@@ -61,7 +61,6 @@ module.exports = (bot) => {
                         type: 1
                     }],
                     headerType: 1
-                    interactiveButtons: []
                 });
             }
 
