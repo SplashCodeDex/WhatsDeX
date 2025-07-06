@@ -6,7 +6,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
-        const isNotQuoted = ctx.msg.message.[ctx.getMessageType()]?.contextInfo?.mentionedJid?.[0] || (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, "")}@s.whatsapp.net` : null);
+        const isNotQuoted = ctx.msg.message?.[ctx.getMessageType()]?.contextInfo?.mentionedJid?.[0] || (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, "")}@s.whatsapp.net` : null);
         const userJid = ctx?.quoted?.senderJid || isNotQuoted;
         const coinAmount = parseInt(ctx.args[isNotQuoted ? 1 : 0], 10) || null;
 
