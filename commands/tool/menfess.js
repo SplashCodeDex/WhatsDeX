@@ -19,13 +19,14 @@ module.exports = {
             formatter.quote(tools.msg.generateNotes(["Jangan gunakan spasi pada angka. Contoh: +62 8123-4567-8910, seharusnya +628123-4567-8910"]))
         );
 
+        if (targetId === senderId) return await ctx.reply(formatter.quote("❎ Tidak dapat digunakan pada diri sendiri."));
+        if (targetId === config.bot.id) return await ctx.reply(formatter.quote("❎ Tidak dapat digunakan pada bot."));
+
         const allMenfessDb = await db.get("menfess") || {};
         const isSenderInMenfess = Object.values(allMenfessDb).some(m => m.from === senderId || m.to === senderId);
         const isReceiverInMenfess = Object.values(allMenfessDb).some(m => m.from === targetId || m.to === targetId);
-
         if (isSenderInMenfess) return await ctx.reply(formatter.quote("❎ Kamu tidak dapat mengirim menfess karena sedang terlibat dalam percakapan lain."));
         if (isReceiverInMenfess) return await ctx.reply(formatter.quote("❎ Kamu tidak dapat mengirim menfess, karena dia sedang terlibat dalam percakapan lain."));
-        if (targetId === senderId) return await ctx.reply(formatter.quote("❎ Tidak dapat digunakan pada diri sendiri."));
 
         try {
             const buttons = [{

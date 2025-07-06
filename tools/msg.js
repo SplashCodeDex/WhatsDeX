@@ -1,41 +1,29 @@
-function convertMsToDuration(ms, specificUnits = []) {
-    if (ms < 1) return "0 milidetik";
-    if (ms < 1000) return specificUnits.includes("milidetik") ? `${Math.floor(ms)} milidetik` : "0 milidetik";
-
-    const timeValues = {
-        tahun: Math.floor(ms / (1000 * 60 * 60 * 24 * 365.25)),
-        bulan: Math.floor((ms / (1000 * 60 * 60 * 24 * 30.44)) % 12),
-        minggu: Math.floor((ms / (1000 * 60 * 60 * 24 * 7)) % 4.345),
-        hari: Math.floor((ms / (1000 * 60 * 60 * 24)) % 7),
-        jam: Math.floor((ms / (1000 * 60 * 60)) % 24),
-        menit: Math.floor((ms / (1000 * 60)) % 60),
-        detik: Math.floor((ms / 1000) % 60),
+function convertMsToDuration(ms, units = []) {
+    const time = {
+        tahun: Math.floor(ms / 31557600000),
+        bulan: Math.floor(ms / 2629800000) % 12,
+        minggu: Math.floor(ms / 604800000) % 4,
+        hari: Math.floor(ms / 86400000) % 7,
+        jam: Math.floor(ms / 3600000) % 24,
+        menit: Math.floor(ms / 60000) % 60,
+        detik: Math.floor(ms / 1000) % 60,
         milidetik: Math.floor(ms % 1000)
     };
 
-    if (specificUnits && specificUnits.length > 0) {
-        const resultParts = [];
-        for (const unit of specificUnits) {
-            if (timeValues.hasOwnProperty(unit)) {
-                const value = timeValues[unit];
-                if (value > 0 || unit === "milidetik") {
-                    resultParts.push(`${value} ${unit}`);
-                }
+    if (units.length) return units.map(unit => `${time[unit]} ${unit}`).join(" ");
+
+    const result = [];
+    for (const [unit, value] of Object.entries(time)) {
+        if (value > 0) {
+            if (unit === "milidetik") {
+                if (ms < 1000) result.push(`${value} ${unit}`);
+            } else {
+                result.push(`${value} ${unit}`);
             }
         }
-        return resultParts.length > 0 ? resultParts.join(" ") : `0 ${specificUnits[0]}`;
     }
 
-    const parts = [];
-    if (timeValues.tahun) parts.push(`${timeValues.tahun} tahun`);
-    if (timeValues.bulan) parts.push(`${timeValues.bulan} bulan`);
-    if (timeValues.minggu) parts.push(`${timeValues.minggu} minggu`);
-    if (timeValues.hari) parts.push(`${timeValues.hari} hari`);
-    if (timeValues.jam) parts.push(`${timeValues.jam} jam`);
-    if (timeValues.menit) parts.push(`${timeValues.menit} menit`);
-    if (timeValues.detik) parts.push(`${timeValues.detik} detik`);
-
-    return parts.length > 0 ? parts.join(" ") : "0 detik";
+    return result.length ? result.join(" ") : ms < 1000 ? `${ms} milidetik` : "0 detik";
 }
 
 function convertSecondToTimecode(seconds) {

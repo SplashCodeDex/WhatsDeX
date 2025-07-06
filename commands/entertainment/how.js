@@ -8,13 +8,7 @@ module.exports = {
     code: async (ctx) => {
         const input = ctx.args.join(" ") || null;
 
-        if (!input) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "itsreimau"))}\n` +
-            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`]))
-        );
-
-        if (ctx.used.command === "how" || input.toLowerCase() === "list") {
+        if (ctx.used.command === "how" || input?.toLowerCase() === "list") {
             const listText = await tools.list.get("how");
             return await ctx.reply({
                 text: listText,
@@ -22,6 +16,12 @@ module.exports = {
                 interactiveButtons: []
             });
         }
+
+        if (!input) return await ctx.reply(
+            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
+            `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "itsreimau"))}\n` +
+            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`]))
+        );
 
         try {
             const randomNumber = Math.floor(Math.random() * 100);

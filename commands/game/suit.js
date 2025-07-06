@@ -7,7 +7,7 @@ module.exports = {
         group: true
     },
     code: async (ctx) => {
-        const accountJid = ctx?.quoted?.senderJid || ctx.msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || null;
+        const accountJid = ctx?.quoted?.senderJid || ctx.msg.message.[ctx.getMessageType()]?.contextInfo?.mentionedJid?.[0] || null;
         const accountId = ctx.getId(accountJid);
 
         const senderJid = ctx.sender.jid;
@@ -20,8 +20,8 @@ module.exports = {
             mentions: [senderJid]
         });
 
-        if (accountJid === senderJid) return await ctx.reply(formatter.quote("Tidak bisa menantang diri sendiri!"));
         if (accountId === config.bot.id) return await ctx.reply(formatter.quote("Tidak bisa menantang bot!"));
+        if (accountJid === senderJid) return await ctx.reply(formatter.quote("Tidak bisa menantang diri sendiri!"));
 
         const existingGame = [...session.values()].find(game => game.players.includes(senderJid) || game.players.includes(accountJid));
         if (existingGame) return await ctx.reply(formatter.quote("Salah satu pemain sedang dalam sesi permainan!"));
@@ -120,7 +120,7 @@ module.exports = {
                     } else if (participantAnswer === "reject") {
                         session.delete(senderJid);
                         session.delete(accountJid);
-                        await ctx.reply({
+                        await ctx.sendMessage(m.jid, {
                             text: formatter.quote(`@${accountId} menolak tantangan suit.`),
                             mentions: [accountJid]
                         }, {

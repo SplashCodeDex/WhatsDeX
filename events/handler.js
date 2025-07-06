@@ -53,7 +53,7 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
                 }
             }
         }, {
-            quoted: tools.cmd.fakeMetaAiQuotedText(`Event: ${type}`)
+            quoted: tools.cmd.fakeMetaAiQuotedText(config.msg.footer)
         });
 
         if (isWelcome && groupDb?.text?.intro) await bot.core.sendMessage(groupJid, {
@@ -68,24 +68,34 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
 // Fungsi untuk menambahkan warning
 async function addWarning(ctx, groupDb, senderJid, groupId) {
     const senderId = ctx.getId(senderJid);
+    const maxWarnings = groupDb?.maxwarnings || 3;
 
-    const warnings = groupDb?.warnings || {};
-    const maxwarnings = groupDb?.maxwarnings || 3;
-    const current = warnings[senderId] || 0;
-    const newWarning = current + 1;
-    warnings[senderId] = newWarning;
+    const warnings = groupDb?.warnings || [];
+
+    const userWarning = warnings.find(w => w.userId === senderId);
+    let currentWarnings = userWarning ? userWarning.count : 0;
+    currentWarnings += 1;
+
+    if (userWarning) {
+        userWarning.count = currentWarnings;
+    } else {
+        warnings.push({
+            userId: senderId,
+            count: currentWarnings
+        });
+    }
 
     await db.set(`group.${groupId}.warnings`, warnings);
     await ctx.reply({
-        text: formatter.quote(`⚠️ Warning ${newWarning}/${maxwarnings} untuk @${senderId}!`),
+        text: formatter.quote(`⚠️ Warning ${currentWarnings}/${maxWarnings} untuk @${senderId}!`),
         mentions: [senderJid]
     });
 
-    if (newWarning >= maxwarnings) {
-        await ctx.reply(formatter.quote(`⛔ Kamu telah menerima ${maxwarnings} warning dan akan dikeluarkan dari grup!`));
+    if (currentWarnings >= maxWarnings) {
+        await ctx.reply(formatter.quote(`⛔ Kamu telah menerima ${maxWarnings} warning dan akan dikeluarkan dari grup!`));
         if (!config.system.restrict) await ctx.group().kick([senderJid]);
-        delete groupDb.warnings[senderId];
-        await db.set(`group.${groupId}`, groupDb);
+        const updatedWarnings = warnings.filter(w => w.userId !== senderId);
+        await db.set(`group.${groupId}.warnings`, updatedWarnings);
     }
 }
 
@@ -225,7 +235,7 @@ module.exports = (bot) => {
 
             // Penanganan antimedia
             for (const type of ["audio", "document", "gif", "image", "sticker", "video"]) {
-                if (groupDb?.option?.[`anti${type}`] && !isOwner && !await ctx.group().isSenderAdmin() && !isCmd) {
+                if (groupDb?.option?.[`anti${type}`] && !isOwner && !await ctx.group().isSenderAdmin()) {
                     const checkMedia = await tools.cmd.checkMedia(ctx.getMessageType(), type);
                     if (checkMedia) {
                         await ctx.reply(formatter.quote(`⛔ Jangan kirim ${type}!`));
@@ -240,7 +250,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan antilink
-            if (groupDb?.option?.antilink && !isOwner && !await ctx.group().isSenderAdmin() && !isCmd) {
+            if (groupDb?.option?.antilink && !isOwner && !await ctx.group().isSenderAdmin()) {
                 if (m.content && await tools.cmd.isUrl(m.content)) {
                     await ctx.reply(formatter.quote("⛔ Jangan kirim link!"));
                     await ctx.deleteMessage(m.key);
@@ -253,7 +263,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan antinsfw
-            if (groupDb?.option?.antinsfw && !isOwner && !await ctx.group().isSenderAdmin() && !isCmd) {
+            if (groupDb?.option?.antinsfw && !isOwner && !await ctx.group().isSenderAdmin()) {
                 const checkMedia = await tools.cmd.checkMedia(ctx.getMessageType(), "image");
                 if (checkMedia) {
                     const buffer = await ctx.msg.media.toBuffer();
@@ -276,21 +286,23 @@ module.exports = (bot) => {
             }
 
             // Penanganan antispam
-            if (groupDb?.option?.antispam && !isOwner && !await ctx.group().isSenderAdmin() && !isCmd) {
+            if (groupDb?.option?.antispam && !isOwner && !await ctx.group().isSenderAdmin()) {
                 const now = Date.now();
-                const spamData = await db.get(`group.${groupId}.spam`) || {};
-                const data = spamData[senderId] || {
+                const spamData = await db.get(`group.${groupId}.spam`) || [];
+
+                const userSpam = spamData.find(s => s.userId === senderId) || {
+                    userId: senderId,
                     count: 0,
                     lastMessageTime: 0
                 };
 
-                const timeDiff = now - data.lastMessageTime;
-                const newCount = timeDiff < 5000 ? data.count + 1 : 1;
+                const timeDiff = now - userSpam.lastMessageTime;
+                const newCount = timeDiff < 5000 ? userSpam.count + 1 : 1;
 
-                spamData[senderId] = {
-                    count: newCount,
-                    lastMessageTime: now
-                };
+                userSpam.count = newCount;
+                userSpam.lastMessageTime = now;
+
+                if (!spamData.some(s => s.userId === senderId)) spamData.push(userSpam);
 
                 await db.set(`group.${groupId}.spam`, spamData);
 
@@ -302,14 +314,14 @@ module.exports = (bot) => {
                     } else {
                         await addWarning(ctx, groupDb, senderJid, groupId);
                     }
-                    delete spamData[senderId];
-                    await db.set(`group.${groupId}.spam`, spamData);
+                    const updatedSpamData = spamData.filter(s => s.userId !== senderId);
+                    await db.set(`group.${groupId}.spam`, updatedSpamData);
                 }
             }
 
             // Penanganan antitagsw
-            if (groupDb?.option?.antitagsw && !isOwner && !await ctx.group().isSenderAdmin() && !isCmd) {
-                const checkMedia = await tools.cmd.checkMedia(ctx.getMessageType(), "groupStatusMention") && m.message?.groupStatusMentionMessage?.protocolMessage?.type === 25;
+            if (groupDb?.option?.antitagsw && !isOwner && !await ctx.group().isSenderAdmin()) {
+                const checkMedia = await tools.cmd.checkMedia(ctx.getMessageType(), "groupStatusMention") || m.message?.groupStatusMentionMessage?.protocolMessage?.type === 25;
                 if (checkMedia) {
                     await ctx.reply(formatter.quote(`⛔ Jangan tag grup di SW, gak ada yg peduli!`));
                     await ctx.deleteMessage(m.key);
@@ -322,7 +334,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan antitoxic
-            if (groupDb?.option?.antitoxic && !isOwner && !await ctx.group().isSenderAdmin() && !isCmd) {
+            if (groupDb?.option?.antitoxic && !isOwner && !await ctx.group().isSenderAdmin()) {
                 const toxicRegex = /anj(k|g)|ajn?(g|k)|a?njin(g|k)|bajingan|b(a?n)?gsa?t|ko?nto?l|me?me?(k|q)|pe?pe?(k|q)|meki|titi(t|d)|pe?ler|tetek|toket|ngewe|go?blo?k|to?lo?l|idiot|(k|ng)e?nto?(t|d)|jembut|bego|dajj?al|janc(u|o)k|pantek|puki ?(mak)?|kimak|kampang|lonte|col(i|mek?)|pelacur|henceu?t|nigga|fuck|dick|bitch|tits|bastard|asshole|dontol|kontoi|ontol/i;
                 if (m.content && toxicRegex.test(m.content)) {
                     await ctx.reply(formatter.quote("⛔ Jangan toxic!"));

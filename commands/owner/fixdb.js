@@ -13,7 +13,7 @@ module.exports = {
             formatter.quote(tools.msg.generateCmdExample(ctx.used, "user"))
         );
 
-        if (input.toLowercase() === "list") {
+        if (input.toLowerCase() === "list") {
             const listText = await tools.list.get("fixdb");
             return await ctx.reply({
                 text: listText,
@@ -30,107 +30,128 @@ module.exports = {
                 menfess: await db.get("menfess") || {}
             };
 
-            const filteredData = (category, item) => {
-                const mappings = {
-                    user: {
-                        afk: {
-                            reason: "string",
-                            timestamp: "number"
-                        },
-                        banned: "boolean",
-                        coin: "number",
-                        lastClaim: {
-                            daily: "number",
-                            weekly: "number",
-                            monthly: "number",
-                            yearly: "number"
-                        },
-                        lastSentMsg: {
-                            banned: "number",
-                            cooldown: "number",
-                            admin: "number",
-                            botAdmin: "number",
-                            coin: "number",
-                            group: "number",
-                            owner: "number",
-                            premium: "number",
-                            private: "number",
-                            restrict: "number"
-                        },
-                        level: "number",
-                        premium: "boolean",
-                        premiumExpiration: "number",
-                        uid: "string",
-                        username: "string",
-                        winGame: "number",
-                        xp: "number"
-                    },
-                    group: {
-                        maxwarnings: "number",
-                        mute: "object",
-                        mutebot: "boolean",
-                        text: {
-                            goodbye: "string",
-                            intro: "string",
-                            welcome: "string"
-                        },
-                        option: {
-                            antiaudio: "boolean",
-                            antidocument: "boolean",
-                            antigif: "boolean",
-                            antiimage: "boolean",
-                            antilink: "boolean",
-                            antinfsw: "boolean",
-                            antisticker: "boolean",
-                            antitagsw: "boolean",
-                            antitoxic: "boolean",
-                            antivideo: "boolean",
-                            autokick: "boolean",
-                            gamerestrict: "boolean",
-                            welcome: "boolean"
-                        },
-                        sewa: "boolean",
-                        sewaExpiration: "number",
-                        spam: "object",
-                        warnings: "object"
-                    },
-                    menfess: {
-                        from: "string",
-                        to: "string"
-                    }
-                };
+            const validateData = (value, expectedType) => {
+                if (value === null || value === undefined) return false;
 
-                const validate = (obj, map) => {
-                    if (typeof map === "string") {
-                        return typeof obj === map;
-                    } else if (typeof map === "object") {
-                        if (typeof obj !== "object" || obj === null) return false;
-                        const result = {};
-                        for (const key in map) {
-                            if (validate(obj[key], map[key])) {
-                                result[key] = obj[key];
+                if (expectedType === "array") return Array.isArray(value);
+
+                if (typeof expectedType === "object" && expectedType !== null) {
+                    if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+
+                    const result = {};
+                    let isValid = true;
+
+                    for (const key in expectedType) {
+                        if (value.hasOwnProperty(key)) {
+                            const valid = validateData(value[key], expectedType[key]);
+                            if (valid) {
+                                result[key] = value[key];
+                            } else {
+                                isValid = false;
                             }
+                        } else {
+                            isValid = false;
                         }
-                        return result;
                     }
-                    return false;
-                };
 
-                const schema = mappings[category];
-                const result = validate(item, schema);
-                return result || {};
+                    return isValid ? result : false;
+                }
+
+                return typeof value === expectedType;
+            };
+
+            const mappings = {
+                user: {
+                    afk: {
+                        reason: "string",
+                        timestamp: "number"
+                    },
+                    banned: "boolean",
+                    coin: "number",
+                    lastClaim: {
+                        daily: "number",
+                        weekly: "number",
+                        monthly: "number",
+                        yearly: "number"
+                    },
+                    lastSentMsg: {
+                        banned: "number",
+                        cooldown: "number",
+                        admin: "number",
+                        botAdmin: "number",
+                        coin: "number",
+                        group: "number",
+                        owner: "number",
+                        premium: "number",
+                        private: "number",
+                        restrict: "number"
+                    },
+                    level: "number",
+                    premium: "boolean",
+                    premiumExpiration: "number",
+                    uid: "string",
+                    username: "string",
+                    winGame: "number",
+                    xp: "number"
+                },
+                group: {
+                    maxwarnings: "number",
+                    mute: "array",
+                    mutebot: "boolean",
+                    text: {
+                        goodbye: "string",
+                        intro: "string",
+                        welcome: "string"
+                    },
+                    option: {
+                        antiaudio: "boolean",
+                        antidocument: "boolean",
+                        antigif: "boolean",
+                        antiimage: "boolean",
+                        antilink: "boolean",
+                        antinfsw: "boolean",
+                        antisticker: "boolean",
+                        antitagsw: "boolean",
+                        antitoxic: "boolean",
+                        antivideo: "boolean",
+                        autokick: "boolean",
+                        gamerestrict: "boolean",
+                        welcome: "boolean"
+                    },
+                    sewa: "boolean",
+                    sewaExpiration: "number",
+                    spam: "array",
+                    warnings: "array"
+                },
+                menfess: {
+                    from: "string",
+                    to: "string"
+                }
             };
 
             const processData = async (category, data) => {
                 await ctx.editMessage(waitMsg.key, formatter.quote(`🔄 Memproses data ${category}...`));
+                const schema = mappings[category];
+
                 for (const id of Object.keys(data)) {
                     const item = data[id] || {};
-                    const filtered = filteredData(category, item);
 
-                    if (!/^\d+$/.test(id) || Object.keys(filtered).length === 0) {
+                    if (!/^\d+$/.test(id)) {
+                        await db.delete(`${category}.${id}`);
+                        continue;
+                    }
+
+                    const isValid = validateData(item, schema);
+                    if (!isValid) {
                         await db.delete(`${category}.${id}`);
                     } else {
-                        await db.set(`${category}.${id}`, filtered);
+                        const filteredItem = {};
+                        for (const key in schema) {
+                            if (item.hasOwnProperty(key)) {
+                                filteredItem[key] = item[key];
+                            }
+                        }
+                        await db.set(`${category}.${id}`, filteredItem);
                     }
                 }
             };
@@ -141,7 +162,6 @@ module.exports = {
                 case "menfess":
                     await processData(input, data[input]);
                     break;
-
                 default:
                     return await ctx.reply(formatter.quote(`❎ Data "${input}" tidak valid!`));
             }

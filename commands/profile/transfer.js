@@ -3,9 +3,9 @@ module.exports = {
     aliases: ["tf"],
     category: "profile",
     code: async (ctx) => {
-        const mentionedJid = ctx.msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-        const userJid = ctx?.quoted?.senderJid || mentionedJid || (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, "")}@s.whatsapp.net` : null);
-        const coinAmount = parseInt(ctx.args[mentionedJid ? 1 : 0], 10) || null;
+        const isNotQuoted = ctx.msg.message.[ctx.getMessageType()]?.contextInfo?.mentionedJid?.[0] || (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, "")}@s.whatsapp.net` : null);
+        const userJid = ctx?.quoted?.senderJid || isNotQuoted;
+        const coinAmount = parseInt(ctx.args[isNotQuoted ? 1 : 0], 10) || null;
 
         const senderJid = ctx.sender.jid;
         const senderId = ctx.getId(senderJid);

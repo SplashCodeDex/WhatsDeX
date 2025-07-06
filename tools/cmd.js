@@ -242,17 +242,12 @@ async function upload(buffer, type = "any", host = config.system.uploaderHost) {
         doc: []
     };
 
-    const hosts = hostMap[type] && type !== "any" ? hostMap[type] : hostMap.any;
-    const preferred = hosts.find(h => h.toLowerCase() === host?.toLowerCase());
-    const toTry = [...new Set(preferred ? [preferred, ...hosts] : hosts)];
-
+    const toTry = host && hostMap.any.includes(host) ? [host, ...(hostMap[type] || [])] : hostMap[type] || [];
     for (const h of toTry) {
         try {
             const url = await uploader[h](buffer);
             if (url) return url;
-        } catch (error) {
-            consolefy.error(`Error: ${util.format(error)}`);
-        }
+        } catch {}
     }
 
     return null;

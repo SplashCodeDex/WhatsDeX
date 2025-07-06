@@ -26,6 +26,9 @@ const APIs = {
     },
     zell: {
         baseURL: "https://zellapi.autos"
+    },
+    zenzxz: {
+        baseURL: "https://zenzxz.dpdns.org"
     }
 };
 

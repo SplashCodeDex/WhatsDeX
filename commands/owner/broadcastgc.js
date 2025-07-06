@@ -11,13 +11,10 @@ module.exports = {
         if (!input) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
             `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "halo, dunia!"))}\n` +
-            `${formatter.quote(tools.msg.generatesFlagInfo({
-                "-ht": "Kirim dengan hidetag"
-            }))}\n` +
             formatter.quote(tools.msg.generateNotes(["Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.", `Gunakan ${formatter.monospace("blacklist")} untuk memasukkan grup ke dalam blacklist. (Hanya berfungsi pada grup)`]))
         );
 
-        if (input === "blacklist" && ctx.isGroup()) {
+        if (ctx.args[0]?.toLowerCase() === "blacklist" && ctx.isGroup()) {
             let blacklist = await db.get("bot.blacklistBroadcast") || [];
 
             const groupIndex = blacklist.indexOf(ctx.id);
@@ -33,16 +30,6 @@ module.exports = {
         }
 
         try {
-            const flag = tools.cmd.parseFlag(input, {
-                "-ht": {
-                    type: "boolean",
-                    key: "hidetag"
-                }
-            });
-
-            const hidetag = flag?.hidetag || false;
-            const text = flag?.input;
-
             const groupIds = Object.values(await ctx.core.groupFetchAllParticipating()).map(g => g.id);
             const blacklist = await db.get("bot.blacklistBroadcast") || [];
             const filteredGroupIds = groupIds.filter(groupId => !blacklist.includes(groupId));
@@ -54,12 +41,6 @@ module.exports = {
             for (const groupId of filteredGroupIds) {
                 await delay(500);
                 try {
-                    let mentions = [];
-                    if (hidetag) {
-                        const members = await ctx.group(groupId).members();
-                        mentions = members.map(m => m.id);
-                    }
-
                     const contextInfo = {
                         mentionedJid: [mentions],
                         isForwarded: true,
@@ -77,7 +58,7 @@ module.exports = {
                     };
 
                     await ctx.sendMessage(groupId, {
-                        text,
+                        input,
                         contextInfo
                     }, {
                         quoted: tools.cmd.fakeMetaAiQuotedText(config.msg.footer)

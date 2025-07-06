@@ -6,7 +6,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
-        const userJid = ctx?.quoted?.senderJid || ctx.msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, "")}@s.whatsapp.net` : null);
+        const userJid = ctx?.quoted?.senderJid || ctx.msg.message.[ctx.getMessageType()]?.contextInfo?.mentionedJid?.[0] || (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, "")}@s.whatsapp.net` : null);
 
         if (!userJid) return await ctx.reply({
             text: `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
@@ -22,8 +22,10 @@ module.exports = {
         if (isOnWhatsApp.length === 0) return await ctx.reply(formatter.quote("❎ Akun tidak ada di WhatsApp!"));
 
         try {
-            await db.delete(`user.${senderId}.premium`);
-            await db.delete(`user.${senderId}.premiumExpiration`);
+            const userId = ctx.getId(userJid);
+
+            await db.delete(`user.${userId}.premium`);
+            await db.delete(`user.${userId}.premiumExpiration`);
 
             const flag = tools.cmd.parseFlag(ctx.args.join(" "), {
                 "-s": {

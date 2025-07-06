@@ -8,17 +8,14 @@ module.exports = {
         restrict: true
     },
     code: async (ctx) => {
-        const accountJid = ctx?.quoted?.senderJid || ctx.msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || null;
+        const accountJid = ctx?.quoted?.senderJid || ctx.msg.message?.[ctx.getMessageType()]?.contextInfo?.mentionedJid?.[0] || null;
         const accountId = ctx.getId(accountJid);
-
-        const senderJid = ctx.sender.jid;
-        const senderId = ctx.getId(senderJid);
 
         if (!accountJid) return await ctx.reply({
             text: `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-                `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${senderId}`))}\n` +
+                `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${ctx.getId(ctx.sender.jid)}`))}\n` +
                 formatter.quote(tools.msg.generateNotes(["Balas atau kutip pesan untuk menjadikan pengirim sebagai akun target."])),
-            mentions: [senderJid]
+            mentions: [ctx.sender.jid]
         });
 
         if (accountId === config.bot.id) return await ctx.reply(formatter.quote(`❎ Tidak bisa memberikan warning ke bot!`));
@@ -27,24 +24,23 @@ module.exports = {
         try {
             const groupId = ctx.getId(ctx.id);
             const groupDb = await db.get(`group.${groupId}`) || {};
-            const warnings = groupDb?.warnings || {};
-            const current = warnings[accountId] || 0;
-            const newWarning = current + 1;
+            const warnings = groupDb?.warnings || [];
 
-            const maxwarnings = groupDb?.maxwarnings || 3;
-            if (newWarning >= maxwarnings) {
-                await ctx.reply(formatter.quote(`⛔ Kamu telah menerima ${maxwarnings} warning dan akan dikeluarkan dari grup!`));
-                if (!config.system.restrict) await ctx.group().kick([senderJid]);
-                delete warnings[senderId];
-                return await db.set(`group.${groupId}.warnings`, warnings);
+            const userWarning = warnings.find(w => w.userId === accountId);
+            let currentWarnings = userWarning ? userWarning.count : 0;
+            const newWarning = currentWarnings + 1;
+
+            if (userWarning) {
+                userWarning.count = newWarning;
+            } else {
+                warnings.push({
+                    userId: accountId,
+                    count: newWarning
+                });
             }
 
-            warnings[accountId] = newWarning;
             await db.set(`group.${groupId}.warnings`, warnings);
-
-            return await ctx.reply(formatter.quote(`✅ Warning diberikan! Sekarang warning @${accountId} menjadi ${newWarning}/${maxwarnings}.`), {
-                mentions: [accountJid]
-            });
+            return await ctx.reply(formatter.quote(`✅ Berhasil menambahkan warning pengguna itu menjadi ${newWarning}/${groupDb?.maxwarnings || 3}.`));
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);
         }

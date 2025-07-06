@@ -52,7 +52,15 @@ module.exports = (bot) => {
                 const profilePictureUrl = await ctx.core.profilePictureUrl(ctx.sender.jid, "image").catch(() => "https://i.pinimg.com/736x/70/dd/61/70dd612c65034b88ebf474a52ccc70c4.jpg");
                 await ctx.reply({
                     text: formatter.quote(`Selamat! Kamu telah naik ke level ${newUserLevel}!`),
-                    footer: formatter.italic(`Terganggu? Ketik ${formatter.monospace(`${ctx.used.prefix}setprofile autolevelup`)} untuk menonaktifkan pesan autolevelup.`),
+                    footer: config.msg.footer,
+                    buttons: [{
+                        buttonId: `${ctx.used.prefix}setprofile autolevelup`,
+                        buttonText: {
+                            displayText: "Nonaktifkan Pesan Autolevelup"
+                        },
+                        type: 1
+                    }],
+                    headerType: 1
                     interactiveButtons: []
                 });
             }
