@@ -5,7 +5,7 @@ module.exports = {
     aliases: ["text2img", "texttoimage", "texttoimg"],
     category: "ai-image",
     permissions: {
-        premium: true
+        coin: 10
     },
     code: async (ctx) => {
         const input = ctx.args.join(" ") || ctx?.quoted?.conversation || (ctx.quoted && ((Object.values(ctx.quoted).find(v => v?.text || v?.caption)?.text) || (Object.values(ctx.quoted).find(v => v?.text || v?.caption)?.caption))) || null;

@@ -8,9 +8,8 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
-        const apiUrl = tools.api.createUrl("https://data.bmkg.go.id", "/DataMKG/TEWS/autogempa.json");
-
         try {
+            const apiUrl = tools.api.createUrl("https://data.bmkg.go.id", "/DataMKG/TEWS/autogempa.json");
             const result = (await axios.get(apiUrl)).data.Infogempa.gempa;
 
             return await ctx.reply({

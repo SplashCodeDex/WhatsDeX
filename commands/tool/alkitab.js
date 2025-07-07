@@ -16,7 +16,7 @@ module.exports = {
             formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`]))
         );
 
-        if (passage.toLowercase() === "list") {
+        if (passage.toLowerCase() === "list") {
             const listText = await tools.list.get("alkitab");
             return await ctx.reply({
                 text: listText,

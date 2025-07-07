@@ -8,9 +8,8 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
-        const apiUrl = tools.api.createUrl("http://jagokata-api.hofeda4501.serv00.net", "/peribahasa-acak.php"); // Dihosting sendiri, karena jagokata-api.rf.gd malah error
-
         try {
+            const apiUrl = tools.api.createUrl("http://jagokata-api.hofeda4501.serv00.net", "/peribahasa-acak.php"); // Dihosting sendiri, karena jagokata-api.rf.gd malah error
             const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data.data);
 
             return await ctx.reply({

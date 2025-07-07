@@ -1,8 +1,7 @@
 const axios = require("axios");
 
 module.exports = {
-    name: "mediafiredl",
-    aliases: ["mediafire", "mf", "mfdl"],
+    name: "xvideosdl",
     category: "downloader",
     permissions: {
         premium: true
@@ -12,24 +11,23 @@ module.exports = {
 
         if (!url) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://www.mediafire.com/file/on2jvy5540bi22u/humanity-turned-into-lcl-scene.mp4/file"))
+            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://www.xvideos.com/video.kfhcdpb267b/evangelion_hentai"))
         );
 
         const isUrl = await tools.cmd.isUrl(url);
         if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
 
         try {
-            const apiUrl = tools.api.createUrl("nekorinn", "/downloader/mediafire", {
+            const apiUrl = tools.api.createUrl("nekorinn", "/downloader/xvideos", {
                 url
             });
-            const result = (await axios.get(apiUrl)).data.result;
+            const result = (await axios.get(apiUrl)).data.result.videos;
 
             return await ctx.reply({
-                document: {
-                    url: result.download.url
+                video: {
+                    url: result.high || result.low
                 },
-                fileName: data.fileName,
-                mimetype: data.mimetype || "application/octet-stream",
+                mimetype: tools.mime.lookup("mp4"),
                 caption: formatter.quote(`URL: ${url}`),
                 footer: config.msg.footer,
                 interactiveButtons: []

@@ -8,9 +8,8 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
-        const apiUrl = tools.api.createUrl("https://candaan-api.vercel.app", "/api/text/random");
-
         try {
+            const apiUrl = tools.api.createUrl("https://candaan-api.vercel.app", "/api/text/random");
             const result = (await axios.get(apiUrl)).data.data;
 
             return await ctx.reply({

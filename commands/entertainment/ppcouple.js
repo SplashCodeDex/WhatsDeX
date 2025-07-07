@@ -8,9 +8,8 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
-        const apiUrl = tools.api.createUrl("https://sandipbaruwal.onrender.com", "/dp");
-
         try {
+            const apiUrl = tools.api.createUrl("https://sandipbaruwal.onrender.com", "/dp");
             const result = (await axios.get(apiUrl)).data;
 
             return await ctx.reply({
@@ -18,13 +17,13 @@ module.exports = {
                         image: {
                             url: result.male
                         },
-                        mimetype: tools.mime.lookup("jpeg")
+                        mimetype: tools.mime.lookup("jpg")
                     },
                     {
                         image: {
                             url: result.female
                         },
-                        mimetype: tools.mime.lookup("jpeg")
+                        mimetype: tools.mime.lookup("jpg")
                     }
                 ],
                 caption: formatter.quote("Untukmu, tuan!")

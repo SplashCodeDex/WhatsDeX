@@ -15,7 +15,7 @@ module.exports = {
             formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`, "Untuk teks satu baris, ketik saja langsung ke perintah. Untuk teks dengan baris baru, balas pesan yang berisi teks tersebut ke perintah.", `Gunakan ${formatter.monospace("delete")} sebagai teks untuk menghapus teks yang disimpan sebelumnya.`]))
         );
 
-        if (key.toLowercase() === "list") {
+        if (key.toLowerCase() === "list") {
             const listText = await tools.list.get("osettext");
             return await ctx.reply({
                 text: listText,
