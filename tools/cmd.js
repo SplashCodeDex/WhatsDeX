@@ -112,7 +112,7 @@ function getRandomElement(arr) {
 async function handleError(ctx, error, useAxios = false, reportErrorToOwner = true) {
     const isGroup = ctx.isGroup();
     const groupJid = isGroup ? ctx.id : null;
-    const groupSubject = isGroup ? await ctx.group(groupJid).name() : null;
+    const groupSubject = isGroup ? (await ctx.group(groupJid)).name() : null;
     const errorText = util.format(error);
 
     consolefy.error(`Error: ${errorText}`);

@@ -20,7 +20,6 @@ module.exports = {
             let endpoint = "/api/tools/sspc";
             if (ctx.used.command == "sshp") endpoint = "/api/tools/sshp";
             if (ctx.used.command == "sstab") endpoint = "/api/tools/sstab";
-
             const result = tools.api.createUrl("diibot", endpoint, {
                 url
             });

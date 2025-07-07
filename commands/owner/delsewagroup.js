@@ -33,11 +33,12 @@ module.exports = {
             });
 
             const silent = flag?.silent || false;
-            const groupOwner = (await ctx.group(groupJid)).owner();
+            const group = await ctx.group(groupJid);
+            const groupOwner = await group.owner();
             if (!silent && groupOwner) {
                 const groupMentions = [{
                     groupJid: `${group.id}@g.us`,
-                    groupSubject: (await ctx.group(groupJid)).name()
+                    groupSubject: await group.name()
                 }];
                 await ctx.sendMessage(groupOwner, {
                     text: formatter.quote(`📢 Sewa bot untuk grup @${groupMentions.groupJid} telah dihentikan oleh Owner!`),

@@ -363,7 +363,6 @@ module.exports = (bot) => {
                     }] of Object.entries(allMenfessDb)) {
                     if (senderId === from || senderId === to) {
                         const targetId = `${senderId === from ? to : from}@s.whatsapp.net`;
-
                         if (m.content === "delete") {
                             const replyText = formatter.quote("✅ Sesi menfess telah dihapus!");
                             await ctx.reply(replyText);

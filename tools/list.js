@@ -91,6 +91,11 @@ async function get(type) {
                 text = createList(data, d => formatter.quote(d));
                 break;
             }
+            case "nsfwhub": {
+                const data = ["anal", "ass", "bdsm", "black", "blowjub", "boobs", "bottomless", "collared", "cum", "cumsluts", "dick", "dom", "dp", "easter", "extreme", "feet", "finger", "fuck", "futa", "gay", "group", "hentai", "kiss", "lesbian", "lick", "pegged", "puffies", "pussy", "real", "sixtynine", "suck", "tattoo", "tiny", "xmas"];
+                text = createList(data, d => formatter.quote(d));
+                break;
+            }
             case "osettext": {
                 const data = [
                     "donate (Variabel yang tersedia: %tag%, %name%, %prefix%, %command%, %footer%, %readmore%) (Atur teks donasi)",
@@ -111,7 +116,7 @@ async function get(type) {
                     "antisticker (Anti stiker)",
                     "antivideo (Anti video)",
                     "antitoxic (Anti toxic, seperti bahasa kasar)",
-                    "autokick (Dikeluarkan secara otomatis, jika ada yang melanggar salah satu opsi 'anti...')",
+                    `autokick (Dikeluarkan secara otomatis, jika ada yang melanggar salah satu opsi ${formatter.monospace("anti...")})`,
                     "gamerestrict (Anggota dilarang bermain game)",
                     "welcome (Sambutan member)"
                 ];

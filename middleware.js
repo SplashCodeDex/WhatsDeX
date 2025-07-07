@@ -95,7 +95,7 @@ module.exports = (bot) => {
                 reaction: "🎮"
             }, {
                 key: "requireBotGroupMembership",
-                condition: config.system.requireBotGroupMembership && !isOwner && !userDb?.premium && ctx.used.command !== "botgroup" && config.bot.groupJid && !await ctx.group(config.bot.groupJid).members().some((member) => ctx.getId(member.id) === senderJid),
+                condition: config.system.requireBotGroupMembership && !isOwner && !userDb?.premium && ctx.used.command !== "botgroup" && config.bot.groupJid && !(await ctx.group(config.bot.groupJid)).members().some((member) => member.id === senderJid),
                 msg: config.msg.botGroupMembership,
                 reaction: "🚫"
             },
@@ -132,7 +132,7 @@ module.exports = (bot) => {
                     await simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji '${reaction}'.`),
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.monospace(reaction)}`),
                         interactiveButtons: []
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
@@ -213,7 +213,7 @@ module.exports = (bot) => {
                     await simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji '${reaction}'.`),
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.monospace(reaction)}!`),
                         interactiveButtons: []
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);

@@ -30,36 +30,6 @@ module.exports = {
                 menfess: await db.get("menfess") || {}
             };
 
-            const validateData = (value, expectedType) => {
-                if (value === null || value === undefined) return false;
-
-                if (expectedType === "array") return Array.isArray(value);
-
-                if (typeof expectedType === "object" && expectedType !== null) {
-                    if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-
-                    const result = {};
-                    let isValid = true;
-
-                    for (const key in expectedType) {
-                        if (value.hasOwnProperty(key)) {
-                            const valid = validateData(value[key], expectedType[key]);
-                            if (valid) {
-                                result[key] = value[key];
-                            } else {
-                                isValid = false;
-                            }
-                        } else {
-                            isValid = false;
-                        }
-                    }
-
-                    return isValid ? result : false;
-                }
-
-                return typeof value === expectedType;
-            };
-
             const mappings = {
                 user: {
                     afk: {
@@ -127,6 +97,36 @@ module.exports = {
                     from: "string",
                     to: "string"
                 }
+            };
+
+            const validateData = (value, expectedType) => {
+                if (value === null || value === undefined) return false;
+
+                if (expectedType === "array") return Array.isArray(value);
+
+                if (typeof expectedType === "object" && expectedType !== null) {
+                    if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+
+                    const result = {};
+                    let isValid = true;
+
+                    for (const key in expectedType) {
+                        if (value.hasOwnProperty(key)) {
+                            const valid = validateData(value[key], expectedType[key]);
+                            if (valid) {
+                                result[key] = value[key];
+                            } else {
+                                isValid = false;
+                            }
+                        } else {
+                            isValid = false;
+                        }
+                    }
+
+                    return isValid ? result : false;
+                }
+
+                return typeof value === expectedType;
             };
 
             const processData = async (category, data) => {

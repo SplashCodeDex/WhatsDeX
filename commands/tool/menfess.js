@@ -19,8 +19,8 @@ module.exports = {
             formatter.quote(tools.msg.generateNotes(["Jangan gunakan spasi pada angka. Contoh: +62 8123-4567-8910, seharusnya +628123-4567-8910"]))
         );
 
-        if (targetId === senderId) return await ctx.reply(formatter.quote("❎ Tidak dapat digunakan pada diri sendiri."));
         if (targetId === config.bot.id) return await ctx.reply(formatter.quote("❎ Tidak dapat digunakan pada bot."));
+        if (targetId === senderId) return await ctx.reply(formatter.quote("❎ Tidak dapat digunakan pada diri sendiri."));
 
         const allMenfessDb = await db.get("menfess") || {};
         const isSenderInMenfess = Object.values(allMenfessDb).some(m => m.from === senderId || m.to === senderId);
@@ -39,7 +39,7 @@ module.exports = {
 
             await ctx.sendMessage(`${targetId}@s.whatsapp.net`, {
                 text: menfessText,
-                footer: formatter.italic(`Setiap pesan yang kamu kirim akan diteruskan ke orang tersebut.`),
+                footer: formatter.italic(`Setiap pesan yang kamu kirim akan diteruskan ke orang tersebut!`),
                 buttons,
                 headerType: 1
             }, {

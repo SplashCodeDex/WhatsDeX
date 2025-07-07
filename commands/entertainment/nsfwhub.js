@@ -1,5 +1,5 @@
 module.exports = {
-    name: "cecan",
+    name: "nsfwhub",
     category: "entertainment",
     permissions: {
         premium: true
@@ -8,7 +8,7 @@ module.exports = {
         const input = ctx.args.join(" ") || null;
 
         if (input?.toLowerCase() === "list") {
-            const listText = await tools.list.get("cecan");
+            const listText = await tools.list.get("nsfwhub");
             return await ctx.reply({
                 text: listText,
                 footer: config.msg.footer,
@@ -17,16 +17,16 @@ module.exports = {
         }
 
         try {
-            const listCecan = ["china", "indonesia", "japan", "korea", "thailand", "vietnam"];
-            const cecan = listCecan.includes(input) ? input : tools.cmd.getRandomElement(listCecan);
-            const result = tools.api.createUrl("siputzx", `/api/r/cecan/${cecan}`);
+            const listNsfwhub = ["anal", "ass", "bdsm", "black", "blowjub", "boobs", "bottomless", "collared", "cum", "cumsluts", "dick", "dom", "dp", "easter", "extreme", "feet", "finger", "fuck", "futa", "gay", "group", "hentai", "kiss", "lesbian", "lick", "pegged", "puffies", "pussy", "real", "sixtynine", "suck", "tattoo", "tiny", "xmas"];
+            const nsfwhub = listNsfwhub.includes(input) ? input : tools.cmd.getRandomElement(listNsfwhub);
+            const result = tools.api.createUrl("nekorinn", `/nsfwhub/${nsfwhub}`);
 
             return await ctx.reply({
                 image: {
                     url: result
                 },
                 mimetype: tools.mime.lookup("jpg"),
-                caption: formatter.quote(`Kategori: ${tools.msg.ucwords(cecan)}`),
+                caption: formatter.quote(`Kategori: ${tools.msg.ucwords(nsfwhub)}`),
                 footer: config.msg.footer,
                 buttons: [{
                     buttonId: input ? `${ctx.used.prefix + ctx.used.command} ${input}` : ctx.used.prefix + ctx.used.command,

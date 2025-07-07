@@ -33,16 +33,16 @@ module.exports = {
                     setKey = `bot.text.${key.toLowerCase()}`;
                     break;
                 default:
-                    return await ctx.reply(formatter.quote(`❎ Teks '${key}' tidak valid!`));
+                    return await ctx.reply(formatter.quote(`❎ Teks ${formatter.monospace(key)} tidak valid!`));
             }
 
             if (text.toLowerCase() === "delete") {
                 await db.delete(setKey);
-                return await ctx.reply(formatter.quote(`🗑️ Pesan untuk teks '${key}' berhasil dihapus!`));
+                return await ctx.reply(formatter.quote(`🗑️ Pesan untuk teks ${formatter.monospace(key)} berhasil dihapus!`));
             }
 
             await db.set(setKey, text);
-            return await ctx.reply(formatter.quote(`✅ Pesan untuk teks '${key}' berhasil disimpan!`));
+            return await ctx.reply(formatter.quote(`✅ Pesan untuk teks ${formatter.monospace(key)} berhasil disimpan!`));
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);
         }

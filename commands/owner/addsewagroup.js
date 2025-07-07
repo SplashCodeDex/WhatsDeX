@@ -35,11 +35,13 @@ module.exports = {
 
             const silent = flag?.silent || false;
 
-            if (silent) {
-                const groupOwner = await ctx.group(groupJid);
+            const group = await ctx.group(groupJid);
+            const groupOwner = await group.owner();
+
+            if (!silent && groupOwner) {
                 const groupMentions = [{
                     groupJid: `${group.id}@g.us`,
-                    groupSubject: await ctx.group(groupJid)
+                    groupSubject: await group.name()
                 }];
             }
 
