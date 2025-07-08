@@ -39,7 +39,7 @@ module.exports = {
                 }
             });
 
-            const type = flag?.type || "any";
+            const type = flag?.type ? flag.type : (checkMedia || checkQuotedMedia);
             const host = flag?.host || config.system.uploaderHost;
 
             const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted.media.toBuffer();

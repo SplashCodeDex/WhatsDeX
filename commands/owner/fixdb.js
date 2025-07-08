@@ -33,140 +33,275 @@ module.exports = {
             const mappings = {
                 user: {
                     afk: {
-                        reason: "string",
-                        timestamp: "number"
+                        reason: {
+                            type: "string",
+                            default: ""
+                        },
+                        timestamp: {
+                            type: "number",
+                            default: 0
+                        }
                     },
-                    banned: "boolean",
-                    coin: "number",
+                    banned: {
+                        type: "boolean",
+                        default: false
+                    },
+                    coin: {
+                        type: "number",
+                        default: 0,
+                        min: 0
+                    },
                     lastClaim: {
-                        daily: "number",
-                        weekly: "number",
-                        monthly: "number",
-                        yearly: "number"
+                        daily: {
+                            type: "number",
+                            default: 0
+                        },
+                        weekly: {
+                            type: "number",
+                            default: 0
+                        },
+                        monthly: {
+                            type: "number",
+                            default: 0
+                        },
+                        yearly: {
+                            type: "number",
+                            default: 0
+                        }
                     },
                     lastSentMsg: {
-                        banned: "number",
-                        cooldown: "number",
-                        admin: "number",
-                        botAdmin: "number",
-                        coin: "number",
-                        group: "number",
-                        owner: "number",
-                        premium: "number",
-                        private: "number",
-                        restrict: "number"
+                        banned: {
+                            type: "number",
+                            default: 0
+                        },
+                        cooldown: {
+                            type: "number",
+                            default: 0
+                        },
+                        admin: {
+                            type: "number",
+                            default: 0
+                        },
+                        botAdmin: {
+                            type: "number",
+                            default: 0
+                        },
+                        coin: {
+                            type: "number",
+                            default: 0
+                        },
+                        group: {
+                            type: "number",
+                            default: 0
+                        },
+                        owner: {
+                            type: "number",
+                            default: 0
+                        },
+                        premium: {
+                            type: "number",
+                            default: 0
+                        },
+                        private: {
+                            type: "number",
+                            default: 0
+                        },
+                        restrict: {
+                            type: "number",
+                            default: 0
+                        }
                     },
-                    level: "number",
-                    premium: "boolean",
-                    premiumExpiration: "number",
-                    uid: "string",
-                    username: "string",
-                    winGame: "number",
-                    xp: "number"
+                    level: {
+                        type: "number",
+                        default: 0,
+                        min: 0
+                    },
+                    premium: {
+                        type: "boolean",
+                        default: false
+                    },
+                    premiumExpiration: {
+                        type: "number",
+                        default: 0
+                    },
+                    uid: {
+                        type: "string",
+                        default: ""
+                    },
+                    username: {
+                        type: "string",
+                        default: ""
+                    },
+                    winGame: {
+                        type: "number",
+                        default: 0,
+                        min: 0
+                    },
+                    xp: {
+                        type: "number",
+                        default: 0,
+                        min: 0
+                    }
                 },
                 group: {
-                    maxwarnings: "number",
-                    mute: "array",
-                    mutebot: "boolean",
+                    maxwarnings: {
+                        type: "number",
+                        default: 3,
+                        min: 1
+                    },
+                    mute: {
+                        type: "array",
+                        default: []
+                    },
+                    mutebot: {
+                        type: "boolean",
+                        default: false
+                    },
                     text: {
-                        goodbye: "string",
-                        intro: "string",
-                        welcome: "string"
+                        goodbye: {
+                            type: "string",
+                            default: ""
+                        },
+                        intro: {
+                            type: "string",
+                            default: ""
+                        },
+                        welcome: {
+                            type: "string",
+                            default: ""
+                        }
                     },
                     option: {
-                        antiaudio: "boolean",
-                        antidocument: "boolean",
-                        antigif: "boolean",
-                        antiimage: "boolean",
-                        antilink: "boolean",
-                        antinfsw: "boolean",
-                        antisticker: "boolean",
-                        antitagsw: "boolean",
-                        antitoxic: "boolean",
-                        antivideo: "boolean",
-                        autokick: "boolean",
-                        gamerestrict: "boolean",
-                        welcome: "boolean"
+                        antiaudio: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antidocument: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antigif: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antiimage: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antilink: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antinfsw: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antisticker: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antitagsw: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antitoxic: {
+                            type: "boolean",
+                            default: false
+                        },
+                        antivideo: {
+                            type: "boolean",
+                            default: false
+                        },
+                        autokick: {
+                            type: "boolean",
+                            default: false
+                        },
+                        gamerestrict: {
+                            type: "boolean",
+                            default: false
+                        },
+                        welcome: {
+                            type: "boolean",
+                            default: false
+                        }
                     },
-                    sewa: "boolean",
-                    sewaExpiration: "number",
-                    spam: "array",
-                    warnings: "array"
+                    sewa: {
+                        type: "boolean",
+                        default: false
+                    },
+                    sewaExpiration: {
+                        type: "number",
+                        default: 0
+                    },
+                    spam: {
+                        type: "array",
+                        default: []
+                    },
+                    warnings: {
+                        type: "array",
+                        default: []
+                    }
                 },
                 menfess: {
-                    from: "string",
-                    to: "string"
+                    from: {
+                        type: "string",
+                        default: ""
+                    },
+                    to: {
+                        type: "string",
+                        default: ""
+                    }
                 }
             };
 
-            const validateData = (value, expectedType) => {
-                if (value === null || value === undefined) return false;
+            const validateAndFixValue = (value, schema) => {
+                if (schema.type === "array") return Array.isArray(value) ? value : schema.default;
 
-                if (expectedType === "array") return Array.isArray(value);
-
-                if (typeof expectedType === "object" && expectedType !== null) {
-                    if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-
+                if (schema.type === "object") {
                     const result = {};
-                    let isValid = true;
-
-                    for (const key in expectedType) {
-                        if (value.hasOwnProperty(key)) {
-                            const valid = validateData(value[key], expectedType[key]);
-                            if (valid) {
-                                result[key] = value[key];
-                            } else {
-                                isValid = false;
-                            }
-                        } else {
-                            isValid = false;
-                        }
+                    for (const key in schema.properties) {
+                        result[key] = validateAndFixValue(value?.[key], schema.properties[key]);
                     }
-
-                    return isValid ? result : false;
+                    return result;
                 }
 
-                return typeof value === expectedType;
+                if (typeof value !== schema.type) return schema.default;
+
+                if (schema.type === "number") {
+                    if (schema.min !== undefined && value < schema.min) return schema.default;
+                    if (schema.max !== undefined && value > schema.max) return schema.default;
+                }
+
+                return value;
             };
 
             const processData = async (category, data) => {
                 await ctx.editMessage(waitMsg.key, formatter.quote(`🔄 Memproses data ${category}...`));
                 const schema = mappings[category];
+                const validIds = [];
 
-                for (const id of Object.keys(data)) {
+                for (const id in data) {
+                    if (!/^\d+$/.test(id)) continue;
+
                     const item = data[id] || {};
+                    const fixedItem = {};
 
-                    if (!/^\d+$/.test(id)) {
-                        await db.delete(`${category}.${id}`);
-                        continue;
+                    for (const field in schema) {
+                        fixedItem[field] = validateAndFixValue(item[field], schema[field]);
                     }
 
-                    const isValid = validateData(item, schema);
-                    if (!isValid) {
-                        await db.delete(`${category}.${id}`);
-                    } else {
-                        const filteredItem = {};
-                        for (const key in schema) {
-                            if (item.hasOwnProperty(key)) {
-                                filteredItem[key] = item[key];
-                            }
-                        }
-                        await db.set(`${category}.${id}`, filteredItem);
-                    }
+                    await db.set(`${category}.${id}`, fixedItem);
+                    validIds.push(id);
                 }
+
+                return validIds.length;
             };
 
-            switch (input) {
-                case "user":
-                case "group":
-                case "menfess":
-                    await processData(input, data[input]);
-                    break;
-                default:
-                    return await ctx.reply(formatter.quote(`❎ Data "${input}" tidak valid!`));
-            }
+            if (!mappings[input]) return await ctx.editMessage(waitMsg.key, formatter.quote(`❌ Invalid data type: ${input}`));
 
-            return await ctx.editMessage(waitMsg.key, formatter.quote(`✅ Database berhasil dibersihkan untuk ${input}!`));
+            const processedCount = await processData(input, data[input]);
+
+            return await ctx.editMessage(waitMsg.key, formatter.quote(`✅ Berhasil membersihkan ${processedCount} data untuk ${input}!`));
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);
         }

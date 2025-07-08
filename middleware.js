@@ -51,7 +51,7 @@ module.exports = (bot) => {
             if (userDb?.autolevelup) {
                 const profilePictureUrl = await ctx.core.profilePictureUrl(ctx.sender.jid, "image").catch(() => "https://i.pinimg.com/736x/70/dd/61/70dd612c65034b88ebf474a52ccc70c4.jpg");
                 await ctx.reply({
-                    text: formatter.quote(`Selamat! Kamu telah naik ke level ${newUserLevel}!`),
+                    text: formatter.quote(`🎊 Selamat! Kamu telah naik ke level ${newUserLevel}.`),
                     footer: config.msg.footer,
                     buttons: [{
                         buttonId: `${ctx.used.prefix}setprofile autolevelup`,
@@ -132,7 +132,7 @@ module.exports = (bot) => {
                     await simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.monospace(reaction)}`),
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.monospace(reaction)}.`),
                         interactiveButtons: []
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
@@ -213,7 +213,7 @@ module.exports = (bot) => {
                     await simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.monospace(reaction)}!`),
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.monospace(reaction)}.`),
                         interactiveButtons: []
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);

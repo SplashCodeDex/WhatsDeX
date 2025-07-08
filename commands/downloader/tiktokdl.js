@@ -12,7 +12,7 @@ module.exports = {
 
         if (!url) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://www.tiktok.com/@japanese_songs2/video/7472130814805822726"))
+            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://www.tiktok.com/@grazeuz/video/7486690677888158984"))
         );
 
         const isUrl = await tools.cmd.isUrl(url);
@@ -24,17 +24,15 @@ module.exports = {
             });
             const result = (await axios.get(apiUrl)).data.result.data;
 
-            if (result.play && !result.images) {
-                return await ctx.reply({
-                    video: {
-                        url: result.play
-                    },
-                    mimetype: tools.mime.lookup("mp4"),
-                    caption: formatter.quote(`URL: ${url}`),
-                    footer: config.msg.footer,
-                    interactiveButtons: []
-                });
-            }
+            if (result.play && !result.images) return await ctx.reply({
+                video: {
+                    url: result.play
+                },
+                mimetype: tools.mime.lookup("mp4"),
+                caption: formatter.quote(`URL: ${url}`),
+                footer: config.msg.footer,
+                interactiveButtons: []
+            });
 
             if (result.images) {
                 const album = result.images.map(imageUrl => ({

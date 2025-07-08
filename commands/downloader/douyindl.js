@@ -24,17 +24,15 @@ module.exports = {
             });
             const result = (await axios.get(apiUrl)).data.result;
 
-            if (!result.slide && result.media) {
-                return await ctx.reply({
-                    video: {
-                        url: result.media.mp4_hd || result.media.mp4_2 || result.media.mp4_1
-                    },
-                    mimetype: tools.mime.lookup("mp4"),
-                    caption: formatter.quote(`URL: ${url}`),
-                    footer: config.msg.footer,
-                    interactiveButtons: []
-                });
-            }
+            if (!result.slide && result.media) return await ctx.reply({
+                video: {
+                    url: result.media.mp4_hd || result.media.mp4_2 || result.media.mp4_1
+                },
+                mimetype: tools.mime.lookup("mp4"),
+                caption: formatter.quote(`URL: ${url}`),
+                footer: config.msg.footer,
+                interactiveButtons: []
+            });
 
             if (result.slide && result.media) {
                 const album = result.media.map(imageUrl => ({
