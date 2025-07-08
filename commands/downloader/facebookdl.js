@@ -12,21 +12,21 @@ module.exports = {
 
         if (!url) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://web.facebook.com/hanabi.lemon/videos/455736192416206"))
+            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://www.facebook.com/reel/1112151989983701"))
         );
 
         const isUrl = await tools.cmd.isUrl(url);
         if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
 
         try {
-            const apiUrl = tools.api.createUrl("nirkyy", "/api/v1/facebook-dl", {
+            const apiUrl = tools.api.createUrl("falcon", "/download/facebook", {
                 url
             });
-            const result = (await axios.get(apiUrl)).data.data.links[0];
+            const result = (await axios.get(apiUrl)).data.result.media;
 
             return await ctx.reply({
                 video: {
-                    url: result.url
+                    url: result.video_hd || result.video_sd
                 },
                 mimetype: tools.mime.lookup("mp4"),
                 caption: formatter.quote(`URL: ${url}`),

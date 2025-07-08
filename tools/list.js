@@ -6,7 +6,6 @@ const util = require("node:util");
 async function get(type) {
     try {
         let text = "";
-
         const createList = (data, list) => data.map(list).join(`\n${formatter.quote("─────")}\n`);
 
         switch (type) {

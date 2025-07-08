@@ -21,9 +21,6 @@ const APIs = {
     siputzx: {
         baseURL: "https://api.siputzx.my.id"
     },
-    vapis: {
-        baseURL: "https://vapis.my.id"
-    },
     zell: {
         baseURL: "https://zellapi.autos"
     },
