@@ -47,10 +47,10 @@ async function checkQuotedMedia(type, required) {
         audio: type.audioMessage,
         document: type.documentMessage || type.documentWithCaptionMessage,
         gif: type.videoMessage,
-        image: type.imageMessage,
+        image: type.imageMessage || type.buttonsMessage?.imageMessage,
         sticker: type.stickerMessage,
         text: type.conversation || type.extendedTextMessage?.text,
-        video: type.videoMessage
+        video: type.videoMessage || type.buttonsMessage?.videoMessage
     };
 
     const mediaList = Array.isArray(required) ? required : [required];
