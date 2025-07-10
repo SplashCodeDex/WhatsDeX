@@ -141,6 +141,7 @@ module.exports = (bot) => {
         const groupId = isGroup ? ctx.getId(groupJid) : null;
         const isOwner = tools.cmd.isOwner(senderId, m.key.id);
         const isCmd = tools.cmd.isCmd(m.content, ctx.bot);
+        const isAdmin = await ctx.group().isSenderAdmin();
 
         // Mengambil database
         const botDb = await db.get("bot") || {};
@@ -148,7 +149,7 @@ module.exports = (bot) => {
         const groupDb = await db.get(`group.${groupId}`) || {};
 
         // Pengecekan mode bot (group, private, self)
-        if (groupDb?.mutebot === true && !isOwner && !await ctx.group().isSenderAdmin()) return;
+        if (groupDb?.mutebot === true && !isOwner && !isAdmin) return;
         if (groupDb?.mutebot === "owner" && !isOwner) return;
         if (botDb?.mode === "group" && isPrivate && !isOwner && !userDb?.premium) return;
         if (botDb?.mode === "private" && isGroup && !isOwner && !userDb?.premium) return;
@@ -182,7 +183,7 @@ module.exports = (bot) => {
 
             // Did you mean?
             if (isCmd?.didyoumean) await ctx.reply({
-                text: formatter.quote(`🧐 Apakah maksudmu ${formatter.monospace(isCmd.prefix + isCmd.didyoumean)}?`),
+                text: formatter.quote(`🧐 Apakah maksudmu ${formatter.inlineCode(isCmd.prefix + isCmd.didyoumean)}?`),
                 footer: config.msg.footer,
                 buttons: [{
                     buttonId: `${isCmd.prefix + isCmd.didyoumean} ${isCmd.input}`,
@@ -222,7 +223,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan AFK (Pengguna yang disebutkan atau di-balas/quote)
-            const userMentions = ctx?.quoted?.senderJid ? [ctx.getId(ctx?.quoted?.senderJid)] : m.message?.[ctx.getMessageType()]?.contextInfo?.mentionedJid?.map((jid) => ctx.getId(jid)) || [];
+            const userMentions = ctx?.quoted?.senderJid ? [ctx.getId(ctx?.quoted?.senderJid)] : ctx.getMentioned().map((jid) => ctx.getId(jid)) || [];
             if (userMentions.length > 0) {
                 for (const userMention of userMentions) {
                     const userMentionAfk = await db.get(`user.${userMention}.afk`) || {};
@@ -235,7 +236,7 @@ module.exports = (bot) => {
 
             // Penanganan antimedia
             for (const type of ["audio", "document", "gif", "image", "sticker", "video"]) {
-                if (groupDb?.option?.[`anti${type}`] && !isOwner && !await ctx.group().isSenderAdmin()) {
+                if (groupDb?.option?.[`anti${type}`] && !isOwner && !isAdmin) {
                     const checkMedia = await tools.cmd.checkMedia(ctx.getMessageType(), type);
                     if (checkMedia) {
                         await ctx.reply(formatter.quote(`⛔ Jangan kirim ${type}!`));
@@ -250,7 +251,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan antilink
-            if (groupDb?.option?.antilink && !isOwner && !await ctx.group().isSenderAdmin()) {
+            if (groupDb?.option?.antilink && !isOwner && !isAdmin) {
                 if (m.content && await tools.cmd.isUrl(m.content)) {
                     await ctx.reply(formatter.quote("⛔ Jangan kirim link!"));
                     await ctx.deleteMessage(m.key);
@@ -263,7 +264,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan antinsfw
-            if (groupDb?.option?.antinsfw && !isOwner && !await ctx.group().isSenderAdmin()) {
+            if (groupDb?.option?.antinsfw && !isOwner && !isAdmin) {
                 const checkMedia = await tools.cmd.checkMedia(ctx.getMessageType(), "image");
                 if (checkMedia) {
                     const buffer = await ctx.msg.media.toBuffer();
@@ -286,7 +287,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan antispam
-            if (groupDb?.option?.antispam && !isOwner && !await ctx.group().isSenderAdmin()) {
+            if (groupDb?.option?.antispam && !isOwner && !isAdmin) {
                 const now = Date.now();
                 const spamData = await db.get(`group.${groupId}.spam`) || [];
 
@@ -320,7 +321,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan antitagsw
-            if (groupDb?.option?.antitagsw && !isOwner && !await ctx.group().isSenderAdmin()) {
+            if (groupDb?.option?.antitagsw && !isOwner && !isAdmin) {
                 const checkMedia = await tools.cmd.checkMedia(ctx.getMessageType(), "groupStatusMention") || m.message?.groupStatusMentionMessage?.protocolMessage?.type === 25;
                 if (checkMedia) {
                     await ctx.reply(formatter.quote(`⛔ Jangan tag grup di SW, gak ada yg peduli!`));
@@ -334,7 +335,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan antitoxic
-            if (groupDb?.option?.antitoxic && !isOwner && !await ctx.group().isSenderAdmin()) {
+            if (groupDb?.option?.antitoxic && !isOwner && !isAdmin) {
                 const toxicRegex = /anj(k|g)|ajn?(g|k)|a?njin(g|k)|bajingan|b(a?n)?gsa?t|ko?nto?l|me?me?(k|q)|pe?pe?(k|q)|meki|titi(t|d)|pe?ler|tetek|toket|ngewe|go?blo?k|to?lo?l|idiot|(k|ng)e?nto?(t|d)|jembut|bego|dajj?al|janc(u|o)k|pantek|puki ?(mak)?|kimak|kampang|lonte|col(i|mek?)|pelacur|henceu?t|nigga|fuck|dick|bitch|tits|bastard|asshole|dontol|kontoi|ontol/i;
                 if (m.content && toxicRegex.test(m.content)) {
                     await ctx.reply(formatter.quote("⛔ Jangan toxic!"));

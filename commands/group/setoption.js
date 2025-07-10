@@ -13,7 +13,7 @@ module.exports = {
         if (!input) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
             `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "antilink"))}\n` +
-            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`, `Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} status`)} untuk melihat status.`]))
+            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`, `Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} status`)} untuk melihat status.`]))
         );
 
         if (input.toLowerCase() === "list") {
@@ -71,7 +71,7 @@ module.exports = {
                     setKey = `group.${groupId}.option.${input.toLowerCase()}`;
                     break;
                 default:
-                    return await ctx.reply(formatter.quote(`❎ Opsi ${formatter.monospace(input)} tidak valid!`));
+                    return await ctx.reply(formatter.quote(`❎ Opsi ${formatter.inlineCode(input)} tidak valid!`));
             }
 
             const currentStatus = await db.get(setKey);
@@ -79,7 +79,7 @@ module.exports = {
 
             await db.set(setKey, newStatus);
             const statusText = newStatus ? "diaktifkan" : "dinonaktifkan";
-            return await ctx.reply(formatter.quote(`✅ Opsi ${formatter.monospace(input)} berhasil ${statusText}!`));
+            return await ctx.reply(formatter.quote(`✅ Opsi ${formatter.inlineCode(input)} berhasil ${statusText}!`));
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);
         }

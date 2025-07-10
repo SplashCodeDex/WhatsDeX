@@ -115,7 +115,7 @@ async function get(type) {
                     "antisticker (Anti stiker)",
                     "antivideo (Anti video)",
                     "antitoxic (Anti toxic, seperti bahasa kasar)",
-                    `autokick (Dikeluarkan secara otomatis, jika ada yang melanggar salah satu opsi ${formatter.monospace("anti...")})`,
+                    `autokick (Dikeluarkan secara otomatis, jika ada yang melanggar salah satu opsi ${formatter.inlineCode("anti...")})`,
                     "gamerestrict (Anggota dilarang bermain game)",
                     "welcome (Sambutan member)"
                 ];

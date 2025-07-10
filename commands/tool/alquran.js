@@ -10,7 +10,7 @@ module.exports = {
         if (!surat && !ayat) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
             `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "21 35"))}\n` +
-            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`]))
+            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`]))
         );
 
         if (surat.toLowerCase() === "list") {

@@ -14,7 +14,7 @@ module.exports = {
         if (!key || !text) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
             `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "welcome Selamat datang di grup!"))}\n` +
-            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`, "Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.", `Gunakan ${formatter.monospace("delete")} sebagai teks untuk menghapus teks yang disimpan sebelumnya.`]))
+            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`, "Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.", `Gunakan ${formatter.inlineCode("delete")} sebagai teks untuk menghapus teks yang disimpan sebelumnya.`]))
         );
 
         if (key.toLowerCase() === "list") {
@@ -37,16 +37,16 @@ module.exports = {
                     setKey = `group.${groupId}.text.${key.toLowerCase()}`;
                     break;
                 default:
-                    return await ctx.reply(formatter.quote(`❎ Teks ${formatter.monospace(key)} tidak valid!`));
+                    return await ctx.reply(formatter.quote(`❎ Teks ${formatter.inlineCode(key)} tidak valid!`));
             }
 
             if (text.toLowerCase() === "delete") {
                 await db.delete(setKey);
-                return await ctx.reply(formatter.quote(`🗑️ Pesan untuk teks ${formatter.monospace(key)} berhasil dihapus!`));
+                return await ctx.reply(formatter.quote(`🗑️ Pesan untuk teks ${formatter.inlineCode(key)} berhasil dihapus!`));
             }
 
             await db.set(setKey, text);
-            return await ctx.reply(formatter.quote(`✅ Pesan untuk teks ${formatter.monospace(key)} berhasil disimpan!`));
+            return await ctx.reply(formatter.quote(`✅ Pesan untuk teks ${formatter.inlineCode(key)} berhasil disimpan!`));
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);
         }

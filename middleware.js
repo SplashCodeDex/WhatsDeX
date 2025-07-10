@@ -23,6 +23,7 @@ module.exports = (bot) => {
         const groupJid = isGroup ? ctx.id : null;
         const groupId = isGroup ? ctx.getId(groupJid) : null;
         const isOwner = tools.cmd.isOwner(senderId, ctx.msg.key.id);
+        const isAdmin = await ctx.group().isSenderAdmin();
 
         // Mengambil database
         const botDb = await db.get("bot") || {};
@@ -30,7 +31,7 @@ module.exports = (bot) => {
         const groupDb = await db.get(`group.${groupId}`) || {};
 
         // Pengecekan mode bot (group, private, self)
-        if (groupDb?.mutebot === true && !isOwner && !await ctx.group().isSenderAdmin()) return;
+        if (groupDb?.mutebot === true && !isOwner && !isAdmin) return;
         if (groupDb?.mutebot === "owner" && !isOwner) return;
         if (botDb?.mode === "group" && isPrivate && !isOwner && !userDb?.premium) return;
         if (botDb?.mode === "private" && isGroup && !isOwner && !userDb?.premium) return;
@@ -72,7 +73,7 @@ module.exports = (bot) => {
 
         // Simulasi mengetik jika diaktifkan dalam konfigurasi
         const simulateTyping = async () => {
-            if (config.system.autoTypingOnCmd) await ctx.simulateTyping();
+            if (config.system.autoTypingOnCmd) ctx.simulateTyping();
         };
 
         // Pengecekan kondisi restrictions
@@ -90,7 +91,7 @@ module.exports = (bot) => {
             },
             {
                 key: "gamerestrict",
-                condition: groupDb?.option?.gamerestrict && isGroup && ctx.bot.cmd.has(ctx.used.command) && ctx.bot.cmd.get(ctx.used.command).category === "game",
+                condition: groupDb?.option?.gamerestrict && isGroup && !isAdmin && ctx.bot.cmd.has(ctx.used.command) && ctx.bot.cmd.get(ctx.used.command).category === "game",
                 msg: config.msg.gamerestrict,
                 reaction: "🎮"
             }, {
@@ -132,7 +133,7 @@ module.exports = (bot) => {
                     await simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.monospace(reaction)}.`),
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
                         interactiveButtons: []
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
@@ -150,7 +151,7 @@ module.exports = (bot) => {
         } = command;
         const permissionChecks = [{
                 key: "admin",
-                condition: isGroup && !await ctx.group().isSenderAdmin(),
+                condition: isGroup && !isAdmin,
                 msg: config.msg.admin,
                 reaction: "🛡️"
             },
@@ -213,7 +214,7 @@ module.exports = (bot) => {
                     await simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.monospace(reaction)}.`),
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
                         interactiveButtons: []
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);

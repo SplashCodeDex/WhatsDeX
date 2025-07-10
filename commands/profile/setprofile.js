@@ -8,7 +8,7 @@ module.exports = {
         if (!input) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
             `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "autolevelup"))}\n` +
-            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.monospace(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`]))
+            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`]))
         );
 
         if (input.toLowerCase() === "list") {
@@ -37,7 +37,7 @@ module.exports = {
 
                     const username = `@${input}`
                     await db.set(`user.${senderId}.username`, username);
-                    return await ctx.reply(formatter.quote(`✅ Username berhasil diubah menjadi ${formatter.monospace(username)}!`));
+                    return await ctx.reply(formatter.quote(`✅ Username berhasil diubah menjadi ${formatter.inlineCode(username)}!`));
                     break;
                 }
                 case "autolevelup": {
@@ -51,7 +51,7 @@ module.exports = {
                     break;
                 }
                 default:
-                    return await ctx.reply(formatter.quote(`❎ Setelan ${formatter.monospace(input)} tidak valid.`));
+                    return await ctx.reply(formatter.quote(`❎ Setelan ${formatter.inlineCode(input)} tidak valid.`));
             }
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);

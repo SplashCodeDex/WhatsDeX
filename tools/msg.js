@@ -78,15 +78,15 @@ function formatSizePerSecond(byteCount) {
 }
 
 function generateCmdExample(used, args) {
-    if (!used) return `${formatter.monospace("used")} harus diberikan!`;
-    if (!args) return `${formatter.monospace("args")} harus diberikan!`;
+    if (!used) return `${formatter.inlineCode("used")} harus diberikan!`;
+    if (!args) return `${formatter.inlineCode("args")} harus diberikan!`;
 
-    const cmdMsg = `Contoh: ${formatter.monospace(`${used.prefix + used.command} ${args}`)}`;
+    const cmdMsg = `Contoh: ${formatter.inlineCode(`${used.prefix + used.command} ${args}`)}`;
     return cmdMsg;
 }
 
 function generateInstruction(actions, mediaTypes) {
-    if (!actions || !actions.length) return `${formatter.monospace("actions")} yang diperlukan harus ditentukan!`;
+    if (!actions || !actions.length) return `${formatter.inlineCode("actions")} yang diperlukan harus ditentukan!`;
 
     let translatedMediaTypes;
     if (typeof mediaTypes === "string") {
@@ -94,7 +94,7 @@ function generateInstruction(actions, mediaTypes) {
     } else if (Array.isArray(mediaTypes)) {
         translatedMediaTypes = mediaTypes;
     } else {
-        return `${formatter.monospace("mediaTypes")} harus berupa string atau array string!`;
+        return `${formatter.inlineCode("mediaTypes")} harus berupa string atau array string!`;
     }
 
     const mediaTypeTranslations = {
@@ -129,15 +129,15 @@ function generateInstruction(actions, mediaTypes) {
 }
 
 function generatesFlagInfo(flags) {
-    if (typeof flags !== "object" || !flags) return `${formatter.monospace("flags")} harus berupa objek!`;
+    if (typeof flags !== "object" || !flags) return `${formatter.inlineCode("flags")} harus berupa objek!`;
 
     const flagInfo = "Flag:\n" +
-        Object.entries(flags).map(([flag, description]) => formatter.quote(`• ${formatter.monospace(flag)}: ${description}`)).join("\n");
+        Object.entries(flags).map(([flag, description]) => formatter.quote(`• ${formatter.inlineCode(flag)}: ${description}`)).join("\n");
     return flagInfo;
 }
 
 function generateNotes(notes) {
-    if (!Array.isArray(notes)) return `${formatter.monospace("notes")} harus berupa string!`;
+    if (!Array.isArray(notes)) return `${formatter.inlineCode("notes")} harus berupa string!`;
 
     const notesMsg = "Catatan:\n" +
         notes.map(note => formatter.quote(`• ${note}`)).join("\n");
