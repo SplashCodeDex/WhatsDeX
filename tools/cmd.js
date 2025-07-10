@@ -242,7 +242,6 @@ async function upload(buffer, type = "any", host = null) {
         doc: []
     };
 
-    // 1. Coba host yang ditentukan (jika ada dan valid)
     if (host && hostMap.any.includes(host)) {
         try {
             const url = await uploader[host](buffer);
@@ -250,7 +249,6 @@ async function upload(buffer, type = "any", host = null) {
         } catch {}
     }
 
-    // 2. Coba host sesuai type
     const typeHosts = hostMap[type] || [];
     for (const h of typeHosts) {
         try {
@@ -259,9 +257,8 @@ async function upload(buffer, type = "any", host = null) {
         } catch {}
     }
 
-    // 3. Fallback ke host any (kecuali yang sudah dicoba)
     for (const h of hostMap.any) {
-        if (h === host || typeHosts.includes(h)) continue; // Skip yang sudah dicoba
+        if (h === host || typeHosts.includes(h)) continue;
 
         try {
             const url = await uploader[h](buffer);
@@ -269,7 +266,7 @@ async function upload(buffer, type = "any", host = null) {
         } catch {}
     }
 
-    return null; // Semua gagal
+    return null;
 }
 
 module.exports = {
