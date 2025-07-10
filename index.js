@@ -35,26 +35,17 @@ Object.assign(global, {
 
 c.log("Starting..."); // Logging proses awal
 
-// Tampilkan nama proyek
+// Tampilkan nama proyek serta deskripsi lain
 CFonts.say(pkg.name, {
-    font: "block",
-    align: "center",
-    colors: ["cyanBright", "white"],
-    background: "transparent",
-    letterSpacing: 1,
-    lineHeight: 1,
-    space: true
+    colors: ["#00A1E0", "#00FFFF"],
+    align: "center"
 });
 
-CFonts.say(
-    `'${pkg.description}'\n` +
-    `By ${pkg.author}`, {
-        font: "console",
-        align: "center",
-        colors: ["white", "cyan"],
-        lineHeight: 1
-    }
-);
+CFonts.say(`${pkg.description} - By ${pkg.author}`, {
+    font: "console",
+    colors: ["#E0F7FF"],
+    align: "center"
+});
 
 // Jalankan server jika diaktifkan dalam konfigurasi
 if (config.system.useServer) {

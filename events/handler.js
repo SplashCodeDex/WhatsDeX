@@ -141,7 +141,7 @@ module.exports = (bot) => {
         const groupId = isGroup ? ctx.getId(groupJid) : null;
         const isOwner = tools.cmd.isOwner(senderId, m.key.id);
         const isCmd = tools.cmd.isCmd(m.content, ctx.bot);
-        const isAdmin = await ctx.group().isSenderAdmin();
+        const isAdmin = await ctx.group().isAdmin(senderJid);
 
         // Mengambil database
         const botDb = await db.get("bot") || {};

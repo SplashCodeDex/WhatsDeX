@@ -151,7 +151,7 @@ module.exports = {
                         game.choices.set(participantId, choiceData);
 
                         await ctx.sendMessage(participantJid, {
-                            text: formatter.quote(`Anda memilih: ${choiceData.name}`)
+                            text: formatter.quote(`Kamu memilih: ${choiceData.name}`)
                         }, {
                             quoted: m
                         });
