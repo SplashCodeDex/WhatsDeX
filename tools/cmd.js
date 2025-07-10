@@ -231,26 +231,45 @@ async function translate(text, language) {
     }
 }
 
-async function upload(buffer, type = "any", host = config.system.uploaderHost) {
+async function upload(buffer, type = "any", host = null) {
     if (!buffer) return null;
 
     const hostMap = {
-        any: ["Cloudku", "FastUrl", "Uguu", "Catbox", "Litterbox"],
+        any: ["FastUrl", "Uguu", "Catbox", "Litterbox", "Cloudku"],
         image: ["Quax", "Ryzumi", "Pomf"],
         video: ["Quax", "Ryzumi", "Pomf", "Videy"],
         audio: ["Quax", "Ryzumi", "Pomf"],
         doc: []
     };
 
-    const toTry = host && hostMap.any.includes(host) ? [host, ...(hostMap[type] || [])] : hostMap[type] || [];
-    for (const h of toTry) {
+    // 1. Coba host yang ditentukan (jika ada dan valid)
+    if (host && hostMap.any.includes(host)) {
+        try {
+            const url = await uploader[host](buffer);
+            if (url) return url;
+        } catch {}
+    }
+
+    // 2. Coba host sesuai type
+    const typeHosts = hostMap[type] || [];
+    for (const h of typeHosts) {
         try {
             const url = await uploader[h](buffer);
             if (url) return url;
         } catch {}
     }
 
-    return null;
+    // 3. Fallback ke host any (kecuali yang sudah dicoba)
+    for (const h of hostMap.any) {
+        if (h === host || typeHosts.includes(h)) continue; // Skip yang sudah dicoba
+
+        try {
+            const url = await uploader[h](buffer);
+            if (url) return url;
+        } catch {}
+    }
+
+    return null; // Semua gagal
 }
 
 module.exports = {

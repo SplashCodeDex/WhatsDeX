@@ -60,7 +60,7 @@ module.exports = {
                         if (cmd.permissions.premium) permissionsText += "Ⓟ";
                         if (cmd.permissions.private) permissionsText += "ⓟ";
 
-                        text += formatter.quote(formatter.inlineCode(`${ctx.used.prefix + cmd.name} ${permissionsText}`));
+                        text += formatter.quote(formatter.monospace(`${ctx.used.prefix + cmd.name} ${permissionsText}`));
                         text += "\n";
                     });
                 }
