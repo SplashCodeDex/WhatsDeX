@@ -141,6 +141,7 @@ module.exports = (bot) => {
         const groupId = isGroup ? ctx.getId(groupJid) : null;
         const isOwner = tools.cmd.isOwner(senderId, m.key.id);
         const isCmd = tools.cmd.isCmd(m.content, ctx.bot);
+        const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 
         // Mengambil database
         const botDb = await db.get("bot") || {};
@@ -214,7 +215,6 @@ module.exports = (bot) => {
 
             // Variabel umum
             const groupAutokick = groupDb?.option?.autokick;
-            const isAdmin = await ctx.group().isAdmin(senderJid) || false;
 
             // Penanganan database grup
             if (groupDb?.sewa && Date.now() > userDb?.sewaExpiration) {
