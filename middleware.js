@@ -31,13 +31,13 @@ module.exports = (bot) => {
         const groupDb = await db.get(`group.${groupId}`) || {};
 
         // Pengecekan mode bot (group, private, self)
-        if (groupDb?.mutebot === true && !isOwner && !isAdmin) return;
-        if (groupDb?.mutebot === "owner" && !isOwner) return;
         if (botDb?.mode === "group" && isPrivate && !isOwner && !userDb?.premium) return;
         if (botDb?.mode === "private" && isGroup && !isOwner && !userDb?.premium) return;
         if (botDb?.mode === "self" && !isOwner) return;
 
         // Pengecekan mute pada grup
+        if (groupDb?.mutebot === true && !isOwner && !isAdmin) return;
+        if (groupDb?.mutebot === "owner" && !isOwner) return;
         const muteList = groupDb?.mute || [];
         if (muteList.includes(senderId)) return;
 
@@ -72,7 +72,7 @@ module.exports = (bot) => {
         }
 
         // Simulasi mengetik jika diaktifkan dalam konfigurasi
-        const simulateTyping = async () => {
+        const simulateTyping = () => {
             if (config.system.autoTypingOnCmd) ctx.simulateTyping();
         };
 
@@ -130,7 +130,7 @@ module.exports = (bot) => {
                 const lastSentMsg = userDb?.lastSentMsg?.[key] || 0;
                 const oneDay = 24 * 60 * 60 * 1000;
                 if (!lastSentMsg || (now - lastSentMsg) > oneDay) {
-                    await simulateTyping();
+                    simulateTyping();
                     await ctx.reply({
                         text: msg,
                         footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
@@ -211,7 +211,7 @@ module.exports = (bot) => {
                 const lastSentMsg = userDb?.lastSentMsg?.[key] || 0;
                 const oneDay = 24 * 60 * 60 * 1000;
                 if (!lastSentMsg || (now - lastSentMsg) > oneDay) {
-                    await simulateTyping();
+                    simulateTyping();
                     await ctx.reply({
                         text: msg,
                         footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
@@ -224,7 +224,7 @@ module.exports = (bot) => {
             }
         }
 
-        await simulateTyping();
+        simulateTyping();
         await next(); // Lanjut ke proses berikutnya jika semua kondisi terpenuhi
     });
 };

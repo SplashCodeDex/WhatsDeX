@@ -155,9 +155,8 @@ function isCmd(content, bot) {
     return mean ? {
         msg: content,
         prefix,
-        cmd: cmdName,
-        input,
-        didyoumean: mean
+        didyoumean: mean,
+        input
     } : false;
 }
 
