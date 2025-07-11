@@ -231,7 +231,7 @@ async function translate(text, language) {
     }
 }
 
-async function upload(buffer, type = "any", host = null) {
+async function upload(buffer, type = "any", host = config.system.uploaderHost) {
     if (!buffer) return null;
 
     const hostMap = {

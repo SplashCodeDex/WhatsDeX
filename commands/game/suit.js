@@ -195,6 +195,14 @@ module.exports = {
                     }
                 }
             });
+
+            collector.on("end", async () => {
+                if (session.has(senderJid) || session.has(accountJid)) {
+                    session.delete(senderJid);
+                    session.delete(accountJid);
+                    return await ctx.reply(formatter.quote("⏱ Waktu habis!"));
+                }
+            });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);
         }
