@@ -106,15 +106,14 @@ module.exports = {
             collector.on("end", async () => {
                 if (session.has(ctx.id)) {
                     session.delete(ctx.id);
-                    {
-                        text: return await ctx.reply(
-                            `${formatter.quote("⏱ Waktu habis!")}\n` +
+                    return await ctx.reply({
+                        text: `${formatter.quote("⏱ Waktu habis!")}\n` +
                             `${formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`)}\n` +
                             formatter.quote(game.description),
-                            footer: config.msg.footer,
-                            buttons: playAgain,
-                            headerType: 1
-                        });
+                        footer: config.msg.footer,
+                        buttons: playAgain,
+                        headerType: 1
+                    });
                 }
             });
         } catch (error) {
