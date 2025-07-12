@@ -105,20 +105,19 @@ module.exports = {
             });
 
             collector.on("end", async () => {
-                    if (session.has(ctx.id)) {
-                        session.delete(ctx.id);
-                        return await ctx.reply({
-                            text: `${formatter.quote("⏱ Waktu habis!")}\n` +
-                                formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`),
-                            footer: config.msg.footer,
-                            buttons: playAgain,
-                            headerType: 1
-                        });
-                    }
+                if (session.has(ctx.id)) {
+                    session.delete(ctx.id);
+                    return await ctx.reply({
+                        text: `${formatter.quote("⏱ Waktu habis!")}\n` +
+                            formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`),
+                        footer: config.msg.footer,
+                        buttons: playAgain,
+                        headerType: 1
+                    });
                 }
             });
-    } catch (error) {
-        return await tools.cmd.handleError(ctx, error, true);
+        } catch (error) {
+            return await tools.cmd.handleError(ctx, error, true);
+        }
     }
-}
 };
