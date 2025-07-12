@@ -35,8 +35,7 @@ module.exports = {
                 text: `${formatter.quote(result.summary)}\n` +
                     `${formatter.quote("─────")}\n` +
                     resultText,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

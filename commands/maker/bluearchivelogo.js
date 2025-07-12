@@ -25,8 +25,7 @@ module.exports = {
                     url: result
                 },
                 mimetype: tools.mime.lookup("png"),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

@@ -91,8 +91,7 @@ module.exports = {
                         },
                         type: 1
                     }
-                ],
-                headerType: 1
+                ]
             }, {
                 quoted: tools.cmd.fakeMetaAiQuotedText(config.msg.note)
             });

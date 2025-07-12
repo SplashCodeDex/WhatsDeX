@@ -34,7 +34,9 @@ module.exports = {
 
             return await ctx.reply({
                 image: result,
-                mimetype: tools.mime.lookup("jpeg")
+                mimetype: tools.mime.lookup("jpeg"),
+                caption: formatter.quote("Untukmu, tuan!"),
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

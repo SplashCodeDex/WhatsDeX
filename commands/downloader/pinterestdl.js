@@ -29,14 +29,12 @@ module.exports = {
                     [isVideo ? "video" : "image"]: {
                         url: media.url
                     },
-                    mimetype: tools.mime.lookup(isVideo ? "mp4" : "jpg"),
-                    caption: formatter.quote(`URL: ${url}`)
+                    mimetype: tools.mime.lookup(isVideo ? "mp4" : "jpg")
                 };
             });
 
-            return await ctx.reply({
-                album,
-                caption: formatter.quote(`URL: ${url}`)
+            return await ctx.core.sendAlbumMessage(ctx.id, album, {
+                quoted: ctx.msg
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

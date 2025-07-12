@@ -44,16 +44,13 @@ module.exports = {
                     buttonId: "accept",
                     buttonText: {
                         displayText: "Terima"
-                    },
-                    type: 1
+                    }
                 }, {
                     buttonId: "reject",
                     buttonText: {
                         displayText: "Tolak"
-                    },
-                    type: 1
-                }],
-                headerType: 1
+                    }
+                }]
             });
 
             session.set(senderJid, game);

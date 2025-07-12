@@ -37,10 +37,8 @@ module.exports = {
                     buttonId: "surrender",
                     buttonText: {
                         displayText: "Menyerah"
-                    },
-                    type: 1
-                }],
-                headerType: 1
+                    }
+                }]
             });
 
             const collector = ctx.MessageCollector({

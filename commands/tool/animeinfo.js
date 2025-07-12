@@ -31,8 +31,7 @@ module.exports = {
                     `${formatter.quote(`URL: ${result.url}`)}\n` +
                     `${formatter.quote("─────")}\n` +
                     await tools.cmd.translate(result.synopsis, "id"),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

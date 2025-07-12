@@ -52,7 +52,6 @@ module.exports = {
                     name: "cta_copy",
                     buttonParamsJson: JSON.stringify({
                         display_text: "Salin URL",
-                        id: "12345",
                         copy_code: result
                     })
                 }]

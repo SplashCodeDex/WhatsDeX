@@ -20,8 +20,7 @@ module.exports = {
             const listText = await tools.list.get("setoption");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         }
 
@@ -44,8 +43,7 @@ module.exports = {
                     `${formatter.quote(`Autokick: ${groupOption.autokick ? "Aktif" : "Nonaktif"}`)}\n` +
                     `${formatter.quote(`Gamerestrict: ${groupOption.gamerestrict ? "Aktif" : "Nonaktif"}`)}\n` +
                     formatter.quote(`Welcome: ${groupOption.welcome ? "Aktif" : "Nonaktif"}`),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         }
 

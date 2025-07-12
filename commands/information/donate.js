@@ -22,8 +22,7 @@ module.exports = {
             return await ctx.reply({
                 text: text,
                 mentions: [ctx.sender.jid],
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);

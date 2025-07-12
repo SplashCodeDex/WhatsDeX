@@ -30,8 +30,7 @@ module.exports = {
                 mimetype: tools.mime.lookup("png"),
                 caption: `${formatter.quote(`Sisi Positif: ${result.sisi_positif}`)}\n` +
                     formatter.quote(`Sisi Negatif: ${result.sisi_negatif}`),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

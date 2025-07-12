@@ -27,7 +27,9 @@ module.exports = {
                 image: {
                     url: result
                 },
-                mimetype: tools.mime.lookup("jpg")
+                mimetype: tools.mime.lookup("jpg"),
+                caption: formatter.quote("Untukmu, tuan!"),
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

@@ -189,10 +189,8 @@ module.exports = (bot) => {
                     buttonId: `${isCmd.prefix + isCmd.didyoumean} ${isCmd.input}`,
                     buttonText: {
                         displayText: "Ya, benar!"
-                    },
-                    type: 1
-                }],
-                headerType: 1
+                    }
+                }]
             });
 
             // Penanganan AFK (Menghapus status AFK pengguna yang mengirim pesan)

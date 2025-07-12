@@ -9,8 +9,7 @@ module.exports = {
                 `${formatter.quote("Rippanteq7 (https://github.com/Rippanteq7)")}\n` +
                 `${formatter.quote("Rizky Pratama (https://github.com/Kyluxx)")}\n` +
                 formatter.quote("Dan kepada semua pihak yang telah membantu dalam pengembangan bot ini. (Banyak kalo diketik satu-satu)"),
-            footer: config.msg.footer,
-            interactiveButtons: []
+            footer: config.msg.footer
         }); // Jika kamu tidak menghapus ini, terima kasih!
     }
 };

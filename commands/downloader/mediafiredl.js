@@ -31,8 +31,7 @@ module.exports = {
                 fileName: data.fileName,
                 mimetype: data.mimetype || "application/octet-stream",
                 caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

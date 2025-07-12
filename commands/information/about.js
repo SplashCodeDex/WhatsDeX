@@ -16,8 +16,7 @@ module.exports = {
                     `${formatter.quote(`Bot Uptime: ${config.bot.uptime}`)}\n` +
                     `${formatter.quote(`Database: ${config.bot.dbSize} (Simpl.DB - JSON)`)}\n` +
                     formatter.quote("Library: @itsreimau/gktw (Fork of @mengkodingan/ckptw)"),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);

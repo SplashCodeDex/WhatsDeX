@@ -11,8 +11,7 @@ module.exports = {
             const listText = await tools.list.get("nsfwhub");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         }
 
@@ -32,10 +31,8 @@ module.exports = {
                     buttonId: input ? `${ctx.used.prefix + ctx.used.command} ${input}` : ctx.used.prefix + ctx.used.command,
                     buttonText: {
                         displayText: "Ambil Lagi"
-                    },
-                    type: 1
-                }],
-                headerType: 1
+                    }
+                }]
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

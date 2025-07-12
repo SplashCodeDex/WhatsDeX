@@ -12,15 +12,13 @@ module.exports = {
                     buttonId: `y`,
                     buttonText: {
                         displayText: "Ya"
-                    },
-                    type: 1
+                    }
                 },
                 {
                     buttonId: "n",
                     buttonText: {
                         displayText: "Tidak"
-                    },
-                    type: 1
+                    }
                 }
             ],
             headerType: 1

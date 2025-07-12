@@ -30,8 +30,7 @@ module.exports = {
                 },
                 mimetype: tools.mime.lookup("mp4"),
                 caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
 
             if (result.images) {
@@ -42,9 +41,8 @@ module.exports = {
                     mimetype: tools.mime.lookup("jpeg")
                 }));
 
-                return await ctx.reply({
-                    album,
-                    caption: formatter.quote(`URL: ${url}`)
+                return await ctx.core.sendAlbumMessage(ctx.id, album, {
+                    quoted: ctx.msg
                 });
             }
         } catch (error) {

@@ -23,8 +23,7 @@ module.exports = {
             const listText = await tools.list.get("ttsmp3");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         }
 

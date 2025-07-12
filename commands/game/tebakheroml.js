@@ -34,16 +34,13 @@ module.exports = {
                     buttonId: "hint",
                     buttonText: {
                         displayText: "Petunjuk"
-                    },
-                    type: 1
+                    }
                 }, {
                     buttonId: "surrender",
                     buttonText: {
                         displayText: "Menyerah"
-                    },
-                    type: 1
-                }],
-                headerType: 1
+                    }
+                }]
             });
 
             const collector = ctx.MessageCollector({

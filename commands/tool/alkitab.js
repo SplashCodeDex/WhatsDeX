@@ -20,8 +20,7 @@ module.exports = {
             const listText = await tools.list.get("alkitab");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         }
 
@@ -44,8 +43,7 @@ module.exports = {
                     `${formatter.quote(`Bab: ${result.chapter.chap}`)}\n` +
                     `${formatter.quote("─────")}\n` +
                     resultText,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);
