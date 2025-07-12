@@ -83,36 +83,31 @@ module.exports = {
                                 buttonId: "batu",
                                 buttonText: {
                                     displayText: "Batu"
-                                },
-                                type: 1
+                                }
                             },
                             {
                                 buttonId: "kertas",
                                 buttonText: {
                                     displayText: "Kertas"
-                                },
-                                type: 1
+                                }
                             },
                             {
                                 buttonId: "gunting",
                                 buttonText: {
                                     displayText: "Gunting"
-                                },
-                                type: 1
+                                }
                             }
                         ];
 
                         await ctx.sendMessage(senderJid, {
                             text: choiceText,
                             footer: config.msg.footer,
-                            buttons,
-                            headerType: 1
+                            buttons
                         });
                         await ctx.sendMessage(accountJid, {
                             text: choiceText,
                             footer: config.msg.footer,
-                            buttons,
-                            headerType: 1
+                            buttons
                         });
                     } else if (participantAnswer === "reject") {
                         session.delete(senderJid);

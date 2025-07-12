@@ -48,8 +48,7 @@ module.exports = {
                 buttonId: ctx.used.prefix + ctx.used.command,
                 buttonText: {
                     displayText: "Main Lagi"
-                },
-                type: 1
+                }
             }];
 
             collector.on("collect", async (m) => {
@@ -65,8 +64,7 @@ module.exports = {
                             `${formatter.quote(game.description)}\n` +
                             formatter.quote(`+${game.coin} Koin`),
                         footer: config.msg.footer,
-                        buttons: playAgain,
-                        headerType: 1
+                        buttons: playAgain
                     }, {
                         quoted: m
                     });
@@ -85,8 +83,7 @@ module.exports = {
                             `${formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`)}\n` +
                             formatter.quote(game.description),
                         footer: config.msg.footer,
-                        buttons: playAgain,
-                        headerType: 1
+                        buttons: playAgain
                     }, {
                         quoted: m
                     });
@@ -108,8 +105,7 @@ module.exports = {
                             `${formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`)}\n` +
                             formatter.quote(game.description),
                         footer: config.msg.footer,
-                        buttons: playAgain,
-                        headerType: 1
+                        buttons: playAgain
                     });
                 }
             });

@@ -33,8 +33,7 @@ module.exports = {
                 buttonId: "delete",
                 buttonText: {
                     displayText: "Hapus Menfess"
-                },
-                type: 1
+                }
             }];
 
             await ctx.sendMessage(`${targetId}@s.whatsapp.net`, {

@@ -30,7 +30,8 @@ module.exports = {
             );
             return await ctx.reply({
                 text: resultText || config.msg.notFound,
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

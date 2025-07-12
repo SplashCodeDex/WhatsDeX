@@ -55,16 +55,17 @@ module.exports = {
                 fileName: `${result.title}.mp4`,
                 mimetype: tools.mime.lookup("mp4"),
                 caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
-
             return await ctx.reply({
                 video: {
                     url: result.downloadUrl
                 },
                 mimetype: tools.mime.lookup("mp4"),
                 caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

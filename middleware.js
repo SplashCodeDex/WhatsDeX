@@ -131,7 +131,8 @@ module.exports = (bot) => {
                     simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`)
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
+                        interactiveButtons: []
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
                 } else {
@@ -211,7 +212,8 @@ module.exports = (bot) => {
                     simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`)
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
+                        interactiveButtons: []
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
                 } else {

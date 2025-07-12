@@ -31,7 +31,8 @@ module.exports = {
                 text: `${formatter.quote(`Latency: ${tools.msg.convertMsToDuration(latency)}`)}\n` +
                     `${formatter.quote(`Download: ${tools.msg.formatSizePerSecond(downloadSpeed)}`)}\n` +
                     formatter.quote(`Upload: ${tools.msg.formatSizePerSecond(uploadSpeed)}`),
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);

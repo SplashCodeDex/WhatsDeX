@@ -30,7 +30,8 @@ module.exports = {
                 fileName: result.metadata.filename,
                 mimetype: result.metadata.mimetype || "application/octet-stream",
                 caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

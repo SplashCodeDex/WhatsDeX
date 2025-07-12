@@ -26,7 +26,8 @@ module.exports = {
                     `${formatter.quote(`Koin: ${isOwner || userDb?.premium ? "Tak terbatas" : userDb?.coin}`)}\n` +
                     `${formatter.quote(`Menang: ${userDb?.winGame || 0}`)}\n` +
                     formatter.quote(`Peringkat: ${leaderboardData.findIndex(user => user.id === senderId) + 1}`),
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);

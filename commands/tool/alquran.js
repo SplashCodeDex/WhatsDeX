@@ -17,7 +17,8 @@ module.exports = {
             const listText = await tools.list.get("alquran");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         }
 
@@ -48,7 +49,8 @@ module.exports = {
                             `${formatter.quote(`Arti: ${result.translate}`)}\n` +
                             `${formatter.quote("─────")}\n` +
                             versesText,
-                        footer: config.msg.footer
+                        footer: config.msg.footer,
+                        interactiveButtons: []
                     });
                 }
 
@@ -64,7 +66,8 @@ module.exports = {
                         `${formatter.quote("─────")}\n` +
                         `${verse.text} (${verse.transliteration})\n` +
                         formatter.italic(verse.translation_id),
-                    footer: config.msg.footer
+                    footer: config.msg.footer,
+                    interactiveButtons: []
                 });
             }
 
@@ -78,7 +81,8 @@ module.exports = {
                     `${formatter.quote(`Arti: ${result.translate}`)}\n` +
                     `${formatter.quote("─────")}\n` +
                     versesText,
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

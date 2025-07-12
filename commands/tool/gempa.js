@@ -25,7 +25,8 @@ module.exports = {
                     `${formatter.quote(`Kedalaman: ${result.Kedalaman}`)}\n` +
                     `${formatter.quote(`Koordinat: ${result.Coordinates}`)}\n` +
                     formatter.quote(`Dirasakan: ${result.Dirasakan}`),
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

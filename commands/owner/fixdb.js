@@ -17,7 +17,8 @@ module.exports = {
             const listText = await tools.list.get("fixdb");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         }
 

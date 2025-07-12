@@ -12,7 +12,8 @@ module.exports = {
             const listText = await tools.list.get("how");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         }
 

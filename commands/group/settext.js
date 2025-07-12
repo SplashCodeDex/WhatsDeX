@@ -21,7 +21,8 @@ module.exports = {
             const listText = await tools.list.get("settext");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         }
 

@@ -30,9 +30,9 @@ module.exports = {
                 },
                 mimetype: tools.mime.lookup("mp4"),
                 caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
-
             if (result.slide && result.media) {
                 const album = result.media.map(imageUrl => ({
                     image: {

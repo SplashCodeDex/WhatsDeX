@@ -33,7 +33,8 @@ module.exports = {
                     `${formatter.quote(`Episode: ${result.episode}`)}\n` +
                     `${formatter.quote(`Rentang Waktu: ${tools.msg.convertSecondToTimecode(result.from)}-${tools.msg.convertSecondToTimecode(result.to)}`)}\n` +
                     formatter.quote(`Kemiripan: ${result.similarity}`),
-                footer: config.msg.footer
+                footer: config.msg.footer,
+                interactiveButtons: []
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

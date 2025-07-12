@@ -20,8 +20,7 @@ module.exports = {
                         displayText: "Tidak"
                     }
                 }
-            ],
-            headerType: 1
+            ]
         });
 
         try {
