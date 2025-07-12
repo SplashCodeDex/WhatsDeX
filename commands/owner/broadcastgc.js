@@ -42,7 +42,6 @@ module.exports = {
                 await delay(500);
                 try {
                     const contextInfo = {
-                        mentionedJid: [mentions],
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
                             newsletterJid: config.bot.newsletterJid,

@@ -7,7 +7,7 @@ module.exports = {
         group: true
     },
     code: async (ctx) => {
-        const accountJid = ctx?.quoted?.senderJid || ctx.getMentioned()[0] || null;
+        const accountJid = ctx.getMentioned()[0] || ctx?.quoted?.senderJid || null;
         const accountId = ctx.getId(accountJid);
 
         const senderJid = ctx.sender.jid;

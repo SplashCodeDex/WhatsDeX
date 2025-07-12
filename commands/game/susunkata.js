@@ -47,6 +47,14 @@ module.exports = {
                 time: game.timeout
             });
 
+            const playAgain = [{
+                buttonId: ctx.used.prefix + ctx.used.command,
+                buttonText: {
+                    displayText: "Main Lagi"
+                },
+                type: 1
+            }];
+
             collector.on("collect", async (m) => {
                 const participantAnswer = m.content.toLowerCase();
                 const participantId = ctx.getId(m.sender);
@@ -57,7 +65,10 @@ module.exports = {
                     await db.add(`user.${participantId}.winGame`, 1);
                     await ctx.sendMessage(ctx.id, {
                         text: `${formatter.quote("💯 Benar!")}\n` +
-                            formatter.quote(`+${game.coin} Koin`)
+                            formatter.quote(`+${game.coin} Koin`),
+                        footer: config.msg.footer,
+                        buttons: playAgain,
+                        headerType: 1
                     }, {
                         quoted: m
                     });
@@ -73,7 +84,10 @@ module.exports = {
                     session.delete(ctx.id);
                     await ctx.sendMessage(ctx.id, {
                         text: `${formatter.quote("🏳️ Kamu menyerah!")}\n` +
-                            formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`)
+                            formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`),
+                        footer: config.msg.footer,
+                        buttons: playAgain,
+                        headerType: 1
                     }, {
                         quoted: m
                     });
@@ -90,10 +104,13 @@ module.exports = {
             collector.on("end", async () => {
                 if (session.has(ctx.id)) {
                     session.delete(ctx.id);
-                    return await ctx.reply(
-                        `${formatter.quote("⏱ Waktu habis!")}\n` +
-                        formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`)
-                    );
+                    return await ctx.reply({
+                        text: `${formatter.quote("⏱ Waktu habis!")}\n` +
+                            formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`),
+                        footer: config.msg.footer,
+                        buttons: playAgain,
+                        headerType: 1
+                    });
                 }
             });
         } catch (error) {
