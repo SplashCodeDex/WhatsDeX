@@ -39,8 +39,7 @@ const bot = new Client({
     usePairingCode: system.usePairingCode,
     customPairingCode: system.customPairingCode,
     selfReply: system.selfReply,
-    autoMention: system.autoMention,
-    autoAiLabel: system.autoAiLabel
+    autoMention: system.autoMention
 });
 
 // Inisialisasi event dan middleware

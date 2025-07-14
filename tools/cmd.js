@@ -1,5 +1,8 @@
 // Impor modul dan dependensi yang diperlukan
 const api = require("./api.js");
+const {
+    MessageType
+} = require("@itsreimau/gktw");
 const uploader = require("@zanixongroup/uploader");
 const axios = require("axios");
 const didYouMean = require("didyoumean");
@@ -16,13 +19,13 @@ async function checkMedia(type, required) {
     if (!type || !required) return false;
 
     const mediaMap = {
-        audio: "audioMessage",
-        document: ["documentMessage", "documentWithCaptionMessage"],
-        gif: "videoMessage",
-        groupStatusMention: "groupStatusMentionMessage",
-        image: "imageMessage",
-        sticker: "stickerMessage",
-        video: "videoMessage"
+        audio: MessageType.audioMessage,
+        document: [MessageType.documentMessage, MessageType.documentWithCaptionMessage],
+        gif: MessageType.videoMessage,
+        groupStatusMention: "groupStatusMentionMessage"
+        image: MessageType.imageMessage,
+        sticker: MessageType.stickerMessage,
+        video: MessageType.videoMessage
     };
 
     const mediaList = Array.isArray(required) ? required : [required];
@@ -47,10 +50,10 @@ async function checkQuotedMedia(type, required) {
         audio: type.audioMessage,
         document: type.documentMessage || type.documentWithCaptionMessage,
         gif: type.videoMessage,
-        image: type.imageMessage || type.buttonsMessage?.imageMessage,
+        image: type.imageMessage || type.buttonsMessage?.imageMessage || type.interactiveMessage?.header?.imageMessage,
         sticker: type.stickerMessage,
         text: type.conversation || type.extendedTextMessage?.text,
-        video: type.videoMessage || type.buttonsMessage?.videoMessage
+        video: type.videoMessage || type.buttonsMessage?.videoMessage || type.interactiveMessage?.header?.videoMessage
     };
 
     const mediaList = Array.isArray(required) ? required : [required];
