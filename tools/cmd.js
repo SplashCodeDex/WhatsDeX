@@ -22,7 +22,7 @@ async function checkMedia(type, required) {
         audio: MessageType.audioMessage,
         document: [MessageType.documentMessage, MessageType.documentWithCaptionMessage],
         gif: MessageType.videoMessage,
-        groupStatusMention: "groupStatusMentionMessage"
+        groupStatusMention: "groupStatusMentionMessage",
         image: MessageType.imageMessage,
         sticker: MessageType.stickerMessage,
         video: MessageType.videoMessage
