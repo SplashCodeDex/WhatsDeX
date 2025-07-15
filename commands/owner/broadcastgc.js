@@ -63,6 +63,7 @@ module.exports = {
                         quoted: tools.cmd.fakeMetaAiQuotedText(config.msg.footer)
                     });
                 } catch (error) {
+                    await tools.cmd.handleError(ctx, error);
                     failedGroupIds.push(groupId);
                 }
             }
