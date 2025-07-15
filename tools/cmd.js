@@ -50,7 +50,7 @@ async function checkQuotedMedia(type, required) {
         audio: type.audioMessage,
         document: type.documentMessage || type.documentWithCaptionMessage,
         gif: type.videoMessage,
-        image: type.imageMessage
+        image: type.imageMessage,
         sticker: type.stickerMessage,
         text: type.conversation || type.extendedTextMessage?.text,
         video: type.videoMessage
