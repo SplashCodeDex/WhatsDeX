@@ -52,7 +52,7 @@ module.exports = {
                     const mediaType = checkMedia || checkQuotedMedia;
                     const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted.media.toBuffer();
 
-                    await sock.sendStatusMentions(groupId, {
+                    await ctx.core.sendStatusMentions(groupId, {
                         [mediaType]: buffer,
                         caption: input
                     });
