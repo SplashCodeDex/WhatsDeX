@@ -57,13 +57,12 @@ module.exports = {
                     };
 
                     await ctx.sendMessage(groupId, {
-                        input,
+                        text: input,
                         contextInfo
                     }, {
                         quoted: tools.cmd.fakeMetaAiQuotedText(config.msg.footer)
                     });
                 } catch (error) {
-                    await tools.cmd.handleError(ctx, error);
                     failedGroupIds.push(groupId);
                 }
             }

@@ -69,7 +69,7 @@ module.exports = (bot) => {
             await db.set(`user.${senderId}.xp`, newUserXp);
         }
 
-        // Simulasi mengetik jika diaktifkan dalam konfigurasi
+        // Simulasi mengetik
         const simulateTyping = () => {
             if (config.system.autoTypingOnCmd) ctx.simulateTyping();
         };
@@ -223,6 +223,6 @@ module.exports = (bot) => {
         }
 
         simulateTyping();
-        await next(); // Lanjut ke proses berikutnya jika semua kondisi terpenuhi
+        await next(); // Lanjut ke proses berikutnya
     });
 };

@@ -57,7 +57,6 @@ module.exports = {
                         caption: input
                     });
                 } catch (error) {
-                    await tools.cmd.handleError(ctx, error);
                     failedGroupIds.push(groupId);
                 }
             }

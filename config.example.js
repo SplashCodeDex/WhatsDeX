@@ -10,10 +10,10 @@ global.config = {
     // Informasi bot dasar
     bot: {
         name: "GAXTAWU", // Nama bot
-        prefix: /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i, // Karakter awalan perintah yang diizinkan
+        prefix: /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i, // Karakter awalan untuk memanggil perintah
         phoneNumber: "", // Nomor telepon bot (Tidak perlu diisi jika menggunakan QR code)
         thumbnail: "https://repository-images.githubusercontent.com/753096396/84e76ef0-ba19-4c87-8ec2-ea803b097479", // Gambar thumbnail bot
-        groupJid: "", // JID untuk group bot (Opsional, jika tidak menggunakan requireBotGroupMembership)
+        groupJid: "", // JID untuk group bot (Tidak perlu diisi jika tidak menggunakan requireBotGroupMembership)
         newsletterJid: "120363416372653441@newsletter", // JID untuk saluran bot
 
         // Konfigurasi autentikasi sesi bot
@@ -54,7 +54,7 @@ global.config = {
         botGroupMembership: quote(`⛔ Tidak dapat memproses karena kamu tidak bergabung dengan grup bot! Ketik ${inlineCode("/botgroup")} untuk mendapatkan link grup bot.`), // Pesan jika pengguna tidak bergabung dengan grup bot
         coin: quote("⛔ Tidak dapat memproses karena koin-mu tidak cukup!"), // Pesan saat koin tidak cukup
         cooldown: quote("🔄 Perintah ini sedang dalam cooldown, tunggu..."), // Pesan saat cooldown perintah
-        gamerestrict: quote("⛔ Tidak dapat memproses karena grup ini membatasi game!"),
+        gamerestrict: quote("⛔ Tidak dapat memproses karena grup ini membatasi game!"), // Pesan jika grup membatasi game
         group: quote("⛔ Perintah hanya dapat diakses dalam grup!"), // Pesan untuk perintah grup
         groupSewa: quote(`⛔ Bot tidak aktif karena grup ini belum melakukan sewa. Ketik ${inlineCode("/price")} untuk melihat harga sewa atau ${inlineCode("/owner")} untuk menghubungi Owner bot.`), // Pesan jika grup belum melakukan sewa
         owner: quote("⛔ Perintah hanya dapat diakses Owner!"), // Pesan untuk perintah yang hanya owner bisa akses
@@ -65,7 +65,7 @@ global.config = {
 
         readmore: "\u200E".repeat(4001), // String read more
         note: "“Lorem ipsum dolor sit amet, tenebris in umbra, vitae ad mortem.”", // Catatan
-        footer: italic("Developed by ItsReimau with ❤"),
+        footer: italic("Developed by ItsReimau with ❤"), // Catatan kaki
 
         wait: quote("🔄 Tunggu sebentar..."), // Pesan loading
         notFound: quote("❎ Tidak ada yang ditemukan! Coba lagi nanti."), // Pesan item tidak ditemukan
