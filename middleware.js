@@ -1,7 +1,7 @@
 // Impor modul dan dependensi yang diperlukan
 const {
     Cooldown
-} = require("@itsreimau/gktw");
+} = require("@im-dims/baileys-library");
 const moment = require("moment-timezone");
 
 // Fungsi untuk mengecek koin pengguna
@@ -19,9 +19,9 @@ module.exports = (bot) => {
         const isGroup = ctx.isGroup();
         const isPrivate = !isGroup;
         const senderJid = ctx.sender.jid;
-        const senderId = ctx.getId(senderJid);
+        const senderId = tools.cmd.getId(senderJid);
         const groupJid = isGroup ? ctx.id : null;
-        const groupId = isGroup ? ctx.getId(groupJid) : null;
+        const groupId = isGroup ? tools.cmd.getId(groupJid) : null;
         const isOwner = tools.cmd.isOwner(senderId, ctx.msg.key.id);
         const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 

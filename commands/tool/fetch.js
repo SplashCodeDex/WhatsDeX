@@ -37,21 +37,24 @@ module.exports = {
                     image: response?.data,
                     mimetype: tools.mime.contentType(contentType),
                     caption: formatter.quote("Untukmu, tuan!"),
-                    footer: config.msg.footer
+                    footer: config.msg.footer,
+                    interactiveButtons: []
                 });
             } else if (/video/.test(contentType)) {
                 return await ctx.reply({
                     video: response?.data,
                     mimetype: tools.mime.contentType(contentType),
                     caption: formatter.quote("Untukmu, tuan!"),
-                    footer: config.msg.footer
+                    footer: config.msg.footer,
+                    interactiveButtons: []
                 });
             } else if (/audio/.test(contentType)) {
                 return await ctx.reply({
                     audio: response?.data,
                     mimetype: tools.mime.contentType(contentType),
                     caption: formatter.quote("Untukmu, tuan!"),
-                    footer: config.msg.footer
+                    footer: config.msg.footer,
+                    interactiveButtons: []
                 });
             } else if (/webp/.test(contentType)) {
                 const sticker = new Sticker(response?.data, {

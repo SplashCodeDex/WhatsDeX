@@ -14,7 +14,7 @@ module.exports = {
 
         try {
             const resultText = pending.map((member, index) => {
-                const id = ctx.getId(member.jid);
+                const id = tools.cmd.getId(member.jid);
                 return formatter.quote(`${index + 1}. ${id}`);
             }).join("\n");
 

@@ -2,7 +2,7 @@
 const api = require("./api.js");
 const {
     MessageType
-} = require("@itsreimau/gktw");
+} = require("@im-dims/baileys-library");
 const uploader = require("@zanixongroup/uploader");
 const axios = require("axios");
 const didYouMean = require("didyoumean");
@@ -105,6 +105,19 @@ function generateUID(id, withBotName = true) {
     return uid;
 }
 
+function getID(jid) {
+    if (!jid) return null;
+
+    return jid.split("@")[0].split(":")[0];
+}
+
+async function getPushName(jid) {
+    if (!jid) return null;
+
+    const pushNames = await db.get("bot.pushNames") || [{}];
+    return pushNames[0][jid] || null;
+}
+
 function getRandomElement(arr) {
     if (!arr || !arr.length) return null;
 
@@ -120,7 +133,7 @@ async function handleError(ctx, error, useAxios = false, reportErrorToOwner = tr
 
     consolefy.error(`Error: ${errorText}`);
     if (config.system.reportErrorToOwner && reportErrorToOwner) await ctx.replyWithJid(`${config.owner.id}@s.whatsapp.net`, {
-        text: `${formatter.quote(isGroup ? `⚠️ Terjadi kesalahan dari grup: @${groupJid}, oleh: @${ctx.getId(ctx.sender.jid)}` : `⚠️ Terjadi kesalahan dari: @${await ctx.getId(ctx.sender.jid)}`)}\n` +
+        text: `${formatter.quote(isGroup ? `⚠️ Terjadi kesalahan dari grup: @${groupJid}, oleh: @${getId(ctx.sender.jid)}` : `⚠️ Terjadi kesalahan dari: @${await getId(ctx.sender.jid)}`)}\n` +
             `${formatter.quote("─────")}\n` +
             formatter.monospace(errorText),
         contextInfo: {
@@ -276,6 +289,8 @@ module.exports = {
     checkQuotedMedia,
     fakeMetaAiQuotedText,
     generateUID,
+    getId,
+    getPushName,
     getRandomElement,
     handleError,
     isCmd,

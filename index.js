@@ -3,11 +3,16 @@ require("./config.js");
 const pkg = require("./package.json");
 const tools = require("./tools/exports.js");
 const {
-    Formatter
-} = require("@itsreimau/gktw");
+    bold,
+    inlineCode,
+    italic,
+    monospace,
+    quote,
+    strikethrough
+} = require("@im-dims/baileys-library");
 const {
     Consolefy
-} = require("@mengkodingan/consolefy");
+} = require("@im-dims/consolefy");
 const CFonts = require("cfonts");
 const fs = require("node:fs");
 const http = require("node:http");
@@ -29,7 +34,14 @@ Object.assign(global, {
     config,
     consolefy: c,
     db: new SimplDB(),
-    formatter: Formatter,
+    formatter: {
+        bold,
+        inlineCode,
+        italic,
+        monospace,
+        quote,
+        strikethrough
+    },
     tools
 });
 

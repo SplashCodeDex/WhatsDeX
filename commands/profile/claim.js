@@ -21,7 +21,7 @@ module.exports = {
         }
 
         const claim = claimRewards[input];
-        const senderId = ctx.getId(ctx.sender.jid);
+        const senderId = tools.cmd.getId(ctx.sender.jid);
         const userDb = await db.get(`user.${senderId}`) || {};
         const level = userDb?.level || 0;
 

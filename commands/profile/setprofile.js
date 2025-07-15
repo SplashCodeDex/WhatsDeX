@@ -21,7 +21,7 @@ module.exports = {
         }
 
         try {
-            const senderId = ctx.getId(ctx.sender.jid);
+            const senderId = tools.cmd.getId(ctx.sender.jid);
             const args = ctx.args;
             const command = args[0]?.toLowerCase();
 

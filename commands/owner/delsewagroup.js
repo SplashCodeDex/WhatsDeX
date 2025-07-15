@@ -20,7 +20,7 @@ module.exports = {
         if (!await ctx.group(groupJid)) return await ctx.reply(formatter.quote("❎ Grup tidak valid atau bot tidak ada di grup tersebut!"));
 
         try {
-            const groupId = ctx.getId(groupJid);
+            const groupId = tools.cmd.getId(groupJid);
 
             await db.delete(`group.${groupId}.sewa`);
             await db.delete(`group.${groupId}.sewaExpiration`);

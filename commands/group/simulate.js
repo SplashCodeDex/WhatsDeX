@@ -1,6 +1,6 @@
 const {
     Events
-} = require("@itsreimau/gktw");
+} = require("@im-dims/baileys-library");
 const {
     handleWelcome
 } = require("../../events/handler.js");

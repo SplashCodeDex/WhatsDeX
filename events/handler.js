@@ -2,7 +2,7 @@
 const {
     Events,
     VCardBuilder
-} = require("@itsreimau/gktw");
+} = require("@im-dims/baileys-library");
 const axios = require("axios");
 const fs = require("node:fs");
 const moment = require("moment-timezone");
@@ -67,7 +67,7 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
 
 // Fungsi untuk menambahkan warning
 async function addWarning(ctx, groupDb, senderJid, groupId) {
-    const senderId = ctx.getId(senderJid);
+    const senderId = tools.cmd.getId(senderJid);
     const maxWarnings = groupDb?.maxwarnings || 3;
 
     const warnings = groupDb?.warnings || [];
@@ -132,75 +132,82 @@ module.exports = (bot) => {
 
     // Event saat bot menerima pesan
     bot.ev.on(Events.MessagesUpsert, async (m, ctx) => {
-        // Variabel umum
-        const isGroup = ctx.isGroup();
-        const isPrivate = !isGroup;
-        const senderJid = ctx.sender.jid;
-        const senderId = ctx.getId(senderJid);
-        const groupJid = isGroup ? ctx.id : null;
-        const groupId = isGroup ? ctx.getId(groupJid) : null;
-        const isOwner = tools.cmd.isOwner(senderId, m.key.id);
-        const isCmd = tools.cmd.isCmd(m.content, ctx.bot);
-        const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
+            // Variabel umum
+            const isGroup = ctx.isGroup();
+            const isPrivate = !isGroup;
+            const senderJid = ctx.sender.jid;
+            const senderId = tools.cmd.getId(senderJid);
+            const groupJid = isGroup ? ctx.id : null;
+            const groupId = isGroup ? tools.cmd.getId(groupJid) : null;
+            const isOwner = tools.cmd.isOwner(senderId, m.key.id);
+            const isCmd = tools.cmd.isCmd(m.content, ctx.bot);
+            const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 
-        // Mengambil database
-        const botDb = await db.get("bot") || {};
-        const userDb = await db.get(`user.${senderId}`) || {};
-        const groupDb = await db.get(`group.${groupId}`) || {};
+            // Mengambil database
+            const botDb = await db.get("bot") || {};
+            const userDb = await db.get(`user.${senderId}`) || {};
+            const groupDb = await db.get(`group.${groupId}`) || {};
 
-        // Pengecekan mode bot (group, private, self)
-        if (botDb?.mode === "group" && isPrivate && !isOwner && !userDb?.premium) return;
-        if (botDb?.mode === "private" && isGroup && !isOwner && !userDb?.premium) return;
-        if (botDb?.mode === "self" && !isOwner) return;
+            // Pengecekan mode bot (group, private, self)
+            if (botDb?.mode === "group" && isPrivate && !isOwner && !userDb?.premium) return;
+            if (botDb?.mode === "private" && isGroup && !isOwner && !userDb?.premium) return;
+            if (botDb?.mode === "self" && !isOwner) return;
 
-        // Pengecekan untuk tidak tersedia pada malam hari
-        const now = moment().tz(config.system.timeZone);
-        const hour = now.hour();
-        if (hour >= 0 && hour < 6 && !isOwner && !userDb?.premium) return;
+            // Pengecekan untuk tidak tersedia pada malam hari
+            const now = moment().tz(config.system.timeZone);
+            const hour = now.hour();
+            if (hour >= 0 && hour < 6 && !isOwner && !userDb?.premium) return;
 
-        // Pengecekan mute pada grup
-        if (groupDb?.mutebot === true && !isOwner && !isAdmin) return;
-        if (groupDb?.mutebot === "owner" && !isOwner) return;
-        const muteList = groupDb?.mute || [];
-        if (muteList.includes(senderId)) await ctx.deleteMessage(m.key);
+            // Pengecekan mute pada grup
+            if (groupDb?.mutebot === true && !isOwner && !isAdmin) return;
+            if (groupDb?.mutebot === "owner" && !isOwner) return;
+            const muteList = groupDb?.mute || [];
+            if (muteList.includes(senderId)) await ctx.deleteMessage(m.key);
 
-        // Grup atau Pribadi
-        if (isGroup || isPrivate) {
-            if (m.key.fromMe) return;
+            // Grup atau Pribadi
+            if (isGroup || isPrivate) {
+                if (m.key.fromMe) return;
 
-            config.bot.dbSize = fs.existsSync("database.json") ? tools.msg.formatSize(fs.statSync("database.json").size / 1024) : "N/A"; // Penangan pada ukuran database
-            config.bot.uptime = tools.msg.convertMsToDuration(Date.now() - config.bot.readyAt); // Penangan pada uptime
+                config.bot.dbSize = fs.existsSync("database.json") ? tools.msg.formatSize(fs.statSync("database.json").size / 1024) : "N/A"; // Penangan pada ukuran database
+                config.bot.uptime = tools.msg.convertMsToDuration(Date.now() - config.bot.readyAt); // Penangan pada uptime
 
-            // Penanganan database pengguna
-            if (isOwner || userDb?.premium) db.set(`user.${senderId}.coin`, 0);
-            if (userDb?.coin === undefined || !Number.isFinite(userDb.coin)) db.set(`user.${senderId}.coin`, 500);
-            if (!userDb?.uid || userDb?.uid !== tools.cmd.generateUID(senderId)) db.set(`user.${senderId}.uid`, tools.cmd.generateUID(senderId));
-            if (!userDb?.username) db.set(`user.${senderId}.username`, `@user_${tools.cmd.generateUID(senderId, false)}`);
-            if (userDb?.premium && Date.now() > userDb.premiumExpiration) {
-                await db.delete(`user.${senderId}.premium`);
-                await db.delete(`user.${senderId}.premiumExpiration`);
-            }
+                const pushNames = botDb?.pushNames || [{}];
+                if (!pushNames[0][senderJid] || pushNames[0][senderJid] !== ctx.sender.pushName) {
+                    pushNames[0][senderJid] = ctx.sender.pushName;
+                    db.set("bot.pushNames", pushNames);
+                }
 
-            // Did you mean?
-            if (isCmd?.didyoumean) await ctx.reply({
-                text: formatter.quote(`🧐 Apakah maksudmu ${formatter.inlineCode(isCmd.prefix + isCmd.didyoumean)}?`),
-                footer: config.msg.footer,
-                buttons: [{
-                    buttonId: `${isCmd.prefix + isCmd.didyoumean} ${isCmd.input}`,
-                    buttonText: {
-                        displayText: "Ya, benar!"
+                // Penanganan database pengguna
+                if (isOwner || userDb?.premium) db.set(`user.${senderId}.coin`, 0);
+                if (userDb?.coin === undefined || !Number.isFinite(userDb.coin)) db.set(`user.${senderId}.coin`, 500);
+                if (!userDb?.uid || userDb?.uid !== tools.cmd.generateUID(senderId)) db.set(`user.${senderId}.uid`, tools.cmd.generateUID(senderId));
+                if (!userDb?.username) db.set(`user.${senderId}.username`, `@user_${tools.cmd.generateUID(senderId, false)}`);
+                if (userDb?.premium && Date.now() > userDb.premiumExpiration) {
+                    await db.delete(`user.${senderId}.premium`);
+                    await db.delete(`user.${senderId}.premiumExpiration`);
+                }
+
+                // Did you mean?
+                if (isCmd?.didyoumean) await ctx.reply({
+                    text: formatter.quote(`🧐 Apakah maksudmu ${formatter.inlineCode(isCmd.prefix + isCmd.didyoumean)}?`),
+                    footer: config.msg.footer,
+                    buttons: [{
+                        buttonId: `${isCmd.prefix + isCmd.didyoumean} ${isCmd.input}`,
+                        buttonText: {
+                            displayText: "Ya, benar!"
+                        }
+                    }]
+                });
+
+                // Penanganan AFK (Menghapus status AFK pengguna yang mengirim pesan)
+                const userAfk = userDb?.afk || {};
+                if (userAfk.reason || userAfk.timestamp) {
+                    const timeElapsed = Date.now() - userAfk.timestamp;
+                    if (timeElapsed > 3000) {
+                        const timeago = tools.msg.convertMsToDuration(timeElapsed);
+                        await ctx.reply(formatter.quote(`📴 Kamu telah keluar dari AFK ${userAfk.reason ? `dengan alasan "${userAfk.reason}"` : "tanpa alasan"} selama ${timeago}.`));
+                        await db.delete(`user.${senderId}.afk`);
                     }
-                }]
-            });
-
-            // Penanganan AFK (Menghapus status AFK pengguna yang mengirim pesan)
-            const userAfk = userDb?.afk || {};
-            if (userAfk.reason || userAfk.timestamp) {
-                const timeElapsed = Date.now() - userAfk.timestamp;
-                if (timeElapsed > 3000) {
-                    const timeago = tools.msg.convertMsToDuration(timeElapsed);
-                    await ctx.reply(formatter.quote(`📴 Kamu telah keluar dari AFK ${userAfk.reason ? `dengan alasan "${userAfk.reason}"` : "tanpa alasan"} selama ${timeago}.`));
-                    await db.delete(`user.${senderId}.afk`);
                 }
             }
         }
@@ -221,7 +228,7 @@ module.exports = (bot) => {
             }
 
             // Penanganan AFK (Pengguna yang disebutkan atau di-balas/quote)
-            const userMentions = ctx?.quoted?.senderJid ? [ctx.getId(ctx?.quoted?.senderJid)] : ctx.getMentioned().map((jid) => ctx.getId(jid)) || [];
+            const userMentions = ctx?.quoted?.senderJid ? [tools.cmd.getId(ctx?.quoted?.senderJid)] : ctx.getMentioned().map((jid) => tools.cmd.getId(jid)) || [];
             if (userMentions.length > 0) {
                 for (const userMention of userMentions) {
                     const userMentionAfk = await db.get(`user.${userMention}.afk`) || {};
@@ -380,35 +387,35 @@ module.exports = (bot) => {
         }
     });
 
-    // Event saat bot menerima panggilan
-    bot.ev.on(Events.Call, async (calls) => {
-        if (!config.system.antiCall) return;
+// Event saat bot menerima panggilan
+bot.ev.on(Events.Call, async (calls) => {
+    if (!config.system.antiCall) return;
 
-        for (const call of calls) {
-            if (call.status !== "offer") continue;
+    for (const call of calls) {
+        if (call.status !== "offer") continue;
 
-            await bot.core.rejectCall(call.id, call.from);
+        await bot.core.rejectCall(call.id, call.from);
 
-            const vcard = new VCardBuilder()
-                .setFullName(config.owner.name)
-                .setOrg(config.owner.organization)
-                .setNumber(config.owner.id)
-                .build();
-            return await bot.core.sendMessage(call.from, {
-                contacts: {
-                    displayName: config.owner.name,
-                    contacts: [{
-                        vcard
-                    }]
-                }
-            }, {
-                quoted: tools.cmd.fakeMetaAiQuotedText(`Bot tidak dapat menerima panggilan ${call.isVideo ? "video" : "suara"}! Jika kamu memerlukan bantuan, silakan menghubungi Owner.`)
-            });
-        }
-    });
+        const vcard = new VCardBuilder()
+            .setFullName(config.owner.name)
+            .setOrg(config.owner.organization)
+            .setNumber(config.owner.id)
+            .build();
+        return await bot.core.sendMessage(call.from, {
+            contacts: {
+                displayName: config.owner.name,
+                contacts: [{
+                    vcard
+                }]
+            }
+        }, {
+            quoted: tools.cmd.fakeMetaAiQuotedText(`Bot tidak dapat menerima panggilan ${call.isVideo ? "video" : "suara"}! Jika kamu memerlukan bantuan, silakan menghubungi Owner.`)
+        });
+    }
+});
 
-    // Event saat pengguna bergabung atau keluar dari grup
-    bot.ev.on(Events.UserJoin, async (m) => handleWelcome(bot, m, Events.UserJoin));
-    bot.ev.on(Events.UserLeave, async (m) => handleWelcome(bot, m, Events.UserLeave));
+// Event saat pengguna bergabung atau keluar dari grup
+bot.ev.on(Events.UserJoin, async (m) => handleWelcome(bot, m, Events.UserJoin));
+bot.ev.on(Events.UserLeave, async (m) => handleWelcome(bot, m, Events.UserLeave));
 };
 module.exports.handleWelcome = handleWelcome; // Penanganan event pengguna bergabung/keluar grup

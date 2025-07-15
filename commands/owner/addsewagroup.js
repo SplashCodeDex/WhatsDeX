@@ -22,7 +22,7 @@ module.exports = {
         if (daysAmount && daysAmount <= 0) return await ctx.reply(formatter.quote("❎ Durasi sewa (dalam hari) harus diisi dan lebih dari 0!"));
 
         try {
-            const groupId = ctx.getId(groupJid);
+            const groupId = tools.cmd.getId(groupJid);
 
             await db.set(`group.${groupId}.sewa`, true);
 

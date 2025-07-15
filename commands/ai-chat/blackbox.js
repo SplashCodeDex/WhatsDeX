@@ -36,7 +36,7 @@ module.exports = {
             } else {
                 const apiUrl = tools.api.createUrl("nekorinn", "/ai/blackbox", {
                     text: input,
-                    sessionid: await db.get(`user.${ctx.getId(ctx.sender.jid)}.uid`) || "guest"
+                    sessionid: await db.get(`user.${tools.cmd.getId(ctx.sender.jid)}.uid`) || "guest"
                 });
                 const result = (await axios.get(apiUrl)).data.result;
 

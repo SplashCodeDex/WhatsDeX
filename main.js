@@ -4,7 +4,7 @@ const events = require("./events/handler.js");
 const {
     Client,
     CommandHandler
-} = require("@itsreimau/gktw");
+} = require("@im-dims/baileys-library");
 const path = require("node:path");
 const util = require("node:util");
 
@@ -37,7 +37,6 @@ const bot = new Client({
     printQRInTerminal: !system.usePairingCode,
     markOnlineOnConnect: system.alwaysOnline,
     usePairingCode: system.usePairingCode,
-    customPairingCode: system.customPairingCode,
     selfReply: system.selfReply,
     autoMention: system.autoMention
 });

@@ -1,6 +1,6 @@
 # gaxtawu
 
-`gaxtawu` adalah bot WhatsApp yang dibangun menggunakan library [@itsreimau/gktw](https://www.npmjs.com/package/@itsreimau/gktw), yaitu sebuah fork dari [@mengkodingan/ckptw](https://ckptw.mengkodingan.my.id/) dengan berbagai pembaruan modern dan dukungan yang lebih up-to-date terhadap perubahan di WhatsApp. Bot ini dirancang untuk mengotomatisasi berbagai tugas di WhatsApp, serta mendukung arsitektur modular melalui sistem perintah (command), sehingga memudahkan pengembangan dan pemeliharaan fitur.
+`gaxtawu` adalah bot WhatsApp yang dibangun menggunakan library [@im-dims/baileys-library](https://www.npmjs.com/package/@im-dims/baileys-library), yaitu sebuah fork dari [@mengkodingan/ckptw](https://ckptw.mengkodingan.my.id/) dengan berbagai pembaruan modern dan dukungan yang lebih up-to-date terhadap perubahan di WhatsApp. Bot ini dirancang untuk mengotomatisasi berbagai tugas di WhatsApp, serta mendukung arsitektur modular melalui sistem perintah (command), sehingga memudahkan pengembangan dan pemeliharaan fitur.
 
 ## Disclaimer
 
@@ -143,13 +143,13 @@ Untuk menambahkan perintah baru, ikuti langkah-langkah berikut:
 
 ### Complete Documentation
 
-`@itsreimau/gktw` adalah library yang digunakan oleh `gaxtawu`, dibangun di atas `baileys-mod` yang mendukung lebih banyak fitur WhatsApp dibandingkan `@whiskeysockets/baileys`. Dokumentasi `@itsreimau/gktw` umumnya mirip dengan dokumentasi `@mengkodingan/ckptw`, namun dengan beberapa tambahan dan pembaruan.
+`@im-dims/baileys-library` adalah library yang digunakan oleh `gaxtawu`, dibangun di atas `baileys-md` yang mendukung lebih banyak fitur WhatsApp dibandingkan `@whiskeysockets/baileys`. Dokumentasi `@im-dims/baileys-library` umumnya mirip dengan dokumentasi `@mengkodingan/ckptw`, namun dengan beberapa tambahan dan pembaruan.
 
 Untuk informasi lebih lanjut, silakan kunjungi:
 
 - [@mengkodingan/ckptw](https://ckptw.mengkodingan.my.id/)
-- [@itsreimau/gktw (npm)](https://www.npmjs.com/package/@itsreimau/gktw)
-- [baileys-mod (github)](https://github.com/Itsukichann/Baileys) – berisi dokumentasi tambahan seperti pengiriman berbagai jenis pesan
+- [@im-dims/baileys-library (npm)](https://www.npmjs.com/package/@im-dims/baileys-library)
+- [baileys-md (github)](https://github.com/Im-Dims/baileys-md) – berisi dokumentasi tambahan seperti pengiriman berbagai jenis pesan
 
 ## Contribution
 

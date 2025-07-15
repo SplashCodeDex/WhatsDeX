@@ -6,7 +6,7 @@ module.exports = {
     },
     code: async (ctx) => {
         return await ctx.reply({
-            text: `@${ctx.getId(ctx.sender.jid)}`,
+            text: `@${tools.cmd.getId(ctx.sender.jid)}`,
             mentions: [ctx.sender.jid]
         });
     }

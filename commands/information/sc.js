@@ -5,7 +5,8 @@ module.exports = {
     code: async (ctx) => {
         return await ctx.reply({
             text: formatter.quote("https://github.com/itsreimau/gaxtawu"),
-            footer: config.msg.footer
+            footer: config.msg.footer,
+            interactiveButtons: []
         }); // Jika kamu tidak menghapus ini, terima kasih!
     }
 };
