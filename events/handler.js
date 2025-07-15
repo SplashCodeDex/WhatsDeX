@@ -10,7 +10,7 @@ const moment = require("moment-timezone");
 // Fungsi untuk menangani event pengguna bergabung/keluar grup
 async function handleWelcome(bot, m, type, isSimulate = false) {
     const groupJid = m.id;
-    const groupId = bot.getId(m.id);
+    const groupId = tools.cmd.getId(m.id);
     const groupDb = await db.get(`group.${groupId}`) || {};
     const botDb = await db.get("bot") || {};
 
@@ -23,7 +23,7 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
 
     for (const jid of m.participants) {
         const isWelcome = type === Events.UserJoin;
-        const userTag = `@${bot.getId(jid)}`;
+        const userTag = `@${tools.cmd.getId(jid)}`;
         const customText = isWelcome ? groupDb?.text?.welcome : groupDb?.text?.goodbye;
         const metadata = await bot.core.groupMetadata(groupJid);
         const text = customText ?
@@ -119,7 +119,7 @@ module.exports = (bot) => {
         }
 
         // Tetapkan config pada bot
-        const id = bot.getId(m.user.id);
+        const id = tools.cmd.getId(m.user.id);
         config.bot = {
             ...config.bot,
             id,
