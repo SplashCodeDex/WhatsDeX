@@ -50,10 +50,10 @@ async function checkQuotedMedia(type, required) {
         audio: type.audioMessage,
         document: type.documentMessage || type.documentWithCaptionMessage,
         gif: type.videoMessage,
-        image: type.imageMessage || type.buttonsMessage?.imageMessage || type.interactiveMessage?.header?.imageMessage,
+        image: type.imageMessage
         sticker: type.stickerMessage,
         text: type.conversation || type.extendedTextMessage?.text,
-        video: type.videoMessage || type.buttonsMessage?.videoMessage || type.interactiveMessage?.header?.videoMessage
+        video: type.videoMessage
     };
 
     const mediaList = Array.isArray(required) ? required : [required];
@@ -105,7 +105,7 @@ function generateUID(id, withBotName = true) {
     return uid;
 }
 
-function getID(jid) {
+function getId(jid) {
     if (!jid) return null;
 
     return jid.split("@")[0].split(":")[0];
