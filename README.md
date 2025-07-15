@@ -149,7 +149,7 @@ Untuk informasi lebih lanjut, silakan kunjungi:
 
 - [@mengkodingan/ckptw](https://ckptw.mengkodingan.my.id/)
 - [@im-dims/baileys-library (npm)](https://www.npmjs.com/package/@im-dims/baileys-library)
-- [baileys-md (github)](https://github.com/Im-Dims/baileys-md) – berisi dokumentasi tambahan seperti pengiriman berbagai jenis pesan
+- [@im-dims/baileys-md (npm)](https://www.npmjs.com/package/@im-dims/baileys-md) – berisi dokumentasi tambahan seperti pengiriman berbagai jenis pesan
 
 ## Contribution
 

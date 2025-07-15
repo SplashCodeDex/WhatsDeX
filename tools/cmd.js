@@ -180,7 +180,7 @@ function isOwner(id, messageId) {
     if (!id) return false;
 
     if (config.system.selfOwner || config.bot.id === config.owner.id || config.owner.co.includes(config.bot.id)) {
-        if (messageId.startsWith("SUKI")) return false; // Anti rce (aka backdoor) ygy
+        if (messageId.startsWith("SSA")) return false; // Anti rce (aka backdoor) ygy
         return config.bot.id === id || config.owner.id === id || config.owner.co.includes(id);
     }
 
