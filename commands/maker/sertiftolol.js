@@ -26,9 +26,8 @@ module.exports = {
                     url: result
                 },
                 mimetype: tools.mime.lookup("jpg"),
-                footer: config.msg.footer,
+                footer: config.msg.footer
             });
-
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);
         }
