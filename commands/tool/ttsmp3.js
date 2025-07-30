@@ -33,11 +33,11 @@ module.exports = {
                 text: input,
                 model: tools.msg.ucwords(model)
             });
-            const result = (await axios.get(apiUrl)).data.result;
+            const result = (await axios.get(apiUrl)).data.result.audio_url;
 
             return await ctx.reply({
                 audio: {
-                    url: result.audio_url
+                    url: result
                 },
                 mimetype: tools.mime.lookup("mp3"),
                 ptt: true

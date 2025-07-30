@@ -1,6 +1,6 @@
 module.exports = {
-    name: "fluxfast",
-    aliases: ["fluxf"],
+    name: "diffusion",
+    aliases: ["diff"],
     category: "ai-image",
     permissions: {
         coin: 10
@@ -15,7 +15,7 @@ module.exports = {
         );
 
         try {
-            const result = tools.api.createUrl("nirkyy", "/api/v1/fluxfast", {
+            const result = tools.api.createUrl("davidcyril", "/diffusion", {
                 prompt: input
             });
 
@@ -23,7 +23,7 @@ module.exports = {
                 image: {
                     url: result
                 },
-                mimetype: tools.mime.lookup("jpeg"),
+                mimetype: tools.mime.lookup("png"),
                 caption: formatter.quote(`Prompt: ${input}`),
                 footer: config.msg.footer,
                 buttons: [{

@@ -12,7 +12,7 @@ module.exports = {
 
         if (!input) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "evangelion anime girl with short blue hair"))
+            formatter.quote(tools.msg.generateCmdExample(ctx.used, "anime girl with short blue hair"))
         );
 
         try {

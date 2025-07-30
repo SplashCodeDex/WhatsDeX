@@ -1,5 +1,3 @@
-const axios = require("axios");
-
 module.exports = {
     name: "remini",
     category: "tool",
@@ -18,14 +16,13 @@ module.exports = {
         try {
             const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted.media.toBuffer();
             const uploadUrl = await tools.cmd.upload(buffer, "image");
-            const apiUrl = tools.api.createUrl("zenzxz", "/tools/remini", {
+            const apiUrl = tools.api.createUrl("davidcyril", "/remini", {
                 url: uploadUrl
             });
-            const result = (await axios.get(apiUrl)).data.result.result_url;
 
             return await ctx.reply({
                 image: {
-                    url: apiUrl
+                    url: result
                 },
                 mimetype: tools.mime.lookup("jpg"),
                 caption: formatter.quote("Untukmu, tuan!"),

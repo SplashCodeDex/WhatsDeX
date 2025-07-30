@@ -6,11 +6,11 @@ const APIs = {
     archive: {
         baseURL: "https://archive.lick.eu.org"
     },
+    davidcyril: {
+        baseURL: "https://apis.davidcyriltech.my.id"
+    },
     diibot: {
         baseURL: "https://api.diioffc.web.id"
-    },
-    falcon: {
-        baseURL: "https://flowfalcon.dpdns.org"
     },
     nekorinn: {
         baseURL: "https://api.nekorinn.my.id"

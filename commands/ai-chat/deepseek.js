@@ -16,10 +16,10 @@ module.exports = {
         );
 
         try {
-            const apiUrl = tools.api.createUrl("archive", "/api/ai/deepseek-r1", {
+            const apiUrl = tools.api.createUrl("nekorinn", "/ai/deepseek-r1", {
                 text: input
             });
-            const result = (await axios.get(apiUrl)).data.result;
+            const result = (await axios.get(apiUrl)).data.result.text;
 
             return await ctx.reply(result);
         } catch (error) {
