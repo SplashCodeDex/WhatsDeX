@@ -1,6 +1,6 @@
 # gaxtawu
 
-`gaxtawu` adalah bot WhatsApp yang dibangun menggunakan library [@itsukichan/utils](https://www.npmjs.com/package/@itsukichan/utils), yaitu sebuah fork dari [@mengkodingan/ckptw](https://www.npmjs.com/package/@mengkodingan/ckptw) dengan berbagai pembaruan modern dan dukungan yang lebih up-to-date terhadap perubahan di WhatsApp. Bot ini dirancang untuk mengotomatisasi berbagai tugas di WhatsApp, serta mendukung arsitektur modular melalui sistem perintah (command), sehingga memudahkan pengembangan dan pemeliharaan fitur.
+`gaxtawu` adalah bot WhatsApp yang menggunakan [@itsukichan/baileys](https://www.npmjs.com/package/@itsukichan/baileys). Bot ini dirancang untuk mengotomatisasi berbagai tugas di WhatsApp, serta mendukung arsitektur modular melalui sistem perintah (command), sehingga memudahkan pengembangan dan pemeliharaan fitur.
 
 ## Disclaimer
 
@@ -143,13 +143,16 @@ Untuk menambahkan perintah baru, ikuti langkah-langkah berikut:
 
 ### Complete Documentation
 
-`@itsukichan/utils` adalah library yang digunakan oleh `gaxtawu`, dibangun di atas `@itsukichan/baileys` yang mendukung lebih banyak fitur WhatsApp dibandingkan `@whiskeysockets/baileys`. Dokumentasi `@itsukichan/utils` umumnya mirip dengan dokumentasi `@mengkodingan/ckptw`, namun dengan beberapa tambahan dan pembaruan.
+`gaxtawu` menggunakan versi modifikasi dari `@itsukichan/utils` yang telah difork dan disesuaikan khusus untuk bot ini. Library ini dibangun di atas `@itsukichan/baileys` yang menawarkan fitur lebih lengkap dibanding `@whiskeysockets/baileys`.
 
-Untuk informasi lebih lanjut, silakan kunjungi:
+#### Perbedaan Utama dengan Versi Original:
+- ✅ **Bug fixes** yang belum diatasi di versi original
+- 🛠️ **Optimasi khusus** untuk kebutuhan `gaxtawu`
 
-- [@mengkodingan/ckptw](https://www.npmjs.com/package/@mengkodingan/ckptw)
-- [@itsukichan/utils](https://www.npmjs.com/package/@itsukichan/utils)
-- [@itsukichan/baileys](https://www.npmjs.com/package/@itsukichan/baileys) – berisi dokumentasi tambahan seperti pengiriman berbagai jenis pesan
+Untuk dokumentasi lengkap, silakan kunjungi:
+- [@mengkodingan/ckptw](https://www.npmjs.com/package/@mengkodingan/ckptw) - Referensi dasar struktur command
+- [itsreimau/Utils](https://github.com/itsreimau/Utils) **(Fork Resmi untuk gaxtawu)** - Dokumentasi versi custom yang digunakan
+- [@itsukichan/baileys](https://www.npmjs.com/package/@itsukichan/baileys) - Panduan pengiriman pesan/media
 
 ## Contribution
 

@@ -37,6 +37,7 @@ const bot = new Client({
     printQRInTerminal: !system.usePairingCode,
     markOnlineOnConnect: system.alwaysOnline,
     usePairingCode: system.usePairingCode,
+    customPairingCode: system.customPairingCode,
     selfReply: system.selfReply,
     autoMention: system.autoMention,
     WAVersion: [2, 3000, 1025091846]

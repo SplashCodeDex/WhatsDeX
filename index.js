@@ -12,7 +12,7 @@ const {
 } = require("@itsukichan/utils");
 const {
     Consolefy
-} = require("@itsukichan/consolefy");
+} = require("@mengkodingan/consolefy");
 const CFonts = require("cfonts");
 const fs = require("node:fs");
 const http = require("node:http");
