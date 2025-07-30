@@ -3,7 +3,7 @@ const {
     inlineCode,
     italic,
     quote
-} = require("@im-dims/baileys-library");
+} = require("@itsukichan/utils");
 
 // Konfigurasi
 global.config = {
@@ -107,7 +107,6 @@ global.config = {
         uploaderHost: "FastUrl", // Host uploader untuk menyimpan media (Tersedia: Catbox, Cloudku, FastUrl, Litterbox, Pomf, Quax, Ryzumi, Uguu, Videy)
         useCoin: true, // Pakai koin
         usePairingCode: false, // Pakai kode pairing untuk koneksi
-        customPairingCode: "UMBR4L15", // Kode pairing kustom untuk koneksi (Opsional, jika menggunakan QR code, jika kosong kode pairing akan random)
         useServer: false // Jalankan bot dengan server
     }
 };

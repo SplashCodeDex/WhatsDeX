@@ -1,6 +1,6 @@
 const {
     VCardBuilder
-} = require("@im-dims/baileys-library");
+} = require("@itsukichan/utils");
 
 module.exports = {
     name: "owner",

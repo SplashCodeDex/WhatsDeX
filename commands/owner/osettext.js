@@ -30,6 +30,7 @@ module.exports = {
             switch (key.toLowerCase()) {
                 case "donate":
                 case "price":
+                case "qris":
                     setKey = `bot.text.${key.toLowerCase()}`;
                     break;
                 default:

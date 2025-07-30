@@ -1,7 +1,7 @@
 // Impor modul dan dependensi yang diperlukan
 const {
     Cooldown
-} = require("@im-dims/baileys-library");
+} = require("@itsukichan/utils");
 const moment = require("moment-timezone");
 
 // Fungsi untuk mengecek koin pengguna

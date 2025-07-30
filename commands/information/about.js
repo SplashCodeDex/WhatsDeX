@@ -15,7 +15,7 @@ module.exports = {
                     `${formatter.quote(`Mode: ${tools.msg.ucwords(botDb?.mode || "public")}`)}\n` +
                     `${formatter.quote(`Bot Uptime: ${config.bot.uptime}`)}\n` +
                     `${formatter.quote(`Database: ${config.bot.dbSize} (Simpl.DB - JSON)`)}\n` +
-                    formatter.quote("Library: @im-dims/baileys-library (Fork of @mengkodingan/ckptw)"),
+                    formatter.quote("Library: @itsukichan/utils (Fork of @mengkodingan/ckptw)"),
                 footer: config.msg.footer,
                 interactiveButtons: []
             });

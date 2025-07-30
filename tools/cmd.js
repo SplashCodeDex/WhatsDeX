@@ -2,7 +2,7 @@
 const api = require("./api.js");
 const {
     MessageType
-} = require("@im-dims/baileys-library");
+} = require("@itsukichan/utils");
 const uploader = require("@zanixongroup/uploader");
 const axios = require("axios");
 const didYouMean = require("didyoumean");

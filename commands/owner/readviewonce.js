@@ -1,6 +1,6 @@
 const {
     MessageType
-} = require("@im-dims/baileys-library");
+} = require("@itsukichan/utils");
 
 module.exports = {
     name: "readviewonce",

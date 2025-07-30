@@ -2,10 +2,13 @@
 const {
     Events,
     VCardBuilder
-} = require("@im-dims/baileys-library");
+} = require("@itsukichan/utils");
 const axios = require("axios");
-const fs = require("node:fs");
 const moment = require("moment-timezone");
+const fs = require("node:fs");
+const {
+    analyzeMessage
+} = require("safety-safe");
 
 // Fungsi untuk menangani event pengguna bergabung/keluar grup
 async function handleWelcome(bot, m, type, isSimulate = false) {
@@ -168,13 +171,25 @@ module.exports = (bot) => {
         if (isGroup || isPrivate) {
             if (m.key.fromMe) return;
 
+            const analyze = analyzeMessage(m.message);
+            if (analyze.isMalicious) {
+                await ctx.deleteMessage(m.key);
+                await bot.block(senderJid);
+                await db.set(`user.${senderId}.banned`, true);
+
+                await ctx.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
+                    text: `🔒 Akun @${senderId} telah diblokir secara otomatis karena alasan: "${analyze.reason}".`,
+                    mention: [senderJid]
+                });
+            }
+
             config.bot.dbSize = fs.existsSync("database.json") ? tools.msg.formatSize(fs.statSync("database.json").size / 1024) : "N/A"; // Penangan pada ukuran database
             config.bot.uptime = tools.msg.convertMsToDuration(Date.now() - config.bot.readyAt); // Penangan pada uptime
 
             const pushNames = botDb?.pushNames || [{}];
             if (!pushNames[0][senderJid] || pushNames[0][senderJid] !== ctx.sender.pushName) {
                 pushNames[0][senderJid] = ctx.sender.pushName;
-                db.set("bot.pushNames", pushNames);
+                await db.set("bot.pushNames", pushNames);
             }
 
             // Penanganan database pengguna

@@ -9,10 +9,10 @@ const {
     monospace,
     quote,
     strikethrough
-} = require("@im-dims/baileys-library");
+} = require("@itsukichan/utils");
 const {
     Consolefy
-} = require("@im-dims/consolefy");
+} = require("@itsukichan/consolefy");
 const CFonts = require("cfonts");
 const fs = require("node:fs");
 const http = require("node:http");

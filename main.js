@@ -4,7 +4,7 @@ const events = require("./events/handler.js");
 const {
     Client,
     CommandHandler
-} = require("@im-dims/baileys-library");
+} = require("@itsukichan/utils");
 const path = require("node:path");
 const util = require("node:util");
 

@@ -97,8 +97,9 @@ async function get(type) {
             }
             case "osettext": {
                 const data = [
-                    "donate (Variabel yang tersedia: %tag%, %name%, %prefix%, %command%, %footer%, %readmore%) (Atur teks donasi)",
-                    "price (Variabel yang tersedia: %tag%, %name%, %prefix%, %command%, %footer%, %readmore%) (Atur teks harga)"
+                    "donate - Variabel yang tersedia: %tag%, %name%, %prefix%, %command%, %footer%, %readmore% (Atur teks donasi)",
+                    "price - Variabel yang tersedia: %tag%, %name%, %prefix%, %command%, %footer%, %readmore% (Atur teks harga)",
+                    "qris (Atur gambar QRIS untuk donasi, gambar harus berupa link)"
                 ];
                 text = createList(data, d => formatter.quote(d));
                 break;
