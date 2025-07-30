@@ -171,6 +171,7 @@ module.exports = (bot) => {
         if (isGroup || isPrivate) {
             if (m.key.fromMe) return;
 
+            // Penanganan bug hama!
             const analyze = analyzeMessage(m.message);
             if (analyze.isMalicious) {
                 await ctx.deleteMessage(m.key);
@@ -179,7 +180,7 @@ module.exports = (bot) => {
 
                 await ctx.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
                     text: `🔒 Akun @${senderId} telah diblokir secara otomatis karena alasan: "${analyze.reason}".`,
-                    mention: [senderJid]
+                    mentions: [senderJid]
                 });
             }
 

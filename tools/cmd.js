@@ -106,11 +106,10 @@ function generateUID(id, withBotName = true) {
 }
 
 function getId(jid) {
-  if (!jid) return null;
-  
-  const clean = jid.replace(/^@+/, "");
-  
-  return clean.split("@")[0].split(":")[0];
+    if (!jid) return null;
+
+    const id = jid.replace(/^@+/, "").split("@")[0].split(":")[0];
+    return /^\d+$/.test(id) ? id : null;
 }
 
 async function getPushName(jid) {

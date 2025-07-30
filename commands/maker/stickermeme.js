@@ -27,7 +27,7 @@ module.exports = {
         if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], ["image", "sticker"])));
 
         try {
-            let [top, bottom] = input.split("|").map(i => i.trim());
+            let [top, bottom] = input.split("|").map(i => i);
             [top, bottom] = bottom ? [top || "_", bottom] : ["_", top || "_"];
 
             const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted.media.toBuffer();
