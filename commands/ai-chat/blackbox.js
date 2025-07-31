@@ -8,7 +8,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
-        const input = ctx.args.join(" ") || ctx?.quoted?.conversation || (ctx.quoted && ((Object.values(ctx.quoted).find(v => v?.text || v?.caption)?.text) || (Object.values(ctx.quoted).find(v => v?.text || v?.caption)?.caption))) || null;
+        const input = ctx.args.join(" ") || ctx?.quoted?.content;
 
         if (!input) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
@@ -16,10 +16,9 @@ module.exports = {
             formatter.quote(tools.msg.generateNotes(["AI ini dapat melihat gambar dan menjawab pertanyaan tentang gambar tersebut.", "Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru."]))
         );
 
-        const messageType = ctx.getMessageType();
         const [checkMedia, checkQuotedMedia] = await Promise.all([
-            tools.cmd.checkMedia(messageType, "image"),
-            tools.cmd.checkQuotedMedia(ctx?.quoted, "image")
+            tools.cmd.checkMedia(ctx.msg.contentType, "image"),
+            tools.cmd.checkQuotedMedia(ctx?.quoted?.contentType, "image")
         ]);
 
         try {

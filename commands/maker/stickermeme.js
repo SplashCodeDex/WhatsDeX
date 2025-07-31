@@ -18,10 +18,9 @@ module.exports = {
             formatter.quote(tools.msg.generateCmdExample(ctx.used, "get in the fucking robot|shinji!"))
         );
 
-        const messageType = ctx.getMessageType();
         const [checkMedia, checkQuotedMedia] = await Promise.all([
-            tools.cmd.checkMedia(messageType, ["image", "sticker"]),
-            tools.cmd.checkQuotedMedia(ctx?.quoted, ["image", "sticker"])
+            tools.cmd.checkMedia(ctx.msg.contentType, ["image", "sticker"]),
+            tools.cmd.checkQuotedMedia(ctx?.quoted?.contentType, ["image", "sticker"])
         ]);
 
         if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], ["image", "sticker"])));

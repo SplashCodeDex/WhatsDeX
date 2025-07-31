@@ -168,25 +168,25 @@ module.exports = (bot) => {
         const muteList = groupDb?.mute || [];
         if (muteList.includes(senderId)) await ctx.deleteMessage(m.key);
 
+        // Penanganan bug hama!
+        const analyze = analyzeMessage(m.message);
+        if (analyze.isMalicious) {
+            await ctx.deleteMessage(m.key);
+            await bot.block(senderJid);
+            await db.set(`user.${senderId}.banned`, true);
+
+            await ctx.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
+                text: `📢 Akun @${senderId} telah diblokir secara otomatis karena alasan: "${analyze.reason}".`,
+                mentions: [senderJid]
+            });
+        }
+
         // Grup atau Pribadi
         if (isGroup || isPrivate) {
             if (m.key.fromMe) return;
 
-            // Penanganan bug hama!
-            const analyze = analyzeMessage(m.message);
-            if (analyze.isMalicious) {
-                await ctx.deleteMessage(m.key);
-                await bot.block(senderJid);
-                await db.set(`user.${senderId}.banned`, true);
-
-                await ctx.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
-                    text: `📢 Akun @${senderId} telah diblokir secara otomatis karena alasan: "${analyze.reason}".`,
-                    mentions: [senderJid]
-                });
-            }
-
-            config.bot.dbSize = fs.existsSync("database.json") ? tools.msg.formatSize(fs.statSync("database.json").size / 1024) : "N/A"; // Penangan pada ukuran database
             config.bot.uptime = tools.msg.convertMsToDuration(Date.now() - config.bot.readyAt); // Penangan pada uptime
+            config.bot.dbSize = fs.existsSync("database.json") ? tools.msg.formatSize(fs.statSync("database.json").size / 1024) : "N/A"; // Penangan pada ukuran database
 
             // Penanganan database pengguna
             if (isOwner || userDb?.premium) db.set(`user.${senderId}.coin`, 0);

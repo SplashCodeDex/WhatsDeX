@@ -8,10 +8,9 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
-        const messageType = ctx.getMessageType();
         const [checkMedia, checkQuotedMedia] = await Promise.all([
-            tools.cmd.checkMedia(messageType, ["video"]),
-            tools.cmd.checkQuotedMedia(ctx?.quoted, ["video"])
+            tools.cmd.checkMedia(ctx.msg.contentType, ["video"]),
+            tools.cmd.checkQuotedMedia(ctx?.quoted?.contentType, ["video"])
         ]);
 
         if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], ["video"])));

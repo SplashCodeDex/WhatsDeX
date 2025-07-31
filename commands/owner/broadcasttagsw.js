@@ -6,7 +6,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
-        const input = ctx.args.join(" ") || ctx?.quoted?.conversation || (ctx.quoted && ((Object.values(ctx.quoted).find(v => v?.text || v?.caption)?.text) || (Object.values(ctx.quoted).find(v => v?.text || v?.caption)?.caption))) || null;
+        const input = ctx.args.join(" ") || ctx?.quoted?.content;
 
         if (!input) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
@@ -14,10 +14,9 @@ module.exports = {
             formatter.quote(tools.msg.generateNotes(["Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.", `Gunakan ${formatter.inlineCode("blacklist")} untuk memasukkan grup ke dalam blacklist. (Hanya berfungsi pada grup)`]))
         );
 
-        const messageType = ctx.getMessageType();
         const [checkMedia, checkQuotedMedia] = await Promise.all([
-            tools.cmd.checkMedia(messageType, ["image", "gif", "video"]),
-            tools.cmd.checkQuotedMedia(ctx?.quoted, ["image", "gif", "video"])
+            tools.cmd.checkMedia(ctx.msg.contentType, ["image", "gif", "video"]),
+            tools.cmd.checkQuotedMedia(ctx?.quoted?.contentType, ["image", "gif", "video"])
         ]);
 
         if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], ["image", "gif", "video"])));
