@@ -1,3 +1,6 @@
+const {
+    ButtonBuilder
+} = require("@itsreimau/gktw");
 const axios = require("axios");
 
 module.exports = {
@@ -13,8 +16,7 @@ module.exports = {
             const listText = await tools.list.get("waifuim");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         }
 
@@ -33,12 +35,9 @@ module.exports = {
                 mimetype: tools.mime.lookup("jpg"),
                 caption: formatter.quote(`Kategori: ${tools.msg.ucwords(waifuim)}`),
                 footer: config.msg.footer,
-                buttons: [{
-                    buttonId: input ? `${ctx.used.prefix + ctx.used.command} ${input}` : ctx.used.prefix + ctx.used.command,
-                    buttonText: {
-                        displayText: "Ambil Lagi"
-                    }
-                }]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Ambil Lagi", input ? `${ctx.used.prefix + ctx.used.command} ${input}` : ctx.used.prefix + ctx.used.command)
+                    .build()
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

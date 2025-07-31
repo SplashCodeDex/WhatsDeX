@@ -1,3 +1,6 @@
+const {
+    ButtonBuilder
+} = require("@itsreimau/gktw");
 const moment = require("moment-timezone");
 
 module.exports = {
@@ -77,19 +80,10 @@ module.exports = {
                 caption: text.trim(),
                 mentions: [ctx.sender.jid],
                 footer: config.msg.footer,
-                buttons: [{
-                        buttonId: `${ctx.used.prefix}owner`,
-                        buttonText: {
-                            displayText: "Hubungi Owner"
-                        }
-                    },
-                    {
-                        buttonId: `${ctx.used.prefix}donate`,
-                        buttonText: {
-                            displayText: "Donasi"
-                        }
-                    }
-                ]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Hubungi Owner", `${ctx.used.prefix}owner`)
+                    .regulerButton("Donasi", `${ctx.used.prefix}donate`)
+                    .build()
             }, {
                 quoted: tools.cmd.fakeMetaAiQuotedText(config.msg.note)
             });

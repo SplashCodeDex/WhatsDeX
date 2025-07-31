@@ -29,8 +29,7 @@ module.exports = {
                 fileName: result.filename,
                 mimetype: tools.mime.lookup(result.filename) || "application/octet-stream",
                 caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

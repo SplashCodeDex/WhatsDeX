@@ -1,3 +1,6 @@
+const {
+    AlbumBuilder
+} = require("@itsreimau/gktw");
 const axios = require("axios");
 
 module.exports = {
@@ -11,21 +14,15 @@ module.exports = {
         try {
             const apiUrl = tools.api.createUrl("https://sandipbaruwal.onrender.com", "/dp");
             const result = (await axios.get(apiUrl)).data;
+            const album = new AlbumBuilder()
+                .addImageUrl(result.male)
+                .addImageUrl(result.female)
+                .build();
 
-            return await ctx.core.sendAlbumMessage(ctx.id, [{
-                    image: {
-                        url: result.male
-                    },
-                    mimetype: tools.mime.lookup("jpg")
-                },
-                {
-                    image: {
-                        url: result.female
-                    },
-                    mimetype: tools.mime.lookup("jpg")
-                }
-            ], {
-                quoted: ctx.msg
+            return await ctx.reply({
+                album: album,
+                caption: formatter.quote("Untukmu, tuan!"),
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

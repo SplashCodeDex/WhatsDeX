@@ -1,5 +1,6 @@
 // Impor modul dan dependensi yang diperlukan
 const {
+    ButtonBuilder,
     Events,
     VCardBuilder
 } = require("@itsreimau/gktw");
@@ -201,12 +202,9 @@ module.exports = (bot) => {
             if (isCmd?.didyoumean) await ctx.reply({
                 text: formatter.quote(`🧐 Apakah maksudmu ${formatter.inlineCode(isCmd.prefix + isCmd.didyoumean)}?`),
                 footer: config.msg.footer,
-                buttons: [{
-                    buttonId: `${isCmd.prefix + isCmd.didyoumean} ${isCmd.input}`,
-                    buttonText: {
-                        displayText: "Ya, benar!"
-                    }
-                }]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Ya, benar!", `${isCmd.prefix + isCmd.didyoumean} ${isCmd.input}`)
+                    .build()
             });
 
             // Penanganan AFK (Menghapus status AFK pengguna yang mengirim pesan)

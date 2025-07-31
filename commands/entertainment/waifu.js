@@ -1,3 +1,6 @@
+const {
+    ButtonBuilder
+} = require("@itsreimau/gktw");
 const axios = require("axios");
 
 module.exports = {
@@ -18,12 +21,9 @@ module.exports = {
                 mimetype: tools.mime.lookup("jpeg"),
                 caption: formatter.quote("My bini."),
                 footer: config.msg.footer,
-                buttons: [{
-                    buttonId: ctx.used.prefix + ctx.used.command,
-                    buttonText: {
-                        displayText: "Ambil Lagi"
-                    }
-                }]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Ambil Lagi", ctx.used.prefix + ctx.used.command)
+                    .build()
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

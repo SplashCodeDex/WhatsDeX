@@ -35,8 +35,7 @@ module.exports = {
                 },
                 mimetype: tools.mime.lookup("png"),
                 caption: formatter.quote("Untukmu, tuan!"),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

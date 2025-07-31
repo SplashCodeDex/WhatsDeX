@@ -1,3 +1,7 @@
+const {
+    ButtonBuilder
+} = require("@itsreimau/gktw");
+
 module.exports = {
     name: "picre",
     category: "entertainment",
@@ -15,12 +19,9 @@ module.exports = {
                 mimetype: tools.mime.lookup("png"),
                 caption: formatter.quote("Untukmu, tuan!"),
                 footer: config.msg.footer,
-                buttons: [{
-                    buttonId: ctx.used.prefix + ctx.used.command,
-                    buttonText: {
-                        displayText: "Ambil Lagi"
-                    }
-                }]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Ambil Lagi", ctx.used.prefix + ctx.used.command)
+                    .build()
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

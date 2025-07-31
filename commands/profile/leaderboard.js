@@ -35,8 +35,7 @@ module.exports = {
             return await ctx.reply({
                 text: resultText.trim(),
                 mentions: [`${senderId}@s.whatsapp.net`],
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);

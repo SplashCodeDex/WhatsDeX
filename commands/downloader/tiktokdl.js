@@ -1,3 +1,6 @@
+const {
+    AlbumBuilder
+} = require("@itsreimau/gktw");
 const axios = require("axios");
 
 module.exports = {
@@ -30,19 +33,20 @@ module.exports = {
                 },
                 mimetype: tools.mime.lookup("mp4"),
                 caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
-            if (result.images) {
-                const album = result.images.map(imageUrl => ({
-                    image: {
-                        url: imageUrl
-                    },
-                    mimetype: tools.mime.lookup("jpeg")
-                }));
 
-                return await ctx.core.sendAlbumMessage(ctx.id, album, {
-                    quoted: ctx.msg
+
+            if (result.images) {
+                const album = new AlbumBuilder();
+                for (const imageUrl of result.images) {
+                    album.addImageUrl(imageUrl);
+                }
+
+                return await ctx.reply({
+                    album: album.build(),
+                    caption: formatter.quote(`URL: ${url}`),
+                    footer: config.msg.footer
                 });
             }
         } catch (error) {

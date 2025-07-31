@@ -1,6 +1,7 @@
 // Impor modul dan dependensi yang diperlukan
 const {
-    Cooldown
+    Cooldown,
+    ButtonBuilder
 } = require("@itsreimau/gktw");
 const moment = require("moment-timezone");
 
@@ -54,12 +55,9 @@ module.exports = (bot) => {
                 await ctx.reply({
                     text: formatter.quote(`🎊 Selamat! Kamu telah naik ke level ${newUserLevel}.`),
                     footer: config.msg.footer,
-                    buttons: [{
-                        buttonId: `${ctx.used.prefix}setprofile autolevelup`,
-                        buttonText: {
-                            displayText: "Nonaktifkan Autolevelup"
-                        }
-                    }]
+                    buttons: new ButtonBuilder()
+                        .regulerButton("Nonaktifkan Autolevelup", `${ctx.used.prefix}setprofile autolevelup`)
+                        .build()
                 });
             }
 
@@ -131,8 +129,7 @@ module.exports = (bot) => {
                     simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
-                        interactiveButtons: []
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`)
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
                 } else {
@@ -212,8 +209,7 @@ module.exports = (bot) => {
                     simulateTyping();
                     await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
-                        interactiveButtons: []
+                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`)
                     });
                     return await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
                 } else {

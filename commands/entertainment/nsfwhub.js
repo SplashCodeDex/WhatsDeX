@@ -1,3 +1,7 @@
+const {
+    ButtonBuilder
+} = require("@itsreimau/gktw");
+
 module.exports = {
     name: "nsfwhub",
     category: "entertainment",
@@ -11,8 +15,7 @@ module.exports = {
             const listText = await tools.list.get("nsfwhub");
             return await ctx.reply({
                 text: listText,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         }
 
@@ -28,12 +31,9 @@ module.exports = {
                 mimetype: tools.mime.lookup("jpg"),
                 caption: formatter.quote(`Kategori: ${tools.msg.ucwords(nsfwhub)}`),
                 footer: config.msg.footer,
-                buttons: [{
-                    buttonId: input ? `${ctx.used.prefix + ctx.used.command} ${input}` : ctx.used.prefix + ctx.used.command,
-                    buttonText: {
-                        displayText: "Ambil Lagi"
-                    }
-                }]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Ambil Lagi", input ? `${ctx.used.prefix + ctx.used.command} ${input}` : ctx.used.prefix + ctx.used.command)
+                    .build()
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

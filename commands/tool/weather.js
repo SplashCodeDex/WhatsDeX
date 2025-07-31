@@ -41,8 +41,7 @@ module.exports = {
                     `${formatter.quote(`Jarak Pandang: ${(result.visibility/1000).toFixed(1)} km`)}\n` +
                     `${formatter.quote(`Matahari Terbit: ${moment.unix(result.sys.sunrise).tz("Asia/Jakarta").format("HH:mm")} WIB`)}\n` +
                     formatter.quote(`Matahari Terbenam: ${moment.unix(result.sys.sunset).tz("Asia/Jakarta").format("HH:mm")} WIB`),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

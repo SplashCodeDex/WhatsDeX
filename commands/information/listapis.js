@@ -12,8 +12,7 @@ module.exports = {
             return await ctx.reply({
                 text: `${formatter.quote("Daftar API yang digunakan:")}\n` +
                     resultText.trim(),
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error);

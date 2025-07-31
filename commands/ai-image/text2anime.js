@@ -1,3 +1,7 @@
+const {
+    ButtonBuilder
+} = require("@itsreimau/gktw");
+
 module.exports = {
     name: "text2anime",
     aliases: ["texttoanime"],
@@ -27,12 +31,9 @@ module.exports = {
                 mimetype: tools.mime.lookup("jpg"),
                 caption: formatter.quote(`Prompt: ${input}`),
                 footer: config.msg.footer,
-                buttons: [{
-                    buttonId: `${ctx.used.prefix + ctx.used.command} ${input}`,
-                    buttonText: {
-                        displayText: "Ambil Lagi"
-                    }
-                }]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Ambil Lagi", `${ctx.used.prefix + ctx.used.command} ${input}`)
+                    .build()
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

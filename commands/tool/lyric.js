@@ -25,8 +25,7 @@ module.exports = {
                 text: `${formatter.quote(`Judul: ${result.title}`)}\n` +
                     `${formatter.quote("─────")}\n` +
                     result.lyrics,
-                footer: config.msg.footer,
-                interactiveButtons: []
+                footer: config.msg.footer
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);

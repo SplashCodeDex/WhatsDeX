@@ -30,15 +30,13 @@ module.exports = {
                     mimetype: tools.mime.lookup("jpg"),
                     caption: text,
                     mentions: [ctx.sender.jid],
-                    footer: config.msg.footer,
-                    interactiveButtons: []
+                    footer: config.msg.footer
                 });
             } else {
                 return await ctx.reply({
                     text: text,
                     mentions: [ctx.sender.jid],
-                    footer: config.msg.footer,
-                    interactiveButtons: []
+                    footer: config.msg.footer
                 });
             }
         } catch (error) {

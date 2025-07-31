@@ -1,3 +1,6 @@
+const {
+    ButtonBuilder
+} = require("@itsreimau/gktw");
 const axios = require("axios");
 const didYouMean = require("didyoumean");
 
@@ -33,24 +36,18 @@ module.exports = {
                     `${formatter.quote(`Jumlah jawaban: ${game.answers.size}`)}\n` +
                     formatter.quote(`Batas waktu: ${tools.msg.convertMsToDuration(game.timeout)}`),
                 footer: config.msg.footer,
-                buttons: [{
-                    buttonId: "surrender",
-                    buttonText: {
-                        displayText: "Menyerah"
-                    }
-                }]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Menyerah", "surrender")
+                    .build()
             });
 
             const collector = ctx.MessageCollector({
                 time: game.timeout
             });
 
-            const playAgain = [{
-                buttonId: ctx.used.prefix + ctx.used.command,
-                buttonText: {
-                    displayText: "Main Lagi"
-                }
-            }];
+            const playAgain = new ButtonBuilder()
+                .regulerButton("Main Lagi", ctx.used.prefix + ctx.used.command)
+                .build();
 
             collector.on("collect", async (m) => {
                 const participantAnswer = m.content.toLowerCase();

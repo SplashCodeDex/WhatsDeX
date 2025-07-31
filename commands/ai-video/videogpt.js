@@ -1,3 +1,7 @@
+const {
+    ButtonBuilder
+} = require("@itsreimau/gktw");
+
 module.exports = {
     name: "videogpt",
     category: "ai-video",
@@ -25,12 +29,9 @@ module.exports = {
                 mimetype: tools.mime.lookup("mp4"),
                 caption: formatter.quote(`Prompt: ${input}`),
                 footer: config.msg.footer,
-                buttons: [{
-                    buttonId: `${ctx.used.prefix + ctx.used.command} ${input}`,
-                    buttonText: {
-                        displayText: "Ambil Lagi"
-                    }
-                }]
+                buttons: new ButtonBuilder()
+                    .regulerButton("Ambil Lagi", `${ctx.used.prefix + ctx.used.command} ${input}`)
+                    .build()
             });
         } catch (error) {
             return await tools.cmd.handleError(ctx, error, true);
