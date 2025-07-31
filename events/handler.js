@@ -26,7 +26,7 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
 
     for (const jid of m.participants) {
         const isWelcome = type === Events.UserJoin;
-        const userTag = `@${ctx.getId(jid)}`;
+        const userTag = `@${bot.getId(jid)}`;
         const customText = isWelcome ? groupDb?.text?.welcome : groupDb?.text?.goodbye;
         const metadata = await bot.core.groupMetadata(groupJid);
         const text = customText ?
@@ -122,7 +122,7 @@ module.exports = (bot) => {
         }
 
         // Tetapkan config pada bot
-        const id = ctx.getId(m.user.id);
+        const id = bot.getId(m.user.id);
         config.bot = {
             ...config.bot,
             id,
