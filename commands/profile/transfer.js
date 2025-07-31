@@ -7,7 +7,7 @@ module.exports = {
         const coinAmount = parseInt(ctx.args[ctx?.quoted?.senderJid ? 0 : 1], 10) || null;
 
         const senderJid = ctx.sender.jid;
-        const senderId = tools.cmd.getId(senderJid);
+        const senderId = ctx.getId(senderJid);
 
         if (!userJid && !coinAmount) return await ctx.reply({
             text: `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
@@ -26,7 +26,7 @@ module.exports = {
         if (userDb?.coin < coinAmount) return await ctx.reply(formatter.quote("❎ Koin-mu tidak mencukupi untuk transfer ini!"));
 
         try {
-            await db.add(`user.${tools.cmd.getId(userJid)}.coin`, coinAmount);
+            await db.add(`user.${ctx.getId(userJid)}.coin`, coinAmount);
             await db.subtract(`user.${senderId}.coin`, coinAmount);
 
             return await ctx.reply(formatter.quote(`✅ Berhasil mentransfer ${coinAmount} koin ke pengguna itu!`));

@@ -19,9 +19,9 @@ module.exports = (bot) => {
         const isGroup = ctx.isGroup();
         const isPrivate = !isGroup;
         const senderJid = ctx.sender.jid;
-        const senderId = tools.cmd.getId(senderJid);
+        const senderId = ctx.getId(senderJid);
         const groupJid = isGroup ? ctx.id : null;
-        const groupId = isGroup ? tools.cmd.getId(groupJid) : null;
+        const groupId = isGroup ? ctx.getId(groupJid) : null;
         const isOwner = tools.cmd.isOwner(senderId, ctx.msg.key.id);
         const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 

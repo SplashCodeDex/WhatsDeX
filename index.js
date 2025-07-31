@@ -3,12 +3,7 @@ require("./config.js");
 const pkg = require("./package.json");
 const tools = require("./tools/exports.js");
 const {
-    bold,
-    inlineCode,
-    italic,
-    monospace,
-    quote,
-    strikethrough
+    Formatter
 } = require("@itsreimau/gktw");
 const {
     Consolefy
@@ -34,14 +29,7 @@ Object.assign(global, {
     config,
     consolefy: c,
     db: new SimplDB(),
-    formatter: {
-        bold,
-        inlineCode,
-        italic,
-        monospace,
-        quote,
-        strikethrough
-    },
+    formatter: Formatter,
     tools
 });
 

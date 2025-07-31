@@ -11,7 +11,7 @@ module.exports = {
 
         if (!userJid) return await ctx.reply({
             text: `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-                `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${tools.cmd.getId(ctx.sender.jid)} 30`))}\n` +
+                `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${ctx.getId(ctx.sender.jid)} 30`))}\n` +
                 `${formatter.quote(tools.msg.generateNotes(["Balas atau kutip pesan untuk menjadikan pengirim sebagai akun target."]))}\n` +
                 formatter.quote(tools.msg.generatesFlagInfo({
                     "-s": "Tetap diam dengan tidak menyiarkan ke orang yang relevan"
@@ -25,7 +25,7 @@ module.exports = {
         if (daysAmount && daysAmount <= 0) return await ctx.reply(formatter.quote("❎ Durasi Premium (dalam hari) harus diisi dan lebih dari 0!"));
 
         try {
-            const userId = tools.cmd.getId(userJid);
+            const userId = ctx.getId(userJid);
 
             const flag = tools.cmd.parseFlag(ctx.args.join(" "), {
                 "-s": {

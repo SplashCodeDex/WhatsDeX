@@ -11,7 +11,7 @@ module.exports = {
 
         if (!userJid || !coinAmount) return await ctx.reply({
             text: `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-                `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${tools.cmd.getId(ctx.sender.jid)} 8`))}\n` +
+                `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${ctx.getId(ctx.sender.jid)} 8`))}\n` +
                 `${formatter.quote(tools.msg.generateNotes(["Balas atau kutip pesan untuk menjadikan pengirim sebagai akun target."]))}\n` +
                 formatter.quote(tools.msg.generatesFlagInfo({
                     "-s": "Tetap diam dengan tidak menyiarkan ke orang yang relevan"
@@ -23,7 +23,7 @@ module.exports = {
         if (isOnWhatsApp.length === 0) return await ctx.reply(formatter.quote("❎ Akun tidak ada di WhatsApp!"));
 
         try {
-            await db.add(`user.${tools.cmd.getId(userJid)}.coin`, coinAmount);
+            await db.add(`user.${ctx.getId(userJid)}.coin`, coinAmount);
 
             const flag = tools.cmd.parseFlag(ctx.args.join(" "), {
                 "-s": {

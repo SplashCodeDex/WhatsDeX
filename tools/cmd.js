@@ -105,20 +105,6 @@ function generateUID(id, withBotName = true) {
     return uid;
 }
 
-function getId(jid) {
-    if (!jid) return null;
-
-    const id = jid?.replace(/^@+/, "")?.split("@")[0]?.split(":")[0];
-    return /^\d+$/.test(id) ? id : null;
-}
-
-async function getPushName(jid) {
-    if (!jid) return null;
-
-    const pushNames = await db.get("bot.pushNames") || [{}];
-    return pushNames[0][jid] || null;
-}
-
 function getRandomElement(arr) {
     if (!arr || !arr.length) return null;
 

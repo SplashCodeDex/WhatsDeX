@@ -151,7 +151,7 @@ Untuk menambahkan perintah baru, ikuti langkah-langkah berikut:
 
 Untuk dokumentasi lengkap, silakan kunjungi:
 - [@mengkodingan/ckptw](https://www.npmjs.com/package/@mengkodingan/ckptw) - Referensi dasar struktur command
-- [itsreimau/Utils](https://github.com/itsreimau/gktw) **(Fork Resmi untuk gaxtawu)** - Dokumentasi versi custom yang digunakan
+- [itsreimau/gktw](https://github.com/itsreimau/gktw) **(Fork Resmi untuk gaxtawu)** - Dokumentasi versi custom yang digunakan
 - [@itsukichan/baileys](https://www.npmjs.com/package/@itsukichan/baileys) - Panduan pengiriman pesan/media
 
 ## Contribution
