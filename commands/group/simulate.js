@@ -1,6 +1,6 @@
 const {
     Events
-} = require("@itsukichan/utils");
+} = require("@itsreimau/gktw");
 const {
     handleWelcome
 } = require("../../events/handler.js");

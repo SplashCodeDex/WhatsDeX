@@ -1,7 +1,7 @@
 // Impor modul dan dependensi yang diperlukan
 const {
     Cooldown
-} = require("@itsukichan/utils");
+} = require("@itsreimau/gktw");
 const moment = require("moment-timezone");
 
 // Fungsi untuk mengecek koin pengguna

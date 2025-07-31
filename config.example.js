@@ -3,7 +3,7 @@ const {
     inlineCode,
     italic,
     quote
-} = require("@itsukichan/utils");
+} = require("@itsreimau/gktw");
 
 // Konfigurasi
 global.config = {

@@ -4,7 +4,7 @@ const events = require("./events/handler.js");
 const {
     Client,
     CommandHandler
-} = require("@itsukichan/utils");
+} = require("@itsreimau/gktw");
 const path = require("node:path");
 const util = require("node:util");
 

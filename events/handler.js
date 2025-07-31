@@ -2,7 +2,7 @@
 const {
     Events,
     VCardBuilder
-} = require("@itsukichan/utils");
+} = require("@itsreimau/gktw");
 const axios = require("axios");
 const moment = require("moment-timezone");
 const fs = require("node:fs");

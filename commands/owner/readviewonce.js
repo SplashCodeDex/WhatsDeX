@@ -1,6 +1,6 @@
 const {
     MessageType
-} = require("@itsukichan/utils");
+} = require("@itsreimau/gktw");
 
 module.exports = {
     name: "readviewonce",

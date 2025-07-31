@@ -1,6 +1,6 @@
 const {
     VCardBuilder
-} = require("@itsukichan/utils");
+} = require("@itsreimau/gktw");
 
 module.exports = {
     name: "owner",

@@ -39,7 +39,7 @@ module.exports = {
                     `${formatter.quote("─────")}\n` +
                     `${formatter.quote(`Bot Uptime: ${config.bot.uptime}`)}\n` +
                     `${formatter.quote(`Database: ${config.bot.dbSize} (Simpl.DB - JSON)`)}\n` +
-                    formatter.quote("Library: @itsukichan/utils (Fork of @mengkodingan/ckptw)"),
+                    formatter.quote("Library: @itsreimau/gktw (Fork of @mengkodingan/ckptw)"),
                 footer: config.msg.footer,
                 interactiveButtons: []
             });

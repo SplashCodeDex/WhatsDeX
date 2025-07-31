@@ -9,7 +9,7 @@ const {
     monospace,
     quote,
     strikethrough
-} = require("@itsukichan/utils");
+} = require("@itsreimau/gktw");
 const {
     Consolefy
 } = require("@mengkodingan/consolefy");

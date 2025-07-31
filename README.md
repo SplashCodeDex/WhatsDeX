@@ -143,7 +143,7 @@ Untuk menambahkan perintah baru, ikuti langkah-langkah berikut:
 
 ### Complete Documentation
 
-`gaxtawu` menggunakan versi modifikasi dari `@itsukichan/utils` yang telah difork dan disesuaikan khusus untuk bot ini. Library ini dibangun di atas `@itsukichan/baileys` yang menawarkan fitur lebih lengkap dibanding `@whiskeysockets/baileys`.
+`gaxtawu` menggunakan versi modifikasi dari `@itsreimau/gktw` yang telah difork dan disesuaikan khusus untuk bot ini. Library ini dibangun di atas `@itsukichan/baileys` yang menawarkan fitur lebih lengkap dibanding `@whiskeysockets/baileys`.
 
 #### Perbedaan Utama dengan Versi Original:
 - ✅ **Bug fixes** yang belum diatasi di versi original
@@ -151,7 +151,7 @@ Untuk menambahkan perintah baru, ikuti langkah-langkah berikut:
 
 Untuk dokumentasi lengkap, silakan kunjungi:
 - [@mengkodingan/ckptw](https://www.npmjs.com/package/@mengkodingan/ckptw) - Referensi dasar struktur command
-- [itsreimau/Utils](https://github.com/itsreimau/Utils) **(Fork Resmi untuk gaxtawu)** - Dokumentasi versi custom yang digunakan
+- [itsreimau/Utils](https://github.com/itsreimau/gktw) **(Fork Resmi untuk gaxtawu)** - Dokumentasi versi custom yang digunakan
 - [@itsukichan/baileys](https://www.npmjs.com/package/@itsukichan/baileys) - Panduan pengiriman pesan/media
 
 ## Contribution
