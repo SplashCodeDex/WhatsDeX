@@ -276,8 +276,6 @@ module.exports = {
     checkQuotedMedia,
     fakeMetaAiQuotedText,
     generateUID,
-    getId,
-    getPushName,
     getRandomElement,
     handleError,
     isCmd,
