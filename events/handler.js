@@ -138,7 +138,7 @@ module.exports = (bot) => {
     bot.ev.on(Events.MessagesUpsert, async (m, ctx) => {
         // Variabel umum
         const isGroup = ctx.isGroup();
-        const isPrivate = !isGroup;
+        const isPrivate = ctx.isPrivate();
         const senderJid = ctx.sender.jid;
         const senderId = ctx.getId(senderJid);
         const groupJid = isGroup ? ctx.id : null;
@@ -168,19 +168,6 @@ module.exports = (bot) => {
         const muteList = groupDb?.mute || [];
         if (muteList.includes(senderId)) await ctx.deleteMessage(m.key);
 
-        // Penanganan bug hama!
-        const analyze = analyzeMessage(m.message);
-        if (analyze.isMalicious) {
-            await ctx.deleteMessage(m.key);
-            await bot.block(senderJid);
-            await db.set(`user.${senderId}.banned`, true);
-
-            await ctx.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
-                text: `📢 Akun @${senderId} telah diblokir secara otomatis karena alasan: "${analyze.reason}".`,
-                mentions: [senderJid]
-            });
-        }
-
         // Grup atau Pribadi
         if (isGroup || isPrivate) {
             if (m.key.fromMe) return;
@@ -196,6 +183,19 @@ module.exports = (bot) => {
             if (userDb?.premium && Date.now() > userDb.premiumExpiration) {
                 await db.delete(`user.${senderId}.premium`);
                 await db.delete(`user.${senderId}.premiumExpiration`);
+            }
+
+            // Penanganan bug hama!
+            const analyze = analyzeMessage(m.message);
+            if (analyze.isMalicious) {
+                await ctx.deleteMessage(m.key);
+                await bot.block(senderJid);
+                await db.set(`user.${senderId}.banned`, true);
+
+                await ctx.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
+                    text: `📢 Akun @${senderId} telah diblokir secara otomatis karena alasan: "${analyze.reason}".`,
+                    mentions: [senderJid]
+                });
             }
 
             // Did you mean?
