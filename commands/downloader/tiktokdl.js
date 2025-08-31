@@ -8,18 +8,19 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, config, tools: { msg, cmd, api, mime } } = ctx.self.context;
         const url = ctx.args[0] || null;
 
         if (!url) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://www.tiktok.com/@grazeuz/video/7486690677888158984"))
+            `${formatter.quote(msg.generateInstruction(["send"], ["text"]))}\n` +
+            formatter.quote(cmd.generateCmdExample(ctx.used, "https://www.tiktok.com/@grazeuz/video/7486690677888158984"))
         );
 
-        const isUrl = tools.cmd.isUrl(url);
+        const isUrl = cmd.isUrl(url);
         if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
 
         try {
-            const apiUrl = tools.api.createUrl("diibot", "/api/download/tiktok", {
+            const apiUrl = api.createUrl("diibot", "/api/download/tiktok", {
                 url
             });
             const result = (await axios.get(apiUrl)).data.result;
@@ -29,7 +30,7 @@ module.exports = {
                     video: {
                         url: result.play
                     },
-                    mimetype: tools.mime.lookup("mp4"),
+                    mimetype: mime.lookup("mp4"),
                     caption: formatter.quote(`URL: ${url}`),
                     footer: config.msg.footer
                 });
@@ -38,7 +39,7 @@ module.exports = {
                     image: {
                         url: imageUrl
                     },
-                    mimetype: tools.mime.lookup("jpeg")
+                    mimetype: mime.lookup("jpeg")
                 }));
 
                 await ctx.reply({
@@ -47,7 +48,7 @@ module.exports = {
                 });
             }
         } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
+            await cmd.handleError(ctx, error, true);
         }
     }
 };

@@ -8,23 +8,24 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools: { msg, api, cmd } } = ctx.self.context;
         const input = ctx.args.join(" ") || ctx.quoted?.content || null;
 
         if (!input) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "apa itu evangelion?"))}\n` +
-            formatter.quote(tools.msg.generateNotes(["Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru."]))
+            `${formatter.quote(msg.generateInstruction(["send"], ["text"]))}\n` +
+            `${formatter.quote(cmd.generateCmdExample(ctx.used, "apa itu evangelion?"))}\n` +
+            formatter.quote(msg.generateNotes(["Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru."]))
         );
 
         try {
-            const apiUrl = tools.api.createUrl("davidcyril", "/ai/chatbot", {
+            const apiUrl = api.createUrl("davidcyril", "/ai/chatbot", {
                 query: input
             });
             const result = (await axios.get(apiUrl)).data.result;
 
             await ctx.reply(result);
         } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
+            await cmd.handleError(ctx, error, true);
         }
     }
 };
