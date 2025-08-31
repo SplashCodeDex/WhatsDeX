@@ -11,13 +11,13 @@ module.exports = {
 
         if (!input) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "gaxtawu"))
+            formatter.quote(tools.msg.generateCmdExample(ctx.used, "whatsdex"))
         );
 
         try {
             await ctx.group().updateSubject(input);
 
-            await ctx.reply(formatter.quote("✅ Berhasil mengubah nama grup!"));
+            await ctx.reply(formatter.quote("✅ Successfully changed the group name!"));
         } catch (error) {
             await tools.cmd.handleError(ctx, error);
         }

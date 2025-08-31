@@ -12,7 +12,7 @@ module.exports = {
 
         if (!url) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://github.com/itsreimau/gaxtawu"))
+            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://github.com/itsreimau/whatsdex"))
         );
 
         const isUrl = tools.cmd.isUrl(url);

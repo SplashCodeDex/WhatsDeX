@@ -27,7 +27,7 @@ module.exports = {
         try {
             await ctx.group().add(accountJid);
 
-            await ctx.reply(formatter.quote("✅ Berhasil ditambahkan!"));
+            await ctx.reply(formatter.quote("✅ Successfully added!"));
         } catch (error) {
             await tools.cmd.handleError(ctx, error);
         }

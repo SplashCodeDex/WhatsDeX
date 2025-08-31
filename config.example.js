@@ -1,114 +1,114 @@
-// Impor modul dan dependensi yang diperlukan
+// Import necessary modules and dependencies
 const {
     Formatter
 } = require("@itsreimau/gktw");
 
-// Konfigurasi
+// Configuration
 global.config = {
-    // Informasi bot dasar
+    // Basic bot information
     bot: {
-        name: "GAXTAWU", // Nama bot
-        prefix: /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i, // Karakter awalan untuk memanggil perintah
-        phoneNumber: "", // Nomor telepon bot (Tidak perlu diisi jika menggunakan QR code)
-        thumbnail: "https://repository-images.githubusercontent.com/753096396/84e76ef0-ba19-4c87-8ec2-ea803b097479", // Gambar thumbnail bot
-        groupJid: "", // JID untuk group bot (Tidak perlu diisi jika tidak menggunakan requireBotGroupMembership)
-        newsletterJid: "120363416372653441@newsletter", // JID untuk saluran bot
+        name: "whatsdex", // Bot name
+        prefix: /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i, // Prefix characters to trigger commands
+        phoneNumber: "", // Bot's phone number (not required if using QR code)
+        thumbnail: "https://repository-images.githubusercontent.com/753096396/84e76ef0-ba19-4c87-8ec2-ea803b097479", // Bot's thumbnail image
+        groupJid: "", // JID for the bot's group (not required if not using requireBotGroupMembership)
+        newsletterJid: "120363416372653441@newsletter", // JID for the bot's channel
 
-        // Konfigurasi autentikasi sesi bot
+        // Bot session authentication configuration
         authAdapter: {
-            adapter: "default", // Adapter untuk menyimpan sesi (Pilihan adapter: default, mysql, mongo, firebase)
+            adapter: "default", // Adapter for storing the session (Adapter options: default, mysql, mongo, firebase)
 
-            // Konfigurasi default
+            // Default configuration
             default: {
                 authDir: "state"
             },
 
-            // Konfigurasi MySQL
+            // MySQL configuration
             mysql: {
-                host: "localhost:3306", // Nama host
-                user: "root", // Nama pengguna
-                password: "admin123", // Kata sandi
-                database: "gaxtawu" // Nama database
+                host: "localhost:3306", // Hostname
+                user: "root", // Username
+                password: "admin123", // Password
+                database: "whatsdex" // Database name
             },
 
-            // Konfigurasi MongoDB
+            // MongoDB configuration
             mongodb: {
-                url: "mongodb://localhost:27017/gaxtawu" // URL
+                url: "mongodb://localhost:27017/whatsdex" // URL
             },
 
-            // Konfigurasi Firebase
+            // Firebase configuration
             firebase: {
-                tableName: "gaxtawu", // Nama tabel
-                session: "state" // Nama sesi
+                tableName: "whatsdex", // Table name
+                session: "state" // Session name
             }
         }
     },
 
-    // Pesan bot yang disesuaikan untuk situasi tertentu
+    // Custom bot messages for specific situations
     msg: {
-        admin: Formatter.quote("⛔ Perintah hanya dapat diakses oleh admin grup!"), // Pesan saat perintah hanya untuk admin
-        banned: Formatter.quote("⛔ Tidak dapat memproses karena kamu telah dibanned oleh Owner!"), // Pesan untuk pengguna yang dibanned
-        botAdmin: Formatter.quote("⛔ Tidak dapat memproses karena bot bukan admin grup ini!"), // Pesan jika bot bukan admin di grup
-        botGroupMembership: Formatter.quote(`⛔ Tidak dapat memproses karena kamu tidak bergabung dengan grup bot!`), // Pesan jika pengguna tidak bergabung dengan grup bot
-        coin: Formatter.quote("⛔ Tidak dapat memproses karena koin-mu tidak cukup!"), // Pesan saat koin tidak cukup
-        cooldown: Formatter.quote("🔄 Perintah ini sedang dalam cooldown, tunggu..."), // Pesan saat cooldown perintah
-        gamerestrict: Formatter.quote("⛔ Tidak dapat memproses karena grup ini membatasi game!"), // Pesan jika grup membatasi game
-        group: Formatter.quote("⛔ Perintah hanya dapat diakses dalam grup!"), // Pesan untuk perintah grup
-        groupSewa: Formatter.quote(`⛔ Bot tidak aktif karena grup ini belum melakukan sewa.`), // Pesan jika grup belum melakukan sewa
-        owner: Formatter.quote("⛔ Perintah hanya dapat diakses Owner!"), // Pesan untuk perintah yang hanya owner bisa akses
-        premium: Formatter.quote("⛔ Tidak dapat memproses karena kamu bukan pengguna Premium!"), // Pesan jika pengguna bukan Premium
-        private: Formatter.quote("⛔ Perintah hanya dapat diakses dalam obrolan pribadi!"), // Pesan untuk perintah obrolan pribadi
-        privatePremiumOnly: Formatter.quote("⛔ Menggunakan bot dalam obrolan pribadi hanya untuk pengguna Premium."), // Pesan jika pengguna bukan Premium menggunakan bot dalam obrolan pribadi
-        restrict: Formatter.quote("⛔ Perintah ini telah dibatasi karena alasan keamanan!"), // Pesan pembatasan perintah
-        unavailableAtNight: Formatter.quote("⛔ Bot tidak tersedia dari jam 12 malam sampai 6 pagi. Silakan kembali nanti!"), // Pesan jika tidak tersedia pada malam hari
+        admin: Formatter.quote("⛔ This command can only be accessed by group admins!"), // Message when a command is for admins only
+        banned: Formatter.quote("⛔ Cannot process because you have been banned by the Owner!"), // Message for banned users
+        botAdmin: Formatter.quote("⛔ Cannot process because the bot is not an admin in this group!"), // Message if the bot is not an admin in the group
+        botGroupMembership: Formatter.quote(`⛔ Cannot process because you have not joined the bot's group!`), // Message if the user has not joined the bot's group
+        coin: Formatter.quote("⛔ Cannot process because you don't have enough coins!"), // Message when coins are insufficient
+        cooldown: Formatter.quote("🔄 This command is on cooldown, please wait..."), // Message during command cooldown
+        gamerestrict: Formatter.quote("⛔ Cannot process because this group has restricted games!"), // Message if the group has restricted games
+        group: Formatter.quote("⛔ This command can only be accessed within a group!"), // Message for group-only commands
+        groupSewa: Formatter.quote(`⛔ The bot is inactive because this group has not been rented.`), // Message if the group has not been rented
+        owner: Formatter.quote("⛔ This command can only be accessed by the Owner!"), // Message for owner-only commands
+        premium: Formatter.quote("⛔ Cannot process because you are not a Premium user!"), // Message if the user is not Premium
+        private: Formatter.quote("⛔ This command can only be accessed in a private chat!"), // Message for private chat-only commands
+        privatePremiumOnly: Formatter.quote("⛔ Using the bot in a private chat is for Premium users only."), // Message if a non-Premium user uses the bot in a private chat
+        restrict: Formatter.quote("⛔ This command has been restricted for security reasons!"), // Command restriction message
+        unavailableAtNight: Formatter.quote("⛔ The bot is unavailable from 12 AM to 6 AM. Please come back later!"), // Message if unavailable at night
 
-        readmore: "\u200E".repeat(4001), // String read more
-        note: "“Lorem ipsum dolor sit amet, tenebris in umbra, vitae ad mortem.”", // Catatan
-        footer: Formatter.italic("Developed by ItsReimau with ❤"), // Catatan kaki
+        readmore: "\u200E".repeat(4001), // Read more string
+        note: "“Lorem ipsum dolor sit amet, in the shadow of darkness, life unto death.”", // Note
+        footer: Formatter.italic("Developed by ItsReimau with ❤"), // Footer
 
-        wait: Formatter.quote("🔄 Tunggu sebentar..."), // Pesan loading
-        notFound: Formatter.quote("❎ Tidak ada yang ditemukan! Coba lagi nanti."), // Pesan item tidak ditemukan
-        urlInvalid: Formatter.quote("❎ URL tidak valid!") // Pesan jika URL tidak valid
+        wait: Formatter.quote("🔄 Please wait a moment..."), // Loading message
+        notFound: Formatter.quote("❎ Nothing found! Please try again later."), // Item not found message
+        urlInvalid: Formatter.quote("❎ Invalid URL!") // Message if the URL is invalid
     },
 
-    // Informasi owner bot
+    // Bot owner information
     owner: {
-        name: "", // Nama owner bot
-        organization: "", // Nama organisasi owner bot
-        id: "", // Nomor telepon owner bot
-        co: [""] // Nomor co-owner bot
+        name: "", // Bot owner's name
+        organization: "", // Bot owner's organization name
+        id: "", // Bot owner's phone number
+        co: [""] // Co-owner's phone number
     },
 
-    // Stiker bot
+    // Bot sticker
     sticker: {
-        packname: "", // Nama paket stiker
-        author: "gaxtawu <github.com/itsreimau/gaxtawu>" // Pembuat stiker
+        packname: "", // Sticker pack name
+        author: "whatsdex <github.com/itsreimau/whatsdex>" // Sticker author
     },
 
-    // Sistem bot
+    // Bot system
     system: {
-        alwaysOnline: true, // Bot selalu berstatus "online"
-        antiCall: true, // Bot secara otomatis membanned orang yang menelepon
-        autoRead: true, // Bot baca pesan otomatis
-        autoMention: true, // Bot otomatis mention seseorang dalam pesan yang dikirim
-        autoAiLabel: true, // Bot otomatis menambahkan label AI dalam pesan yang dikirim
-        autoTypingOnCmd: true, // Tampilkan status "sedang mengetik" saat memproses perintah
-        cooldown: 10 * 1000, // Jeda antar perintah (ms)
-        maxListeners: 50, // Max listeners untuk events
-        port: 3000, // Port (Jika pakai server)
-        privatePremiumOnly: false, // Pengguna bukan Premium tidak diperbolehkan menggunakan bot dalam percakapan pribadi
-        restrict: false, // Batasi akses perintah
-        requireBotGroupMembership: false, // Harus gabung grup bot
-        requireGroupSewa: false, // Harus sewa bot untuk bisa dipakai di grup
-        reportErrorToOwner: true, // Laporkan error ke owner bot
-        selfOwner: false, // Bot jadi owner sendiri
-        selfReply: true, // Bot bisa balas pesan bot sendiri
-        timeZone: "Asia/Jakarta", // Zona waktu bot
-        unavailableAtNight: false, // Bot tidak tersedia pada malam hari, dari jam 12 malam sampai 6 pagi (Waktu akan disesuaikan menurut timeZone)
-        useCoin: true, // Pakai koin
-        usePairingCode: false, // Pakai kode pairing untuk koneksi
-        customPairingCode: "UMBR4L15", // Kode pairing kustom untuk koneksi (Opsional, jika menggunakan QR code, jika kosong kode pairing akan random)
-        useStore: false, // Store untuk menyimpan pesan masuk
-        useServer: false // Jalankan bot dengan server
+        alwaysOnline: true, // Bot always has "online" status
+        antiCall: true, // Bot automatically bans people who call
+        autoRead: true, // Bot automatically reads messages
+        autoMention: true, // Bot automatically mentions someone in sent messages
+        autoAiLabel: true, // Bot automatically adds an AI label in sent messages
+        autoTypingOnCmd: true, // Show "typing..." status when processing commands
+        cooldown: 10 * 1000, // Cooldown between commands (ms)
+        maxListeners: 50, // Max listeners for events
+        port: 3000, // Port (if using a server)
+        privatePremiumOnly: false, // Non-Premium users are not allowed to use the bot in private conversations
+        restrict: false, // Restrict command access
+        requireBotGroupMembership: false, // Must join the bot's group
+        requireGroupSewa: false, // Must rent the bot to be used in a group
+        reportErrorToOwner: true, // Report errors to the bot owner
+        selfOwner: false, // Bot becomes its own owner
+        selfReply: true, // Bot can reply to its own messages
+        timeZone: "Asia/Jakarta", // Bot's time zone
+        unavailableAtNight: false, // Bot is unavailable at night, from 12 AM to 6 AM (Time will be adjusted according to timeZone)
+        useCoin: true, // Use coins
+        usePairingCode: false, // Use pairing code for connection
+        customPairingCode: "UMBR4L15", // Custom pairing code for connection (Optional, if using QR code, if empty the pairing code will be random)
+        useStore: false, // Store for saving incoming messages
+        useServer: false // Run the bot with a server
     }
 };

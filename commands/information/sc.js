@@ -4,8 +4,8 @@ module.exports = {
     category: "information",
     code: async (ctx) => {
         await ctx.reply({
-            text: formatter.quote("https://github.com/itsreimau/gaxtawu"),
+            text: formatter.quote("https://github.com/itsreimau/whatsdex"),
             footer: config.msg.footer
-        }); // Jika kamu tidak menghapus ini, terima kasih!
+        }); // If you don't delete this, thank you!
     }
 };
