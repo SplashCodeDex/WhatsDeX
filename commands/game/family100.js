@@ -10,7 +10,7 @@ module.exports = {
         group: true
     },
     code: async (ctx) => {
-        if (session.has(ctx.id)) return await ctx.reply(formatter.quote("🎮 Sesi permainan sedang berjalan!"));
+        if (session.has(ctx.id)) return await ctx.reply(formatter.quote("🎮 A game session is already in progress!"));
 
         try {
             const apiUrl = tools.api.createUrl("https://raw.githubusercontent.com", "/BochilTeam/database/refs/heads/master/games/family100.json");
@@ -29,14 +29,16 @@ module.exports = {
             session.set(ctx.id, true);
 
             await ctx.reply({
-                text: `${formatter.quote(`Soal: ${result.soal}`)}\n` +
-                    `${formatter.quote(`Jumlah jawaban: ${game.answers.size}`)}\n` +
-                    formatter.quote(`Batas waktu: ${tools.msg.convertMsToDuration(game.timeout)}`),
+                text: `${formatter.quote(`Question: ${result.soal}`)}
+` +
+                    `${formatter.quote(`Number of answers: ${game.answers.size}`)}
+` +
+                    formatter.quote(`Time limit: ${tools.msg.convertMsToDuration(game.timeout)}`),
                 footer: config.msg.footer,
                 buttons: [{
                     buttonId: "surrender",
                     buttonText: {
-                        displayText: "Menyerah"
+                        displayText: "Surrender"
                     }
                 }]
             });
@@ -48,7 +50,7 @@ module.exports = {
             const playAgain = [{
                 buttonId: ctx.used.prefix + ctx.used.command,
                 buttonText: {
-                    displayText: "Main Lagi"
+                    displayText: "Play Again"
                 }
             }];
 
@@ -62,7 +64,7 @@ module.exports = {
 
                     await db.add(`user.${participantId}.coin`, game.coin.answered);
                     await ctx.sendMessage(ctx.id, {
-                        text: formatter.quote(`✅ ${tools.msg.ucwords(participantAnswer)} benar! Jawaban tersisa: ${game.answers.size}`)
+                        text: formatter.quote(`✅ ${tools.msg.ucwords(participantAnswer)} is correct! Remaining answers: ${game.answers.size}`)
                     }, {
                         quoted: m
                     });
@@ -75,7 +77,7 @@ module.exports = {
                             await db.add(`user.${participant}.winGame`, 1);
                         }
                         await ctx.sendMessage(ctx.id, {
-                            text: formatter.quote(`🎉 Selamat! Semua jawaban telah terjawab! Setiap anggota yang menjawab mendapat ${game.coin.allAnswered} koin.`),
+                            text: formatter.quote(`🎉 Congratulations! All answers have been answered! Each member who answered gets ${game.coin.allAnswered} coins.`),
                             footer: config.msg.footer,
                             buttons: playAgain
                         }, {
@@ -83,12 +85,13 @@ module.exports = {
                         });
                     }
                 } else if (participantAnswer === "surrender") {
-                    const remaining = [...game.answers].map(tools.msg.ucwords).join(", ").replace(/, ([^,]*)$/, ", dan $1");
+                    const remaining = [...game.answers].map(tools.msg.ucwords).join(", ").replace(/, ([^,]*)$/, ", and $1");
                     session.delete(ctx.id);
                     collector.stop();
                     await ctx.sendMessage(ctx.id, {
-                        text: `${formatter.quote("🏳️ Kamu menyerah!")}\n` +
-                            formatter.quote(`Jawaban yang belum terjawab adalah ${remaining}.`),
+                        text: `${formatter.quote("🏳️ You surrendered!")}
+` +
+                            formatter.quote(`The unanswered answers are ${remaining}.`),
                         footer: config.msg.footer,
                         buttons: playAgain
                     }, {
@@ -96,7 +99,7 @@ module.exports = {
                     });
                 } else if (didYouMean(participantAnswer, [game.answer]) === game.answer) {
                     await ctx.sendMessage(ctx.id, {
-                        text: formatter.quote("🎯 Sedikit lagi!")
+                        text: formatter.quote("🎯 A little more!")
                     }, {
                         quoted: m
                     });
@@ -104,13 +107,14 @@ module.exports = {
             });
 
             collector.on("end", async () => {
-                const remaining = [...game.answers].map(tools.msg.ucwords).join(", ").replace(/, ([^,]*)$/, ", dan $1");
+                const remaining = [...game.answers].map(tools.msg.ucwords).join(", ").replace(/, ([^,]*)$/, ", and $1");
 
                 if (session.has(ctx.id)) {
                     session.delete(ctx.id);
                     await ctx.reply({
-                        text: `${formatter.quote("⏱ Waktu habis!")}\n` +
-                            formatter.quote(`Jawaban yang belum terjawab adalah ${remaining}`),
+                        text: `${formatter.quote("⏱ Time is up!")}
+` +
+                            formatter.quote(`The unanswered answers are ${remaining}`),
                         footer: config.msg.footer,
                         buttons: playAgain
                     });

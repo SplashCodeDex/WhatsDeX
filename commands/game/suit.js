@@ -16,15 +16,15 @@ module.exports = {
         if (!accountJid) await ctx.reply({
             text: `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
                 `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${senderId}`))}\n` +
-                formatter.quote(tools.msg.generateNotes(["Balas atau kutip pesan untuk menjadikan pengirim sebagai akun target."])),
+                formatter.quote(tools.msg.generateNotes(["Reply or quote a message to make the sender the target account."])),
             mentions: [senderJid]
         });
 
-        if (accountId === config.bot.id) return await ctx.reply(formatter.quote("Tidak bisa menantang bot!"));
-        if (accountJid === senderJid) return await ctx.reply(formatter.quote("Tidak bisa menantang diri sendiri!"));
+        if (accountId === config.bot.id) return await ctx.reply(formatter.quote("Cannot challenge the bot!"));
+        if (accountJid === senderJid) return await ctx.reply(formatter.quote("Cannot challenge yourself!"));
 
         const existingGame = [...session.values()].find(game => game.players.includes(senderJid) || game.players.includes(accountJid));
-        if (existingGame) return await ctx.reply(formatter.quote("Salah satu pemain sedang dalam sesi permainan!"));
+        if (existingGame) return await ctx.reply(formatter.quote("One of the players is already in a game session!"));
 
         try {
             const game = {
@@ -36,19 +36,19 @@ module.exports = {
             };
 
             await ctx.reply({
-                text: `${formatter.quote(`Kamu menantang @${accountId} untuk bermain suit!`)}\n` +
-                    formatter.quote(`Bonus: ${game.coin} Koin`),
+                text: `${formatter.quote(`You challenged @${accountId} to a game of suit!`)}\n` +
+                    formatter.quote(`Bonus: ${game.coin} Coins`),
                 mentions: [accountJid],
                 footer: config.msg.footer,
                 buttons: [{
                     buttonId: "accept",
                     buttonText: {
-                        displayText: "Terima"
+                        displayText: "Accept"
                     }
                 }, {
                     buttonId: "reject",
                     buttonText: {
-                        displayText: "Tolak"
+                        displayText: "Reject"
                     }
                 }]
             });
@@ -72,27 +72,27 @@ module.exports = {
                     if (participantAnswer === "accept") {
                         game.started = true;
                         await ctx.sendMessage(m.jid, {
-                            text: formatter.quote(`@${accountId} menerima tantangan! Silahkan pilih di obrolan pribadi.`),
+                            text: formatter.quote(`@${accountId} accepted the challenge! Please make your choice in a private chat.`),
                             mentions: [accountJid]
                         }, {
                             quoted: m
                         });
 
-                        const choiceText = formatter.quote("Silahkan pilih salah satu:");
+                        const choiceText = formatter.quote("Please choose one:");
                         const buttons = [{
-                            buttonId: "batu",
+                            buttonId: "rock",
                             buttonText: {
-                                displayText: "Batu"
+                                displayText: "Rock"
                             }
                         }, {
-                            buttonId: "kertas",
+                            buttonId: "paper",
                             buttonText: {
-                                displayText: "Kertas"
+                                displayText: "Paper"
                             }
                         }, {
-                            buttonId: "gunting",
+                            buttonId: "scissors",
                             buttonText: {
-                                displayText: "Gunting"
+                                displayText: "Scissors"
                             }
                         }];
 
@@ -110,7 +110,7 @@ module.exports = {
                         session.delete(senderJid);
                         session.delete(accountJid);
                         await ctx.sendMessage(m.jid, {
-                            text: formatter.quote(`@${accountId} menolak tantangan suit.`),
+                            text: formatter.quote(`@${accountId} rejected the suit challenge.`),
                             mentions: [accountJid]
                         }, {
                             quoted: m
@@ -121,17 +121,17 @@ module.exports = {
 
                 if (!isGroup && game.started) {
                     const choices = {
-                        batu: {
+                        rock: {
                             index: 0,
-                            name: "Batu"
+                            name: "Rock"
                         },
-                        kertas: {
+                        paper: {
                             index: 1,
-                            name: "Kertas"
+                            name: "Paper"
                         },
-                        gunting: {
+                        scissors: {
                             index: 2,
-                            name: "Gunting"
+                            name: "Scissors"
                         }
                     };
                     const choiceData = choices[participantAnswer];
@@ -140,7 +140,7 @@ module.exports = {
                         game.choices.set(participantId, choiceData);
 
                         await ctx.sendMessage(participantJid, {
-                            text: formatter.quote(`Kamu memilih: ${choiceData.name}`)
+                            text: formatter.quote(`You chose: ${choiceData.name}`)
                         }, {
                             quoted: m
                         });
@@ -152,24 +152,24 @@ module.exports = {
                             ];
 
                             const result = (3 + sChoice.index - aChoice.index) % 3;
-                            let winnerText, coinText = "Tak seorang pun menang, tak seorang pun mendapat koin";
+                            let winnerText, coinText = "No one wins, no one gets coins";
 
                             if (result === 0) {
-                                winnerText = "Seri!";
+                                winnerText = "It's a draw!";
                             } else if (result === 1) {
-                                winnerText = `@${senderId} menang!`;
+                                winnerText = `@${senderId} wins!`;
                                 await db.add(`user.${senderId}.coin`, game.coin);
                                 await db.add(`user.${senderId}.winGame`, 1);
-                                coinText = `+${game.coin} Koin untuk @${senderId}`;
+                                coinText = `+${game.coin} Coins for @${senderId}`;
                             } else {
-                                winnerText = `@${accountId} menang!`;
+                                winnerText = `@${accountId} wins!`;
                                 await db.add(`user.${accountId}.coin`, game.coin);
                                 await db.add(`user.${accountId}.winGame`, 1);
-                                coinText = `+${game.coin} Koin untuk @${accountId}`;
+                                coinText = `+${game.coin} Coins for @${accountId}`;
                             }
 
                             await ctx.reply({
-                                text: `${formatter.quote("Hasil suit:")}\n` +
+                                text: `${formatter.quote("Suit results:")}\n` +
                                     `${formatter.quote(`@${senderId}: ${sChoice.name}`)}\n` +
                                     `${formatter.quote(`@${accountId}: ${aChoice.name}`)}\n` +
                                     `${formatter.quote(winnerText)}\n` +
@@ -189,7 +189,7 @@ module.exports = {
                 if (session.has(senderJid) || session.has(accountJid)) {
                     session.delete(senderJid);
                     session.delete(accountJid);
-                    await ctx.reply(formatter.quote("⏱ Waktu habis!"));
+                    await ctx.reply(formatter.quote("⏱ Time is up!"));
                 }
             });
         } catch (error) {

@@ -4,10 +4,10 @@ const didYouMean = require("didyoumean");
 const session = new Map();
 
 module.exports = {
-    name: "tebakgambar",
+    name: "guessthepicture",
     category: "game",
     code: async (ctx) => {
-        if (session.has(ctx.id)) return await ctx.reply(formatter.quote("🎮 Sesi permainan sedang berjalan!"));
+        if (session.has(ctx.id)) return await ctx.reply(formatter.quote("🎮 A game session is already in progress!"));
 
         try {
             const apiUrl = tools.api.createUrl("https://raw.githubusercontent.com", "/BochilTeam/database/refs/heads/master/games/tebakgambar.json");
@@ -26,19 +26,21 @@ module.exports = {
                     url: result.img
                 },
                 mimetype: tools.mime.lookup("jpeg"),
-                caption: `${formatter.quote(`Deskripsi: ${result.deskripsi}`)}\n` +
-                    `${formatter.quote(`Bonus: ${game.coin} Koin`)}\n` +
-                    formatter.quote(`Batas waktu: ${tools.msg.convertMsToDuration(game.timeout)}`),
+                caption: `${formatter.quote(`Description: ${result.deskripsi}`)}
+` +
+                    `${formatter.quote(`Bonus: ${game.coin} Coins`)}
+` +
+                    formatter.quote(`Time limit: ${tools.msg.convertMsToDuration(game.timeout)}`),
                 footer: config.msg.footer,
                 buttons: [{
                     buttonId: "hint",
                     buttonText: {
-                        displayText: "Petunjuk"
+                        displayText: "Hint"
                     }
                 }, {
                     buttonId: "surrender",
                     buttonText: {
-                        displayText: "Menyerah"
+                        displayText: "Surrender"
                     }
                 }]
             });
@@ -50,7 +52,7 @@ module.exports = {
             const playAgain = [{
                 buttonId: ctx.used.prefix + ctx.used.command,
                 buttonText: {
-                    displayText: "Main Lagi"
+                    displayText: "Play Again"
                 }
             }];
 
@@ -64,8 +66,9 @@ module.exports = {
                     await db.add(`user.${participantId}.coin`, game.coin);
                     await db.add(`user.${participantId}.winGame`, 1);
                     await ctx.sendMessage(ctx.id, {
-                        text: `${formatter.quote("💯 Benar!")}\n` +
-                            formatter.quote(`+${game.coin} Koin`),
+                        text: `${formatter.quote("💯 Correct!")}
+` +
+                            formatter.quote(`+${game.coin} Coins`),
                         footer: config.msg.footer,
                         buttons: playAgain
                     }, {
@@ -82,8 +85,9 @@ module.exports = {
                     session.delete(ctx.id);
                     collector.stop();
                     await ctx.sendMessage(ctx.id, {
-                        text: `${formatter.quote("🏳️ Kamu menyerah!")}\n` +
-                            formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`),
+                        text: `${formatter.quote("🏳️ You surrendered!")}
+` +
+                            formatter.quote(`The answer is ${tools.msg.ucwords(game.answer)}.`),
                         footer: config.msg.footer,
                         buttons: playAgain
                     }, {
@@ -91,7 +95,7 @@ module.exports = {
                     });
                 } else if (didYouMean(participantAnswer, [game.answer]) === game.answer) {
                     await ctx.sendMessage(ctx.id, {
-                        text: formatter.quote("🎯 Sedikit lagi!")
+                        text: formatter.quote("🎯 A little more!")
                     }, {
                         quoted: m
                     });
@@ -102,8 +106,9 @@ module.exports = {
                 if (session.has(ctx.id)) {
                     session.delete(ctx.id);
                     await ctx.reply({
-                        text: `${formatter.quote("⏱ Waktu habis!")}\n` +
-                            formatter.quote(`Jawabannya adalah ${tools.msg.ucwords(game.answer)}.`),
+                        text: `${formatter.quote("⏱ Time is up!")}
+` +
+                            formatter.quote(`The answer is ${tools.msg.ucwords(game.answer)}.`),
                         footer: config.msg.footer,
                         buttons: playAgain
                     });
