@@ -8,12 +8,13 @@ module.exports = {
     aliases: ["s", "stiker"],
     category: "converter",
     code: async (ctx) => {
+        const { formatter, config, tools: { cmd, msg } } = ctx.self.context;
         const [checkMedia, checkQuotedMedia] = await Promise.all([
-            tools.cmd.checkMedia(ctx.msg.contentType, ["image", "gif", "video"]),
-            tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ["image", "gif", "video"])
+            cmd.checkMedia(ctx.msg.contentType, ["image", "gif", "video"]),
+            cmd.checkQuotedMedia(ctx.quoted?.contentType, ["image", "gif", "video"])
         ]);
 
-        if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], ["image", "gif", "video"])));
+        if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(msg.generateInstruction(["send", "reply"], ["image", "gif", "video"])));
 
         try {
             const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted?.media.toBuffer();
@@ -28,7 +29,7 @@ module.exports = {
 
             await ctx.reply(await sticker.toMessage());
         } catch (error) {
-            await tools.cmd.handleError(ctx, error);
+            await cmd.handleError(ctx, error);
         }
     }
 };
