@@ -1,7 +1,7 @@
 const { analyzeMessage } = require("guaranteed_security");
 
-module.exports = async (ctx) => {
-    const { database, formatter, config } = ctx.self.context;
+module.exports = async (ctx, context) => {
+    const { database, formatter, config } = context;
     const { sender, msg } = ctx;
 
     const analyze = analyzeMessage(msg.message);
@@ -11,7 +11,7 @@ module.exports = async (ctx) => {
         await database.user.update(sender.id, { banned: true });
 
         await ctx.sendMessage(config.owner.id + require("@itsreimau/gktw").Baileys.S_WHATSAPP_NET, {
-            text: `📢 Akun @${sender.id} telah diblokir secara otomatis karena alasan ${formatter.inlineCode(analyze.reason)}.`,
+            text: `📢 Account @${sender.id} has been automatically blocked for the reason ${formatter.inlineCode(analyze.reason)}.`,
             mentions: [sender.jid]
         });
         return false;

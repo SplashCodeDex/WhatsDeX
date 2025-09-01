@@ -1,5 +1,5 @@
-module.exports = async (ctx) => {
-    const { database, tools, formatter } = ctx.self.context;
+module.exports = async (ctx, context) => {
+    const { database, tools, formatter } = context;
     const { isGroup, sender, userDb } = ctx;
 
     // Handle user coming back from AFK

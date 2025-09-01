@@ -1,7 +1,7 @@
 const { Baileys } = require("@itsreimau/gktw");
 
-module.exports = async (ctx) => {
-    const { database, formatter } = ctx.self.context;
+module.exports = async (ctx, context) => {
+    const { database, formatter } = context;
     const { isPrivate, sender, isCmd, msg, m } = ctx;
 
     if (isPrivate) {
@@ -11,7 +11,7 @@ module.exports = async (ctx) => {
                 if (sender.id === from || sender.id === to) {
                     const targetId = sender.id === from ? to : from + Baileys.S_WHATSAPP_NET;
                     if (m.content === "delete") {
-                        const replyText = formatter.quote("✅ Sesi menfess telah dihapus!");
+                        const replyText = formatter.quote("✅ Menfess session has been deleted!");
                         await ctx.reply(replyText);
                         await ctx.sendMessage(targetId, {
                             text: replyText

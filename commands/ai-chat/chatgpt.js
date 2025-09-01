@@ -8,7 +8,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
-        const { formatter, tools: { msg, api, cmd } } = ctx.self.context;
+        const { config, formatter, tools: { msg, api, cmd } } = ctx.bot.context;
         const input = ctx.args.join(" ") || ctx.quoted?.content || null;
 
         if (!input) return await ctx.reply(
@@ -25,7 +25,7 @@ module.exports = {
 
             await ctx.reply(result);
         } catch (error) {
-            await cmd.handleError(ctx, error, true);
+            await cmd.handleError(config, ctx, error, true);
         }
     }
 };

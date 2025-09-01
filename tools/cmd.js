@@ -86,7 +86,7 @@ function fakeMetaAiQuotedText(text) {
     return quoted;
 }
 
-function generateUID(id, withBotName = true) {
+function generateUID(config, id, withBotName = true) {
     if (!id) return null;
 
     let hash = 0;
@@ -109,7 +109,7 @@ function getRandomElement(array) {
     return array[randomIndex];
 }
 
-async function handleError(ctx, error, useAxios = false, reportErrorToOwner = true) {
+async function handleError(config, ctx, error, useAxios = false, reportErrorToOwner = true) {
     const isGroup = ctx.isGroup();
     const groupJid = isGroup ? ctx.id : null;
     const groupSubject = isGroup ? await ctx.group(groupJid).name() : null;
@@ -132,7 +132,7 @@ async function handleError(ctx, error, useAxios = false, reportErrorToOwner = tr
     await ctx.reply(formatter.quote(`⚠️ Terjadi kesalahan: ${error.message}`));
 }
 
-function isCmd(content, bot) {
+function isCmd(config, content, bot) {
     if (!content || !bot) return null;
 
     const prefix = content.charAt(0);
@@ -160,7 +160,7 @@ function isCmd(content, bot) {
     } : false;
 }
 
-function isOwner(id, messageId) {
+function isOwner(config, id, messageId) {
     if (!id) return false;
 
     if (config.system.selfOwner || config.bot.id === config.owner.id || config.owner.co.includes(config.bot.id)) {

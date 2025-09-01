@@ -23,7 +23,7 @@ module.exports = {
                 }
             });
         } catch (error) {
-            await tools.cmd.handleError(ctx, error);
+            await tools.cmd.handleError(config, ctx, error);
         }
     }
 };

@@ -1,8 +1,8 @@
 const axios = require("axios");
 const { Baileys } = require("@itsreimau/gktw");
 
-module.exports = async (ctx) => {
-    const { tools: { cmd, api, warn }, formatter } = ctx.self.context;
+module.exports = async (ctx, context) => {
+    const { tools: { cmd, api, warn }, formatter } = context;
     const { isGroup, isOwner, isAdmin, groupDb, sender, msg } = ctx;
 
     if (isGroup && !isOwner && !isAdmin) {

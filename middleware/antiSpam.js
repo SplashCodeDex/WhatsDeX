@@ -1,5 +1,5 @@
-module.exports = async (ctx) => {
-    const { database, tools: { warn }, formatter } = ctx.self.context;
+module.exports = async (ctx, context) => {
+    const { database, tools: { warn }, formatter } = context;
     const { isGroup, isOwner, isAdmin, groupDb, sender, msg } = ctx;
 
     if (isGroup && !isOwner && !isAdmin) {
