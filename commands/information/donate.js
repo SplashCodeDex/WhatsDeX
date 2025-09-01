@@ -14,13 +14,13 @@ module.exports = {
                 .replace(/%command%/g, ctx.used.command)
                 .replace(/%footer%/g, config.msg.footer)
                 .replace(/%readmore%/g, config.msg.readmore) :
-                `${formatter.quote("083838039693 (DANA)")}\n` +
-                `${formatter.quote("083838039693 (Pulsa & Kuota)")}\n` +
+                `${formatter.quote("YOUR_DANA_NUMBER (DANA) (DANA) (DANA)")}\n` +
+                `${formatter.quote("YOUR_PULSA_KUOTA_NUMBER (Pulsa & Kuota)")}\n` +
                 `${formatter.quote("· · ─ ·✶· ─ · ·")}\n` +
-                `${formatter.quote("https://paypal.me/itsreimau (PayPal)")}\n` +
-                `${formatter.quote("https://saweria.co/itsreimau (Saweria)")}\n` +
-                `${formatter.quote("https://tako.id/itsreimau (Tako)")}\n` +
-                formatter.quote("https://trakteer.id/itsreimau (Trakteer)");
+                `${formatter.quote("YOUR_PAYPAL_LINK (PayPal)")}\n` +`
+                `${formatter.quote("YOUR_SAWERIA_LINK (Saweria)")}\n` +
+                `${formatter.quote("YOUR_TAKO_LINK (Tako)")}\n` +
+                                `${formatter.quote("YOUR_TRAKTEER_LINK (Trakteer)")}`;;
 
             if (qrisLink) {
                 await ctx.reply({

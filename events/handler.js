@@ -13,7 +13,7 @@ const fs = require("node:fs");
 
 // Fungsi untuk menangani event pengguna bergabung/keluar grup
 async function handleWelcome(bot, m, type, isSimulate = false) {
-    const { config, database, formatter, tools: { cmd } } = bot.context;
+    const { config, database, formatter, tools: { cmd } } = context;
     const groupJid = m.id;
     const groupId = bot.getId(m.id);
     const groupDb = await database.group.get(groupId);
@@ -73,14 +73,14 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
 
 
 // Events utama bot
-module.exports = (bot) => {
-    const { config, consolefy, db, formatter, tools: { cmd, msg } } = bot.context;
+module.exports = (bot, context) => {
+    const { config, consolefy, db, formatter, tools: { cmd, msg } } = context;
 
     bot.ev.setMaxListeners(config.system.maxListeners); // Tetapkan max listeners untuk events
 
     // Event saat bot siap
     bot.ev.once(Events.ClientReady, async (m) => {
-        const { database } = bot.context;
+        const { database } = context;
         consolefy.success(`${config.bot.name} by ${config.owner.name}, ready at ${m.user.id}`);
 
         // Mulai ulang bot
@@ -107,7 +107,7 @@ module.exports = (bot) => {
 
     // Event saat bot menerima pesan
     bot.ev.on(Events.MessagesUpsert, async (m, ctx) => {
-        const { config, database, consolefy, formatter, tools: { cmd, msg } } = ctx.self.context;
+        const { config, database, consolefy, formatter, tools: { cmd, msg } } = context;
 
         // Tambahkan data db ke ctx
         ctx.userDb = await database.user.get(ctx.sender.id);
@@ -155,7 +155,7 @@ module.exports = (bot) => {
         if (isGroup || isPrivate) {
             if (m.key.fromMe) return;
 
-            const { state } = ctx.self.context;
+            const { state } = context;
             state.uptime = msg.convertMsToDuration(Date.now() - config.bot.readyAt);
             state.dbSize = fs.existsSync("database.json") ? msg.formatSize(fs.statSync("database.json").size / 1024) : "N/A";
 
@@ -197,7 +197,7 @@ module.exports = (bot) => {
 
     // Event saat bot menerima panggilan
     bot.ev.on(Events.Call, async (calls) => {
-        const { config, database, consolefy, formatter, tools: { cmd } } = bot.context;
+        const { config, database, consolefy, formatter, tools: { cmd } } = context;
         if (!config.system.antiCall) return;
 
         for (const call of calls) {

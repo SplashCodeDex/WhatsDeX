@@ -13,8 +13,8 @@ async function checkCoin(database, requiredCoin, userDb, senderId, isOwner) {
 }
 
 // Main bot middleware
-module.exports = (bot) => {
-    const { database, consolefy, tools: { cmd }, config, formatter } = bot.context;
+module.exports = (bot, context) => {
+    const { database, consolefy, tools: { cmd }, config, formatter } = context;
 
     bot.use(async (ctx, next) => {
         // Common variables

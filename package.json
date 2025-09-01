@@ -16,20 +16,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/itsreimau/whatsdex.git"
+    "url": "git+https://github.com/SplashCodeDex/WhatsDeX.git"
   },
   "keywords": [
     "whatsapp",
     "whatsapp-bot"
   ],
-  "author": "Muhamad Ikbal Maulana | ItsReimau",
+  "author": "CodeDeX",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/itsreimau/whatsdex/issues"
+    "url": "https://github.com/SplashCodeDex/WhatsDeX/issues"
   },
-  "homepage": "https://github.com/itsreimau/whatsdex#readme",
+  "homepage": "https://github.com/SplashCodeDex/WhatsDeX#readme",
   "dependencies": {
-    "@itsreimau/gktw": "github:itsreimau/gktw",
+    "@itsreimau/gktw": "github:SplashCodeDex/gktw",
     "@mengkodingan/consolefy": "^1.0.1",
     "axios": "^1.11.0",
     "cfonts": "^3.3.0",
