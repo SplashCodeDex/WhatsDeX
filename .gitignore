@@ -15,3 +15,6 @@ package-lock.json
 
 # Abaikan file 'yarn.lock'
 yarn.lock
+
+# Abaikan direktori 'temp_gktw'
+temp_gktw/

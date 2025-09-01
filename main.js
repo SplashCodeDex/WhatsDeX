@@ -50,8 +50,8 @@ module.exports = (context) => {
     });
 
     // Initialize events and middleware
-    events(bot);
-    middleware(bot);
+    events(bot, context);
+    middleware(bot, context);
 
     // Load and run command handler
     const cmd = new CommandHandler(bot, path.resolve(__dirname, "commands"));

@@ -1,4 +1,4 @@
-# whatsdex
+# WhatsDeX
 
 `whatsdex` is a WhatsApp bot that uses [@rexxhayanasi/elaina-bail](https://www.npmjs.com/package/@rexxhayanasi/elaina-bail). This bot is designed to automate various tasks on WhatsApp, and supports a modular architecture through a command system, making it easy to develop and maintain features.
 
@@ -27,7 +27,7 @@ Follow these steps to set up and run `whatsdex`:
 First, clone the repository and navigate to the project directory:
 
 ```bash
-git clone https://github.com/itsreimau/whatsdex.git
+git clone https://github.com/SplashCodeDex/WhatsDeX.git
 cd whatsdex
 ```
 
@@ -153,7 +153,7 @@ To add new commands, follow these steps:
 For complete documentation, please visit:
 
 - [@mengkodingan/ckptw](https://www.npmjs.com/package/@mengkodingan/ckptw) - Basic reference for the command structure
-- [itsreimau/gktw](https://github.com/itsreimau/gktw) **(Official Fork for whatsdex)** - Documentation for the custom version used
+- [itsreimau/gktw](https://github.com/SplashCodeDex/gktw) **(Official Fork for WhatsDeX)** - Documentation for the custom version used
 - [@rexxhayanasi/elaina-bail](https://www.npmjs.com/package/@rexxhayanasi/elaina-bail) - Guide for sending messages/media
 
 ## Contribution
