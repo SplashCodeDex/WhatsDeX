@@ -13,8 +13,8 @@ module.exports = {
 
         if (!input) return await ctx.reply(
             `${formatter.quote(msg.generateInstruction(["send"], ["text"]))}\n` +
-            `${formatter.quote(cmd.generateCmdExample(ctx.used, "apa itu evangelion?"))}\n` +
-            formatter.quote(msg.generateNotes(["Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru."]))
+            `${formatter.quote(cmd.generateCmdExample(ctx.used, "what is evangelion?"))}\n` +
+            formatter.quote(msg.generateNotes(["Reply or quote a message to use its text as the target input, especially if the text requires a new line."]))
         );
 
         try {

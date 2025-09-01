@@ -1,55 +1,59 @@
 # Contributing to WhatsDeX
 
-We welcome contributions to WhatsDeX! By contributing, you help us improve and expand the project.
+First off, thank you for considering contributing to WhatsDeX! Your help is essential for keeping this project great.
 
-Please take a moment to review this document before submitting your contributions.
+Following these guidelines helps to communicate that you respect the time of the developers managing and developing this open-source project. In return, they should reciprocate that respect in addressing your issue or assessing patches and features.
+
+## Code of Conduct
+
+This project and everyone participating in it is governed by a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior.
 
 ## How to Contribute
 
-1.  **Fork the repository:** Start by forking the WhatsDeX repository to your GitHub account.
-2.  **Clone your forked repository:**
-    ```bash
-    git clone https://github.com/YOUR_USERNAME/WhatsDeX.git
-    cd WhatsDeX
-    ```
-3.  **Create a new branch:** Create a new branch for your feature or bug fix. Use a descriptive name.
-    ```bash
-    git checkout -b feature/your-feature-name
-    # or
-    git checkout -b bugfix/issue-description
-    ```
-4.  **Make your changes:** Implement your feature or fix the bug. Ensure your code adheres to the existing coding style and conventions.
-5.  **Test your changes:** Before submitting, make sure your changes work as expected and do not introduce new issues.
-6.  **Commit your changes:** Write clear and concise commit messages.
-    ```bash
-    git commit -m "feat: Add new feature X" # for new features
-    # or
-    git commit -m "fix: Resolve issue Y" # for bug fixes
-    ```
-7.  **Push to your fork:**
-    ```bash
-    git push origin feature/your-feature-name
-    ```
-8.  **Create a Pull Request (PR):** Go to the original WhatsDeX repository on GitHub and open a new Pull Request from your forked branch to the `master` branch.
+### Reporting Bugs
 
-## Coding Style and Conventions
+- **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/itsreimau/whatsdex/issues).
+- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/itsreimau/whatsdex/issues/new). Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
 
--   **Follow existing patterns:** When making changes, try to match the existing code style, formatting, and architectural patterns.
--   **Meaningful variable names:** Use clear and descriptive names for variables, functions, and classes.
--   **Comments:** Add comments where necessary to explain complex logic or non-obvious parts of the code. Focus on *why* something is done, not just *what*.
+### Suggesting Enhancements
 
-## Reporting Bugs
+- Open a new issue and provide a clear and detailed explanation of the feature you would like to see, why it is useful, and how it would work.
 
-If you find a bug, please open an issue on the GitHub repository. Provide as much detail as possible, including:
+### Pull Requests
 
--   A clear and concise description of the bug.
--   Steps to reproduce the behavior.
--   Expected behavior.
--   Screenshots or error messages (if applicable).
--   Your environment (OS, Node.js version, etc.).
+- Fork the repo and create your branch from `master`.
+- If you've added code that should be tested, add tests.
+- If you've changed APIs, update the documentation.
+- Ensure the test suite passes (`npm test`).
+- Make sure your code lints.
+- Issue that pull request!
 
-## Feature Requests
+## Architectural Guidelines
 
-We welcome ideas for new features! Please open an issue to propose new features. Describe the feature, why it would be useful, and any potential implementation details.
+With the recent architectural refactor, it is critical that all contributions adhere to the new patterns to maintain the quality and consistency of the codebase.
 
-Thank you for contributing to WhatsDeX!
+### 1. The Context Object (`context.js`)
+
+- All shared services, tools, and configurations are managed in `context.js`.
+- If you need to access a shared resource (like the database or a tool), it should be destructured from the `context` object, which is available in the `bot` instance (`ctx.self.context`).
+- Do **not** use global variables or direct `require` statements for shared resources.
+
+### 2. Middleware (`/middleware`)
+
+- Any new logic that needs to inspect or intercept incoming messages should be implemented as a new middleware file in the `/middleware` directory.
+- Each middleware file must export a single asynchronous function that accepts the `ctx` object as its only argument.
+- The middleware should return `false` to halt further processing of the message, or `true` to pass it to the next middleware in the chain.
+
+### 3. Data Access Layer (DAL) (`/database`)
+
+- All interactions with the database **must** go through the DAL.
+- To access user data, for example, use `ctx.self.context.database.user.get(userId)` or `ctx.self.context.database.user.update(userId, data)`.
+- Do **not** interact with the `simpl.db` instance directly from within commands or middleware.
+
+### 4. Automated Testing
+
+- All new features (especially middleware and commands) should be accompanied by tests written using the `jest` framework.
+- New tests should be placed in the `__tests__` directory, mirroring the project structure.
+- Before submitting a pull request, ensure all tests pass by running `npm test`.
+
+By following these guidelines, we can ensure that WhatsDeX remains a high-quality, maintainable, and robust application. Thank you for your contribution!

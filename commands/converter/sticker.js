@@ -5,7 +5,7 @@ const {
 
 module.exports = {
     name: "sticker",
-    aliases: ["s", "stiker"],
+    aliases: ["s"],
     category: "converter",
     code: async (ctx) => {
         const { formatter, config, tools: { cmd, msg } } = ctx.self.context;

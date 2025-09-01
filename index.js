@@ -10,7 +10,7 @@ const { config, consolefy, pkg } = {
     pkg: require("./package.json")
 };
 
-consolefy.log("Starting..."); // Logging proses awal
+consolefy.log("Starting..."); // Logging initial process
 
 // Tampilkan nama proyek serta deskripsi lain
 CFonts.say(pkg.name, {
@@ -27,7 +27,7 @@ CFonts.say(`${pkg.description} - By ${pkg.author}`, {
 // Jalankan server jika diaktifkan dalam konfigurasi
 if (config.system.useServer) {
     const { port } = config.system;
-    http.createServer((_, res) => res.end(`${pkg.name} berjalan di port ${port}`)).listen(port, () => consolefy.success(`${pkg.name} runs on port ${port}`));
+    http.createServer((_, res) => res.end(`${pkg.name} is running on port ${port}`)).listen(port, () => consolefy.success(`${pkg.name} runs on port ${port}`));
 }
 
 main(context); // Jalankan modul utama
