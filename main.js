@@ -1,4 +1,4 @@
-// Impor modul dan dependensi yang diperlukan
+// Import required modules and dependencies
 const middleware = require("./middleware.js");
 const events = require("./events/handler.js");
 const {
@@ -51,6 +51,6 @@ middleware(bot);
 
 // Muat dan jalankan command handler
 const cmd = new CommandHandler(bot, path.resolve(__dirname, "commands"));
-cmd.load();
+cmd.load(false);
 
-bot.launch().catch(error => consolefy.error(`Error: ${util.format(error)}`)); // Luncurkan bot
+bot.launch().catch(error => consolefy.error(`Error: ${util.format(error)}`)); // Launch the bot
