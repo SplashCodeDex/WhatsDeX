@@ -7,7 +7,8 @@ const tools = {
     cmd: require("./cmd.js"),
     list: require("./list.js"),
     mime,
-    msg: require("./msg.js")
+    msg: require("./msg.js"),
+    warn: require("./warn.js")
 };
 
 module.exports = tools;

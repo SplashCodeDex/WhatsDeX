@@ -5,15 +5,17 @@ const {
 const moment = require("moment-timezone");
 
 // Fungsi untuk mengecek koin pengguna
-async function checkCoin(requiredCoin, userDb, senderId, isOwner) {
+async function checkCoin(database, requiredCoin, userDb, senderId, isOwner) {
     if (isOwner || userDb?.premium) return false;
     if (userDb?.coin < requiredCoin) return true;
-    await db.subtract(`user.${senderId}.coin`, requiredCoin);
+    await database.user.update(senderId, { coin: userDb.coin - requiredCoin });
     return false;
 }
 
 // Middleware utama bot
 module.exports = (bot) => {
+    const { database, consolefy, tools: { cmd }, config, formatter } = bot.context;
+
     bot.use(async (ctx, next) => {
         // Variabel umum
         const isGroup = ctx.isGroup();
@@ -22,13 +24,12 @@ module.exports = (bot) => {
         const senderId = ctx.getId(senderJid);
         const groupJid = isGroup ? ctx.id : null;
         const groupId = isGroup ? ctx.getId(groupJid) : null;
-        const isOwner = tools.cmd.isOwner(senderId, ctx.msg.key.id);
+        const isOwner = cmd.isOwner(senderId, ctx.msg.key.id);
         const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 
         // Mengambil database
-        const botDb = await db.get("bot") || {};
-        const userDb = await db.get(`user.${senderId}`) || {};
-        const groupDb = await db.get(`group.${groupId}`) || {};
+        const userDb = await database.user.get(senderId);
+        const groupDb = isGroup ? await database.group.get(groupId) : {};
 
         // Log command masuk
         if (isGroup && !ctx.msg.key.fromMe) {
@@ -36,17 +37,6 @@ module.exports = (bot) => {
         } else if (isPrivate && !ctx.msg.key.fromMe) {
             consolefy.info(`Incoming command: ${ctx.used.command}, from: ${senderId}`);
         }
-
-        // Pengecekan mode bot (group, private, self)
-        if (botDb?.mode === "group" && isPrivate && !isOwner && !userDb?.premium) return;
-        if (botDb?.mode === "private" && isGroup && !isOwner && !userDb?.premium) return;
-        if (botDb?.mode === "self" && !isOwner) return;
-
-        // Pengecekan mute pada grup
-        if (groupDb?.mutebot === true && !isOwner && !isAdmin) return;
-        if (groupDb?.mutebot === "owner" && !isOwner) return;
-        const muteList = groupDb?.mute || [];
-        if (muteList.includes(senderId)) return;
 
         // Menambah XP pengguna dan menangani level-up
         const xpGain = 10;
@@ -70,10 +60,9 @@ module.exports = (bot) => {
                 });
             }
 
-            await db.set(`user.${senderId}.xp`, newUserXp);
-            await db.set(`user.${senderId}.level`, newUserLevel);
+            await database.user.update(senderId, { xp: newUserXp, level: newUserLevel });
         } else {
-            await db.set(`user.${senderId}.xp`, newUserXp);
+            await database.user.update(senderId, { xp: newUserXp });
         }
 
         // Simulasi mengetik
@@ -171,7 +160,7 @@ module.exports = (bot) => {
                 const oneDay = 24 * 60 * 60 * 1000;
                 if (!lastSentMsg || (now - lastSentMsg) > oneDay) {
                     simulateTyping();
-                    await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
+                    await database.user.update(senderId, { lastSentMsg: { ...userDb.lastSentMsg, [key]: now } });
                     return await ctx.reply({
                         text: msg,
                         footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
@@ -201,7 +190,7 @@ module.exports = (bot) => {
             reaction: "🤖"
         }, {
             key: "coin",
-            condition: permissions.coin && config.system.useCoin && await checkCoin(permissions.coin, userDb, senderId, isOwner),
+            condition: permissions.coin && config.system.useCoin && await checkCoin(database, permissions.coin, userDb, senderId, isOwner),
             msg: config.msg.coin,
             buttons: [{
                 buttonId: `${ctx.used.prefix}coin`,
@@ -262,7 +251,7 @@ module.exports = (bot) => {
                 const oneDay = 24 * 60 * 60 * 1000;
                 if (!lastSentMsg || (now - lastSentMsg) > oneDay) {
                     simulateTyping();
-                    await db.set(`user.${senderId}.lastSentMsg.${key}`, now);
+                    await database.user.update(senderId, { lastSentMsg: { ...userDb.lastSentMsg, [key]: now } });
                     return await ctx.reply({
                         text: msg,
                         footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
