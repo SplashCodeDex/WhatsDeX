@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/SplashCodeDex/WhatsDeX#readme",
   "dependencies": {
-    "@itsreimau/gktw": "github:SplashCodeDex/gktw",
+    "@itsreimau/gktw": "git+https://github.com/itsreimau/gktw.git",
     "@mengkodingan/consolefy": "^1.0.1",
     "axios": "^1.11.0",
     "cfonts": "^3.3.0",
