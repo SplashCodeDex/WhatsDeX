@@ -23,7 +23,8 @@ const database = {
     user: require("./database/user.js")(db),
     group: require("./database/group.js")(db),
     bot: require("./database/bot.js")(db),
-    menfess: require("./database/menfess.js")(db)
+    menfess: require("./database/menfess.js")(db),
+    chat: require("./database/chat.js")(db)
 };
 
 const state = require("./state.js");

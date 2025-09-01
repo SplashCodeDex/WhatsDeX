@@ -85,6 +85,11 @@ global.config = {
         author: "whatsdex <github.com/itsreimau/whatsdex>" // Sticker author
     },
 
+    // API keys for various services
+    api: {
+        openai: "" // OpenAI API key
+    },
+
     // Bot system
     system: {
         alwaysOnline: true, // Bot always has "online" status
