@@ -1,7 +1,7 @@
-// Impor modul dan dependensi yang diperlukan
+// Import required modules and dependencies
 const mime = require("mime-types");
 
-// Ekspor modul atau fungsi yang diperlukan
+// Export required modules or functions
 const tools = {
     api: require("./api.js"),
     cmd: require("./cmd.js"),

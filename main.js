@@ -11,7 +11,7 @@ const util = require("node:util");
 module.exports = (context) => {
     const { config, consolefy } = context;
 
-    // Konfigurasi bot dari file 'config.js'
+    // Bot configuration from 'config.js' file
     const {
         bot: botConfig,
         system
@@ -20,7 +20,7 @@ module.exports = (context) => {
         authAdapter
     } = botConfig;
 
-    // Pilih adapter autentikasi
+    // Select authentication adapter
     const adapters = {
         mysql: () => require("baileys-mysql").useSqlAuthState(authAdapter.mysql),
         mongodb: () => require("baileys-mongodb").useMongoAuthState(authAdapter.mongodb.url),
@@ -28,9 +28,9 @@ module.exports = (context) => {
     };
     const selectedAuthAdapter = adapters[authAdapter.adapter] ? adapters[authAdapter.adapter]() : null;
 
-    consolefy.log("Connecting..."); // Logging proses koneksi
+    consolefy.log("Connecting..."); // Logging connection process
 
-    // Buat instance bot
+    // Create bot instance
     const bot = new Client({
         authDir: authAdapter.adapter === "default" ? path.resolve(__dirname, authAdapter.default.authDir) : null,
         authAdapter: selectedAuthAdapter,
@@ -49,13 +49,13 @@ module.exports = (context) => {
         context
     });
 
-    // Inisialisasi event dan middleware
+    // Initialize events and middleware
     events(bot);
     middleware(bot);
 
-    // Muat dan jalankan command handler
+    // Load and run command handler
     const cmd = new CommandHandler(bot, path.resolve(__dirname, "commands"));
     cmd.load();
 
-    bot.launch().catch(error => consolefy.error(`Error: ${util.format(error)}`)); // Luncurkan bot
+    bot.launch().catch(error => consolefy.error(`Error: ${util.format(error)}`)); // Launch the bot
 };

@@ -1,10 +1,10 @@
-// Impor modul dan dependensi yang diperlukan
+// Import required modules and dependencies
 const {
     Cooldown
 } = require("@itsreimau/gktw");
 const moment = require("moment-timezone");
 
-// Fungsi untuk mengecek koin pengguna
+// Function to check user coins
 async function checkCoin(database, requiredCoin, userDb, senderId, isOwner) {
     if (isOwner || userDb?.premium) return false;
     if (userDb?.coin < requiredCoin) return true;
@@ -12,12 +12,12 @@ async function checkCoin(database, requiredCoin, userDb, senderId, isOwner) {
     return false;
 }
 
-// Middleware utama bot
+// Main bot middleware
 module.exports = (bot) => {
     const { database, consolefy, tools: { cmd }, config, formatter } = bot.context;
 
     bot.use(async (ctx, next) => {
-        // Variabel umum
+        // Common variables
         const isGroup = ctx.isGroup();
         const isPrivate = !isGroup;
         const senderJid = ctx.sender.jid;
@@ -27,18 +27,18 @@ module.exports = (bot) => {
         const isOwner = cmd.isOwner(senderId, ctx.msg.key.id);
         const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 
-        // Mengambil database
+        // Get database
         const userDb = await database.user.get(senderId);
         const groupDb = isGroup ? await database.group.get(groupId) : {};
 
-        // Log command masuk
+        // Log incoming command
         if (isGroup && !ctx.msg.key.fromMe) {
             consolefy.info(`Incoming command: ${ctx.used.command}, from group: ${groupId}, by: ${senderId}`);
         } else if (isPrivate && !ctx.msg.key.fromMe) {
             consolefy.info(`Incoming command: ${ctx.used.command}, from: ${senderId}`);
         }
 
-        // Menambah XP pengguna dan menangani level-up
+        // Add user XP and handle level-ups
         const xpGain = 10;
         const xpToLevelUp = 100;
         let newUserXp = (userDb?.xp || 0) + xpGain;
@@ -49,12 +49,12 @@ module.exports = (bot) => {
             if (userDb?.autolevelup) {
                 const profilePictureUrl = await ctx.core.profilePictureUrl(ctx.sender.jid, "image").catch(() => "https://i.pinimg.com/736x/70/dd/61/70dd612c65034b88ebf474a52ccc70c4.jpg");
                 await ctx.reply({
-                    text: formatter.quote(`🎊 Selamat! Kamu telah naik ke level ${newUserLevel}.`),
+                    text: formatter.quote(` Congratulations! You have leveled up to level ${newUserLevel}.`),
                     footer: config.msg.footer,
                     buttons: [{
                         buttonId: `${ctx.used.prefix}setprofile autolevelup`,
                         buttonText: {
-                            displayText: "Nonaktifkan Autolevelup"
+                            displayText: "Disable Autolevelup"
                         }
                     }]
                 });
@@ -65,12 +65,12 @@ module.exports = (bot) => {
             await database.user.update(senderId, { xp: newUserXp });
         }
 
-        // Simulasi mengetik
+        // Simulate typing
         const simulateTyping = () => {
             if (config.system.autoTypingOnCmd) ctx.simulateTyping();
         };
 
-        // Pengecekan kondisi restrictions
+        // Check restriction conditions
         const restrictions = [{
             key: "banned",
             condition: userDb?.banned && ctx.used.command !== "owner",
@@ -78,7 +78,7 @@ module.exports = (bot) => {
             buttons: [{
                 buttonId: `${ctx.used.prefix}owner`,
                 buttonText: {
-                    displayText: "Hubungi Owner"
+                    displayText: "Contact Owner"
                 }
             }],
             reaction: "🚫"
@@ -99,12 +99,12 @@ module.exports = (bot) => {
             buttons: [{
                 buttonId: `${ctx.used.prefix}price`,
                 buttonText: {
-                    displayText: "Harga Premium"
+                    displayText: "Premium Price"
                 }
             }, {
                 buttonId: `${ctx.used.prefix}owner`,
                 buttonText: {
-                    displayText: "Hubungi Owner"
+                    displayText: "Contact Owner"
                 }
             }],
             reaction: "💎"
@@ -115,7 +115,7 @@ module.exports = (bot) => {
             buttons: [{
                 buttonId: `${ctx.used.prefix}botgroup`,
                 buttonText: {
-                    displayText: "Grup Bot"
+                    displayText: "Bot Group"
                 }
             }],
             reaction: "🚫"
@@ -126,12 +126,12 @@ module.exports = (bot) => {
             buttons: [{
                 buttonId: `${ctx.used.prefix}price`,
                 buttonText: {
-                    displayText: "Harga Sewa"
+                    displayText: "Rental Price"
                 }
             }, {
                 buttonId: `${ctx.used.prefix}owner`,
                 buttonText: {
-                    displayText: "Hubungi Owner"
+                    displayText: "Contact Owner"
                 }
             }],
             reaction: "🔒"
@@ -163,7 +163,7 @@ module.exports = (bot) => {
                     await database.user.update(senderId, { lastSentMsg: { ...userDb.lastSentMsg, [key]: now } });
                     return await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
+                        footer: formatter.italic(`The next response will be an emoji reaction ${formatter.inlineCode(reaction)}.`),
                         buttons: buttons || null
                     });
                 } else {
@@ -172,7 +172,7 @@ module.exports = (bot) => {
             }
         }
 
-        // Pengecekan kondisi permissions
+        // Check permission conditions
         const command = [...ctx.bot.cmd.values()].find(cmd => [cmd.name, ...(cmd.aliases || [])].includes(ctx.used.command));
         if (!command) return await next();
         const {
@@ -195,7 +195,7 @@ module.exports = (bot) => {
             buttons: [{
                 buttonId: `${ctx.used.prefix}coin`,
                 buttonText: {
-                    displayText: "Cek Koin"
+                    displayText: "Check Coins"
                 }
             }],
             reaction: "💰"
@@ -216,12 +216,12 @@ module.exports = (bot) => {
             buttons: [{
                 buttonId: `${ctx.used.prefix}price`,
                 buttonText: {
-                    displayText: "Harga Premium"
+                    displayText: "Premium Price"
                 }
             }, {
                 buttonId: `${ctx.used.prefix}owner`,
                 buttonText: {
-                    displayText: "Hubungi Owner"
+                    displayText: "Contact Owner"
                 }
             }],
             reaction: "💎"
@@ -254,7 +254,7 @@ module.exports = (bot) => {
                     await database.user.update(senderId, { lastSentMsg: { ...userDb.lastSentMsg, [key]: now } });
                     return await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`Respon selanjutnya akan berupa reaksi emoji ${formatter.inlineCode(reaction)}.`),
+                        footer: formatter.italic(`The next response will be an emoji reaction ${formatter.inlineCode(reaction)}.`),
                         buttons: buttons || null
                     });
                 } else {
@@ -264,6 +264,6 @@ module.exports = (bot) => {
         }
 
         simulateTyping();
-        await next(); // Lanjut ke proses berikutnya
+        await next(); // Continue to the next process
     });
 };

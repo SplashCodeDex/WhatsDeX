@@ -29,16 +29,16 @@ module.exports = {
                 "misc": "Miscellaneous"
             };
 
-            let text = `Halo, @${ctx.getId(ctx.sender.jid)}! Saya adalah bot WhatsApp bernama ${config.bot.name}, dimiliki oleh ${config.owner.name}. Saya bisa melakukan banyak perintah, seperti membuat stiker, menggunakan AI untuk pekerjaan tertentu, dan beberapa perintah berguna lainnya.\n` +
+            let text = `Hello, @${ctx.getId(ctx.sender.jid)}! I am a WhatsApp bot named ${config.bot.name}, owned by ${config.owner.name}. I can perform many commands, such as creating stickers, using AI for specific tasks, and other useful commands.\n` +
                 "\n" +
-                `${formatter.quote(`Tanggal: ${moment.tz(config.system.timeZone).locale("id").format("dddd, DD MMMM YYYY")}`)}\n` +
-                `${formatter.quote(`Waktu: ${moment.tz(config.system.timeZone).format("HH.mm.ss")}`)}\n` +
+                `${formatter.quote(`Date: ${moment.tz(config.system.timeZone).locale("en").format("dddd, DD MMMM YYYY")}`)}\n` +
+                `${formatter.quote(`Time: ${moment.tz(config.system.timeZone).format("HH:mm:ss")}`)}\n` +
                 "\n" +
-                `${formatter.quote(`Bot Uptime: ${state.uptime}`)}\n` +
+                `${formatter.quote(`Uptime: ${state.uptime}`)}\n` +
                 `${formatter.quote(`Database: ${state.dbSize} (Simpl.DB - JSON)`)}\n` +
                 `${formatter.quote("Library: @itsreimau/gktw (Fork of @mengkodingan/ckptw)")}\n` +
                 "\n" +
-                `${formatter.italic("Jangan lupa berdonasi agar bot tetap online.")}\n` +
+                `${formatter.italic("Don't forget to donate to keep the bot online.")}\n` +
                 `${config.msg.readmore}\n`;
 
             for (const category of Object.keys(tag)) {
@@ -51,7 +51,7 @@ module.exports = {
                     }));
 
                 if (cmds.length > 0) {
-                    text += `✾ ${formatter.bold(tag[category])}\n`;
+                    text += ` ${formatter.bold(tag[category])}\n`;
 
                     cmds.forEach(cmd => {
                         let permissionsText = "";
@@ -81,12 +81,12 @@ module.exports = {
                 buttons: [{
                     buttonId: `${ctx.used.prefix}owner`,
                     buttonText: {
-                        displayText: "Hubungi Owner"
+                        displayText: "Contact Owner"
                     }
                 }, {
                     buttonId: `${ctx.used.prefix}donate`,
                     buttonText: {
-                        displayText: "Donasi"
+                        displayText: "Donate"
                     }
                 }]
             }, {

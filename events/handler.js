@@ -37,8 +37,8 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
             .replace(/%subject%/g, metadata.subject)
             .replace(/%description%/g, metadata.description) :
             (isWelcome ?
-                formatter.quote(`👋 Selamat datang ${userTag} di grup ${metadata.subject}!`) :
-                formatter.quote(`👋 Selamat tinggal, ${userTag}!`));
+                formatter.quote(` Welcome ${userTag} to the group ${metadata.subject}!`) :
+                formatter.quote(` Goodbye, ${userTag}!`));
         const profilePictureUrl = await bot.core.profilePictureUrl(jid, "image").catch(() => "https://i.pinimg.com/736x/70/dd/61/70dd612c65034b88ebf474a52ccc70c4.jpg");
 
         await bot.core.sendMessage(groupJid, {
@@ -66,7 +66,7 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
             text: groupDb.text.intro,
             mentions: [jid]
         }, {
-            quoted: tools.cmd.fakeMetaAiQuotedText("Jangan lupa untuk mengisi intro!")
+            quoted: tools.cmd.fakeMetaAiQuotedText("Don't forget to fill out your intro!")
         });
     }
 }
@@ -88,7 +88,7 @@ module.exports = (bot) => {
         if (botRestart?.jid && botRestart?.timestamp) {
             const timeago = msg.convertMsToDuration(Date.now() - botRestart.timestamp);
             await bot.core.sendMessage(botRestart.jid, {
-                text: formatter.quote(`✅ Berhasil dimulai ulang! Membutuhkan waktu ${timeago}.`),
+                text: formatter.quote(`[OK] Successfully restarted! It took ${timeago}.`),
                 edit: botRestart.key
             });
             await database.bot.update({ restart: null });
@@ -209,7 +209,7 @@ module.exports = (bot) => {
             await database.user.update(bot.getId(call.from), { banned: true });
 
             await bot.core.sendMessage(config.owner.id + Baileys.S_WHATSAPP_NET, {
-                text: `📢 Akun @${bot.getId(call.from)} telah diblokir secara otomatis karena alasan ${formatter.inlineCode("Anti Call")}.`,
+                text: ` Account @${bot.getId(call.from)} has been automatically blocked for the reason ${formatter.inlineCode("Anti Call")}.`,
                 mentions: [call.from]
             });
 
@@ -226,7 +226,7 @@ module.exports = (bot) => {
                     }]
                 }
             }, {
-                quoted: cmd.fakeMetaAiQuotedText(`Bot tidak dapat menerima panggilan ${call.isVideo ? "video" : "suara"}! Jika kamu memerlukan bantuan, silakan menghubungi Owner.`)
+                quoted: cmd.fakeMetaAiQuotedText(`The bot cannot receive ${call.isVideo ? "video" : "voice"} calls! If you need help, please contact the Owner.`)
             });
         }
     });
