@@ -8,7 +8,7 @@ This document outlines the plan for personalizing the WhatsDeX bot for CodeDeX.
 
 *   **Project Name:** WhatsDeX
 *   **Author:** CodeDeX
-*   **GitHub Repository:** https://github.com/SplashCodeDex/WhatsDeX (Assumed)
+*   **GitHub Repository:** https://github.com/SplashCodeDex/WhatsDeX
 
 ### Bot Configuration (`config.js`)
 
@@ -31,14 +31,14 @@ This document outlines the plan for personalizing the WhatsDeX bot for CodeDeX.
 
 *   **`name`:** whatsdex
 *   **`author`:** CodeDeX
-*   **`repository.url`:** https://github.com/SplashCodeDex/WhatsDeX (Assumed)
-*   **`bugs.url`:** https://github.com/SplashCodeDex/WhatsDeX/issues (Assumed)
-*   **`homepage`:** https://github.com/SplashCodeDex/WhatsDeX#readme (Assumed)
+*   **`repository.url`:** https://github.com/SplashCodeDex/WhatsDeX.git
+*   **`bugs.url`:** https://github.com/SplashCodeDex/WhatsDeX/issues
+*   **`homepage`:** https://github.com/SplashCodeDex/WhatsDeX#readme
 
 ### `README.md`
 
 *   Update project name to WhatsDeX
-*   Update repository URL to https://github.com/CodeDeX/WhatsDeX (Assumed)
+*   Update repository URL to https://github.com/SplashCodeDex/WhatsDeX
 *   Update author name to CodeDeX
 
 ### Other Files
@@ -49,10 +49,13 @@ This document outlines the plan for personalizing the WhatsDeX bot for CodeDeX.
 
 ## Action Plan
 
-1.  [ ] Get missing information from CodeDeX.
-2.  [ ] Create a new GitHub repository for the project.
-3.  [ ] Update `package.json` with the new project information.
-4.  [ ] Update `config.js` with the new bot and owner information.
-5.  [ ] Update `README.md` with the new project information.
-6.  [ ] Update other files with the new information.
-7.  [ ] Commit all changes to the new GitHub repository.
+1.  [X] Get missing information from CodeDeX.
+2.  [X] Create a new GitHub repository for the project.
+3.  [X] Update `package.json` with the new project information.
+4.  [X] Update `config.js` with the new bot and owner information.
+5.  [X] Update `README.md` with the new project information.
+6.  [X] Update other files with the new information.
+7.  [X] Commit all changes to the new GitHub repository.
+8.  [X] Push changes to the new GitHub repository.
+9.  [ ] Provide deployment instructions.
+10. [ ] Guide on further project development and automation.

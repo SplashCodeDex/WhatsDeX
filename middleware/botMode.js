@@ -1,5 +1,5 @@
-module.exports = async (ctx) => {
-    const { database } = ctx.self.context;
+module.exports = async (ctx, context) => {
+    const { database } = context;
     const { isGroup, isOwner, userDb } = ctx;
 
     const botDb = await database.bot.get();

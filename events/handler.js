@@ -131,7 +131,7 @@ module.exports = (bot, context) => {
         ];
 
         for (const middleware of messageMiddleware) {
-            const result = await middleware(ctx);
+            const result = await middleware(ctx, context);
             if (!result) return;
         }
 
@@ -142,8 +142,8 @@ module.exports = (bot, context) => {
         const senderId = ctx.getId(senderJid);
         const groupJid = isGroup ? ctx.id : null;
         const groupId = isGroup ? ctx.getId(groupJid) : null;
-        const isOwner = cmd.isOwner(senderId, m.key.id);
-        const isCmd = cmd.isCmd(m.content, ctx.bot);
+        const isOwner = cmd.isOwner(config, senderId, m.key.id);
+        const isCmd = cmd.isCmd(config, m.content, ctx.bot);
         const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 
         // Mengambil database
@@ -160,8 +160,8 @@ module.exports = (bot, context) => {
             state.dbSize = fs.existsSync("database.json") ? msg.formatSize(fs.statSync("database.json").size / 1024) : "N/A";
 
             // Penanganan database pengguna
-            if (!userDb?.username) await database.user.update(senderId, { username: `@user_${cmd.generateUID(senderId, false)}` });
-            if (!userDb?.uid || userDb?.uid !== cmd.generateUID(senderId)) await database.user.update(senderId, { uid: cmd.generateUID(senderId) });
+            if (!userDb?.username) await database.user.update(senderId, { username: `@user_${cmd.generateUID(config, senderId, false)}` });
+            if (!userDb?.uid || userDb?.uid !== cmd.generateUID(config, senderId)) await database.user.update(senderId, { uid: cmd.generateUID(config, senderId) });
             if (userDb?.premium && Date.now() > userDb.premiumExpiration) {
                 const { premium, premiumExpiration, ...rest } = userDb;
                 await database.user.set(senderId, rest);

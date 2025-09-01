@@ -24,7 +24,7 @@ module.exports = (bot, context) => {
         const senderId = ctx.getId(senderJid);
         const groupJid = isGroup ? ctx.id : null;
         const groupId = isGroup ? ctx.getId(groupJid) : null;
-        const isOwner = cmd.isOwner(senderId, ctx.msg.key.id);
+        const isOwner = cmd.isOwner(config, senderId, ctx.msg.key.id);
         const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 
         // Get database

@@ -1,15 +1,15 @@
-module.exports = async (ctx) => {
-    const { formatter, config } = ctx.self.context;
+module.exports = async (ctx, context) => {
+    const { formatter, config } = context;
     const { isCmd } = ctx;
 
     if (isCmd?.didyoumean) {
         await ctx.reply({
-            text: formatter.quote(`🧐 Apakah maksudmu ${formatter.inlineCode(isCmd.prefix + isCmd.didyoumean)}?`),
+            text: formatter.quote(`🧐 Did you mean ${formatter.inlineCode(isCmd.prefix + isCmd.didyoumean)}?`),
             footer: config.msg.footer,
             buttons: [{
                 buttonId: `${isCmd.prefix + isCmd.didyoumean} ${isCmd.input}`,
                 buttonText: {
-                    displayText: "Ya, benar!"
+                    displayText: "Yes, that's right!"
                 }
             }]
         });

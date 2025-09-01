@@ -35,7 +35,7 @@ module.exports = (context) => {
         authDir: authAdapter.adapter === "default" ? path.resolve(__dirname, authAdapter.default.authDir) : null,
         authAdapter: selectedAuthAdapter,
         WAVersion: [2, 3000, 1025091846],
-        printQRInTerminal: !system.usePairingCode,
+        printQRInTerminal: false,
         phoneNumber: botConfig.phoneNumber,
         usePairingCode: system.usePairingCode,
         customPairingCode: system.customPairingCode,
