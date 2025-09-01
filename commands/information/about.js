@@ -4,6 +4,7 @@ module.exports = {
     category: "information",
     code: async (ctx) => {
         const { config, tools } = ctx.bot.context;
+        const { db, formatter } = ctx.bot.context;
         try {
             const botDb = await db.get("bot") || {};
 
@@ -21,7 +22,7 @@ module.exports = {
                 footer: config.msg.footer
             });
         } catch (error) {
-            await tools.cmd.handleError(config, ctx, error);
+            await tools.cmd.handleError(ctx.bot.context, ctx, error);
         }
     }
 };

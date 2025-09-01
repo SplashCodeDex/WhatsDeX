@@ -48,6 +48,7 @@ module.exports = (context) => {
         autoAiLabel: system.autoAiLabel,
         context
     });
+    bot.context = context;
 
     // Initialize events and middleware
     events(bot, context);
