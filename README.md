@@ -145,16 +145,7 @@ To add new commands, follow these steps:
 
 `whatsdex` uses a modified version of `@mengkodingan/ckptw` that has been forked and customized specifically for this bot. This library is built on top of `@rexxhayanasi/elaina-bail` which offers more complete features than `@whiskeysockets/baileys`.
 
-#### Key Differences with the Original Version:
 
-- **Bug fixes** that have not been addressed in the original version
-- **Special optimizations** for the needs of `whatsdex`
-
-For complete documentation, please visit:
-
-- [@mengkodingan/ckptw](https://www.npmjs.com/package/@mengkodingan/ckptw) - Basic reference for the command structure
-- [itsreimau/gktw](https://github.com/SplashCodeDex/gktw) **(Official Fork for WhatsDeX)** - Documentation for the custom version used
-- [@rexxhayanasi/elaina-bail](https://www.npmjs.com/package/@rexxhayanasi/elaina-bail) - Guide for sending messages/media
 
 ## Contribution
 
