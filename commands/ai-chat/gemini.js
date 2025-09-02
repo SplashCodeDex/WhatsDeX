@@ -1,6 +1,12 @@
 const z = require('zod');
 const GeminiService = require('../../services/gemini');
 const aiTools = require('../../tools/ai-tools');
+const aiChatDB = require('../../database/ai_chat_database');
+
+// Constants for summarization logic
+const SUMMARIZE_THRESHOLD = 16;
+const MESSAGES_TO_SUMMARIZE = 10;
+const HISTORY_PRUNE_LENGTH = 6;
 
 module.exports = {
   name: 'gemini',
@@ -24,8 +30,29 @@ module.exports = {
 
       // Service call with tool handling
       const geminiService = new GeminiService();
+      const userId = ctx.author.id;
 
-      const messages = [{ role: 'user', content: validatedInput }];
+      const chat = await aiChatDB.getChat(userId) || { history: [], summary: '' };
+      let currentHistory = chat.history || [];
+      let currentSummary = chat.summary || '';
+
+      // Summarization Logic
+      if (currentHistory.length >= SUMMARIZE_THRESHOLD) {
+        const messagesToSummarize = currentHistory.slice(0, MESSAGES_TO_SUMMARIZE);
+        if (messagesToSummarize.length > 0) {
+          const newSummary = await geminiService.getSummary(messagesToSummarize);
+          currentSummary = currentSummary ? `${currentSummary}\n\n${newSummary}` : newSummary;
+          currentHistory = currentHistory.slice(-HISTORY_PRUNE_LENGTH);
+          // The database update will happen in the next step.
+        }
+      }
+
+      const systemMessage = `You are a helpful assistant. You can use tools to answer questions.${currentSummary ? `\n\nSummary of past conversation:\n${currentSummary}` : ''}`;
+      const messages = [
+        { role: 'system', content: systemMessage },
+        ...currentHistory,
+        { role: 'user', content: validatedInput },
+      ];
 
       const response = await geminiService.getChatCompletionWithTools(messages, aiTools);
       const responseMessage = response.message;
@@ -72,10 +99,14 @@ module.exports = {
 
         const finalResponse = await geminiService.getChatCompletionWithTools(messages, aiTools);
         const finalMessageContent = finalResponse.message.content;
+        messages.push(finalResponse.message);
+        await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
         return ctx.reply(finalMessageContent);
 
       } else {
         const result = responseMessage.content;
+        messages.push(responseMessage);
+        await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
         return ctx.reply(result);
       }
     } catch (error) {

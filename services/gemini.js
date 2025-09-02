@@ -65,6 +65,39 @@ class GeminiService {
       throw new Error('Failed to get response from Gemini API proxy with tools.');
     }
   }
+
+  /**
+   * Get a summary of a conversation from the Gemini API proxy.
+   * @param {Array<object>} messagesToSummarize - The messages to summarize.
+   * @returns {Promise<string>} The summary text.
+   */
+  async getSummary(messagesToSummarize) {
+    if (!messagesToSummarize || messagesToSummarize.length === 0) {
+      throw new Error('Messages to summarize are required.');
+    }
+
+    const systemPrompt = 'You are a summarization expert. Summarize the key points of the following conversation concisely.';
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...messagesToSummarize,
+    ];
+
+    try {
+      const apiUrl = createUrl('davidcyril', '/ai/gemini', {
+        text: JSON.stringify(messages), // Assuming the simple endpoint can handle a stringified message array
+      });
+      const response = await axios.get(apiUrl);
+
+      if (response.data && response.data.message) {
+        return response.data.message;
+      }
+
+      throw new Error('Invalid response format from Gemini API proxy for summarization.');
+    } catch (error) {
+      console.error('Error fetching Gemini summary:', error);
+      throw new Error('Failed to get summary from Gemini API proxy.');
+    }
+  }
 }
 
 module.exports = GeminiService;
