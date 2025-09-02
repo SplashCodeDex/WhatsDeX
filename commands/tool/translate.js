@@ -1,34 +1,47 @@
+const axios = require('axios');
+const z = require('zod');
+const { createUrl } = require('../../tools/api');
+
 module.exports = {
-    name: "translate",
-    aliases: ["tr"],
-    category: "tool",
-    permissions: {
-        coin: 10
-    },
-    code: async (ctx) => {
-        const input = ctx.args.slice(ctx.args[0]?.length === 2 ? 1 : 0).join(" ") || ctx.quoted?.content || null;
-        const langCode = ctx.args[0]?.length === 2 ? ctx.args[0] : "id";
+  name: 'translate',
+  aliases: ['tr'],
+  category: 'tool',
+  permissions: {
+    coin: 10,
+  },
+  code: async (ctx) => {
+    const { formatter, config } = ctx.bot.context;
 
-        if (!input) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "en halo, dunia!"))}\n` +
-            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`, "Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru."]))
-        );
+    try {
+      const langCode = ctx.args[0]?.length === 2 ? ctx.args[0] : 'id';
+      const input = ctx.args.slice(ctx.args[0]?.length === 2 ? 1 : 0).join(' ') || ctx.quoted?.content || '';
 
-        if (input.toLowerCase() === "list") {
-            const listText = await tools.list.get("translate");
-            return await ctx.reply({
-                text: listText,
-                footer: config.msg.footer
-            });
-        }
+      if (input.toLowerCase() === 'list') {
+        const langListUrl = createUrl('https://raw.githubusercontent.com', '/itsecurityco/to-google-translate/refs/heads/master/supported_languages.json');
+        const response = await axios.get(langListUrl);
+        const listText = response.data.map((lang) => `${formatter.quote(`Kode: ${lang.code}`)}\n${formatter.quote(`Bahasa: ${lang.language}`)}`).join(`\n${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
+        return ctx.reply({ text: listText, footer: config.msg.footer });
+      }
 
-        try {
-            const result = await tools.cmd.translate(input, langCode);
+      // Validation
+      const inputSchema = z.string().min(1, { message: 'Please provide text to translate.' });
+      const inputCheck = inputSchema.safeParse(input);
+      if (!inputCheck.success) {
+        return ctx.reply(formatter.quote(`❎ ${inputCheck.error.issues[0].message}\n\nExample: .tr en hello world`));
+      }
+      const textToTranslate = inputCheck.data;
 
-            await ctx.reply(result);
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
-        }
+      // API Call
+      const apiUrl = createUrl('davidcyril', '/tools/translate', {
+        text: textToTranslate,
+        to: langCode,
+      });
+      const result = (await axios.get(apiUrl)).data.translated_text;
+
+      return ctx.reply(result);
+    } catch (error) {
+      console.error(error);
+      return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
+  },
 };
