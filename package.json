@@ -10,6 +10,7 @@
   },
   "scripts": {
     "test": "jest",
+    "lint": "eslint",
     "install:adapter": "node install-adapter.js",
     "start": "node .",
     "start:pm2": "pm2 start ./index.js --name $(basename $(pwd))"
@@ -41,7 +42,8 @@
     "moment-timezone": "^0.6.0",
     "mongoose": "^8.18.0",
     "simpl.db": "^2.13.0",
-    "wa-sticker-formatter": "^4.4.4"
+    "wa-sticker-formatter": "^4.4.4",
+    "zod": "^4.1.5"
   },
   "optionalDependencies": {
     "baileys-firebase": "^1.0.1",
@@ -49,6 +51,9 @@
     "baileys-mysql": "^1.0.4"
   },
   "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.32.0",
     "jest": "^30.1.1"
   }
 }
