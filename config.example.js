@@ -44,6 +44,11 @@ global.config = {
         }
     },
 
+    // Database configuration
+    database: {
+        mongoUri: "mongodb://localhost:27017/whatsdex_app" // MongoDB connection URI for application data
+    },
+
     // Custom bot messages for specific situations
     msg: {
         admin: Formatter.quote("⛔ This command can only be accessed by group admins!"), // Message when a command is for admins only
