@@ -35,6 +35,13 @@ function convertMsToDuration(ms, units = []) {
     return result.join(" ") || "0 detik";
 }
 
+function ucwords(text) {
+    if (!text) return null;
+
+    return text.toLowerCase().replace(/\b\w/g, (t) => t.toUpperCase());
+}
+
 module.exports = {
     convertMsToDuration,
+    ucwords,
 };

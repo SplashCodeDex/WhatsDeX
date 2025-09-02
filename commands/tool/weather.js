@@ -1,50 +1,64 @@
-const axios = require("axios");
-const moment = require("moment-timezone");
+const axios = require('axios');
+const moment = require('moment-timezone');
+const z = require('zod');
+const { createUrl } = require('../../tools/api');
+const { ucwords } = require('../../utils/formatters');
 
 module.exports = {
-    name: "weather",
-    aliases: ["cuaca"],
-    category: "tool",
-    permissions: {
-        coin: 10
-    },
-    code: async (ctx) => {
-        const input = ctx.args.join(" ") || null;
+  name: 'weather',
+  aliases: ['cuaca'],
+  category: 'tool',
+  permissions: {
+    coin: 10,
+  },
+  code: async (ctx) => {
+    const { formatter, config } = ctx.bot.context;
 
-        if (!input) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "bogor"))
-        );
+    try {
+      const input = ctx.args.join(' ');
 
-        try {
-            const apiUrl = tools.api.createUrl("diibot", "/api/tools/cekcuaca", {
-                query: input
-            });
-            const result = (await axios.get(apiUrl)).data.result;
+      // Validation
+      const locationSchema = z.string().min(1, { message: 'Please provide a location.' });
+      const validationResult = locationSchema.safeParse(input);
+      if (!validationResult.success) {
+        return ctx.reply(formatter.quote(`❎ ${validationResult.error.issues[0].message}\n\nExample: .weather London`));
+      }
+      const location = validationResult.data;
 
-            await ctx.reply({
-                text: `${formatter.quote(`Lokasi: ${result.name}, ${result.sys.country}`)}\n` +
-                    `${formatter.quote(`Koordinat: ${result.coord.lat}, ${result.coord.lon}`)}\n` +
-                    `${formatter.quote(`Terakhir diperbarui: ${moment.unix(result.dt).tz("Asia/Jakarta").format("DD/MM/YYYY HH:mm")} WIB`)}\n` +
-                    `${formatter.quote("· · ─ ·✶· ─ · ·")}\n` +
-                    `${formatter.quote(`Cuaca: ${tools.msg.ucwords(result.weather[0].description)}`)}\n` +
-                    `${formatter.quote(`Suhu: ${result.main.temp}°C (Min ${result.main.temp_min}°C | Max ${result.main.temp_max}°C)`)}\n` +
-                    `${formatter.quote(`Terasa seperti: ${result.main.feels_like}°C`)}\n` +
-                    `${formatter.quote(`Kelembaban: ${result.main.humidity}%`)}\n` +
-                    `${formatter.quote(`Tekanan Udara: ${result.main.pressure} hPa`)}\n` +
-                    `${formatter.quote("· · ─ ·✶· ─ · ·")}\n` +
-                    `${formatter.quote(`Angin: ${result.wind.speed} m/s (${(result.wind.speed * 3.6).toFixed(1)} km/h)`)}\n` +
-                    `${formatter.quote(`Arah Angin: ${result.wind.deg}°`)}\n` +
-                    `${formatter.quote(`Hembusan: ${result.wind.gust} m/s`)}\n` +
-                    `${formatter.quote("· · ─ ·✶· ─ · ·")}\n` +
-                    `${formatter.quote(`Awan: ${result.clouds.all}%`)}\n` +
-                    `${formatter.quote(`Jarak Pandang: ${(result.visibility/1000).toFixed(1)} km`)}\n` +
-                    `${formatter.quote(`Matahari Terbit: ${moment.unix(result.sys.sunrise).tz("Asia/Jakarta").format("HH:mm")} WIB`)}\n` +
-                    formatter.quote(`Matahari Terbenam: ${moment.unix(result.sys.sunset).tz("Asia/Jakarta").format("HH:mm")} WIB`),
-                footer: config.msg.footer
-            });
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
-        }
+      // API Call
+      const apiUrl = createUrl('diibot', '/api/tools/cekcuaca', {
+        query: location,
+      });
+      const result = (await axios.get(apiUrl)).data.result;
+
+      const replyText = [
+        `Lokasi: ${result.name}, ${result.sys.country}`,
+        `Koordinat: ${result.coord.lat}, ${result.coord.lon}`,
+        `Terakhir diperbarui: ${moment.unix(result.dt).tz('Asia/Jakarta').format('DD/MM/YYYY HH:mm')} WIB`,
+        '· · ─ ·✶· ─ · ·',
+        `Cuaca: ${ucwords(result.weather[0].description)}`,
+        `Suhu: ${result.main.temp}°C (Min ${result.main.temp_min}°C | Max ${result.main.temp_max}°C)`,
+        `Terasa seperti: ${result.main.feels_like}°C`,
+        `Kelembaban: ${result.main.humidity}%`,
+        `Tekanan Udara: ${result.main.pressure} hPa`,
+        '· · ─ ·✶· ─ · ·',
+        `Angin: ${result.wind.speed} m/s (${(result.wind.speed * 3.6).toFixed(1)} km/h)`,
+        `Arah Angin: ${result.wind.deg}°`,
+        `Hembusan: ${result.wind.gust} m/s`,
+        '· · ─ ·✶· ─ · ·',
+        `Awan: ${result.clouds.all}%`,
+        `Jarak Pandang: ${(result.visibility / 1000).toFixed(1)} km`,
+        `Matahari Terbit: ${moment.unix(result.sys.sunrise).tz('Asia/Jakarta').format('HH:mm')} WIB`,
+        `Matahari Terbenam: ${moment.unix(result.sys.sunset).tz('Asia/Jakarta').format('HH:mm')} WIB`,
+      ].map((line) => formatter.quote(line)).join('\n');
+
+      return ctx.reply({
+        text: replyText,
+        footer: config.msg.footer,
+      });
+    } catch (error) {
+      console.error(error);
+      return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
+  },
 };
