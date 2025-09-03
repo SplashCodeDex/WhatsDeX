@@ -8,6 +8,7 @@ const moment = require("moment-timezone");
 const ContentModerationService = require("./src/services/contentModeration");
 const NLPProcessorService = require("./src/services/nlpProcessor");
 const logger = require("./src/utils/logger");
+const auditMiddleware = require("./middleware/audit");
 
 // Initialize services
 const moderationService = new ContentModerationService();
@@ -368,5 +369,8 @@ module.exports = (bot, context) => {
 
         simulateTyping();
         await next(); // Continue to the next process
+    // Initialize audit middleware
+    auditMiddleware(bot, context);
+};
     });
 };

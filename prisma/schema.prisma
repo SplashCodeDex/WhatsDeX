@@ -277,4 +277,24 @@ model ErrorLog {
   createdAt   DateTime @default(now())
 
   @@map("error_logs")
+// Audit logging for compliance and security
+model AuditLog {
+  id          String   @id @default(cuid())
+  eventType   String // Event type (user_login, admin_action, etc.)
+  actor       String // Who performed the action
+  actorId     String? // User ID of the actor
+  action      String // Description of the action
+  resource    String // Resource affected (user, system, payment, etc.)
+  resourceId  String? // ID of the affected resource
+  details     String? // JSON details of the event
+  riskLevel   String   @default("low") // low, medium, high, critical
+  ipAddress   String? // IP address of the actor
+  userAgent   String? // User agent string
+  sessionId   String? // Session ID
+  location    String? // Geographic location
+  metadata    String? // Additional JSON metadata
+  createdAt   DateTime @default(now())
+
+  @@map("audit_logs")
+}
 }
