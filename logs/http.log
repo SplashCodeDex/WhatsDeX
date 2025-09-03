@@ -1,0 +1,1 @@
+{"error":"error: Environment variable not found: DATABASE_URL.\n  -->  schema.prisma:8\n   | \n 7 |   provider = \"postgresql\"\n 8 |   url      = env(\"DATABASE_URL\")\n   | \n\nValidation Error Count: 1","level":"\u001b[31merror\u001b[39m","message":"\u001b[31mFailed to connect to database\u001b[39m","timestamp":"2025-09-03 10:54:14:5414"}

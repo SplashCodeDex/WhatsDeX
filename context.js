@@ -1,4 +1,4 @@
-// Enhanced context with audit logging
+// Enhanced context with audit logging and database services
 const config = require("./config.js");
 const pkg = require("./package.json");
 const tools = require("./tools/exports.js");
@@ -8,17 +8,21 @@ const path = require("node:path");
 const SimplDB = require("simpl.db");
 const fs = require("node:fs");
 const AuditLogger = require("./src/services/auditLogger");
+const DatabaseService = require("./src/services/database");
 
 // Inisialisasi Consolefy untuk logging
 const c = new Consolefy({
     tag: pkg.name
 });
 
-// Inisialisasi SimplDB untuk Database
+// Inisialisasi Database Service (Prisma)
+const databaseService = new DatabaseService();
+
+// Inisialisasi SimplDB untuk backward compatibility
 const dbFile = path.resolve(__dirname, "database.json");
 if (!fs.existsSync(dbFile)) fs.writeFileSync(dbFile, "{}", "utf8");
 
-// Inisialisasi DAL
+// Inisialisasi DAL (legacy)
 const db = new SimplDB();
 const database = {
     user: require("./database/user.js")(db),
@@ -29,8 +33,8 @@ const database = {
 
 const state = require("./state.js");
 
-// Initialize audit logger
-const auditLogger = new AuditLogger(database);
+// Initialize audit logger with Prisma database service
+const auditLogger = new AuditLogger(databaseService);
 
 // Buat objek konteks
 const context = {
@@ -38,18 +42,25 @@ const context = {
     consolefy: c,
     db,
     database,
+    databaseService,
     formatter: Formatter,
     state,
     tools,
     auditLogger,
 
-    // Initialize audit logger
+    // Initialize services
     async initialize() {
         try {
+            // Connect to database
+            await databaseService.connect();
+
+            // Initialize audit logger
             await auditLogger.initialize();
-            console.log('Audit logger initialized successfully');
+
+            console.log('All services initialized successfully');
         } catch (error) {
-            console.error('Failed to initialize audit logger:', error);
+            console.error('Failed to initialize services:', error);
+            throw error;
         }
     },
 
@@ -57,9 +68,11 @@ const context = {
     async shutdown() {
         try {
             await auditLogger.close();
-            console.log('Audit logger shut down successfully');
+            await databaseService.disconnect();
+            console.log('All services shut down successfully');
         } catch (error) {
-            console.error('Error during audit logger shutdown:', error);
+            console.error('Error during services shutdown:', error);
+            throw error;
         }
     }
 };

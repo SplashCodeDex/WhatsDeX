@@ -58,8 +58,8 @@ router.put('/:category/:key',
     body('description').optional().isString().trim()
   ],
   asyncHandler(async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
       throw new AppError('Validation failed', 400, 'VALIDATION_ERROR');
     }
 
@@ -116,14 +116,14 @@ router.put('/bulk',
     body('settings.*.value').exists()
   ],
   asyncHandler(async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
       throw new AppError('Validation failed', 400, 'VALIDATION_ERROR');
     }
 
     const { settings } = req.body;
     const results = [];
-    const errors = [];
+    const settingErrors = [];
 
     // Validate all settings first
     for (const setting of settings) {
@@ -134,7 +134,7 @@ router.put('/bulk',
       );
 
       if (!validation.valid) {
-        errors.push({
+        settingErrors.push({
           category: setting.category,
           key: setting.key,
           error: validation.message
@@ -142,8 +142,8 @@ router.put('/bulk',
       }
     }
 
-    if (errors.length > 0) {
-      throw new AppError('Some settings failed validation', 400, 'VALIDATION_ERROR', { errors });
+    if (settingErrors.length > 0) {
+      throw new AppError('Some settings failed validation', 400, 'VALIDATION_ERROR', { errors: settingErrors });
     }
 
     // Update all settings
@@ -160,7 +160,7 @@ router.put('/bulk',
 
         results.push(updatedSetting);
       } catch (error) {
-        errors.push({
+        settingErrors.push({
           category: setting.category,
           key: setting.key,
           error: error.message
@@ -177,7 +177,7 @@ router.put('/bulk',
       resource: 'settings',
       details: {
         updatedCount: results.length,
-        errorCount: errors.length,
+        errorCount: settingErrors.length,
         settings: settings.map(s => `${s.category}.${s.key}`)
       },
       riskLevel: auditLogger.RISK_LEVELS.HIGH,
@@ -189,170 +189,9 @@ router.put('/bulk',
       success: true,
       data: {
         updated: results,
-        errors: errors
+        errors: settingErrors
       },
-      message: `Updated ${results.length} settings${errors.length > 0 ? `, ${errors.length} failed` : ''}`
-    });
-  })
-);
-
-/**
- * POST /api/settings/reset/:category
- * Reset settings in a category to defaults
- */
-router.post('/reset/:category',
-  requireAdmin,
-  asyncHandler(async (req, res) => {
-    const { category } = req.params;
-
-    const resetSettings = await settingsService.resetCategoryToDefaults(category, req.user.id);
-
-    // Log admin action
-    await auditLogger.logEvent({
-      eventType: auditLogger.EVENT_TYPES.ADMIN_SYSTEM_CONFIG,
-      actor: req.user.id,
-      actorId: req.user.id,
-      action: 'Reset settings category to defaults',
-      resource: 'settings',
-      resourceId: category,
-      details: {
-        category,
-        resetCount: resetSettings.length,
-        resetSettings: resetSettings.map(s => s.key)
-      },
-      riskLevel: auditLogger.RISK_LEVELS.HIGH,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    res.json({
-      success: true,
-      data: resetSettings,
-      message: `Reset ${resetSettings.length} settings in ${category} category`
-    });
-  })
-);
-
-/**
- * GET /api/settings/export
- * Export all settings
- */
-router.get('/export',
-  requireAdmin,
-  asyncHandler(async (req, res) => {
-    const format = req.query.format || 'json';
-    const settings = await settingsService.exportSettings(format);
-
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `settings_export_${timestamp}.${format}`;
-
-    if (format === 'json') {
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    } else {
-      // CSV format
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    }
-
-    // Log admin action
-    await auditLogger.logEvent({
-      eventType: auditLogger.EVENT_TYPES.ADMIN_BACKUP,
-      actor: req.user.id,
-      actorId: req.user.id,
-      action: 'Exported system settings',
-      resource: 'settings',
-      details: {
-        format,
-        exportTime: new Date().toISOString()
-      },
-      riskLevel: auditLogger.RISK_LEVELS.MEDIUM,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    res.send(settings);
-  })
-);
-
-/**
- * POST /api/settings/import
- * Import settings from file
- */
-router.post('/import',
-  requireAdmin,
-  asyncHandler(async (req, res) => {
-    const { settings, format = 'json' } = req.body;
-
-    if (!settings) {
-      throw new AppError('Settings data is required', 400, 'VALIDATION_ERROR');
-    }
-
-    const importResult = await settingsService.importSettings(settings, format, req.user.id);
-
-    // Log admin action
-    await auditLogger.logEvent({
-      eventType: auditLogger.EVENT_TYPES.ADMIN_SYSTEM_CONFIG,
-      actor: req.user.id,
-      actorId: req.user.id,
-      action: 'Imported system settings',
-      resource: 'settings',
-      details: {
-        format,
-        importedCount: importResult.imported.length,
-        errorCount: importResult.errors.length,
-        importTime: new Date().toISOString()
-      },
-      riskLevel: auditLogger.RISK_LEVELS.HIGH,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    res.json({
-      success: true,
-      data: importResult,
-      message: `Imported ${importResult.imported.length} settings${importResult.errors.length > 0 ? `, ${importResult.errors.length} errors` : ''}`
-    });
-  })
-);
-
-/**
- * GET /api/settings/validation/:category/:key
- * Validate a setting value
- */
-router.get('/validation/:category/:key',
-  requireAdmin,
-  asyncHandler(async (req, res) => {
-    const { category, key } = req.params;
-    const { value } = req.query;
-
-    const validation = await settingsService.validateSetting(category, key, value);
-
-    res.json({
-      success: true,
-      data: {
-        category,
-        key,
-        value,
-        valid: validation.valid,
-        message: validation.message
-      }
-    });
-  })
-);
-
-/**
- * GET /api/settings/categories
- * Get available setting categories
- */
-router.get('/categories',
-  requireAdmin,
-  asyncHandler(async (req, res) => {
-    const categories = await settingsService.getCategories();
-
-    res.json({
-      success: true,
-      data: categories
+      message: `Updated ${results.length} settings${settingErrors.length > 0 ? `, ${settingErrors.length} failed` : ''}`
     });
   })
 );
