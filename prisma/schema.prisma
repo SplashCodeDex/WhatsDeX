@@ -31,7 +31,8 @@ model User {
   sessions          UserSession[]
   commands          CommandUsage[]
   groups            UserGroup[]
-  menfess           Menfess[]
+  menfessFrom       Menfess[] @relation("menfessFromUser")
+  menfessTo         Menfess[] @relation("menfessToUser")
   feedback          Feedback[]
   subscriptions     Subscription[]
   payments          Payment[]
@@ -123,11 +124,11 @@ model GroupSetting {
 model Menfess {
   id          String   @id @default(cuid())
   fromUserId  String
-  fromUser    User     @relation(fields: [fromUserId], references: [id], onDelete: Cascade)
+  fromUser    User     @relation("menfessFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
   toGroupId   String?
   toGroup     Group?   @relation(fields: [toGroupId], references: [id], onDelete: Cascade)
   toUserId    String?
-  toUser      User?    @relation(fields: [toUserId], references: [id], onDelete: Cascade)
+  toUser      User?    @relation("menfessToUser", fields: [toUserId], references: [id], onDelete: Cascade)
   message     String
   mediaUrl    String?
   mediaType   String?
@@ -277,6 +278,8 @@ model ErrorLog {
   createdAt   DateTime @default(now())
 
   @@map("error_logs")
+}
+
 // Audit logging for compliance and security
 model AuditLog {
   id          String   @id @default(cuid())
@@ -296,5 +299,4 @@ model AuditLog {
   createdAt   DateTime @default(now())
 
   @@map("audit_logs")
-}
 }

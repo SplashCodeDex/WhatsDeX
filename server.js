@@ -9,7 +9,7 @@ const path = require('path');
 
 // Import context and services
 const context = require('./context.js');
-const { config, consolefy } = context;
+const { config, consolefy, auditLogger } = context;
 
 // Import routes
 const userRoutes = require('./routes/users');
@@ -20,7 +20,7 @@ const analyticsRoutes = require('./routes/analytics');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler');
 
 class AdminServer {
   constructor() {
@@ -39,6 +39,9 @@ class AdminServer {
 
   async initialize() {
     try {
+      // Initialize context services first
+      await context.initialize();
+
       // Security middleware
       this.app.use(helmet({
         contentSecurityPolicy: {
