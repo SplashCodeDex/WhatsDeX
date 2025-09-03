@@ -1,23 +1,48 @@
-FROM node:20
+# WhatsDeX Enhanced Dockerfile
+FROM node:18-alpine
 
 # Set working directory
-WORKDIR /usr/src/app
-
-# Copy package files and install dependencies
-COPY package.json ./
-RUN npm install
+WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && \
-    apt-get install -y ffmpeg imagemagick webp && \
-    apt-get upgrade -y && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    postgresql-client \
+    redis \
+    python3 \
+    make \
+    g++ \
+    git
 
-# Copy the rest of the application files
+# Copy package files
+COPY package*.json ./
+COPY prisma/ ./prisma/
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy application code
 COPY . .
 
-## Enable This if you use non-default AuthAdapter
-# npm run install:adapter
+# Generate Prisma client
+RUN npx prisma generate
 
-# Command to run the application
-CMD ["node", "index.js"]
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S whatsdex -u 1001
+
+# Create necessary directories
+RUN mkdir -p logs uploads src/services src/utils
+
+# Set permissions
+RUN chown -R whatsdex:nodejs /app
+USER whatsdex
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD node healthcheck.js
+
+# Expose port
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "start"]

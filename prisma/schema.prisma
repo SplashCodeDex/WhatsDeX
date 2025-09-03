@@ -1,0 +1,280 @@
+// Prisma schema for WhatsDeX enhanced database
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User management
+model User {
+  id                String   @id @default(cuid())
+  jid               String   @unique
+  name              String?
+  phone             String?
+  email             String?
+  avatar            String?
+  xp                Int      @default(0)
+  level             Int      @default(1)
+  coin              Int      @default(0)
+  premium           Boolean  @default(false)
+  premiumExpiry     DateTime?
+  banned            Boolean  @default(false)
+  banReason         String?
+  lastActivity      DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  sessions          UserSession[]
+  commands          CommandUsage[]
+  groups            UserGroup[]
+  menfess           Menfess[]
+  feedback          Feedback[]
+  subscriptions     Subscription[]
+  payments          Payment[]
+
+  @@map("users")
+}
+
+// User sessions for analytics
+model UserSession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String   @unique
+  ipAddress   String?
+  userAgent   String?
+  platform    String?
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  duration    Int? // in seconds
+
+  @@map("user_sessions")
+}
+
+// Command usage tracking
+model CommandUsage {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  command       String
+  category      String
+  success       Boolean  @default(true)
+  errorMessage  String?
+  executionTime Int? // in milliseconds
+  usedAt        DateTime @default(now())
+
+  @@map("command_usage")
+}
+
+// Group management
+model Group {
+  id              String   @id @default(cuid())
+  jid             String   @unique
+  name            String?
+  description     String?
+  avatar          String?
+  ownerJid        String?
+  memberCount     Int      @default(0)
+  maxMembers      Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  users           UserGroup[]
+  settings        GroupSetting[]
+  menfess         Menfess[]
+
+  @@map("groups")
+}
+
+// User-Group relationship
+model UserGroup {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role      String   @default("member") // member, admin, owner
+  joinedAt  DateTime @default(now())
+
+  @@unique([userId, groupId])
+  @@map("user_groups")
+}
+
+// Group settings
+model GroupSetting {
+  id              String  @id @default(cuid())
+  groupId         String
+  group           Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  settingKey      String
+  settingValue    String
+  updatedBy       String
+  updatedAt       DateTime @updatedAt
+
+  @@unique([groupId, settingKey])
+  @@map("group_settings")
+}
+
+// Menfess (anonymous messaging)
+model Menfess {
+  id          String   @id @default(cuid())
+  fromUserId  String
+  fromUser    User     @relation(fields: [fromUserId], references: [id], onDelete: Cascade)
+  toGroupId   String?
+  toGroup     Group?   @relation(fields: [toGroupId], references: [id], onDelete: Cascade)
+  toUserId    String?
+  toUser      User?    @relation(fields: [toUserId], references: [id], onDelete: Cascade)
+  message     String
+  mediaUrl    String?
+  mediaType   String?
+  sentAt      DateTime @default(now())
+  delivered   Boolean  @default(false)
+  read        Boolean  @default(false)
+
+  @@map("menfess")
+}
+
+// Bot configuration and settings
+model BotSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  category    String
+  description String?
+  updatedBy   String
+  updatedAt   DateTime @updatedAt
+
+  @@map("bot_settings")
+}
+
+// Feedback system
+model Feedback {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String // bug, feature, general
+  subject     String
+  message     String
+  rating      Int? // 1-5 stars
+  status      String   @default("pending") // pending, reviewed, resolved
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("feedback")
+}
+
+// Subscription management
+model Subscription {
+  id                String            @id @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId            String
+  plan              SubscriptionPlan  @relation(fields: [planId], references: [id])
+  status            String            @default("active") // active, cancelled, expired
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd Boolean           @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@map("subscriptions")
+}
+
+// Subscription plans
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  price       Float
+  currency    String   @default("USD")
+  interval    String   @default("month") // month, year
+  features    String[] // JSON array of features
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+// Payment records
+model Payment {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount        Float
+  currency      String   @default("USD")
+  status        String   @default("pending") // pending, completed, failed, refunded
+  paymentMethod String
+  transactionId String?
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("payments")
+}
+
+// API keys and integrations
+model ApiKey {
+  id          String   @id @default(cuid())
+  name        String
+  key         String   @unique
+  service     String // openai, stripe, etc.
+  isActive    Boolean  @default(true)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  lastUsed    DateTime?
+  expiresAt   DateTime?
+
+  @@map("api_keys")
+}
+
+// Analytics and metrics
+model Analytics {
+  id          String   @id @default(cuid())
+  metric      String
+  value       Float
+  category    String
+  metadata    String? // JSON metadata
+  recordedAt  DateTime @default(now())
+
+  @@map("analytics")
+}
+
+// Plugin system
+model Plugin {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  version     String
+  author      String
+  isActive    Boolean  @default(false)
+  isPremium   Boolean  @default(false)
+  price       Float?
+  downloads   Int      @default(0)
+  rating      Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("plugins")
+}
+
+// Error logging
+model ErrorLog {
+  id          String   @id @default(cuid())
+  level       String // error, warn, info
+  message     String
+  stack       String?
+  userId      String?
+  command     String?
+  metadata    String? // JSON metadata
+  createdAt   DateTime @default(now())
+
+  @@map("error_logs")
+}

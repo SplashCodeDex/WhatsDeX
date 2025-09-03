@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # WhatsDeX Bot Application
+  whatsdex:
+    build: .
+    container_name: whatsdex-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://whatsdex:password@postgres:5432/whatsdex
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./.env:/app/.env:ro
+    networks:
+      - whatsdex-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: whatsdex-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=whatsdex
+      - POSTGRES_USER=whatsdex
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - whatsdex-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whatsdex -d whatsdex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: whatsdex-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - whatsdex-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: whatsdex-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - whatsdex
+    networks:
+      - whatsdex-network
+    profiles:
+      - production
+
+  # Admin Dashboard (Future)
+  # admin:
+  #   build:
+  #     context: ./admin
+  #     dockerfile: Dockerfile
+  #   container_name: whatsdex-admin
+  #   restart: unless-stopped
+  #   environment:
+  #     - API_URL=http://whatsdex:3000
+  #   depends_on:
+  #     - whatsdex
+  #   networks:
+  #     - whatsdex-network
+  #   profiles:
+  #     - admin
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  whatsdex-network:
+    driver: bridge
