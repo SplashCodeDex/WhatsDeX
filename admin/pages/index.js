@@ -16,6 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import UserManagement from './users';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -345,16 +346,7 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {activeTab === 'users' && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                  User Management
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  User management interface will be implemented here.
-                </p>
-              </div>
-            )}
+            {activeTab === 'users' && <UserManagement />}
 
             {activeTab === 'analytics' && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
