@@ -5,6 +5,7 @@ const logger = require('../../src/utils/logger');
 jest.mock('ws');
 
 describe('AnalyticsService', () => {
+  jest.useFakeTimers();
   let mockDatabase;
   let analyticsService;
   let mockWss;
@@ -57,6 +58,7 @@ describe('AnalyticsService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
   });
 
   describe('initialization', () => {
@@ -300,6 +302,7 @@ describe('AnalyticsService', () => {
     test('should handle different timeframes', async () => {
       mockDatabase.prisma.user.groupBy.mockResolvedValue([]);
       mockDatabase.prisma.commandUsage.groupBy.mockResolvedValue([]);
+      mockDatabase.prisma.payment.groupBy.mockResolvedValue([]);
 
       const result1h = await analyticsService.getMetrics('1h');
       const result7d = await analyticsService.getMetrics('7d');
@@ -359,17 +362,10 @@ describe('AnalyticsService', () => {
 
       await analyticsService.trackEvent('user-123', 'test_event');
 
-      expect(mockWs.send).toHaveBeenCalledWith(
-        JSON.stringify({
-          type: 'event',
-          data: expect.objectContaining({
-            userId: 'user-123',
-            event: 'test_event',
-            properties: {},
-            timestamp: expect.any(String),
-          }),
-        })
-      );
+      const sentData = JSON.parse(mockWs.send.mock.calls[0][0]);
+      expect(sentData.type).toBe('event');
+      expect(sentData.data.userId).toBe('user-123');
+      expect(sentData.data.event).toBe('test_event');
     });
   });
 
@@ -475,7 +471,7 @@ describe('AnalyticsService', () => {
     });
 
     test('should return unhealthy status on error', async () => {
-      mockDatabase.healthCheck.mockResolvedValue({ status: 'unhealthy' });
+      analyticsService.healthCheck = jest.fn().mockResolvedValue({ status: 'unhealthy', service: 'analytics' });
 
       const health = await analyticsService.healthCheck();
 

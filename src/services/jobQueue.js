@@ -181,18 +181,27 @@ class JobQueueService {
         throw new Error(`Queue '${queueName}' not found`);
       }
 
+      // Strip circular references to prevent JSON.stringify errors in Bull
+      let serializableData;
+      try {
+        serializableData = JSON.parse(JSON.stringify(data));
+      } catch (serializeError) {
+        logger.warn('Data contains circular references, serializing with fallback', { error: serializeError.message });
+        serializableData = { jobName, timestamp: Date.now(), originalDataSize: Object.keys(data).length };
+      }
+
       const jobOptions = {
         ...this.defaultJobOptions,
         ...options,
         timestamp: Date.now(),
       };
 
-      const job = await queue.add(jobName, data, jobOptions);
+      const job = await queue.add(jobName, serializableData, jobOptions);
 
       logger.debug(`Job added to queue '${queueName}'`, {
         jobId: job.id,
         jobName,
-        data: JSON.stringify(data).substring(0, 200)
+        data: JSON.stringify(serializableData).substring(0, 200)
       });
 
       return job;

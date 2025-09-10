@@ -34,10 +34,14 @@ class DatabaseService {
 
   async connect() {
     try {
+      console.log('Attempting DB connect; DATABASE_URL exists:', !!process.env.DATABASE_URL ? 'yes (masked)' : 'no');
+      console.log('Prisma client initialized:', !!this.prisma);
       await this.prisma.$connect();
       this.isConnected = true;
       logger.info('Database connected successfully');
+      console.log('DB connected successfully');
     } catch (error) {
+      console.log('DB connect failed:', error.message);
       logger.error('Failed to connect to database', { error: error.message });
       throw error;
     }
@@ -353,9 +357,16 @@ class DatabaseService {
   // Health check
   async healthCheck() {
     try {
-      await this.prisma.$queryRaw`SELECT 1`;
-      return { status: 'healthy', database: 'connected' };
+      console.log('Health check: Prisma available:', !!this.prisma);
+      if (this.prisma && typeof this.prisma.$queryRaw === 'function') {
+        await this.prisma.$queryRaw`SELECT 1`;
+        console.log('Health check passed');
+        return { status: 'healthy', database: 'connected' };
+      } else {
+        throw new Error('$queryRaw not available on prisma client');
+      }
     } catch (error) {
+      console.log('Health check failed:', error.message);
       logger.error('Database health check failed', { error: error.message });
       return { status: 'unhealthy', database: 'disconnected', error: error.message };
     }

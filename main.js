@@ -57,6 +57,7 @@ module.exports = async (context) => {
             }
         } else if (connection === 'open') {
             console.log('✅ Bot connected to WhatsApp!');
+            global.bot = bot; // Set global bot for message processor access
         }
     });
 
@@ -64,7 +65,20 @@ module.exports = async (context) => {
         const msg = m.messages[0];
         if (!msg.message) return;
 
-        messageQueue.add({ bot, msg });
+        // Serialize msg to avoid circular references
+        const serializableMsg = {
+          key: {
+            remoteJid: msg.key.remoteJid,
+            fromMe: msg.key.fromMe,
+            id: msg.key.id
+          },
+          message: msg.message,
+          type: Object.keys(msg.message)[0],
+          pushName: msg.pushName,
+          messageTimestamp: msg.messageTimestamp
+        };
+
+        messageQueue.add({ serializableMsg });
     });
 
     return bot;

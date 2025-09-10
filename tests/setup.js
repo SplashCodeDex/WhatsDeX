@@ -13,7 +13,7 @@ const Formatter = {
     quote: (text) => `_${text}_`,
     italic: (text) => `_${text}_`,
     bold: (text) => `*${text}*`,
-    monospace: (text) => ``${text}````,
+    monospace: (text) => ```${text}```,
 };
 
 // Mock Prisma
