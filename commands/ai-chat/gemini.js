@@ -4,9 +4,11 @@ const aiTools = require('../../tools/ai-tools');
 const aiChatDB = require('../../database/ai_chat_database');
 
 // Constants for summarization logic
-const SUMMARIZE_THRESHOLD = 16;
-const MESSAGES_TO_SUMMARIZE = 10;
-const HISTORY_PRUNE_LENGTH = 6;
+const {
+  SUMMARIZE_THRESHOLD = 16,
+  MESSAGES_TO_SUMMARIZE = 10,
+  HISTORY_PRUNE_LENGTH = 6
+} = ctx.bot.context.config.ai.summarization;
 
 module.exports = {
   name: 'gemini',
