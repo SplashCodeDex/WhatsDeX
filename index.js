@@ -4,13 +4,12 @@ const CFonts = require("cfonts");
 const http = require("node:http");
 const main = require("./main.js");
 
-const { config, consolefy, pkg } = {
+const { config, pkg } = {
     config: context.config,
-    consolefy: context.consolefy,
     pkg: require("./package.json")
 };
 
-consolefy.log("Starting..."); // Logging initial process
+console.log("🚀 Starting WhatsDeX..."); // Logging initial process
 
 // Tampilkan nama proyek serta deskripsi lain
 CFonts.say(pkg.name, {
@@ -27,7 +26,14 @@ CFonts.say(`${pkg.description} - By ${pkg.author}`, {
 // Jalankan server jika diaktifkan dalam konfigurasi
 if (config.system.useServer) {
     const { port } = config.system;
-    http.createServer((_, res) => res.end(`${pkg.name} is running on port ${port}`)).listen(port, () => consolefy.success(`${pkg.name} runs on port ${port}`));
+    http.createServer((_, res) => res.end(`${pkg.name} is running on port ${port}`)).listen(port, () => console.log(`✅ ${pkg.name} runs on port ${port}`));
 }
 
-main(context); // Jalankan modul utama
+(async () => {
+    try {
+        await main(context); // Jalankan modul utama dengan async/await
+    } catch (error) {
+        console.error(`❌ Fatal Error: ${error.message}`);
+        process.exit(1);
+    }
+})();

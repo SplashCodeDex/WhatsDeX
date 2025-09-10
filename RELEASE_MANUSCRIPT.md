@@ -110,9 +110,35 @@ This document outlines the significant architectural refactor merged into the `m
 
 ### Impact on Future Development
 
-This new architecture is a paradigm shift for the project. All future development should adhere to these new patterns:
+## WhatsDeXBrain: The AI Core (September 2025)
 
-- New features that inspect or modify messages should be implemented as modular middleware.
-- All database interactions must go through the Data Access Layer.
-- New commands and middleware should be accompanied by corresponding tests.
-- Shared utilities and services should be added to the central `context` object.
+### Decision:
+
+A new AI core, named `WhatsDeXBrain`, was implemented to handle all incoming messages and make intelligent decisions about how to respond. This represents a major step towards a more conversational and intelligent bot.
+
+### Reasoning:
+
+The previous architecture relied on a simple command-based system. The `WhatsDeXBrain` was introduced to:
+
+1.  **Enable Natural Language Understanding:** To allow the bot to understand natural language and not just commands.
+2.  **Provide a More Human-like Experience:** To make the bot more conversational and engaging.
+3.  **Centralize Decision-Making:** To have a single point of entry for all incoming messages, making the code easier to manage and debug.
+
+### Implementation Details:
+
+- **`WhatsDeXBrain.js`:** The core of the brain, responsible for processing incoming messages.
+- **`nlpProcessor.js`:** A new service that uses a combination of keyword matching, pattern matching, and the Gemini API to determine the user's intent.
+- **`brain/` directory:** A new directory that contains the intent handlers. Each handler is responsible for a specific intent (e.g., `greeting`, `farewell`, `question`).
+- **`intentRouter.js`:** A new file that routes the message to the appropriate handler based on the intent.
+
+### New Architecture:
+
+The new architecture is as follows:
+
+1.  **`middleware.js`:** The main entry point for all incoming messages. It calls the `WhatsDeXBrain.processMessage` method.
+2.  **`WhatsDeXBrain.js`:** The core of the brain. It calls the `nlpProcessor.js` to determine the user's intent, and then calls the `intentRouter.js` to route the message to the appropriate handler.
+3.  **`nlpProcessor.js`:** Determines the user's intent.
+4.  **`intentRouter.js`:** Routes the message to the appropriate handler.
+5.  **`brain/` directory:** Contains the intent handlers.
+
+This new architecture is highly modular and extensible. New intents and handlers can be easily added without modifying the core logic of the brain.

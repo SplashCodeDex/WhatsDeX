@@ -56,4 +56,13 @@ With the recent architectural refactor, it is critical that all contributions ad
 - New tests should be placed in the `__tests__` directory, mirroring the project structure.
 - Before submitting a pull request, ensure all tests pass by running `npm test`.
 
-By following these guidelines, we can ensure that WhatsDeX remains a high-quality, maintainable, and robust application. Thank you for your contribution!
+### 5. WhatsDeXBrain: The AI Core
+
+- All incoming messages are processed by the `WhatsDeXBrain` service.
+- The brain uses the `nlpProcessor` service to understand the user's intent.
+- The `intentRouter` then routes the message to the appropriate handler in the `src/services/brain` directory.
+- When adding new intents, you must:
+  1.  Add the intent to the `nlpProcessor` service.
+  2.  Create a new handler file in the `src/services/brain` directory.
+  3.  Add the new handler to the `intentRouter`.
+  4.  Create a new command file if necessary.

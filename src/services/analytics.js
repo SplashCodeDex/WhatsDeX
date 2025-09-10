@@ -35,7 +35,7 @@ class AnalyticsService {
       if (config.websocketPort) {
         this.wss = new WebSocket.Server({ port: config.websocketPort });
 
-        this.wss.on('connection', (ws) => {
+        this.wss.on('connection', async (ws) => {
           this.clients.add(ws);
 
           ws.on('message', (message) => {
