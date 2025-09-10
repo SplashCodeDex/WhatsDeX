@@ -1,6 +1,8 @@
-const {
-    MessageType
-} = require("@itsreimau/gktw");
+const MessageType = {
+    audioMessage: "audioMessage",
+    imageMessage: "imageMessage",
+    videoMessage: "videoMessage",
+};
 
 module.exports = {
     name: "readviewonce",

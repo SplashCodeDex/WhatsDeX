@@ -1,13 +1,7 @@
 // Impor modul dan dependensi yang diperlukan
-const {
-    Baileys,
-    Events,
-    VCardBuilder
-} = require("@itsreimau/gktw");
+const { VCardBuilder } = require("@whiskeysockets/baileys");
 const axios = require("axios");
-const {
-    analyzeMessage
-} = require("guaranteed_security");
+const { analyzeMessage } = require("guaranteed_security");
 const moment = require("moment-timezone");
 const fs = require("node:fs");
 
@@ -27,7 +21,7 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
     if (!isSimulate && hour >= 0 && hour < 6) return;
 
     for (const jid of m.participants) {
-        const isWelcome = type === Events.UserJoin;
+        const isWelcome = type === 'add';
         const userTag = `@${bot.getId(jid)}`;
         const customText = isWelcome ? groupDb?.text?.welcome : groupDb?.text?.goodbye;
         const metadata = await bot.core.groupMetadata(groupJid);
@@ -79,34 +73,36 @@ module.exports = (bot, context) => {
     bot.ev.setMaxListeners(config.system.maxListeners); // Tetapkan max listeners untuk events
 
     // Event saat bot siap
-    bot.ev.once(Events.ClientReady, async (m) => {
-        const { database } = context;
-        consolefy.success(`${config.bot.name} by ${config.owner.name}, ready at ${m.user.id}`);
+    bot.ev.once('connection.update', async (m) => {
+        if(m.connection === 'open') {
+            const { database } = context;
+            consolefy.success(`${config.bot.name} by ${config.owner.name}, ready at ${bot.user.id}`);
 
-        // Mulai ulang bot
-        const botRestart = await database.bot.get("restart");
-        if (botRestart?.jid && botRestart?.timestamp) {
-            const timeago = msg.convertMsToDuration(Date.now() - botRestart.timestamp);
-            await bot.core.sendMessage(botRestart.jid, {
-                text: formatter.quote(`[OK] Successfully restarted! It took ${timeago}.`),
-                edit: botRestart.key
-            });
-            await database.bot.update({ restart: null });
+            // Mulai ulang bot
+            const botRestart = await database.bot.get("restart");
+            if (botRestart?.jid && botRestart?.timestamp) {
+                const timeago = msg.convertMsToDuration(Date.now() - botRestart.timestamp);
+                await bot.core.sendMessage(botRestart.jid, {
+                    text: formatter.quote(`[OK] Successfully restarted! It took ${timeago}.`),
+                    edit: botRestart.key
+                });
+                await database.bot.update({ restart: null });
+            }
+
+            // Tetapkan config pada bot
+            config.bot = {
+                ...config.bot,
+                jid: bot.user.id,
+                decodedJid: bot.decodeJid(bot.user.id),
+                id: bot.getId(bot.user.id),
+                readyAt: bot.readyAt,
+                groupLink: await bot.core.groupInviteCode(config.bot.groupJid).then(code => `https://chat.whatsapp.com/${code}`).catch(() => "https://chat.whatsapp.com/FxEYZl2UyzAEI2yhaH34Ye")
+            };
         }
-
-        // Tetapkan config pada bot
-        config.bot = {
-            ...config.bot,
-            jid: m.user.id,
-            decodedJid: bot.decodeJid(m.user.id),
-            id: bot.getId(m.user.id),
-            readyAt: bot.readyAt,
-            groupLink: await bot.core.groupInviteCode(config.bot.groupJid).then(code => `https://chat.whatsapp.com/${code}`).catch(() => "https://chat.whatsapp.com/FxEYZl2UyzAEI2yhaH34Ye")
-        };
     });
 
     // Event saat bot menerima pesan
-    bot.ev.on(Events.MessagesUpsert, async (m, ctx) => {
+    bot.ev.on('messages.upsert', async (m, ctx) => {
         const { config, database, consolefy, formatter, tools: { cmd, msg } } = context;
 
         // Tambahkan data db ke ctx
@@ -196,7 +192,7 @@ module.exports = (bot, context) => {
     });
 
     // Event saat bot menerima panggilan
-    bot.ev.on(Events.Call, async (calls) => {
+    bot.ev.on('call', async (calls) => {
         const { config, database, consolefy, formatter, tools: { cmd } } = context;
         if (!config.system.antiCall) return;
 
@@ -208,7 +204,7 @@ module.exports = (bot, context) => {
             await bot.core.rejectCall(call.id, call.from);
             await database.user.update(bot.getId(call.from), { banned: true });
 
-            await bot.core.sendMessage(config.owner.id + Baileys.S_WHATSAPP_NET, {
+            await bot.core.sendMessage(config.owner.id + "@s.whatsapp.net", {
                 text: ` Account @${bot.getId(call.from)} has been automatically blocked for the reason ${formatter.inlineCode("Anti Call")}.`,
                 mentions: [call.from]
             });
@@ -232,7 +228,12 @@ module.exports = (bot, context) => {
     });
 
     // Event saat pengguna bergabung atau keluar dari grup
-    bot.ev.on(Events.UserJoin, async (m) => handleWelcome(bot, m, Events.UserJoin));
-    bot.ev.on(Events.UserLeave, async (m) => handleWelcome(bot, m, Events.UserLeave));
+    bot.ev.on('group-participants.update', async (m) => {
+        if(m.action === 'add') {
+            handleWelcome(bot, m, 'add');
+        } else if(m.action === 'remove') {
+            handleWelcome(bot, m, 'remove');
+        }
+    });
 };
 module.exports.handleWelcome = handleWelcome; // Penanganan event pengguna bergabung/keluar grup

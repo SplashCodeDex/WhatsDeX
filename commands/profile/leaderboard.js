@@ -1,7 +1,3 @@
-const {
-    Baileys
-} = require("@itsreimau/gktw");
-
 module.exports = {
     name: "leaderboard",
     aliases: ["lb", "peringkat"],
@@ -38,7 +34,7 @@ module.exports = {
 
             await ctx.reply({
                 text: resultText.trim(),
-                mentions: [senderId + Baileys.S_WHATSAPP_NET],
+                mentions: [senderId + "@s.whatsapp.net"],
                 footer: config.msg.footer
             });
         } catch (error) {

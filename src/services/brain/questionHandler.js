@@ -1,4 +1,4 @@
-const GeminiService = require('../gemini');
+const GeminiService = require('../../../services/gemini.js');
 const logger = require('../../utils/logger');
 
 const gemini = new GeminiService();

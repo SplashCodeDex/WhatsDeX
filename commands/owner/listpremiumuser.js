@@ -1,7 +1,3 @@
-const {
-    Baileys
-} = require("@itsreimau/gktw");
-
 module.exports = {
     name: "listpremiumuser",
     aliases: ["listprem", "listpremium"],
@@ -27,13 +23,15 @@ module.exports = {
             let userMentions = [];
 
             for (const user of premiumUsers) {
-                userMentions.push(user.id + Baileys.S_WHATSAPP_NET);
+                userMentions.push(user.id + "@s.whatsapp.net");
 
                 if (user.expiration) {
                     const daysLeft = tools.msg.convertMsToDuration(Date.now() - user.expiration, ["hari"]);
-                    resultText += `${formatter.quote(`@${user.id} (${daysLeft} tersisa)`)}\n`;
+                    resultText += `${formatter.quote(`@${user.id} (${daysLeft} tersisa)`)}
+`;
                 } else {
-                    resultText += `${formatter.quote(`@${user.id} (Premium permanen)`)}\n`;
+                    resultText += `${formatter.quote(`@${user.id} (Premium permanen)`)}
+`;
                 }
             }
 

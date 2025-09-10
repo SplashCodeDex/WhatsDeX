@@ -1,9 +1,4 @@
-const {
-    Events
-} = require("@itsreimau/gktw");
-const {
-    handleWelcome
-} = require("../../events/handler.js");
+const { handleWelcome } = require("../../events/handler.js");
 
 module.exports = {
     name: "simulate",
@@ -30,11 +25,11 @@ module.exports = {
             switch (input.toLowerCase()) {
                 case "j":
                 case "join":
-                    await handleWelcome(ctx, m, Events.UserJoin, true);
+                    await handleWelcome(ctx, m, 'add', true);
                     break;
                 case "l":
                 case "leave":
-                    await handleWelcome(ctx, m, Events.UserLeave, true);
+                    await handleWelcome(ctx, m, 'remove', true);
                     break;
                 default:
                     await ctx.reply(formatter.quote(`❎ Simulasi ${formatter.inlineCode(input)} tidak valid!`));

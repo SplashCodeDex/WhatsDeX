@@ -1,4 +1,4 @@
-const { Baileys } = require('@itsreimau/gktw');
+
 const z = require('zod');
 
 module.exports = {
@@ -10,7 +10,7 @@ module.exports = {
 
     try {
       // Argument parsing
-      const userJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, '')}${Baileys.S_WHATSAPP_NET}` : null);
+      const userJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, '')}${`@s.whatsapp.net`}` : null);
       const amountStr = ctx.quoted?.senderJid ? ctx.args[0] : ctx.args[1];
 
       // Validation

@@ -1,6 +1,4 @@
-const {
-    VCardBuilder
-} = require("@itsreimau/gktw");
+const VCard = require("vcard-creator").default;
 
 module.exports = {
     name: "owner",
@@ -8,11 +6,11 @@ module.exports = {
     category: "information",
     code: async (ctx) => {
         try {
-            const vcard = new VCardBuilder()
-                .setFullName(config.owner.name)
-                .setOrg(config.owner.organization)
-                .setNumber(config.owner.id)
-                .build();
+            const vcard = new VCard()
+                .addName(config.owner.name)
+                .addCompany(config.owner.organization)
+                .addPhoneNumber(config.owner.id)
+                .toString();
 
             await ctx.reply({
                 contacts: {

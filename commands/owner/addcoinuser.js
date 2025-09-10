@@ -1,7 +1,3 @@
-const {
-    Baileys
-} = require("@itsreimau/gktw");
-
 module.exports = {
     name: "addcoinuser",
     aliases: ["acu", "addcoin"],
@@ -10,7 +6,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
-        const userJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || (ctx.args[0] ? ctx.args[0].replace(/[^\d]/g, "") + Baileys.S_WHATSAPP_NET : null);
+        const userJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || (ctx.args[0] ? ctx.args[0].replace(/[^\\d]/g, "") + "@s.whatsapp.net" : null);
         const coinAmount = parseInt(ctx.args[ctx.quoted?.senderJid ? 0 : 1], 10) || null;
 
         if (!userJid || !coinAmount) return await ctx.reply({
@@ -38,7 +34,7 @@ module.exports = {
 
             const silent = flag?.silent || false;
             if (!silent) await ctx.sendMessage(userJid, {
-                text: formatter.quote(`📢 Kamu telah menerima ${coinAmount} koin dari Owner!`)
+                text: formatter.quote(`📺 Kamu telah menerima ${coinAmount} koin dari Owner!`) 
             });
 
             await ctx.reply(formatter.quote(`✅ Berhasil menambahkan ${coinAmount} koin kepada pengguna itu!`));

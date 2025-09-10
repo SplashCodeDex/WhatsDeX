@@ -1,5 +1,7 @@
 // Impor modul dan dependensi yang diperlukan
 const util = require("node:util");
+const axios = require("axios");
+const FormData = require("form-data");
 
 // Daftar API gratis
 const APIs = {
@@ -58,7 +60,38 @@ function listUrl() {
     return APIs;
 }
 
+async function uploadImage(buffer) {
+    const form = new FormData();
+    form.append("source", buffer, "image.jpg");
+
+    const {
+        data
+    } = await axios.post("https://freeimage.host/api/1/upload", form, {
+        headers: {
+            "Content-Type": `multipart/form-data; boundary=${form._boundary}`,
+            "X-API-Key": "6d207e02198a847aa98d0a2a901485a5"
+        },
+    });
+
+    return data.image.url;
+}
+
+async function uploadFile(buffer, filename) {
+    const form = new FormData();
+    form.append("file", buffer, filename);
+
+    const { data } = await axios.post("https://file.io", form, {
+        headers: {
+            ...form.getHeaders(),
+        },
+    });
+
+    return data.link;
+}
+
 module.exports = {
     createUrl,
-    listUrl
+    listUrl,
+    uploadImage,
+    uploadFile
 };

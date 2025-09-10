@@ -1,10 +1,5 @@
-const {
-    Baileys
-} = require("@itsreimau/gktw");
-const {
-    Sticker,
-    StickerTypes
-} = require("wa-sticker-formatter");
+const tools = require("../../tools/exports");
+const { Sticker, StickerTypes } = require("wa-sticker-formatter");
 
 module.exports = {
     name: "stickermeme",
@@ -26,13 +21,13 @@ module.exports = {
             tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ["image", "sticker"])
         ]);
 
-        if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], ["image", "sticker"])));
+        if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], ["image", "sticker"])))
 
         try {
             let [top, bottom] = input.split("|").map(inp => inp);
             [top, bottom] = bottom ? [top || "_", bottom] : ["_", top || "_"];
             const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted?.media.toBuffer();
-            const uploadUrl = await Baileys.uploadFile(buffer);
+            const uploadUrl = await tools.api.uploadImage(buffer);
             const result = tools.api.createUrl("https://api.memegen.link", `/images/custom/${top}${bottom}.png`, {
                 background: uploadUrl
             });

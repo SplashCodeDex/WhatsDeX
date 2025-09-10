@@ -38,7 +38,7 @@ module.exports = {
                 }
             }];
 
-            await ctx.sendMessage(targetId + Baileys.S_WHATSAPP_NET, {
+            await ctx.sendMessage(targetId + `@s.whatsapp.net`, {
                 text: menfessText,
                 footer: formatter.italic(`Setiap pesan yang kamu kirim akan diteruskan ke orang tersebut!`),
                 buttons

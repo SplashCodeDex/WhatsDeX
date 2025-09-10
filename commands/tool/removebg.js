@@ -20,7 +20,7 @@ module.exports = {
 
         try {
             const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted?.media.toBuffer();
-            const uploadUrl = await Baileys.uploadFile(buffer, "image");
+            const uploadUrl = await tools.api.uploadImage(buffer);
             const apiUrl = tools.api.createUrl("izumi", "/tools/removebg", {
                 imageUrl: uploadUrl
             });

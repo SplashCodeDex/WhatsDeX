@@ -19,7 +19,7 @@ module.exports = {
 
         try {
             const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted?.media.toBuffer();
-            const uploadUrl = await Baileys.uploadFile(buffer);
+            const uploadUrl = await tools.api.uploadImage(buffer);
             const apiUrl = tools.api.createUrl("neko", "/tools/find-waifu", {
                 imageUrl: uploadUrl
             });

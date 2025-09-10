@@ -2,7 +2,7 @@
 const config = require("./config.js");
 const pkg = require("./package.json");
 const tools = require("./tools/exports.js");
-const { Formatter } = require("@itsreimau/gktw");
+const formatter = require("./utils/formatter.js");
 // Initialize consolefy
 const { Consolefy } = require("@mengkodingan/consolefy");
 const consolefy = new Consolefy({
@@ -235,7 +235,7 @@ const context = {
   database,
   databaseService,
   consolefy, // Add consolefy to context
-  formatter: Formatter,
+  formatter,
   state,
   tools,
   prisma, // Direct Prisma access for advanced queries

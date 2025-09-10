@@ -1,7 +1,3 @@
-const {
-    Baileys
-} = require("@itsreimau/gktw");
-
 module.exports = {
     name: "approve",
     category: "group",
@@ -16,7 +12,7 @@ module.exports = {
         if (!input) return await ctx.reply(
             `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
             `${formatter.quote(tools.msg.generateCmdExample(ctx.used, ctx.getId(ctx.sender.jid)))}\n` +
-            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} all`)} untuk menyetujui semua anggota yang tertunda.`]))
+            formatter.quote(tools.msg.generateNotes([`Ketik ${formatter.inlineCode("`${ctx.used.prefix + ctx.used.command} all`")} untuk menyetujui semua anggota yang tertunda.`]))
         );
 
         const pendings = await ctx.group().pendingMembers();
@@ -34,7 +30,7 @@ module.exports = {
             }
         }
 
-        const accountJid = input.replace(/[^\d]/g, "") + Baileys.S_WHATSAPP_NET;
+        const accountJid = input.replace(/[^\d]/g, "") + "@s.whatsapp.net";
 
         const isPending = pendings.some(pending => pending.jid === accountJid);
         if (!isPending) return await ctx.reply(formatter.quote("❎ Akun tidak ditemukan di daftar anggota yang menunggu persetujuan."));

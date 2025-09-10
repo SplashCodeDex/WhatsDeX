@@ -36,7 +36,7 @@ module.exports = {
                 "\n" +
                 `${formatter.quote(`Uptime: ${state.uptime}`)}\n` +
                 `${formatter.quote(`Database: ${state.dbSize} (Simpl.DB - JSON)`)}\n` +
-                `${formatter.quote("Library: @itsreimau/gktw (Fork of @mengkodingan/ckptw)")}\n` +
+                `${formatter.quote("Library: @whiskeysockets/baileys")}\n` +
                 "\n" +
                 `${formatter.italic("Don't forget to donate to keep the bot online.")}\n` +
                 `${config.msg.readmore}\n`;

@@ -19,7 +19,8 @@ module.exports = {
 
         try {
             const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted?.media.toBuffer();
-            const result = await Baileys.uploadFile(buffer);
+            const filename = `file.${tools.mime.extension(ctx.msg.media.mimetype || ctx.quoted?.media.mimetype)}`;
+            const result = await tools.api.uploadFile(buffer, filename);
 
             await ctx.reply({
                 text: formatter.quote(`URL: ${result}`),
