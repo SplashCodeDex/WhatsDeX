@@ -55,6 +55,18 @@ class NLPProcessorService {
       profile: {
         keywords: ['profile', 'level', 'xp', 'coin', 'balance', 'stats', 'leaderboard'],
         commands: ['profile', 'coin', 'leaderboard', 'claim']
+      },
+
+      // Greeting commands
+      greeting: {
+        keywords: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'],
+        commands: ['hello']
+      },
+
+      // Farewell commands
+      farewell: {
+        keywords: ['goodbye', 'bye', 'see you', 'take care'],
+        commands: ['goodbye']
       }
     };
 
@@ -73,7 +85,9 @@ class NLPProcessorService {
       'search_google': 'googlesearch',
       'search_youtube': 'youtubesearch',
       'play_game': 'family100',
-      'get_quote': 'quotes'
+      'get_quote': 'quotes',
+      'greeting': 'hello',
+      'farewell': 'goodbye'
     };
 
     logger.info('NLP Processor service initialized');
@@ -224,6 +238,8 @@ Available intents:
 - play_game: play games or quizzes
 - get_info: get information or status
 - convert_media: convert files (sticker, audio, etc.)
+- greeting: greet the user
+- farewell: say goodbye to the user
 
 Respond with ONLY valid JSON, no additional text.`;
 
@@ -422,6 +438,14 @@ Respond with ONLY valid JSON, no additional text.`;
 
     if (input.includes('joke') || input.includes('funny')) {
       return { intent: 'tell_joke', confidence: 0.8, explanation: 'Humor keywords detected' };
+    }
+
+    if (input.includes('hello') || input.includes('hi') || input.includes('hey')) {
+      return { intent: 'greeting', confidence: 0.9, explanation: 'Greeting keywords detected' };
+    }
+
+    if (input.includes('goodbye') || input.includes('bye')) {
+      return { intent: 'farewell', confidence: 0.9, explanation: 'Farewell keywords detected' };
     }
 
     return { intent: 'unknown', confidence: 0.3, explanation: 'Unable to classify intent' };

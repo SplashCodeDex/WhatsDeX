@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -193,7 +193,7 @@ model SubscriptionPlan {
   price       Float
   currency    String   @default("USD")
   interval    String   @default("month") // month, year
-  features    String[] // JSON array of features
+  features    String? // JSON string of features
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

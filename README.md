@@ -171,41 +171,18 @@ There are two authentication methods that can be used to connect the bot to your
 
 After the authentication process is successful, the bot is ready to receive and respond to messages according to the given commands.
 
-## Customization
+## WhatsDeXBrain: The AI Core
 
-### Added New Commands
+The `whatsdex` bot is powered by `WhatsDeXBrain`, a sophisticated AI core that enables natural language understanding and conversational abilities. This brain is responsible for processing all incoming messages and determining the appropriate response.
 
-To add new commands, follow these steps:
+### How it Works
 
-1. Create a new JavaScript file in the `commands` folder with the desired functionality. For example, create a `test/helloworld.js` file:
+1.  **Message Processing:** All incoming messages are first processed by the `WhatsDeXBrain`.
+2.  **Intent Recognition:** The brain uses a powerful `nlpProcessor` service to analyze the message and recognize the user's intent. This service uses a combination of keyword matching, pattern matching, and the Gemini API for high accuracy.
+3.  **Intent Routing:** Once the intent is recognized, the `intentRouter` routes the message to the appropriate handler.
+4.  **Intent Handling:** Each intent has a dedicated handler that is responsible for generating the appropriate response. For example, the `greeting` intent is handled by the `greetingHandler`, which sends a friendly greeting to the user.
 
-    ```javascript
-    // commands/test/helloworld.js
-
-    module.exports = { // Sets up and shares the function for the "helloworld" command
-        name: "helloworld", // The name of the command that will be used by the user
-        aliases: ["hello"], // Alternative names that can be used to call this command
-        category: "test", // The category to group this command
-        permissions: { // Special settings for this command
-            admin: Boolean, // Can only group admins use this command? (true/false)
-            botAdmin: Boolean, // Does the bot have to be an admin to run this command? (true/false)
-            coin: Number, // The number of coins required to run this command
-            group: Boolean, // Can this command only be used in a group? (true/false)
-            owner: Boolean, // Can only the bot owner use this command? (true/false)
-            premium: Boolean, // Can only premium users use this command? (true/false)
-            private: Boolean // Can this command only be used in a private chat? (true/false)
-        },
-        code: async (ctx) => { // The function that is executed when this command is called
-            await ctx.reply("Hello, World!"); // Send the message "Hello, World!" to the user
-        }
-    };
-    ```
-
-2. This command can be triggered by sending `/helloworld` in the chat.
-
-### Complete Documentation
-
-`whatsdex` uses a modified version of `@mengkodingan/ckptw` that has been forked and customized specifically for this bot. This library is built on top of `@rexxhayanasi/elaina-bail` which offers more complete features than `@whiskeysockets/baileys`.
+This modular architecture makes it easy to add new intents and capabilities to the bot. For more information on how to contribute to the `WhatsDeXBrain`, please see the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 ## Enterprise Support
 

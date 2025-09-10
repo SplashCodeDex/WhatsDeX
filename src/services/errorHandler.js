@@ -1,241 +1,298 @@
-const Sentry = require('@sentry/node');
+/**
+ * Centralized Error Handling Service
+ * Provides consistent error handling across the application
+ */
+
 const logger = require('../utils/logger');
+
+class AppError extends Error {
+  constructor(message, statusCode = 500, isOperational = true) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+    this.timestamp = new Date().toISOString();
+
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
 
 class ErrorHandler {
   constructor() {
-    this.isInitialized = false;
-    this.errorCounts = new Map();
-    this.errorThreshold = 10; // Max errors per minute before alerting
-    this.alertCooldown = 5 * 60 * 1000; // 5 minutes cooldown between alerts
-    this.lastAlertTime = 0;
+    this.errorTypes = {
+      VALIDATION_ERROR: 'ValidationError',
+      DATABASE_ERROR: 'DatabaseError',
+      NETWORK_ERROR: 'NetworkError',
+      AUTHENTICATION_ERROR: 'AuthenticationError',
+      AUTHORIZATION_ERROR: 'AuthorizationError',
+      NOT_FOUND_ERROR: 'NotFoundError',
+      RATE_LIMIT_ERROR: 'RateLimitError',
+      EXTERNAL_API_ERROR: 'ExternalApiError'
+    };
   }
 
-  initialize() {
-    if (this.isInitialized) return;
-
-    // Initialize Sentry if DSN is provided
-    if (process.env.SENTRY_DSN) {
-      Sentry.init({
-        dsn: process.env.SENTRY_DSN,
-        environment: process.env.NODE_ENV || 'development',
-        tracesSampleRate: 1.0,
-        integrations: [
-          new Sentry.Integrations.Http({ tracing: true }),
-          new Sentry.Integrations.Console(),
-        ],
-        beforeSend: (event) => {
-          // Add custom context
-          event.tags = {
-            ...event.tags,
-            service: 'whatsdex',
-            version: process.env.npm_package_version || '1.0.0'
-          };
-          return event;
-        }
-      });
-
-      logger.info('Sentry error tracking initialized');
-    }
-
-    this.isInitialized = true;
-  }
-
-  // Main error handling method
-  handle(error, context = {}) {
-    const errorId = this.generateErrorId(error);
-    const errorInfo = this.parseError(error, context);
-
-    // Log the error
-    logger.error(`Error handled: ${errorInfo.message}`, {
-      errorId,
-      stack: errorInfo.stack,
+  /**
+   * Handle operational errors
+   */
+  handleOperationalError(error, context = {}) {
+    logger.error('Operational Error:', {
+      message: error.message,
+      stack: error.stack,
       context,
-      userId: context.userId,
-      command: context.command,
-      groupId: context.groupId
+      timestamp: new Date().toISOString()
     });
 
-    // Send to Sentry if available
-    if (process.env.SENTRY_DSN) {
-      Sentry.withScope((scope) => {
-        scope.setTag('errorId', errorId);
-        scope.setTag('service', 'whatsdex');
-
-        if (context.userId) scope.setUser({ id: context.userId });
-        if (context.command) scope.setTag('command', context.command);
-        if (context.groupId) scope.setTag('groupId', context.groupId);
-
-        scope.setContext('error_context', context);
-        scope.setContext('error_info', errorInfo);
-
-        Sentry.captureException(error);
-      });
-    }
-
-    // Track error frequency for alerting
-    this.trackErrorFrequency(errorInfo.type);
-
-    // Return error response
-    return {
-      success: false,
-      error: {
-        id: errorId,
-        message: this.getUserFriendlyMessage(errorInfo),
-        type: errorInfo.type,
-        recoverable: this.isRecoverable(errorInfo)
-      }
-    };
+    // Don't expose internal errors to users
+    const userMessage = this.getUserFriendlyMessage(error);
+    return { success: false, message: userMessage, error: error.message };
   }
 
-  // Handle async errors
-  async handleAsync(fn, context = {}) {
-    try {
-      return await fn();
-    } catch (error) {
-      return this.handle(error, context);
-    }
-  }
-
-  // Parse error into structured format
-  parseError(error, context = {}) {
-    const parsed = {
-      message: error.message || 'Unknown error',
+  /**
+   * Handle programming errors (bugs)
+   */
+  handleProgrammingError(error, context = {}) {
+    logger.error('Programming Error:', {
+      message: error.message,
       stack: error.stack,
-      type: this.classifyError(error),
+      context,
+      timestamp: new Date().toISOString()
+    });
+
+    // For programming errors, we might want to exit the process
+    // in development, but handle gracefully in production
+    if (process.env.NODE_ENV === 'production') {
+      // Log and continue
+      return { success: false, message: 'An unexpected error occurred' };
+    } else {
+      // In development, throw to get full stack trace
+      throw error;
+    }
+  }
+
+  /**
+   * Handle database errors
+   */
+  handleDatabaseError(error, operation = 'unknown') {
+    logger.error('Database Error:', {
+      operation,
+      message: error.message,
       code: error.code,
-      errno: error.errno,
-      syscall: error.syscall,
-      originalError: error
-    };
+      meta: error.meta,
+      timestamp: new Date().toISOString()
+    });
 
-    // Add context-specific information
-    if (context.command) {
-      parsed.command = context.command;
+    // Handle specific database errors
+    if (error.code === 'P1001') {
+      return { success: false, message: 'Database connection failed' };
     }
 
-    if (context.userId) {
-      parsed.userId = context.userId;
+    if (error.code === 'P2002') {
+      return { success: false, message: 'Data already exists' };
     }
 
-    return parsed;
+    return { success: false, message: 'Database operation failed' };
   }
 
-  // Classify error types
-  classifyError(error) {
-    if (error.code === 'ECONNREFUSED') return 'connection';
-    if (error.code === 'ENOTFOUND') return 'network';
-    if (error.code === 'EACCES') return 'permission';
-    if (error.code === 'ENOENT') return 'file_not_found';
-    if (error.name === 'ValidationError') return 'validation';
-    if (error.name === 'CastError') return 'database_cast';
-    if (error.name === 'MongoError' || error.name === 'PrismaClientKnownRequestError') return 'database';
-    if (error.message?.includes('rate limit')) return 'rate_limit';
-    if (error.message?.includes('API key')) return 'api_key';
-    if (error.message?.includes('timeout')) return 'timeout';
+  /**
+   * Handle API errors
+   */
+  handleApiError(error, service = 'unknown') {
+    logger.error('API Error:', {
+      service,
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      timestamp: new Date().toISOString()
+    });
 
-    return 'unknown';
-  }
-
-  // Generate unique error ID
-  generateErrorId(error) {
-    const timestamp = Date.now();
-    const hash = require('crypto').createHash('md5');
-    hash.update(`${timestamp}-${error.message}-${error.stack}`);
-    return `err_${hash.digest('hex').substring(0, 8)}`;
-  }
-
-  // Get user-friendly error messages
-  getUserFriendlyMessage(errorInfo) {
-    const messages = {
-      connection: 'Unable to connect to the service. Please try again later.',
-      network: 'Network connection issue. Please check your internet connection.',
-      permission: 'Permission denied. Please contact support if this persists.',
-      file_not_found: 'Required file not found. Please try again.',
-      validation: 'Invalid input provided. Please check your command format.',
-      database: 'Database temporarily unavailable. Please try again later.',
-      rate_limit: 'Too many requests. Please wait a moment before trying again.',
-      api_key: 'Service temporarily unavailable. Please try again later.',
-      timeout: 'Request timed out. Please try again.',
-      unknown: 'An unexpected error occurred. Please try again or contact support.'
-    };
-
-    return messages[errorInfo.type] || messages.unknown;
-  }
-
-  // Check if error is recoverable
-  isRecoverable(errorInfo) {
-    const recoverableTypes = ['connection', 'network', 'timeout', 'rate_limit'];
-    return recoverableTypes.includes(errorInfo.type);
-  }
-
-  // Track error frequency for alerting
-  trackErrorFrequency(errorType) {
-    const now = Date.now();
-    const key = `${errorType}_${Math.floor(now / 60000)}`; // Per minute
-
-    const currentCount = this.errorCounts.get(key) || 0;
-    this.errorCounts.set(key, currentCount + 1);
-
-    // Clean up old entries
-    for (const [k, v] of this.errorCounts.entries()) {
-      if (now - parseInt(k.split('_')[1]) * 60000 > 3600000) { // Older than 1 hour
-        this.errorCounts.delete(k);
-      }
+    const status = error.response?.status;
+    if (status === 401) {
+      return { success: false, message: 'Authentication failed' };
     }
 
-    // Alert if threshold exceeded
-    if (currentCount + 1 >= this.errorThreshold && now - this.lastAlertTime > this.alertCooldown) {
-      logger.warn(`High error frequency detected for type: ${errorType}`, {
-        count: currentCount + 1,
-        threshold: this.errorThreshold
-      });
-      this.lastAlertTime = now;
+    if (status === 403) {
+      return { success: false, message: 'Access forbidden' };
     }
+
+    if (status === 429) {
+      return { success: false, message: 'Rate limit exceeded' };
+    }
+
+    return { success: false, message: `Service ${service} unavailable` };
   }
 
-  // Create error boundary for Express routes
-  createErrorBoundary() {
-    return (error, req, res, next) => {
-      const errorResponse = this.handle(error, {
-        userId: req.user?.id,
-        command: req.body?.command,
-        method: req.method,
-        url: req.url
-      });
+  /**
+   * Handle WhatsApp-specific errors
+   */
+  handleWhatsAppError(error, operation = 'unknown') {
+    logger.error('WhatsApp Error:', {
+      operation,
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
 
-      res.status(this.getHttpStatusCode(error)).json(errorResponse);
+    // Handle specific WhatsApp errors
+    if (error.message?.includes('connection')) {
+      return { success: false, message: 'WhatsApp connection failed' };
+    }
+
+    if (error.message?.includes('auth')) {
+      return { success: false, message: 'WhatsApp authentication failed' };
+    }
+
+    return { success: false, message: 'WhatsApp operation failed' };
+  }
+
+  /**
+   * Get user-friendly error message
+   */
+  getUserFriendlyMessage(error) {
+    // Map technical errors to user-friendly messages
+    const errorMappings = {
+      'ENOTFOUND': 'Service temporarily unavailable',
+      'ECONNREFUSED': 'Connection failed',
+      'ETIMEDOUT': 'Request timed out',
+      'EACCES': 'Permission denied',
+      'ENOENT': 'Resource not found'
     };
+
+    const technicalCode = error.code || error.errno;
+    if (technicalCode && errorMappings[technicalCode]) {
+      return errorMappings[technicalCode];
+    }
+
+    // For unknown errors, provide generic message
+    if (process.env.NODE_ENV === 'production') {
+      return 'An error occurred. Please try again later.';
+    }
+
+    // In development, show the actual error
+    return error.message || 'An unexpected error occurred';
   }
 
-  // Get appropriate HTTP status code for error
-  getHttpStatusCode(error) {
-    const errorType = this.classifyError(error);
-
-    const statusCodes = {
-      connection: 503,
-      network: 502,
-      permission: 403,
-      file_not_found: 404,
-      validation: 400,
-      database: 503,
-      rate_limit: 429,
-      api_key: 503,
-      timeout: 408,
-      unknown: 500
-    };
-
-    return statusCodes[errorType] || 500;
-  }
-
-  // Health check
-  async healthCheck() {
-    return {
-      status: 'healthy',
+  /**
+   * Create standardized error response
+   */
+  createErrorResponse(error, context = {}) {
+    const baseResponse = {
+      success: false,
       timestamp: new Date().toISOString(),
-      service: 'error-handler',
-      sentry: process.env.SENTRY_DSN ? 'configured' : 'not_configured'
+      context
+    };
+
+    if (error instanceof AppError) {
+      return {
+        ...baseResponse,
+        message: error.message,
+        statusCode: error.statusCode,
+        type: 'AppError'
+      };
+    }
+
+    // Handle different error types
+    if (error.name === 'ValidationError') {
+      return {
+        ...baseResponse,
+        message: 'Invalid input data',
+        statusCode: 400,
+        type: 'ValidationError',
+        details: error.details
+      };
+    }
+
+    if (error.name === 'CastError') {
+      return {
+        ...baseResponse,
+        message: 'Invalid data format',
+        statusCode: 400,
+        type: 'CastError'
+      };
+    }
+
+    // Default error response
+    return {
+      ...baseResponse,
+      message: this.getUserFriendlyMessage(error),
+      statusCode: 500,
+      type: 'UnknownError'
+    };
+  }
+
+  /**
+   * Async error wrapper for routes/controllers
+   */
+  asyncHandler(fn) {
+    return (req, res, next) => {
+      Promise.resolve(fn(req, res, next)).catch((error) => {
+        const errorResponse = this.createErrorResponse(error, {
+          url: req.url,
+          method: req.method,
+          ip: req.ip
+        });
+
+        logger.error('Unhandled async error:', error);
+
+        res.status(errorResponse.statusCode).json(errorResponse);
+      });
+    };
+  }
+
+  /**
+   * WhatsApp command error wrapper
+   */
+  commandHandler(fn) {
+    return async (ctx) => {
+      try {
+        return await fn(ctx);
+      } catch (error) {
+        logger.error('Command error:', {
+          command: ctx.used?.command,
+          user: ctx.getId(ctx.sender.jid),
+          error: error.message,
+          stack: error.stack
+        });
+
+        const errorResponse = this.handleOperationalError(error, {
+          command: ctx.used?.command,
+          user: ctx.getId(ctx.sender.jid)
+        });
+
+        return ctx.reply(errorResponse.message);
+      }
+    };
+  }
+
+  /**
+   * Database operation wrapper
+   */
+  databaseHandler(fn) {
+    return async (...args) => {
+      try {
+        return await fn(...args);
+      } catch (error) {
+        return this.handleDatabaseError(error, fn.name);
+      }
+    };
+  }
+
+  /**
+   * API call wrapper
+   */
+  apiHandler(fn, serviceName) {
+    return async (...args) => {
+      try {
+        return await fn(...args);
+      } catch (error) {
+        return this.handleApiError(error, serviceName);
+      }
     };
   }
 }
 
-module.exports = ErrorHandler;
+// Create singleton instance
+const errorHandler = new ErrorHandler();
+
+// Export both class and instance
+module.exports = errorHandler;
+module.exports.AppError = AppError;
+module.exports.ErrorHandler = ErrorHandler;

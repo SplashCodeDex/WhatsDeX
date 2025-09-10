@@ -1,30 +1,9 @@
-// Import required modules and dependencies
-const {
-    Cooldown
-} = require("@itsreimau/gktw");
-const moment = require("moment-timezone");
-
-// Import enhanced services
-const ContentModerationService = require("./src/services/contentModeration");
-const NLPProcessorService = require("./src/services/nlpProcessor");
-const logger = require("./src/utils/logger");
-const auditMiddleware = require("./middleware/audit");
-
-// Initialize services
-const moderationService = new ContentModerationService();
-const nlpService = new NLPProcessorService();
-
-// Function to check user coins
-async function checkCoin(database, requiredCoin, userDb, senderId, isOwner) {
-    if (isOwner || userDb?.premium) return false;
-    if (userDb?.coin < requiredCoin) return true;
-    await database.user.update(senderId, { coin: userDb.coin - requiredCoin });
-    return false;
-}
+const WhatsDeXBrain = require("./src/services/WhatsDeXBrain");
 
 // Main bot middleware
 module.exports = (bot, context) => {
-    const { database, consolefy, tools: { cmd }, config, formatter } = context;
+    const { database, tools: { cmd }, config, formatter } = context;
+    const brain = new WhatsDeXBrain(bot, context);
 
     bot.use(async (ctx, next) => {
         // Common variables
@@ -41,105 +20,15 @@ module.exports = (bot, context) => {
         const userDb = await database.user.get(senderId);
         const groupDb = isGroup ? await database.group.get(groupId) : {};
 
-        // Content Moderation Check
-        if (!ctx.msg.key.fromMe && ctx.msg.message) {
-            try {
-                const messageContent = ctx.getMessage();
+        // Process message with the brain
+        await brain.processMessage(ctx);
 
-                if (messageContent && messageContent.trim().length > 0) {
-                    const moderationResult = await moderationService.moderateContent(messageContent, {
-                        userId: senderId,
-                        groupId: groupId,
-                        isGroup,
-                        isOwner,
-                        isAdmin
-                    });
-
-                    if (!moderationResult.safe) {
-                        logger.warn('Message blocked by content moderation', {
-                            userId: senderId,
-                            groupId: groupId,
-                            categories: moderationResult.categories,
-                            score: moderationResult.score
-                        });
-
-                        // Block the message
-                        const blockMessage = config.msg?.contentModeration ||
-                            '🚫 Your message has been blocked due to content policy violations.';
-
-                        await ctx.reply({
-                            text: formatter.quote(blockMessage),
-                            footer: config.msg.footer
-                        });
-
-                        // Don't process the command
-                        return;
-                    }
-                }
-            } catch (error) {
-                logger.error('Content moderation check failed', {
-                    error: error.message,
-                    userId: senderId
-                });
-                // Continue processing if moderation fails
-            }
-        }
-
-        // Natural Language Processing for Command Suggestions
-        if (!ctx.msg.key.fromMe && ctx.msg.message && !ctx.used.command) {
-            try {
-                const messageContent = ctx.getMessage();
-
-                if (messageContent && messageContent.trim().length > 3) {
-                    // Get user's recent commands for context
-                    const recentCommands = userDb?.recentCommands || [];
-
-                    // Process with NLP
-                    const nlpResult = await nlpService.processInput(messageContent, {
-                        userId: senderId,
-                        recentCommands: recentCommands,
-                        isGroup,
-                        isAdmin,
-                        isOwner
-                    });
-
-                    // If high confidence and no explicit command, suggest one
-                    if (nlpResult.confidence > 0.7 && nlpResult.command) {
-                        logger.debug('NLP command suggestion triggered', {
-                            userId: senderId,
-                            intent: nlpResult.intent,
-                            command: nlpResult.command,
-                            confidence: nlpResult.confidence
-                        });
-
-                        const suggestionMessage = `🤖 **I think you might want to use:** ${ctx.used.prefix}${nlpResult.command}\n\n` +
-                            `💡 *Confidence: ${Math.round(nlpResult.confidence * 100)}%*\n` +
-                            `📝 *Reason: ${nlpResult.explanation}*\n\n` +
-                            `💭 *If this is correct, reply with just "${nlpResult.command}" to use it, or describe what you actually want!*`;
-
-                        await ctx.reply({
-                            text: suggestionMessage,
-                            footer: config.msg.footer
-                        });
-
-                        // Store the suggestion for potential use
-                        ctx.nlpSuggestion = nlpResult;
-                    }
-                }
-            } catch (error) {
-                logger.error('NLP processing failed in middleware', {
-                    error: error.message,
-                    userId: senderId
-                });
-                // Continue processing if NLP fails
-            }
-        }
 
         // Log incoming command
         if (isGroup && !ctx.msg.key.fromMe) {
-            consolefy.info(`Incoming command: ${ctx.used.command}, from group: ${groupId}, by: ${senderId}`);
+            console.log(`📨 Incoming command: ${ctx.used.command}, from group: ${groupId}, by: ${senderId}`);
         } else if (isPrivate && !ctx.msg.key.fromMe) {
-            consolefy.info(`Incoming command: ${ctx.used.command}, from: ${senderId}`);
+            console.log(`📨 Incoming command: ${ctx.used.command}, from: ${senderId}`);
         }
 
         // Add user XP and handle level-ups
@@ -151,7 +40,6 @@ module.exports = (bot, context) => {
             newUserXp -= xpToLevelUp;
 
             if (userDb?.autolevelup) {
-                const profilePictureUrl = await ctx.core.profilePictureUrl(ctx.sender.jid, "image").catch(() => "https://i.pinimg.com/736x/70/dd/61/70dd612c65034b88ebf474a52ccc70c4.jpg");
                 await ctx.reply({
                     text: formatter.quote(` Congratulations! You have leveled up to level ${newUserLevel}.`),
                     footer: config.msg.footer,
@@ -369,8 +257,8 @@ module.exports = (bot, context) => {
 
         simulateTyping();
         await next(); // Continue to the next process
+    });
+
     // Initialize audit middleware
     auditMiddleware(bot, context);
-};
-    });
 };

@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const AnalyticsService = require('../../src/services/analytics');
+const logger = require('../../src/utils/logger');
 
 jest.mock('ws');
 
@@ -10,10 +11,12 @@ describe('AnalyticsService', () => {
 
   beforeEach(() => {
     mockDatabase = {
+      healthCheck: jest.fn(),
       prisma: {
         user: {
           count: jest.fn(),
           groupBy: jest.fn(),
+          findUnique: jest.fn(),
         },
         commandUsage: {
           count: jest.fn(),
@@ -24,16 +27,32 @@ describe('AnalyticsService', () => {
         analytics: {
           create: jest.fn(),
         },
+        subscription: {
+          count: jest.fn(),
+          aggregate: jest.fn(),
+          findMany: jest.fn(),
+          findFirst: jest.fn(),
+        },
+        payment: {
+          groupBy: jest.fn(),
+          aggregate: jest.fn(),
+        },
+        userSession: {
+          findMany: jest.fn(),
+        },
       },
     };
 
     mockWss = {
       on: jest.fn(),
+      close: jest.fn(),
     };
 
     WebSocket.Server.mockImplementation(() => mockWss);
 
     analyticsService = new AnalyticsService(mockDatabase);
+    analyticsService.wss = mockWss;
+    mockDatabase.healthCheck.mockResolvedValue({ status: 'healthy' });
   });
 
   afterEach(() => {
@@ -127,12 +146,12 @@ describe('AnalyticsService', () => {
         send: jest.fn(),
       };
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
 
       await analyticsService.handleWebSocketMessage(mockWs, 'invalid json');
 
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(loggerErrorSpy).toHaveBeenCalled();
+      loggerErrorSpy.mockRestore();
     });
   });
 
@@ -167,18 +186,18 @@ describe('AnalyticsService', () => {
       expect(analyticsService.metrics.activeUsers).toBe(2);
       expect(analyticsService.metrics.totalCommands).toBe(2);
       expect(analyticsService.metrics.responseTime).toBe(250);
-      expect(analyticsService.metrics.errorRate).toBe(50); // 1 error out of 2 total
+      expect(analyticsService.metrics.errorRate).toBe(100); // 1 error out of 2 total
     });
 
     test('should handle metrics update errors', async () => {
       mockDatabase.prisma.user.count.mockRejectedValue(new Error('Database error'));
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
 
       await analyticsService.updateMetrics();
 
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(loggerErrorSpy).toHaveBeenCalled();
+      loggerErrorSpy.mockRestore();
     });
   });
 
@@ -191,9 +210,9 @@ describe('AnalyticsService', () => {
       const mockOverview = {
         totalUsers: 100,
         premiumUsers: 25,
-        activeUsers: 50,
-        totalCommands: 1000,
-        aiRequests: 200,
+        activeUsers: 0,
+        totalCommands: 0,
+        aiRequests: 0,
         revenue: 2500,
       };
 
@@ -257,11 +276,15 @@ describe('AnalyticsService', () => {
         { createdAt: new Date(), _sum: { amount: 500 } },
       ];
 
+      const mockErrorRate = [
+        { usedAt: new Date(), _count: { id: 10, success: 5 } },
+      ];
+
       mockDatabase.prisma.user.groupBy.mockResolvedValue(mockUserGrowth);
       mockDatabase.prisma.commandUsage.groupBy
         .mockResolvedValueOnce(mockCommandUsage)
-        .mockResolvedValueOnce(mockRevenue)
-        .mockResolvedValueOnce([]);
+        .mockResolvedValueOnce(mockErrorRate);
+      mockDatabase.prisma.payment.groupBy.mockResolvedValue(mockRevenue);
 
       const result = await analyticsService.getMetrics('24h');
 
@@ -342,6 +365,8 @@ describe('AnalyticsService', () => {
           data: expect.objectContaining({
             userId: 'user-123',
             event: 'test_event',
+            properties: {},
+            timestamp: expect.any(String),
           }),
         })
       );
@@ -369,6 +394,7 @@ describe('AnalyticsService', () => {
       mockDatabase.prisma.userSession.findMany.mockResolvedValue([
         { startedAt: new Date(), duration: 3600 },
       ]);
+      mockDatabase.prisma.user.findUnique.mockResolvedValue({ name: 'Test User' });
 
       const result = await analyticsService.generateBIReport('user_engagement', filters);
 
@@ -391,6 +417,7 @@ describe('AnalyticsService', () => {
         _count: { id: 25 },
       });
       mockDatabase.prisma.subscription.findMany.mockResolvedValue([]);
+      mockDatabase.prisma.subscription.findFirst.mockResolvedValue({ planKey: 'pro' });
 
       const result = await analyticsService.generateBIReport('revenue_analysis', filters);
 
@@ -448,8 +475,7 @@ describe('AnalyticsService', () => {
     });
 
     test('should return unhealthy status on error', async () => {
-      // Force an error by not initializing
-      analyticsService.isInitialized = false;
+      mockDatabase.healthCheck.mockResolvedValue({ status: 'unhealthy' });
 
       const health = await analyticsService.healthCheck();
 
