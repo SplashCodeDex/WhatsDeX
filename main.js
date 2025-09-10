@@ -57,6 +57,7 @@ module.exports = async (context) => {
             }
         } else if (connection === 'open') {
             console.log('✅ Bot connected to WhatsApp!');
+            console.log('Bot JID:', bot.user.id);
             global.bot = bot; // Set global bot for message processor access
         }
     });
