@@ -45,7 +45,7 @@ class DependencyCleaner {
     conflicts.database = dbDeps.filter(dep => dependencies[dep]);
 
     // WhatsApp library conflicts
-    const waDeps = ['@itsreimau/gktw', '@mengkodingan/consolefy', 'baileys'];
+    const waDeps = ['@whiskeysockets/baileys', '@mengkodingan/consolefy', 'baileys'];
     conflicts.whatsapp = waDeps.filter(dep => dependencies[dep]);
 
     // Potentially unused dependencies
@@ -98,8 +98,8 @@ class DependencyCleaner {
       }
     });
 
-    // Remove duplicate WhatsApp libraries (keep @itsreimau/gktw)
-    const removeWaDeps = ['@mengkodingan/consolefy'];
+    // Remove duplicate WhatsApp libraries (keep @whiskeysockets/baileys)
+    const removeWaDeps = ['@itsreimau/gktw', '@mengkodingan/consolefy'];
     removeWaDeps.forEach(dep => {
       if (cleaned.dependencies[dep]) {
         delete cleaned.dependencies[dep];
@@ -211,7 +211,7 @@ DESCRIPTION:
   Removes conflicting and unused dependencies from package.json.
   This tool will:
   - Remove duplicate database libraries (keeps Prisma)
-  - Remove duplicate WhatsApp libraries (keeps @itsreimau/gktw)
+  - Remove duplicate WhatsApp libraries (keeps @whiskeysockets/baileys)
   - Identify potentially unused dependencies
   - Update scripts for clean workflow
   - Backup original package.json

@@ -1,66 +1,79 @@
 const { EventEmitter } = require('events');
+const makeWASocket = require('@whiskeysockets/baileys').default;
+const { useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const pino = require('pino');
+const path = require('node:path');
+const { Boom } = require('@hapi/boom');
 const logger = require('../../utils/logger');
-const PairingCodeHandler = require('./pairingCodeHandler');
-const QRCodeHandler = require('./qrCodeHandler');
-const LearningEngine = require('./learningEngine');
-const SecurityManager = require('./securityManager');
 
 class UnifiedSmartAuth extends EventEmitter {
-    constructor(gktwClient) {
+    constructor(config) {
         super();
-        this.client = gktwClient;  // @itsreimau/gktw client reference
+        this.config = config;
         this.authState = 'disconnected';
-        this.learningData = {};
-
-        this.pairingCodeHandler = new PairingCodeHandler(this);
-        this.qrCodeHandler = new QRCodeHandler(this);
-        this.learningEngine = new LearningEngine(this);
-        this.securityManager = new SecurityManager(this);
+        this.client = null;
 
         logger.info('UnifiedSmartAuth initialized');
+    }
+
+    async connect() {
+        const authDir = path.resolve(__dirname, this.config.bot.authAdapter.default.authDir);
+        const { state, saveCreds } = await useMultiFileAuthState(authDir);
+
+        const pinoLogger = pino({ level: 'silent' });
+
+        this.client = makeWASocket({
+            auth: state,
+            printQRInTerminal: true,
+            logger: pinoLogger,
+            browser: ['WhatsDeX', 'Chrome', '1.0.0']
+        });
+
+        this.client.ev.on('creds.update', saveCreds);
 
         this.client.ev.on('connection.update', (update) => {
-            const { connection, lastDisconnect } = update;
+            const { connection, lastDisconnect, qr } = update;
+
+            if (qr) {
+                this.emit('qr', qr);
+            }
+
             if (connection === 'close') {
                 this.authState = 'disconnected';
+                const shouldReconnect = (lastDisconnect.error instanceof Boom) ?
+                    lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut :
+                    true;
+
                 this.emit('disconnected', lastDisconnect.error);
+
+                if (shouldReconnect) {
+                    this.connect();
+                }
             } else if (connection === 'open') {
                 this.authState = 'connected';
                 this.emit('connected');
             }
         });
 
-        this.client.ev.on('creds.update', () => {
-            // TODO: Save creds to database
-        });
-    }
-
-    async connect() {
-        try {
-            await this.client.launch();
-        } catch (error) {
-            logger.error('Failed to connect to WhatsApp', { error });
-            this.emit('error', error);
-        }
+        return this.client;
     }
 
     async disconnect() {
-        try {
+        if (this.client) {
             await this.client.logout();
-        } catch (error) {
-            logger.error('Failed to disconnect from WhatsApp', { error });
-            this.emit('error', error);
+            this.client = null;
+            this.authState = 'disconnected';
         }
     }
 
-    // Get pairing code from @itsreimau/gktw
     async getPairingCode() {
-        return this.client.getCurrentPairingCode();
+        // Pairing code logic needs to be implemented based on the new Baileys API
+        return null;
     }
 
-    // Get QR code from @itsreimau/gktw
     async getQRCode() {
-        return this.client.getCurrentQR();
+        // QR code logic is handled by the 'qr' event
+        return null;
     }
 }
 

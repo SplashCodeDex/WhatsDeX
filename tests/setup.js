@@ -7,23 +7,14 @@
 require('dotenv').config({ path: '.env.test' });
 
 // Mock external dependencies
-jest.mock('@itsreimau/gktw', () => ({
-  Formatter: {
-    quote: (text) => `*${text}*`,
+jest.mock('@whiskeysockets/baileys', () => ({ default: jest.fn().mockReturnValue({ ev: { on: jest.fn() }, sendMessage: jest.fn(), logout: jest.fn() }), useMultiFileAuthState: jest.fn().mockResolvedValue({ state: {}, saveCreds: jest.fn() }), DisconnectReason: { loggedOut: 'loggedOut' }, S_WHATSAPP_NET: '@s.whatsapp.net' }));
+
+const Formatter = {
+    quote: (text) => `_${text}_`,
     italic: (text) => `_${text}_`,
     bold: (text) => `*${text}*`,
-    inlineCode: (text) => `\`${text}\``
-  }
-}));
-
-jest.mock('@mengkodingan/consolefy', () => ({
-  Consolefy: jest.fn().mockImplementation(() => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    success: jest.fn()
-  }))
-}));
+    monospace: (text) => ``${text}````,
+};
 
 // Mock Prisma
 jest.mock('@prisma/client', () => ({

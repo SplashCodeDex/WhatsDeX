@@ -1,68 +1,32 @@
 # Contributing to WhatsDeX
 
-First off, thank you for considering contributing to WhatsDeX! Your help is essential for keeping this project great.
+First off, thank you for considering contributing to WhatsDeX! It's people like you that make WhatsDeX such a great tool.
 
-Following these guidelines helps to communicate that you respect the time of the developers managing and developing this open-source project. In return, they should reciprocate that respect in addressing your issue or assessing patches and features.
+## Where do I start?
 
-## Code of Conduct
+If you're looking for a place to start, you can check out the [issues](https://github.com/SplashCodeDex/WhatsDeX/issues) page to see if there's anything you'd like to work on. If you have an idea for a new feature, you can create a new issue to discuss it.
 
-This project and everyone participating in it is governed by a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior.
+## How do I contribute?
 
-## How to Contribute
+1.  **Fork the repository.**
+2.  **Create a new branch.**
+3.  **Make your changes.**
+4.  **Commit your changes.**
+5.  **Push your changes to your fork.**
+6.  **Create a pull request.**
 
-### Reporting Bugs
+## Code Style
 
-- **Ensure the bug was not already reported** by searching on GitHub under [Issues](https://github.com/SplashCodeDex/WhatsDeX/issues).
-- If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/SplashCodeDex/WhatsDeX/issues/new). Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
+Please follow the existing code style. We use ESLint to enforce a consistent code style. You can run `npm run lint` to check your code for any style issues.
 
-### Suggesting Enhancements
+## Commit Messages
 
-- Open a new issue and provide a clear and detailed explanation of the feature you would like to see, why it is useful, and how it would work.
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification for your commit messages.
 
-### Pull Requests
+## Pull Requests
 
-- Fork the repo and create your branch from `master`.
-- If you've added code that should be tested, add tests.
-- If you've changed APIs, update the documentation.
-- Ensure the test suite passes (`npm test`).
-- Make sure your code lints.
-- Issue that pull request!
+When you create a pull request, please make sure to include a detailed description of the changes you've made. If your pull request fixes an issue, please make sure to link to the issue in the description.
 
-## Architectural Guidelines
+## Questions?
 
-With the recent architectural refactor, it is critical that all contributions adhere to the new patterns to maintain the quality and consistency of the codebase.
-
-### 1. The Context Object (`context.js`)
-
-- All shared services, tools, and configurations are managed in `context.js`.
-- If you need to access a shared resource (like the database or a tool), it should be destructured from the `context` object, which is available in the `bot` instance (`ctx.self.context`).
-- Do **not** use global variables or direct `require` statements for shared resources.
-
-### 2. Middleware (`/middleware`)
-
-- Any new logic that needs to inspect or intercept incoming messages should be implemented as a new middleware file in the `/middleware` directory.
-- Each middleware file must export a single asynchronous function that accepts the `ctx` object as its only argument.
-- The middleware should return `false` to halt further processing of the message, or `true` to pass it to the next middleware in the chain.
-
-### 3. Data Access Layer (DAL) (`/database`)
-
-- All interactions with the database **must** go through the DAL.
-- To access user data, for example, use `ctx.self.context.database.user.get(userId)` or `ctx.self.context.database.user.update(userId, data)`.
-- Do **not** interact with the `simpl.db` instance directly from within commands or middleware.
-
-### 4. Automated Testing
-
-- All new features (especially middleware and commands) should be accompanied by tests written using the `jest` framework.
-- New tests should be placed in the `__tests__` directory, mirroring the project structure.
-- Before submitting a pull request, ensure all tests pass by running `npm test`.
-
-### 5. WhatsDeXBrain: The AI Core
-
-- All incoming messages are processed by the `WhatsDeXBrain` service.
-- The brain uses the `nlpProcessor` service to understand the user's intent.
-- The `intentRouter` then routes the message to the appropriate handler in the `src/services/brain` directory.
-- When adding new intents, you must:
-  1.  Add the intent to the `nlpProcessor` service.
-  2.  Create a new handler file in the `src/services/brain` directory.
-  3.  Add the new handler to the `intentRouter`.
-  4.  Create a new command file if necessary.
+If you have any questions, feel free to ask in the [discussions](https://github.com/SplashCodeDex/WhatsDeX/discussions) page.

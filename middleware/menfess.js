@@ -1,4 +1,4 @@
-const { Baileys } = require("@itsreimau/gktw");
+const { S_WHATSAPP_NET } = require("@whiskeysockets/baileys");
 
 module.exports = async (ctx, context) => {
     const { database, formatter } = context;
@@ -9,7 +9,7 @@ module.exports = async (ctx, context) => {
         if (!isCmd || isCmd?.didyoumean) {
             for (const [menfessId, { from, to }] of Object.entries(allMenfessDb)) {
                 if (sender.id === from || sender.id === to) {
-                    const targetId = sender.id === from ? to : from + Baileys.S_WHATSAPP_NET;
+                    const targetId = sender.id === from ? to : from + S_WHATSAPP_NET;
                     if (m.content === "delete") {
                         const replyText = formatter.quote("✅ Menfess session has been deleted!");
                         await ctx.reply(replyText);

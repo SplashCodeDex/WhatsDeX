@@ -1,9 +1,6 @@
 // Impor modul dan dependensi yang diperlukan
 const api = require("./api.js");
-const {
-    Baileys,
-    MessageType
-} = require("@itsreimau/gktw");
+const { jidDecode, proto, getContentType, S_WHATSAPP_NET, STORIES_JID, META_AI_JID } = require("@whiskeysockets/baileys");
 const axios = require("axios");
 const didYouMean = require("didyoumean");
 const util = require("node:util");
@@ -14,58 +11,36 @@ const formatBotName = (botName) => {
     return botName.replace(/[aiueo0-9\W_]/g, "");
 };
 
-function checkMedia(type, required) {
-    if (!type || !required) return false;
+function checkMedia(message, required) {
+    if (!message || !required) return false;
 
-    const mediaMap = {
-        audio: MessageType.audioMessage,
-        document: [MessageType.documentMessage, MessageType.documentWithCaptionMessage],
-        gif: MessageType.videoMessage,
-        groupStatusMention: MessageType.groupStatusMentionMessage,
-        image: MessageType.imageMessage,
-        sticker: MessageType.stickerMessage,
-        text: [MessageType.conversation, MessageType.extendedTextMessage],
-        video: MessageType.videoMessage
-    };
-
+    const type = getContentType(message);
     const mediaList = Array.isArray(required) ? required : [required];
-    for (const media of mediaList) {
-        const mappedType = mediaMap[media];
-        if (!mappedType) continue;
 
-        if (Array.isArray(mappedType)) {
-            if (mappedType.includes(type)) return media;
-        } else {
-            if (type === mappedType) return media;
-        }
+    for (const media of mediaList) {
+        if (type === media) return media;
+        if (type === 'extendedTextMessage' && media === 'text') return media;
+        if (type === 'videoMessage' && media === 'gif') return media;
+        if (type === 'documentWithCaptionMessage' && media === 'document') return media;
     }
 
     return false;
 }
 
-function checkQuotedMedia(type, required) {
-    if (!type || !required) return false;
+function checkQuotedMedia(message, required) {
+    if (!message || !required) return false;
 
-    const mediaMap = {
-        audio: MessageType.audioMessage,
-        document: [MessageType.documentMessage, MessageType.documentWithCaptionMessage],
-        gif: MessageType.videoMessage,
-        image: MessageType.imageMessage,
-        sticker: MessageType.stickerMessage,
-        text: [MessageType.conversation, MessageType.extendedTextMessage],
-        video: MessageType.videoMessage
-    };
+    const quoted = message.extendedTextMessage?.contextInfo?.quotedMessage;
+    if (!quoted) return false;
 
+    const type = getContentType(quoted);
     const mediaList = Array.isArray(required) ? required : [required];
-    for (const media of mediaList) {
-        const mappedType = mediaMap[media];
-        if (!mappedType) continue;
 
-        if (Array.isArray(mappedType)) {
-            if (mappedType.includes(type)) return media;
-        } else {
-            if (type === mappedType) return media;
-        }
+    for (const media of mediaList) {
+        if (type === media) return media;
+        if (type === 'extendedTextMessage' && media === 'text') return media;
+        if (type === 'videoMessage' && media === 'gif') return media;
+        if (type === 'documentWithCaptionMessage' && media === 'document') return media;
     }
 
     return false;
@@ -76,8 +51,8 @@ function fakeMetaAiQuotedText(text) {
 
     const quoted = {
         key: {
-            remoteJid: Baileys.STORIES_JID,
-            participant: Baileys.META_AI_JID
+            remoteJid: STORIES_JID,
+            participant: META_AI_JID
         },
         message: {
             conversation: text
@@ -117,9 +92,11 @@ async function handleError(context, ctx, error, useAxios = false, reportErrorToO
     const errorText = util.format(error);
 
     consolefy.error(`Error: ${errorText}`);
-    if (config.system.reportErrorToOwner && reportErrorToOwner) await ctx.replyWithJid(config.owner.id + Baileys.S_WHATSAPP_NET, {
-        text: `${formatter.quote(isGroup ? `⚠️ Terjadi kesalahan dari grup: @${groupJid}, oleh: @${ctx.getId(ctx.sender.jid)}` : `⚠️ Terjadi kesalahan dari: @${ctx.getId(ctx.sender.jid)}`)}\n` +
-            `${formatter.quote("· · ─ ·✶· ─ · ·")}\n` +
+    if (config.system.reportErrorToOwner && reportErrorToOwner) await ctx.replyWithJid(config.owner.id + S_WHATSAPP_NET, {
+        text: `${formatter.quote(isGroup ? `⚠️ Terjadi kesalahan dari grup: @${groupJid}, oleh: @${ctx.getId(ctx.sender.jid)}` : `⚠️ Terjadi kesalahan dari: @${ctx.getId(ctx.sender.jid)}`)}
+` + 
+            `${formatter.quote("· · ─ ·✶· ─ · ·")}
+` + 
             formatter.monospace(errorText),
         mentions: [ctx.sender.jid],
         contextInfo: {

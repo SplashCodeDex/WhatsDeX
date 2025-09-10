@@ -3,11 +3,7 @@ const config = require("./config.js");
 const pkg = require("./package.json");
 const tools = require("./tools/exports.js");
 const formatter = require("./utils/formatter.js");
-// Initialize consolefy
-const { Consolefy } = require("@mengkodingan/consolefy");
-const consolefy = new Consolefy({
-    tag: pkg.name
-});
+
 const logger = require("./src/utils/logger");
 
 // Initialize Prisma database service
@@ -234,7 +230,7 @@ const context = {
   config,
   database,
   databaseService,
-  consolefy, // Add consolefy to context
+  
   formatter,
   state,
   tools,

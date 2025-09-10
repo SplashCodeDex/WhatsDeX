@@ -8,6 +8,8 @@ const path = require('node:path');
 const {
     Boom
 } = require('@hapi/boom');
+const qrcode = require('qrcode-terminal');
+const messageQueue = require('./src/worker.js');
 
 module.exports = async (context) => {
     const {
@@ -26,7 +28,6 @@ module.exports = async (context) => {
 
     const bot = makeWASocket({
         auth: state,
-        printQRInTerminal: true,
         logger,
         browser: ['WhatsDeX', 'Chrome', '1.0.0']
     });
@@ -41,7 +42,7 @@ module.exports = async (context) => {
         } = update;
 
         if (qr) {
-            console.log('QR code received, please scan!');
+            qrcode.generate(qr, { small: true });
         }
 
         if (connection === 'close') {
@@ -52,7 +53,7 @@ module.exports = async (context) => {
             console.log('Connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect);
 
             if (shouldReconnect) {
-                module.exports(context); // Re-run the main function to reconnect
+                setTimeout(() => module.exports(context), 5000); // Re-run the main function to reconnect after 5 seconds
             }
         } else if (connection === 'open') {
             console.log('✅ Bot connected to WhatsApp!');
@@ -60,28 +61,10 @@ module.exports = async (context) => {
     });
 
     bot.ev.on('messages.upsert', async (m) => {
-        console.log(JSON.stringify(m, undefined, 2));
-
         const msg = m.messages[0];
         if (!msg.message) return;
 
-        const key = {
-            remoteJid: msg.key.remoteJid,
-            fromMe: msg.key.fromMe,
-            id: msg.key.id
-        }
-
-        const messageType = Object.keys(msg.message)[0];
-        if (messageType === 'conversation') {
-            const text = msg.message.conversation;
-            if (text === '!ping') {
-                await bot.sendMessage(key.remoteJid, {
-                    text: 'Pong!'
-                }, {
-                    quoted: msg
-                });
-            }
-        }
+        messageQueue.add({ bot, msg });
     });
 
     return bot;

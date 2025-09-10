@@ -1,7 +1,10 @@
 // Import necessary modules and dependencies
-const {
-    Formatter
-} = require("@itsreimau/gktw");
+const Formatter = {
+    quote: (text) => `_${text}_`,
+    italic: (text) => `_${text}_`,
+    bold: (text) => `*${text}*`,
+    monospace: (text) => `\`\`${text}\`\``,
+};
 
 // Configuration
 global.config = {

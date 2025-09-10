@@ -32,7 +32,18 @@ class DatabaseMigrator {
 const config = require("./config.js");
 const pkg = require("./package.json");
 const tools = require("./tools/exports.js");
-const { Formatter } = require("@itsreimau/gktw");
+const Formatter = {
+    quote: (text) => `_${text}_`,
+    italic: (text) => `_${text}_`,
+    bold: (text) => `*${text}*`,
+    monospace: (text) => `\
+\
+\
+${text}\
+\
+\
+`,
+};
 const logger = require("./src/utils/logger");
 
 // Initialize Prisma database service
