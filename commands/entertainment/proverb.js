@@ -11,6 +11,7 @@ module.exports = {
         const { tools, formatter, config } = ctx.bot.context; // Add tools, formatter, config here
         try {
             const apiUrl = tools.api.createUrl("http://jagokata-api.hofeda4501.serv00.net", "/peribahasa-acak.php"); // Dihosting sendiri, karena jagokata-api.rf.gd malah error
+            console.log('Calling proverb API:', apiUrl);
             const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data.data);
 
             await ctx.reply({

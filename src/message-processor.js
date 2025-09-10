@@ -68,6 +68,7 @@ module.exports = async (job) => {
 
     const command = commands.get(commandName);
     console.log('message-processor: Found command:', !!command);
+    if (commandName === 'proverb') console.log('Proverb command matched');
 
     if (command) {
         const ctx = {

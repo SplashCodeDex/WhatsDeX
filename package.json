@@ -71,7 +71,7 @@
     "form-data": "^4.0.0",
     "guaranteed_security": "^1.0.0",
     "helmet": "^7.2.0",
-    "jimp": "^0.22.12",
+    "jimp": "^1.6.0",
     "jsonwebtoken": "^9.0.2",
     "link-preview-js": "^3.1.0",
     "mime-types": "^2.1.35",
@@ -88,7 +88,8 @@
     "wa-sticker-formatter": "^4.4.4",
     "winston": "^3.17.0",
     "yargs": "^18.0.0",
-    "zod": "^4.1.5"
+    "zod": "^4.1.5",
+    "redis": "^4.6.5"
   },
   "optionalDependencies": {
     "baileys-firebase": "^1.0.1",

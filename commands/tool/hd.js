@@ -1,6 +1,8 @@
+/* Deprecated: gktw migrated to @whiskeysockets/baileys
 const {
     Baileys
 } = require("@itsreimau/gktw");
+*/
 
 module.exports = {
     name: "hd",
