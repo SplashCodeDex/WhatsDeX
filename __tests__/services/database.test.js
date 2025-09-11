@@ -222,3 +222,33 @@ describe('DatabaseService', () => {
     });
   });
 });
+describe('Migrations', () => {
+  let testPrisma;
+  const { execSync } = require('child_process');
+
+  beforeAll(async () => {
+    // Use in-memory SQLite for test
+    process.env.DATABASE_URL = 'file:./test.db';
+    const { PrismaClient } = require('@prisma/client');
+    testPrisma = new PrismaClient();
+    await testPrisma.$connect();
+    execSync('npx prisma migrate dev --name test-migrate --schema=./prisma/schema.prisma', { stdio: 'inherit' });
+  });
+
+  afterAll(async () => {
+    await testPrisma.$disconnect();
+  });
+
+  test('Models created after migrate', async () => {
+    const user = await testPrisma.user.create({
+      data: { name: 'test' }
+    });
+    expect(user).toHaveProperty('id');
+
+    // Test UserViolation
+    const violation = await testPrisma.userViolation.create({
+      data: { userId: user.id, violationType: 'spam' }
+    });
+    expect(violation).toHaveProperty('severity', 'low');
+  });
+});

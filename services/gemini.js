@@ -48,7 +48,8 @@ class GeminiService {
    * @param {string} text - The user's input text
    * @returns {Promise<string>} The response text from Gemini
    */
-  async getChatCompletion(text) {
+  async getChatCompletion(text, correlationId = null) {
+    const logger = require('../src/utils/logger');
     if (!text) {
       throw new Error('Input text is required.');
     }
@@ -59,36 +60,63 @@ class GeminiService {
     if (this.cache) {
       const cachedResponse = await this.cache.get(cacheKey);
       if (cachedResponse) {
-        logger.debug('Returning cached Gemini response', { cacheKey });
+        logger.debug('Returning cached Gemini response', { cacheKey, correlationId });
         return cachedResponse;
       }
     }
 
-    try {
-      logger.debug('Sending chat completion request to Gemini', { textLength: text.length });
+    const maxRetries = 3;
+    const baseDelay = 1000;
 
-      const result = await this.model.generateContent(text);
-      const response = await result.response;
-      const message = response.text();
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        logger.info('Gemini chat completion request', {
+          correlationId,
+          attempt,
+          textLength: text.length
+        });
 
-      if (!message) {
-        throw new Error('Empty response from Gemini API');
+        const result = await this.model.generateContent(text);
+        const response = await result.response;
+        const message = response.text();
+
+        if (!message) {
+          throw new Error('Empty response from Gemini API');
+        }
+
+        // Cache the response
+        if (this.cache) {
+          await this.cache.set(cacheKey, message, 1800); // Cache for 30 minutes
+          logger.debug('Cached Gemini response', { cacheKey, correlationId });
+        }
+
+        logger.info('Gemini chat completion success', {
+          correlationId,
+          attempt,
+          responseLength: message.length
+        });
+        return message;
+      } catch (error) {
+        logger.warn('Gemini chat completion attempt failed', {
+          correlationId,
+          attempt,
+          maxRetries,
+          error: error.message,
+          retryAfter: attempt < maxRetries ? baseDelay * Math.pow(2, attempt - 1) : null
+        });
+
+        if (attempt === maxRetries) {
+          logger.error('Gemini chat completion failed after retries', {
+            correlationId,
+            error: error.message,
+            text: text.substring(0, 100) + '...'
+          });
+          throw new Error(`Failed to get response from Gemini API: ${error.message}`);
+        }
+
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt - 1)));
       }
-
-      // Cache the response
-      if (this.cache) {
-        await this.cache.set(cacheKey, message, 1800); // Cache for 30 minutes
-        logger.debug('Cached Gemini response', { cacheKey });
-      }
-
-      logger.debug('Received response from Gemini', { responseLength: message.length });
-      return message;
-    } catch (error) {
-      logger.error('Error fetching Gemini completion', {
-        error: error.message,
-        text: text.substring(0, 100) + '...'
-      });
-      throw new Error(`Failed to get response from Gemini API: ${error.message}`);
     }
   }
 
@@ -97,7 +125,8 @@ class GeminiService {
    * @param {Array} messages - Array of message objects with role and content
    * @returns {Promise<string>} The response text from Gemini
    */
-  async getChatCompletionWithHistory(messages) {
+  async getChatCompletionWithHistory(messages, correlationId = null) {
+    const logger = require('../src/utils/logger');
     if (!messages || messages.length === 0) {
       throw new Error('Messages array is required.');
     }
@@ -110,51 +139,76 @@ class GeminiService {
     if (this.cache) {
       const cachedResponse = await this.cache.get(cacheKey);
       if (cachedResponse) {
-        logger.debug('Returning cached Gemini conversation response', { cacheKey });
+        logger.debug('Returning cached Gemini conversation response', { cacheKey, correlationId });
         return cachedResponse;
       }
     }
 
-    try {
-      logger.debug('Sending chat completion with history to Gemini', {
-        messageCount: messages.length
-      });
+    const maxRetries = 3;
+    const baseDelay = 1000;
 
-      // Convert messages to Gemini format
-      const history = messages.slice(0, -1).map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      }));
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        logger.info('Gemini chat completion with history request', {
+          correlationId,
+          attempt,
+          messageCount: messages.length
+        });
 
-      const chat = this.model.startChat({
-        history: history,
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
+        // Convert messages to Gemini format
+        const history = messages.slice(0, -1).map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }]
+        }));
+
+        const chat = this.model.startChat({
+          history: history,
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
+          }
+        });
+
+        const lastMessage = messages[messages.length - 1];
+        const result = await chat.sendMessage(lastMessage.content);
+        const response = await result.response;
+        const message = response.text();
+
+        // Cache the response
+        if (this.cache) {
+          await this.cache.set(cacheKey, message, 1800); // Cache for 30 minutes
+          logger.debug('Cached Gemini conversation response', { cacheKey, correlationId });
         }
-      });
 
-      const lastMessage = messages[messages.length - 1];
-      const result = await chat.sendMessage(lastMessage.content);
-      const response = await result.response;
-      const message = response.text();
+        logger.info('Gemini chat completion with history success', {
+          correlationId,
+          attempt,
+          responseLength: message.length
+        });
+        return message;
+      } catch (error) {
+        logger.warn('Gemini chat completion with history attempt failed', {
+          correlationId,
+          attempt,
+          maxRetries,
+          error: error.message,
+          messageCount: messages.length,
+          retryAfter: attempt < maxRetries ? baseDelay * Math.pow(2, attempt - 1) : null
+        });
 
-      // Cache the response
-      if (this.cache) {
-        await this.cache.set(cacheKey, message, 1800); // Cache for 30 minutes
-        logger.debug('Cached Gemini conversation response', { cacheKey });
+        if (attempt === maxRetries) {
+          logger.error('Gemini chat completion with history failed after retries', {
+            correlationId,
+            error: error.message,
+            messageCount: messages.length
+          });
+          throw new Error(`Failed to get response from Gemini API: ${error.message}`);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt - 1)));
       }
-
-      logger.debug('Received response from Gemini chat', { responseLength: message.length });
-      return message;
-    } catch (error) {
-      logger.error('Error fetching Gemini chat completion', {
-        error: error.message,
-        messageCount: messages.length
-      });
-      throw new Error(`Failed to get response from Gemini API: ${error.message}`);
     }
   }
 
@@ -379,12 +433,40 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
       logger.debug('Content moderation completed', parsed);
       return parsed;
     } catch (error) {
-      logger.error('Error moderating content with Gemini', {
+      logger.error('Error moderating content with Gemini - ALERT: Manual review required', {
         error: error.message,
         content: content.substring(0, 100) + '...'
       });
-      // Default to safe if moderation fails
-      return { safe: true, categories: [], reason: 'Moderation service unavailable' };
+
+      // Broadcast alert to admin dashboard via WebSocket
+      try {
+        const AdminServer = require('../server');
+        AdminServer.broadcast('moderation_alert', {
+          content: content.substring(0, 200) + '...',
+          reason: 'Moderation failure - manual review required',
+          timestamp: new Date().toISOString(),
+          severity: 'high'
+        });
+      } catch (broadcastError) {
+        logger.warn('Failed to broadcast moderation alert', { error: broadcastError.message });
+      }
+
+      // Flag for audit (assume auditLogger available)
+      try {
+        const auditLogger = require('../src/services/auditLogger');
+        await auditLogger.logEvent({
+          eventType: 'MODERATION_FAILURE',
+          actor: 'system',
+          action: 'content_moderation_failed',
+          resource: 'moderation',
+          details: { contentPreview: content.substring(0, 100), error: error.message },
+          riskLevel: 'high'
+        });
+      } catch (auditError) {
+        logger.warn('Failed to log moderation failure to audit', { error: auditError.message });
+      }
+
+      throw new Error(`Moderation failed: ${error.message} - Content flagged for manual review`);
     }
   }
 

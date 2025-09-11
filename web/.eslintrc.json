@@ -1,0 +1,52 @@
+{
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "rules": {
+    "no-console": "warn",
+    "prefer-template": "off",
+    "no-plusplus": "off",
+    "no-return-assign": "off",
+    "no-undef": "off",
+    "no-bitwise": "off",
+    "no-restricted-properties": "off",
+    "operator-linebreak": "off",
+    "comma-dangle": "off",
+    "arrow-parens": "off",
+    "no-promise-executor-return": "off",
+    "consistent-return": "off",
+    "no-restricted-syntax": "off",
+    "no-prototype-builtins": "off",
+    "eol-last": "off",
+    "linebreak-style": "off",
+    "quotes": "off",
+    "max-len": "off",
+    "no-use-before-define": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "no-shadow": "off",
+    "@next/next/no-img-element": "off",
+    "indent": "off",
+    "object-curly-newline": "off",
+    "no-nested-ternary": "off",
+    "no-unused-vars": "warn",
+    "arrow-body-style": "off",
+    "react/jsx-no-undef": "off"
+  },
+  "env": {
+    "browser": true,
+    "es2020": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

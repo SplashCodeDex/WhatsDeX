@@ -439,23 +439,55 @@ router.post('/record-usage', (req, res) => {
   }
 });
 
-// Cleanup expired codes periodically
-setInterval(() => {
-  qrManager.cleanupExpiredQRs();
-  pairingManager.cleanupExpiredCodes();
-}, 60000); // Every minute
+ // Cleanup expired codes periodically
+ setInterval(() => {
+   qrManager.cleanupExpiredQRs();
+   pairingManager.cleanupExpiredCodes();
+ }, 60000); // Every minute
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await qrManager.shutdown();
-  await pairingManager.shutdown();
-  await reconnectionEngine.shutdown();
-});
+ // Graceful shutdown
+ process.on('SIGINT', async () => {
+   await qrManager.shutdown();
+   await pairingManager.shutdown();
+   await reconnectionEngine.shutdown();
+ });
 
-process.on('SIGTERM', async () => {
-  await qrManager.shutdown();
-  await pairingManager.shutdown();
-  await reconnectionEngine.shutdown();
-});
+ process.on('SIGTERM', async () => {
+   await qrManager.shutdown();
+   await pairingManager.shutdown();
+   await reconnectionEngine.shutdown();
+ });
 
-module.exports = router;
+ // Single enhanced logout endpoint for session invalidation
+ router.post('/logout', async (req, res) => {
+   try {
+     const authHeader = req.headers['authorization'];
+     const token = authHeader && authHeader.split(' ')[1];
+     if (!token) {
+       return res.status(401).json({ error: 'Access token required' });
+     }
+
+     const jwt = require('jsonwebtoken');
+     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret');
+     const sessionId = decoded.sessionId || `session_${decoded.userId}`;
+
+     let invalidTokens = new Set(); // Fallback in-memory
+
+     if (process.env.REDIS_URL) {
+       const { createClient } = require('redis');
+       const redis = createClient({ url: process.env.REDIS_URL });
+       await redis.connect();
+       await redis.del(sessionId);
+       await redis.setEx(`invalid_token:${token}`, 3600, '1'); // 1h expiration
+       await redis.quit();
+     } else {
+       invalidTokens.add(token);
+     }
+
+     res.json({ success: true, message: 'Session invalidated' });
+   } catch (error) {
+     res.status(500).json({ error: 'Logout failed', message: error.message });
+   }
+ });
+
+ module.exports = router;

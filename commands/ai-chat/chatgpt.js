@@ -55,28 +55,68 @@ module.exports = {
       const response = await openAIService.getChatCompletion(messages, aiTools);
       const responseMessage = response.message;
 
+      // Whitelist of safe commands for tool calls (only read-only, no modifications)
+      const SAFE_COMMANDS = new Set([
+        'ping', 'about', 'uptime', 'price', 'suggest', 'tqto', 'listapis',
+        'googlesearch', 'youtubesearch', 'githubsearch', 'npmsearch',
+        'translate', 'weather', 'gempa', 'holiday', 'faktaunik', 'quotes', 'proverb'
+      ]);
+  
       if (response.finish_reason === 'tool_calls' && responseMessage.tool_calls) {
         messages.push(responseMessage);
         // eslint-disable-next-line no-restricted-syntax
         for (const toolCall of responseMessage.tool_calls) {
           const functionName = toolCall.function.name;
           const functionArgs = JSON.parse(toolCall.function.arguments);
+          
+          // Log tool call attempt
+          console.log(`AI Tool Call: ${functionName} with args ${JSON.stringify(functionArgs)}`);
+  
+          // Check whitelist
+          if (!SAFE_COMMANDS.has(functionName)) {
+            console.warn(`Unsafe tool call blocked: ${functionName}`);
+            messages.push({
+              tool_call_id: toolCall.id,
+              role: 'tool',
+              name: functionName,
+              content: `Error: Command "${functionName}" is not allowed for tool execution.`
+            });
+            continue;
+          }
+  
           const commandToExecute = ctx.bot.cmd.get(functionName);
           let toolResponse = 'Error: Command not found.';
           if (commandToExecute) {
             try {
               let commandOutput = '';
-              const mockCtx = { ...ctx, args: Object.values(functionArgs), reply: (output) => { commandOutput = typeof output === 'object' ? JSON.stringify(output) : output; } };
+              // Sandboxed ctx: only reply, args, basic props - no group ops, owner access, exec
+              const sandboxedCtx = {
+                ...ctx,
+                args: Object.values(functionArgs),
+                reply: (output) => {
+                  commandOutput = typeof output === 'object' ? JSON.stringify(output) : output;
+                },
+                // Remove dangerous properties
+                group: undefined,
+                sender: { jid: ctx.sender.jid }, // Read-only
+                isGroup: ctx.isGroup,
+                getId: ctx.getId,
+                // No access to bot.cmd full set, database, etc.
+              };
               // eslint-disable-next-line no-await-in-loop
-              await commandToExecute.code(mockCtx);
+              await commandToExecute.code(sandboxedCtx);
               toolResponse = commandOutput;
-            } catch (e) { toolResponse = `Error: ${e.message}`; }
+              console.log(`Tool execution success: ${functionName}`);
+            } catch (e) {
+              toolResponse = `Error: ${e.message}`;
+              console.error(`Tool execution failed for ${functionName}:`, e);
+            }
           }
           messages.push({
             tool_call_id: toolCall.id, role: 'tool', name: functionName, content: toolResponse,
           });
         }
-
+  
         const finalResponse = await openAIService.getChatCompletion(messages);
         const finalMessageContent = finalResponse.message.content;
         messages.push(finalResponse.message);

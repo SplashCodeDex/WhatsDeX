@@ -13,7 +13,6 @@ const nextConfig = {
 
   // Experimental features
   experimental: {
-    appDir: false, // Using pages directory for now
     optimizeCss: true,
     scrollRestoration: true,
   },
@@ -88,7 +87,6 @@ const nextConfig = {
 
   // Output configuration
   output: 'standalone',
-  outputFileTracingRoot: undefined,
 };
 
 module.exports = nextConfig;

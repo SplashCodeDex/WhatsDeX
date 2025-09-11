@@ -35,7 +35,9 @@
     "performance-monitor": "node scripts/performance-monitor.js",
     "gui:install-mui": "cd gui && npm install @mui/material @emotion/react @emotion/styled",
     "gui:install-express-socketio": "cd gui && npm install express socket.io",
-    "gui:install-electron": "cd gui && npm install electron --save-dev"
+    "gui:install-electron": "cd gui && npm install electron --save-dev",
+    "e2e": "playwright test",
+    "security-audit": "npm audit --audit-level=moderate"
   },
   "repository": {
     "type": "git",
@@ -56,6 +58,7 @@
     "@prisma/client": "^5.7.1",
     "@sentry/node": "^7.109.0",
     "@sentry/profiling-node": "^7.109.0",
+    "@socket.io/redis-adapter": "^8.3.0",
     "@whiskeysockets/baileys": "^6.7.5",
     "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
@@ -69,11 +72,14 @@
     "express-rate-limit": "^7.5.1",
     "express-validator": "^7.2.1",
     "form-data": "^4.0.0",
+    "framer-motion": "^12.23.12",
     "guaranteed_security": "^1.0.0",
     "helmet": "^7.2.0",
     "jimp": "^1.6.0",
     "jsonwebtoken": "^9.0.2",
     "link-preview-js": "^3.1.0",
+    "lucide-react": "^0.544.0",
+    "magicui-next": "^0.1.24",
     "mime-types": "^2.1.35",
     "moment-timezone": "^0.6.0",
     "multer": "^1.4.5-lts.1",
@@ -82,14 +88,14 @@
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "rate-limiter-flexible": "^3.0.4",
+    "redis": "^4.7.1",
     "socket.io": "^4.8.1",
     "stripe": "^14.14.0",
     "vcard-creator": "^0.5.0",
     "wa-sticker-formatter": "^4.4.4",
     "winston": "^3.17.0",
     "yargs": "^18.0.0",
-    "zod": "^4.1.5",
-    "redis": "^4.6.5"
+    "zod": "^4.1.5"
   },
   "optionalDependencies": {
     "baileys-firebase": "^1.0.1",
@@ -97,6 +103,7 @@
     "baileys-mysql": "^1.0.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",

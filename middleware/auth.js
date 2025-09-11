@@ -15,7 +15,15 @@ const authRateLimiter = new RateLimiterMemory({
  */
 const authenticateToken = async (req, res, next) => {
   try {
-    // Rate limiting
+    // IP whitelisting check (consolidated)
+    const devIPs = ['127.0.0.1', '::1', '0.0.0.0'];
+    const isDevIP = devIPs.includes(req.ip);
+    const isWhitelisted = isDevIP || (process.env.WHITELIST_IPS && process.env.WHITELIST_IPS.split(',').includes(req.ip));
+    if (!isWhitelisted) {
+      require('../src/services/auditLogger').warn('IP not whitelisted', { ip: req.ip, endpoint: req.path });
+      return res.status(403).json({ error: 'IP address not whitelisted' });
+    }
+  
     await authRateLimiter.consume(req.ip);
 
     const authHeader = req.headers['authorization'];
@@ -58,7 +66,7 @@ const authenticateToken = async (req, res, next) => {
         endpoint: req.path,
         method: req.method
       });
-
+    
       next();
     });
 

@@ -330,6 +330,33 @@ class StripeService {
         this.webhookSecret
       );
 
+      // Idempotency check for webhook replay protection
+      const { database } = require('../context');
+      const existing = await database.auditLog.findFirst({
+        where: {
+          details: {
+            contains: event.id
+          },
+          createdAt: {
+            gt: new Date(Date.now() - 5 * 60 * 1000) // 5 minutes
+          }
+        }
+      });
+
+      if (existing) {
+        logger.warn('Duplicate webhook event', { eventId: event.id });
+        return { event, duplicate: true };
+      }
+
+      // Log the event for idempotency
+      await database.auditLog.create({
+        eventType: 'stripe_webhook',
+        actor: 'stripe',
+        action: event.type,
+        details: JSON.stringify({ eventId: event.id, type: event.type }),
+        riskLevel: 'high'
+      });
+
       logger.info('Stripe webhook received', {
         type: event.type,
         id: event.id

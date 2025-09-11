@@ -110,21 +110,44 @@ services:
   admin:
     build:
       context: ./admin
-      dockerfile: Dockerfile
     container_name: whatsdex-admin
     restart: unless-stopped
     environment:
-      - API_URL=http://whatsdex:3000
+      - API_URL=http://admin-backend:3001
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
     ports:
       - "3002:3000"
     depends_on:
-      - whatsdex
+      - admin-backend
     networks:
       - whatsdex-network
     profiles:
       - admin
+
+  # Admin Backend (Express + Socket.IO)
+  admin-backend:
+    build: .
+    command: node server.js
+    container_name: whatsdex-admin-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - ADMIN_PORT=3001
+      - DATABASE_URL=postgresql://whatsdex:whatsdex_password@postgres:5432/whatsdex
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsdex-network
+    profiles:
+      - admin
+    # For scaling: docker-compose up --scale admin-backend=2 (ports auto 3001, 3002)
 
   # Monitoring & Logging (Grafana + Prometheus)
   prometheus:

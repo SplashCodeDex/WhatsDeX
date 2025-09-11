@@ -119,6 +119,39 @@ module.exports = async (job) => {
             getId: (jid) => jid.split('@')[0],
         };
 
+        // Integrate middleware chain
+        try {
+            const middleware = [
+                require('../middleware/botMode.js'),
+                require('../middleware/inputValidation.js'),
+                require('../middleware/groupMute.js'),
+                require('../middleware/nightMode.js'),
+                require('../middleware/maliciousMessage.js'),
+                require('../middleware/didYouMean.js'),
+                require('../middleware/afk.js'),
+                require('../middleware/antiMedia.js'),
+                require('../middleware/antiLink.js'),
+                require('../middleware/antiNsfw.js'),
+                require('../middleware/antiSpam.js'),
+                require('../middleware/antiTagsw.js'),
+                require('../middleware/antiToxic.js'),
+                require('../middleware/menfess.js'),
+                require('../middleware/inputValidation.js')
+            ];
+
+            for (const mw of middleware) {
+                const result = await mw(ctx, context);
+                if (!result) {
+                    console.log('message-processor: Middleware blocked command:', commandName);
+                    return; // Middleware blocked, exit
+                }
+            }
+        } catch (mwError) {
+            console.error('Middleware error in processor:', mwError);
+            await ctx.reply(formatter.quote(`Middleware error: ${mwError.message}`));
+            return;
+        }
+
         try {
             console.log('message-processor: Executing command:', commandName);
             await command.code(ctx);

@@ -394,7 +394,7 @@ export default function AnalyticsPage() {
                 <div className="text-sm text-gray-600">Uptime</div>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">< 10s</div>
+                <div className="text-2xl font-bold text-green-600">&lt; 10s</div>
                 <div className="text-sm text-gray-600">Avg Response Time</div>
               </div>
               <div className="p-4 bg-purple-50 rounded-lg">

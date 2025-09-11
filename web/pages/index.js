@@ -18,7 +18,8 @@ import GlassButton from '../components/ui/GlassButton';
 import {
   SkeletonDashboardCard,
   SkeletonChart,
-  SkeletonTable
+  SkeletonTable,
+  Skeleton
 } from '../components/ui/Skeleton';
 import { cn } from '../lib/utils';
 

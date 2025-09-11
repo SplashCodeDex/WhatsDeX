@@ -6,6 +6,9 @@ const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const { createAdapter } = require('@socket.io/redis-adapter');
+const { createClient } = require('redis');
+const crypto = require('crypto');
 
 // Import context and services
 const context = require('./context.js');
@@ -33,6 +36,26 @@ class AdminServer {
       }
     });
 
+    // Redis adapter for Socket.IO scaling
+    this.redisPubClient = null;
+    this.redisSubClient = null;
+    if (process.env.REDIS_URL) {
+      this.redisPubClient = createClient({ url: process.env.REDIS_URL });
+      this.redisSubClient = this.redisPubClient.duplicate();
+      Promise.all([this.redisPubClient.connect(), this.redisSubClient.connect()])
+        .then(() => {
+          this.io.adapter(createAdapter(this.redisPubClient, this.redisSubClient));
+          consolefy.log('Redis adapter connected for Socket.IO');
+        })
+        .catch((err) => {
+          consolefy.error('Failed to connect Redis adapter:', err.message, { code: err.code, command: err.command });
+          // Fallback to in-memory on connection failure
+          consolefy.warn('Falling back to in-memory adapter due to Redis connection error');
+        });
+    } else {
+      consolefy.log('No REDIS_URL, using in-memory adapter for Socket.IO');
+    }
+
     this.port = process.env.ADMIN_PORT || 3001;
     this.isInitialized = false;
   }
@@ -44,16 +67,24 @@ class AdminServer {
 
       // Security middleware
       this.app.use(helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            scriptSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https:"],
-          },
-        },
+        contentSecurityPolicy: false,
       }));
+
+      // Custom CSP middleware with nonce
+      this.app.use((req, res, next) => {
+        const nonce = crypto.randomBytes(16).toString('base64');
+        res.locals.nonce = nonce;
+        const csp = [
+          "default-src 'self'",
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com 'nonce-" + nonce + "'",
+          "font-src 'self' https://fonts.gstatic.com",
+          "script-src 'self' 'unsafe-eval' 'nonce-" + nonce + "'",
+          "img-src 'self' data: https:",
+          "report-uri /api/csp-report"
+        ].join('; ');
+        res.setHeader('Content-Security-Policy', csp);
+        next();
+      });
 
       // CORS configuration
       this.app.use(cors({
@@ -105,6 +136,17 @@ class AdminServer {
       // Error handling middleware
       this.app.use(errorHandler);
 
+      // CSP report endpoint
+      this.app.post('/api/csp-report', (req, res) => {
+        logger.warn('CSP violation reported', {
+          directive: req.body['csp-report'],
+          blockedUri: req.body['blocked-uri'],
+          originalPolicy: req.body['original-policy'],
+          ip: req.ip
+        });
+        res.status(204).send();
+      });
+
       // WebSocket setup
       this.setupWebSocket();
 
@@ -153,6 +195,18 @@ class AdminServer {
   }
 
   async stop() {
+    // Graceful Redis disconnect if connected
+    if (this.redisPubClient && this.redisSubClient) {
+      try {
+        await Promise.all([
+          this.redisPubClient.quit().catch(() => {}),
+          this.redisSubClient.quit().catch(() => {})
+        ]);
+        consolefy.log('Redis clients disconnected gracefully');
+      } catch (err) {
+        consolefy.error('Error disconnecting Redis clients:', err.message);
+      }
+    }
     return new Promise((resolve) => {
       this.server.close(() => {
         consolefy.log('Admin server stopped');

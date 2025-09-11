@@ -171,4 +171,5 @@ export const SkeletonChart = ({ className, ...props }) => (
   </div>
 );
 
+export { Skeleton };
 export default Skeleton;

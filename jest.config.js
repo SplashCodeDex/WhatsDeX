@@ -1,6 +1,9 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
+  transformIgnorePatterns: [
+    '/node_modules/(?!(playwright)/)',
+  ],
   collectCoverageFrom: [
     'commands/**/*.js',
     'middleware/**/*.js',
@@ -17,10 +20,10 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 75,
-      lines: 75,
-      statements: 75
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
     }
   },
   testMatch: [
