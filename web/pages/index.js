@@ -13,14 +13,14 @@ import {
   BoltIcon
 } from '@heroicons/react/24/outline';
 import Layout from '../components/Layout';
-import GlassCard from '../components/ui/GlassCard';
-import GlassButton from '../components/ui/GlassButton';
+import GlassCard from '../../shared/components/ui/GlassCard';
+import GlassButton from '../../shared/components/ui/GlassButton';
 import {
   SkeletonDashboardCard,
   SkeletonChart,
   SkeletonTable,
   Skeleton
-} from '../components/ui/Skeleton';
+} from '../../shared/components/ui/Skeleton';
 import { cn } from '../lib/utils';
 
 export default function Dashboard() {

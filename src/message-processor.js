@@ -48,9 +48,30 @@ module.exports = async (job) => {
         text = msg.message.conversation;
     } else if (messageType === 'extendedTextMessage' && msg.message.extendedTextMessage) {
         text = msg.message.extendedTextMessage.text;
+    } else if (messageType === 'imageMessage' && msg.message.imageMessage && msg.message.imageMessage.caption) {
+        text = msg.message.imageMessage.caption;
+    } else if (messageType === 'videoMessage' && msg.message.videoMessage && msg.message.videoMessage.caption) {
+        text = msg.message.videoMessage.caption;
+    } else if (messageType === 'buttonsMessage' && msg.message.buttonsMessage && msg.message.buttonsMessage.footer) {
+        text = msg.message.buttonsMessage.footer;
+    } else if (messageType === 'protocolMessage' && msg.message.protocolMessage && msg.message.protocolMessage.quotedMessage) {
+        // Handle reaction or other protocol, but for now, extract from quoted if text
+        const quoted = msg.message.protocolMessage.quotedMessage;
+        const quotedType = Object.keys(quoted)[0];
+        if (quotedType === 'conversation') {
+            text = quoted.conversation;
+        } else if (quotedType === 'extendedTextMessage') {
+            text = quoted.extendedTextMessage.text;
+        }
     }
     console.log('message-processor: Extracted text:', text);
 
+    // Early skip for non-text types to reduce noise
+    const textTypes = ['conversation', 'extendedTextMessage', 'imageMessage', 'videoMessage', 'buttonsMessage', 'protocolMessage'];
+    if (!textTypes.includes(messageType)) {
+        console.log('message-processor: Skipping non-text message type:', messageType);
+        return;
+    }
     if (!text) return;
 
     const prefixMatch = text.match(config.bot.prefix);
@@ -73,7 +94,8 @@ module.exports = async (job) => {
     if (command) {
         const ctx = {
             reply: async (content) => {
-                await bot.sendMessage(msg.key.remoteJid, { text: content });
+                const messageContent = typeof content === 'string' ? { text: content } : content;
+                await bot.sendMessage(msg.key.remoteJid, messageContent);
             },
             editMessage: async (key, content) => {
                 await bot.sendMessage(msg.key.remoteJid, { edit: key, text: content });
@@ -102,14 +124,25 @@ module.exports = async (job) => {
             // For now, they return false or throw an error.
             group: () => ({
                 isAdmin: async (jid) => {
-                    console.warn('group.isAdmin not fully implemented in message-processor.js');
-                    // You would need to fetch group metadata and check participant roles here
-                    return false;
+                    if (!msg.key.remoteJid.endsWith('@g.us')) return false;
+                    try {
+                        const metadata = await bot.groupMetadata(msg.key.remoteJid);
+                        const participant = metadata.participants.find(p => p.id === jid);
+                        return participant ? participant.admin : false;
+                    } catch (error) {
+                        console.error('Error fetching group metadata for isAdmin:', error);
+                        return false;
+                    }
                 },
                 isOwner: async (jid) => {
-                    console.warn('group.isOwner not fully implemented in message-processor.js');
-                    // You would need to fetch group metadata and check participant roles here
-                    return false;
+                    if (!msg.key.remoteJid.endsWith('@g.us')) return false;
+                    try {
+                        const metadata = await bot.groupMetadata(msg.key.remoteJid);
+                        return metadata.owner === jid;
+                    } catch (error) {
+                        console.error('Error fetching group metadata for isOwner:', error);
+                        return false;
+                    }
                 },
                 // Add other group-related functions as needed by commands
             }),
@@ -135,8 +168,7 @@ module.exports = async (job) => {
                 require('../middleware/antiSpam.js'),
                 require('../middleware/antiTagsw.js'),
                 require('../middleware/antiToxic.js'),
-                require('../middleware/menfess.js'),
-                require('../middleware/inputValidation.js')
+                require('../middleware/menfess.js')
             ];
 
             for (const mw of middleware) {

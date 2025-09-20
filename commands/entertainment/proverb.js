@@ -12,7 +12,14 @@ module.exports = {
         try {
             const apiUrl = tools.api.createUrl("http://jagokata-api.hofeda4501.serv00.net", "/peribahasa-acak.php"); // Dihosting sendiri, karena jagokata-api.rf.gd malah error
             console.log('Calling proverb API:', apiUrl);
-            const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data.data);
+            const response = await axios.get(apiUrl);
+            if (!response.data || !response.data.data || !Array.isArray(response.data.data) || response.data.data.length === 0) {
+                throw new Error('Invalid or empty API response');
+            }
+            const result = tools.cmd.getRandomElement(response.data.data);
+            if (!result || !result.kalimat || !result.arti) {
+                throw new Error('Invalid proverb data structure');
+            }
 
             await ctx.reply({
                 text: `${formatter.quote(`Kalimat: ${result.kalimat}`)}\n` +
@@ -26,7 +33,7 @@ module.exports = {
                 }]
             });
         } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
+            await tools.cmd.handleError(ctx.bot.context, ctx, error, true);
         }
     }
 };

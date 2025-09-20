@@ -1,16 +1,32 @@
+const { fontFamily } = require("tailwindcss/defaultTheme");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: ["class"],
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: 'class',
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
       colors: {
-        // Modern color palette
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
           50: '#f0f9ff',
           100: '#e0f2fe',
           200: '#bae6fd',
@@ -24,6 +40,8 @@ module.exports = {
           950: '#082f49',
         },
         secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
           50: '#f8fafc',
           100: '#f1f5f9',
           200: '#e2e8f0',
@@ -36,7 +54,17 @@ module.exports = {
           900: '#0f172a',
           950: '#020617',
         },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
         accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
           50: '#fef2f2',
           100: '#fee2e2',
           200: '#fecaca',
@@ -48,6 +76,14 @@ module.exports = {
           800: '#991b1b',
           900: '#7f1d1d',
           950: '#450a0a',
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
         success: {
           50: '#f0fdf4',
@@ -75,7 +111,6 @@ module.exports = {
           900: '#78350f',
           950: '#451a03',
         },
-        // Glassmorphism colors
         glass: {
           50: 'rgba(255, 255, 255, 0.05)',
           100: 'rgba(255, 255, 255, 0.1)',
@@ -88,7 +123,6 @@ module.exports = {
           800: 'rgba(255, 255, 255, 0.6)',
           900: 'rgba(255, 255, 255, 0.7)',
         },
-        // Dark glass colors
         'glass-dark': {
           50: 'rgba(0, 0, 0, 0.05)',
           100: 'rgba(0, 0, 0, 0.1)',
@@ -118,22 +152,23 @@ module.exports = {
         'neon': '0 0 5px theme(colors.primary.500), 0 0 10px theme(colors.primary.500), 0 0 15px theme(colors.primary.500)',
         'neon-accent': '0 0 5px theme(colors.accent.500), 0 0 10px theme(colors.accent.500), 0 0 15px theme(colors.accent.500)',
       },
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
-        'fade-out': 'fadeOut 0.5s ease-in-out',
-        'slide-in-left': 'slideInLeft 0.3s ease-out',
-        'slide-in-right': 'slideInRight 0.3s ease-out',
-        'slide-in-up': 'slideInUp 0.3s ease-out',
-        'slide-in-down': 'slideInDown 0.3s ease-out',
-        'bounce-in': 'bounceIn 0.6s ease-out',
-        'scale-in': 'scaleIn 0.3s ease-out',
-        'rotate-in': 'rotateIn 0.5s ease-out',
-        'float': 'float 3s ease-in-out infinite',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'shimmer': 'shimmer 2s linear infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
+      borderRadius: {
+        '4xl': '2rem',
+        '5xl': '2.5rem',
+        '6xl': '3rem',
+        lg: `var(--radius)`,
+        md: `calc(var(--radius) - 2px)`,
+        sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
@@ -185,8 +220,25 @@ module.exports = {
           '100%': { boxShadow: '0 0 20px theme(colors.primary.500), 0 0 30px theme(colors.primary.500)' },
         },
       },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'fade-out': 'fadeOut 0.5s ease-in-out',
+        'slide-in-left': 'slideInLeft 0.3s ease-out',
+        'slide-in-right': 'slideInRight 0.3s ease-out',
+        'slide-in-up': 'slideInUp 0.3s ease-out',
+        'slide-in-down': 'slideInDown 0.3s ease-out',
+        'bounce-in': 'bounceIn 0.6s ease-out',
+        'scale-in': 'scaleIn 0.3s ease-out',
+        'rotate-in': 'rotateIn 0.5s ease-out',
+        'float': 'float 3s ease-in-out infinite',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'shimmer': 'shimmer 2s linear infinite',
+        'glow': 'glow 2s ease-in-out infinite alternate',
+      },
       fontFamily: {
-        'sans': ['Inter', 'system-ui', 'sans-serif'],
+        sans: ["var(--font-sans)", ...fontFamily.sans],
         'mono': ['JetBrains Mono', 'monospace'],
         'display': ['Poppins', 'system-ui', 'sans-serif'],
       },
@@ -210,11 +262,6 @@ module.exports = {
         '88': '22rem',
         '128': '32rem',
         '144': '36rem',
-      },
-      borderRadius: {
-        '4xl': '2rem',
-        '5xl': '2.5rem',
-        '6xl': '3rem',
       },
     },
   },

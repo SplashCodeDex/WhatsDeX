@@ -1,4 +1,4 @@
-const UnifiedSmartAuth = require("../services/unifiedSmartAuth");
+const UnifiedSmartAuth = require("../../src/services/auth/UnifiedSmartAuth");
 
 /**
  * Re-pair Command

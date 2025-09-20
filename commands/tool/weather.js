@@ -29,7 +29,14 @@ module.exports = {
       const apiUrl = createUrl('diibot', '/api/tools/cekcuaca', {
         query: location,
       });
-      const result = (await axios.get(apiUrl)).data.result;
+      console.log('Weather API URL:', apiUrl);
+      const response = await axios.get(apiUrl);
+      const result = response.data.result;
+      console.log('Weather API result keys:', result ? Object.keys(result) : 'undefined');
+
+      if (!result || !result.name || !result.weather || !Array.isArray(result.weather) || result.weather.length === 0 || !result.main) {
+        throw new Error(`Weather data not found for "${location}". The API may be down or location invalid. Try another city.`);
+      }
 
       const replyText = [
         `Lokasi: ${result.name}, ${result.sys.country}`,
@@ -44,10 +51,10 @@ module.exports = {
         '· · ─ ·✶· ─ · ·',
         `Angin: ${result.wind.speed} m/s (${(result.wind.speed * 3.6).toFixed(1)} km/h)`,
         `Arah Angin: ${result.wind.deg}°`,
-        `Hembusan: ${result.wind.gust} m/s`,
+        `Hembusan: ${result.wind.gust || 'N/A'} m/s`,
         '· · ─ ·✶· ─ · ·',
         `Awan: ${result.clouds.all}%`,
-        `Jarak Pandang: ${(result.visibility / 1000).toFixed(1)} km`,
+        `Jarak Pandang: ${result.visibility ? (result.visibility / 1000).toFixed(1) + ' km' : 'N/A'}`,
         `Matahari Terbit: ${moment.unix(result.sys.sunrise).tz('Asia/Jakarta').format('HH:mm')} WIB`,
         `Matahari Terbenam: ${moment.unix(result.sys.sunset).tz('Asia/Jakarta').format('HH:mm')} WIB`,
       ].map((line) => formatter.quote(line)).join('\n');
@@ -55,7 +62,6 @@ module.exports = {
       return ctx.reply({
         text: replyText,
         footer: config.msg.footer,
-      });
     } catch (error) {
       console.error(error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));

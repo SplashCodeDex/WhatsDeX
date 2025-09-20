@@ -22,13 +22,13 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../src/components/ui/card';
-import { Button } from '../src/components/ui/button';
-import { Badge } from '../src/components/ui/badge';
-import { Input } from '../src/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../src/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../src/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../src/components/ui/dropdown-menu';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';
+import { Button } from '@components/ui/button';
+import { Badge } from '@components/ui/badge';
+import { Input } from '@components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -36,8 +36,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../src/components/ui/table';
-import { DataTable } from '../src/components/ui/data-table';
+} from '@components/ui/table';
+import { DataTable } from '@components/ui/table';
 
 interface User {
   id: string;

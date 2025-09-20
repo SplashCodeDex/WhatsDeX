@@ -12,7 +12,6 @@ import {
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFacetedMinMaxValues,
-  getPaginationRowModel,
 } from "@tanstack/react-table"
 
 import {
@@ -41,6 +40,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
+  const [sorting, setSorting] = React.useState<SortingState>([])
 
   const table = useReactTable({
     data,

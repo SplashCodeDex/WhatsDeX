@@ -27,7 +27,7 @@ model User {
   premiumExpiry     DateTime?
   banned            Boolean  @default(false)
   banReason         String?
-  lastActivity      DateTime @default(now()) @index // Add index for queries
+  lastActivity      DateTime @default(now()) // Add index for queries
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -44,6 +44,7 @@ model User {
   adminSessions     AdminSession[]
 
   @@map("users")
+  @@index([lastActivity])
 }
 
 model UserSession {
@@ -377,49 +378,4 @@ model AdminSession {
   @@index([sessionId])
 
   @@map("admin_sessions")
-}
-
-// Additional index on User for lastActivity
-model User {
-  id                String   @id @default(cuid())
-  jid               String   @unique
-  name              String?
-  phone             String?
-  email             String?
-  avatar            String?
-  xp                Int      @default(0)
-  level             Int      @default(1)
-  coin              Int      @default(0)
-  premium           Boolean  @default(false)
-  premiumExpiry     DateTime?
-  banned            Boolean  @default(false)
-  banReason         String?
-  lastActivity      DateTime @default(now()) @index // Add index
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  // Relations
-  sessions          UserSession[]
-  violations        UserViolation[]
-  moderationQueues  ModerationQueue[]
-  adminSessions     AdminSession[]
-
-  @@map("users")
-}
-
-model Subscription {
-  id                String            @id @default(cuid())
-  userId            String
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planId            String
-  plan              SubscriptionPlan  @relation(fields: [planId], references: [id])
-  status            String            @default("active") // active, cancelled, expired (String for SQLite)
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  cancelAtPeriodEnd Boolean           @default(false)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-
-  @@map("subscriptions")
-  @@index([status, currentPeriodEnd])
 }

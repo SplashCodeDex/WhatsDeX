@@ -1,32 +1,53 @@
-# Contributing to WhatsDeX
+# Contributing to WhatsDeX Admin
 
-First off, thank you for considering contributing to WhatsDeX! It's people like you that make WhatsDeX such a great tool.
+First off, thank you for considering contributing to WhatsDeX Admin! It's people like you that make this project such a great tool.
 
-## Where do I start?
+## Code of Conduct
 
-If you're looking for a place to start, you can check out the [issues](https://github.com/SplashCodeDex/WhatsDeX/issues) page to see if there's anything you'd like to work on. If you have an idea for a new feature, you can create a new issue to discuss it.
+This project and everyone participating in it is governed by the [WhatsDeX Admin Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [email@example.com](mailto:email@example.com).
 
-## How do I contribute?
+## How Can I Contribute?
 
-1.  **Fork the repository.**
-2.  **Create a new branch.**
-3.  **Make your changes.**
-4.  **Commit your changes.**
-5.  **Push your changes to your fork.**
-6.  **Create a pull request.**
+### Reporting Bugs
 
-## Code Style
+Bugs are tracked as [GitHub issues](https://github.com/your-repo/issues). Before creating a bug report, please check the existing issues to see if the bug has already been reported.
 
-Please follow the existing code style. We use ESLint to enforce a consistent code style. You can run `npm run lint` to check your code for any style issues.
+When creating a bug report, please include as many details as possible. Fill out the required template, which will help us resolve issues faster.
 
-## Commit Messages
+### Suggesting Enhancements
 
-Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification for your commit messages.
+Enhancement suggestions are tracked as [GitHub issues](https://github.com/your-repo/issues).
 
-## Pull Requests
+When creating an enhancement suggestion, please include as much detail as possible. Fill out the required template, which will help us understand the suggestion better.
 
-When you create a pull request, please make sure to include a detailed description of the changes you've made. If your pull request fixes an issue, please make sure to link to the issue in the description.
+### Pull Requests
 
-## Questions?
+We welcome pull requests! Please follow these steps to submit a pull request:
 
-If you have any questions, feel free to ask in the [discussions](https://github.com/SplashCodeDex/WhatsDeX/discussions) page.
+1.  Fork the repository.
+2.  Create a new branch (`git checkout -b feature/your-feature-name`).
+3.  Make your changes.
+4.  Commit your changes (`git commit -m 'Add some feature'`).
+5.  Push to the branch (`git push origin feature/your-feature-name`).
+6.  Open a pull request.
+
+## Styleguides
+
+### Git Commit Messages
+
+- Use the present tense ("Add feature" not "Added feature").
+- Use the imperative mood ("Move cursor to..." not "Moves cursor to...").
+- Limit the first line to 72 characters or less.
+- Reference issues and pull requests liberally after the first line.
+
+### JavaScript Styleguide
+
+All JavaScript must adhere to the [StandardJS](https://standardjs.com/) style guide.
+
+### TypeScript Styleguide
+
+All TypeScript must adhere to the [TypeScript Style Guide](https://github.com/basarat/typescript-book/blob/master/docs/style-guide.md).
+
+### CSS Styleguide
+
+All CSS must adhere to the [Tailwind CSS](https://tailwindcss.com/docs) best practices.
