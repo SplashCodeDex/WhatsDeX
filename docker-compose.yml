@@ -85,7 +85,7 @@ services:
   # Web Dashboard (Next.js)
   dashboard:
     build:
-      context: ./web
+      context: .
       dockerfile: Dockerfile
     container_name: whatsdex-dashboard
     restart: unless-stopped

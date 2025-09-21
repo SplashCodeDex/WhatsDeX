@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import withAuth from '../../components/withAuth';
 
-export default function AnalyticsPage() {
+function AnalyticsPage() {
   const [analytics, setAnalytics] = useState({});
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('24h');
@@ -408,3 +409,5 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
+export default withAuth(AnalyticsPage);

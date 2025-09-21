@@ -24,8 +24,9 @@ import {
   Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import withAuth from '../../components/withAuth';
 
-export default function SystemSettings() {
+function SystemSettings() {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -38,6 +38,7 @@ import {
   TableRow,
 } from '@components/ui/table';
 import { DataTable } from '@components/ui/table';
+import withAuth from '../../components/withAuth';
 
 interface User {
   id: string;
@@ -63,7 +64,7 @@ interface Stats {
   banned: number;
 }
 
-export default function UserManagement() {
+function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -524,3 +525,5 @@ export default function UserManagement() {
     </div>
   );
 }
+
+export default withAuth(UserManagement);

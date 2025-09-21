@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import io from 'socket.io-client';
+import withAuth from '../../components/withAuth';
 
-export default function AuthPage() {
+function AuthPage() {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [qrCode, setQrCode] = useState(null);
   const [pairingCode, setPairingCode] = useState(null);
@@ -410,3 +411,5 @@ export default function AuthPage() {
     </div>
   );
 }
+
+export default withAuth(AuthPage);

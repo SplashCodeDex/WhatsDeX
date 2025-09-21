@@ -18,7 +18,9 @@ import {
 import { motion } from 'framer-motion';
 import UserManagement from './users';
 
-export default function AdminDashboard() {
+import withAuth from '../../components/withAuth';
+
+function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [systemStats, setSystemStats] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
@@ -397,3 +399,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+export default withAuth(AdminDashboard);

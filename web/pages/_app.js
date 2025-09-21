@@ -1,8 +1,12 @@
 import '../styles/globals.css';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import Layout from '../components/Layout';
+import { useRouter } from 'next/router';
 
 function MyApp({ Component, pageProps }) {
+  const router = useRouter();
+
   useEffect(() => {
     // Initialize theme on app start
     const savedTheme = localStorage.getItem('theme');
@@ -19,9 +23,17 @@ function MyApp({ Component, pageProps }) {
     document.documentElement.classList.add('loaded');
   }, []);
 
+  const isAdminPage = router.pathname.startsWith('/admin');
+
   return (
     <>
-      <Component {...pageProps} />
+      {isAdminPage ? (
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      ) : (
+        <Component {...pageProps} />
+      )}
       <Toaster
         position="top-right"
         toastOptions={{
