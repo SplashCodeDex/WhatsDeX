@@ -1,0 +1,56 @@
+# Dependencies & Lockfiles
+**/node_modules
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# Build & Compilation Output
+**/.next
+**/build
+**/dist
+**/out
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local Environment Variables
+# Commit .env.example, but ignore all other .env files
+.env*
+!.env.example
+
+# Databases
+prisma/dev.db
+*.db
+*.db-journal
+
+# Project State & Local Config
+state/
+config.js
+database.json
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# IDE & Editor Config
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tooling Specific
+.kilocode/
+
+# Temporary Files
+*.tmp
+Dockerfile.*.tmp
+
+# Test & Coverage Reports
+coverage/
+
+.gemini/
+gha-creds-*.json
