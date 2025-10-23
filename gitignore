@@ -1,0 +1,142 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Build artifacts
+dev-dist/
+
+# Temporary files
+*.zip
+
+# Environment variables
+.env# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+gen/
+
+# Flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/App.framework
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Generated.xcconfig
+/ios/Runner/GeneratedPluginRegistrant.*
+
+# Android
+/android/key.properties
+/android/local.properties
+/android/app/src/main/assets/flutter_assets/
+/android/.gradle
+/android/app/build
+/android/gradle
+/android/gradlew
+/android/gradlew.bat
+
+# Web
+/web/
+.dart_tool/# Built application files
+*.apk
+*.ap_
+*.aab
+*.aar
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+build/
+.gradle/
+
+# Local configuration files (sdk location, etc)
+local.properties
+
+# Gradle-specific caching
+.gradle/
+
+# Android Studio project files
+.idea/
+.cxx/
+
+# Keystore files
+*.keystore
+
+# External native build files
+.externalNativeBuild/
+
+# Flutter specific
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.dart_tool/
+
+# VS Code specific
+.vscode/
+
+# macOS specific
+.DS_Store
+
+# Crashlytics/Firebase specific
+crashlytics/
+
+# Project specific
+/tools/
+/Bulk Sender for Marketing/
+firebase-debug.log
+/Bulk Sender for Marketing/**/*.xml
+/node_modules
+/dist
+/build
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# Environment variables
+.env
+.env.local
+# Build output
+/public/r
