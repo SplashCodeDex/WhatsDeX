@@ -1,6 +1,6 @@
 # WhatsDeX
 
-`whatsdex` is a comprehensive WhatsApp automation platform that includes both a powerful WhatsApp bot and a full-featured admin management system. The platform uses [@rexxhayanasi/elaina-bail](https://www.npmjs.com/package/@rexxhayanasi/elaina-bail) for WhatsApp integration and supports a modular architecture through a command system.
+`whatsdex` is a comprehensive WhatsApp automation platform that includes both a powerful WhatsApp bot and a full-featured admin management system. The platform uses [@whiskeysockets/baileys](https://www.npmjs.com/package/@whiskeysockets/baileys) for WhatsApp integration and supports a modular architecture through a command system.
 
 ## 🚀 Admin System Deployment
 
@@ -182,15 +182,51 @@ The `whatsdex` bot is powered by `WhatsDeXBrain`, a sophisticated AI core that e
 3.  **Intent Routing:** Once the intent is recognized, the `intentRouter` routes the message to the appropriate handler.
 4.  **Intent Handling:** Each intent has a dedicated handler that is responsible for generating the appropriate response. For example, the `greeting` intent is handled by the `greetingHandler`, which sends a friendly greeting to the user.
 
+### AI Integration Features
+
+- **Gemini AI Integration:** Advanced conversational AI powered by Google's Gemini API
+- **Context Awareness:** Maintains conversation context for more natural interactions
+- **Multi-Modal Support:** Handles text, images, and mixed media content
+- **Learning Capabilities:** Adapts responses based on user interactions and feedback
+- **Extensible Architecture:** Easy to add new AI providers and capabilities
+
 This modular architecture makes it easy to add new intents and capabilities to the bot. For more information on how to contribute to the `WhatsDeXBrain`, please see the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+
+## Web Dashboard
+
+WhatsDeX includes a modern web dashboard for bot management and monitoring:
+
+### Features
+- **Real-time Analytics:** Live bot performance metrics and usage statistics
+- **User Management:** Admin interface for managing bot users and permissions
+- **Command Monitoring:** Track command usage and performance
+- **System Health:** Monitor bot status, uptime, and system resources
+- **Audit Logs:** Comprehensive logging of all bot activities
+
+### Running the Dashboard
+
+```bash
+# Install dashboard dependencies
+npm run setup:frontend
+
+# Run dashboard in development mode
+npm run dev:frontend
+
+# Build dashboard for production
+npm run build:frontend
+```
+
+The dashboard is available at `http://localhost:3000` by default.
 
 ## Enterprise Support
 
 For organizations requiring the admin system or enterprise support:
 
-- **Email**: enterprise@whatsdex.com
-- **Phone**: +1 (555) 123-4567
+- **Email**: facebook.me.secure@gmail.com
+- **Phone**: +233533365712
 - **Website**: https://enterprise.whatsdex.com
+- **WhatsApp Group**: <link>
+- **WhatsApp Channel**: <link>
 
 ## Contribution
 
