@@ -41,6 +41,7 @@ model User {
   subscriptions     Subscription[]
   violations        UserViolation[]
   moderationQueues  ModerationQueue[]
+  payments          Payment[]
   adminSessions     AdminSession[]
 
   @@map("users")

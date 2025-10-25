@@ -1,0 +1,31 @@
+# Backup Service Dockerfile
+FROM alpine:latest
+
+# Install backup tools
+RUN apk add --no-cache \
+    postgresql-client \
+    redis \
+    curl \
+    bash \
+    && rm -rf /var/cache/apk/*
+
+# Create backup directory
+RUN mkdir -p /backups
+
+# Copy backup scripts
+COPY scripts/backup.sh /usr/local/bin/backup.sh
+RUN chmod +x /usr/local/bin/backup.sh
+
+# Create non-root user
+RUN addgroup -g 1001 -S backup \
+    && adduser -S backup -u 1001 -G backup \
+    && chown -R backup:backup /backups
+
+USER backup
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD echo "Backup service is running"
+
+# Default command
+CMD ["/usr/local/bin/backup.sh"]

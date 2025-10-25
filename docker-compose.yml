@@ -106,10 +106,11 @@ services:
       timeout: 10s
       retries: 3
 
-  # Admin Panel (Optional)
+  # Admin Panel (Required)
   admin:
     build:
-      context: ./admin
+      context: .
+      dockerfile: Dockerfile.admin
     container_name: whatsdex-admin
     restart: unless-stopped
     environment:
@@ -122,10 +123,8 @@ services:
       - admin-backend
     networks:
       - whatsdex-network
-    profiles:
-      - admin
 
-  # Admin Backend (Express + Socket.IO)
+  # Admin Backend (Express + Socket.IO) - Required
   admin-backend:
     build: .
     command: node server.js
@@ -145,11 +144,9 @@ services:
         condition: service_healthy
     networks:
       - whatsdex-network
-    profiles:
-      - admin
     # For scaling: docker-compose up --scale admin-backend=2 (ports auto 3001, 3002)
 
-  # Monitoring & Logging (Grafana + Prometheus)
+  # Monitoring & Logging (Grafana + Prometheus) - Required
   prometheus:
     image: prom/prometheus:latest
     container_name: whatsdex-prometheus
@@ -161,8 +158,6 @@ services:
       - prometheus_data:/prometheus
     networks:
       - whatsdex-network
-    profiles:
-      - monitoring
 
   grafana:
     image: grafana/grafana:latest
@@ -181,10 +176,8 @@ services:
       - prometheus
     networks:
       - whatsdex-network
-    profiles:
-      - monitoring
 
-  # Load Balancer (Nginx)
+  # Load Balancer (Nginx) - Required
   nginx:
     image: nginx:alpine
     container_name: whatsdex-nginx
@@ -201,10 +194,8 @@ services:
       - dashboard
     networks:
       - whatsdex-network
-    profiles:
-      - production
 
-  # Backup Service
+  # Backup Service - Required
   backup:
     build:
       context: .
@@ -224,8 +215,6 @@ services:
       - postgres
     networks:
       - whatsdex-network
-    profiles:
-      - backup
 
   # Development Database (for local development)
   postgres-dev:

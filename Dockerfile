@@ -11,14 +11,16 @@ RUN apk add --no-cache \
     python3 \
     make \
     g++ \
-    git
+    git \
+    curl \
+    && rm -rf /var/cache/apk/*
 
 # Copy package files
 COPY package*.json ./
 COPY prisma/ ./prisma/
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies with better error handling
+RUN npm ci --only=production --no-audit --no-fund --prefer-offline || npm ci --only=production
 
 # Copy application code
 COPY . .
@@ -27,22 +29,22 @@ COPY . .
 RUN npx prisma generate
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S whatsdex -u 1001
+RUN addgroup -g 1001 -S nodejs \
+    && adduser -S whatsdex -u 1001 -G nodejs
 
-# Create necessary directories
-RUN mkdir -p logs uploads src/services src/utils
+# Create necessary directories with proper permissions
+RUN mkdir -p logs uploads src/services src/utils \
+    && chown -R whatsdex:nodejs /app
 
-# Set permissions
-RUN chown -R whatsdex:nodejs /app
+# Switch to non-root user
 USER whatsdex
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node healthcheck.js
+# Health check with better command
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
 
-# Expose port
-EXPOSE 3000
+# Expose ports
+EXPOSE 3000 8080
 
 # Start the application
 CMD ["npm", "start"]

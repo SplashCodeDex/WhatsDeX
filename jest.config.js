@@ -30,6 +30,10 @@ module.exports = {
     '**/__tests__/**/*.test.js',
     '**/?(*.)+(spec|test).js'
   ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/e2e/' // Exclude e2e tests
+  ],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   testTimeout: 10000,
   verbose: true,

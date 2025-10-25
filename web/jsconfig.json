@@ -3,9 +3,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@components/*": ["../shared/components/*"]
+      "@components/*": ["../shared/components/*"],
+      "@/lib/*": ["../shared/lib/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.js", "**/*.jsx"],
+  "include": ["next-env.d.ts", "**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }
