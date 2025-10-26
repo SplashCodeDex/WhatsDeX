@@ -2,36 +2,6 @@
   "extends": [
     "next/core-web-vitals"
   ],
-  "rules": {
-    "no-console": "warn",
-    "prefer-template": "off",
-    "no-plusplus": "off",
-    "no-return-assign": "off",
-    "no-undef": "off",
-    "no-bitwise": "off",
-    "no-restricted-properties": "off",
-    "operator-linebreak": "off",
-    "comma-dangle": "off",
-    "arrow-parens": "off",
-    "no-promise-executor-return": "off",
-    "consistent-return": "off",
-    "no-restricted-syntax": "off",
-    "no-prototype-builtins": "off",
-    "eol-last": "off",
-    "linebreak-style": "off",
-    "quotes": "off",
-    "max-len": "off",
-    "no-use-before-define": "off",
-    "react-hooks/exhaustive-deps": "off",
-    "no-shadow": "off",
-    "@next/next/no-img-element": "off",
-    "indent": "off",
-    "object-curly-newline": "off",
-    "no-nested-ternary": "off",
-    "no-unused-vars": "warn",
-    "arrow-body-style": "off",
-    "react/jsx-no-undef": "off"
-  },
   "env": {
     "browser": true,
     "es2020": true,
@@ -47,6 +17,50 @@
   "settings": {
     "react": {
       "version": "detect"
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "./tsconfig.json"
+      }
     }
+  },
+  "rules": {
+    "import/extensions": "off",
+    "import/no-unresolved": "error",
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": true, "optionalDependencies": false, "peerDependencies": false}],
+    "import/no-relative-packages": "off",
+    "no-use-before-define": "error",
+    "no-unsafe-optional-chaining": "off",
+    "max-len": "off",
+    "no-unused-vars": "error",
+    "react-hooks/exhaustive-deps": "error",
+    "no-promise-executor-return": "off",
+    "no-alert": "error",
+    "no-nested-ternary": "error",
+    "@next/next/no-img-element": "off",
+    "no-shadow": "error",
+    "react/display-name": "off",
+    "import/prefer-default-export": "off",
+    "no-console": "warn",
+    "prefer-template": "error",
+    "no-plusplus": "off",
+    "no-return-assign": "off",
+    "no-undef": "error",
+    "no-bitwise": "off",
+    "no-restricted-properties": "off",
+    "operator-linebreak": "off",
+    "comma-dangle": "off",
+    "arrow-parens": "off",
+    "consistent-return": "off",
+    "no-restricted-syntax": "off",
+    "no-prototype-builtins": "off",
+    "eol-last": "off",
+    "linebreak-style": "off",
+    "quotes": "off",
+    "indent": "off",
+    "object-curly-newline": "off",
+    "arrow-body-style": "off",
+    "react/jsx-no-undef": "error"
   }
 }

@@ -28,20 +28,18 @@ export default function AnalyticsPage() {
   };
 
   const formatNumber = (num) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
   };
 
   const formatTime = (ms) => {
-    if (ms < 1000) return ms + 'ms';
-    if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
-    return (ms / 60000).toFixed(1) + 'm';
+    if (ms < 1000) return `${ms}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    return `${(ms / 60000).toFixed(1)}m`;
   };
 
-  const formatPercentage = (value) => {
-    return (value * 100).toFixed(1) + '%';
-  };
+  const formatPercentage = (value) => `${(value * 100).toFixed(1)}%`;
 
   if (loading) {
     return (

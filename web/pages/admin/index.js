@@ -13,7 +13,7 @@ import {
   TrendingUp,
   Server,
   Database,
-  Zap
+  Zap,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import UserManagement from './users';
@@ -29,7 +29,7 @@ function AdminDashboard() {
   useEffect(() => {
     // Simulate loading data
     const loadData = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setSystemStats({
         totalUsers: 12543,
@@ -42,7 +42,7 @@ function AdminDashboard() {
         revenue: 15420,
         serverLoad: 45,
         memoryUsage: 68,
-        databaseSize: 2.4
+        databaseSize: 2.4,
       });
 
       setRecentActivity([
@@ -52,7 +52,7 @@ function AdminDashboard() {
           action: 'New user registered',
           user: 'john_doe',
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          status: 'success'
+          status: 'success',
         },
         {
           id: 2,
@@ -60,7 +60,7 @@ function AdminDashboard() {
           action: 'Database backup completed',
           user: 'System',
           timestamp: new Date(Date.now() - 12 * 60 * 1000),
-          status: 'success'
+          status: 'success',
         },
         {
           id: 3,
@@ -68,7 +68,7 @@ function AdminDashboard() {
           action: 'Failed login attempt',
           user: 'unknown',
           timestamp: new Date(Date.now() - 25 * 60 * 1000),
-          status: 'warning'
+          status: 'warning',
         },
         {
           id: 4,
@@ -76,8 +76,8 @@ function AdminDashboard() {
           action: 'Command execution failed',
           user: 'mike_jones',
           timestamp: new Date(Date.now() - 35 * 60 * 1000),
-          status: 'error'
-        }
+          status: 'error',
+        },
       ]);
 
       setLoading(false);
@@ -86,13 +86,15 @@ function AdminDashboard() {
     loadData();
   }, []);
 
-  const StatCard = ({ title, value, change, icon: Icon, color = 'blue' }) => {
+  const StatCard = ({
+    title, value, change, icon: Icon, color = 'blue',
+  }) => {
     const colors = {
       blue: 'bg-blue-500',
       green: 'bg-green-500',
       yellow: 'bg-yellow-500',
       red: 'bg-red-500',
-      purple: 'bg-purple-500'
+      purple: 'bg-purple-500',
     };
 
     return (
@@ -162,7 +164,7 @@ function AdminDashboard() {
     { id: 'analytics', name: 'Analytics', icon: Activity },
     { id: 'system', name: 'System', icon: Server },
     { id: 'security', name: 'Security', icon: Shield },
-    { id: 'settings', name: 'Settings', icon: Settings }
+    { id: 'settings', name: 'Settings', icon: Settings },
   ];
 
   return (

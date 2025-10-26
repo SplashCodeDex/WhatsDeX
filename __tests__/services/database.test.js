@@ -1,41 +1,34 @@
-const { PrismaClient } = require('@prisma/client');
-const DatabaseService = require('../../src/services/database');
 const { execSync } = require('child_process');
 const fs = require('fs');
 
-// The Migration tests will use the real Prisma client, so we will not mock it globally.
-// const { PrismaClient } = require('@prisma/client');
-// jest.mock('@prisma/client'); // Remove global mock
+// Mock Prisma Client globally for DatabaseService unit tests
+const mockPrisma = {
+  user: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    upsert: jest.fn(),
+  },
+  $connect: jest.fn(),
+  $disconnect: jest.fn(),
+  $on: jest.fn(),
+  $use: jest.fn(),
+  $queryRaw: jest.fn(),
+};
+
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrisma),
+}));
 
 describe('DatabaseService', () => {
-  let mockPrisma;
   let dbService;
 
   beforeEach(() => {
-    // Mock Prisma Client only for the DatabaseService unit tests
-    const mockPrismaClient = jest.fn(() => mockPrisma);
     jest.resetModules(); // Reset module registry to ensure new mock is used
-    jest.doMock('@prisma/client', () => ({ PrismaClient: mockPrismaClient }));
-    const { PrismaClient: MockedPrismaClient } = require('@prisma/client');
-
-    mockPrisma = {
-      user: {
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-        delete: jest.fn(),
-        count: jest.fn(),
-        upsert: jest.fn(),
-      },
-      // ... (other mocked models)
-      $connect: jest.fn(),
-      $disconnect: jest.fn(),
-      $on: jest.fn(),
-      $use: jest.fn(),
-      $queryRaw: jest.fn(),
-    };
-
+    const DatabaseService = require('../../src/services/database');
     dbService = new DatabaseService();
   });
 
@@ -46,6 +39,9 @@ describe('DatabaseService', () => {
 
   // ... (all the existing unit tests for DatabaseService)
   // ... (The code for initialization, user operations, health check, cleanup)
+  test('should be defined', () => {
+    expect(dbService).toBeDefined();
+  });
 });
 
 describe('Migrations', () => {
@@ -83,7 +79,7 @@ describe('Migrations', () => {
   test('Models created after migrate', async () => {
     // Test User
     const user = await testPrisma.user.create({
-      data: { name: 'test' }
+      data: { name: 'test', jid: 'testuser@s.whatsapp.net' }
     });
     expect(user).toHaveProperty('id');
 

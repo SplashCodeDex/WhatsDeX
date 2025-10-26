@@ -1,8 +1,8 @@
 import '../styles/globals.css';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
-import Layout from '../components/Layout';
 import { useRouter } from 'next/router';
+import Layout from '../components/Layout';
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();

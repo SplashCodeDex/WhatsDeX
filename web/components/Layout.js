@@ -10,11 +10,11 @@ import {
   ChartBarIcon,
   UserGroupIcon,
   CpuChipIcon,
-  SignalIcon
+  SignalIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../lib/utils';
 
-const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
+const Layout = ({ children, title = 'WhatsDeX Dashboard' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(3);
@@ -45,33 +45,43 @@ const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: ChartBarIcon, current: true },
-    { name: 'Users', href: '/users', icon: UserGroupIcon, current: false },
-    { name: 'AI Analytics', href: '/ai-analytics', icon: CpuChipIcon, current: false },
-    { name: 'System', href: '/system', icon: SignalIcon, current: false },
-    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon, current: false },
+    {
+      name: 'Dashboard', href: '/', icon: ChartBarIcon, current: true,
+    },
+    {
+      name: 'Users', href: '/users', icon: UserGroupIcon, current: false,
+    },
+    {
+      name: 'AI Analytics', href: '/ai-analytics', icon: CpuChipIcon, current: false,
+    },
+    {
+      name: 'System', href: '/system', icon: SignalIcon, current: false,
+    },
+    {
+      name: 'Settings', href: '/settings', icon: Cog6ToothIcon, current: false,
+    },
   ];
 
   return (
     <div className={cn(
-      "min-h-screen bg-gradient-to-br transition-all duration-500",
+      'min-h-screen bg-gradient-to-br transition-all duration-500',
       darkMode
-        ? "from-slate-900 via-slate-800 to-slate-900"
-        : "from-blue-50 via-indigo-50 to-purple-50"
+        ? 'from-slate-900 via-slate-800 to-slate-900'
+        : 'from-blue-50 via-indigo-50 to-purple-50',
     )}>
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className={cn(
-          "absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl opacity-20 animate-float",
-          darkMode ? "bg-blue-500" : "bg-blue-400"
+          'absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl opacity-20 animate-float',
+          darkMode ? 'bg-blue-500' : 'bg-blue-400',
         )} />
         <div className={cn(
-          "absolute -bottom-40 -left-40 w-80 h-80 rounded-full blur-3xl opacity-20 animate-float",
-          darkMode ? "bg-purple-500" : "bg-purple-400"
+          'absolute -bottom-40 -left-40 w-80 h-80 rounded-full blur-3xl opacity-20 animate-float',
+          darkMode ? 'bg-purple-500' : 'bg-purple-400',
         )} style={{ animationDelay: '2s' }} />
         <div className={cn(
-          "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-10 animate-pulse-slow",
-          darkMode ? "bg-indigo-500" : "bg-indigo-400"
+          'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-10 animate-pulse-slow',
+          darkMode ? 'bg-indigo-500' : 'bg-indigo-400',
         )} />
       </div>
 
@@ -95,10 +105,10 @@ const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.3 }}
               className={cn(
-                "fixed inset-y-0 left-0 z-50 w-64 backdrop-blur-xl border-r",
+                'fixed inset-y-0 left-0 z-50 w-64 backdrop-blur-xl border-r',
                 darkMode
-                  ? "bg-glass-dark-500 border-slate-700/50"
-                  : "bg-glass-500 border-white/20"
+                  ? 'bg-glass-dark-500 border-slate-700/50'
+                  : 'bg-glass-500 border-white/20',
               )}
             >
               <SidebarContent
@@ -114,10 +124,10 @@ const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
       {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:block lg:w-64">
         <div className={cn(
-          "h-full backdrop-blur-xl border-r",
+          'h-full backdrop-blur-xl border-r',
           darkMode
-            ? "bg-glass-dark-500 border-slate-700/50"
-            : "bg-glass-500 border-white/20"
+            ? 'bg-glass-dark-500 border-slate-700/50'
+            : 'bg-glass-500 border-white/20',
         )}>
           <SidebarContent navigation={navigation} darkMode={darkMode} />
         </div>
@@ -127,20 +137,20 @@ const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
       <div className="lg:pl-64">
         {/* Top Navigation */}
         <div className={cn(
-          "sticky top-0 z-30 backdrop-blur-xl border-b",
+          'sticky top-0 z-30 backdrop-blur-xl border-b',
           darkMode
-            ? "bg-glass-dark-300 border-slate-700/50"
-            : "bg-glass-300 border-white/20"
+            ? 'bg-glass-dark-300 border-slate-700/50'
+            : 'bg-glass-300 border-white/20',
         )}>
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             {/* Mobile menu button */}
             <button
               type="button"
               className={cn(
-                "rounded-lg p-2 transition-all duration-200 hover:scale-105",
+                'rounded-lg p-2 transition-all duration-200 hover:scale-105',
                 darkMode
-                  ? "text-slate-400 hover:text-white hover:bg-slate-700/50"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+                  ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50',
               )}
               onClick={() => setSidebarOpen(true)}
             >
@@ -152,8 +162,8 @@ const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               className={cn(
-                "text-xl font-bold",
-                darkMode ? "text-white" : "text-slate-900"
+                'text-xl font-bold',
+                darkMode ? 'text-white' : 'text-slate-900',
               )}
             >
               {title}
@@ -167,10 +177,10 @@ const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleDarkMode}
                 className={cn(
-                  "rounded-lg p-2 transition-all duration-200",
+                  'rounded-lg p-2 transition-all duration-200',
                   darkMode
-                    ? "text-slate-400 hover:text-yellow-400 hover:bg-slate-700/50"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+                    ? 'text-slate-400 hover:text-yellow-400 hover:bg-slate-700/50'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50',
                 )}
               >
                 {darkMode ? (
@@ -185,10 +195,10 @@ const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "relative rounded-lg p-2 transition-all duration-200",
+                  'relative rounded-lg p-2 transition-all duration-200',
                   darkMode
-                    ? "text-slate-400 hover:text-white hover:bg-slate-700/50"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+                    ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50',
                 )}
               >
                 <BellIcon className="h-5 w-5" />
@@ -223,8 +233,7 @@ const Layout = ({ children, title = "WhatsDeX Dashboard" }) => {
 };
 
 // Sidebar Content Component
-const SidebarContent = ({ navigation, darkMode, onClose }) => {
-  return (
+const SidebarContent = ({ navigation, darkMode, onClose }) => (
     <div className="flex h-full flex-col">
       {/* Logo */}
       <motion.div
@@ -237,24 +246,24 @@ const SidebarContent = ({ navigation, darkMode, onClose }) => {
             whileHover={{ rotate: 360 }}
             transition={{ duration: 0.5 }}
             className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-xl",
+              'flex h-10 w-10 items-center justify-center rounded-xl',
               darkMode
-                ? "bg-gradient-to-br from-blue-500 to-purple-600"
-                : "bg-gradient-to-br from-blue-500 to-purple-600"
+                ? 'bg-gradient-to-br from-blue-500 to-purple-600'
+                : 'bg-gradient-to-br from-blue-500 to-purple-600',
             )}
           >
             <span className="text-xl font-bold text-white">W</span>
           </motion.div>
           <div>
             <h2 className={cn(
-              "text-lg font-bold",
-              darkMode ? "text-white" : "text-slate-900"
+              'text-lg font-bold',
+              darkMode ? 'text-white' : 'text-slate-900',
             )}>
               WhatsDeX
             </h2>
             <p className={cn(
-              "text-xs",
-              darkMode ? "text-slate-400" : "text-slate-600"
+              'text-xs',
+              darkMode ? 'text-slate-400' : 'text-slate-600',
             )}>
               AI-Powered Bot
             </p>
@@ -266,10 +275,10 @@ const SidebarContent = ({ navigation, darkMode, onClose }) => {
           <button
             onClick={onClose}
             className={cn(
-              "rounded-lg p-1 transition-colors",
+              'rounded-lg p-1 transition-colors',
               darkMode
-                ? "text-slate-400 hover:text-white hover:bg-slate-700/50"
-                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+                ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50',
             )}
           >
             <XMarkIcon className="h-5 w-5" />
@@ -287,14 +296,14 @@ const SidebarContent = ({ navigation, darkMode, onClose }) => {
             transition={{ delay: index * 0.1 }}
             href={item.href}
             className={cn(
-              "group flex items-center rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 hover:scale-105",
+              'group flex items-center rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 hover:scale-105',
               item.current
                 ? darkMode
-                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                  : "bg-blue-500/20 text-blue-600 border border-blue-500/30"
+                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                  : 'bg-blue-500/20 text-blue-600 border border-blue-500/30'
                 : darkMode
-                  ? "text-slate-400 hover:text-white hover:bg-slate-700/50"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+                  ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50',
             )}
           >
             <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
@@ -326,14 +335,14 @@ const SidebarContent = ({ navigation, darkMode, onClose }) => {
           </div>
           <div>
             <p className={cn(
-              "text-sm font-medium",
-              darkMode ? "text-white" : "text-slate-900"
+              'text-sm font-medium',
+              darkMode ? 'text-white' : 'text-slate-900',
             )}>
               System Online
             </p>
             <p className={cn(
-              "text-xs",
-              darkMode ? "text-slate-400" : "text-slate-600"
+              'text-xs',
+              darkMode ? 'text-slate-400' : 'text-slate-600',
             )}>
               All services running
             </p>
@@ -341,7 +350,6 @@ const SidebarContent = ({ navigation, darkMode, onClose }) => {
         </div>
       </motion.div>
     </div>
-  );
-};
+);
 
 export default Layout;

@@ -10,17 +10,17 @@ import {
   ClockIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  BoltIcon
+  BoltIcon,
 } from '@heroicons/react/24/outline';
-import Layout from '../components/Layout';
-import GlassCard from '../../shared/components/ui/GlassCard';
-import GlassButton from '../../shared/components/ui/GlassButton';
+import GlassCard from '@whatsdex/shared/components/ui/GlassCard';
+import GlassButton from '@whatsdex/shared/components/ui/GlassButton';
 import {
   SkeletonDashboardCard,
   SkeletonChart,
   SkeletonTable,
-  Skeleton
-} from '../../shared/components/ui/Skeleton';
+  Skeleton,
+} from '@whatsdex/shared/components/ui/Skeleton';
+import Layout from '../components/Layout';
 import { cn } from '../lib/utils';
 
 export default function Dashboard() {
@@ -32,7 +32,7 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       setStats({
         totalUsers: 12543,
@@ -42,7 +42,7 @@ export default function Dashboard() {
         systemUptime: 99.8,
         responseTime: 245,
         errorRate: 0.2,
-        cacheHitRate: 94.5
+        cacheHitRate: 94.5,
       });
 
       setRecentActivity([
@@ -52,7 +52,7 @@ export default function Dashboard() {
           user: 'john_doe',
           action: 'Used /gemini command',
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          status: 'success'
+          status: 'success',
         },
         {
           id: 2,
@@ -60,7 +60,7 @@ export default function Dashboard() {
           user: 'sarah_smith',
           action: 'Generated image with DALL-E',
           timestamp: new Date(Date.now() - 12 * 60 * 1000),
-          status: 'success'
+          status: 'success',
         },
         {
           id: 3,
@@ -68,7 +68,7 @@ export default function Dashboard() {
           user: 'System',
           action: 'Database backup completed',
           timestamp: new Date(Date.now() - 25 * 60 * 1000),
-          status: 'success'
+          status: 'success',
         },
         {
           id: 4,
@@ -76,8 +76,8 @@ export default function Dashboard() {
           user: 'mike_jones',
           action: 'Command execution failed',
           timestamp: new Date(Date.now() - 35 * 60 * 1000),
-          status: 'error'
-        }
+          status: 'error',
+        },
       ]);
 
       setLoading(false);
@@ -86,7 +86,9 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  const StatCard = ({ title, value, change, changeType, icon: Icon, variant = 'default' }) => (
+  const StatCard = ({
+    title, value, change, changeType, icon: Icon, variant = 'default',
+  }) => (
     <GlassCard variant={variant} className="p-6" glow={variant === 'accent'}>
       <div className="flex items-center justify-between">
         <div>
@@ -113,8 +115,8 @@ export default function Dashboard() {
                 changeType === 'positive'
                   ? 'text-green-600 dark:text-green-400'
                   : changeType === 'negative'
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-slate-600 dark:text-slate-400'
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-slate-600 dark:text-slate-400',
               )}
             >
               {changeType === 'positive' && <ArrowUpIcon className="w-4 h-4 mr-1" />}
@@ -129,7 +131,7 @@ export default function Dashboard() {
             'p-3 rounded-xl',
             variant === 'accent'
               ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
-              : 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 text-slate-600 dark:text-slate-400'
+              : 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 text-slate-600 dark:text-slate-400',
           )}
         >
           <Icon className="w-6 h-6" />
@@ -149,8 +151,8 @@ export default function Dashboard() {
         activity.status === 'success'
           ? 'bg-green-500/20 text-green-400'
           : activity.status === 'error'
-          ? 'bg-red-500/20 text-red-400'
-          : 'bg-blue-500/20 text-blue-400'
+            ? 'bg-red-500/20 text-red-400'
+            : 'bg-blue-500/20 text-blue-400',
       )}>
         {activity.status === 'success' && <CheckCircleIcon className="w-5 h-5" />}
         {activity.status === 'error' && <ExclamationTriangleIcon className="w-5 h-5" />}
@@ -172,7 +174,7 @@ export default function Dashboard() {
         <ClockIcon className="w-4 h-4 inline mr-1" />
         {activity.timestamp.toLocaleTimeString([], {
           hour: '2-digit',
-          minute: '2-digit'
+          minute: '2-digit',
         })}
       </div>
     </motion.div>

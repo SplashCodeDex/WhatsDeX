@@ -19,16 +19,24 @@ import {
   Calendar,
   Activity,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';
-import { Button } from '@components/ui/button';
-import { Badge } from '@components/ui/badge';
-import { Input } from '@components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@components/ui/dropdown-menu';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -36,8 +44,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@components/ui/table';
-import { DataTable } from '@components/ui/table';
+} from '@/components/ui/table';
+import { DataTable } from '@/components/ui/datatable';
 import withAuth from '../../components/withAuth';
 
 interface User {
@@ -78,14 +86,14 @@ function UserManagement() {
     total: 0,
     active: 0,
     premium: 0,
-    banned: 0
+    banned: 0,
   });
 
   const usersPerPage = 10;
 
   useEffect(() => {
     const loadUsers = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const mockUsers: User[] = Array.from({ length: 50 }, (_, i) => ({
         id: `user-${i + 1}`,
@@ -101,7 +109,7 @@ function UserManagement() {
         aiRequests: Math.floor(Math.random() * 500),
         totalSpent: Math.floor(Math.random() * 500),
         level: Math.floor(Math.random() * 50) + 1,
-        xp: Math.floor(Math.random() * 5000)
+        xp: Math.floor(Math.random() * 5000),
       }));
 
       setUsers(mockUsers);
@@ -111,8 +119,10 @@ function UserManagement() {
         total: acc.total + 1,
         active: acc.active + (user.status === 'active' ? 1 : 0),
         premium: acc.premium + (user.plan !== 'free' ? 1 : 0),
-        banned: acc.banned + (user.status === 'banned' ? 1 : 0)
-      }), { total: 0, active: 0, premium: 0, banned: 0 });
+        banned: acc.banned + (user.status === 'banned' ? 1 : 0),
+      }), {
+        total: 0, active: 0, premium: 0, banned: 0,
+      });
 
       setStats(calculatedStats);
       setLoading(false);
@@ -122,10 +132,10 @@ function UserManagement() {
   }, []);
 
   useEffect(() => {
-    let filtered = users.filter(user => {
-      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.phone.includes(searchTerm);
+    const filtered = users.filter((user) => {
+      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase())
+                           || user.email.toLowerCase().includes(searchTerm.toLowerCase())
+                           || user.phone.includes(searchTerm);
       const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
       const matchesPlan = filterPlan === 'all' || user.plan === filterPlan;
       return matchesSearch && matchesStatus && matchesPlan;
@@ -137,11 +147,9 @@ function UserManagement() {
 
   const handleUserAction = async (action: string, userId: string) => {
     console.log(`${action} user:`, userId);
-    setUsers(users.map(user =>
-      user.id === userId
-        ? { ...user, status: action === 'ban' ? 'banned' : action === 'unban' ? 'active' : user.status }
-        : user
-    ));
+    setUsers(users.map((user) => (user.id === userId
+      ? { ...user, status: action === 'ban' ? 'banned' : action === 'unban' ? 'active' : user.status }
+      : user)));
   };
 
   const handleBulkAction = async (action: string) => {
@@ -149,17 +157,15 @@ function UserManagement() {
 
     console.log(`${action} users:`, selectedUsers);
 
-    setUsers(users.map(user =>
-      selectedUsers.includes(user.id)
-        ? { ...user, status: action === 'ban' ? 'banned' : action === 'unban' ? 'active' : user.status }
-        : user
-    ));
+    setUsers(users.map((user) => (selectedUsers.includes(user.id)
+      ? { ...user, status: action === 'ban' ? 'banned' : action === 'unban' ? 'active' : user.status }
+      : user)));
 
     setSelectedUsers([]);
   };
 
   const exportUsers = () => {
-    const csvData = filteredUsers.map(user => ({
+    const csvData = filteredUsers.map((user) => ({
       ID: user.id,
       Name: user.name,
       Email: user.email,
@@ -172,12 +178,12 @@ function UserManagement() {
       AIRequests: user.aiRequests,
       TotalSpent: user.totalSpent,
       Level: user.level,
-      XP: user.xp
+      XP: user.xp,
     }));
 
     const csvString = [
       Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
+      ...csvData.map((row) => Object.values(row).join(',')),
     ].join('\n');
 
     const blob = new Blob([csvString], { type: 'text/csv' });
@@ -191,27 +197,27 @@ function UserManagement() {
 
   const getStatusVariant = (status: User['status']) => {
     switch (status) {
-      case 'active': return "default" as const;
-      case 'inactive': return "secondary" as const;
-      case 'banned': return "destructive" as const;
-      default: return "secondary" as const;
+      case 'active': return 'default' as const;
+      case 'inactive': return 'secondary' as const;
+      case 'banned': return 'destructive' as const;
+      default: return 'secondary' as const;
     }
   };
 
   const getPlanVariant = (plan: User['plan']) => {
     switch (plan) {
-      case 'free': return "secondary" as const;
-      case 'basic': return "outline" as const;
-      case 'pro': return "default" as const;
-      case 'enterprise': return "secondary" as const;
-      default: return "secondary" as const;
+      case 'free': return 'secondary' as const;
+      case 'basic': return 'outline' as const;
+      case 'pro': return 'default' as const;
+      case 'enterprise': return 'secondary' as const;
+      default: return 'secondary' as const;
     }
   };
 
   const columns = [
     {
-      accessorKey: "name",
-      header: "User",
+      accessorKey: 'name',
+      header: 'User',
       cell: ({ row }: any) => (
         <div className="flex items-center space-x-3">
           <img
@@ -227,8 +233,8 @@ function UserManagement() {
       ),
     },
     {
-      accessorKey: "plan",
-      header: "Plan",
+      accessorKey: 'plan',
+      header: 'Plan',
       cell: ({ row }: any) => (
         <Badge variant={getPlanVariant(row.original.plan)}>
           {row.original.plan.toUpperCase()}
@@ -236,8 +242,8 @@ function UserManagement() {
       ),
     },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: 'status',
+      header: 'Status',
       cell: ({ row }: any) => (
         <Badge variant={getStatusVariant(row.original.status)}>
           {row.original.status.toUpperCase()}
@@ -245,17 +251,17 @@ function UserManagement() {
       ),
     },
     {
-      accessorKey: "commandsUsed",
-      header: "Commands Used",
+      accessorKey: 'commandsUsed',
+      header: 'Commands Used',
       cell: ({ row }: any) => row.original.commandsUsed,
     },
     {
-      accessorKey: "lastActive",
-      header: "Last Active",
+      accessorKey: 'lastActive',
+      header: 'Last Active',
       cell: ({ row }: any) => row.original.lastActive.toLocaleDateString(),
     },
     {
-      id: "actions",
+      id: 'actions',
       cell: ({ row }: any) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="sm" onClick={() => {

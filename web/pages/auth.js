@@ -95,7 +95,7 @@ export default function AuthPage() {
     try {
       socketRef.current.emit('start_connection', {
         method: selectedMethod,
-        voiceEnabled
+        voiceEnabled,
       });
     } catch (err) {
       setError('Failed to start connection process');

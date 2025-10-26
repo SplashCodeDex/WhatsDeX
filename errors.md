@@ -1,137 +1,288 @@
-# Error Log and Resolutions
+npm run build
 
-## 1. Module Loading Error in repair.js (MODULE_NOT_FOUND)
+> whatsdex@1.4.13-alpha.1 build
+> npm run lint && npm test
 
-**Date:** 2025-09-11  
-**Error Details:**  
-- Location: `commands/owner/repair.js`  
-- Description: Cannot find module '../services/unifiedSmartAuth'. The relative path was incorrect from commands/owner/ to src/services/auth/.  
+> whatsdex@1.4.13-alpha.1 lint
+> eslint
 
-**Root Cause:** Incorrect relative path in require statement.  
+> whatsdex@1.4.13-alpha.1 test
+> cross-env DATABASE_URL="file:./dev.db" jest
 
-**Resolution:** Updated require to '../../src/services/auth/UnifiedSmartAuth'. The file exists at that location.  
+RUNS **tests**/services/database.test.js
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": SQLite database "dev.db" at "file:./dev.db"
 
-**Prevention:** Use absolute paths or path resolution libraries for complex structures.  
+FAIL **tests**/services/database.test.js (54.27 s)on was found.
+● Migrations › Models created after migrate
 
-## 2. Proverb Command Error (TypeError: Cannot read properties of undefined (reading 'error'))
+    expect(received).toHaveProperty(path)
 
-**Date:** 2025-09-11  
-**Error Details:**  
-- Location: `commands/entertainment/proverb.js` (line 29) and `tools/cmd.js` (line 94)  
-- Description: Failed to access 'error' on undefined in handleError. Caused by unvalidated API response leading to null .data.data.  
+    Matcher error: received value must not be null nor undefined
 
-**Root Cause:** No checks for API response structure; module cache prevented update load without restart. API: http://jagokata-api.hofeda4501.serv00.net/peribahasa-acak.php returns { status, author, data: array of { kalimat, arti, link } }.  
+    Received has value: undefined
 
-**Resolution:**  
-- Added validation: check response.data.data is array with length > 0, and result has kalimat/arti.  
-- Corrected handleError call to tools.cmd.handleError(ctx.bot.context, ctx, error, true).  
-- Restarted bot to clear cache.  
-- Direct curl test confirmed valid format.  
+      86 |       data: { name: 'test' }
+      87 |     });
+    > 88 |     expect(user).toHaveProperty('id');
+         |                  ^
+      89 |
+      90 |     // Test UserViolation
+      91 |     const violation = await testPrisma.userViolation.create({
 
-**Code Changes (proverb.js):**  
-```
-const response = await axios.get(apiUrl);
-if (!response.data || !response.data.data || !Array.isArray(response.data.data) || response.data.data.length === 0) {
-    throw new Error('Invalid or empty API response');
-}
-const result = tools.cmd.getRandomElement(response.data.data);
-if (!result || !result.kalimat || !result.arti) {
-    throw new Error('Invalid proverb data structure');
-}
-```
+      at Object.toHaveProperty (__tests__/services/database.test.js:88:18)
 
-**Prevention:** Always validate external APIs; use hot-reload or pm2 for development.  
+● Test suite failed to run
 
-## 3. Weather Command Error (text.match is not a function)
+    Invalid: beforeEach() may not be used in a describe block containing no tests.
 
-**Date:** 2025-09-11  
-**Error Details:**  
-- Location: `commands/tool/weather.js` (line 55), Baileys messages.js, message-processor.js (line 76)  
-- Description: During ctx.reply({ text: ..., footer: ... }), Baileys' URL extractor called .match() on an object instead of string.  
+      12 |   let dbService;
+      13 |
+    > 14 |   beforeEach(() => {
+         |   ^
+      15 |     // Mock Prisma Client only for the DatabaseService unit tests
+      16 |     const mockPrismaClient = jest.fn(() => mockPrisma);
+      17 |     jest.resetModules(); // Reset module registry to ensure new mock is used
 
-**Root Cause:**  
-- Custom ctx.reply always sent { text: content }, so object { text, footer } became { text: { text, footer } }, passing object to Baileys as "text".  
-- API (https://diibot.my.id/api/tools/cekcuaca) unreachable (DNS ENOTFOUND), making result undefined, but catch replied with string (error.message), yet malformed object still caused crash.  
+      at beforeEach (__tests__/services/database.test.js:14:3)
+      at Object.describe (__tests__/services/database.test.js:10:1)
 
-**Resolution:**  
-- Updated ctx.reply in message-processor.js: if content is object, send it directly; if string, wrap in { text: content }.  
-- Added logging (API URL, result keys) and validation in weather.js: check result.name, weather array, main object. Throw custom error for invalid data.  
-- Handled optional fields like wind.gust, visibility with fallbacks.  
-- Restarted bot; DNS for diibot failed (curl error 6), but validation catches it with user-friendly message.  
+● Test suite failed to run
 
-**Code Changes (message-processor.js):**  
-```
-reply: async (content) => {
-    const messageContent = typeof content === 'string' ? { text: content } : content;
-    await bot.sendMessage(msg.key.remoteJid, messageContent);
-},
-```
+    Invalid: afterEach() may not be used in a describe block containing no tests.
 
-**Code Changes (weather.js):**  
-```
-const response = await axios.get(apiUrl);
-const result = response.data.result;
-console.log('Weather API result keys:', result ? Object.keys(result) : 'undefined');
-if (!result || !result.name || !result.weather || !Array.isArray(result.weather) || result.weather.length === 0 || !result.main) {
-    throw new Error(`Weather data not found for "${location}". The API may be down or location invalid. Try another city.`);
-}
-... (with fallbacks like ${result.wind.gust || 'N/A'})
-```
+      40 |   });
+      41 |
+    > 42 |   afterEach(() => {
+         |   ^
+      43 |     jest.clearAllMocks();
+      44 |     jest.resetModules(); // Reset modules again after the test suite finishes
+      45 |   });
 
-**Prevention:** Type-check parameters in wrapper functions; monitor API health; use fallback APIs (e.g., OpenWeatherMap).  
+      at afterEach (__tests__/services/database.test.js:42:3)
+      at Object.describe (__tests__/services/database.test.js:10:1)
 
-## 4. WebSocket Connection Error (ENOTFOUND web.whatsapp.com)
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server started on port 8080 {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server started on port 8080 {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server started on port 8080 {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server started on port 8080 {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+debug: Metrics updated {"activeUsers":2,"aiRequests":2,"errorRate":100,"responseTime":250,"timestamp":"2025-10-26 03:14:44:1444","totalCommands":2,"uptime":95.7655582}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server started on port 8080 {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+debug: Event tracked {"event":"command_used","properties":{"command":"/help","success":true},"timestamp":"2025-10-26 03:14:44:1444","userId":"user-123"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server started on port 8080 {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+debug: Event tracked {"event":"test_event","properties":{},"timestamp":"2025-10-26 03:14:44:1444","userId":"user-123"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+error: Failed to generate BI report {"error":"Unknown report type: unknown_report","filters":{},"reportType":"unknown_report","timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+debug: Cache cleaned {"entriesRemoved":1,"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server started on port 8080 {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server started on port 8080 {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Metrics collection started {"timestamp":"2025-10-26 03:14:44:1444"}
+info: Analytics service initialized successfully {"timestamp":"2025-10-26 03:14:44:1444"}
+info: WebSocket server closed {"timestamp":"2025-10-26 03:14:44:1444"}
+PASS **tests**/services/analytics.test.js (8.053 s)
+AnalyticsService
+initialization
+√ should initialize successfully (343 ms)
+√ should initialize without WebSocket (340 ms)
+WebSocket handling
+√ should handle subscribe message (309 ms)
+√ should handle get_metrics message (303 ms)
+√ should handle invalid JSON (291 ms)
+metrics collection
+√ should update metrics successfully (340 ms)
+√ should handle metrics update errors (280 ms)
+dashboard data
+√ should get dashboard data successfully (481 ms)
+√ should use cached data when available (298 ms)
+detailed metrics
+√ should get metrics for 24h timeframe (311 ms)
+√ should handle different timeframes (50 ms)
+event tracking
+√ should track user events (266 ms)
+√ should broadcast events to WebSocket clients (258 ms)
+business intelligence reports
+√ should generate user engagement report (235 ms)
+√ should generate revenue analysis report (136 ms)
+√ should handle unknown report types (284 ms)
+cache management
+√ should clean expired cache entries (119 ms)
+health check
+√ should return healthy status (138 ms)
+√ should return unhealthy status on error (109 ms)
+cleanup
+√ should close WebSocket server (273 ms)
 
-**Date:** 2025-09-11  
-**Error Details:**  
-- Location: Baileys socket.js (WebSocketClient)  
-- Description: getaddrinfo ENOTFOUND for web.whatsapp.com during connection, leading to repeated timeouts and reconnect attempts.  
+PASS **tests**/commands/downloader/youtubevideo.test.js (6.05 s)
+youtubevideo command
+√ should download a video for a valid URL (216 ms)
+√ should reply with an error for an invalid URL (232 ms)
+√ should reply with an error if no URL is provided (47 ms)
+√ should use the specified quality when provided (22 ms)
+√ should reply with an error when an invalid quality flag makes the URL invalid (23 ms)
 
-**Root Cause:** Intermittent DNS resolution failure for WhatsApp domain, possibly due to network instability, DNS server issues, or temporary block. nslookup succeeded (resolved to mmx-ds.cdn.whatsapp.net IPs), but Node.js getaddrinfo failed in some attempts.  
+PASS **tests**/commands/search/googlesearch.test.js
+googlesearch command
+√ should return search results for a valid query (241 ms)
+√ should reply with an error for an empty query (18 ms)
+√ should handle no results from the API (44 ms)
 
-**Resolution:**  
-- Diagnosed with nslookup (worked) and monitored logs (bot reconnected successfully after ~58 minutes).  
-- No code change needed; environmental (network/DNS). If persistent, recommend VPN, DNS change (e.g., 8.8.8.8), or Baileys proxy config.  
-- Bot now connected (JID: 233533365712:20@s.whatsapp.net); processing messages without errors.  
+console.log
+AI Tool Call: youtubesearch with args {"query":"cat videos"}
 
-**Prevention:** Configure Baileys with custom DNS resolver or proxy; add connection retry logic with exponential backoff; monitor network health.  
+      at Object.log [as code] (commands/ai-chat/chatgpt.js:73:19)
 
-## General Bot Review Summary
-- **Scanned Logs:** Addressed proverb, weather, repair.js; no other critical errors. Minor middleware warnings (e.g., group.isAdmin not implemented) noted but non-blocking.  
-- **Recommendations:** Implement full group metadata fetching in message-processor.js; add API health checks; use PM2 for auto-restart on crashes.  
-- **Status:** Bot operational, commands functioning post-fixes.  
+console.error
+Tool execution failed for youtubesearch: TypeError: Cannot read properties of undefined (reading 'jid')
+at Object.jid [as code] (W:\CodeDeX\WhatsDeX\commands\ai-chat\chatgpt.js:101:43)
+at Object.<anonymous> (W:\CodeDeX\WhatsDeX\_\_tests\_\_\commands\ai-chat\chatgpt_new.test.js:84:9)
 
-**Last Updated:** 2025-09-11
+      110 |             } catch (e) {
+      111 |               toolResponse = `Error: ${e.message}`;
+    > 112 |               console.error(`Tool execution failed for ${functionName}:`, e);
+          |                       ^
+      113 |             }
+      114 |           }
+      115 |           messages.push({
 
-## 5. Empty "Extracted text" Logs and Message Processing Flaws
+      at Object.error [as code] (commands/ai-chat/chatgpt.js:112:23)
+      at Object.<anonymous> (__tests__/commands/ai-chat/chatgpt_new.test.js:84:9)
 
-**Date:** 2025-09-11
-**Error Details:**
-- Location: `src/message-processor.js`, `src/worker.js`, middleware chain, ctx structure in commands (e.g., menu.js).
-- Description: Consistent empty "Extracted text" logs for non-text messages (media, reactions, senderKeyDistributionMessage), leading to noisy output; /menu command failed with "Cannot read properties of undefined (reading 'context')" due to ctx.self.context undefined; hardcoded Redis credentials exposure; incomplete group admin/owner checks returning false/warn; duplicate inputValidation middleware.
+PASS **tests**/commands/ai-chat/chatgpt_new.test.js
+New chatgpt command with Memory and Function Calling
+√ should handle a simple chat conversation (36 ms)
+√ should trigger summarization when history is long (24 ms)
+√ should correctly handle a tool call (251 ms)
 
-**Root Cause:**
-- Unfiltered queuing of all message types via Bull in worker.js, with processor extracting only from 'conversation'/'extendedTextMessage', logging empty for others.
-- Missing extraction for 'imageMessage.caption', 'videoMessage.caption', 'buttonsMessage.footer', 'protocolMessage.quoted'.
-- Duplicate require('../middleware/inputValidation.js') in middleware array (lines 127,140).
-- Hardcoded Redis creds in worker.js (lines 7-10).
-- Placeholder ctx.group.isAdmin/isOwner returning false without fetching metadata.
-- Processor set ctx.bot = { context: ... }, but commands like menu.js expect ctx.self.context and ctx.bot.cmd, causing undefined.
+PASS **tests**/middleware.botMode.test.js
+botMode middleware
+√ should allow a non-premium user in a group when bot mode is 'group' (28 ms)
+√ should block a non-premium user in a private chat when bot mode is 'group' (9 ms)
+√ should allow a premium user in a private chat when bot mode is 'group' (10 ms)
+√ should allow an owner in a private chat when bot mode is 'group' (18 ms)
+√ should allow a non-premium user in a private chat when bot mode is 'private' (24 ms)
+√ should block a non-premium user in a group when bot mode is 'private' (11 ms)
+√ should allow an owner in a group when bot mode is 'private' (7 ms)
+√ should allow an owner when bot mode is 'self' (14 ms)
+√ should block a non-owner when bot mode is 'self' (99 ms)
+√ should allow any user when bot mode is not set (53 ms)
 
-**Resolution:**
-- Added early skip in processor for non-text types (line 72: if (!textTypes.includes(messageType)) return;), reducing noise.
-- Expanded extraction (lines 52-67): Added cases for image/video caption, buttons footer, protocol quoted text.
-- Removed duplicate inputValidation from middleware array (line 140).
-- Replaced hardcoded Redis with process.env.REDIS_* in worker.js (lines 6-11).
-- Implemented real group metadata fetching in ctx.group.isAdmin/isOwner (lines 106-124): await bot.groupMetadata, check participant.admin/owner.
-- Fixed ctx structure: Added self: { context }, cmd: tools.cmd to ctx.bot (lines 82-94), matching command expectations.
-- Restarted bot; terminal shows skipping non-text (e.g., "Skipping non-text message type: senderKeyDistributionMessage"), successful extraction for text, no execution errors on /menu.
+PASS **tests**/commands/tool/translate.test.js
+translate command
+√ should translate text successfully (37 ms)
+√ should fetch and display the language list for the "list" subcommand (21 ms)
+√ should reply with an error if no text is provided (10 ms)
+√ should use "id" as default language if no code is provided (10 ms)
 
-**Prevention:**
-- Filter queuing at source (e.g., in main.js/events if messageQueue.add found).
-- Standardize ctx structure across processors/handlers.
-- Use .env for all secrets; validate with tools like dotenv.
-- Add unit tests for extraction/group funcs (e.g., jest for message types).
-- Monitor logs for warnings/errors post-changes.
+PASS **tests**/commands/profile/claim.test.js
+claim command
+√ should successfully claim a daily reward (39 ms)
+√ should show an error if the claim type is invalid (25 ms)
+√ should show an error if the user level is too low (13 ms)
+√ should show an error if the claim is on cooldown (14 ms)
+√ should prevent owner from claiming (29 ms)
+√ should show the list of available claims (12 ms)
 
-**Status:** Resolved; bot processes text commands seamlessly, reduces noise, secure config, accurate group roles.
+PASS **tests**/commands/profile/transfer.test.js
+transfer command
+√ should successfully transfer coins to a mentioned user (28 ms)
+√ should reply with an error for a non-positive amount (24 ms)
+√ should reply with an error for a non-numeric amount (11 ms)
+√ should reply with an error if the user has insufficient coins (8 ms)
+√ should reply with help message if no user or amount is provided (10 ms)
+
+PASS **tests**/middleware/inputValidation.test.js
+inputValidation middleware
+√ valid YouTube URL for youtubevideo (43 ms)
+√ invalid URL for youtubevideo (27 ms)
+√ valid prompt for chatgpt (17 ms)
+√ invalid prompt too long for chatgpt (19 ms)
+√ unknown command allows execution (10 ms)
+
+PASS **tests**/database/chat.test.js
+Chat Database
+√ should create chat table if it does not exist (27 ms)
+√ should get user history (14 ms)
+√ should return empty array for new user (11 ms)
+√ should add a message to history (8 ms)
+√ should create history for new user and add message (20 ms)
+√ should clear user history (15 ms)
+
+PASS **tests**/tools.msg.test.js
+ucwords
+√ should capitalize the first letter of each word (15 ms)
+√ should handle single words (7 ms)
+√ should handle already capitalized words (8 ms)
+√ should handle mixed case words (6 ms)
+√ should return null for null input (23 ms)
+√ should return null for empty string (6 ms)
+
+PASS **tests**/commands/information/ping.test.js
+ping command
+√ should reply with Pong! and edit the message with the response time (12 ms)
+√ should handle errors gracefully (13 ms)
+
+PASS **tests**/commands/ai-chat/clearchat.test.js
+clearchat command
+√ should clear chat history and reply with a success message (17 ms)
+
+Test Suites: 1 failed, 13 passed, 14 total
+Tests: 1 failed, 76 passed, 77 total
+Snapshots: 0 total
+Time: 83.441 s
+Ran all test suites.

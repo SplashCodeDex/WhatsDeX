@@ -20,31 +20,6 @@ function AuthPage() {
   const timerRef = useRef();
   const startTimeRef = useRef();
 
-  useEffect(() => {
-    // Initialize socket connection
-    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000');
-
-    // Socket event listeners
-    socketRef.current.on('connection_status', handleConnectionStatus);
-    socketRef.current.on('qr_code', handleQRCode);
-    socketRef.current.on('pairing_code', handlePairingCode);
-    socketRef.current.on('connection_progress', handleConnectionProgress);
-    socketRef.current.on('analytics_update', handleAnalyticsUpdate);
-    socketRef.current.on('error', handleError);
-
-    // Request initial status
-    socketRef.current.emit('get_status');
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
-
   const handleConnectionStatus = (status) => {
     setConnectionStatus(status.status);
     setRetryCount(status.retryCount || 0);
@@ -66,6 +41,15 @@ function AuthPage() {
     setError(null);
   };
 
+  const playVoiceCode = async (voiceData) => {
+    try {
+      // In a real implementation, this would play the audio
+      console.log('Playing voice code:', voiceData.text);
+    } catch (err) {
+      console.error('Failed to play voice code:', err);
+    }
+  };
+
   const handlePairingCode = (data) => {
     setPairingCode(data);
     setError(null);
@@ -84,8 +68,8 @@ function AuthPage() {
     setAnalytics(data);
   };
 
-  const handleError = (error) => {
-    setError(error.message);
+  const handleError = (err) => {
+    setError(err.message);
     setIsLoading(false);
   };
 
@@ -96,7 +80,7 @@ function AuthPage() {
     try {
       socketRef.current.emit('start_connection', {
         method: selectedMethod,
-        voiceEnabled
+        voiceEnabled,
       });
     } catch (err) {
       setError('Failed to start connection process');
@@ -120,14 +104,30 @@ function AuthPage() {
     socketRef.current.emit('refresh_pairing_code');
   };
 
-  const playVoiceCode = async (voiceData) => {
-    try {
-      // In a real implementation, this would play the audio
-      console.log('Playing voice code:', voiceData.text);
-    } catch (err) {
-      console.error('Failed to play voice code:', err);
-    }
-  };
+  useEffect(() => {
+    // Initialize socket connection
+    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000');
+
+    // Socket event listeners
+    socketRef.current.on('connection_status', handleConnectionStatus);
+    socketRef.current.on('qr_code', handleQRCode);
+    socketRef.current.on('pairing_code', handlePairingCode);
+    socketRef.current.on('connection_progress', handleConnectionProgress);
+    socketRef.current.on('analytics_update', handleAnalyticsUpdate);
+    socketRef.current.on('error', handleError);
+
+    // Request initial status
+    socketRef.current.emit('get_status');
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [handleConnectionStatus, handleQRCode, handlePairingCode, handleConnectionProgress, handleAnalyticsUpdate, handleError]);
 
   const formatTime = (ms) => {
     const seconds = Math.floor(ms / 1000);
