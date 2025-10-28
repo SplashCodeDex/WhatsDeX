@@ -6,6 +6,7 @@
 const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
+const context = require('../../context');
 
 class TextToSpeechService {
     constructor() {
@@ -39,8 +40,8 @@ class TextToSpeechService {
                 throw new Error('Text too long. Maximum 500 characters.');
             }
 
-            // Check rate limit
-            if (!this.checkRateLimit('tts_global')) {
+            // Check rate limit from database
+            if (!(await this.checkRateLimit('tts_global'))) {
                 throw new Error('Rate limit exceeded. Please wait before using TTS again.');
             }
 
@@ -104,8 +105,8 @@ class TextToSpeechService {
                 throw new Error('Text too long. Maximum 1000 characters.');
             }
 
-            // Check rate limit
-            if (!this.checkRateLimit('tts_advanced')) {
+            // Check rate limit from database
+            if (!(await this.checkRateLimit('tts_advanced'))) {
                 throw new Error('Rate limit exceeded. Please wait before using advanced TTS.');
             }
 
@@ -180,13 +181,12 @@ class TextToSpeechService {
     }
 
     /**
-     * Check rate limit for TTS operations
+     * Check rate limit for TTS operations (now uses database)
      * @param {string} operation - Operation type
      */
-    checkRateLimit(operation) {
+    async checkRateLimit(operation) {
         const key = `tts_${operation}`;
         const now = Date.now();
-        const limit = this.rateLimits.get(key);
 
         const limits = {
             'tts_global': { cooldown: 5000, maxPerCooldown: 3 }, // 5 seconds, 3 operations
@@ -195,17 +195,44 @@ class TextToSpeechService {
 
         const config = limits[operation] || { cooldown: 10000, maxPerCooldown: 1 };
 
-        if (!limit || now - limit.lastUsed > config.cooldown) {
-            this.rateLimits.set(key, { lastUsed: now, count: 1 });
+        try {
+            const existingLimit = await context.database.rateLimit.findUnique({
+                where: { key }
+            });
+
+            if (!existingLimit || (now - existingLimit.lastUsed.getTime()) > config.cooldown) {
+                await context.database.rateLimit.upsert({
+                    where: { key },
+                    update: {
+                        count: 1,
+                        lastUsed: new Date()
+                    },
+                    create: {
+                        key,
+                        count: 1,
+                        lastUsed: new Date()
+                    }
+                });
+                return true;
+            }
+
+            if (existingLimit.count >= config.maxPerCooldown) {
+                return false;
+            }
+
+            await context.database.rateLimit.update({
+                where: { key },
+                data: {
+                    count: { increment: 1 },
+                    lastUsed: new Date()
+                }
+            });
+
             return true;
+        } catch (error) {
+            console.error('Error checking TTS rate limit:', error);
+            return false; // Fail safe
         }
-
-        if (limit.count >= config.maxPerCooldown) {
-            return false;
-        }
-
-        limit.count++;
-        return true;
     }
 
     /**

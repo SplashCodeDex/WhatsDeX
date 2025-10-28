@@ -7,6 +7,7 @@ const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
 const { writeExif } = require('../../lib/exif');
+const context = require('../../context');
 
 class StickerService {
     constructor() {
@@ -281,14 +282,13 @@ class StickerService {
     }
 
     /**
-     * Check rate limit for sticker operations
+     * Check rate limit for sticker operations (now uses database)
      * @param {string} userId - User ID
      * @param {string} operation - Operation type
      */
-    checkRateLimit(userId, operation) {
-        const key = `${userId}_${operation}`;
+    async checkRateLimit(userId, operation) {
+        const key = `sticker_${operation}_${userId}`;
         const now = Date.now();
-        const limit = this.rateLimits.get(key);
 
         const limits = {
             'emojimix': { cooldown: 10000, maxPerCooldown: 3 }, // 10 seconds, 3 operations
@@ -298,17 +298,44 @@ class StickerService {
 
         const config = limits[operation] || { cooldown: 30000, maxPerCooldown: 1 };
 
-        if (!limit || now - limit.lastUsed > config.cooldown) {
-            this.rateLimits.set(key, { lastUsed: now, count: 1 });
+        try {
+            const existingLimit = await context.database.rateLimit.findUnique({
+                where: { key }
+            });
+
+            if (!existingLimit || (now - existingLimit.lastUsed.getTime()) > config.cooldown) {
+                await context.database.rateLimit.upsert({
+                    where: { key },
+                    update: {
+                        count: 1,
+                        lastUsed: new Date()
+                    },
+                    create: {
+                        key,
+                        count: 1,
+                        lastUsed: new Date()
+                    }
+                });
+                return true;
+            }
+
+            if (existingLimit.count >= config.maxPerCooldown) {
+                return false;
+            }
+
+            await context.database.rateLimit.update({
+                where: { key },
+                data: {
+                    count: { increment: 1 },
+                    lastUsed: new Date()
+                }
+            });
+
             return true;
+        } catch (error) {
+            console.error('Error checking sticker rate limit:', error);
+            return false; // Fail safe
         }
-
-        if (limit.count >= config.maxPerCooldown) {
-            return false;
-        }
-
-        limit.count++;
-        return true;
     }
 
     /**

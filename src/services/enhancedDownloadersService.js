@@ -6,6 +6,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { JSDOM } = require('jsdom');
+const context = require('../../context');
 
 class EnhancedDownloadersService {
     constructor() {
@@ -312,14 +313,13 @@ class EnhancedDownloadersService {
     }
 
     /**
-     * Check rate limit for download operations
+     * Check rate limit for download operations (now uses database)
      * @param {string} userId - User ID
      * @param {string} platform - Platform name
      */
-    checkRateLimit(userId, platform) {
-        const key = `${userId}_${platform}`;
+    async checkRateLimit(userId, platform) {
+        const key = `downloader_${platform}_${userId}`;
         const now = Date.now();
-        const limit = this.rateLimits.get(key);
 
         const limits = {
             'pixiv': { cooldown: 30000, maxPerCooldown: 2 }, // 30 seconds, 2 searches
@@ -330,17 +330,44 @@ class EnhancedDownloadersService {
 
         const config = limits[platform] || { cooldown: 30000, maxPerCooldown: 1 };
 
-        if (!limit || now - limit.lastUsed > config.cooldown) {
-            this.rateLimits.set(key, { lastUsed: now, count: 1 });
+        try {
+            const existingLimit = await context.database.rateLimit.findUnique({
+                where: { key }
+            });
+
+            if (!existingLimit || (now - existingLimit.lastUsed.getTime()) > config.cooldown) {
+                await context.database.rateLimit.upsert({
+                    where: { key },
+                    update: {
+                        count: 1,
+                        lastUsed: new Date()
+                    },
+                    create: {
+                        key,
+                        count: 1,
+                        lastUsed: new Date()
+                    }
+                });
+                return true;
+            }
+
+            if (existingLimit.count >= config.maxPerCooldown) {
+                return false;
+            }
+
+            await context.database.rateLimit.update({
+                where: { key },
+                data: {
+                    count: { increment: 1 },
+                    lastUsed: new Date()
+                }
+            });
+
             return true;
+        } catch (error) {
+            console.error('Error checking downloader rate limit:', error);
+            return false; // Fail safe
         }
-
-        if (limit.count >= config.maxPerCooldown) {
-            return false;
-        }
-
-        limit.count++;
-        return true;
     }
 
     /**

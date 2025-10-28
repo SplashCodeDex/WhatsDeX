@@ -9,6 +9,7 @@ const path = require('path');
 const { Boom } = require('@hapi/boom');
 const NodeCache = require('node-cache');
 const { default: WAConnection, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } = require('baileys');
+const context = require('../../context');
 
 class MultiBotService {
     constructor() {
@@ -39,26 +40,66 @@ class MultiBotService {
      */
     async createBot(userId, mainBot) {
         try {
-            // Check rate limit
-            if (!this.checkRateLimit(userId, 'create_bot')) {
+            // Check rate limit from database
+            const rateLimitKey = `multibot_create_${userId}`;
+            const existingLimit = await context.database.rateLimit.findUnique({
+                where: { key: rateLimitKey }
+            });
+
+            const now = Date.now();
+            const cooldown = 5 * 60 * 1000; // 5 minutes
+
+            if (existingLimit && (now - existingLimit.lastUsed.getTime()) < cooldown && existingLimit.count >= 1) {
                 throw new Error('Rate limit exceeded. Please wait before creating new bot.');
             }
 
-            // Check if user already has active bot
-            if (this.activeBots.has(userId)) {
+            // Check if user already has active bot in database
+            const existingBot = await context.database.multiBot.findUnique({
+                where: { userId }
+            });
+
+            if (existingBot && existingBot.isActive) {
                 throw new Error('You already have an active bot instance!');
             }
 
-            const botData = {
-                id: userId,
-                userId,
-                createdAt: Date.now(),
-                isActive: true,
-                reconnectAttempts: 0,
-                maxReconnectAttempts: 5
-            };
+            // Create bot record in database
+            const botData = await context.database.multiBot.upsert({
+                where: { userId },
+                update: {
+                    isActive: true,
+                    reconnectAttempts: 0,
+                    updatedAt: new Date()
+                },
+                create: {
+                    userId,
+                    isActive: true,
+                    reconnectAttempts: 0,
+                    maxReconnectAttempts: 5
+                }
+            });
 
-            this.activeBots.set(userId, botData);
+            // Update rate limit
+            await context.database.rateLimit.upsert({
+                where: { key: rateLimitKey },
+                update: {
+                    count: { increment: 1 },
+                    lastUsed: new Date()
+                },
+                create: {
+                    key: rateLimitKey,
+                    count: 1,
+                    lastUsed: new Date()
+                }
+            });
+
+            this.activeBots.set(userId, {
+                id: botData.id,
+                userId: botData.userId,
+                createdAt: botData.createdAt.getTime(),
+                isActive: botData.isActive,
+                reconnectAttempts: botData.reconnectAttempts,
+                maxReconnectAttempts: botData.maxReconnectAttempts
+            });
 
             // Start bot process
             await this.startBotProcess(userId, mainBot);
@@ -241,6 +282,17 @@ class MultiBotService {
                 this.botProcesses.delete(userId);
             }
 
+            // Update database record
+            await context.database.multiBot.updateMany({
+                where: { userId },
+                data: {
+                    isActive: false,
+                    stoppedAt: new Date(),
+                    stopReason: reason,
+                    updatedAt: new Date()
+                }
+            });
+
             // Remove from active bots
             this.activeBots.delete(userId);
 
@@ -295,14 +347,13 @@ class MultiBotService {
     }
 
     /**
-     * Check rate limit for bot operations
+     * Check rate limit for bot operations (now uses database)
      * @param {string} userId - User ID
      * @param {string} operation - Operation type
      */
-    checkRateLimit(userId, operation) {
-        const key = `${userId}_${operation}`;
+    async checkRateLimit(userId, operation) {
+        const key = `multibot_${operation}_${userId}`;
         const now = Date.now();
-        const limit = this.rateLimits.get(key);
 
         const limits = {
             'create_bot': { cooldown: 300000, maxPerCooldown: 1 }, // 5 minutes, 1 bot
@@ -311,17 +362,44 @@ class MultiBotService {
 
         const config = limits[operation] || { cooldown: 60000, maxPerCooldown: 1 };
 
-        if (!limit || now - limit.lastUsed > config.cooldown) {
-            this.rateLimits.set(key, { lastUsed: now, count: 1 });
+        try {
+            const existingLimit = await context.database.rateLimit.findUnique({
+                where: { key }
+            });
+
+            if (!existingLimit || (now - existingLimit.lastUsed.getTime()) > config.cooldown) {
+                await context.database.rateLimit.upsert({
+                    where: { key },
+                    update: {
+                        count: 1,
+                        lastUsed: new Date()
+                    },
+                    create: {
+                        key,
+                        count: 1,
+                        lastUsed: new Date()
+                    }
+                });
+                return true;
+            }
+
+            if (existingLimit.count >= config.maxPerCooldown) {
+                return false;
+            }
+
+            await context.database.rateLimit.update({
+                where: { key },
+                data: {
+                    count: { increment: 1 },
+                    lastUsed: new Date()
+                }
+            });
+
             return true;
+        } catch (error) {
+            console.error('Error checking rate limit:', error);
+            return false; // Fail safe
         }
-
-        if (limit.count >= config.maxPerCooldown) {
-            return false;
-        }
-
-        limit.count++;
-        return true;
     }
 
     /**
@@ -340,18 +418,46 @@ class MultiBotService {
      */
     async loadExistingBots() {
         try {
+            // Load from database instead of file system
+            const bots = await context.database.multiBot.findMany({
+                where: { isActive: true }
+            });
+
+            for (const bot of bots) {
+                this.activeBots.set(bot.userId, {
+                    id: bot.id,
+                    userId: bot.userId,
+                    createdAt: bot.createdAt.getTime(),
+                    isActive: bot.isActive,
+                    reconnectAttempts: bot.reconnectAttempts,
+                    maxReconnectAttempts: bot.maxReconnectAttempts,
+                    needsRestart: !bot.isActive
+                });
+            }
+
+            // Also check file system for any orphaned directories
             const botsDir = await fs.readdir(this.botsDir);
 
             for (const botDir of botsDir) {
                 const botPath = path.join(this.botsDir, botDir);
                 const stat = await fs.stat(botPath);
 
-                if (stat.isDirectory()) {
+                if (stat.isDirectory() && !this.activeBots.has(botDir)) {
                     // Check if bot directory has auth files
                     const files = await fs.readdir(botPath);
                     const hasAuth = files.some(file => file.includes('creds'));
 
                     if (hasAuth) {
+                        // Create database record for orphaned bot
+                        await context.database.multiBot.create({
+                            data: {
+                                userId: botDir,
+                                isActive: false,
+                                reconnectAttempts: 0,
+                                maxReconnectAttempts: 5
+                            }
+                        });
+
                         this.activeBots.set(botDir, {
                             id: botDir,
                             userId: botDir,
@@ -372,19 +478,37 @@ class MultiBotService {
      * Clean up inactive bots
      */
     async cleanupInactiveBots() {
-        const now = Date.now();
-        const maxInactiveTime = 24 * 60 * 60 * 1000; // 24 hours
+        try {
+            const maxInactiveTime = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
 
-        for (const [userId, botData] of this.activeBots.entries()) {
-            if (!botData.isActive && (now - botData.createdAt) > maxInactiveTime) {
+            // Find inactive bots older than 24 hours
+            const inactiveBots = await context.database.multiBot.findMany({
+                where: {
+                    isActive: false,
+                    updatedAt: {
+                        lt: maxInactiveTime
+                    }
+                }
+            });
+
+            for (const bot of inactiveBots) {
                 try {
-                    const botDir = path.join(this.botsDir, userId);
+                    // Clean up bot directory
+                    const botDir = path.join(this.botsDir, bot.userId);
                     await fs.rm(botDir, { recursive: true, force: true });
-                    this.activeBots.delete(userId);
+
+                    // Remove from database
+                    await context.database.multiBot.delete({
+                        where: { id: bot.id }
+                    });
+
+                    this.activeBots.delete(bot.userId);
                 } catch (error) {
                     console.error('Error cleaning up inactive bot:', error);
                 }
             }
+        } catch (error) {
+            console.error('Error in cleanupInactiveBots:', error);
         }
     }
 

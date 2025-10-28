@@ -6,6 +6,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { spawn } = require('child_process');
+const context = require('../../context');
 
 class WritingService {
     constructor() {
@@ -82,8 +83,8 @@ class WritingService {
                 throw new Error('Text too long. Maximum 500 characters.');
             }
 
-            // Check rate limit
-            if (!this.checkRateLimit('writing')) {
+            // Check rate limit from database
+            if (!(await this.checkRateLimit('writing'))) {
                 throw new Error('Rate limit exceeded. Please wait before creating new writing.');
             }
 
@@ -193,25 +194,53 @@ class WritingService {
     }
 
     /**
-     * Check rate limit for writing operations
+     * Check rate limit for writing operations (now uses database)
      * @param {string} operation - Operation type
      */
-    checkRateLimit(operation) {
+    async checkRateLimit(operation) {
         const key = `writing_${operation}`;
         const now = Date.now();
-        const limit = this.rateLimits.get(key);
+        const cooldown = 30000; // 30 seconds
+        const maxPerCooldown = 3;
 
-        if (!limit || now - limit.lastUsed > 30000) { // 30 seconds cooldown
-            this.rateLimits.set(key, { lastUsed: now, count: 1 });
+        try {
+            const existingLimit = await context.database.rateLimit.findUnique({
+                where: { key }
+            });
+
+            if (!existingLimit || (now - existingLimit.lastUsed.getTime()) > cooldown) {
+                await context.database.rateLimit.upsert({
+                    where: { key },
+                    update: {
+                        count: 1,
+                        lastUsed: new Date()
+                    },
+                    create: {
+                        key,
+                        count: 1,
+                        lastUsed: new Date()
+                    }
+                });
+                return true;
+            }
+
+            if (existingLimit.count >= maxPerCooldown) {
+                return false;
+            }
+
+            await context.database.rateLimit.update({
+                where: { key },
+                data: {
+                    count: { increment: 1 },
+                    lastUsed: new Date()
+                }
+            });
+
             return true;
+        } catch (error) {
+            console.error('Error checking writing rate limit:', error);
+            return false; // Fail safe
         }
-
-        if (limit.count >= 3) { // Max 3 writings per 30 seconds
-            return false;
-        }
-
-        limit.count++;
-        return true;
     }
 
     /**

@@ -1,22 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const UltraSmartQRManager = require('../src/services/auth/qrCodeHandler');
-const SmartPairingCodeManager = require('../src/services/auth/pairingCodeHandler');
+const UnifiedSmartAuth = require('../src/services/auth/UnifiedSmartAuth');
 const AutoReconnectionEngine = require('../src/services/autoReconnectionEngine');
+const context = require('../context');
 
 // Initialize services
-const qrManager = new UltraSmartQRManager();
-const pairingManager = new SmartPairingCodeManager();
+const unifiedAuth = new UnifiedSmartAuth({
+  bot: {
+    phoneNumber: process.env.BOT_PHONE_NUMBER || '1234567890',
+    authAdapter: {
+      default: {
+        authDir: './auth_info_baileys'
+      }
+    }
+  }
+});
 const reconnectionEngine = new AutoReconnectionEngine();
 
-// In-memory storage for demo (use database in production)
+// Persistent session storage via Prisma
 let connectionStatus = {
   status: 'disconnected',
   qrCode: null,
   pairingCode: null,
   retryCount: 0,
   connectionTime: 0,
-  progress: 0
+  progress: 0,
+  sessionId: null
 };
 
 // WebSocket connections for real-time updates
@@ -31,9 +40,40 @@ const broadcast = (event, data) => {
   });
 };
 
-// Update connection status and broadcast
-const updateConnectionStatus = (status, additionalData = {}) => {
+// Update connection status and broadcast with database persistence
+const updateConnectionStatus = async (status, additionalData = {}) => {
   connectionStatus = { ...connectionStatus, ...status, ...additionalData };
+
+  // Persist session data to database
+  if (connectionStatus.sessionId) {
+    try {
+      await context.database.userSession.upsert({
+        where: { id: connectionStatus.sessionId },
+        update: {
+          status: connectionStatus.status,
+          qrCode: connectionStatus.qrCode,
+          pairingCode: connectionStatus.pairingCode,
+          retryCount: connectionStatus.retryCount,
+          connectionTime: connectionStatus.connectionTime,
+          progress: connectionStatus.progress,
+          updatedAt: new Date()
+        },
+        create: {
+          id: connectionStatus.sessionId,
+          userId: 'system', // System session for bot
+          status: connectionStatus.status,
+          qrCode: connectionStatus.qrCode,
+          pairingCode: connectionStatus.pairingCode,
+          retryCount: connectionStatus.retryCount,
+          connectionTime: connectionStatus.connectionTime,
+          progress: connectionStatus.progress
+        }
+      });
+    } catch (error) {
+      console.error('Failed to persist session status:', error);
+    }
+  }
+
   broadcast('connection_status', connectionStatus);
 };
 
@@ -43,18 +83,42 @@ const updateConnectionStatus = (status, additionalData = {}) => {
  * GET /api/auth/status
  * Get current authentication status
  */
-router.get('/status', (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      ...connectionStatus,
-      analytics: {
-        qrStats: qrManager.getQRStats(),
-        pairingStats: pairingManager.getCodeStats(),
-        reconnectionStats: reconnectionEngine.getStats()
+router.get('/status', async (req, res) => {
+  try {
+    // Load latest session data from database
+    if (connectionStatus.sessionId) {
+      const sessionData = await context.database.userSession.findUnique({
+        where: { id: connectionStatus.sessionId }
+      });
+      if (sessionData) {
+        connectionStatus = {
+          ...connectionStatus,
+          status: sessionData.status,
+          qrCode: sessionData.qrCode,
+          pairingCode: sessionData.pairingCode,
+          retryCount: sessionData.retryCount,
+          connectionTime: sessionData.connectionTime,
+          progress: sessionData.progress
+        };
       }
     }
-  });
+
+    res.json({
+      success: true,
+      data: {
+        ...connectionStatus,
+        analytics: {
+          reconnectionStats: reconnectionEngine.getStats()
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve status',
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -63,10 +127,14 @@ router.get('/status', (req, res) => {
  */
 router.post('/start', async (req, res) => {
   try {
-    const { method = 'qr', voiceEnabled = false } = req.body;
+    const { method = 'qr', voiceEnabled = false, phoneNumber } = req.body;
+
+    // Create session ID for persistence
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    connectionStatus.sessionId = sessionId;
 
     // Update status to connecting
-    updateConnectionStatus({
+    await updateConnectionStatus({
       status: 'connecting',
       retryCount: 0,
       connectionTime: 0,
@@ -74,51 +142,52 @@ router.post('/start', async (req, res) => {
     });
 
     if (method === 'qr') {
-      // Generate QR code
-      const sessionData = 'whatsapp_session_' + Date.now(); // Mock session data
-      const qrResult = await qrManager.generateUltraSmartQR(sessionData);
+      // Generate real QR code using UnifiedSmartAuth
+      await unifiedAuth.connect();
+      const qrCode = await unifiedAuth.getQRCode();
 
-      updateConnectionStatus({
-        qrCode: qrResult,
+      await updateConnectionStatus({
+        qrCode: qrCode,
         progress: 30
       });
 
-      // Simulate connection process
-      setTimeout(() => {
-        updateConnectionStatus({
+      // Listen for connection events
+      unifiedAuth.once('connected', async () => {
+        await updateConnectionStatus({
           status: 'connected',
           progress: 100,
-          connectionTime: Date.now() - Date.now() // Would be actual connection time
+          connectionTime: Date.now()
         });
-      }, 3000);
+      });
 
     } else if (method === 'pairing') {
-      // Generate pairing code
-      const pairingResult = await pairingManager.generateSmartPairingCode();
+      // Generate real pairing code using UnifiedSmartAuth
+      await unifiedAuth.connect();
+      const pairingCode = await unifiedAuth.getPairingCode(phoneNumber);
 
-      updateConnectionStatus({
-        pairingCode: pairingResult,
+      await updateConnectionStatus({
+        pairingCode: pairingCode,
         progress: 30
       });
 
-      // Simulate connection process
-      setTimeout(() => {
-        updateConnectionStatus({
+      // Listen for connection events
+      unifiedAuth.once('connected', async () => {
+        await updateConnectionStatus({
           status: 'connected',
           progress: 100,
-          connectionTime: Date.now() - Date.now()
+          connectionTime: Date.now()
         });
-      }, 3000);
+      });
     }
 
     res.json({
       success: true,
       message: 'Authentication process started',
-      data: { method }
+      data: { method, sessionId }
     });
 
   } catch (error) {
-    updateConnectionStatus({
+    await updateConnectionStatus({
       status: 'error',
       error: error.message
     });
@@ -135,18 +204,29 @@ router.post('/start', async (req, res) => {
  * POST /api/auth/stop
  * Stop authentication process
  */
-router.post('/stop', (req, res) => {
-  updateConnectionStatus({
-    status: 'disconnected',
-    qrCode: null,
-    pairingCode: null,
-    progress: 0
-  });
+router.post('/stop', async (req, res) => {
+  try {
+    // Disconnect from WhatsApp
+    await unifiedAuth.disconnect();
 
-  res.json({
-    success: true,
-    message: 'Authentication process stopped'
-  });
+    await updateConnectionStatus({
+      status: 'disconnected',
+      qrCode: null,
+      pairingCode: null,
+      progress: 0
+    });
+
+    res.json({
+      success: true,
+      message: 'Authentication process stopped'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to stop authentication',
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -155,17 +235,17 @@ router.post('/stop', (req, res) => {
  */
 router.post('/refresh-qr', async (req, res) => {
   try {
-    if (!connectionStatus.qrCode) {
+    // Get fresh QR code from UnifiedSmartAuth
+    const newQR = await unifiedAuth.getQRCode();
+
+    if (!newQR) {
       return res.status(400).json({
         success: false,
-        message: 'No active QR code to refresh'
+        message: 'Unable to generate new QR code'
       });
     }
 
-    const sessionData = 'whatsapp_session_' + Date.now();
-    const newQR = await qrManager.generateUltraSmartQR(sessionData);
-
-    updateConnectionStatus({
+    await updateConnectionStatus({
       qrCode: newQR
     });
 
@@ -190,9 +270,18 @@ router.post('/refresh-qr', async (req, res) => {
  */
 router.post('/refresh-pairing', async (req, res) => {
   try {
-    const newPairingCode = await pairingManager.generateSmartPairingCode();
+    const { phoneNumber } = req.body;
 
-    updateConnectionStatus({
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    const newPairingCode = await unifiedAuth.getPairingCode(phoneNumber);
+
+    await updateConnectionStatus({
       pairingCode: newPairingCode
     });
 
@@ -215,23 +304,46 @@ router.post('/refresh-pairing', async (req, res) => {
  * GET /api/auth/analytics
  * Get authentication analytics
  */
-router.get('/analytics', (req, res) => {
-  const analytics = {
-    qrStats: qrManager.getQRStats(),
-    pairingStats: pairingManager.getCodeStats(),
-    reconnectionStats: reconnectionEngine.getStats(),
-    overall: {
-      totalConnections: 0, // Would be tracked in database
-      successRate: 95.2,
-      averageConnectionTime: 12.5,
-      activeConnections: connectionStatus.status === 'connected' ? 1 : 0
-    }
-  };
+router.get('/analytics', async (req, res) => {
+  try {
+    // Get real analytics from database
+    const totalConnections = await context.database.userSession.count({
+      where: { status: 'connected' }
+    });
 
-  res.json({
-    success: true,
-    data: analytics
-  });
+    const successfulConnections = await context.database.userSession.count({
+      where: {
+        status: 'connected',
+        connectionTime: { not: null }
+      }
+    });
+
+    const avgConnectionTime = await context.database.userSession.aggregate({
+      _avg: { connectionTime: true },
+      where: { connectionTime: { not: null } }
+    });
+
+    const analytics = {
+      reconnectionStats: reconnectionEngine.getStats(),
+      overall: {
+        totalConnections,
+        successRate: totalConnections > 0 ? (successfulConnections / totalConnections) * 100 : 0,
+        averageConnectionTime: avgConnectionTime._avg.connectionTime || 0,
+        activeConnections: connectionStatus.status === 'connected' ? 1 : 0
+      }
+    };
+
+    res.json({
+      success: true,
+      data: analytics
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve analytics',
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -242,10 +354,17 @@ router.post('/disconnect', async (req, res) => {
   try {
     const { reason = 'manual' } = req.body;
 
-    // Trigger reconnection engine
-    await reconnectionEngine.handleDisconnection(reason);
+    // Disconnect from WhatsApp first
+    await unifiedAuth.disconnect();
 
-    updateConnectionStatus({
+    // Trigger reconnection engine with real network monitoring
+    await reconnectionEngine.handleDisconnection(reason, {
+      networkType: 'unknown', // Could be detected from system
+      deviceType: 'server',
+      userActivity: 'manual_disconnect'
+    });
+
+    await updateConnectionStatus({
       status: 'disconnected',
       qrCode: null,
       pairingCode: null,
@@ -329,24 +448,72 @@ if (typeof router.ws === 'function') {
 
 /**
  * GET /api/auth/qr-stats
- * Get QR code statistics
+ * Get QR code statistics from database
  */
-router.get('/qr-stats', (req, res) => {
-  res.json({
-    success: true,
-    data: qrManager.getQRStats()
-  });
+router.get('/qr-stats', async (req, res) => {
+  try {
+    const qrSessions = await context.database.userSession.findMany({
+      where: { qrCode: { not: null } },
+      select: {
+        createdAt: true,
+        updatedAt: true,
+        status: true
+      }
+    });
+
+    const stats = {
+      totalGenerated: qrSessions.length,
+      successfulScans: qrSessions.filter(s => s.status === 'connected').length,
+      averageGenerationTime: 0, // Could calculate from timestamps
+      lastGenerated: qrSessions[qrSessions.length - 1]?.createdAt || null
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve QR stats',
+      error: error.message
+    });
+  }
 });
 
 /**
  * GET /api/auth/pairing-stats
- * Get pairing code statistics
+ * Get pairing code statistics from database
  */
-router.get('/pairing-stats', (req, res) => {
-  res.json({
-    success: true,
-    data: pairingManager.getCodeStats()
-  });
+router.get('/pairing-stats', async (req, res) => {
+  try {
+    const pairingSessions = await context.database.userSession.findMany({
+      where: { pairingCode: { not: null } },
+      select: {
+        createdAt: true,
+        updatedAt: true,
+        status: true
+      }
+    });
+
+    const stats = {
+      totalGenerated: pairingSessions.length,
+      successfulUses: pairingSessions.filter(s => s.status === 'connected').length,
+      averageGenerationTime: 0, // Could calculate from timestamps
+      lastGenerated: pairingSessions[pairingSessions.length - 1]?.createdAt || null
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve pairing stats',
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -362,44 +529,35 @@ router.get('/reconnection-stats', (req, res) => {
 
 /**
  * POST /api/auth/validate-pairing
- * Validate pairing code
+ * Validate pairing code (now handled by UnifiedSmartAuth events)
  */
 router.post('/validate-pairing', (req, res) => {
-  try {
-    const { codeId, code } = req.body;
-
-    const validation = pairingManager.validateCode(codeId, code);
-
-    if (validation.valid) {
-      updateConnectionStatus({
-        status: 'connected',
-        progress: 100
-      });
-    }
-
-    res.json({
-      success: true,
-      data: validation
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to validate pairing code',
-      error: error.message
-    });
-  }
+  // Pairing code validation is now handled automatically by UnifiedSmartAuth
+  // This endpoint is kept for backward compatibility
+  res.json({
+    success: true,
+    message: 'Pairing code validation is handled automatically',
+    data: { valid: true, autoValidated: true }
+  });
 });
 
 /**
  * POST /api/auth/record-scan
- * Record QR code scan
+ * Record QR code scan (now handled automatically)
  */
-router.post('/record-scan', (req, res) => {
+router.post('/record-scan', async (req, res) => {
   try {
     const { qrId, success = true, scanTime } = req.body;
 
-    qrManager.recordQRScan(qrId, success, scanTime);
+    // Record scan event in database
+    await context.database.userSession.updateMany({
+      where: { qrCode: qrId },
+      data: {
+        status: success ? 'connected' : 'failed',
+        connectionTime: success ? scanTime : null,
+        updatedAt: new Date()
+      }
+    });
 
     res.json({
       success: true,
@@ -417,13 +575,21 @@ router.post('/record-scan', (req, res) => {
 
 /**
  * POST /api/auth/record-usage
- * Record pairing code usage
+ * Record pairing code usage (now handled automatically)
  */
-router.post('/record-usage', (req, res) => {
+router.post('/record-usage', async (req, res) => {
   try {
     const { codeId, success = true, useTime, accessibilityUsed = false } = req.body;
 
-    pairingManager.recordCodeUsage(codeId, success, useTime, accessibilityUsed);
+    // Record usage event in database
+    await context.database.userSession.updateMany({
+      where: { pairingCode: codeId },
+      data: {
+        status: success ? 'connected' : 'failed',
+        connectionTime: success ? useTime : null,
+        updatedAt: new Date()
+      }
+    });
 
     res.json({
       success: true,
@@ -439,22 +605,31 @@ router.post('/record-usage', (req, res) => {
   }
 });
 
- // Cleanup expired codes periodically
- setInterval(() => {
-   qrManager.cleanupExpiredQRs();
-   pairingManager.cleanupExpiredCodes();
+ // Cleanup expired sessions periodically
+ setInterval(async () => {
+   try {
+     // Clean up old disconnected sessions
+     await context.database.userSession.deleteMany({
+       where: {
+         status: 'disconnected',
+         updatedAt: {
+           lt: new Date(Date.now() - 24 * 60 * 60 * 1000) // Older than 24 hours
+         }
+       }
+     });
+   } catch (error) {
+     console.error('Failed to cleanup expired sessions:', error);
+   }
  }, 60000); // Every minute
 
  // Graceful shutdown
  process.on('SIGINT', async () => {
-   await qrManager.shutdown();
-   await pairingManager.shutdown();
+   await unifiedAuth.disconnect();
    await reconnectionEngine.shutdown();
  });
 
  process.on('SIGTERM', async () => {
-   await qrManager.shutdown();
-   await pairingManager.shutdown();
+   await unifiedAuth.disconnect();
    await reconnectionEngine.shutdown();
  });
 
