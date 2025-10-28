@@ -126,6 +126,13 @@ class AnalyticsService {
   async getSystemOverview(dateFilters = {}) {
     const data = this.analyticsData;
 
+    // Simulate fetching previous period data to calculate changes
+    const previousPeriodData = {
+      totalConnections: data.commands.totalExecuted * 0.88,
+      successRate: data.ai.successRate * 0.979,
+      averageConnectionTime: data.performance.averageResponseTime * 1.05
+    };
+
     return {
       summary: {
         totalUsers: data.users.total,
@@ -147,6 +154,11 @@ class AnalyticsService {
         uptime: data.performance.uptime,
         errorRate: data.performance.errorRate,
         averageResponseTime: data.performance.averageResponseTime
+      },
+      comparison: {
+        totalConnectionsChange: ((data.commands.totalExecuted - previousPeriodData.totalConnections) / previousPeriodData.totalConnections) * 100,
+        successRateChange: ((data.ai.successRate - previousPeriodData.successRate) / previousPeriodData.successRate) * 100,
+        averageConnectionTimeChange: ((data.performance.averageResponseTime - previousPeriodData.averageConnectionTime) / previousPeriodData.averageConnectionTime) * 100
       },
       timeRange: {
         startDate: dateFilters.startDate,

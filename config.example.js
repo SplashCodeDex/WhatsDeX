@@ -12,9 +12,9 @@ global.config = {
     bot: {
         name: "whatsdex", // Bot name
         prefix: /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i, // Prefix characters to trigger commands
-        phoneNumber: "", // Bot's phone number (not required if using QR code)
+        phoneNumber: "", // REPLACE WITH YOUR BOT'S PHONE NUMBER
         thumbnail: "https://repository-images.githubusercontent.com/753096396/84e76ef0-ba19-4c87-8ec2-ea803b097479", // Bot's thumbnail image
-        groupJid: "", // JID for the bot's group (not required if not using requireBotGroupMembership)
+        groupJid: "", // REPLACE WITH YOUR BOT'S GROUP JID
         newsletterJid: "120363416372653441@newsletter", // JID for the bot's channel
 
         // Bot session authentication configuration
@@ -49,7 +49,7 @@ global.config = {
 
     // Database configuration
     database: {
-        mongoUri: "mongodb://localhost:27017/whatsdex_app" // MongoDB connection URI for application data
+        mongoUri: "mongodb://localhost:27017/whatsdex_app" // REPLACE WITH YOUR MONGODB CONNECTION URI
     },
 
     // Custom bot messages for specific situations
@@ -71,7 +71,7 @@ global.config = {
         unavailableAtNight: Formatter.quote("⛔ The bot is unavailable from 12 AM to 6 AM. Please come back later!"), // Message if unavailable at night
 
         readmore: "\u200E".repeat(4001), // Read more string
-        note: "“Lorem ipsum dolor sit amet, in the shadow of darkness, life unto death.”", // Note
+        note: "Welcome to WhatsDeX! Please replace this message with something relevant.", // Default note
         footer: Formatter.italic("Developed by CodeDeX with ❤"), // Footer
 
         wait: Formatter.quote("🔄 Please wait a moment..."), // Loading message
@@ -81,21 +81,21 @@ global.config = {
 
     // Bot owner information
     owner: {
-        name: "", // Bot owner's name
-        organization: "", // Bot owner's organization name
-        id: "", // Bot owner's phone number
+        name: "Your Name", // REPLACE WITH YOUR NAME
+        organization: "Your Organization", // REPLACE WITH YOUR ORGANIZATION
+        id: "1234567890", // REPLACE WITH YOUR PHONE NUMBER
         co: [""] // Co-owner's phone number
     },
 
     // Bot sticker
     sticker: {
-        packname: "", // Sticker pack name
+        packname: "WhatsDeX Sticker Pack", // Sticker pack name
         author: "CodeDeX" // Sticker author
     },
 
     // API keys for various services
     api: {
-        openai: "" // OpenAI API key
+        openai: "" // REPLACE WITH YOUR OPENAI API KEY
     },
 
     // AI configuration

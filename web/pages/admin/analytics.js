@@ -119,7 +119,7 @@ function AnalyticsPage() {
                 {formatNumber(analytics.overall?.totalConnections || 0)}
               </div>
               <div className="text-sm text-gray-500">
-                +12% from last period
+                {analytics.comparison?.totalConnectionsChange > 0 ? `+${analytics.comparison?.totalConnectionsChange.toFixed(1)}%` : `${analytics.comparison?.totalConnectionsChange.toFixed(1)}%`} from last period
               </div>
             </div>
 
@@ -132,7 +132,7 @@ function AnalyticsPage() {
                 {formatPercentage(analytics.overall?.successRate / 100 || 0)}
               </div>
               <div className="text-sm text-gray-500">
-                +2.1% from last period
+                {analytics.comparison?.successRateChange > 0 ? `+${analytics.comparison?.successRateChange.toFixed(1)}%` : `${analytics.comparison?.successRateChange.toFixed(1)}%`} from last period
               </div>
             </div>
 
@@ -145,7 +145,7 @@ function AnalyticsPage() {
                 {formatTime(analytics.overall?.averageConnectionTime * 1000 || 0)}
               </div>
               <div className="text-sm text-gray-500">
-                -1.2s from last period
+                {analytics.comparison?.averageConnectionTimeChange > 0 ? `+${analytics.comparison?.averageConnectionTimeChange.toFixed(1)}s` : `${analytics.comparison?.averageConnectionTimeChange.toFixed(1)}s`} from last period
               </div>
             </div>
 
