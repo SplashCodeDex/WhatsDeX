@@ -23,6 +23,28 @@ import {
 import Layout from '../components/Layout';
 import { cn } from '../lib/utils';
 
+const getChangeTypeClass = (changeType) => {
+  switch (changeType) {
+    case 'positive':
+      return 'text-green-600 dark:text-green-400';
+    case 'negative':
+      return 'text-red-600 dark:text-red-400';
+    default:
+      return 'text-slate-600 dark:text-slate-400';
+  }
+};
+
+const getActivityStatusClass = (status) => {
+  switch (status) {
+    case 'success':
+      return 'bg-green-500/20 text-green-400';
+    case 'error':
+      return 'bg-red-500/20 text-red-400';
+    default:
+      return 'bg-blue-500/20 text-blue-400';
+  }
+};
+
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -112,11 +134,7 @@ export default function Dashboard() {
               transition={{ delay: 0.4 }}
               className={cn(
                 'flex items-center mt-2 text-sm',
-                changeType === 'positive'
-                  ? 'text-green-600 dark:text-green-400'
-                  : changeType === 'negative'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-slate-600 dark:text-slate-400',
+                getChangeTypeClass(changeType),
               )}
             >
               {changeType === 'positive' && <ArrowUpIcon className="w-4 h-4 mr-1" />}
@@ -148,11 +166,7 @@ export default function Dashboard() {
     >
       <div className={cn(
         'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center',
-        activity.status === 'success'
-          ? 'bg-green-500/20 text-green-400'
-          : activity.status === 'error'
-            ? 'bg-red-500/20 text-red-400'
-            : 'bg-blue-500/20 text-blue-400',
+        getActivityStatusClass(activity.status),
       )}>
         {activity.status === 'success' && <CheckCircleIcon className="w-5 h-5" />}
         {activity.status === 'error' && <ExclamationTriangleIcon className="w-5 h-5" />}

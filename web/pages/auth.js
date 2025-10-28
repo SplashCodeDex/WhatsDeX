@@ -72,6 +72,37 @@ export default function AuthPage() {
     setIsLoading(false);
   }, []);
 
+  const startConnection = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      socketRef.current.emit('start_connection', {
+        method: selectedMethod,
+        voiceEnabled,
+      });
+    } catch (err) {
+      setError('Failed to start connection process');
+      setIsLoading(false);
+    }
+  }, [selectedMethod, voiceEnabled]);
+
+  const stopConnection = useCallback(() => {
+    socketRef.current.emit('stop_connection');
+    setIsLoading(false);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+  }, []);
+
+  const refreshQR = useCallback(() => {
+    socketRef.current.emit('refresh_qr');
+  }, []);
+
+  const refreshPairingCode = useCallback(() => {
+    socketRef.current.emit('refresh_pairing_code');
+  }, []);
+
   useEffect(() => {
     // Initialize socket connection
     socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000');

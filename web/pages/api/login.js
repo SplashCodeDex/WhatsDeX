@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken'; // eslint-disable-line import/no-extraneous-dependencies
 
 export default function handler(req, res) {
   if (req.method === 'POST') {

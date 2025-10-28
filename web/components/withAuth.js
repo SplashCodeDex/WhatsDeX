@@ -9,7 +9,7 @@ const withAuth = (WrappedComponent) => (props) => {
     if (!token) {
       router.replace('/login');
     }
-  }, []);
+  }, [router]);
 
   return <WrappedComponent {...props} />;
 };

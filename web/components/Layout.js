@@ -44,6 +44,18 @@ const Layout = ({ children, title = 'WhatsDeX Dashboard' }) => {
     }
   };
 
+// Moved outside the Layout component for broader accessibility and to resolve scoping issues
+const getNavigationItemClass = (item, isDarkMode) => {
+  if (item.current) {
+    return isDarkMode
+      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+      : 'bg-blue-500/20 text-blue-600 border border-blue-500/30';
+  }
+  return isDarkMode
+    ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50';
+};
+
   const navigation = [
     {
       name: 'Dashboard', href: '/', icon: ChartBarIcon, current: true,
@@ -297,13 +309,7 @@ const SidebarContent = ({ navigation, darkMode, onClose }) => (
             href={item.href}
             className={cn(
               'group flex items-center rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 hover:scale-105',
-              item.current
-                ? darkMode
-                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                  : 'bg-blue-500/20 text-blue-600 border border-blue-500/30'
-                : darkMode
-                  ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50',
+              getNavigationItemClass(item, darkMode),
             )}
           >
             <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
