@@ -38,14 +38,6 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   DataTable
 } from '@/components/ui/datatable';
 import {
@@ -102,7 +94,6 @@ function UserManagement() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -502,7 +493,16 @@ function UserManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTable columns={columns} data={paginatedUsers} searchKey="name" />
+          <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <DataTable columns={columns} data={paginatedUsers} searchKey="name" />
+          </motion.div>
+        </AnimatePresence>
         </CardContent>
         <div className="flex justify-center py-4">
           <Pagination>
@@ -514,17 +514,22 @@ function UserManagement() {
                   className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined}
                 />
               </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    href="#"
-                    isActive={page === currentPage}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                if (totalPages > 5 && ((page > 2 && page < currentPage - 1) || (page < totalPages - 1 && page > currentPage + 1))) {
+                  return <PaginationEllipsis key={page} />;
+                }
+                return (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      href="#"
+                      isActive={page === currentPage}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
               <PaginationItem>
                 <PaginationNext
                   href="#"

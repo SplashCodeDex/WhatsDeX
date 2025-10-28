@@ -18,8 +18,8 @@ import {
   SkeletonDashboardCard,
   SkeletonChart,
   SkeletonTable,
-  Skeleton,
 } from '@whatsdex/shared/components/ui/Skeleton';
+import { Badge } from '../components/ui/badge';
 import Layout from '../components/Layout';
 import { cn } from '../lib/utils';
 
@@ -34,14 +34,45 @@ const getChangeTypeClass = (changeType) => {
   }
 };
 
-const getActivityStatusClass = (status) => {
+// Activity Status Badge Configuration
+const getActivityStatusConfig = (status) => {
   switch (status) {
     case 'success':
-      return 'bg-green-500/20 text-green-400';
+      return {
+        variant: 'success',
+        icon: CheckCircleIcon,
+        label: 'Success',
+      };
     case 'error':
-      return 'bg-red-500/20 text-red-400';
+      return {
+        variant: 'error',
+        icon: ExclamationTriangleIcon,
+        label: 'Error',
+      };
+    case 'processing':
+      return {
+        variant: 'info',
+        icon: ClockIcon,
+        label: 'Processing',
+      };
+    case 'warning':
+      return {
+        variant: 'warning',
+        icon: ExclamationTriangleIcon,
+        label: 'Warning',
+      };
+    case 'fast':
+      return {
+        variant: 'success',
+        icon: BoltIcon,
+        label: 'Fast',
+      };
     default:
-      return 'bg-blue-500/20 text-blue-400';
+      return {
+        variant: 'default',
+        icon: SignalIcon,
+        label: 'Unknown',
+      };
   }
 };
 
@@ -74,7 +105,8 @@ export default function Dashboard() {
           user: 'john_doe',
           action: 'Used /gemini command',
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          status: 'success',
+          status: 'fast',
+          duration: '0.8s',
         },
         {
           id: 2,
@@ -83,6 +115,7 @@ export default function Dashboard() {
           action: 'Generated image with DALL-E',
           timestamp: new Date(Date.now() - 12 * 60 * 1000),
           status: 'success',
+          duration: '4.2s',
         },
         {
           id: 3,
@@ -91,14 +124,34 @@ export default function Dashboard() {
           action: 'Database backup completed',
           timestamp: new Date(Date.now() - 25 * 60 * 1000),
           status: 'success',
+          duration: '15.3s',
         },
         {
           id: 4,
+          type: 'processing',
+          user: 'alex_kim',
+          action: 'Processing video download',
+          timestamp: new Date(Date.now() - 30 * 60 * 1000),
+          status: 'processing',
+          duration: '...',
+        },
+        {
+          id: 5,
+          type: 'warning',
+          user: 'System',
+          action: 'High memory usage detected',
+          timestamp: new Date(Date.now() - 33 * 60 * 1000),
+          status: 'warning',
+          duration: '-',
+        },
+        {
+          id: 6,
           type: 'error',
           user: 'mike_jones',
           action: 'Command execution failed',
           timestamp: new Date(Date.now() - 35 * 60 * 1000),
           status: 'error',
+          duration: '0.1s',
         },
       ]);
 
@@ -156,42 +209,6 @@ export default function Dashboard() {
         </motion.div>
       </div>
     </GlassCard>
-  );
-
-  const ActivityItem = ({ activity }) => (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="flex items-center space-x-4 p-4 rounded-xl bg-white/5 dark:bg-slate-700/30 backdrop-blur-sm border border-white/10 dark:border-slate-600/30"
-    >
-      <div className={cn(
-        'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center',
-        getActivityStatusClass(activity.status),
-      )}>
-        {activity.status === 'success' && <CheckCircleIcon className="w-5 h-5" />}
-        {activity.status === 'error' && <ExclamationTriangleIcon className="w-5 h-5" />}
-        {activity.type === 'command' && <BoltIcon className="w-5 h-5" />}
-        {activity.type === 'ai' && <CpuChipIcon className="w-5 h-5" />}
-        {activity.type === 'system' && <SignalIcon className="w-5 h-5" />}
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-          {activity.user}
-        </p>
-        <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-          {activity.action}
-        </p>
-      </div>
-
-      <div className="flex-shrink-0 text-xs text-slate-500 dark:text-slate-400">
-        <ClockIcon className="w-4 h-4 inline mr-1" />
-        {activity.timestamp.toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
-      </div>
-    </motion.div>
   );
 
   return (
@@ -322,20 +339,63 @@ export default function Dashboard() {
 
               <div className="space-y-4">
                 {loading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4 p-4">
-                      <Skeleton className="w-10 h-10 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-3 w-1/2" />
-                      </div>
-                      <Skeleton className="w-12 h-4" />
-                    </div>
-                  ))
+                  <SkeletonTable />
                 ) : (
-                  recentActivity.map((activity) => (
-                    <ActivityItem key={activity.id} activity={activity} />
-                  ))
+                  <div className="space-y-3">
+                    {recentActivity.map((activity) => {
+                      const statusConfig = getActivityStatusConfig(activity.status);
+                      const StatusIcon = statusConfig.icon;
+
+                      return (
+                        <motion.div
+                          key={activity.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: activity.id * 0.1 }}
+                          className="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
+                        >
+                          <div className="flex-shrink-0 mt-1">
+                            <StatusIcon className={cn(
+                              'w-5 h-5',
+                              activity.status === 'success' && 'text-green-500',
+                              activity.status === 'error' && 'text-red-500',
+                              activity.status === 'processing' && 'text-blue-500',
+                              activity.status === 'warning' && 'text-yellow-500',
+                              activity.status === 'fast' && 'text-green-500',
+                            )} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                {activity.user}
+                              </p>
+                              <Badge variant={statusConfig.variant} className="flex-shrink-0">
+                                {statusConfig.label}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
+                              {activity.action}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-500">
+                              <span className="flex items-center gap-1">
+                                <ClockIcon className="w-3 h-3" />
+                                {activity.timestamp.toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                              {activity.duration && (
+                                <span className="flex items-center gap-1">
+                                  <BoltIcon className="w-3 h-3" />
+                                  {activity.duration}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </GlassCard>

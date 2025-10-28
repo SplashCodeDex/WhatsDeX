@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import * as React from 'react';
 
 interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -13,12 +13,12 @@ const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
   ({ children, className, hover = true, glow = false, variant = 'default', ...props }, ref) => {
     const variants = {
       default: {
-        background: 'bg-glass-500',
-        border: 'border-white/20',
+        background: 'bg-white/30 dark:bg-slate-900/30',
+        border: 'border-white/20 dark:border-slate-700/50',
         shadow: 'shadow-glass'
       },
       dark: {
-        background: 'bg-glass-dark-500',
+        background: 'bg-slate-900/40 dark:bg-slate-800/40',
         border: 'border-slate-700/50',
         shadow: 'shadow-glass'
       },

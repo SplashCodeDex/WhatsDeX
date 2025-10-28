@@ -14,10 +14,35 @@ import {
 } from '@heroicons/react/24/outline';
 import { cn } from '../lib/utils';
 
+const getNavigationItemClass = (item, darkMode) => {
+  if (item.current) {
+    return darkMode
+      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+      : 'bg-blue-500/20 text-blue-600 border border-blue-500/30';
+  }
+  return darkMode
+    ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50';
+};
+
 const Layout = ({ children, title = 'WhatsDeX Dashboard' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(3);
+  const [notifications, setNotifications] = useState([]);
+
+  // Simulate new notifications
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNotifications((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: `New notification at ${new Date().toLocaleTimeString()}`,
+        },
+      ]);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Initialize dark mode from localStorage
   useEffect(() => {
@@ -43,19 +68,6 @@ const Layout = ({ children, title = 'WhatsDeX Dashboard' }) => {
       localStorage.setItem('theme', 'light');
     }
   };
-
-// Moved outside the Layout component for broader accessibility and to resolve scoping issues
-const getNavigationItemClass = (item, isDarkMode) => {
-  if (item.current) {
-    return isDarkMode
-      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-      : 'bg-blue-500/20 text-blue-600 border border-blue-500/30';
-  }
-  return isDarkMode
-    ? 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50';
-};
-
   const navigation = [
     {
       name: 'Dashboard', href: '/', icon: ChartBarIcon, current: true,
@@ -119,8 +131,8 @@ const getNavigationItemClass = (item, isDarkMode) => {
               className={cn(
                 'fixed inset-y-0 left-0 z-50 w-64 backdrop-blur-xl border-r',
                 darkMode
-                  ? 'bg-glass-dark-500 border-slate-700/50'
-                  : 'bg-glass-500 border-white/20',
+                  ? 'bg-slate-900/80 border-slate-700/50'
+                  : 'bg-white/80 border-white/20',
               )}
             >
               <SidebarContent
@@ -138,8 +150,8 @@ const getNavigationItemClass = (item, isDarkMode) => {
         <div className={cn(
           'h-full backdrop-blur-xl border-r',
           darkMode
-            ? 'bg-glass-dark-500 border-slate-700/50'
-            : 'bg-glass-500 border-white/20',
+            ? 'bg-slate-900/80 border-slate-700/50'
+            : 'bg-white/80 border-white/20',
         )}>
           <SidebarContent navigation={navigation} darkMode={darkMode} />
         </div>
@@ -151,8 +163,8 @@ const getNavigationItemClass = (item, isDarkMode) => {
         <div className={cn(
           'sticky top-0 z-30 backdrop-blur-xl border-b',
           darkMode
-            ? 'bg-glass-dark-300 border-slate-700/50'
-            : 'bg-glass-300 border-white/20',
+            ? 'bg-slate-900/60 border-slate-700/50'
+            : 'bg-white/60 border-white/20',
         )}>
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             {/* Mobile menu button */}
@@ -206,6 +218,7 @@ const getNavigationItemClass = (item, isDarkMode) => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => setNotifications([])}
                 className={cn(
                   'relative rounded-lg p-2 transition-all duration-200',
                   darkMode
@@ -214,13 +227,13 @@ const getNavigationItemClass = (item, isDarkMode) => {
                 )}
               >
                 <BellIcon className="h-5 w-5" />
-                {notifications > 0 && (
+                {notifications.length > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs text-white flex items-center justify-center font-medium"
                   >
-                    {notifications}
+                    {notifications.length}
                   </motion.span>
                 )}
               </motion.button>
