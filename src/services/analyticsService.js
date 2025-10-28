@@ -602,37 +602,35 @@ class AnalyticsService {
   }
 
   async getPerformanceAnalytics(dateFilters = {}, metrics = []) {
-    const data = this.analyticsData.performance;
-
+    // This will be implemented later
     return {
       overview: {
-        averageResponseTime: data.averageResponseTime,
-        uptime: data.uptime,
-        errorRate: data.errorRate,
-        throughput: data.throughput,
-        memoryUsage: data.memoryUsage,
-        cpuUsage: data.cpuUsage
+        averageResponseTime: 0,
+        uptime: 0,
+        errorRate: 0,
+        throughput: 0,
+        memoryUsage: 0,
+        cpuUsage: 0,
       },
-      responseTimeByEndpoint: data.responseTimeByEndpoint,
+      responseTimeByEndpoint: [],
       metrics: metrics.length > 0 ? metrics : ['responseTime', 'uptime', 'errorRate', 'throughput'],
       timeRange: {
         startDate: dateFilters.startDate,
-        endDate: dateFilters.endDate
-      }
+        endDate: dateFilters.endDate,
+      },
     };
   }
 
   async getGeographicAnalytics(dateFilters = {}, metric = 'users') {
-    const data = this.analyticsData.geographic;
-
+    // This will be implemented later
     return {
-      topCountries: data.topCountries,
-      topCities: data.topCities,
+      topCountries: [],
+      topCities: [],
       metric,
       timeRange: {
         startDate: dateFilters.startDate,
-        endDate: dateFilters.endDate
-      }
+        endDate: dateFilters.endDate,
+      },
     };
   }
 

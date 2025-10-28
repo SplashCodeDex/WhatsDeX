@@ -62,6 +62,6 @@
     "eslint-plugin-react": "^7.37.5",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
-    "typescript": "^5.3.2"
+    "typescript": "5.9.3"
   }
 }
