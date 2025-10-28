@@ -33,7 +33,8 @@
     "setup:frontend": "cd web && npm install",
     "launch": "node scripts/simple-launcher.js",
     "e2e": "playwright test",
-    "security-audit": "npm audit --audit-level=high"
+    "security-audit": "npm audit --audit-level=high",
+    "seed": "cross-env DATABASE_URL=\"file:./dev.db\" node scripts/seed.js"
   },
   "repository": {
     "type": "git",
