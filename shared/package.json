@@ -2,5 +2,9 @@
   "name": "@whatsdex/shared",
   "version": "1.0.0",
   "description": "Shared components and utilities for WhatsDeX",
-  "main": "index.js"
+  "main": "index.js",
+  "dependencies": {
+    "@radix-ui/react-select": "^2.2.6",
+    "lucide-react": "^0.548.0"
+  }
 }
