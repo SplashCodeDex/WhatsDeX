@@ -255,107 +255,86 @@ function SystemSettings() {
     const isPassword = type === 'password' || key.toLowerCase().includes('password') || key.toLowerCase().includes('secret') || key.toLowerCase().includes('token');
     const showPwd = showPassword[fieldId];
 
+    let inputElement;
+    if (type === 'textarea') {
+      inputElement = (
+        <textarea
+          value={value || ''}
+          onChange={(e) => handleSettingChange(category, key, e.target.value)}
+          rows={4}
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+          placeholder={options.placeholder}
+        />
+      );
+    } else if (type === 'select') {
+      inputElement = (
+        <select
+          value={value || ''}
+          onChange={(e) => handleSettingChange(category, key, e.target.value)}
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+        >
+          {options.options?.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    } else if (type === 'checkbox') {
+      inputElement = (
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            checked={value || false}
+            onChange={(e) => handleSettingChange(category, key, e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+            {options.description}
+          </span>
+        </div>
+      );
+    } else {
+      inputElement = (
+        <div className="relative">
+          <input
+            type={isPassword && !showPwd ? 'password' : 'text'}
+            value={value || ''}
+            onChange={(e) => handleSettingChange(category, key, e.target.value)}
+            className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+            placeholder={options.placeholder}
+          />
+          {isPassword && (
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => ({ ...prev, [fieldId]: !prev[fieldId] }))}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showPwd ? (
+                <EyeOff className="h-4 w-4 text-gray-400" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div key={fieldId} className="space-y-2">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {options.label || key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
           {options.required && <span className="text-red-500 ml-1">*</span>}
         </label>
-
-            let inputElement;
-            if (type === 'textarea') {
-              inputElement = (
-                <textarea
-                  value={value || ''}
-                  onChange={(e) => handleSettingChange(category, key, e.target.value)}
-                  rows={4}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                  placeholder={options.placeholder}
-                />
-              );
-            } else if (type === 'select') {
-              inputElement = (
-                <select
-                  value={value || ''}
-                  onChange={(e) => handleSettingChange(category, key, e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                >
-                  {options.options?.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              );
-            } else if (type === 'checkbox') {
-              inputElement = (
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={value || false}
-                    onChange={(e) => handleSettingChange(category, key, e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                    {options.description}
-                  </span>
-                </div>
-              );
-            } else {
-              inputElement = (
-                <div className="relative">
-                  <input
-                    type={isPassword && !showPwd ? 'password' : 'text'}
-                    value={value || ''}
-                    onChange={(e) => handleSettingChange(category, key, e.target.value)}
-                    className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                    placeholder={options.placeholder}
-                  />
-                  {isPassword && (
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => ({ ...prev, [fieldId]: !prev[fieldId] }))}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      {showPwd ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      )}
-                    </button>
-                  )}
-                </div>
-              );
-            }
-        
-            return (
-              <div key={fieldId} className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {options.label || key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
-                  {options.required && <span className="text-red-500 ml-1">*</span>}
-                </label>
-                {inputElement}
-                {error && (
-                  <p className="text-sm text-red-600 dark:text-red-400 flex items-center">
-                    <AlertTriangle className="w-4 h-4 mr-1" />
-                    {error}
-                  </p>
-                )}
-                {options.description && !type === 'checkbox' && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {options.description}
-                  </p>
-                )}
-              </div>
-            );
+        {inputElement}
         {error && (
           <p className="text-sm text-red-600 dark:text-red-400 flex items-center">
             <AlertTriangle className="w-4 h-4 mr-1" />
             {error}
           </p>
         )}
-
-        {options.description && !type === 'checkbox' && (
+        {options.description && type !== 'checkbox' && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {options.description}
           </p>
