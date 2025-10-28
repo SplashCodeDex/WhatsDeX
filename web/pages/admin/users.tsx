@@ -97,39 +97,40 @@ function UserManagement() {
 
   useEffect(() => {
     const loadUsers = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setLoading(true);
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        const fetchedUsers = await response.json();
 
-      const mockUsers: User[] = Array.from({ length: 50 }, (_, i) => ({
-        id: `user-${i + 1}`,
-        name: `User ${i + 1}`,
-        email: `user${i + 1}@example.com`,
-        phone: `+123456789${i.toString().padStart(3, '0')}`,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
-        plan: ['free', 'basic', 'pro', 'enterprise'][Math.floor(Math.random() * 4)] as User['plan'],
-        status: ['active', 'inactive', 'banned'][Math.floor(Math.random() * 3)] as User['status'],
-        joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
-        lastActive: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        commandsUsed: Math.floor(Math.random() * 1000),
-        aiRequests: Math.floor(Math.random() * 500),
-        totalSpent: Math.floor(Math.random() * 500),
-        level: Math.floor(Math.random() * 50) + 1,
-        xp: Math.floor(Math.random() * 5000),
-      }));
+        // The dates will come as strings, so we need to convert them back to Date objects
+        const formattedUsers = fetchedUsers.map((user: any) => ({
+          ...user,
+          joinDate: new Date(user.joinDate),
+          lastActive: new Date(user.lastActive),
+        }));
 
-      setUsers(mockUsers);
-      setFilteredUsers(mockUsers);
+        setUsers(formattedUsers);
+        setFilteredUsers(formattedUsers); // Initially, all users are shown
 
-      const calculatedStats: Stats = mockUsers.reduce((acc, user) => ({
-        total: acc.total + 1,
-        active: acc.active + (user.status === 'active' ? 1 : 0),
-        premium: acc.premium + (user.plan !== 'free' ? 1 : 0),
-        banned: acc.banned + (user.status === 'banned' ? 1 : 0),
-      }), {
-        total: 0, active: 0, premium: 0, banned: 0,
-      });
+        const calculatedStats: Stats = formattedUsers.reduce((acc: Stats, user: User) => ({
+          total: acc.total + 1,
+          active: acc.active + (user.status === 'active' ? 1 : 0),
+          premium: acc.premium + (user.plan !== 'free' ? 1 : 0),
+          banned: acc.banned + (user.status === 'banned' ? 1 : 0),
+        }), {
+          total: 0, active: 0, premium: 0, banned: 0,
+        });
 
-      setStats(calculatedStats);
-      setLoading(false);
+        setStats(calculatedStats);
+      } catch (error) {
+        console.error('Error loading users:', error);
+        // Handle error state in UI if necessary
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadUsers();
