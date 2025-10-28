@@ -627,7 +627,6 @@ function UserManagement() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
       </motion.div>
     </AnimatePresence>
   );
