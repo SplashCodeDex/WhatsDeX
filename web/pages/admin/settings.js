@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import withAuth from '../../components/withAuth';
 
-function SystemSettings() {
+const SystemSettings = () => {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -887,4 +887,6 @@ function SystemSettings() {
       </div>
     </div>
   );
-}
+};
+
+export default withAuth(SystemSettings);

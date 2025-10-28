@@ -45,7 +45,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { DataTable } from '@/components/ui/datatable';
+import {
+  DataTable
+} from '@/components/ui/datatable';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import withAuth from '../../components/withAuth';
 
 interface User {
@@ -82,14 +93,16 @@ function UserManagement() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [paginatedUsers, setPaginatedUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<Stats>({
     total: 0,
     active: 0,
     premium: 0,
     banned: 0,
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const usersPerPage = 10;
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -143,13 +156,31 @@ function UserManagement() {
 
     setFilteredUsers(filtered);
     setSelectedUsers([]);
-  }, [users, searchTerm, filterStatus, filterPlan]);
+
+    // Pagination logic
+    const usersPerPage = 10;
+    const totalPagesCount = Math.ceil(filtered.length / usersPerPage);
+    setTotalPages(totalPagesCount);
+
+    const indexOfLastUser = currentPage * usersPerPage;
+    const indexOfFirstUser = indexOfLastUser - usersPerPage;
+    setPaginatedUsers(filtered.slice(indexOfFirstUser, indexOfLastUser));
+  }, [users, searchTerm, filterStatus, filterPlan, currentPage]);
 
   const handleUserAction = async (action: string, userId: string) => {
     console.log(`${action} user:`, userId);
-    setUsers(users.map((user) => (user.id === userId
-      ? { ...user, status: action === 'ban' ? 'banned' : action === 'unban' ? 'active' : user.status }
-      : user)));
+    setUsers(users.map((user) => {
+      if (user.id === userId) {
+        let newStatus = user.status;
+        if (action === 'ban') {
+          newStatus = 'banned';
+        } else if (action === 'unban') {
+          newStatus = 'active';
+        }
+        return { ...user, status: newStatus };
+      }
+      return user;
+    }));
   };
 
   const handleBulkAction = async (action: string) => {
@@ -157,9 +188,18 @@ function UserManagement() {
 
     console.log(`${action} users:`, selectedUsers);
 
-    setUsers(users.map((user) => (selectedUsers.includes(user.id)
-      ? { ...user, status: action === 'ban' ? 'banned' : action === 'unban' ? 'active' : user.status }
-      : user)));
+    setUsers(users.map((user) => {
+      if (selectedUsers.includes(user.id)) {
+        let newStatus = user.status;
+        if (action === 'ban') {
+          newStatus = 'banned';
+        } else if (action === 'unban') {
+          newStatus = 'active';
+        }
+        return { ...user, status: newStatus };
+      }
+      return user;
+    }));
 
     setSelectedUsers([]);
   };
@@ -193,6 +233,13 @@ function UserManagement() {
     a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setFilterStatus('all');
+    setFilterPlan('all');
+    setCurrentPage(1); // Reset to first page when filters are cleared
   };
 
   const getStatusVariant = (status: User['status']) => {
@@ -264,12 +311,13 @@ function UserManagement() {
       id: 'actions',
       cell: ({ row }: any) => (
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={() => {
-            setSelectedUser(row.original);
-            setShowUserModal(true);
-          }}>
-            <Eye className="h-4 w-4" />
-          </Button>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="sm" onClick={() => {
+              setSelectedUser(row.original);
+            }}>
+              <Eye className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
@@ -309,7 +357,15 @@ function UserManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="user-management-content"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.2 }}
+        className="space-y-6"
+      >
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -415,6 +471,14 @@ function UserManagement() {
                 <SelectItem value="enterprise">Enterprise</SelectItem>
               </SelectContent>
             </Select>
+            <Button variant="outline" onClick={handleClearFilters}>
+              <XCircle className="mr-2 h-4 w-4" />
+              Clear Filters
+            </Button>
+            <Button variant="outline">
+              <Filter className="mr-2 h-4 w-4" />
+              Filter
+            </Button>
           </div>
         </CardContent>
 
@@ -446,8 +510,39 @@ function UserManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTable columns={columns} data={filteredUsers} searchKey="name" />
+          <DataTable columns={columns} data={paginatedUsers} searchKey="name" />
         </CardContent>
+        <div className="flex justify-center py-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    isActive={page === currentPage}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : undefined}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </Card>
 
       {/* User Detail Modal */}
@@ -496,7 +591,9 @@ function UserManagement() {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{selectedUser.commandsUsed}</div>
+                  <div className="flex items-center justify-center text-2xl font-bold text-primary">
+                    <TrendingUp className="h-6 w-6 mr-1" />{selectedUser.commandsUsed}
+                  </div>
                   <div className="text-sm text-muted-foreground">Commands Used</div>
                 </div>
                 <div className="text-center p-4 bg-muted rounded-lg">
@@ -504,7 +601,9 @@ function UserManagement() {
                   <div className="text-sm text-muted-foreground">AI Requests</div>
                 </div>
                 <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-success">${selectedUser.totalSpent}</div>
+                  <div className="flex items-center justify-center text-2xl font-bold text-success">
+                    <DollarSign className="h-6 w-6 mr-1" />{selectedUser.totalSpent}
+                  </div>
                   <div className="text-sm text-muted-foreground">Total Spent</div>
                 </div>
                 <div className="text-center p-4 bg-muted rounded-lg">
@@ -529,6 +628,8 @@ function UserManagement() {
         </DialogContent>
       </Dialog>
     </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

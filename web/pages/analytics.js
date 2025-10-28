@@ -7,13 +7,7 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('24h');
   const [selectedMetric, setSelectedMetric] = useState('overview');
 
-  useEffect(() => {
-    fetchAnalytics();
-    const interval = setInterval(fetchAnalytics, 30000); // Update every 30 seconds
-    return () => clearInterval(interval);
-  }, [timeRange]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       const response = await fetch(`/api/auth/analytics?range=${timeRange}`);
       const data = await response.json();
@@ -25,8 +19,13 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
 
+  useEffect(() => {
+    fetchAnalytics();
+    const interval = setInterval(fetchAnalytics, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, [timeRange, fetchAnalytics]);
   const formatNumber = (num) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;

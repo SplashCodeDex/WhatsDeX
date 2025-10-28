@@ -19,6 +19,59 @@ export default function AuthPage() {
   const timerRef = useRef();
   const startTimeRef = useRef();
 
+  const playVoiceCode = useCallback(async (voiceData) => {
+    try {
+      // In a real implementation, this would play the audio
+      console.log('Playing voice code:', voiceData.text);
+    } catch (err) {
+      console.error('Failed to play voice code:', err);
+    }
+  }, []);
+
+  const handleConnectionStatus = useCallback((status) => {
+    setConnectionStatus(status.status);
+    setRetryCount(status.retryCount || 0);
+
+    if (status.status === 'connecting' && !startTimeRef.current) {
+      startTimeRef.current = Date.now();
+      timerRef.current = setInterval(() => {
+        setConnectionTime(Date.now() - startTimeRef.current);
+      }, 1000);
+    } else if (status.status === 'connected') {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+  }, []);
+
+  const handleQRCode = useCallback((data) => {
+    setQrCode(data);
+    setError(null);
+  }, []);
+
+  const handlePairingCode = useCallback((data) => {
+    setPairingCode(data);
+    setError(null);
+
+    // Auto-play voice if enabled
+    if (voiceEnabled && data.voice) {
+      playVoiceCode(data.voice);
+    }
+  }, [voiceEnabled, playVoiceCode]);
+
+  const handleConnectionProgress = useCallback((progress) => {
+    setConnectionProgress(progress);
+  }, []);
+
+  const handleAnalyticsUpdate = useCallback((data) => {
+    setAnalytics(data);
+  }, []);
+
+  const handleError = useCallback((err) => {
+    setError(err.message);
+    setIsLoading(false);
+  }, []);
+
   useEffect(() => {
     // Initialize socket connection
     socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000');
@@ -42,92 +95,7 @@ export default function AuthPage() {
         clearInterval(timerRef.current);
       }
     };
-  }, []);
-
-  const handleConnectionStatus = (status) => {
-    setConnectionStatus(status.status);
-    setRetryCount(status.retryCount || 0);
-
-    if (status.status === 'connecting' && !startTimeRef.current) {
-      startTimeRef.current = Date.now();
-      timerRef.current = setInterval(() => {
-        setConnectionTime(Date.now() - startTimeRef.current);
-      }, 1000);
-    } else if (status.status === 'connected') {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    }
-  };
-
-  const handleQRCode = (data) => {
-    setQrCode(data);
-    setError(null);
-  };
-
-  const handlePairingCode = (data) => {
-    setPairingCode(data);
-    setError(null);
-
-    // Auto-play voice if enabled
-    if (voiceEnabled && data.voice) {
-      playVoiceCode(data.voice);
-    }
-  };
-
-  const handleConnectionProgress = (progress) => {
-    setConnectionProgress(progress);
-  };
-
-  const handleAnalyticsUpdate = (data) => {
-    setAnalytics(data);
-  };
-
-  const handleError = (error) => {
-    setError(error.message);
-    setIsLoading(false);
-  };
-
-  const startConnection = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      socketRef.current.emit('start_connection', {
-        method: selectedMethod,
-        voiceEnabled,
-      });
-    } catch (err) {
-      setError('Failed to start connection process');
-      setIsLoading(false);
-    }
-  };
-
-  const stopConnection = () => {
-    socketRef.current.emit('stop_connection');
-    setIsLoading(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-  };
-
-  const refreshQR = () => {
-    socketRef.current.emit('refresh_qr');
-  };
-
-  const refreshPairingCode = () => {
-    socketRef.current.emit('refresh_pairing_code');
-  };
-
-  const playVoiceCode = async (voiceData) => {
-    try {
-      // In a real implementation, this would play the audio
-      console.log('Playing voice code:', voiceData.text);
-    } catch (err) {
-      console.error('Failed to play voice code:', err);
-    }
-  };
-
+  }, [handleConnectionStatus, handleQRCode, handlePairingCode, handleConnectionProgress, handleAnalyticsUpdate, handleError]);
   const formatTime = (ms) => {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);

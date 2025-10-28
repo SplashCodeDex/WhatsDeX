@@ -20,7 +20,7 @@ function AuthPage() {
   const timerRef = useRef();
   const startTimeRef = useRef();
 
-  const handleConnectionStatus = (status) => {
+  const handleConnectionStatus = useCallback((status) => {
     setConnectionStatus(status.status);
     setRetryCount(status.retryCount || 0);
 
@@ -34,23 +34,23 @@ function AuthPage() {
         clearInterval(timerRef.current);
       }
     }
-  };
+  }, []);
 
-  const handleQRCode = (data) => {
+  const handleQRCode = useCallback((data) => {
     setQrCode(data);
     setError(null);
-  };
+  }, []);
 
-  const playVoiceCode = async (voiceData) => {
+  const playVoiceCode = useCallback(async (voiceData) => {
     try {
       // In a real implementation, this would play the audio
       console.log('Playing voice code:', voiceData.text);
     } catch (err) {
       console.error('Failed to play voice code:', err);
     }
-  };
+  }, []);
 
-  const handlePairingCode = (data) => {
+  const handlePairingCode = useCallback((data) => {
     setPairingCode(data);
     setError(null);
 
@@ -58,20 +58,20 @@ function AuthPage() {
     if (voiceEnabled && data.voice) {
       playVoiceCode(data.voice);
     }
-  };
+  }, [voiceEnabled, playVoiceCode]);
 
-  const handleConnectionProgress = (progress) => {
+  const handleConnectionProgress = useCallback((progress) => {
     setConnectionProgress(progress);
-  };
+  }, []);
 
-  const handleAnalyticsUpdate = (data) => {
+  const handleAnalyticsUpdate = useCallback((data) => {
     setAnalytics(data);
-  };
+  }, []);
 
-  const handleError = (err) => {
+  const handleError = useCallback((err) => {
     setError(err.message);
     setIsLoading(false);
-  };
+  }, []);
 
   const startConnection = async () => {
     setIsLoading(true);
