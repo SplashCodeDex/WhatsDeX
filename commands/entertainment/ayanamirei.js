@@ -8,6 +8,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const apiUrl = tools.api.createUrl("https://api.github.com", "/repos/Yashirof/ayanami-bot-discord/contents/images");
             const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data);

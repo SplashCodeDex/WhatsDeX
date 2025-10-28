@@ -1,31 +1,31 @@
 const z = require('zod');
 const { convertMsToDuration } = require('../../utils/formatters');
 
-// Daftar hadiah klaim yang tersedia
+// List of available claim rewards
 const claimRewards = {
   daily: {
     reward: 100,
-    cooldown: 24 * 60 * 60 * 1000, // 24 jam (100 koin)
+    cooldown: 24 * 60 * 60 * 1000, // 24 hours (100 coins)
     level: 1,
-    description: 'Hadiah harian',
+    description: 'Daily reward',
   },
   weekly: {
     reward: 500,
-    cooldown: 7 * 24 * 60 * 60 * 1000, // 7 hari (500 koin)
+    cooldown: 7 * 24 * 60 * 60 * 1000, // 7 days (500 coins)
     level: 15,
-    description: 'Hadiah mingguan',
+    description: 'Weekly reward',
   },
   monthly: {
     reward: 2000,
-    cooldown: 30 * 24 * 60 * 60 * 1000, // 30 hari (2000 koin)
+    cooldown: 30 * 24 * 60 * 60 * 1000, // 30 days (2000 coins)
     level: 50,
-    description: 'Hadiah bulanan',
+    description: 'Monthly reward',
   },
   yearly: {
     reward: 10000,
-    cooldown: 365 * 24 * 60 * 60 * 1000, // 365 hari (10000 koin)
+    cooldown: 365 * 24 * 60 * 60 * 1000, // 365 days (10000 coins)
     level: 75,
-    description: 'Hadiah tahunan',
+    description: 'Yearly reward',
   },
 };
 

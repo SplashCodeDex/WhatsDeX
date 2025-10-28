@@ -6,6 +6,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         try {
             const users = await db.get("user");
             const premiumUsers = [];

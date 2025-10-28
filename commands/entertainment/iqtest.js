@@ -6,6 +6,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, database: db } = ctx.bot.context;
         const winGame = await db.get(`user.${ctx.getId(ctx.sender.jid)}.winGame`) || 0;
 
         let iqScore;

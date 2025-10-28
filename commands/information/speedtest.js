@@ -5,11 +5,12 @@ module.exports = {
     aliases: ["speed"],
     category: "information",
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const latencyStart = performance.now();
 
             const downloadStart = performance.now();
-            const downloadUrl = tools.api.createUrl("https://github.com", "/itsreimau/whatsdex/raw/master/README.md");
+            const downloadUrl = tools.api.createUrl("https://github.com", "/SplashCodeDex/WhatsDeX/raw/master/README.md");
             const downloadResponse = await axios.get(downloadUrl);
             const downloadSize = downloadResponse.headers["content-length"];
             const downloadTime = (performance.now() - downloadStart) / 1000;

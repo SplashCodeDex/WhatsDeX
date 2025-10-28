@@ -1,4 +1,6 @@
 // Impor modul dan dependensi yang diperlukan
+const formatter = require("../utils/formatter.js");
+const config = require("../config.js");
 const api = require("./api.js");
 const { jidDecode, proto, getContentType, S_WHATSAPP_NET, STORIES_JID, META_AI_JID } = require("@whiskeysockets/baileys");
 const axios = require("axios");
@@ -84,14 +86,14 @@ function getRandomElement(array) {
     return array[randomIndex];
 }
 
-async function handleError(context, ctx, error, useAxios = false, reportErrorToOwner = true) {
-    const { consolefy, config, formatter } = context;
+async function handleError(ctx, error, useAxios = false, reportErrorToOwner = true) {
+    const { config, formatter } = ctx.bot.context;
     const isGroup = ctx.isGroup;
     const groupJid = isGroup ? ctx.id : null;
     const groupSubject = isGroup ? await ctx.group(groupJid).name() : null;
     const errorText = util.format(error);
 
-    consolefy.error(`Error: ${errorText}`);
+    console.error(`Error: ${errorText}`);
     if (config.system.reportErrorToOwner && reportErrorToOwner) await ctx.replyWithJid(config.owner.id + S_WHATSAPP_NET, {
         text: `${formatter.quote(isGroup ? `⚠️ Terjadi kesalahan dari grup: @${groupJid}, oleh: @${ctx.getId(ctx.sender.jid)}` : `⚠️ Terjadi kesalahan dari: @${ctx.getId(ctx.sender.jid)}`)}
 ` + 

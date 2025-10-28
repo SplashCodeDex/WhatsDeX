@@ -8,6 +8,7 @@ module.exports = {
         group: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const members = await ctx.group().members();
             const memberIDs = members.map(member => member.jid);

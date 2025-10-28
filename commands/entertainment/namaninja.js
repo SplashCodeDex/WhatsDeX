@@ -6,6 +6,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools } = ctx.bot.context;
         const input = ctx.args.join(" ") || null;
 
         if (!input) return await ctx.reply(

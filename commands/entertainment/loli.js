@@ -5,6 +5,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const result = tools.api.createUrl("izumi", "/random/loli");
 

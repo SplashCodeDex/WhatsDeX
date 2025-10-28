@@ -7,6 +7,7 @@ module.exports = {
     name: "kuismerdeka",
     category: "game",
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         if (session.has(ctx.id)) return await ctx.reply(formatter.quote("🎮 A game session is already in progress!"));
 
         try {

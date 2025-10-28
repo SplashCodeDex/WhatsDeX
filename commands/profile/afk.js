@@ -2,6 +2,7 @@ module.exports = {
     name: "afk",
     category: "profile",
     code: async (ctx) => {
+        const { formatter, tools, database: db } = ctx.bot.context;
         const input = ctx.args.join(" ") || null;
 
         try {

@@ -6,6 +6,7 @@ module.exports = {
         premium: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const result = tools.api.createUrl("hang", "/random/nsfw");
 

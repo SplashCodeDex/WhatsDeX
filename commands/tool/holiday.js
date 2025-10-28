@@ -9,6 +9,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const month = new Date().getMonth() + 1;
         const apiUrl = tools.api.createUrl("https://dayoffapi.vercel.app", "/api", {
             month

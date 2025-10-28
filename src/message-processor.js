@@ -95,7 +95,7 @@ module.exports = async (job) => {
         const ctx = {
             reply: async (content) => {
                 const messageContent = typeof content === 'string' ? { text: content } : content;
-                await bot.sendMessage(msg.key.remoteJid, messageContent);
+                return await bot.sendMessage(msg.key.remoteJid, messageContent);
             },
             editMessage: async (key, content) => {
                 await bot.sendMessage(msg.key.remoteJid, { edit: key, text: content });
@@ -168,7 +168,8 @@ module.exports = async (job) => {
                 require('../middleware/antiSpam.js'),
                 require('../middleware/antiTagsw.js'),
                 require('../middleware/antiToxic.js'),
-                require('../middleware/menfess.js')
+                require('../middleware/menfess.js'),
+                require('../middleware/rateLimiter.js')
             ];
 
             for (const mw of middleware) {

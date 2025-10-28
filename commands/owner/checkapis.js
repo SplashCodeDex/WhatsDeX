@@ -8,6 +8,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const APIs = tools.api.listUrl();
             let resultText = "";

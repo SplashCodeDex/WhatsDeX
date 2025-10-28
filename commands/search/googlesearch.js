@@ -34,8 +34,8 @@ module.exports = {
         return ctx.reply(formatter.quote(config.msg.notFound));
       }
 
-      const resultText = result.map((res) => `${formatter.quote(`Judul: ${res.title}`)}\n`
-                    + `${formatter.quote(`Deskripsi: ${res.desc}`)}\n`
+      const resultText = result.map((res) => `${formatter.quote(`Title: ${res.title}`)}\n`
+                    + `${formatter.quote(`Description: ${res.desc}`)}\n`
                     + formatter.quote(`URL: ${res.url}`)).join(`\n${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
 
       return ctx.reply({

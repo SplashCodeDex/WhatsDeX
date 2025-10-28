@@ -9,6 +9,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const input = ctx.args.join(" ") || null;
 
         if (!input) return await ctx.reply(
@@ -23,8 +24,8 @@ module.exports = {
             const result = (await axios.get(apiUrl)).data.result;
 
             const resultText = result.map(res =>
-                `${formatter.quote(`Nama: ${res.title}`)}\n` +
-                `${formatter.quote(`Pengembang: ${res.author}`)}\n` +
+                `${formatter.quote(`Name: ${res.title}`)}\n` +
+                `${formatter.quote(`Developer: ${res.author}`)}\n` +
                 formatter.quote(`URL: ${res.links.npm}`)
             ).join(
                 "\n" +

@@ -6,6 +6,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
+        const { formatter, tools, database: db } = ctx.bot.context;
         const userJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || (ctx.args[0] ? ctx.args[0].replace(/[^\\d]/g, "") + "@s.whatsapp.net" : null);
         const daysAmount = parseInt(ctx.args[ctx.quoted?.senderJid ? 0 : 1], 10) || null;
 

@@ -7,6 +7,7 @@ module.exports = {
         restrict: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const url = ctx.args[0] || null;
 
         if (!url) return await ctx.reply(

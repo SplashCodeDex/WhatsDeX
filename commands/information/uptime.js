@@ -3,6 +3,7 @@ module.exports = {
     aliases: ["runtime"],
     category: "information",
     code: async (ctx) => {
-        await ctx.reply(formatter.quote(`🚀 Bot telah aktif selama ${config.bot.uptime}.`));
+        const { formatter, config } = ctx.bot.context;
+        await ctx.reply(formatter.quote(`🚀 Bot has been active for ${config.bot.uptime}.`));
     }
 };

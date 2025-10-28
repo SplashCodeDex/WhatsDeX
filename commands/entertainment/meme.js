@@ -8,6 +8,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const apiUrl = tools.api.createUrl("https://candaan-api.vercel.app", "/api/image/random");
             const result = (await axios.get(apiUrl)).data.data;

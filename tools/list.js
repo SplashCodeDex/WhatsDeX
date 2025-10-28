@@ -1,4 +1,5 @@
 // Impor modul dan dependensi yang diperlukan
+const formatter = require("../utils/formatter.js");
 const api = require("./api.js");
 const axios = require("axios");
 const util = require("node:util");

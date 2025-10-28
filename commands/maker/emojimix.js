@@ -11,6 +11,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const input = ctx.args.join("");
         const emojis = Array.from(input.matchAll(/\p{Emoji}/gu), (match) => match[0]);
         const [emoji1, emoji2] = emojis.slice(0, 2);

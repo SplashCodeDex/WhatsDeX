@@ -12,6 +12,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
+        const { formatter, tools } = ctx.bot.context;
         if (!tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ["viewOnce"])) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["reply"], ["viewOnce"])));
 
         try {

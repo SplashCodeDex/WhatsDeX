@@ -12,6 +12,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         if (!process.env.PM2_HOME) return await ctx.reply(formatter.quote("❎ Bot is not running under PM2! Manual restart required."));
 
         try {

@@ -7,6 +7,7 @@ module.exports = {
         group: true
     },
     code: async (ctx) => {
+        const { formatter, tools } = ctx.bot.context;
         const accountJid = (await ctx.getMentioned())[0] || ctx.quoted?.senderJid || null;
 
         if (!accountJid) return await ctx.reply({

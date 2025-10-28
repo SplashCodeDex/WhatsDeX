@@ -7,6 +7,7 @@ module.exports = {
         group: true
     },
     code: async (ctx) => {
+        const { formatter, tools, database: db } = ctx.bot.context;
         const input = parseInt(ctx.args[0], 10) || null;
 
         if (!input) return await ctx.reply(

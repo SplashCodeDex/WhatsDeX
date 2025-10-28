@@ -72,7 +72,7 @@ global.config = {
 
         readmore: "\u200E".repeat(4001), // Read more string
         note: "“Lorem ipsum dolor sit amet, in the shadow of darkness, life unto death.”", // Note
-        footer: Formatter.italic("Developed by ItsReimau with ❤"), // Footer
+        footer: Formatter.italic("Developed by CodeDeX with ❤"), // Footer
 
         wait: Formatter.quote("🔄 Please wait a moment..."), // Loading message
         notFound: Formatter.quote("❎ Nothing found! Please try again later."), // Item not found message
@@ -90,7 +90,7 @@ global.config = {
     // Bot sticker
     sticker: {
         packname: "", // Sticker pack name
-        author: "whatsdex <github.com/itsreimau/whatsdex>" // Sticker author
+        author: "CodeDeX" // Sticker author
     },
 
     // API keys for various services
@@ -116,7 +116,7 @@ global.config = {
         reportErrorToOwner: true, // Report errors to the bot owner
         selfOwner: false, // Bot becomes its own owner
         selfReply: true, // Bot can reply to its own messages
-        timeZone: "Asia/Jakarta", // Bot's time zone
+        timeZone: "Africa/Accra", // Bot's time zone
         unavailableAtNight: false, // Bot is unavailable at night, from 12 AM to 6 AM (Time will be adjusted according to timeZone)
         useCoin: true, // Use coins
         usePairingCode: false, // Use pairing code for connection

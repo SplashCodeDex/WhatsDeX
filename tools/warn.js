@@ -1,5 +1,5 @@
 async function addWarning(ctx, groupDb, senderJid, groupId) {
-    const { database, formatter, config } = ctx.self.context;
+    const { database, formatter, config } = ctx.bot.context;
     const senderId = ctx.getId(senderJid);
     const maxWarnings = groupDb?.maxwarnings || 3;
 
@@ -20,12 +20,12 @@ async function addWarning(ctx, groupDb, senderJid, groupId) {
 
     await database.group.update(groupId, { warnings });
     await ctx.reply({
-        text: formatter.quote(`⚠️ Warning ${currentWarnings}/${maxWarnings} untuk @${senderId}!`),
+        text: formatter.quote(`⚠️ Warning ${currentWarnings}/${maxWarnings} for @${senderId}!`),
         mentions: [senderJid]
     });
 
     if (currentWarnings >= maxWarnings) {
-        await ctx.reply(formatter.quote(`⛔ Kamu telah menerima ${maxWarnings} warning dan akan dikeluarkan dari grup!`));
+        await ctx.reply(formatter.quote(`⛔ You have received ${maxWarnings} warnings and will be removed from the group!`));
         if (!config.system.restrict) await ctx.group().kick(senderJid);
         await database.group.update(groupId, { warnings: warnings.filter(warning => warning.userId !== senderId) });
     }

@@ -8,6 +8,7 @@ module.exports = {
         restrict: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
         const accountId = ctx.getId(accountJid);
 

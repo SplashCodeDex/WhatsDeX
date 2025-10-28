@@ -8,6 +8,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const input = ctx.args.join(" ") || null;
 
         if (!input) return await ctx.reply(
@@ -26,7 +27,7 @@ module.exports = {
 ` +
                 `${formatter.quote(`Description: ${res.description}`)}
 ` +
-                `${formatter.quote(`Count: ${res.stars} stargazers, ${res.forks} forks`)}
+                `${formatter.quote(`Count: ${res.stars} stars, ${res.forks} forks`)}
 ` +
                 `${formatter.quote(`Language: ${res.language}`)}
 ` +

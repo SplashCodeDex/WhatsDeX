@@ -5,6 +5,7 @@ module.exports = {
     aliases: ["creator", "developer"],
     category: "information",
     code: async (ctx) => {
+        const { tools, config } = ctx.bot.context;
         try {
             const vcard = new VCard()
                 .addName(config.owner.name)

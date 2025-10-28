@@ -3,6 +3,7 @@ module.exports = {
     aliases: ["listapi"],
     category: "information",
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const APIs = tools.api.listUrl();
             let resultText = "";
@@ -10,7 +11,7 @@ module.exports = {
             for (const [name, api] of Object.entries(APIs)) resultText += formatter.quote(`${api.baseURL}\n`);
 
             await ctx.reply({
-                text: `${formatter.quote("Daftar API yang digunakan:")}\n` +
+                text: `${formatter.quote("List of APIs used:")}\n` +
                     resultText.trim(),
                 footer: config.msg.footer
             });

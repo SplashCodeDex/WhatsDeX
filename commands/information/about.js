@@ -3,6 +3,7 @@ module.exports = {
     aliases: ["bot", "infobot"],
     category: "information",
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         const { config, tools } = ctx.bot.context;
         const { db, formatter } = ctx.bot.context;
         try {
@@ -12,8 +13,8 @@ module.exports = {
                 text: `${formatter.quote(`👋 Hello! I am a WhatsApp bot named ${config.bot.name}, owned by ${config.owner.name}. I can perform many commands, such as creating stickers, using AI for certain tasks, and several other useful commands. I am here to entertain and please you!`)}
 ` + // Can be changed as desired
                     `${formatter.quote("· · ─ ·✶· ─ · ·")}\n` +
-                    `${formatter.quote(`Nama Bot: ${config.bot.name}`)}\n` +
-                    `${formatter.quote(`Versi: ${require("../../package.json").version}`)}\n` +
+                    `${formatter.quote(`Bot Name: ${config.bot.name}`)}\n` +
+                    `${formatter.quote(`Version: ${require("../../package.json").version}`)}\n` +
                     `${formatter.quote(`Owner: ${config.owner.name}`)}\n` +
                     `${formatter.quote(`Mode: ${tools.msg.ucwords(botDb?.mode || "public")}`)}\n` +
                     `${formatter.quote(`Bot Uptime: ${config.bot.uptime}`)}\n` +

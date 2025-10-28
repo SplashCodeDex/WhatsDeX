@@ -12,6 +12,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const [checkMedia, checkQuotedMedia] = await Promise.all([
             tools.cmd.checkMedia(ctx.msg.contentType, ["audio", "document", "image", "video", "sticker"]),
             tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ["audio", "document", "image", "video", "sticker"])

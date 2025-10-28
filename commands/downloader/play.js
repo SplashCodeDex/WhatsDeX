@@ -8,6 +8,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const flag = tools.cmd.parseFlag(ctx.args.join(" ") || null, {
             "-i": {
                 type: "value",

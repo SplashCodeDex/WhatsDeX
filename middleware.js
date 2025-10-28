@@ -46,7 +46,7 @@ module.exports = (bot, context) => {
                     buttons: [{
                         buttonId: `${ctx.used.prefix}setprofile autolevelup`,
                         buttonText: {
-                            displayText: "Disable Autolevelup"
+                            displayText: "Disable Auto Level Up"
                         }
                     }]
                 });

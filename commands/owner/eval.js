@@ -4,6 +4,7 @@ module.exports = {
     name: /^==> |^=> /,
     type: "hears",
     code: async (ctx) => {
+        const { formatter, tools } = ctx.bot.context;
         const isOwner = tools.cmd.isOwner(ctx.getId(ctx.sender.jid), ctx.msg.key.id);
         if (!isOwner) return;
 

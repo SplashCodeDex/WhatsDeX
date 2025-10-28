@@ -6,6 +6,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         const input = ctx.args[0] || null;
 
         if (!input) return await ctx.reply(

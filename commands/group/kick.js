@@ -9,6 +9,7 @@ module.exports = {
         restrict: true
     },
     code: async (ctx) => {
+        const { formatter, tools } = ctx.bot.context;
         const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
 
         if (!accountJid) return await ctx.reply({

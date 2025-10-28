@@ -13,6 +13,7 @@ module.exports = {
         private: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         const [id, ...text] = ctx.args;
         const targetId = id ? id.replace(/[^\d]/g, "") : null;
         const menfessText = text ? text.join(" ") : null;

@@ -3,6 +3,7 @@ module.exports = {
     aliases: ["donasi", "support"],
     category: "information",
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         try {
             const qrisLink = await db.get("bot.text.qris") || null;
             const customText = await db.get("bot.text.donate") || null;

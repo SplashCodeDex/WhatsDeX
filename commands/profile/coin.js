@@ -3,6 +3,7 @@ module.exports = {
     aliases: ["koin"],
     category: "profile",
     code: async (ctx) => {
+        const { formatter, tools, database: db } = ctx.bot.context;
         const senderId = ctx.getId(ctx.sender.jid);
         const userDb = await db.get(`user.${senderId}`) || {};
 

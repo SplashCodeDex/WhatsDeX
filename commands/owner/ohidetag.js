@@ -7,6 +7,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
+        const { formatter, tools } = ctx.bot.context;
         const input = ctx.args.join(" ") || ctx.quoted?.content || formatter.quote("👋 Halo, Dunia!");
 
         try {

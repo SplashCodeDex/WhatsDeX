@@ -5,6 +5,7 @@ module.exports = {
         premium: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const input = ctx.args.join(" ") || null;
 
         if (input?.toLowerCase() === "list") {

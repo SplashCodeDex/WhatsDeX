@@ -19,7 +19,7 @@ module.exports = {
       if (input.toLowerCase() === 'list') {
         const langListUrl = createUrl('https://raw.githubusercontent.com', '/itsecurityco/to-google-translate/refs/heads/master/supported_languages.json');
         const response = await axios.get(langListUrl);
-        const listText = response.data.map((lang) => `${formatter.quote(`Kode: ${lang.code}`)}\n${formatter.quote(`Bahasa: ${lang.language}`)}`).join(`\n${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
+        const listText = response.data.map((lang) => `${formatter.quote(`Code: ${lang.code}`)}\n${formatter.quote(`Language: ${lang.language}`)}`).join(`\n${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
         return ctx.reply({ text: listText, footer: config.msg.footer });
       }
 

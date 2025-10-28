@@ -3,6 +3,7 @@ module.exports = {
     aliases: ["geticon"],
     category: "misc",
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const userJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || (ctx.args[0] ? ctx.args[0].replace(/[^\d]/g, "") + "@s.whatsapp.net" : null);
 
         if (!userJid) return await ctx.reply({

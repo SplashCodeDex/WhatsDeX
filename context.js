@@ -225,7 +225,6 @@ const database = {
 
 const state = require("./state.js");
 
-// Create context object
 const context = {
   config,
   database,

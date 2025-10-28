@@ -4,6 +4,7 @@ module.exports = {
     category: "profile",
     permissions: {},
     code: async (ctx) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
         try {
             const senderId = ctx.getId(ctx.sender.jid);
             const users = await db.get("user");

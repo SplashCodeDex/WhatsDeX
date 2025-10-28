@@ -8,6 +8,7 @@ module.exports = {
         group: true
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         const pending = await ctx.group().pendingMembers();
 
         if (!pending || pending.length === 0) return await ctx.reply(formatter.quote("✅ Tidak ada anggota yang menunggu persetujuan."));

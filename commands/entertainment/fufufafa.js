@@ -7,6 +7,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const apiUrl = tools.api.createUrl("https://fufufafapi.vanirvan.my.id", "/api");
             const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data);

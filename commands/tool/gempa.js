@@ -8,6 +8,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools, config } = ctx.bot.context;
         try {
             const apiUrl = tools.api.createUrl("https://data.bmkg.go.id", "/DataMKG/TEWS/autogempa.json");
             const result = (await axios.get(apiUrl)).data.Infogempa.gempa;
@@ -17,13 +18,13 @@ module.exports = {
                     url: tools.api.createUrl("https://data.bmkg.go.id", `/DataMKG/TEWS/${result.Shakemap}`)
                 },
                 mimetype: tools.mime.lookup("jpeg"),
-                caption: `${formatter.quote(`Wilayah: ${result.Wilayah}`)}\n` +
-                    `${formatter.quote(`Tanggal: ${result.Tanggal}`)}\n` +
-                    `${formatter.quote(`Potensi: ${result.Potensi}`)}\n` +
+                caption: `${formatter.quote(`Region: ${result.Wilayah}`)}\n` +
+                    `${formatter.quote(`Date: ${result.Tanggal}`)}\n` +
+                    `${formatter.quote(`Potential: ${result.Potensi}`)}\n` +
                     `${formatter.quote(`Magnitude: ${result.Magnitude}`)}\n` +
-                    `${formatter.quote(`Kedalaman: ${result.Kedalaman}`)}\n` +
-                    `${formatter.quote(`Koordinat: ${result.Coordinates}`)}\n` +
-                    formatter.quote(`Dirasakan: ${result.Dirasakan}`),
+                    `${formatter.quote(`Depth: ${result.Kedalaman}`)}\n` +
+                    `${formatter.quote(`Coordinates: ${result.Coordinates}`)}\n` +
+                    formatter.quote(`Felt: ${result.Dirasakan}`),
                 footer: config.msg.footer
             });
         } catch (error) {

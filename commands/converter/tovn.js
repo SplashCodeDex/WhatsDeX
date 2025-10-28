@@ -6,6 +6,7 @@ module.exports = {
         coin: 10
     },
     code: async (ctx) => {
+        const { formatter, tools } = ctx.bot.context;
         if (!tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ["audio"])) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["reply"], ["audio"])));
 
         try {

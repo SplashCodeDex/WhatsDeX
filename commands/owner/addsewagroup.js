@@ -6,6 +6,7 @@ module.exports = {
         owner: true
     },
     code: async (ctx) => {
+        const { formatter, tools, database: db } = ctx.bot.context;
         const groupJid = ctx.isGroup() ? ctx.id : (ctx.args[0] ? ctx.args[0].replace(/[^\d]/g, "") + "@g.us" : null);
         const daysAmount = parseInt(ctx.args[ctx.isGroup() ? 0 : 1], 10) || null;
 

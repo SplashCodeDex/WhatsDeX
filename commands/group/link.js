@@ -7,6 +7,7 @@ module.exports = {
         group: true
     },
     code: async (ctx) => {
+        const { formatter, tools } = ctx.bot.context;
         try {
             const code = await ctx.group().inviteCode();
 
