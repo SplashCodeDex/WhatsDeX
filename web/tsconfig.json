@@ -17,9 +17,14 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@/shared/*": ["../shared/*"]
-    }
+      "@/*": [
+        "./*"
+      ],
+      "@/shared/*": [
+        "../shared/*"
+      ]
+    },
+    "incremental": true
   },
   "include": [
     "next-env.d.ts",

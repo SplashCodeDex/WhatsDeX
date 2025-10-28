@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@whatsdex/shared'],
   reactStrictMode: true,
   swcMinify: true,
 
