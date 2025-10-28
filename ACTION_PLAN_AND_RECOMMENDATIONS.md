@@ -1,7 +1,7 @@
 
 # WhatsDeX: Professional Action Plan & Enhancement Recommendations
-**Date:** 2025-10-28  
-**Version:** 1.4.13-alpha.1  
+**Date:** 2025-10-28
+**Version:** 1.4.13-alpha.1
 **Status:** Production Readiness Roadmap
 
 ---
@@ -22,7 +22,7 @@
 ## 🔐 CRITICAL SECURITY FIXES
 
 ### Fix 1: API Key Exposure Remediation
-**Timeline:** IMMEDIATE (Today)  
+**Timeline:** IMMEDIATE (Today)
 **Effort:** 2-4 hours
 
 #### Step-by-Step Implementation:
@@ -39,10 +39,10 @@
    ```bash
    # Install git-filter-repo
    pip install git-filter-repo
-   
+
    # Remove .env from history
    git filter-repo --path .env --invert-paths --force
-   
+
    # Verify .env is in .gitignore
    echo ".env" >> .gitignore
    git add .gitignore
@@ -55,12 +55,12 @@
    // services/secretsManager.js
    const AWS = require('aws-sdk');
    const secretsManager = new AWS.SecretsManager();
-   
+
    class SecretsManager {
      async getSecret(secretName) {
        try {
-         const data = await secretsManager.getSecretValue({ 
-           SecretId: secretName 
+         const data = await secretsManager.getSecretValue({
+           SecretId: secretName
          }).promise();
          return JSON.parse(data.SecretString);
        } catch (error) {
@@ -68,7 +68,7 @@
          throw error;
        }
      }
-     
+
      async rotateSecret(secretName) {
        // Implement automatic key rotation
        const newValue = this.generateSecureKey();
@@ -76,16 +76,16 @@
          SecretId: secretName,
          SecretString: JSON.stringify({ value: newValue })
        }).promise();
-       
+
        logger.info('Secret rotated successfully', { secretName });
        return newValue;
      }
-     
+
      generateSecureKey() {
        return require('crypto').randomBytes(32).toString('hex');
      }
    }
-   
+
    module.exports = SecretsManager;
    ```
 
@@ -93,13 +93,13 @@
    ```javascript
    // services/gemini.js
    const SecretsManager = require('./secretsManager');
-   
+
    class GeminiService {
      constructor() {
        // Instead of: this.apiKey = process.env.GOOGLE_GEMINI_API_KEY;
        this.secretsManager = new SecretsManager();
      }
-     
+
      async initialize() {
        const secrets = await this.secretsManager.getSecret('gemini-api-key');
        this.apiKey = secrets.value;
@@ -111,7 +111,7 @@
 ---
 
 ### Fix 2: JWT Authentication Hardening
-**Timeline:** This Week  
+**Timeline:** This Week
 **Effort:** 8-12 hours
 
 #### Implementation:
@@ -122,44 +122,44 @@
    const express = require('express');
    const jwt = require('jsonwebtoken');
    const router = express.Router();
-   
+
    // Token blacklist (use Redis in production)
    const Redis = require('ioredis');
    const redis = new Redis(process.env.REDIS_URL);
-   
+
    router.post('/refresh', async (req, res) => {
      try {
        const { refreshToken } = req.body;
-       
+
        if (!refreshToken) {
          return res.status(401).json({ error: 'Refresh token required' });
        }
-       
+
        // Verify refresh token
        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-       
+
        // Check if token is blacklisted
        const isBlacklisted = await redis.get(`blacklist:${refreshToken}`);
        if (isBlacklisted) {
          return res.status(401).json({ error: 'Token has been revoked' });
        }
-       
+
        // Generate new tokens
        const newAccessToken = jwt.sign(
          { userId: decoded.userId, role: decoded.role },
          process.env.JWT_SECRET,
          { expiresIn: '15m' }
        );
-       
+
        const newRefreshToken = jwt.sign(
          { userId: decoded.userId, role: decoded.role },
          process.env.JWT_REFRESH_SECRET,
          { expiresIn: '7d' }
        );
-       
+
        // Blacklist old refresh token
        await redis.setex(`blacklist:${refreshToken}`, 7 * 24 * 60 * 60, '1');
-       
+
        res.json({
          accessToken: newAccessToken,
          refreshToken: newRefreshToken
@@ -169,21 +169,21 @@
        res.status(401).json({ error: 'Invalid refresh token' });
      }
    });
-   
+
    router.post('/logout', async (req, res) => {
      try {
        const { refreshToken } = req.body;
-       
+
        // Blacklist refresh token
        await redis.setex(`blacklist:${refreshToken}`, 7 * 24 * 60 * 60, '1');
-       
+
        res.json({ message: 'Logged out successfully' });
      } catch (error) {
        logger.error('Logout failed', { error: error.message });
        res.status(500).json({ error: 'Logout failed' });
      }
    });
-   
+
    module.exports = router;
    ```
 
@@ -194,37 +194,37 @@
      try {
        // Rate limiting
        await authRateLimiter.consume(req.ip);
-       
+
        const authHeader = req.headers['authorization'];
        const token = authHeader?.split(' ')[1];
-       
+
        if (!token) {
          return res.status(401).json({ error: 'Access token required' });
        }
-       
+
        // Check blacklist
        const isBlacklisted = await redis.get(`blacklist:${token}`);
        if (isBlacklisted) {
          return res.status(401).json({ error: 'Token has been revoked' });
        }
-       
+
        // Verify token - REMOVE FALLBACK SECRET
        if (!process.env.JWT_SECRET) {
          throw new Error('JWT_SECRET environment variable is required');
        }
-       
+
        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
          if (err) {
            logger.warn('JWT verification failed', { error: err.message, ip: req.ip });
            return res.status(403).json({ error: 'Invalid or expired token' });
          }
-         
+
          req.user = {
            id: decoded.userId,
            role: decoded.role || 'admin',
            permissions: decoded.permissions || []
          };
-         
+
          next();
        });
      } catch (error) {
@@ -239,7 +239,7 @@
 ## 🤖 AI ENHANCEMENT RECOMMENDATIONS
 
 ### Enhancement 1: Advanced Conversation Context Management
-**Value:** Improved user experience, better AI responses  
+**Value:** Improved user experience, better AI responses
 **Effort:** 1-2 weeks
 
 #### Current Limitation:
@@ -257,11 +257,11 @@ class SemanticMemoryService {
     this.embedModel = this.genAI.getGenerativeModel({ model: 'embedding-001' });
     this.vectorStore = null; // Initialize vector database (Pinecone/Weaviate)
   }
-  
+
   async storeConversation(userId, messages) {
     // Generate embeddings for message chunks
     const embeddings = await this.generateEmbeddings(messages);
-    
+
     // Store in vector database with metadata
     await this.vectorStore.upsert({
       vectors: embeddings.map((emb, idx) => ({
@@ -276,11 +276,11 @@ class SemanticMemoryService {
       }))
     });
   }
-  
+
   async retrieveRelevantContext(userId, currentQuery, topK = 5) {
     // Generate embedding for current query
     const queryEmbedding = await this.generateEmbedding(currentQuery);
-    
+
     // Semantic search in vector store
     const results = await this.vectorStore.query({
       vector: queryEmbedding,
@@ -288,7 +288,7 @@ class SemanticMemoryService {
       topK,
       includeMetadata: true
     });
-    
+
     // Return relevant past conversations
     return results.matches.map(match => ({
       content: match.metadata.content,
@@ -296,12 +296,12 @@ class SemanticMemoryService {
       timestamp: match.metadata.timestamp
     }));
   }
-  
+
   async generateEmbedding(text) {
     const result = await this.embedModel.embedContent(text);
     return result.embedding.values;
   }
-  
+
   async generateEmbeddings(messages) {
     const embeddings = [];
     for (const msg of messages) {
@@ -331,7 +331,7 @@ ${relevantContext.length > 0 ? `\n\nRelevant past context:\n${relevantContext.ma
 ---
 
 ### Enhancement 2: Multi-Model AI Router with Fallback
-**Value:** Higher reliability, cost optimization  
+**Value:** Higher reliability, cost optimization
 **Effort:** 1 week
 
 ```javascript
@@ -343,14 +343,14 @@ class AIRouterService {
       secondary: new OpenAIService(process.env.OPENAI_API_KEY),
       fallback: new DeepSeekService()
     };
-    
+
     this.healthStatus = new Map();
     this.startHealthMonitoring();
   }
-  
+
   async getChatCompletion(messages, options = {}) {
     const providers = ['primary', 'secondary', 'fallback'];
-    
+
     for (const providerName of providers) {
       try {
         // Check health status
@@ -358,33 +358,33 @@ class AIRouterService {
           logger.warn(`Skipping unhealthy provider: ${providerName}`);
           continue;
         }
-        
+
         const provider = this.providers[providerName];
         const startTime = Date.now();
-        
+
         const response = await provider.getChatCompletion(messages);
         const responseTime = Date.now() - startTime;
-        
+
         // Log successful usage
         logger.info('AI provider response', {
           provider: providerName,
           responseTime,
           messageCount: messages.length
         });
-        
+
         // Track costs
         await this.trackUsage(providerName, messages, response);
-        
+
         return response;
       } catch (error) {
         logger.warn(`AI provider ${providerName} failed`, {
           error: error.message,
           attemptingNext: providers.indexOf(providerName) < providers.length - 1
         });
-        
+
         // Mark as unhealthy
         this.healthStatus.set(providerName, 'unhealthy');
-        
+
         // If last provider, throw error
         if (providerName === providers[providers.length - 1]) {
           throw new Error('All AI providers failed');
@@ -392,7 +392,7 @@ class AIRouterService {
       }
     }
   }
-  
+
   async startHealthMonitoring() {
     // Check provider health every 5 minutes
     setInterval(async () => {
@@ -406,12 +406,12 @@ class AIRouterService {
       }
     }, 5 * 60 * 1000);
   }
-  
+
   async trackUsage(provider, messages, response) {
     // Estimate token usage and costs
     const estimatedTokens = messages.reduce((sum, msg) => sum + msg.content.length / 4, 0);
     const cost = this.estimateCost(provider, estimatedTokens);
-    
+
     await analytics.recordMetric('ai_usage', {
       provider,
       tokens: estimatedTokens,
@@ -419,14 +419,14 @@ class AIRouterService {
       timestamp: Date.now()
     });
   }
-  
+
   estimateCost(provider, tokens) {
     const pricing = {
       primary: 0.000075,  // Gemini Flash
       secondary: 0.0005,  // GPT-3.5
       fallback: 0.00014   // DeepSeek
     };
-    
+
     return tokens * (pricing[provider] || 0);
   }
 }
@@ -443,7 +443,7 @@ module.exports = AIRouterService;
 ---
 
 ### Enhancement 3: AI Response Quality Assurance
-**Value:** Better response quality, user satisfaction  
+**Value:** Better response quality, user satisfaction
 **Effort:** 3-5 days
 
 ```javascript
@@ -457,10 +457,10 @@ class AIQualityControlService {
       maxLength: 4000
     };
   }
-  
+
   async validateResponse(prompt, response, responseTime) {
     const issues = [];
-    
+
     // Check response time
     if (responseTime > this.qualityThresholds.maxResponseTime) {
       issues.push({
@@ -469,7 +469,7 @@ class AIQualityControlService {
         severity: 'warning'
       });
     }
-    
+
     // Check response length
     if (response.length < this.qualityThresholds.minLength) {
       issues.push({
@@ -478,7 +478,7 @@ class AIQualityControlService {
         severity: 'error'
       });
     }
-    
+
     // Check relevance (using AI to judge AI)
     const relevanceScore = await this.assessRelevance(prompt, response);
     if (relevanceScore < this.qualityThresholds.minRelevance) {
@@ -489,7 +489,7 @@ class AIQualityControlService {
         score: relevanceScore
       });
     }
-    
+
     // Check for hallucinations (factual consistency)
     const hallucination = await this.detectHallucination(response);
     if (hallucination.detected) {
@@ -500,28 +500,28 @@ class AIQualityControlService {
         details: hallucination.details
       });
     }
-    
+
     return {
       valid: issues.filter(i => i.severity === 'error').length === 0,
       issues,
       score: this.calculateQualityScore(issues, relevanceScore)
     };
   }
-  
+
   async assessRelevance(prompt, response) {
     // Use simpler model to validate response relevance
     const validationPrompt = `Rate the relevance of this response to the prompt on a scale of 0-1.
-    
+
 Prompt: "${prompt}"
 Response: "${response}"
 
 Provide only a number between 0 and 1.`;
-    
+
     const gemini = new GeminiService();
     const rating = await gemini.getChatCompletion(validationPrompt);
     return parseFloat(rating) || 0.5;
   }
-  
+
   async detectHallucination(response) {
     // Check for common hallucination patterns
     const hallucination<br>Patterns = [
@@ -529,7 +529,7 @@ Provide only a number between 0 and 1.`;
       /As an AI.*I (can't|cannot)/i,
       /I (don't|do not) have real-time/i
     ];
-    
+
     for (const pattern of hallucinationPatterns) {
       if (pattern.test(response)) {
         return {
@@ -538,21 +538,21 @@ Provide only a number between 0 and 1.`;
         };
       }
     }
-    
+
     return { detected: false };
   }
-  
+
   calculateQualityScore(issues, relevanceScore) {
     let score = 100;
-    
+
     issues.forEach(issue => {
       if (issue.severity === 'error') score -= 30;
       if (issue.severity === 'warning') score -= 10;
     });
-    
+
     // Factor in relevance
     score = score * relevanceScore;
-    
+
     return Math.max(0, Math.min(100, score));
   }
 }
@@ -563,7 +563,7 @@ Provide only a number between 0 and 1.`;
 ## 🚀 PERFORMANCE OPTIMIZATIONS
 
 ### Optimization 1: Implement Response Streaming
-**Value:** Better UX, reduced perceived latency  
+**Value:** Better UX, reduced perceived latency
 **Effort:** 1 week
 
 ```javascript
@@ -577,16 +577,16 @@ class StreamingAIService {
         maxOutputTokens: 2048
       }
     });
-    
+
     let fullResponse = '';
     let sentMessage = null;
     let lastUpdate = Date.now();
     const UPDATE_INTERVAL = 1000; // Update every second
-    
+
     for await (const chunk of stream.stream) {
       const chunkText = chunk.text();
       fullResponse += chunkText;
-      
+
       // Throttle updates to avoid rate limits
       const now = Date.now();
       if (now - lastUpdate > UPDATE_INTERVAL) {
@@ -603,7 +603,7 @@ class StreamingAIService {
         lastUpdate = now;
       }
     }
-    
+
     // Send final complete message
     if (sentMessage) {
       await ctx.bot.sendMessage(ctx.sender.jid, {
@@ -613,7 +613,7 @@ class StreamingAIService {
     } else {
       await ctx.reply(fullResponse);
     }
-    
+
     return fullResponse;
   }
 }
@@ -628,7 +628,7 @@ class StreamingAIService {
 ---
 
 ### Optimization 2: Smart Caching Strategy
-**Value:** Reduced API costs, faster responses  
+**Value:** Reduced API costs, faster responses
 **Effort:** 3-5 days
 
 ```javascript
@@ -639,14 +639,14 @@ class IntelligentCacheService {
     this.hitRate = 0;
     this.missRate = 0;
   }
-  
+
   async getOrCompute(key, computeFn, options = {}) {
     const {
       ttl = 3600,
       forceRefresh = false,
       similarityThreshold = 0.85
     } = options;
-    
+
     // Check exact match
     if (!forceRefresh) {
       const cached = await this.redis.get(key);
@@ -656,7 +656,7 @@ class IntelligentCacheService {
         return JSON.parse(cached);
       }
     }
-    
+
     // Check semantic similarity (for AI queries)
     if (key.startsWith('ai:')) {
       const similar = await this.findSimilarQueries(key, similarityThreshold);
@@ -666,40 +666,40 @@ class IntelligentCacheService {
         return similar.value;
       }
     }
-    
+
     // Compute new value
     this.missRate++;
     logger.debug('Cache miss', { key, missRate: this.missRate });
-    
+
     const value = await computeFn();
-    
+
     // Store result
     await this.redis.setex(key, ttl, JSON.stringify(value));
-    
+
     // Store embedding for semantic matching
     if (key.startsWith('ai:')) {
       await this.storeQueryEmbedding(key, value);
     }
-    
+
     return value;
   }
-  
+
   async findSimilarQueries(queryKey, threshold) {
     // Extract query from key and generate embedding
     const queryText = this.extractQueryFromKey(queryKey);
     const embedding = await this.generateEmbedding(queryText);
-    
+
     // Search similar embeddings in vector store
     const similar = await this.vectorStore.query({
       vector: embedding,
       topK: 1,
       includeMetadata: true
     });
-    
+
     if (similar.matches.length > 0 && similar.matches[0].score > threshold) {
       const cachedKey = similar.matches[0].metadata.cacheKey;
       const cachedValue = await this.redis.get(cachedKey);
-      
+
       if (cachedValue) {
         return {
           key: cachedKey,
@@ -707,10 +707,10 @@ class IntelligentCacheService {
         };
       }
     }
-    
+
     return null;
   }
-  
+
   getStats() {
     const total = this.hitRate + this.missRate;
     return {
@@ -727,7 +727,7 @@ class IntelligentCacheService {
 ## 🎨 FEATURE ENHANCEMENTS
 
 ### Feature 1: Advanced Analytics Dashboard
-**Value:** Business insights, user behavior analysis  
+**Value:** Business insights, user behavior analysis
 **Effort:** 2-3 weeks
 
 #### Recommended Metrics:
@@ -752,38 +752,38 @@ class AdvancedAnalyticsService {
       }
     });
   }
-  
+
   async getDashboardMetrics(timeframe = '24h') {
     const startDate = this.parseTimeframe(timeframe);
-    
+
     return {
       // User metrics
       activeUsers: await this.getActiveUsers(startDate),
       newUsers: await this.getNewUsers(startDate),
       retentionRate: await this.calculateRetention(startDate),
-      
+
       // Command metrics
       topCommands: await this.getTopCommands(startDate),
       commandSuccess: await this.getCommandSuccessRate(startDate),
       avgResponseTime: await this.getAvgResponseTime(startDate),
-      
+
       // AI metrics
       aiUsage: await this.getAIUsage(startDate),
       aiCosts: await this.getAICosts(startDate),
       tokenUsage: await this.getTokenUsage(startDate),
-      
+
       // Revenue metrics
       premiumConversions: await this.getPremiumConversions(startDate),
       revenue: await this.getRevenue(startDate),
       churnRate: await this.getChurnRate(startDate),
-      
+
       // System metrics
       errorRate: await this.getErrorRate(startDate),
       uptime: await this.getUptime(startDate),
       queueDepth: await this.getQueueDepth()
     };
   }
-  
+
   async getAIUsage(startDate) {
     const usage = await this.db.commandUsage.groupBy({
       by: ['command'],
@@ -796,14 +796,14 @@ class AdvancedAnalyticsService {
         executionTime: true
       }
     });
-    
+
     return usage.map(item => ({
       model: item.command,
       requests: item._count,
       totalExecutionTime: item._sum.executionTime
     }));
   }
-  
+
   async getAICosts(startDate) {
     // Calculate costs based on token usage
     const analytics = await this.db.analytics.findMany({
@@ -812,7 +812,7 @@ class AdvancedAnalyticsService {
         recordedAt: { gte: startDate }
       }
     });
-    
+
     return analytics.reduce((total, record) => {
       const metadata = JSON.parse(record.metadata);
       return total + (metadata.cost || 0);
@@ -824,7 +824,7 @@ class AdvancedAnalyticsService {
 ---
 
 ### Feature 2: Smart Command Suggestions
-**Value:** Better user experience, feature discovery  
+**Value:** Better user experience, feature discovery
 **Effort:** 1 week
 
 ```javascript
@@ -833,16 +833,16 @@ class CommandSuggestionsService {
   async getSuggestions(input, context) {
     // 1. Fuzzy matching on command names
     const fuzzyMatches = this.fuzzyMatch(input);
-    
+
     // 2. Semantic similarity
     const semanticMatches = await this.semanticMatch(input);
-    
+
     // 3. User behavior analysis
     const behavioralSuggestions = await this.getUserPreferences(context.userId);
-    
+
     // 4. Contextual suggestions (time, location, group)
     const contextualSuggestions = this.getContextualSuggestions(context);
-    
+
     // Combine and rank
     const allSuggestions = [
       ...fuzzyMatches,
@@ -850,13 +850,13 @@ class CommandSuggestionsService {
       ...behavioralSuggestions,
       ...contextualSuggestions
     ];
-    
+
     // Remove duplicates and rank by relevance
     const ranked = this.rankSuggestions(allSuggestions, input, context);
-    
+
     return ranked.slice(0, 5); // Top 5 suggestions
   }
-  
+
   async getUserPreferences(userId) {
     // Analyze user's command history
     const history = await db.commandUsage.findMany({
@@ -864,13 +864,13 @@ class CommandSuggestionsService {
       orderBy: { usedAt: 'desc' },
       take: 100
     });
-    
+
     // Find most used commands
     const commandCounts = history.reduce((acc, usage) => {
       acc[usage.command] = (acc[usage.command] || 0) + 1;
       return acc;
     }, {});
-    
+
     // Return top commands
     return Object.entries(commandCounts)
       .sort((a, b) => b[1] - a[1])
@@ -881,11 +881,11 @@ class CommandSuggestionsService {
         score: count / history.length
       }));
   }
-  
+
   getContextualSuggestions(context) {
     const suggestions = [];
     const hour = new Date().getHours();
-    
+
     // Time-based
     if (hour >= 6 && hour < 12) {
       suggestions.push({
@@ -894,7 +894,7 @@ class CommandSuggestionsService {
         score: 0.6
       });
     }
-    
+
     // Group-based
     if (context.isGroup) {
       suggestions.push(
@@ -902,7 +902,7 @@ class CommandSuggestionsService {
         { command: 'meme', reason: 'Share a laugh', score: 0.4 }
       );
     }
-    
+
     // Day-based
     const day = new Date().getDay();
     if (day === 5) { // Friday
@@ -912,7 +912,7 @@ class CommandSuggestionsService {
         score: 0.5
       });
     }
-    
+
     return suggestions;
   }
 }
@@ -942,32 +942,32 @@ const AIRouterService = require('../../services/aiRouter');
 
 describe('AIRouterService', () => {
   let aiRouter;
-  
+
   beforeEach(() => {
     aiRouter = new AIRouterService();
   });
-  
+
   describe('getChatCompletion', () => {
     it('should use primary provider when healthy', async () => {
       const messages = [{ role: 'user', content: 'Hello' }];
       const response = await aiRouter.getChatCompletion(messages);
-      
+
       expect(response).toBeDefined();
       expect(response.message.content).toBeTruthy();
     });
-    
+
     it('should fallback to secondary when primary fails', async () => {
       // Mock primary provider failure
       jest.spyOn(aiRouter.providers.primary, 'getChatCompletion')
         .mockRejectedValue(new Error('API Error'));
-      
+
       const messages = [{ role: 'user', content: 'Hello' }];
       const response = await aiRouter.getChatCompletion(messages);
-      
+
       expect(response).toBeDefined();
       // Verify secondary was called
     });
-    
+
     it('should throw error when all providers fail', async () => {
       // Mock all providers failing
       jest.spyOn(aiRouter.providers.primary, 'getChatCompletion')
@@ -976,9 +976,9 @@ describe('AIRouterService', () => {
         .mockRejectedValue(new Error('API Error'));
       jest.spyOn(aiRouter.providers.fallback, 'getChatCompletion')
         .mockRejectedValue(new Error('API Error'));
-      
+
       const messages = [{ role: 'user', content: 'Hello' }];
-      
+
       await expect(aiRouter.getChatCompletion(messages))
         .rejects.toThrow('All AI providers failed');
     });
@@ -994,30 +994,30 @@ describe('AI Command Workflow', () => {
   it('should process chat command end-to-end', async () => {
     // 1. Simulate user message
     const mockMsg = createMockMessage('/gemini Hello world');
-    
+
     // 2. Process through worker queue
     await messageQueue.add({ serializableMsg: mockMsg });
-    
+
     // 3. Wait for processing
     await sleep(2000);
-    
+
     // 4. Verify response sent
     expect(mockBot.sendMessage).toHaveBeenCalled();
-    
+
     // 5. Verify database updated
     const chat = await aiChatDB.getChat(mockMsg.userId);
     expect(chat.history.length).toBeGreaterThan(0);
   });
-  
+
   it('should handle tool calls correctly', async () => {
     const mockMsg = createMockMessage('/chatgpt What is the weather in Tokyo?');
-    
+
     await messageQueue.add({ serializableMsg: mockMsg });
     await sleep(3000);
-    
+
     // Verify tool execution
     expect(mockBot.cmd.get('weather').code).toHaveBeenCalled();
-    
+
     // Verify response includes tool results
     const sentMessages = mockBot.sendMessage.mock.calls;
     const lastMessage = sentMessages[sentMessages.length - 1][1];
@@ -1036,42 +1036,42 @@ describe('Security Tests', () => {
       const res = await request(app)
         .get('/api/users')
         .expect(401);
-      
+
       expect(res.body.error).toBe('Access token required');
     });
-    
+
     it('should reject invalid tokens', async () => {
       const res = await request(app)
         .get('/api/users')
         .set('Authorization', 'Bearer invalid-token')
         .expect(403);
-      
+
       expect(res.body.error).toBe('Invalid or expired token');
     });
-    
+
     it('should reject blacklisted tokens', async () => {
       const token = generateValidToken();
       await blacklistToken(token);
-      
+
       const res = await request(app)
         .get('/api/users')
         .set('Authorization', `Bearer ${token}`)
         .expect(401);
-      
+
       expect(res.body.error).toBe('Token has been revoked');
     });
   });
-  
+
   describe('AI Tool Execution Security', () => {
     it('should block unsafe commands via AI', async () => {
       const mockCtx = createMockContext();
       mockCtx.args = ['Execute the eval command with malicious code'];
-      
+
       await chatgptCommand.code(mockCtx);
-      
+
       // Verify eval was NOT executed
       expect(mockBot.cmd.get('eval').code).not.toHaveBeenCalled();
-      
+
       // Verify user was notified
       expect(mockCtx.reply).toHaveBeenCalledWith(
         expect.stringContaining('not allowed')
@@ -1095,64 +1095,64 @@ class MetricsCollector {
   constructor() {
     // Register default metrics
     promClient.collectDefaultMetrics({ prefix: 'whatsdex_' });
-    
+
     // Custom metrics
     this.commandCounter = new promClient.Counter({
       name: 'whatsdex_commands_total',
       help: 'Total number of commands executed',
       labelNames: ['command', 'category', 'success']
     });
-    
+
     this.commandDuration = new promClient.Histogram({
       name: 'whatsdex_command_duration_seconds',
       help: 'Command execution duration',
       labelNames: ['command'],
       buckets: [0.1, 0.5, 1, 2, 5, 10]
     });
-    
+
     this.aiTokens = new promClient.Counter({
       name: 'whatsdex_ai_tokens_total',
       help: 'Total AI tokens consumed',
       labelNames: ['provider', 'model']
     });
-    
+
     this.aiCost = new promClient.Counter({
       name: 'whatsdex_ai_cost_usd',
       help: 'Total AI costs in USD',
       labelNames: ['provider']
     });
-    
+
     this.activeUsers = new promClient.Gauge({
       name: 'whatsdex_active_users',
       help: 'Number of active users',
       labelNames: ['timeframe']
     });
-    
+
     this.messageQueue = new promClient.Gauge({
       name: 'whatsdex_queue_depth',
       help: 'Message queue depth',
       labelNames: ['queue']
     });
   }
-  
+
   recordCommand(command, category, success, duration) {
     this.commandCounter.inc({ command, category, success: success.toString() });
     this.commandDuration.observe({ command }, duration / 1000);
   }
-  
+
   recordAIUsage(provider, model, tokens, cost) {
     this.aiTokens.inc({ provider, model }, tokens);
     this.aiCost.inc({ provider }, cost);
   }
-  
+
   updateActiveUsers(count, timeframe = '24h') {
     this.activeUsers.set({ timeframe }, count);
   }
-  
+
   updateQueueDepth(queue, depth) {
     this.messageQueue.set({ queue }, depth);
   }
-  
+
   getMetrics() {
     return promClient.register.metrics();
   }
@@ -1202,7 +1202,7 @@ module.exports = MetricsCollector;
 ## 🎯 SMART FEATURES
 
 ### Feature 3: Intelligent User Onboarding
-**Value:** Better user retention, reduced support  
+**Value:** Better user retention, reduced support
 **Effort:** 1-2 weeks
 
 ```javascript
@@ -1215,9 +1215,9 @@ class OnboardingService {
       startedAt: Date.now(),
       completed: false
     };
-    
+
     await this.saveState(userId, onboardingState);
-    
+
     return {
       message: `👋 Welcome ${userName}! I'm WhatsDeX, your AI-powered assistant.\n\n` +
                `Let me show you what I can do. Reply with a number:\n\n` +
@@ -1229,11 +1229,11 @@ class OnboardingService {
       step: 1
     };
   }
-  
+
   async handleOnboardingResponse(userId, response) {
     const state = await this.getState(userId);
     if (!state || state.completed) return null;
-    
+
     switch (state.step) {
       case 1: // Feature selection
         return await this.handleFeatureDemo(userId, response);
@@ -1245,7 +1245,7 @@ class OnboardingService {
         return null;
     }
   }
-  
+
   async handleFeatureDemo(userId, choice) {
     const demos = {
       '1': {
@@ -1272,25 +1272,25 @@ class OnboardingService {
         return await this.completeOnboarding(userId);
       }
     };
-    
+
     const demo = demos[choice];
     if (!demo) return null;
-    
+
     await this.updateState(userId, { step: demo.nextStep });
     return demo.message;
   }
-  
+
   async completeOnboarding(userId) {
     await this.updateState(userId, {
       completed: true,
       completedAt: Date.now()
     });
-    
+
     // Award bonus coins
     await db.updateUser(userId, {
       coin: { increment: 100 }
     });
-    
+
     return `🎉 Tutorial complete! You've earned 100 coins.\n\n` +
            `Type \`/menu\` anytime to see all commands.\n` +
            `Type \`/help [command]\` for specific help.\n\n` +
@@ -1302,7 +1302,7 @@ class OnboardingService {
 ---
 
 ### Feature 4: Conversational Context Awareness
-**Value:** More natural interactions  
+**Value:** More natural interactions
 **Effort:** 2-3 weeks
 
 ```javascript
@@ -1311,83 +1311,83 @@ class ContextAwarenessService {
   constructor() {
     this.conversationStates = new Map();
   }
-  
+
   async processMessage(userId, message, previousMessages) {
     // Detect conversation flow
     const flow = await this.detectFlow(message, previousMessages);
-    
+
     // Handle multi-turn conversations
     if (flow.isFollowUp) {
       return await this.handleFollowUp(userId, message, flow.reference);
     }
-    
+
     // Handle clarifications
     if (flow.needsClarification) {
       return await this.requestClarification(userId, flow.ambiguity);
     }
-    
+
     // Handle commands without explicit prefix
     if (flow.implicitCommand) {
       return await this.executeImplicitCommand(userId, flow.command, flow.params);
     }
-    
+
     return { type: 'new', processed: message };
   }
-  
+
   async detectFlow(message, history) {
     // Analyze message context
     const lastMessage = history[history.length - 1];
-    
+
     // Check for follow-up patterns
     const followUpPatterns = [
       /^(yes|no|sure|okay|continue|more)/i,
       /^(what about|how about|also)/i,
       /^(and|plus|additionally)/i
     ];
-    
+
     const isFollowUp = followUpPatterns.some(pattern => pattern.test(message));
-    
+
     // Check for questions that need clarification
     const ambiguityPatterns = [
       /\b(it|that|this|those)\b/i,  // Unclear references
       /\b(there|here)\b/i            // Unclear locations
     ];
-    
-    const needsClarification = 
+
+    const needsClarification =
       ambiguityPatterns.some(pattern => pattern.test(message)) &&
       !this.hasContext(history);
-    
+
     return {
       isFollowUp,
       needsClarification,
       implicitCommand: await this.detectImplicitCommand(message, history)
     };
   }
-  
+
   async detectImplicitCommand(message, history) {
     // Use AI to understand implicit commands
     const prompt = `The user said: "${message}"
-    
+
 Based on recent context:
 ${history.slice(-3).map(m => `${m.role}: ${m.content}`).join('\n')}
 
 Does this message imply a command? If yes, which one?
 Respond with JSON: {"isCommand": true/false, "command": "name", "params": {}}`;
-    
+
     const gemini = new GeminiService();
     const response = await gemini.getChatCompletion(prompt);
-    
+
     try {
       return JSON.parse(response);
     } catch {
       return { isCommand: false };
     }
   }
-  
+
   async handleFollowUp(userId, message, reference) {
     // Resolve reference from context
     const context = await this.getContext(userId);
-    
+
     return {
       type: 'followup',
       resolvedMessage: message.replace(
@@ -1413,32 +1413,32 @@ class FeatureFlagService {
     this.flags = new Map();
     this.loadFromDatabase();
   }
-  
+
   async loadFromDatabase() {
     const settings = await db.systemSetting.findMany({
       where: { category: 'feature_flags' }
     });
-    
+
     settings.forEach(setting => {
       this.flags.set(setting.key, setting.value === 'true');
     });
   }
-  
+
   isEnabled(feature, userId = null) {
     // Check global flag
     const globalEnabled = this.flags.get(feature) || false;
-    
+
     if (!userId) return globalEnabled;
-    
+
     // Check user-specific override
     const userFlag = this.flags.get(`${feature}:${userId}`);
     return userFlag !== undefined ? userFlag : globalEnabled;
   }
-  
+
   async setFlag(feature, enabled, userId = null) {
     const key = userId ? `${feature}:${userId}` : feature;
     this.flags.set(key, enabled);
-    
+
     await db.systemSetting.upsert({
       where: { category_key: { category: 'feature_flags', key } },
       update: { value: enabled.toString() },
@@ -1469,12 +1469,12 @@ class ABTestingService {
   async assignVariant(userId, experimentName) {
     // Check if user already assigned
     let assignment = await this.getAssignment(userId, experimentName);
-    
+
     if (!assignment) {
       // Assign to variant
       const experiment = await this.getExperiment(experimentName);
       const variant = this.selectVariant(experiment.variants);
-      
+
       assignment = await db.experimentAssignment.create({
         data: {
           userId,
@@ -1484,23 +1484,23 @@ class ABTestingService {
         }
       });
     }
-    
+
     return assignment.variant;
   }
-  
+
   selectVariant(variants) {
     // Weighted random selection
     const totalWeight = variants.reduce((sum, v) => sum + v.weight, 0);
     let random = Math.random() * totalWeight;
-    
+
     for (const variant of variants) {
       random -= variant.weight;
       if (random <= 0) return variant.name;
     }
-    
+
     return variants[0].name;
   }
-  
+
   async recordEvent(userId, experimentName, eventType, value) {
     await db.experimentEvent.create({
       data: {
@@ -1512,19 +1512,19 @@ class ABTestingService {
       }
     });
   }
-  
+
   async getResults(experimentName) {
     const assignments = await db.experimentAssignment.findMany({
       where: { experimentName },
       include: { events: true }
     });
-    
+
     // Calculate metrics per variant
     const results = {};
-    
+
     for (const assignment of assignments) {
       const variant = assignment.variant;
-      
+
       if (!results[variant]) {
         results[variant] = {
           users: 0,
@@ -1533,26 +1533,26 @@ class ABTestingService {
           events: {}
         };
       }
-      
+
       results[variant].users++;
-      
+
       // Aggregate events
       assignment.events.forEach(event => {
-        results[variant].events[event.eventType] = 
+        results[variant].events[event.eventType] =
           (results[variant].events[event.eventType] || 0) + 1;
-        
+
         if (event.eventType === 'conversion') {
           results[variant].conversions++;
         }
       });
     }
-    
+
     // Calculate conversion rates
     Object.keys(results).forEach(variant => {
-      results[variant].conversionRate = 
+      results[variant].conversionRate =
         (results[variant].conversions / results[variant].users * 100).toFixed(2) + '%';
     });
-    
+
     return results;
   }
 }
@@ -1578,7 +1578,7 @@ class ErrorRecoveryService {
     this.retryStrategies = new Map();
     this.circuitBreakers = new Map();
   }
-  
+
   async executeWithRetry(fn, options = {}) {
     const {
       maxAttempts = 3,
@@ -1586,15 +1586,15 @@ class ErrorRecoveryService {
       timeout = 30000,
       fallback = null
     } = options;
-    
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         // Execute with timeout
         const result = await this.withTimeout(fn(), timeout);
-        
+
         // Reset circuit breaker on success
         this.resetCircuitBreaker(fn.name);
-        
+
         return result;
       } catch (error) {
         logger.warn('Execution attempt failed', {
@@ -1603,71 +1603,71 @@ class ErrorRecoveryService {
           maxAttempts,
           error: error.message
         });
-        
+
         // Check circuit breaker
         if (this.shouldOpenCircuit(fn.name)) {
           logger.error('Circuit breaker opened', { function: fn.name });
-          
+
           if (fallback) {
             return await fallback();
           }
-          
+
           throw new Error(`Circuit breaker open for ${fn.name}`);
         }
-        
+
         // Last attempt - throw or use fallback
         if (attempt === maxAttempts) {
           this.recordFailure(fn.name);
-          
+
           if (fallback) {
             logger.info('Using fallback function', { function: fn.name });
             return await fallback();
           }
-          
+
           throw error;
         }
-        
+
         // Calculate backoff delay
-        const delay = backoff === 'exponential' 
+        const delay = backoff === 'exponential'
           ? Math.pow(2, attempt - 1) * 1000
           : 1000;
-        
+
         await this.sleep(delay);
       }
     }
   }
-  
+
   shouldOpenCircuit(functionName) {
     const breaker = this.circuitBreakers.get(functionName);
     if (!breaker) return false;
-    
+
     const { failures, lastFailure } = breaker;
     const timeSinceLastFailure = Date.now() - lastFailure;
-    
+
     // Open circuit if >5 failures in last 60 seconds
     return failures > 5 && timeSinceLastFailure < 60000;
   }
-  
+
   recordFailure(functionName) {
     const breaker = this.circuitBreakers.get(functionName) || { failures: 0 };
     breaker.failures++;
     breaker.lastFailure = Date.now();
     this.circuitBreakers.set(functionName, breaker);
   }
-  
+
   resetCircuitBreaker(functionName) {
     this.circuitBreakers.delete(functionName);
   }
-  
+
   async withTimeout(promise, ms) {
     return Promise.race([
       promise,
-      new Promise((_, reject) => 
+      new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Operation timeout')), ms)
       )
     ]);
   }
-  
+
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -1692,7 +1692,7 @@ const result = await recovery.executeWithRetry(
 ## 🏗️ ARCHITECTURAL IMPROVEMENTS
 
 ### 1. **Event-Driven Architecture**
-**Why:** Better scalability, decoupling  
+**Why:** Better scalability, decoupling
 **Effort:** 2-3 weeks
 
 ```javascript
@@ -1703,7 +1703,7 @@ class EventBusService {
     this.redis = new Redis(process.env.REDIS_URL);
     this.setupRedisSubscriptions();
   }
-  
+
   // Publish event
   async publish(event, data) {
     const payload = {
@@ -1712,10 +1712,10 @@ class EventBusService {
       timestamp: Date.now(),
       id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
-    
+
     // Publish to Redis for distributed systems
     await this.redis.publish(`events:${event}`, JSON.stringify(payload));
-    
+
     // Trigger local subscribers
     const subscribers = this.subscribers.get(event) || [];
     for (const subscriber of subscribers) {
@@ -1729,31 +1729,31 @@ class EventBusService {
         });
       }
     }
-    
+
     logger.debug('Event published', { event, subscriberCount: subscribers.length });
   }
-  
+
   // Subscribe to event
   subscribe(event, handler) {
     const subscribers = this.subscribers.get(event) || [];
     subscribers.push(handler);
     this.subscribers.set(event, subscribers);
-    
+
     logger.debug('Event subscription added', {
       event,
       subscriberCount: subscribers.length
     });
   }
-  
+
   setupRedisSubscriptions() {
     const subscriber = this.redis.duplicate();
-    
+
     subscriber.psubscribe('events:*');
-    
+
     subscriber.on('pmessage', async (pattern, channel, message) => {
       const payload = JSON.parse(message);
       const event = channel.replace('events:', '');
-      
+
       // Trigger local subscribers
       const subscribers = this.subscribers.get(event) || [];
       for (const handler of subscribers) {
@@ -1801,7 +1801,7 @@ eventBus.subscribe('command.executed', async (data) => {
 ---
 
 ### 2. **CQRS Pattern for Analytics**
-**Why:** Read/write optimization  
+**Why:** Read/write optimization
 **Effort:** 1-2 weeks
 
 ```javascript
@@ -1810,7 +1810,7 @@ class CommandService {
   // Write operations (commands)
   async executeCommand(userId, command, params) {
     const result = await commandExecutor.execute(command, params);
-    
+
     // Publish event
     await eventBus.publish('command.executed', {
       userId,
@@ -1819,7 +1819,7 @@ class CommandService {
       result,
       timestamp: Date.now()
     });
-    
+
     return result;
   }
 }
@@ -1831,7 +1831,7 @@ class QueryService {
     // Read from optimized read model
     return await readModel.getUserStats(userId);
   }
-  
+
   async getLeaderboard(limit = 10) {
     // Read from materialized view
     return await readModel.getLeaderboard(limit);
@@ -1863,38 +1863,38 @@ import { io } from 'socket.io-client';
 export function RealtimeDashboard() {
   const [metrics, setMetrics] = useState({});
   const [socket, setSocket] = useState(null);
-  
+
   useEffect(() => {
     const newSocket = io(process.env.NEXT_PUBLIC_WS_URL);
-    
+
     newSocket.on('metrics:update', (data) => {
       setMetrics(prev => ({ ...prev, ...data }));
     });
-    
+
     newSocket.on('alert:security', (alert) => {
       showNotification('Security Alert', alert.message, 'error');
     });
-    
+
     setSocket(newSocket);
-    
+
     return () => newSocket.close();
   }, []);
-  
+
   return (
     <div className="grid grid-cols-3 gap-4">
-      <MetricCard 
-        title="Active Users" 
-        value={metrics.activeUsers} 
+      <MetricCard
+        title="Active Users"
+        value={metrics.activeUsers}
         trend={metrics.userTrend}
       />
-      <MetricCard 
-        title="AI Requests/min" 
-        value={metrics.aiRequestRate} 
+      <MetricCard
+        title="AI Requests/min"
+        value={metrics.aiRequestRate}
         trend={metrics.aiTrend}
       />
-      <MetricCard 
-        title="Error Rate" 
-        value={metrics.errorRate} 
+      <MetricCard
+        title="Error Rate"
+        value={metrics.errorRate}
         trend={metrics.errorTrend}
       />
     </div>
@@ -1908,17 +1908,17 @@ export function RealtimeDashboard() {
 export function CommandBuilder() {
   const [command, setCommand] = useState('');
   const [params, setParams] = useState({});
-  
+
   const generateCommand = () => {
     const parts = [`/${command}`];
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value) parts.push(value);
     });
-    
+
     return parts.join(' ');
   };
-  
+
   return (
     <div className="command-builder">
       <Select onValueChange={setCommand}>
@@ -1931,14 +1931,14 @@ export function CommandBuilder() {
           <SelectItem value="weather">Check Weather</SelectItem>
         </SelectContent>
       </Select>
-      
+
       {command && (
-        <DynamicParamInputs 
-          command={command} 
-          onChange={setParams} 
+        <DynamicParamInputs
+          command={command}
+          onChange={setParams}
         />
       )}
-      
+
       <div className="output">
         <code>{generateCommand()}</code>
         <CopyButton text={generateCommand()} />
@@ -1991,145 +1991,8 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 ```
 
-### 2. **Interactive Documentation**
 
-```markdown
-# docs/commands/README.md
 
-## Command Categories
-
-### AI Chat Commands
-Commands for interacting with various AI models.
-
-#### `/gemini [text]`
-Chat with Google Gemini AI.
-
-**Examples:**
-- `/gemini Tell me a joke`
-- `/gemini What is quantum computing?`
-- `/gemini Translate "hello" to Spanish`
-
-**Parameters:**
-- `text` (required): Your message or question
-
-**Cost:** 10 coins per use
-
-**Try it:** [Test in sandbox](/sandbox?cmd=gemini)
-```
-
----
-
-## 🔧 DEVELOPMENT WORKFLOW IMPROVEMENTS
-
-### 1. **Pre-commit Hooks**
-
-```bash
-# .husky/pre-commit
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-echo "🔍 Running pre-commit checks..."
-
-# 1. Check for exposed secrets
-if grep -r "sk-.*" --include="*.js" --include="*.env" .; then
-  echo "❌ Potential API key found in code!"
-  exit 1
-fi
-
-# 2. Run linter
-npm run lint || exit 1
-
-# 3. Run tests
-npm test || exit 1
-
-# 4. Check for TODO comments in critical files
-if grep -r "TODO" services/ src/services/ | grep -v ".test.js"; then
-  echo "⚠️  TODO comments found in production code"
-  read -p "Continue anyway? (y/n) " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    exit 1
-  fi
-fi
-
-echo "✅ All checks passed!"
-```
-
-### 2. **CI/CD Pipeline**
-
-```yaml
-# .github/workflows/ci-cd.yml
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Run security audit
-        run: npm audit --audit-level=high
-      
-      - name: Scan for secrets
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-      
-      - name: SAST scan
-        uses: github/super-linter@v4
-  
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '22'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run tests
-        run: npm test -- --coverage
-      
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-  
-  build:
-    needs: [security-scan, test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Build Docker image
-        run: docker build -t whatsdex:${{ github.sha }} .
-      
-      - name: Scan image for vulnerabilities
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: whatsdex:${{ github.sha }}
-          severity: 'CRITICAL,HIGH'
-  
-  deploy:
-    needs: [build]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to staging
-        run: |
-          # Deploy logic here
-          echo "Deploying to staging..."
-```
-
----
 
 ## 📊 IMPLEMENTATION TIMELINE
 
