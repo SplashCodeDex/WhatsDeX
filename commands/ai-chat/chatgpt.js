@@ -15,8 +15,7 @@ module.exports = {
     coin: 15,
   },
   code: async (ctx) => {
-        const { formatter, config } = ctx.bot.context;
-    const { config, formatter } = ctx.bot.context;
+   const { formatter, config } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
     if (!config.api.openai) {

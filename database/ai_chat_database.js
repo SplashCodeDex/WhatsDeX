@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const AIChat = require('./models/AIChat');
 const path = require('path');
+const logger = require('../src/utils/logger');
 // Use a more robust path and handle missing config for tests
 let config;
 try {
@@ -13,16 +14,34 @@ let isConnected = false;
 
 async function connect() {
     if (isConnected) return;
-    try {
-        await mongoose.connect(config.database.mongoUri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        isConnected = true;
-        console.log('Successfully connected to AI Chat MongoDB.');
-    } catch (error) {
-        console.error('Error connecting to AI Chat MongoDB:', error);
-        // Do not exit process, as the main bot might still function
+
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 5000;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            await mongoose.connect(config.database.mongoUri, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                serverSelectionTimeoutMS: 5000,
+                socketTimeoutMS: 45000,
+            });
+            isConnected = true;
+            logger.info('Successfully connected to AI Chat MongoDB', { attempt });
+            return;
+        } catch (error) {
+            logger.error('Error connecting to AI Chat MongoDB', {
+                attempt,
+                maxRetries: MAX_RETRIES,
+                error: error.message
+            });
+
+            if (attempt === MAX_RETRIES) {
+                throw new Error(`Failed to connect to MongoDB after ${MAX_RETRIES} attempts: ${error.message}`);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        }
     }
 }
 

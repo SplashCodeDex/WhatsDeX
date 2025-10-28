@@ -83,10 +83,16 @@ module.exports = {
                 args: argsForCommand,
                 reply: (output) => {
                   commandOutput = typeof output === 'object' ? JSON.stringify(output) : output;
-                }
+                },
+                // Remove dangerous properties
+                group: undefined,
+                sender: { jid: ctx.sender.jid },
+                isGroup: ctx.isGroup,
+                getId: ctx.getId,
               };
               await commandToExecute.code(mockCtx);
               toolResponse = commandOutput;
+              console.log(`Tool execution success: ${functionName}`);
             } catch (e) {
               toolResponse = `Error executing tool ${functionName}: ${e.message}`;
             }
