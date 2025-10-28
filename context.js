@@ -165,6 +165,78 @@ class DatabaseService {
     }
   }
 
+  // BotSetting operations
+  async getBotSetting(key) {
+    try {
+      return await this.prisma.botSetting.findUnique({
+        where: { key },
+      });
+    } catch (error) {
+      logger.error('Database error in getBotSetting:', error);
+      throw error;
+    }
+  }
+
+  async setBotSetting(key, value, category = 'general', description = null, updatedBy = 'system') {
+    try {
+      return await this.prisma.botSetting.upsert({
+        where: { key },
+        update: { value, category, description, updatedBy },
+        create: { key, value, category, description, updatedBy },
+      });
+    } catch (error) {
+      logger.error('Database error in setBotSetting:', error);
+      throw error;
+    }
+  }
+
+  async updateBotSetting(key, updateData) {
+    try {
+      return await this.prisma.botSetting.update({
+        where: { key },
+        data: updateData,
+      });
+    } catch (error) {
+      logger.error('Database error in updateBotSetting:', error);
+      throw error;
+    }
+  }
+
+  // Menfess operations
+  async getMenfess(id) {
+    try {
+      return await this.prisma.menfess.findUnique({
+        where: { id },
+      });
+    } catch (error) {
+      logger.error('Database error in getMenfess:', error);
+      throw error;
+    }
+  }
+
+  async createMenfess(menfessData) {
+    try {
+      return await this.prisma.menfess.create({
+        data: menfessData,
+      });
+    } catch (error) {
+      logger.error('Database error in createMenfess:', error);
+      throw error;
+    }
+  }
+
+  async deleteMenfess(id) {
+    try {
+      return await this.prisma.menfess.delete({
+        where: { id },
+      });
+    } catch (error) {
+      logger.error('Database error in deleteMenfess:', error);
+      throw error;
+    }
+  }
+
+
   // Health check
   async healthCheck() {
     try {
@@ -214,12 +286,14 @@ const database = {
     update: (jid, data) => databaseService.updateGroup(jid, data)
   },
   bot: {
-    get: () => Promise.resolve({}), // Placeholder
-    update: () => Promise.resolve() // Placeholder
+    get: (key) => databaseService.getBotSetting(key),
+    set: (key, value, category, description, updatedBy) => databaseService.setBotSetting(key, value, category, description, updatedBy),
+    update: (key, data) => databaseService.updateBotSetting(key, data)
   },
   menfess: {
-    get: () => Promise.resolve({}), // Placeholder
-    create: () => Promise.resolve() // Placeholder
+    get: (id) => databaseService.getMenfess(id),
+    create: (menfessData) => databaseService.createMenfess(menfessData),
+    delete: (id) => databaseService.deleteMenfess(id)
   }
 };
 
