@@ -23,10 +23,14 @@ CFonts.say(`${pkg.description} - By ${pkg.author}`, {
     align: "center"
 });
 
+const { initSocket } = require("./server.js");
+
 // Jalankan server jika diaktifkan dalam konfigurasi
 if (config.system.useServer) {
     const { port } = config.system;
-    http.createServer((_, res) => res.end(`${pkg.name} is running on port ${port}`)).listen(port, () => console.log(`✅ ${pkg.name} runs on port ${port}`));
+    const server = http.createServer((_, res) => res.end(`${pkg.name} is running on port ${port}`));
+    initSocket(server);
+    server.listen(port, () => console.log(`✅ ${pkg.name} runs on port ${port}`));
 }
 
 (async () => {

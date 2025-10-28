@@ -1,4 +1,5 @@
 const { fontFamily } = require("tailwindcss/defaultTheme");
+const { shadcnPlugin } = require("./lib/shadcn-plugin");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -11,20 +12,8 @@ module.exports = {
     '../shared/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-  	container: {
-  		center: true,
-  		padding: '2rem',
-  		screens: {
-  			'2xl': '1400px'
-  		}
-  	},
   	extend: {
   		colors: {
-  			border: 'hsl(var(--border))',
-  			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
   			primary: {
   				'50': '#f0f9ff',
   				'100': '#e0f2fe',
@@ -37,8 +26,6 @@ module.exports = {
   				'800': '#075985',
   				'900': '#0c4a6e',
   				'950': '#082f49',
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
   			},
   			secondary: {
   				'50': '#f8fafc',
@@ -52,39 +39,6 @@ module.exports = {
   				'800': '#1e293b',
   				'900': '#0f172a',
   				'950': '#020617',
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
-  			},
-  			destructive: {
-  				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
-  			},
-  			muted: {
-  				DEFAULT: 'hsl(var(--muted))',
-  				foreground: 'hsl(var(--muted-foreground))'
-  			},
-  			accent: {
-  				'50': '#fef2f2',
-  				'100': '#fee2e2',
-  				'200': '#fecaca',
-  				'300': '#fca5a5',
-  				'400': '#f87171',
-  				'500': '#ef4444',
-  				'600': '#dc2626',
-  				'700': '#b91c1c',
-  				'800': '#991b1b',
-  				'900': '#7f1d1d',
-  				'950': '#450a0a',
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
-  			},
-  			popover: {
-  				DEFAULT: 'hsl(var(--popover))',
-  				foreground: 'hsl(var(--popover-foreground))'
-  			},
-  			card: {
-  				DEFAULT: 'hsl(var(--card))',
-  				foreground: 'hsl(var(--card-foreground))'
   			},
   			success: {
   				'50': '#f0fdf4',
@@ -136,13 +90,6 @@ module.exports = {
   				'800': 'rgba(0, 0, 0, 0.6)',
   				'900': 'rgba(0, 0, 0, 0.7)'
   			},
-  			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
-  			}
   		},
   		backgroundImage: {
   			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -164,27 +111,8 @@ module.exports = {
   			'4xl': '2rem',
   			'5xl': '2.5rem',
   			'6xl': '3rem',
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
   		},
   		keyframes: {
-  			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
-  			},
-  			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
-  			},
   			fadeIn: {
   				'0%': {
   					opacity: '0'
@@ -424,5 +352,6 @@ module.exports = {
   },
   plugins: [
     require('tailwindcss-animate'),
+    shadcnPlugin
   ],
 }

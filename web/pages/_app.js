@@ -2,20 +2,17 @@ import '../styles/globals.css';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/router';
-import Layout from '../components/Layout';
+import Layout from '../components/common/Layout';
+import { ThemeProvider } from '../contexts/ThemeContext';
+import { Toaster as ShadcnToaster } from '../components/ui/toaster';
+
+import { initSocket } from '../socket';
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Initialize theme on app start
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      document.documentElement.classList.add('dark');
-    }
-
+    initSocket();
     // Add smooth scrolling
     document.documentElement.style.scrollBehavior = 'smooth';
 
@@ -26,7 +23,7 @@ function MyApp({ Component, pageProps }) {
   const isAdminPage = router.pathname.startsWith('/admin');
 
   return (
-    <>
+    <ThemeProvider>
       {isAdminPage ? (
         <Layout>
           <Component {...pageProps} />
@@ -77,7 +74,8 @@ function MyApp({ Component, pageProps }) {
           },
         }}
       />
-    </>
+      <ShadcnToaster />
+    </ThemeProvider>
   );
 }
 

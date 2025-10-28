@@ -1,27 +1,42 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useToast } from '../hooks/use-toast';
 import {
   ChartBarIcon,
   UsersIcon,
   CpuChipIcon,
   SignalIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
   ClockIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   BoltIcon,
 } from '@heroicons/react/24/outline';
-import GlassCard from '@whatsdex/shared/components/ui/GlassCard';
-import GlassButton from '@whatsdex/shared/components/ui/GlassButton';
 import {
-  SkeletonDashboardCard,
-  SkeletonChart,
-  SkeletonTable,
-} from '@whatsdex/shared/components/ui/Skeleton';
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { Button } from '@/components/ui/button';
+import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { Badge } from '../components/ui/badge';
-import Layout from '../components/Layout';
-import { cn } from '../lib/utils';
+import Layout from '../components/common/Layout';
+import { cn } from '@/lib/utils';
+import toast, { Toaster } from 'react-hot-toast';
+import { getSocket } from '../socket';
+import { AnimatedList } from '@/components/ui/animated-list';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { NumberTicker } from '@/components/ui/number-ticker';
 
 const getChangeTypeClass = (changeType) => {
   switch (changeType) {
@@ -74,12 +89,89 @@ const getActivityStatusConfig = (status) => {
         label: 'Unknown',
       };
   }
+
+
+export const ActivityItem = ({ activity }) => {
+  const statusConfig = getActivityStatusConfig(activity.status);
+  const StatusIcon = statusConfig.icon;
+
+  return (
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{activity.user}</CardTitle>
+        <Badge variant={statusConfig.variant} className="flex-shrink-0">
+          {statusConfig.label}
+        </Badge>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground truncate">{activity.action}</p>
+        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-500">
+          <span className="flex items-center gap-1">
+            <ClockIcon className="w-3 h-3" />
+            {activity.timestamp.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+          {activity.duration && (
+            <span className="flex items-center gap-1">
+              <BoltIcon className="w-3 h-3" />
+              {activity.duration}
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
+
+const StatCard = ({ title, value, change, changeType, icon: Icon, variant = 'default' }) => (
+  <Card className={cn('w-full', variant === 'accent' && 'bg-accent/50')}>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">
+        <NumberTicker value={value} />
+      </div>
+      {change && (
+        <p className={cn('text-xs text-muted-foreground', getChangeTypeClass(changeType))}>
+          {change} from last month
+        </p>
+      )}
+    </CardContent>
+  </Card>
+);
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleUpdateStats = (newStats) => {
+      setStats(newStats);
+    };
+
+    const handleNewActivity = (newActivity) => {
+      setRecentActivity((prevActivity) => [newActivity, ...prevActivity]);
+    };
+
+    if (socket) {
+      socket.on('update-stats', handleUpdateStats);
+      socket.on('new-activity', handleNewActivity);
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('update-stats', handleUpdateStats);
+        socket.off('new-activity', handleNewActivity);
+      }
+    };
+  }, []);
 
   // Simulate data loading
   useEffect(() => {
@@ -161,55 +253,9 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  const StatCard = ({
-    title, value, change, changeType, icon: Icon, variant = 'default',
-  }) => (
-    <GlassCard variant={variant} className="p-6" glow={variant === 'accent'}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            {title}
-          </p>
-          <motion.p
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="text-3xl font-bold text-slate-900 dark:text-white mt-2"
-          >
-            {typeof value === 'number' && value > 1000
-              ? `${(value / 1000).toFixed(1)}K`
-              : value}
-          </motion.p>
-          {change && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className={cn(
-                'flex items-center mt-2 text-sm',
-                getChangeTypeClass(changeType),
-              )}
-            >
-              {changeType === 'positive' && <ArrowUpIcon className="w-4 h-4 mr-1" />}
-              {changeType === 'negative' && <ArrowDownIcon className="w-4 h-4 mr-1" />}
-              <span>{change}</span>
-            </motion.div>
-          )}
-        </div>
-        <motion.div
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          className={cn(
-            'p-3 rounded-xl',
-            variant === 'accent'
-              ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
-              : 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600 text-slate-600 dark:text-slate-400',
-          )}
-        >
-          <Icon className="w-6 h-6" />
-        </motion.div>
-      </div>
-    </GlassCard>
-  );
+
+
+
 
   return (
     <Layout title="Dashboard">
@@ -229,203 +275,178 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {loading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <SkeletonDashboardCard key={i} />
-            ))
-          ) : (
-            <>
-              <StatCard
-                title="Total Users"
-                value={stats.totalUsers}
-                change="+12.5%"
-                changeType="positive"
-                icon={UsersIcon}
-                variant="accent"
-              />
-              <StatCard
-                title="Active Users"
-                value={stats.activeUsers}
-                change="+8.2%"
-                changeType="positive"
-                icon={SignalIcon}
-              />
-              <StatCard
-                title="AI Requests"
-                value={stats.aiRequests}
-                change="+23.1%"
-                changeType="positive"
-                icon={CpuChipIcon}
-                variant="success"
-              />
-              <StatCard
-                title="System Uptime"
-                value={`${stats.systemUptime}%`}
-                change="+0.1%"
-                changeType="positive"
-                icon={ChartBarIcon}
-              />
-            </>
-          )}
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Performance Metrics */}
-          <div className="lg:col-span-2">
-            <GlassCard className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Performance Metrics
-                </h2>
-                <GlassButton variant="ghost" size="sm">
-                  View Details
-                </GlassButton>
-              </div>
-
-              {loading ? (
-                <SkeletonChart />
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {stats.responseTime}ms
-                    </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">
-                      Avg Response Time
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {stats.cacheHitRate}%
-                    </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">
-                      Cache Hit Rate
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                      {stats.errorRate}%
-                    </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">
-                      Error Rate
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      {stats.totalCommands}
-                    </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400">
-                      Total Commands
-                    </div>
-                  </div>
-                </div>
-              )}
-            </GlassCard>
-          </div>
-
-          {/* Recent Activity */}
-          <div>
-            <GlassCard className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Recent Activity
-                </h2>
-                <GlassButton variant="ghost" size="sm">
-                  View All
-                </GlassButton>
-              </div>
-
-              <div className="space-y-4">
+        <BentoGrid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          <BentoCard className="md:col-span-2 lg:col-span-2">
+            <ChartAreaDefault />
+          </BentoCard>
+          <BentoCard>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold">Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
                 {loading ? (
-                  <SkeletonTable />
+                  <Skeleton className="h-64" />
                 ) : (
-                  <div className="space-y-3">
-                    {recentActivity.map((activity) => {
-                      const statusConfig = getActivityStatusConfig(activity.status);
-                      const StatusIcon = statusConfig.icon;
-
-                      return (
-                        <motion.div
-                          key={activity.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: activity.id * 0.1 }}
-                          className="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
-                        >
-                          <div className="flex-shrink-0 mt-1">
-                            <StatusIcon className={cn(
-                              'w-5 h-5',
-                              activity.status === 'success' && 'text-green-500',
-                              activity.status === 'error' && 'text-red-500',
-                              activity.status === 'processing' && 'text-blue-500',
-                              activity.status === 'warning' && 'text-yellow-500',
-                              activity.status === 'fast' && 'text-green-500',
-                            )} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                                {activity.user}
-                              </p>
-                              <Badge variant={statusConfig.variant} className="flex-shrink-0">
-                                {statusConfig.label}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
-                              {activity.action}
-                            </p>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-500">
-                              <span className="flex items-center gap-1">
-                                <ClockIcon className="w-3 h-3" />
-                                {activity.timestamp.toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </span>
-                              {activity.duration && (
-                                <span className="flex items-center gap-1">
-                                  <BoltIcon className="w-3 h-3" />
-                                  {activity.duration}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                  <AnimatedList>
+                    {recentActivity.map((activity) => (
+                      <ActivityItem key={activity.id} activity={activity} />
+                    ))}
+                  </AnimatedList>
                 )}
-              </div>
-            </GlassCard>
-          </div>
-        </div>
+              </CardContent>
+            </Card>
+          </BentoCard>
+          <BentoCard>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold">Global Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Globe />
+              </CardContent>
+            </Card>
+          </BentoCard>
+        </BentoGrid>
+
+                {/* Main Content Grid */}
+
+                <BentoGrid className="grid-cols-1 lg:grid-cols-3 gap-8">
+
+                  <BentoCard
+
+                    name="Performance Metrics"
+
+                    description="Detailed view of system performance over time."
+
+                    Icon={ChartBarIcon}
+
+                    href="#"
+
+                    cta="View Report"
+
+                    className="lg:col-span-2"
+
+                    background={<ChartAreaDefault />}
+
+                  />
+
+                  <BentoCard
+
+                    name="Recent Activity"
+
+                    description="Latest user interactions and system events."
+
+                    Icon={ClockIcon}
+
+                    href="#"
+
+                    cta="View All"
+
+                    className="lg:col-span-1"
+
+                    background={
+
+                      <Card>
+
+                        <CardHeader>
+
+                          <CardTitle className="text-xl font-bold">Recent Activity</CardTitle>
+
+                        </CardHeader>
+
+                        <CardContent>
+
+                          {loading ? (
+
+                            <Skeleton className="h-64" />
+
+                          ) : (
+
+                            <AnimatedList>
+
+                              {recentActivity.map((activity) => (
+
+                                <ActivityItem key={activity.id} activity={activity} />
+
+                              ))}
+
+                            </AnimatedList>
+
+                          )}
+
+                        </CardContent>
+
+                      </Card>
+
+                    }
+
+                  />
+
+                  <BentoCard
+
+                    name="Global Activity"
+
+                    description="Real-time overview of worldwide bot interactions."
+
+                    Icon={SignalIcon}
+
+                    href="#"
+
+                    cta="Explore Map"
+
+                    className="lg:col-span-2"
+
+                    background={
+
+                      <Card>
+
+                        <CardHeader>
+
+                          <CardTitle className="text-xl font-bold">Global Activity</CardTitle>
+
+                        </CardHeader>
+
+                        <CardContent>
+
+                          <Globe />
+
+                        </CardContent>
+
+                      </Card>
+
+                    }
+
+                  />
+
+                </BentoGrid>
 
         {/* Quick Actions */}
-        <GlassCard className="p-6">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <GlassButton variant="primary" className="h-20 flex-col space-y-2">
-              <CpuChipIcon className="w-6 h-6" />
-              <span>AI Settings</span>
-            </GlassButton>
-            <GlassButton variant="success" className="h-20 flex-col space-y-2">
-              <UsersIcon className="w-6 h-6" />
-              <span>Manage Users</span>
-            </GlassButton>
-            <GlassButton variant="secondary" className="h-20 flex-col space-y-2">
-              <ChartBarIcon className="w-6 h-6" />
-              <span>View Analytics</span>
-            </GlassButton>
-            <GlassButton variant="ghost" className="h-20 flex-col space-y-2">
-              <SignalIcon className="w-6 h-6" />
-              <span>System Status</span>
-            </GlassButton>
-          </div>
-        </GlassCard>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Button variant="primary" className="h-20 flex-col space-y-2">
+                <CpuChipIcon className="w-6 h-6" />
+                <span>AI Settings</span>
+              </Button>
+              <Button variant="success" className="h-20 flex-col space-y-2">
+                <UsersIcon className="w-6 h-6" />
+                <span>Manage Users</span>
+              </Button>
+              <Button variant="secondary" className="h-20 flex-col space-y-2">
+                <ChartBarIcon className="w-6 h-6" />
+                <span>View Analytics</span>
+              </Button>
+              <Button variant="ghost" className="h-20 flex-col space-y-2">
+                <SignalIcon className="w-6 h-6" />
+                <span>System Status</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

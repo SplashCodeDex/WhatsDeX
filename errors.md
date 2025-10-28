@@ -161,146 +161,50 @@ All utility functions now have proper access to required dependencies. This fixe
 
 **_new errors_**
 
-2hydration-error-info.js:63 Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+npm run dev
 
-1. You might have mismatching versions of React and the renderer (such as React DOM)
-2. You might be breaking the Rules of Hooks
-3. You might have more than one copy of React in the same app
-   See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
-   console.error @ hydration-error-info.js:63
-   window.console.error @ setup-hydration-warning.js:18
-   resolveDispatcher @ react.development.js:520
-   exports.useContext @ react.development.js:1209
-   MotionDOMComponent @ index.mjs:64
-   renderWithHooks @ react-dom.development.js:15486
-   updateForwardRef @ react-dom.development.js:19240
-   beginWork @ react-dom.development.js:21670
-   beginWork$1 @ react-dom.development.js:27460
-   performUnitOfWork @ react-dom.development.js:26591
-   workLoopSync @ react-dom.development.js:26500
-   renderRootSync @ react-dom.development.js:26468
-   performConcurrentWorkOnRoot @ react-dom.development.js:25772
-   workLoop @ scheduler.development.js:266
-   flushWork @ scheduler.development.js:239
-   performWorkUntilDeadline @ scheduler.development.js:533Understand this error
-   hydration-error-info.js:63 Warning: An error occurred during hydration. The server HTML was replaced with client content in <div>.
-   See more info here: https://nextjs.org/docs/messages/react-hydration-error
-   console.error @ hydration-error-info.js:63
-   window.console.error @ setup-hydration-warning.js:18
-   printWarning @ react-dom.development.js:86
-   error @ react-dom.development.js:60
-   errorHydratingContainer @ react-dom.development.js:11473
-   recoverFromConcurrentError @ react-dom.development.js:25880
-   performConcurrentWorkOnRoot @ react-dom.development.js:25784
-   workLoop @ scheduler.development.js:266
-   flushWork @ scheduler.development.js:239
-   performWorkUntilDeadline @ scheduler.development.js:533Understand this error
-   hydration-error-info.js:63 Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
-4. You might have mismatching versions of React and the renderer (such as React DOM)
-5. You might be breaking the Rules of Hooks
-6. You might have more than one copy of React in the same app
-   See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
-   console.error @ hydration-error-info.js:63
-   window.console.error @ setup-hydration-warning.js:18
-   resolveDispatcher @ react.development.js:520
-   exports.useContext @ react.development.js:1209
-   MotionDOMComponent @ index.mjs:64
-   renderWithHooks @ react-dom.development.js:15486
-   updateForwardRef @ react-dom.development.js:19240
-   beginWork @ react-dom.development.js:21670
-   beginWork$1 @ react-dom.development.js:27460
-   performUnitOfWork @ react-dom.development.js:26591
-   workLoopSync @ react-dom.development.js:26500
-   renderRootSync @ react-dom.development.js:26468
-   recoverFromConcurrentError @ react-dom.development.js:25884
-   performConcurrentWorkOnRoot @ react-dom.development.js:25784
-   workLoop @ scheduler.development.js:266
-   flushWork @ scheduler.development.js:239
-   performWorkUntilDeadline @ scheduler.development.js:533Understand this error
-   hydration-error-info.js:63 Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
-7. You might have mismatching versions of React and the renderer (such as React DOM)
-8. You might be breaking the Rules of Hooks
-9. You might have more than one copy of React in the same app
-   See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
-   console.error @ hydration-error-info.js:63
-   window.console.error @ setup-hydration-warning.js:18
-   resolveDispatcher @ react.development.js:520
-   exports.useContext @ react.development.js:1209
-   MotionDOMComponent @ index.mjs:64
-   renderWithHooks @ react-dom.development.js:15486
-   updateForwardRef @ react-dom.development.js:19240
-   beginWork @ react-dom.development.js:21670
-   callCallback @ react-dom.development.js:4164
-   invokeGuardedCallbackDev @ react-dom.development.js:4213
-   invokeGuardedCallback @ react-dom.development.js:4277
-   beginWork$1 @ react-dom.development.js:27485
-   performUnitOfWork @ react-dom.development.js:26591
-   workLoopSync @ react-dom.development.js:26500
-   renderRootSync @ react-dom.development.js:26468
-   recoverFromConcurrentError @ react-dom.development.js:25884
-   performConcurrentWorkOnRoot @ react-dom.development.js:25784
-   workLoop @ scheduler.development.js:266
-   flushWork @ scheduler.development.js:239
-   performWorkUntilDeadline @ scheduler.development.js:533Understand this error
-   react.development.js:1214 Uncaught TypeError: Cannot read properties of null (reading 'useContext')
-   at exports.useContext (react.development.js:1214:25)
-   at MotionDOMComponent (index.mjs:64:65)
-   at renderWithHooks (react-dom.development.js:15486:18)
-   at updateForwardRef (react-dom.development.js:19240:20)
-   at beginWork (react-dom.development.js:21670:16)
-   at HTMLUnknownElement.callCallback (react-dom.development.js:4164:14)
-   at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
-   at invokeGuardedCallback (react-dom.development.js:4277:31)
-   at beginWork$1 (react-dom.development.js:27485:7)
-   at performUnitOfWork (react-dom.development.js:26591:12)
-   at workLoopSync (react-dom.development.js:26500:5)
-   at renderRootSync (react-dom.development.js:26468:7)
-   at recoverFromConcurrentError (react-dom.development.js:25884:20)
-   at performConcurrentWorkOnRoot (react-dom.development.js:25784:22)
-   at workLoop (scheduler.development.js:266:34)
-   at flushWork (scheduler.development.js:239:14)
-   at MessagePort.performWorkUntilDeadline (scheduler.development.js:533:21)
-   exports.useContext @ react.development.js:1214
-   MotionDOMComponent @ index.mjs:64
-   renderWithHooks @ react-dom.development.js:15486
-   updateForwardRef @ react-dom.development.js:19240
-   beginWork @ react-dom.development.js:21670
-   callCallback @ react-dom.development.js:4164
-   invokeGuardedCallbackDev @ react-dom.development.js:4213
-   invokeGuardedCallback @ react-dom.development.js:4277
-   beginWork$1 @ react-dom.development.js:27485
-   performUnitOfWork @ react-dom.development.js:26591
-   workLoopSync @ react-dom.development.js:26500
-   renderRootSync @ react-dom.development.js:26468
-   recoverFromConcurrentError @ react-dom.development.js:25884
-   performConcurrentWorkOnRoot @ react-dom.development.js:25784
-   workLoop @ scheduler.development.js:266
-   flushWork @ scheduler.development.js:239
-   performWorkUntilDeadline @ scheduler.development.js:533Understand this error
-   hydration-error-info.js:63 Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
-10. You might have mismatching versions of React and the renderer (such as React DOM)
-11. You might be breaking the Rules of Hooks
-12. You might have more than one copy of React in the same app
-    See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
-    console.error @ hydration-error-info.js:63
-    window.console.error @ setup-hydration-warning.js:18
-    resolveDispatcher @ react.development.js:520
-    exports.useContext @ react.development.js:1209
-    MotionDOMComponent @ index.mjs:64
-    renderWithHooks @ react-dom.development.js:15486
-    updateForwardRef @ react-dom.development.js:19240
-    beginWork @ react-dom.development.js:21670
-    beginWork$1 @ react-dom.development.js:27460
-    performUnitOfWork @ react-dom.development.js:26591
-    workLoopSync @ react-dom.development.js:26500
-    renderRootSync @ react-dom.development.js:26468
-    recoverFromConcurrentError @ react-dom.development.js:25884
-    performConcurrentWorkOnRoot @ react-dom.development.js:25784
-    workLoop @ scheduler.development.js:266
-    flushWork @ scheduler.development.js:239
-    performWorkUntilDeadline @ scheduler.development.js:533Understand this error
-    hydration-error-info.js:63 Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
-13. You might have mismatching versions of React and the renderer (such as React DOM)
-14. You might be breaking the Rules of Hooks
-15. You might have more than one copy of React in the same app
-    See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
+> whatsdex-dashboard@1.0.0 dev
+> next dev
+
+▲ Next.js 14.2.33
+
+- Local: http://localhost:3000
+- Experiments (use with caution):
+  · optimizeCss
+  · scrollRestoration
+
+✓ Starting...
+✓ Ready in 2.7s
+○ Compiling / ...
+
+warn - Your `content` configuration includes a pattern which looks like it's accidentally matching all of `node_modules` and can cause serious performance issues.
+warn - Pattern: `..\shared\**\*.js`
+warn - See our documentation for recommendations:
+warn - https://tailwindcss.com/docs/content-configuration#pattern-recommendations
+⨯ ./pages/index.js
+Error:
+× 'import', and 'export' cannot be used outside of module code
+╭─[W:\CodeDeX\WhatsDeX\web\pages\index.js:144:1]
+144 │ </Card>
+145 │ );
+146 │
+147 │ export default function Dashboard() {
+· ──────
+148 │ const [loading, setLoading] = useState(true);
+149 │ const [stats, setStats] = useState(null);
+149 │ const [recentActivity, setRecentActivity] = useState([]);
+╰────
+
+Caused by:
+Syntax Error
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+Time 9.4673
+Time 1.2581
+Time 1.1442
+Time 0.6412
+GET / 500 in 5430ms
+Time 0.5386
+GET /.well-known/appspecific/com.chrome.devtools.json 500 in 52ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'W:\CodeDeX\WhatsDeX\web\.next\cache\webpack\client-development-fallback\0.pack.gz*' -> 'W:\CodeDeX\WhatsDeX\web\.next\cache\webpack\client-development-fallback\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'W:\CodeDeX\WhatsDeX\web\.next\cache\webpack\client-development-fallback\0.pack.gz*' -> 'W:\CodeDeX\WhatsDeX\web\.next\cache\webpack\client-development-fallback\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'W:\CodeDeX\WhatsDeX\web\.next\cache\webpack\client-development-fallback\0.pack.gz\_' -> 'W:\CodeDeX\WhatsDeX\web\.next\cache\webpack\client-development-fallback\0.pack.gz'

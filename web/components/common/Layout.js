@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bars3Icon,
@@ -12,7 +12,8 @@ import {
   CpuChipIcon,
   SignalIcon,
 } from '@heroicons/react/24/outline';
-import { cn } from '../lib/utils';
+import { cn } from '@/lib/utils';
+import { ThemeContext } from '@/contexts/ThemeContext';
 
 const getNavigationItemClass = (item, darkMode) => {
   if (item.current) {
@@ -25,9 +26,11 @@ const getNavigationItemClass = (item, darkMode) => {
     : 'text-slate-600 hover:text-slate-900 hover:bg-white/50';
 };
 
+import { CommandPalette } from './CommandPalette';
+
 const Layout = ({ children, title = 'WhatsDeX Dashboard' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useContext(ThemeContext);
   const [notifications, setNotifications] = useState([]);
 
   // Simulate new notifications
@@ -44,30 +47,6 @@ const Layout = ({ children, title = 'WhatsDeX Dashboard' }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Initialize dark mode from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
   const navigation = [
     {
       name: 'Dashboard', href: '/', icon: ChartBarIcon, current: true,
@@ -93,6 +72,7 @@ const Layout = ({ children, title = 'WhatsDeX Dashboard' }) => {
         ? 'from-slate-900 via-slate-800 to-slate-900'
         : 'from-blue-50 via-indigo-50 to-purple-50',
     )}>
+      <CommandPalette />
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className={cn(
@@ -256,6 +236,7 @@ const Layout = ({ children, title = 'WhatsDeX Dashboard' }) => {
     </div>
   );
 };
+
 
 // Sidebar Content Component
 const SidebarContent = ({ navigation, darkMode, onClose }) => (

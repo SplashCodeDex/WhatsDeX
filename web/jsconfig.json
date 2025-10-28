@@ -4,7 +4,8 @@
     "paths": {
       "@/*": ["./*"],
       "@components/*": ["../shared/components/*"],
-      "@/lib/*": ["../shared/lib/*"]
+      "@/lib/*": ["./lib/*"],
+      "@/contexts/*": ["./contexts/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
