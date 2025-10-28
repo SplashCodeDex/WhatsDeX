@@ -53,7 +53,7 @@ describe('Migrations', () => {
     process.env.DATABASE_URL = `file:${dbPath}`;
 
     // Use a fresh Prisma client instance for the migration tests
-    const { PrismaClient } = require('@prisma/client');
+    const { PrismaClient } = jest.requireActual('@prisma/client');
     testPrisma = new PrismaClient();
 
     // Ensure database file is clean
@@ -63,7 +63,10 @@ describe('Migrations', () => {
 
     // Connect and run migrations
     await testPrisma.$connect();
-    execSync(`npx prisma migrate dev --name test-migrate --schema=./prisma/schema.prisma --skip-seed --skip-generate`, { stdio: 'inherit' });
+    execSync(`npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss`, {
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: `file:${dbPath}` },
+    });
   }, 30000); // Increase timeout for migrations
 
   afterAll(async () => {

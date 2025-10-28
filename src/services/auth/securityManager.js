@@ -1,9 +1,9 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const logger = require('../../utils/logger');
 
 class SecurityManager {
-    constructor(unifiedAuth) {
-        this.unifiedAuth = unifiedAuth;
-        this.failedLoginAttempts = new Map();
+    constructor() {
         logger.info('SecurityManager initialized');
     }
 
@@ -13,15 +13,7 @@ class SecurityManager {
             return false;
         }
 
-        // TODO: Implement a more robust cryptographic verification
-        logger.info('Verifying pairing code format', { code });
-        if (!/^[\d]{12}$/.test(code)) {
-            logger.warn('Invalid pairing code format', { code });
-            await this.recordFailedLogin(userId);
-            return false;
-        }
-
-        // Placeholder for actual verification
+        // This is still a placeholder for actual code verification logic
         const isValid = true; 
 
         if (!isValid) {
@@ -31,52 +23,39 @@ class SecurityManager {
         return isValid;
     }
 
-    async cleanupExpiredSessions() {
-        logger.info('Cleaning up expired sessions');
-        const fs = require('fs').promises;
-        const path = require('path');
-        const authDir = path.resolve(__dirname, '../../../', this.unifiedAuth.config.bot.authAdapter.default.authDir);
-        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-
-        try {
-            const files = await fs.readdir(authDir);
-            for (const file of files) {
-                const filePath = path.join(authDir, file);
-                const stat = await fs.stat(filePath);
-                if (stat.mtime.getTime() < sevenDaysAgo) {
-                    await fs.unlink(filePath);
-                    logger.info(`Deleted expired session file: ${file}`);
-                }
-            }
-        } catch (error) {
-            logger.error(`Error cleaning up expired sessions: ${error.message}`);
-        }
-    }
-
     async detectAnomalies(userId) {
-        const failedAttempts = this.failedLoginAttempts.get(userId) || 0;
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const failedAttempts = await prisma.auditLog.count({
+            where: {
+                actorId: userId,
+                eventType: 'SECURITY_LOGIN_FAILURE',
+                createdAt: {
+                    gte: oneHourAgo,
+                },
+            },
+        });
+
         if (failedAttempts > 5) {
-            logger.warn(`Anomaly detected for user ${userId}: multiple failed login attempts`);
+            logger.warn(`Anomaly detected for user ${userId}: ${failedAttempts} failed login attempts in the last hour`);
             return true;
         }
         return false;
     }
 
     async recordFailedLogin(userId) {
-        const failedAttempts = (this.failedLoginAttempts.get(userId) || 0) + 1;
-        this.failedLoginAttempts.set(userId, failedAttempts);
-        setTimeout(() => {
-            this.failedLoginAttempts.delete(userId);
-        }, 60 * 60 * 1000); // Reset after 1 hour
+        await prisma.auditLog.create({
+            data: {
+                eventType: 'SECURITY_LOGIN_FAILURE',
+                actorId: userId,
+                action: 'Failed pairing code verification',
+                resource: 'authentication',
+                riskLevel: 'MEDIUM',
+            },
+        });
     }
 
     async alertSecurityIssue(issue) {
-        securityLogger.warn('Security issue detected', { issue });
-    }
-}
-
-module.exports = SecurityManager;
-      logger.warn('Security issue detected', { issue });
+        logger.warn('Security issue detected', { issue });
     }
 }
 

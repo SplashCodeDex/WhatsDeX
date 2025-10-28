@@ -1,3 +1,5 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const logger = require('../../utils/logger');
 
 class PairingCodeHandler {
@@ -6,31 +8,44 @@ class PairingCodeHandler {
         logger.info('PairingCodeHandler initialized');
     }
 
-    async getSmartPairingCode(options = {}) {
+    async getSmartPairingCode(userId, options = {}) {
         const nativeCode = await this.unifiedAuth.getPairingCode();
 
-        // Enhance with smart features
+        // Log the generation of the pairing code
+        await this.logPairingCodeEvent(userId, 'GENERATED', { codeId: nativeCode.id });
+
         return {
             ...nativeCode,
-            phonetic: this.convertToPhonetic(nativeCode.code), // Optional enhancement
-            analytics: this.trackUsage(nativeCode),
-            expiryWarning: this.calculateExpiryWarning(nativeCode)
+            phonetic: this.convertToPhonetic(nativeCode.code),
         };
     }
 
+    async validateCode(userId, codeId, code) {
+        // In a real implementation, this would involve cryptographic verification
+        const isValid = await this.unifiedAuth.verifyPairingCode(code);
+
+        const eventType = isValid ? 'VALIDATION_SUCCESS' : 'VALIDATION_FAILURE';
+        await this.logPairingCodeEvent(userId, eventType, { codeId });
+
+        return isValid;
+    }
+
+    async logPairingCodeEvent(userId, action, details = {}) {
+        await prisma.auditLog.create({
+            data: {
+                eventType: 'PAIRING_CODE_EVENT',
+                actorId: userId,
+                action: `Pairing code ${action.toLowerCase()}`,
+                resource: 'authentication',
+                details: JSON.stringify(details),
+                riskLevel: 'LOW',
+            },
+        });
+    }
+
     convertToPhonetic(code) {
-        // TODO: Implement phonetic conversion
+        // Placeholder for phonetic conversion
         return code;
-    }
-
-    trackUsage(code) {
-        // TODO: Implement usage tracking
-        return {};
-    }
-
-    calculateExpiryWarning(code) {
-        // TODO: Implement expiry warning calculation
-        return {};
     }
 }
 
