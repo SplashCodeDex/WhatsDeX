@@ -2,6 +2,7 @@
   "name": "whatsdex-dashboard",
   "version": "1.0.0",
   "description": "Modern web dashboard for WhatsDeX bot management",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",

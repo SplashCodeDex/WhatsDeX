@@ -12,6 +12,7 @@ class UnifiedSmartAuth extends EventEmitter {
         this.config = config;
         this.authState = 'disconnected';
         this.client = null;
+        this.currentQrCode = null; // Initialize currentQrCode
 
         logger.info('UnifiedSmartAuth initialized');
     }
@@ -35,6 +36,7 @@ class UnifiedSmartAuth extends EventEmitter {
             const { connection, lastDisconnect, qr } = update;
 
             if (qr) {
+                this.currentQrCode = qr; // Store the QR code
                 this.emit('qr', qr);
             }
 
@@ -66,14 +68,26 @@ class UnifiedSmartAuth extends EventEmitter {
         }
     }
 
-    async getPairingCode() {
-        // Pairing code logic needs to be implemented based on the new Baileys API
-        return null;
+    async getPairingCode(phoneNumber) {
+        if (!this.client) {
+            throw new Error('Baileys client not initialized. Call connect() first.');
+        }
+        if (!phoneNumber) {
+            throw new Error('Phone number is required to request a pairing code.');
+        }
+        // Ensure phone number is in E.164 format without '+'
+        const formattedPhoneNumber = phoneNumber.replace(/\D/g, '');
+        const code = await this.client.requestPairingCode(formattedPhoneNumber);
+        logger.info(`Requested Pairing Code: ${code}`);
+        return code;
     }
 
     async getQRCode() {
-        // QR code logic is handled by the 'qr' event
-        return null;
+        if (!this.client) {
+            throw new Error('Baileys client not initialized. Call connect() first.');
+        }
+        // Return the last received QR code, or null if not available
+        return this.currentQrCode || null;
     }
 }
 

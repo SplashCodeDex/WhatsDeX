@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const UltraSmartQRManager = require('../src/services/ultraSmartAuth');
-const SmartPairingCodeManager = require('../src/services/smartPairingCode');
+const UltraSmartQRManager = require('../src/services/auth/qrCodeHandler');
+const SmartPairingCodeManager = require('../src/services/auth/pairingCodeHandler');
 const AutoReconnectionEngine = require('../src/services/autoReconnectionEngine');
 
 // Initialize services
