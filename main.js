@@ -17,7 +17,7 @@ module.exports = async (context) => {
     } = context;
 
     const authDir = path.resolve(__dirname, config.bot.authAdapter.default.authDir);
-    const { 
+    const {
         state,
         saveCreds
     } = await useMultiFileAuthState(authDir);

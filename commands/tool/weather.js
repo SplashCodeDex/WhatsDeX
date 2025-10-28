@@ -62,6 +62,7 @@ module.exports = {
       return ctx.reply({
         text: replyText,
         footer: config.msg.footer,
+      });
     } catch (error) {
       console.error(error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
