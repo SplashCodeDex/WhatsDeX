@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   transpilePackages: ['@whatsdex/shared'],
   reactStrictMode: true,
@@ -66,6 +68,22 @@ const nextConfig = {
   // Webpack configuration
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Add custom webpack configurations here
+
+    // Fix React duplicate modules issue - Force single instance
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+      'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
+      'framer-motion': path.resolve(__dirname, 'node_modules/framer-motion'),
+    };
+
+    // Ensure shared folder uses web's React
+    config.resolve.modules = [
+      path.resolve(__dirname, 'node_modules'),
+      'node_modules'
+    ];
 
     // Optimize bundle splitting
     if (!dev && !isServer) {

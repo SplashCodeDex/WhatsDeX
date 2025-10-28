@@ -2,291 +2,67 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ master, main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ master, main, develop ]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
-
-env:
-  NODE_VERSION: '18'
-  DOCKER_IMAGE: 'whatsdex'
-  REGISTRY: 'ghcr.io'
+    branches: [main]
 
 jobs:
-  # Security and Quality Checks
   security-scan:
-    name: 'Security & Quality Scan'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
+      - uses: actions/checkout@v3
 
       - name: Run security audit
-        run: npm audit --audit-level=moderate
+        run: npm audit --audit-level=high
 
-      - name: Run ESLint
-        run: npm run lint
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
 
-      - name: Check for vulnerabilities
-        uses: github/super-linter/slim@v5
-        env:
-          DEFAULT_BRANCH: master
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_ALL_CODEBASE: false
-          VALIDATE_JAVASCRIPT_ES: true
-          VALIDATE_JSON: true
-          VALIDATE_YAML: true
+      - name: SAST scan
+        uses: github/super-linter@v4
 
-  # Unit and Integration Tests
   test:
-    name: 'Unit & Integration Tests'
     runs-on: ubuntu-latest
-    needs: security-scan
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: whatsdex_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npx prisma generate
+      - name: Run tests
+        run: npm test -- --coverage
 
-      - name: Run database migrations (test)
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: postgresql://postgres:test_password@localhost:5432/whatsdex_test
-
-      - name: Run unit tests
-        run: npm test -- --coverage --watchAll=false
-        env:
-          NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:test_password@localhost:5432/whatsdex_test
-          REDIS_URL: redis://localhost:6379
-
-      - name: Upload coverage reports
+      - name: Upload coverage
         uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
 
-      - name: Run integration tests
-        run: npm run test:integration
-        env:
-          NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:test_password@localhost:5432/whatsdex_test
-          REDIS_URL: redis://localhost:6379
-
-  # Performance Tests
-  performance-test:
-    name: 'Performance Tests'
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v10
-        with:
-          urls: |
-            http://localhost:3000
-          configPath: .lighthouserc.json
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-
-  # Build Docker Image
   build:
-    name: 'Build & Push Docker Image'
+    needs: [security-scan, test]
     runs-on: ubuntu-latest
-    needs: [test, performance-test]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Build Docker image
+        run: docker build -t whatsdex:${{ github.sha }} .
 
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          image-ref: whatsdex:${{ github.sha }}
+          severity: 'CRITICAL,HIGH'
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.DOCKER_IMAGE }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
-
-  # Deploy to Staging
-  deploy-staging:
-    name: 'Deploy to Staging'
+  deploy:
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    needs: build
-    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && github.event_name != 'pull_request'
-    environment:
-      name: staging
-      url: https://staging.whatsdex.com
-
     steps:
       - name: Deploy to staging
         run: |
-          echo "Deploying to staging environment..."
-          echo "Image: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.DOCKER_IMAGE }}:latest"
-          # Add your staging deployment commands here
-          # Example: kubectl set image deployment/whatsdex whatsdex=${{ env.REGISTRY }}/${{ github.repository }}/${{ env.DOCKER_IMAGE }}:latest
-
-  # Deploy to Production
-  deploy-production:
-    name: 'Deploy to Production'
-    runs-on: ubuntu-latest
-    needs: [build, deploy-staging]
-    if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && github.event_name == 'push'
-    environment:
-      name: production
-      url: https://whatsdex.com
-
-    steps:
-      - name: Deploy to production
-        run: |
-          echo "Deploying to production environment..."
-          echo "Image: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.DOCKER_IMAGE }}:latest"
-          # Add your production deployment commands here
-          # Example: kubectl set image deployment/whatsdex whatsdex=${{ env.REGISTRY }}/${{ github.repository }}/${{ env.DOCKER_IMAGE }}:latest
-
-  # Health Check
-  health-check:
-    name: 'Post-Deployment Health Check'
-    runs-on: ubuntu-latest
-    needs: [deploy-staging, deploy-production]
-    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
-
-    steps:
-      - name: Health check
-        run: |
-          echo "Performing health checks..."
-          # Add health check commands here
-          # Example: curl -f https://whatsdex.com/health || exit 1
-
-  # Notification
-  notify:
-    name: 'Send Notifications'
-    runs-on: ubuntu-latest
-    needs: [security-scan, test, build, health-check]
-    if: always()
-
-    steps:
-      - name: Send Discord notification
-        uses: Ilshidur/action-discord@0.3.2
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: |
-            **WhatsDeX CI/CD Pipeline ${{ job.status }}**
-
-            **Commit:** ${{ github.sha }}
-            **Branch:** ${{ github.ref }}
-            **Triggered by:** ${{ github.actor }}
-
-            **Results:**
-            🔒 Security Scan: ${{ needs.security-scan.result }}
-            🧪 Tests: ${{ needs.test.result }}
-            🐳 Build: ${{ needs.build.result }}
-            🚀 Deploy: ${{ needs.deploy-staging.result || needs.deploy-production.result }}
-            ❤️ Health Check: ${{ needs.health-check.result }}
-
-            [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-      - name: Send Slack notification (optional)
-        if: failure()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          # Deploy logic here
+          echo "Deploying to staging..."

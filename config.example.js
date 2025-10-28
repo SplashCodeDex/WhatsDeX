@@ -98,6 +98,15 @@ global.config = {
         openai: "" // OpenAI API key
     },
 
+    // AI configuration
+    ai: {
+        summarization: {
+            SUMMARIZE_THRESHOLD: 16,
+            MESSAGES_TO_SUMMARIZE: 10,
+            HISTORY_PRUNE_LENGTH: 6
+        }
+    },
+
     // Bot system
     system: {
         alwaysOnline: true, // Bot always has "online" status
