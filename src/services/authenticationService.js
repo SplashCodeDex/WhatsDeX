@@ -46,10 +46,21 @@ class AuthenticationService extends EventEmitter {
         }
     }
 
-    getAnalytics() {
-        // This will be implemented later
-        return {};
+    async getAnalytics() {
+        const totalAttempts = await prisma.authAttemptLog.count();
+        const successfulAttempts = await prisma.authAttemptLog.count({
+            where: { success: true },
+        });
+
+        return {
+            totalAttempts,
+            successfulAttempts,
+            successRate: totalAttempts > 0 ? (successfulAttempts / totalAttempts) * 100 : 0,
+        };
     }
 }
+
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 module.exports = AuthenticationService;

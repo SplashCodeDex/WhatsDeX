@@ -43,9 +43,83 @@ model User {
   moderationQueues  ModerationQueue[]
   payments          Payment[]
   adminSessions     AdminSession[]
+  menfessSessionsFrom MenfessSession[] @relation("menfessSessionFromUser")
+  menfessSessionsTo   MenfessSession[] @relation("menfessSessionToUser")
 
   @@map("users")
   @@index([lastActivity])
+}
+
+model MenfessSession {
+  id           String   @id @default(cuid())
+  fromUserId   String
+  fromUser     User     @relation("menfessSessionFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId     String
+  toUser       User     @relation("menfessSessionToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+  fakeName     String
+  startTime    DateTime @default(now())
+  expiresAt    DateTime
+  isActive     Boolean  @default(true)
+  messageCount Int      @default(0)
+
+  @@index([fromUserId, isActive])
+  @@index([toUserId, isActive])
+  @@map("menfess_sessions")
+}
+
+model GameSession {
+  id        String   @id @default(cuid())
+  gameType  String // e.g., 'tebak_bom', 'akinator', 'chess'
+  chatId    String
+  players   Json // Array of player JIDs
+  gameState Json // Game-specific data (e.g., board, scores)
+  startTime DateTime @default(now())
+  expiresAt DateTime
+  isActive  Boolean  @default(true)
+
+  @@index([chatId, isActive])
+  @@map("game_sessions")
+}
+
+model FunContent {
+  id        String   @id @default(cuid())
+  type      String   // 'quote', 'khodam', 'sifat_baik', 'sifat_buruk', 'bisakah_response', etc.
+  category  String?  // For quotes: 'motivasi', 'bijak', 'bucin'
+  content   String
+  author    String?  // For quotes
+
+  @@index([type, category])
+  @@map("fun_content")
+}
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g., 'user_jid_fun_command'
+  count     Int
+  expiresAt DateTime
+
+  @@map("rate_limits")
+}
+
+model NlpConfig {
+  id        String   @id @default(cuid())
+  type      String   // 'command_pattern', 'intent_map', 'stop_word'
+  key       String   // e.g., 'chat', 'create_image'
+  value     Json     // The actual data (keywords, commands, intent mapping)
+
+  @@unique([type, key])
+  @@map("nlp_configs")
+}
+
+model AuthAttemptLog {
+  id        String   @id @default(cuid())
+  method    String
+  success   Boolean
+  duration  Int
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("auth_attempt_logs")
 }
 
 model UserSession {

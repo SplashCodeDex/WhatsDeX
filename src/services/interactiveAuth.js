@@ -239,8 +239,8 @@ class InteractiveAuthEnhancement {
     /**
      * Display analytics information
      */
-    displayAnalytics() {
-        const analytics = this.unifiedAuth.getAnalytics();
+    async displayAnalytics() {
+        const analytics = await this.unifiedAuth.getAnalytics();
 
         console.log("\n" + "📊 UNIFIED AUTHENTICATION ANALYTICS");
         console.log("═".repeat(50));

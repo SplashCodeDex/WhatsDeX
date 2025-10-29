@@ -10,6 +10,8 @@ const enhancedDownloadersService = require('./enhancedDownloadersService');
 const menfesService = require('./menfesService');
 const mathQuizService = require('./mathQuizService');
 const textToSpeechService = require('./textToSpeechService');
+const writingService = require('./writingService');
+const multiBotService = require('./multiBotService');
 
 class ServicesManager {
     constructor() {
@@ -33,6 +35,16 @@ class ServicesManager {
             await this.initializeService('textToSpeech', async () => {
                 await textToSpeechService.initialize();
                 return textToSpeechService;
+            });
+
+            await this.initializeService('writing', async () => {
+                await writingService.initialize();
+                return writingService;
+            });
+
+            await this.initializeService('multiBot', async () => {
+                await multiBotService.initialize();
+                return multiBotService;
             });
 
             // Initialize other services
@@ -127,6 +139,24 @@ class ServicesManager {
                 console.error('Error cleaning up TTS files:', error);
             }
         }, 30 * 60 * 1000);
+
+        // Clean up writing files every 45 minutes
+        setInterval(() => {
+            try {
+                writingService.cleanupOldFiles();
+            } catch (error) {
+                console.error('Error cleaning up writing files:', error);
+            }
+        }, 45 * 60 * 1000);
+
+        // Clean up inactive multi-bots every 15 minutes
+        setInterval(() => {
+            try {
+                multiBotService.cleanupInactiveBots();
+            } catch (error) {
+                console.error('Error cleaning up multi-bots:', error);
+            }
+        }, 15 * 60 * 1000);
     }
 
     /**
@@ -161,7 +191,8 @@ class ServicesManager {
             initialized: this.initialized,
             services: Object.keys(this.services),
             activeGames: gamesService.getActiveGamesCount(),
-            activeMenfes: menfesService.getActiveSessionsCount()
+            activeMenfes: menfesService.getActiveSessionsCount(),
+            activeBots: multiBotService.getStats().activeBots
         };
     }
 }

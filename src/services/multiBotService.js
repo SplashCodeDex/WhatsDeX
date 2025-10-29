@@ -8,7 +8,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { Boom } = require('@hapi/boom');
 const NodeCache = require('node-cache');
-const { default: WAConnection, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } = require('baileys');
+const { default: WAConnection, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 
 class MultiBotService {
     constructor() {
@@ -299,29 +299,32 @@ class MultiBotService {
      * @param {string} userId - User ID
      * @param {string} operation - Operation type
      */
-    checkRateLimit(userId, operation) {
-        const key = `${userId}_${operation}`;
-        const now = Date.now();
-        const limit = this.rateLimits.get(key);
-
+    async checkRateLimit(userId, operation) {
         const limits = {
-            'create_bot': { cooldown: 300000, maxPerCooldown: 1 }, // 5 minutes, 1 bot
-            'stop_bot': { cooldown: 60000, maxPerCooldown: 3 } // 1 minute, 3 operations
+            'create_bot': { cooldown: 300000, maxPerCooldown: 1 }, // 5 minutes
+            'stop_bot': { cooldown: 60000, maxPerCooldown: 3 }, // 1 minute
         };
-
         const config = limits[operation] || { cooldown: 60000, maxPerCooldown: 1 };
 
-        if (!limit || now - limit.lastUsed > config.cooldown) {
-            this.rateLimits.set(key, { lastUsed: now, count: 1 });
+        const key = `${userId}_${operation}`;
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + config.cooldown);
+
+        const rateLimit = await prisma.rateLimit.upsert({
+            where: { key },
+            update: { count: { increment: 1 } },
+            create: { key, count: 1, expiresAt },
+        });
+
+        if (rateLimit.expiresAt < now) {
+            await prisma.rateLimit.update({
+                where: { key },
+                data: { count: 1, expiresAt },
+            });
             return true;
         }
 
-        if (limit.count >= config.maxPerCooldown) {
-            return false;
-        }
-
-        limit.count++;
-        return true;
+        return rateLimit.count <= config.maxPerCooldown;
     }
 
     /**

@@ -79,6 +79,11 @@ describe('Migrations', () => {
     delete process.env.DATABASE_URL;
   });
 
+  afterEach(async () => {
+    await testPrisma.userViolation.deleteMany();
+    await testPrisma.user.deleteMany();
+  });
+
   test('Models created after migrate', async () => {
     // Test User
     const user = await testPrisma.user.create({
@@ -88,7 +93,7 @@ describe('Migrations', () => {
 
     // Test UserViolation
     const violation = await testPrisma.userViolation.create({
-      data: { userId: user.id, violationType: 'spam' }
+      data: { userId: user.id, violationType: 'spam', reason: 'Test violation' }
     });
     expect(violation).toHaveProperty('severity', 'low');
   });
