@@ -8,7 +8,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { Boom } = require('@hapi/boom');
 const NodeCache = require('node-cache');
-const { default: WAConnection, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } = require('baileys');
+const { default: WAConnection, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const context = require('../../context');
 
 class MultiBotService {
