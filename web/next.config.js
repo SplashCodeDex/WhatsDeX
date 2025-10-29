@@ -1,17 +1,22 @@
 /** @type {import('next').NextConfig} */
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const path = require('path');
 
 const nextConfig = {
   transpilePackages: ['@whatsdex/shared'],
   reactStrictMode: true,
-  swcMinify: true,
 
   // Image optimization
   images: {
-    domains: ['localhost', 'whatsdex.com'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'whatsdex.com',
+      },
+    ],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -68,38 +73,15 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   },
 
-  // Webpack configuration
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Add custom webpack configurations here
-
-    // Fix React duplicate modules issue - Force single instance
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'react': path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
-      'react/jsx-dev-runtime': path.resolve(__dirname, 'node_modules/react/jsx-dev-runtime.js'),
-      'framer-motion': path.resolve(__dirname, 'node_modules/framer-motion'),
-    };
-
-    // Ensure shared folder uses web's React
-    config.resolve.modules = [
-      path.resolve(__dirname, 'node_modules'),
-      'node_modules'
-    ];
-
-    // Optimize bundle splitting
-    if (!dev && !isServer) {
-      config.optimization.splitChunks.chunks = 'all';
-    }
-
-    // Add support for SVG imports
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ['@svgr/webpack'],
-    });
-
-    return config;
+  // Turbopack configuration
+  turbopack: {
+    root: path.join(__dirname, '../..'), // Set the root to the monorepo root
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
   },
 
   // Build optimization
@@ -111,4 +93,4 @@ const nextConfig = {
   output: 'standalone',
 };
 
-export default nextConfig;
+module.exports = nextConfig;

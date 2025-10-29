@@ -160,3 +160,20 @@ All utility functions now have proper access to required dependencies. This fixe
 **Status:** ✅ FIXED
 
 **_new errors_**
+Based on your recent build log, the previous dependency issues have been resolved, but now you are encountering new errors related to the updated Next.js version (16.0.1). Specifically, the build failed due to an incompatibility between your next.config.js and the new default Turbopack compiler.
+New errors and warnings
+Turbopack vs. Webpack config error: The core issue is that Next.js 16 uses Turbopack as the default compiler but found a configuration hook for Webpack in your next.config.js. These two are incompatible.
+⨯ ERROR: This build is using Turbopack, with a `webpack` config and no `turbopack` config.
+swcMinify deprecated: The swcMinify option is no longer valid in Next.js 16. It is now enabled by default.
+images.domains deprecated: You need to update your image configuration to use images.remotePatterns instead of images.domains.
+Multiple lockfiles: Next.js detected multiple package-lock.json files, which can cause unexpected behavior in a monorepo setup.
+Solution: Update your next.config.js
+To resolve all these issues, you need to modify your project's next.config.js file to be compatible with Next.js 16 and its Turbopack compiler.
+Open W:\CodeDeX\WhatsDeX\web\next.config.js in your editor.
+Remove the incompatible Webpack config: Identify and delete any section that uses webpack: (config) => { ... }.
+Use turbopack: {} to silence the error: To tell Next.js to ignore the now-removed Webpack config and explicitly use Turbopack, add an empty turbopack object to your config.
+Migrate from images.domains to images.remotePatterns: Find your existing images configuration and update it to the modern format.
+Remove swcMinify: Delete the swcMinify: true or swcMinify: false entry, as it is no longer supported and is enabled by default.
+Set the Turbopack root: Add the turbopack.root option to explicitly define your workspace root, which will silence the lockfile warning.
+Example of an updated next.config.js
+Your final next.config.js might look something like this.
