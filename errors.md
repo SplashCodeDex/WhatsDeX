@@ -160,20 +160,30 @@ All utility functions now have proper access to required dependencies. This fixe
 **Status:** ✅ FIXED
 
 **_new errors_**
-Based on your recent build log, the previous dependency issues have been resolved, but now you are encountering new errors related to the updated Next.js version (16.0.1). Specifically, the build failed due to an incompatibility between your next.config.js and the new default Turbopack compiler.
-New errors and warnings
-Turbopack vs. Webpack config error: The core issue is that Next.js 16 uses Turbopack as the default compiler but found a configuration hook for Webpack in your next.config.js. These two are incompatible.
-⨯ ERROR: This build is using Turbopack, with a `webpack` config and no `turbopack` config.
-swcMinify deprecated: The swcMinify option is no longer valid in Next.js 16. It is now enabled by default.
-images.domains deprecated: You need to update your image configuration to use images.remotePatterns instead of images.domains.
-Multiple lockfiles: Next.js detected multiple package-lock.json files, which can cause unexpected behavior in a monorepo setup.
-Solution: Update your next.config.js
-To resolve all these issues, you need to modify your project's next.config.js file to be compatible with Next.js 16 and its Turbopack compiler.
-Open W:\CodeDeX\WhatsDeX\web\next.config.js in your editor.
-Remove the incompatible Webpack config: Identify and delete any section that uses webpack: (config) => { ... }.
-Use turbopack: {} to silence the error: To tell Next.js to ignore the now-removed Webpack config and explicitly use Turbopack, add an empty turbopack object to your config.
-Migrate from images.domains to images.remotePatterns: Find your existing images configuration and update it to the modern format.
-Remove swcMinify: Delete the swcMinify: true or swcMinify: false entry, as it is no longer supported and is enabled by default.
-Set the Turbopack root: Add the turbopack.root option to explicitly define your workspace root, which will silence the lockfile warning.
-Example of an updated next.config.js
-Your final next.config.js might look something like this.
+The new set of warnings and errors points to a fundamental architecture problem: you are attempting to use Node.js-specific APIs inside a Next.js Edge Middleware file. The Edge Runtime is a serverless environment that is highly optimized but does not support the full Node.js API, which includes file system access (fs, path) and process information (process.cwd, process.uptime).
+The errors show that you are trying to use Node.js APIs inside a Next.js Edge Middleware file. The Edge Runtime is a serverless environment that is optimized but does not support the full Node.js API. This includes file system access (fs, path) and process information (process.cwd, process.uptime).
+Core problem: Edge Runtime limitations
+The middleware.js file is importing several modules (WhatsDeXBrain.js, contentModeration.js, gemini.js, and auditLogger.js). The auditLogger.js file uses Node.js features that are not compatible with the Edge Runtime:
+require('winston'): A server-side logging library that writes to the file system.
+import path from 'path': The path module for file system paths.
+require('fs').promises: The fs module for file system operations.
+process.cwd(): A method to get the current working directory.
+process.uptime(): A method to get the process's uptime.
+Solution: Separate your logic
+You cannot run server-side Node.js code within the Edge Middleware. The correct architecture is to move any code that uses Node.js APIs out of the middleware and into a separate API route.
+Your middleware.js should only perform light-weight tasks that do not rely on the file system, such as checking headers, rewriting URLs, or authenticating requests.
+The audit logging, file system operations, and heavy business logic should be handled in a dedicated Next.js API route (/pages/api or a Route Handler in the app directory).
+Step-by-step fix
+Refactor your auditLogger.js service.
+Create a new API route, for example, pages/api/audit/log.js, to handle your audit logging. This API route runs in a standard Node.js environment, so it can use winston, fs, path, and process.
+The API route should expose an endpoint (e.g., /api/audit/log) that accepts a POST request with the log data.
+Inside the API route handler, you can call your auditLogger.js methods to write the logs to the file system.
+Modify your middleware.js to avoid Node.js APIs.
+Remove all import or require statements that point to Node.js-dependent modules like auditLogger.js.
+Instead of importing the auditLogger directly, make an HTTP request to your newly created API endpoint from the client side or from another part of your application. For example, if you need to log an action, you would send a fetch request to /api/audit/log with the log payload.
+Update WhatsDeXBrain.js and other services.
+Review WhatsDeXBrain.js, contentModeration.js, and gemini.js to ensure they also do not contain any direct references to Node.js APIs.
+If they do, you need to either replace those APIs with Edge-compatible alternatives or also move those services into dedicated API routes. For example, the gemini service likely makes HTTP requests, which is fine, but if it relies on file system access, it must be moved.
+Remove process.cwd() and process.uptime().
+Replace process.cwd() with a mechanism to handle paths relative to your project's structure, or pass the path explicitly.
+Replace process.uptime() with a standard JavaScript Date object or another method that does not rely on the Node.js process module.

@@ -159,43 +159,5 @@ module.exports = (bot, context) => {
     // The audit middleware focuses on command-level logging through the middleware chain
     // Additional event logging can be added to the main events/handler.js file if needed
 
-    // Log system events
-    process.on('SIGINT', async () => {
-        await auditLogger.logSystem({
-            type: 'stop',
-            uptime: process.uptime(),
-            memoryUsage: process.memoryUsage(),
-            timestamp: new Date().toISOString()
-        });
-    });
-
-    process.on('SIGTERM', async () => {
-        await auditLogger.logSystem({
-            type: 'stop',
-            uptime: process.uptime(),
-            memoryUsage: process.memoryUsage(),
-            timestamp: new Date().toISOString()
-        });
-    });
-
-    process.on('uncaughtException', async (error) => {
-        await auditLogger.logSystem({
-            type: 'error',
-            error: error.message,
-            stack: error.stack,
-            uptime: process.uptime(),
-            memoryUsage: process.memoryUsage(),
-            timestamp: new Date().toISOString()
-        });
-    });
-
-    process.on('unhandledRejection', async (reason, promise) => {
-        await auditLogger.logSystem({
-            type: 'error',
-            error: `Unhandled Rejection: ${reason}`,
-            uptime: process.uptime(),
-            memoryUsage: process.memoryUsage(),
-            timestamp: new Date().toISOString()
-        });
-    });
+    // System event logging should be handled in a separate, non-Edge-compatible service.
 };

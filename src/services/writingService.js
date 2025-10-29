@@ -4,7 +4,7 @@
  */
 
 const fs = require('fs').promises;
-const path = require('path');
+import path from 'path';
 const { spawn } = require('child_process');
 const context = require('../../context');
 

@@ -1,6 +1,11 @@
-/** @type {import('next').NextConfig} */
-const path = require('path');
+// Add these lines at the top of your file
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@whatsdex/shared'],
   reactStrictMode: true,
@@ -75,7 +80,7 @@ const nextConfig = {
 
   // Turbopack configuration
   turbopack: {
-    root: path.join(__dirname, '../..'), // Set the root to the monorepo root
+    root: join(__dirname, '../..'),
     rules: {
       '*.svg': {
         loaders: ['@svgr/webpack'],
@@ -93,4 +98,4 @@ const nextConfig = {
   output: 'standalone',
 };
 
-module.exports = nextConfig;
+export default nextConfig;

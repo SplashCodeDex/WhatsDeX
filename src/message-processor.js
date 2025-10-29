@@ -1,4 +1,4 @@
-const path = require('path');
+import path from 'path';
 const fs = require('fs');
 const util = require('util');
 const context = require('../context'); // Import the context module

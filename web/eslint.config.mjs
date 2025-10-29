@@ -1,0 +1,92 @@
+import { defineConfig } from "eslint/config";
+import globals from "globals";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import js from "@eslint/js";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({
+    baseDirectory: __dirname,
+    recommendedConfig: js.configs.recommended,
+    allConfig: js.configs.all
+});
+
+export default defineConfig([{
+    extends: compat.extends("next/core-web-vitals"),
+
+    languageOptions: {
+        globals: {
+            ...globals.browser,
+            ...globals.node,
+        },
+
+        ecmaVersion: 2020,
+        sourceType: "module",
+
+        parserOptions: {
+            ecmaFeatures: {
+                jsx: true,
+            },
+        },
+    },
+
+    settings: {
+        react: {
+            version: "detect",
+        },
+
+        "import/resolver": {
+            typescript: {
+                alwaysTryTypes: true,
+                project: "./tsconfig.json",
+            },
+        },
+    },
+
+    rules: {
+        "import/extensions": "off",
+        "import/no-unresolved": "error",
+
+        "import/no-extraneous-dependencies": ["error", {
+            devDependencies: true,
+            optionalDependencies: false,
+            peerDependencies: false,
+        }],
+
+        "import/no-relative-packages": "off",
+        "no-use-before-define": "error",
+        "no-unsafe-optional-chaining": "off",
+        "max-len": "off",
+        "no-unused-vars": "error",
+        "react-hooks/exhaustive-deps": "error",
+        "no-promise-executor-return": "off",
+        "no-alert": "error",
+        "no-nested-ternary": "error",
+        "@next/next/no-img-element": "off",
+        "no-shadow": "error",
+        "react/display-name": "off",
+        "import/prefer-default-export": "off",
+        "no-console": "warn",
+        "prefer-template": "error",
+        "no-plusplus": "off",
+        "no-return-assign": "off",
+        "no-undef": "error",
+        "no-bitwise": "off",
+        "no-restricted-properties": "off",
+        "operator-linebreak": "off",
+        "comma-dangle": "off",
+        "arrow-parens": "off",
+        "consistent-return": "off",
+        "no-restricted-syntax": "off",
+        "no-prototype-builtins": "off",
+        "eol-last": "off",
+        "linebreak-style": "off",
+        quotes: "off",
+        indent: "off",
+        "object-curly-newline": "off",
+        "arrow-body-style": "off",
+        "react/jsx-no-undef": "error",
+    },
+}]);

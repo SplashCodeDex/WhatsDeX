@@ -50,7 +50,7 @@ class AutoReconnectionEngine extends EventEmitter {
   async loadLearningData() {
     try {
       const fs = require('fs').promises;
-      const path = require('path');
+      import path from 'path';
       const learningFile = path.join(__dirname, '../../.whatsdex-reconnection-learning.json');
       const data = await fs.readFile(learningFile, 'utf8');
       this.learningData = { ...this.learningData, ...JSON.parse(data) };
@@ -66,7 +66,7 @@ class AutoReconnectionEngine extends EventEmitter {
   async saveLearningData() {
     try {
       const fs = require('fs').promises;
-      const path = require('path');
+      import path from 'path';
       const learningFile = path.join(__dirname, '../../.whatsdex-reconnection-learning.json');
       await fs.writeFile(learningFile, JSON.stringify(this.learningData, null, 2));
     } catch (error) {

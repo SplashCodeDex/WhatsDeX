@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const AIChat = require('./models/AIChat');
-const path = require('path');
+import path from 'path';
 const logger = require('../src/utils/logger');
 // Use a more robust path and handle missing config for tests
 let config;

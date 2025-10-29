@@ -259,6 +259,5 @@ module.exports = (bot, context) => {
         await next(); // Continue to the next process
     });
 
-    // Initialize audit middleware
-    auditMiddleware(bot, context);
+
 };

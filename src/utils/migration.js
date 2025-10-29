@@ -1,7 +1,7 @@
 const DatabaseService = require('../services/database');
 const logger = require('./logger');
 const fs = require('fs').promises;
-const path = require('path');
+import path from 'path';
 
 class MigrationService {
   constructor() {

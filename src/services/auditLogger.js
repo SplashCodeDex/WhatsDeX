@@ -1,5 +1,5 @@
 const winston = require('winston');
-const path = require('path');
+import path from 'path';
 const fs = require('fs').promises;
 
 class AuditLogger {

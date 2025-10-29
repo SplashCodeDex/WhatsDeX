@@ -23,7 +23,7 @@ class InteractiveAuthEnhancement {
             console.log('🔍 Detecting existing authenticated session...');
 
             const fs = require('fs').promises;
-            const path = require('path');
+            import path from 'path';
             const statePath = path.join(__dirname, '../../state');
             const credsPath = path.join(statePath, 'creds.json');
 

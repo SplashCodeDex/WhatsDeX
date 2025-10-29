@@ -5,7 +5,7 @@
 
 const { spawn } = require('child_process');
 const fs = require('fs').promises;
-const path = require('path');
+import path from 'path';
 const { Boom } = require('@hapi/boom');
 const NodeCache = require('node-cache');
 const { default: WAConnection, useMultiFileAuthState, Browsers, DisconnectReason, makeCacheableSignalKeyStore, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');

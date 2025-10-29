@@ -1,6 +1,6 @@
 const Bull = require('bull');
 const { createClient } = require('redis');
-const path = require('path');
+import path from 'path';
 
 const redisClient = createClient({
     username: process.env.REDIS_USERNAME || 'default',

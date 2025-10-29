@@ -12,6 +12,8 @@
     "export": "next export"
   },
   "dependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.38.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
@@ -25,6 +27,7 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-table": "^8.21.3",
+    "@upstash/redis": "^1.35.6",
     "@whatsdex/shared": "file:../shared",
     "axios": "^1.13.1",
     "beasties": "^0.3.5",
@@ -33,6 +36,7 @@
     "cmdk": "^1.1.1",
     "cobe": "^0.6.5",
     "framer-motion": "^12.23.24",
+    "globals": "^16.4.0",
     "lucide-react": "^0.548.0",
     "motion": "^12.23.24",
     "next": "^16.0.1",

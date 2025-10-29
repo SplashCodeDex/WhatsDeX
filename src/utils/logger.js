@@ -1,5 +1,5 @@
 const winston = require('winston');
-const path = require('path');
+import path from 'path';
 
 // Define log levels
 const levels = {

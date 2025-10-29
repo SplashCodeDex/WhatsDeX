@@ -22,7 +22,7 @@ class SecurityManager {
         }
 
         // Placeholder for actual verification
-        const isValid = true; 
+        const isValid = true;
 
         if (!isValid) {
             await this.recordFailedLogin(userId);
@@ -34,7 +34,7 @@ class SecurityManager {
     async cleanupExpiredSessions() {
         logger.info('Cleaning up expired sessions');
         const fs = require('fs').promises;
-        const path = require('path');
+        import path from 'path';
         const authDir = path.resolve(__dirname, '../../../', this.unifiedAuth.config.bot.authAdapter.default.authDir);
         const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 

@@ -6,7 +6,7 @@
  */
 
 const { spawn } = require('child_process');
-const path = require('path');
+import path from 'path';
 
 class SimpleLauncher {
   constructor() {
