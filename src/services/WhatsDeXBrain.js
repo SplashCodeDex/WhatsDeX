@@ -104,7 +104,7 @@ class WhatsDeXBrain {
    */
   async getConversationMemoryDB(userId) {
     try {
-      const context = require('../context');
+      const context = require('../../context');
       const memory = await context.database.ConversationMemory.findMany({
         where: { userId },
         orderBy: { lastUpdated: 'desc' },

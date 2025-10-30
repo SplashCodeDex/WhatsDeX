@@ -47,7 +47,7 @@ const getChangeTypeClass = (changeType) => {
     case 'negative':
       return 'text-red-600 dark:text-red-400';
     default:
-      return 'text-slate-600 dark:text-slate-400';
+      return 'text-secondary-600 dark:text-secondary-400';
   }
 };
 
@@ -107,7 +107,7 @@ export const ActivityItem = ({ activity }) => {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground truncate">{activity.action}</p>
-        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-500">
+        <div className="flex items-center gap-3 mt-1 text-xs text-secondary-500 dark:text-secondary-500">
           <span className="flex items-center gap-1">
             <ClockIcon className="w-3 h-3" />
             {activity.timestamp.toLocaleTimeString([], {
@@ -268,10 +268,10 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+          <h1 className="text-4xl font-bold text-secondary-900 dark:text-white mb-2">
             Welcome to <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">WhatsDeX</span>
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400">
+          <p className="text-lg text-secondary-600 dark:text-secondary-400">
             Your AI-powered WhatsApp bot management dashboard
           </p>
         </motion.div>

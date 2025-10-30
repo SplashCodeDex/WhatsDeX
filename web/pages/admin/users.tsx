@@ -49,7 +49,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import withAuth from '../../components/withAuth';
+import withAuth from '../../components/common/withAuth';
 
 interface User {
   id: string;

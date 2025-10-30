@@ -1,5 +1,5 @@
 const { getJid, getSender, getGroup } = require('./baileysUtils');
-const { Cooldown } = require('../middleware/cooldown'); // Assuming Cooldown is a class
+const { Cooldown } = require('../middleware/cooldown.js'); // Re-adding the import
 const moment = require('moment-timezone'); // Assuming moment-timezone is used
 
 const createBotContext = async (botInstance, rawBaileysMessage, originalContext, requestInfo = {}) => {
@@ -10,6 +10,9 @@ const createBotContext = async (botInstance, rawBaileysMessage, originalContext,
     const isGroup = rawBaileysMessage.key.remoteJid.endsWith('@g.us');
     const groupJid = getGroup(rawBaileysMessage);
     const groupId = getGroup(rawBaileysMessage);
+
+    // Instantiate Cooldown
+    const cooldown = new Cooldown(); // New: Instantiate Cooldown
 
     // Simulate ctx.reply
     const reply = async (content) => {
@@ -111,6 +114,7 @@ const createBotContext = async (botInstance, rawBaileysMessage, originalContext,
         replyReact: replyReact,
         simulateTyping: simulateTyping,
         used: used,
+        cooldown: cooldown, // New: Add cooldown instance to ctx
         // Add other properties as needed based on your middleware's usage
         ip: requestInfo.ip || 'unknown',
         userAgent: requestInfo.userAgent || 'WhatsApp',

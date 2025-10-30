@@ -18,7 +18,7 @@ import {
 import { motion } from 'framer-motion';
 import UserManagement from './users';
 
-import withAuth from '../../components/withAuth';
+import withAuth from '../../components/common/withAuth';
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');

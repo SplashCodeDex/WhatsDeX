@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
-import withAuth from '../../components/withAuth';
+import withAuth from '../../components/common/withAuth';
 
 function AnalyticsPage() {
   const [analytics, setAnalytics] = useState({});

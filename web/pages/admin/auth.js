@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import io from 'socket.io-client';
-import withAuth from '../../components/withAuth';
+import withAuth from '../../components/common/withAuth';
 
 function AuthPage() {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');

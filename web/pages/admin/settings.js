@@ -21,7 +21,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import withAuth from '../../components/withAuth';
+import withAuth from '../../components/common/withAuth';
 
 const SystemSettings = () => {
   const [settings, setSettings] = useState({});
