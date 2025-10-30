@@ -52,5 +52,5 @@ Dockerfile.*.tmp
 # Test & Coverage Reports
 coverage/
 
-.gemini/
+
 gha-creds-*.json
