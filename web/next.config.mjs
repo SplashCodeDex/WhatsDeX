@@ -33,6 +33,9 @@ const nextConfig = {
     scrollRestoration: true,
   },
 
+  // Server external packages
+  serverExternalPackages: ['sharp'],
+
   // Headers for security and performance
   async headers() {
     return [

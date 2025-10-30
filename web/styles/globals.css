@@ -42,16 +42,29 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-800;
+    background-color: #f1f5f9;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background-color: #1e293b;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-secondary-300 dark:bg-secondary-600 rounded-full;
+    background-color: #cbd5e1;
+    border-radius: 9999px;
     transition: background-color 0.2s ease;
   }
 
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: #475569;
+  }
+
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-secondary-400 dark:bg-secondary-500;
+    background-color: #94a3b8;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b;
   }
 
   /* Focus styles */
@@ -181,7 +194,7 @@
   }
 
   .btn-ghost {
-    @apply bg-transparent text-secondary-600 dark:text-secondary-400 font-medium px-6 py-3 rounded-xl border border-white/20 dark:border-secondary-700/50 hover:bg-white/10 dark:hover:bg-secondary-700/30 transition-all duration-300 hover:scale-105 active:scale-95;
+    @apply bg-transparent text-slate-600 dark:text-slate-400 font-medium px-6 py-3 rounded-xl border border-white/20 dark:border-slate-700/50 hover:bg-white/5 dark:hover:bg-slate-700/20 transition-all duration-300 hover:scale-105 active:scale-95;
   }
 }
 

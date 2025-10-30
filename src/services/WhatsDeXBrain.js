@@ -126,7 +126,7 @@ class WhatsDeXBrain {
    */
   async updateConversationMemoryDB(userId, userMessage, aiResponse) {
     try {
-      const context = require('../context');
+      const context = require('../../context');
       const memory = await this.getConversationMemoryDB(userId);
       memory.push(`User: ${userMessage}`);
       memory.push(`AI: ${aiResponse}`);
