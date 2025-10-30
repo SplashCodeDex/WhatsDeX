@@ -5,6 +5,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const { Boom } = require('@hapi/boom');
 const { useRedisAuthState } = require('baileys-redis-auth');
+const { Queue } = require('bullmq'); // Import Queue from bullmq
 
 // Load environment variables
 dotenv.config();
@@ -14,10 +15,23 @@ app.use(express.json());
 
 let bot;
 
+// Initialize BullMQ Queue
+// IMPORTANT: BullMQ requires a direct Redis connection (ioredis compatible),
+// not the REST API URL/TOKEN used by @upstash/redis.
+// You will need to get the REDIS_HOST, REDIS_PORT, and REDIS_PASSWORD for direct connection from Upstash.
+const messageQueue = new Queue('whatsapp-messages', {
+    connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        password: process.env.REDIS_PASSWORD,
+        tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+    }
+});
+
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useRedisAuthState({
-        host: process.env.UPSTASH_REDIS_REST_URL,
-        password: process.env.UPSTASH_REDIS_REST_TOKEN,
+        host: process.env.UPSTASH_REDIS_REST_URL, // This is for baileys-redis-auth
+        password: process.env.UPSTASH_REDIS_REST_TOKEN, // This is for baileys-redis-auth
     }, 'whatsapp-session');
 
     bot = makeWASocket({
@@ -44,22 +58,16 @@ async function connectToWhatsApp() {
         }
     });
 
-    // Webhook to push messages to Next.js API
+    // Add messages to BullMQ queue
     bot.ev.on('messages.upsert', async (m) => {
         const msg = m.messages[0];
         if (!msg.message) return;
 
         try {
-            await fetch(`${process.env.NEXT_JS_WEBHOOK_URL}/api/bot-message`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.WEBHOOK_SECRET}`
-                },
-                body: JSON.stringify(msg),
-            });
+            await messageQueue.add('incoming-whatsapp-message', { msg });
+            console.log('Message added to queue:', msg.key.id);
         } catch (error) {
-            console.error('Failed to send webhook to Next.js:', error);
+            console.error('Failed to add message to queue:', error);
         }
     });
 
