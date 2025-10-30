@@ -213,7 +213,7 @@
   }
 
   .shadow-neon {
-    box-shadow: 0 0 5px theme(colors.blue.500), 0 0 10px theme(colors.blue.500), 0 0 15px theme(colors.blue.500);
+    box-shadow: 0 0 5px theme(colors.primary.500), 0 0 10px theme(colors.primary.500), 0 0 15px theme(colors.primary.500);
   }
 
   .border-glass {
@@ -264,8 +264,8 @@
 }
 
 @keyframes glow {
-  from { box-shadow: 0 0 5px theme(colors.blue.500); }
-  to { box-shadow: 0 0 20px theme(colors.blue.500), 0 0 30px theme(colors.blue.500); }
+  from { box-shadow: 0 0 5px theme(colors.primary.500); }
+  to { box-shadow: 0 0 20px theme(colors.primary.500), 0 0 30px theme(colors.primary.500); }
 }
 
 /* Responsive design utilities */
