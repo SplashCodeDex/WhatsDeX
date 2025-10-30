@@ -23,9 +23,9 @@ RUN addgroup -g 1001 -S backup \
 
 USER backup
 
-# Health check
+# Health check (Improved: checks if the script is executable and present)
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD echo "Backup service is running"
+    CMD test -x /usr/local/bin/backup.sh || exit 1
 
 # Default command
 CMD ["/usr/local/bin/backup.sh"]

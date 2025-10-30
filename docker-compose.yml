@@ -1,248 +1,103 @@
 version: '3.8'
 
 services:
-  # Main WhatsApp Bot Application
-  whatsdex:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: whatsdex-bot
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://whatsdex:whatsdex_password@postgres:5432/whatsdex
-      - REDIS_URL=redis://redis:6379
-      - PORT=3000
-      - WEBSOCKET_PORT=8080
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - GOOGLE_CLOUD_API_KEY=${GOOGLE_CLOUD_API_KEY}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
-    ports:
-      - "3000:3000"
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./uploads:/app/uploads
-      - ./logs:/app/logs
-      - ./database.json:/app/database.json
-    networks:
-      - whatsdex-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
   # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: whatsdex-postgres
-    restart: unless-stopped
+  db:
+    image: postgres:16-alpine
+    restart: always
     environment:
-      - POSTGRES_DB=whatsdex
-      - POSTGRES_USER=whatsdex
-      - POSTGRES_PASSWORD=whatsdex_password
+      POSTGRES_DB: ${DB_NAME:-whatsdex}
+      POSTGRES_USER: ${DB_USER:-whatsdex}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-whatsdex}
+    volumes:
+      - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./prisma/migrations:/docker-entrypoint-initdb.d
-    networks:
-      - whatsdex-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U whatsdex -d whatsdex"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-whatsdex} -d ${DB_NAME:-whatsdex}"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
-  # Redis Cache & Session Store
+  # Redis Cache and Queue
   redis:
     image: redis:7-alpine
-    container_name: whatsdex-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
-    networks:
-      - whatsdex-network
+    ports:
+      - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
       timeout: 5s
       retries: 5
-    command: redis-server --appendonly yes
 
-  # Web Dashboard (Next.js)
-  dashboard:
+  # WhatsDeX Bot Service
+  bot-service:
     build:
-      context: .
+      context: ./whatsdex-bot-service
       dockerfile: Dockerfile
-    container_name: whatsdex-dashboard
-    restart: unless-stopped
-    environment:
-      - NEXT_PUBLIC_API_URL=http://whatsdex:3000
-      - NEXT_PUBLIC_WS_URL=ws://whatsdex:8080
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=http://localhost:3001
-    ports:
-      - "3001:3000"
-    depends_on:
-      - whatsdex
-    networks:
-      - whatsdex-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Admin Panel (Required)
-  admin:
-    build:
-      context: .
-      dockerfile: Dockerfile.admin
-    container_name: whatsdex-admin
-    restart: unless-stopped
-    environment:
-      - API_URL=http://admin-backend:3001
-      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
-    ports:
-      - "3002:3000"
-    depends_on:
-      - admin-backend
-    networks:
-      - whatsdex-network
-
-  # Admin Backend (Express + Socket.IO) - Required
-  admin-backend:
-    build: .
-    command: node server.js
-    container_name: whatsdex-admin-backend
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
-      - ADMIN_PORT=3001
-      - DATABASE_URL=postgresql://whatsdex:whatsdex_password@postgres:5432/whatsdex
+    restart: always
+    env_file:
+      - ./whatsdex-bot-service/.env
     ports:
       - "3001:3001"
     depends_on:
-      postgres:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"] # Assuming a health check endpoint
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Next.js Web Application
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./web/.env.local
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - whatsdex-network
-    # For scaling: docker-compose up --scale admin-backend=2 (ports auto 3001, 3002)
+      bot-service:
+        condition: service_started # Only needs bot-service to be started, not necessarily healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"] # Assuming a health check endpoint
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Monitoring & Logging (Grafana + Prometheus) - Required
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: whatsdex-prometheus
-    restart: unless-stopped
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    networks:
-      - whatsdex-network
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: whatsdex-grafana
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    ports:
-      - "3003:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
-    depends_on:
-      - prometheus
-    networks:
-      - whatsdex-network
-
-  # Load Balancer (Nginx) - Required
-  nginx:
-    image: nginx:alpine
-    container_name: whatsdex-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
-      - nginx_logs:/var/log/nginx
-    depends_on:
-      - whatsdex
-      - dashboard
-    networks:
-      - whatsdex-network
-
-  # Backup Service - Required
-  backup:
+  # BullMQ Worker for Next.js
+  worker:
     build:
-      context: .
-      dockerfile: Dockerfile.backup
-    container_name: whatsdex-backup
-    restart: unless-stopped
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=whatsdex
-      - POSTGRES_USER=whatsdex
-      - POSTGRES_PASSWORD=whatsdex_password
-      - BACKUP_SCHEDULE=0 2 * * *
-      - BACKUP_RETENTION_DAYS=30
-    volumes:
-      - backup_data:/backups
+      context: ./web
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./web/.env.local
+    command: node worker.js # Command to run the worker script
     depends_on:
-      - postgres
-    networks:
-      - whatsdex-network
-
-  # Development Database (for local development)
-  postgres-dev:
-    image: postgres:15-alpine
-    container_name: whatsdex-postgres-dev
-    restart: unless-stopped
-    environment:
-      - POSTGRES_DB=whatsdex_dev
-      - POSTGRES_USER=whatsdex
-      - POSTGRES_PASSWORD=whatsdex_password
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
-    networks:
-      - whatsdex-network
-    profiles:
-      - dev
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'node worker.js' || exit 1"] # Check if worker process is running
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  postgres_data:
-  postgres_dev_data:
+  db_data:
   redis_data:
-  grafana_data:
-  prometheus_data:
-  backup_data:
-  nginx_logs:
-
-networks:
-  whatsdex-network:
-    driver: bridge
