@@ -1,30 +1,68 @@
-Renaming Middleware to Proxy
-Why This Error Occurred
-You are using the middleware file convention, which is deprecated and has been renamed to proxy.
+npm run dev
 
-Migration to Proxy
-Why the Change
-The reason behind the renaming of middleware is that the term "middleware" can often be confused with Express.js middleware, leading to a misinterpretation of its purpose. Also, Middleware is highly capable, so it may encourage the usage; however, this feature is recommended to be used as a last resort.
+> whatsdex-dashboard@1.0.0 dev
+> next dev
 
-Next.js is moving forward to provide better APIs with better ergonomics so that developers can achieve their goals without Middleware. This is the reason behind the renaming of middleware.
+▲ Next.js 16.0.1 (Turbopack)
 
-Why "Proxy"
-The name Proxy clarifies what Middleware is capable of. The term "proxy" implies that it has a network boundary in front of the app, which is the behavior of Middleware. Also, Middleware defaults to run at the Edge Runtime, which can run closer to the client, separated from the app's region. These behaviors align better with the term "proxy" and provide a clearer purpose of the feature.
+- Local: http://localhost:3000
+- Network: http://10.213.143.111:3000
+- Environments: .env.local, .env
+- Experiments (use with caution):
+  ✓ optimizeCss
+  ✓ scrollRestoration
 
-How to Migrate
-We recommend users avoid relying on Middleware unless no other options exist. Our goal is to give them APIs with better ergonomics so they can achieve their goals without Middleware.
+✓ Starting...
+✓ Ready in 1701ms
+Error: Could not resolve value for theme function: `theme(colors.primary.500)`. Consider checking if the path is correct or provide a fallback value to silence this error.
+[at Object.co [as theme] (W:\CodeDeX\WhatsDeX\node*modules\tailwindcss\dist\lib.js:13:4834)]
+[at W:\CodeDeX\WhatsDeX\node_modules\tailwindcss\dist\lib.js:13:5515]
+[at Tr (W:\CodeDeX\WhatsDeX\node_modules\tailwindcss\dist\lib.js:3:1718)]
+[at * (W:\CodeDeX\WhatsDeX\node*modules\tailwindcss\dist\lib.js:3:1377)]
+[at Hr (W:\CodeDeX\WhatsDeX\node_modules\tailwindcss\dist\lib.js:13:5407)]
+[at W:\CodeDeX\WhatsDeX\node_modules\tailwindcss\dist\lib.js:13:5179]
+[at Tr (W:\CodeDeX\WhatsDeX\node_modules\tailwindcss\dist\lib.js:3:1718)]
+[at * (W:\CodeDeX\WhatsDeX\node_modules\tailwindcss\dist\lib.js:3:1377)]
+[at je (W:\CodeDeX\WhatsDeX\node_modules\tailwindcss\dist\lib.js:13:5104)]
+[at ln (W:\CodeDeX\WhatsDeX\node_modules\tailwindcss\dist\lib.js:38:283)]
+○ Compiling / ...
+ReferenceError: ChartAreaDefault is not defined
+at Dashboard (pages\index.js:280:14)
+278 | <BentoGrid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+279 | <BentoCard className="md:col-span-2 lg:col-span-2">
 
-The term “middleware” often confuses users with Express.js middleware, which can encourage misuse. To clarify our direction, we are renaming the file convention to “proxy.” This highlights that we are moving away from Middleware, breaking down its overloaded features, and making the Proxy clear in its purpose.
+> 280 | <ChartAreaDefault />
 
-Next.js provides a codemod to migrate from middleware.ts to proxy.ts. You can run the following command to migrate:
+      |              ^
 
-npx @next/codemod@canary middleware-to-proxy .
-The codemod will rename the file and the function name from middleware to proxy.
+281 | </BentoCard>
+282 | <BentoCard>
+283 | <Card>
+⨯ ReferenceError: ChartAreaDefault is not defined
+at Dashboard (pages\index.js:280:14)
+278 | <BentoGrid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+279 | <BentoCard className="md:col-span-2 lg:col-span-2">
 
-// middleware.ts -> proxy.ts
+> 280 | <ChartAreaDefault />
 
-- export function middleware() {
+      |              ^
 
-* export function proxy() {
+281 | </BentoCard>
+282 | <BentoCard>
+283 | <Card>
+⨯ ReferenceError: ChartAreaDefault is not defined
+at Dashboard (pages\index.js:280:14)
+278 | <BentoGrid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+279 | <BentoCard className="md:col-span-2 lg:col-span-2">
 
-The Next.js codemod for middleware-to-proxy failed on your pages/index.js file with an Unexpected token syntax error. The error report indicates that the Babel parser, used by jscodeshift, encountered an invalid character or syntax at line 454, column 0.
+> 280 | <ChartAreaDefault />
+
+      |              ^
+
+281 | </BentoCard>
+282 | <BentoCard>
+283 | <Card> {
+page: '/'
+}
+Merging inline stylesheets into a single <style> tag skipped, no inline stylesheets to merge
+Time 17.896
