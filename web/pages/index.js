@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useToast } from '../hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import {
   ChartBarIcon,
   UsersIcon,
@@ -29,14 +29,16 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
-import { Badge } from '../components/ui/badge';
-import Layout from '../components/common/Layout';
+import { ChartAreaInteractive } from '@/components/ui/shadcn-io/area-chart-01';
+import { Badge } from '@/components/ui/badge';
+import Layout from '@/components/common/Layout';
 import { cn } from '@/lib/utils';
 import toast, { Toaster } from 'react-hot-toast';
-import { getSocket } from '../socket';
+import { getSocket } from '@/socket';
 import { AnimatedList } from '@/components/ui/animated-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NumberTicker } from '@/components/ui/number-ticker';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const getChangeTypeClass = (changeType) => {
   switch (changeType) {
@@ -277,7 +279,7 @@ export default function Dashboard() {
         {/* Stats Grid */}
         <BentoGrid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           <BentoCard className="md:col-span-2 lg:col-span-2">
-            <ChartAreaDefault />
+            <ChartAreaInteractive />
           </BentoCard>
           <BentoCard>
             <Card>
@@ -294,16 +296,6 @@ export default function Dashboard() {
                     ))}
                   </AnimatedList>
                 )}
-              </CardContent>
-            </Card>
-          </BentoCard>
-          <BentoCard>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-bold">Global Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Globe />
               </CardContent>
             </Card>
           </BentoCard>
@@ -327,7 +319,7 @@ export default function Dashboard() {
 
                     className="lg:col-span-2"
 
-                    background={<ChartAreaDefault />}
+                    background={<ChartAreaInteractive />}
 
                   />
 
@@ -382,43 +374,6 @@ export default function Dashboard() {
                     }
 
                   />
-
-                  <BentoCard
-
-                    name="Global Activity"
-
-                    description="Real-time overview of worldwide bot interactions."
-
-                    Icon={SignalIcon}
-
-                    href="#"
-
-                    cta="Explore Map"
-
-                    className="lg:col-span-2"
-
-                    background={
-
-                      <Card>
-
-                        <CardHeader>
-
-                          <CardTitle className="text-xl font-bold">Global Activity</CardTitle>
-
-                        </CardHeader>
-
-                        <CardContent>
-
-                          <Globe />
-
-                        </CardContent>
-
-                      </Card>
-
-                    }
-
-                  />
-
                 </BentoGrid>
 
         {/* Quick Actions */}

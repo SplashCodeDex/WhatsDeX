@@ -33,7 +33,7 @@
 
   /* Selection styles */
   ::selection {
-    @apply bg-blue-500/20 text-blue-900 dark:text-blue-100;
+    @apply bg-primary/20 text-primary-foreground;
   }
 
   /* Scrollbar styles */
@@ -57,7 +57,7 @@
 
   /* Focus styles */
   *:focus-visible {
-    @apply outline-none ring-2 ring-blue-500/50 ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
   }
 }
 
@@ -166,7 +166,7 @@
 
   /* Button variants */
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium px-6 py-3 rounded-xl shadow-glass hover:shadow-neon transition-all duration-300 hover:scale-105 active:scale-95;
+    @apply bg-gradient-to-r from-primary to-purple-600 text-white font-medium px-6 py-3 rounded-xl shadow-glass hover:shadow-neon transition-all duration-300 hover:scale-105 active:scale-95;
   }
 
   .btn-secondary {
@@ -217,7 +217,7 @@
   }
 
   .shadow-neon {
-    box-shadow: 0 0 5px theme(colors.primary.500), 0 0 10px theme(colors.primary.500), 0 0 15px theme(colors.primary.500);
+    box-shadow: 0 0 5px theme(colors.primary), 0 0 10px theme(colors.primary), 0 0 15px theme(colors.primary);
   }
 
   .border-glass {
@@ -268,8 +268,8 @@
 }
 
 @keyframes glow {
-  from { box-shadow: 0 0 5px theme(colors.primary.500); }
-  to { box-shadow: 0 0 20px theme(colors.primary.500), 0 0 30px theme(colors.primary.500); }
+  from { box-shadow: 0 0 5px theme(colors.primary); }
+  to { box-shadow: 0 0 20px theme(colors.primary), 0 0 30px theme(colors.primary); }
 }
 
 /* Responsive design utilities */

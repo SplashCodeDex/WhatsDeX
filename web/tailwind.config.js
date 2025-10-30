@@ -104,7 +104,7 @@ module.exports = {
   			glass: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
   			'glass-sm': '0 4px 16px 0 rgba(31, 38, 135, 0.2)',
   			'glass-lg': '0 16px 64px 0 rgba(31, 38, 135, 0.5)',
-  			neon: '0 0 5px theme(colors.primary.500), 0 0 10px theme(colors.primary.500), 0 0 15px theme(colors.primary.500)'
+  			neon: '0 0 5px theme(colors.primary), 0 0 10px theme(colors.primary), 0 0 15px theme(colors.primary)'
   		},
   		borderRadius: {
   			'4xl': '2rem',
