@@ -55,3 +55,4 @@ coverage/
 .gemini/
 gha-creds-*.json
 .gemini/settings.json
+.gemini/settings.json
