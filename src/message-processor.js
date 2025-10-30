@@ -2,6 +2,7 @@ import path from 'path';
 const fs = require('fs');
 const util = require('util');
 const context = require('../context'); // Import the context module
+const MetaAIService = require('./src/services/metaAI');
 
 // Load all commands dynamically
 const commands = new Map();
@@ -40,6 +41,7 @@ module.exports = async (job) => {
     }
 
     const { config, formatter, database, tools } = context;
+    const metaAI = new MetaAIService(process.env.META_AI_KEY);
 
     const messageType = msg.type || Object.keys(msg.message || {})[0];
     let text = '';
@@ -65,6 +67,40 @@ module.exports = async (job) => {
         }
     }
     console.log('message-processor: Extracted text:', text);
+
+    // Handle voice messages for transcription
+    if (messageType === 'audioMessage') {
+        try {
+            const audioBuffer = msg.message.audioMessage; // Assuming buffer is available
+            const transcript = await metaAI.transcribeVoice(audioBuffer);
+            console.log('message-processor: Voice transcript:', transcript);
+
+            // Create context for voice message
+            const ctx = {
+                reply: async (content) => {
+                    const messageContent = typeof content === 'string' ? { text: content } : content;
+                    return await bot.sendMessage(msg.key.remoteJid, messageContent);
+                },
+                bot: {
+                    context: { config, formatter, database, tools },
+                },
+                sender: { jid: msg.key.participant || msg.key.remoteJid, pushName: msg.pushName },
+                id: msg.key.id,
+                isGroup: msg.key.remoteJid.endsWith('@g.us'),
+                transcript: transcript,
+                msg: msg,
+                getId: (jid) => jid.split('@')[0],
+            };
+
+            // Generate AI response based on transcript
+            const aiResponse = await metaAI.generateReply(`Respond to this voice message transcript: "${transcript}"`);
+            await ctx.reply(`Voice transcript: "${transcript}"\n\nAI Response: ${aiResponse}`);
+            return;
+        } catch (error) {
+            console.error('Voice processing error:', error);
+            return;
+        }
+    }
 
     // Early skip for non-text types to reduce noise
     const textTypes = ['conversation', 'extendedTextMessage', 'imageMessage', 'videoMessage', 'buttonsMessage', 'protocolMessage'];

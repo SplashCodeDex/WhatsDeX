@@ -1,6 +1,6 @@
- // Enums not supported in SQLite; use String with code validation
- // Status values: "PENDING", "APPROVED", "REJECTED", "EXPIRED", "CANCELLED"
- // RiskLevel values: "LOW", "MEDIUM", "HIGH", "CRITICAL"
+// Enums not supported in SQLite; use String with code validation
+// Status values: "PENDING", "APPROVED", "REJECTED", "EXPIRED", "CANCELLED"
+// RiskLevel values: "LOW", "MEDIUM", "HIGH", "CRITICAL"
 
 // Prisma schema for WhatsDeX enhanced database
 generator client {
@@ -14,51 +14,53 @@ datasource db {
 
 // User management
 model User {
-  id                String   @id @default(cuid())
-  jid               String   @unique
-  name              String?
-  phone             String?
-  email             String?
-  avatar            String?
-  xp                Int      @default(0)
-  level             Int      @default(1)
-  coin              Int      @default(0)
-  premium           Boolean  @default(false)
-  premiumExpiry     DateTime?
-  banned            Boolean  @default(false)
-  banReason         String?
-  lastActivity      DateTime @default(now()) // Add index for queries
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id            String    @id @default(cuid())
+  jid           String    @unique
+  name          String?
+  phone         String?
+  email         String?
+  avatar        String?
+  xp            Int       @default(0)
+  level         Int       @default(1)
+  coin          Int       @default(0)
+  premium       Boolean   @default(false)
+  premiumExpiry DateTime?
+  banned        Boolean   @default(false)
+  banReason     String?
+  lastActivity  DateTime  @default(now()) // Add index for queries
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relations
-  sessions          UserSession[]
-  commands          CommandUsage[]
-  groups            UserGroup[]
-  menfessFrom       Menfess[] @relation("menfessFromUser")
-  menfessTo         Menfess[] @relation("menfessToUser")
-  feedback          Feedback[]
-  subscriptions     Subscription[]
-  violations        UserViolation[]
-  moderationQueues  ModerationQueue[]
-  payments          Payment[]
-  adminSessions     AdminSession[]
+  sessions           UserSession[]
+  commands           CommandUsage[]
+  groups             UserGroup[]
+  menfessFrom        Menfess[]            @relation("menfessFromUser")
+  menfessTo          Menfess[]            @relation("menfessToUser")
+  feedback           Feedback[]
+  subscriptions      Subscription[]
+  violations         UserViolation[]
+  moderationQueues   ModerationQueue[]
+  payments           Payment[]
+  adminSessions      AdminSession[]
+  ConversationMemory ConversationMemory[]
+  AIGeneratedContent AIGeneratedContent[]
 
-  @@map("users")
   @@index([lastActivity])
+  @@map("users")
 }
 
 model UserSession {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId   String   @unique
-  ipAddress   String?
-  userAgent   String?
-  platform    String?
-  startedAt   DateTime @default(now())
-  endedAt     DateTime?
-  duration    Int? // in seconds
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String    @unique
+  ipAddress String?
+  userAgent String?
+  platform  String?
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  duration  Int? // in seconds
 
   @@map("user_sessions")
 }
@@ -78,65 +80,65 @@ model CommandUsage {
 }
 
 model Group {
-  id              String   @id @default(cuid())
-  jid             String   @unique
-  name            String?
-  description     String?
-  avatar          String?
-  ownerJid        String?
-  memberCount     Int      @default(0)
-  maxMembers      Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  jid         String   @unique
+  name        String?
+  description String?
+  avatar      String?
+  ownerJid    String?
+  memberCount Int      @default(0)
+  maxMembers  Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  users           UserGroup[]
-  settings        GroupSetting[]
-  menfess         Menfess[]
+  users    UserGroup[]
+  settings GroupSetting[]
+  menfess  Menfess[]
 
   @@map("groups")
 }
 
 model UserGroup {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  groupId   String
-  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  role      String   @default("member") // member, admin, owner
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId  String
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role     String   @default("member") // member, admin, owner
+  joinedAt DateTime @default(now())
 
   @@unique([userId, groupId])
   @@map("user_groups")
 }
 
 model GroupSetting {
-  id              String  @id @default(cuid())
-  groupId         String
-  group           Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  settingKey      String
-  settingValue    String
-  updatedBy       String
-  updatedAt       DateTime @updatedAt
+  id           String   @id @default(cuid())
+  groupId      String
+  group        Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  settingKey   String
+  settingValue String
+  updatedBy    String
+  updatedAt    DateTime @updatedAt
 
   @@unique([groupId, settingKey])
   @@map("group_settings")
 }
 
 model Menfess {
-  id          String   @id @default(cuid())
-  fromUserId  String
-  fromUser    User     @relation("menfessFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
-  toGroupId   String?
-  toGroup     Group?   @relation(fields: [toGroupId], references: [id], onDelete: Cascade)
-  toUserId    String?
-  toUser      User?    @relation("menfessToUser", fields: [toUserId], references: [id], onDelete: Cascade)
-  message     String
-  mediaUrl    String?
-  mediaType   String?
-  sentAt      DateTime @default(now())
-  delivered   Boolean  @default(false)
-  read        Boolean  @default(false)
+  id         String   @id @default(cuid())
+  fromUserId String
+  fromUser   User     @relation("menfessFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toGroupId  String?
+  toGroup    Group?   @relation(fields: [toGroupId], references: [id], onDelete: Cascade)
+  toUserId   String?
+  toUser     User?    @relation("menfessToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+  message    String
+  mediaUrl   String?
+  mediaType  String?
+  sentAt     DateTime @default(now())
+  delivered  Boolean  @default(false)
+  read       Boolean  @default(false)
 
   @@map("menfess")
 }
@@ -154,35 +156,35 @@ model BotSetting {
 }
 
 model Feedback {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String // bug, feature, general
-  subject     String
-  message     String
-  rating      Int? // 1-5 stars
-  status      String   @default("pending") // pending, reviewed, resolved
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // bug, feature, general
+  subject   String
+  message   String
+  rating    Int? // 1-5 stars
+  status    String   @default("pending") // pending, reviewed, resolved
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("feedback")
 }
 
 model Subscription {
-  id                String            @id @default(cuid())
-  userId            String
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planId            String
-  plan              SubscriptionPlan  @relation(fields: [planId], references: [id])
-  status            String            @default("active") // active, cancelled, expired
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId             String
+  plan               SubscriptionPlan @relation(fields: [planId], references: [id])
+  status             String           @default("active") // active, cancelled, expired
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
-  cancelAtPeriodEnd Boolean           @default(false)
+  cancelAtPeriodEnd  Boolean          @default(false)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
-  @@map("subscriptions")
   @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
 }
 
 model SubscriptionPlan {
@@ -220,26 +222,26 @@ model Payment {
 }
 
 model ApiKey {
-  id          String   @id @default(cuid())
-  name        String
-  key         String   @unique
-  service     String // openai, stripe, etc.
-  isActive    Boolean  @default(true)
-  createdBy   String
-  createdAt   DateTime @default(now())
-  lastUsed    DateTime?
-  expiresAt   DateTime?
+  id        String    @id @default(cuid())
+  name      String
+  key       String    @unique
+  service   String // openai, stripe, etc.
+  isActive  Boolean   @default(true)
+  createdBy String
+  createdAt DateTime  @default(now())
+  lastUsed  DateTime?
+  expiresAt DateTime?
 
   @@map("api_keys")
 }
 
 model Analytics {
-  id          String   @id @default(cuid())
-  metric      String
-  value       Float
-  category    String
-  metadata    String? // JSON metadata
-  recordedAt  DateTime @default(now())
+  id         String   @id @default(cuid())
+  metric     String
+  value      Float
+  category   String
+  metadata   String? // JSON metadata
+  recordedAt DateTime @default(now())
 
   @@map("analytics")
 }
@@ -262,40 +264,40 @@ model Plugin {
 }
 
 model ErrorLog {
-  id          String   @id @default(cuid())
-  level       String // error, warn, info
-  message     String
-  stack       String?
-  userId      String?
-  command     String?
-  metadata    String? // JSON metadata
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  level     String // error, warn, info
+  message   String
+  stack     String?
+  userId    String?
+  command   String?
+  metadata  String? // JSON metadata
+  createdAt DateTime @default(now())
 
   @@map("error_logs")
 }
 
 // Audit logging for compliance and security
 model AuditLog {
-  id          String   @id @default(cuid())
-  eventType   String // Event type (user_login, admin_action, etc.)
-  actor       String // Who performed the action
-  actorId     String? // User ID of the actor
-  action      String // Description of the action
-  resource    String // Resource affected (user, system, payment, etc.)
-  resourceId  String? // ID of the affected resource
-  details     String? // JSON details of the event
-  riskLevel   String   @default("low") // low, medium, high, critical (String for SQLite)
-  ipAddress   String? // IP address of the actor
-  userAgent   String? // User agent string
-  sessionId   String? // Session ID
-  location    String? // Geographic location
-  metadata    String? // Additional JSON metadata
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  eventType  String // Event type (user_login, admin_action, etc.)
+  actor      String // Who performed the action
+  actorId    String? // User ID of the actor
+  action     String // Description of the action
+  resource   String // Resource affected (user, system, payment, etc.)
+  resourceId String? // ID of the affected resource
+  details    String? // JSON details of the event
+  riskLevel  String   @default("low") // low, medium, high, critical (String for SQLite)
+  ipAddress  String? // IP address of the actor
+  userAgent  String? // User agent string
+  sessionId  String? // Session ID
+  location   String? // Geographic location
+  metadata   String? // Additional JSON metadata
+  createdAt  DateTime @default(now())
 
-  @@map("audit_logs")
   @@index([createdAt])
   @@index([actor])
   @@index([eventType])
+  @@map("audit_logs")
 }
 
 // User violations and moderation history
@@ -303,13 +305,13 @@ model UserViolation {
   id            String    @id @default(cuid())
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  violationType String    // hate_speech, violence, spam, harassment
+  violationType String // hate_speech, violence, spam, harassment
   severity      String    @default("low") // low, medium, high, critical (String for SQLite)
   reason        String
-  evidence      String?   // JSON evidence data
+  evidence      String? // JSON evidence data
   moderatorId   String?
-  action        String    // warn, ban, delete, none
-  duration      Int?      // ban duration in hours
+  action        String // warn, ban, delete, none
+  duration      Int? // ban duration in hours
   status        String    @default("pending") // pending, active, expired, appealed (String for SQLite)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -317,66 +319,92 @@ model UserViolation {
 
   @@index([userId, createdAt])
   @@index([violationType, severity])
-
   @@map("user_violations")
 }
 
 // System configuration settings
 model SystemSetting {
-  id            String   @id @default(cuid())
-  category      String   // general, security, api, database, email
-  key           String
-  value         String
-  valueType     String   @default("string") // string, number, boolean, json
-  description   String?
-  isEncrypted   Boolean  @default(false)
+  id              String   @id @default(cuid())
+  category        String // general, security, api, database, email
+  key             String
+  value           String
+  valueType       String   @default("string") // string, number, boolean, json
+  description     String?
+  isEncrypted     Boolean  @default(false)
   validationRules String? // JSON validation rules
-  updatedBy     String
-  updatedAt     DateTime @updatedAt
+  updatedBy       String
+  updatedAt       DateTime @updatedAt
 
   @@unique([category, key])
   @@index([category, updatedAt])
-
   @@map("system_settings")
 }
 
 // Moderation queue for manual review
 model ModerationQueue {
-  id            String   @id @default(cuid())
-  contentType   String   // message, image, file, profile
-  contentId     String
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  content       String
-  metadata      String?  // JSON metadata
-  priority      String   @default("normal") // low, normal, high, urgent
-  status        String   @default("pending") // pending, approved, rejected, escalated (String for SQLite)
-  moderatorId   String?
-  reviewedAt    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String    @id @default(cuid())
+  contentType String // message, image, file, profile
+  contentId   String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  metadata    String? // JSON metadata
+  priority    String    @default("normal") // low, normal, high, urgent
+  status      String    @default("pending") // pending, approved, rejected, escalated (String for SQLite)
+  moderatorId String?
+  reviewedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([status, priority])
   @@index([createdAt])
-
   @@map("moderation_queue")
 }
 
 // Admin user sessions
 model AdminSession {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId     String   @unique
-  ipAddress     String?
-  userAgent     String?
-  deviceInfo    String?  // JSON device information
-  lastActivity  DateTime @default(now())
-  expiresAt     DateTime
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId    String   @unique
+  ipAddress    String?
+  userAgent    String?
+  deviceInfo   String? // JSON device information
+  lastActivity DateTime @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
 
   @@index([userId, expiresAt])
   @@index([sessionId])
-
   @@map("admin_sessions")
+}
+
+// Conversation memory for AI chatbots
+model ConversationMemory {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String? // Optional session grouping
+  messages    String // JSON array of message exchanges
+  lastUpdated DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@index([userId, lastUpdated])
+  @@index([sessionId])
+  @@map("conversation_memory")
+}
+
+// AI-generated content storage
+model AIGeneratedContent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // image, text, voice_transcript, etc.
+  prompt    String
+  content   String // URL for images, text for responses
+  metadata  String? // JSON metadata
+  createdAt DateTime @default(now())
+
+  @@index([userId, type, createdAt])
+  @@map("ai_generated_content")
 }

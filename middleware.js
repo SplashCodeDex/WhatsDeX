@@ -155,7 +155,7 @@ module.exports = (bot, context) => {
                     await database.user.update(senderId, { lastSentMsg: { ...userDb.lastSentMsg, [key]: now } });
                     return await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`The next response will be an emoji reaction ${formatter.inlineCode(reaction)}.`),
+                        footer: formatter.italic(`The next response will be an emoji reaction ${formatter.inlineCode(reaction)}. `),
                         buttons: buttons || null
                     });
                 } else {
@@ -246,7 +246,7 @@ module.exports = (bot, context) => {
                     await database.user.update(senderId, { lastSentMsg: { ...userDb.lastSentMsg, [key]: now } });
                     return await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(`The next response will be an emoji reaction ${formatter.inlineCode(reaction)}.`),
+                        footer: formatter.italic(`The next response will be an emoji reaction ${formatter.inlineCode(reaction)}. `),
                         buttons: buttons || null
                     });
                 } else {
@@ -259,5 +259,6 @@ module.exports = (bot, context) => {
         await next(); // Continue to the next process
     });
 
-
+    // Initialize audit middleware
+    auditMiddleware(bot, context);
 };
