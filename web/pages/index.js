@@ -89,7 +89,7 @@ const getActivityStatusConfig = (status) => {
         label: 'Unknown',
       };
   }
-
+};
 
 export const ActivityItem = ({ activity }) => {
   const statusConfig = getActivityStatusConfig(activity.status);
