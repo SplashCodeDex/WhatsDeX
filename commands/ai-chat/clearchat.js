@@ -6,7 +6,6 @@ module.exports = {
     coin: 0,
   },
   code: async (ctx) => {
-        const { formatter } = ctx.bot.context;
     const { database, formatter } = ctx.bot.context;
     const userId = ctx.author.id;
 

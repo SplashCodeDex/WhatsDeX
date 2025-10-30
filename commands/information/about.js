@@ -4,8 +4,6 @@ module.exports = {
     category: "information",
     code: async (ctx) => {
         const { formatter, tools, config, database: db } = ctx.bot.context;
-        const { config, tools } = ctx.bot.context;
-        const { db, formatter } = ctx.bot.context;
         try {
             const botDb = await db.get("bot") || {};
 

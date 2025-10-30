@@ -76,8 +76,3 @@ class SecurityManager {
 }
 
 module.exports = SecurityManager;
-      logger.warn('Security issue detected', { issue });
-    }
-}
-
-module.exports = SecurityManager;

@@ -5,7 +5,6 @@ module.exports = {
     aliases: ["allmenu", "help", "list", "listmenu"],
     category: "main",
     code: async (ctx) => {
-        const { formatter, tools, config } = ctx.bot.context;
         const { config, formatter, tools, state } = ctx.self.context;
         try {
             const {
