@@ -69,7 +69,7 @@ describe('claim command', () => {
 
     // Assert
     expect(ctx.reply).toHaveBeenCalledWith(
-      '❎ Invalid option: expected one of "daily"|\"weekly\"|\"monthly\"|\"yearly\"'
+      '❎ Invalid option: expected one of "daily"|"weekly"|"monthly"|"yearly"'
     );
     expect(db.set).not.toHaveBeenCalled();
   });
@@ -125,7 +125,7 @@ describe('claim command', () => {
 
     // Assert
     expect(ctx.reply).toHaveBeenCalledWith({
-      text: expect.stringContaining('daily (Hadiah harian)'),
+      text: expect.stringContaining('daily (Daily reward)'),
       footer: 'test-footer',
     });
   });

@@ -1,4 +1,5 @@
 const transferCommand = require('../../../commands/profile/transfer.js');
+const { db } = require('../../../src/utils');
 
 describe('transfer command', () => {
   let ctx;

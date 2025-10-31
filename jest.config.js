@@ -1,7 +1,12 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
-  transformIgnorePatterns: ['/node_modules/(?!(playwright)/)'],
+  transform: {
+    '^.+\\.jsx?$': 'babel-jest'  // ADD THIS
+  },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(playwright|@google/generative-ai)/)'  // Transform ESM packages
+  ],
   collectCoverageFrom: [
     'commands/**/*.js',
     'middleware/**/*.js',

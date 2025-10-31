@@ -1,5 +1,6 @@
 const z = require('zod');
 const { convertMsToDuration } = require('../../utils/formatters');
+const { db } = require('../../src/utils');
 
 // List of available claim rewards
 const claimRewards = {

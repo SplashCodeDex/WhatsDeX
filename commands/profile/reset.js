@@ -1,3 +1,5 @@
+const { db, collector } = require('../../src/utils');
+
 module.exports = {
   name: 'reset',
   category: 'profile',

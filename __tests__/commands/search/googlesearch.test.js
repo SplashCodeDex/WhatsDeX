@@ -58,8 +58,8 @@ describe('googlesearch command', () => {
     // Assert
     expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('http://mockapi.com'));
     const replyText = ctx.reply.mock.calls[0][0].text;
-    expect(replyText).toContain('Judul: Haddaway - What Is Love');
-    expect(replyText).toContain('Judul: What Is Love? - Wikipedia');
+    expect(replyText).toContain('Title: Haddaway - What Is Love');
+    expect(replyText).toContain('Title: What Is Love? - Wikipedia');
   });
 
   it('should reply with an error for an empty query', async () => {

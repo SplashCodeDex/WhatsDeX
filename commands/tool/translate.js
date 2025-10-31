@@ -26,7 +26,7 @@ module.exports = {
         const listText = response.data
           .map(
             lang =>
-              `${formatter.quote(`Code: ${lang.code}`)}\n${formatter.quote(`Language: ${lang.language}`)}`
+              `${formatter.quote(`Language Code: ${lang.code}`)}\n${formatter.quote(`Language: ${lang.language}`)}`
           )
           .join(`\n${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
         return ctx.reply({ text: listText, footer: config.msg.footer });

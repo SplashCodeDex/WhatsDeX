@@ -67,9 +67,9 @@ describe('translate command', () => {
     // Assert
     expect(axios.get).toHaveBeenCalledWith('http://mockapi.com/langlist');
     const replyText = ctx.reply.mock.calls[0][0].text;
-    expect(replyText).toContain('Kode: en');
-    expect(replyText).toContain('Bahasa: English');
-    expect(replyText).toContain('Kode: id');
+    expect(replyText).toContain('Language Code: en');
+    expect(replyText).toContain('Language: English');
+    expect(replyText).toContain('Language Code: id');
   });
 
   it('should reply with an error if no text is provided', async () => {

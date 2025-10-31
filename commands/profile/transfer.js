@@ -1,4 +1,5 @@
 const z = require('zod');
+const { db } = require('../../src/utils');
 
 module.exports = {
   name: 'transfer',
