@@ -28,9 +28,10 @@ const nextConfig = {
   },
 
   // Experimental features
-  experimental: {
-    esmExternals: 'loose',
-  },
+  // experimental: {
+  //   optimizeCss: true,
+  //   scrollRestoration: true,
+  // },
 
   // Server external packages
   // serverExternalPackages: ['sharp'],
