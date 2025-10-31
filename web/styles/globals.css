@@ -152,7 +152,7 @@
   }
 
   .interactive-subtle {
-    @apply transition-all duration-200 hover:scale-102 active:scale-98;
+    @apply transition-all duration-200 hover:scale-105 active:scale-95;
   }
 
   /* Status indicators */

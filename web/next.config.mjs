@@ -28,10 +28,11 @@ const nextConfig = {
   },
 
   // Experimental features
-  // experimental: {
-  //   optimizeCss: true,
-  //   scrollRestoration: true,
-  // },
+  experimental: {
+    esmExternals: 'loose', // This is often the key fix for Baileys
+    // optimizeCss: true,
+    // scrollRestoration: true,
+  },
 
   // Server external packages
   // serverExternalPackages: ['sharp'],
