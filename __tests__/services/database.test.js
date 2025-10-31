@@ -62,10 +62,17 @@ describe('Migrations', () => {
 
     // Connect and run migrations
     await testPrisma.$connect();
-    execSync(
-      `npx prisma migrate dev --name test-migrate --schema=./prisma/schema.prisma --skip-seed --skip-generate`,
-      { stdio: 'inherit' }
-    );
+    try {
+      execSync(
+        `npx prisma migrate dev --name test-migrate --schema=./prisma/schema.prisma --skip-seed --skip-generate`,
+        { stdio: 'inherit' }
+      );
+    } catch (error) {
+      console.error('Migration failed:', error);
+      throw error;
+    }
+    await testPrisma.$disconnect();
+    await testPrisma.$connect();
   }, 30000); // Increase timeout for migrations
 
   afterAll(async () => {
