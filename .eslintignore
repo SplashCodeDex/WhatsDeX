@@ -1,0 +1,24 @@
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Dependencies
+node_modules/
+
+# Cache and temp files
+.cache/
+*.log
+.env
+.env.*
+
+# Generated files
+coverage/
+*.tsbuildinfo
+
+# Prisma
+prisma/migrations/
+
+# Config files that should be .cjs
+.prettierrc.js
