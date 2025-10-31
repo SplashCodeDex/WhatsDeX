@@ -1,38 +1,22 @@
-// Make sure the mock includes everything expected by the DatabaseService constructor
-const mockPrisma = {
-  user: {
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    count: jest.fn(),
-    upsert: jest.fn(),
+jest.mock('../../../src/utils', () => ({
+  db: {
+    get: jest.fn(),
+    add: jest.fn(),
+    subtract: jest.fn(),
   },
-  $connect: jest.fn(),
-  $disconnect: jest.fn(),
-  $on: jest.fn(), // <--- This is the key addition to fix the TypeError
-  $use: jest.fn(),
-  $queryRaw: jest.fn(),
-};
-
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn(() => mockPrisma),
 }));
 
-const transferCommand = require('../../../commands/profile/transfer.js');</search>
-</search_and_replace>
+const transferCommand = require('../../../commands/profile/transfer.js');
+const { db } = require('../../../src/utils');
 
 describe('transfer command', () => {
   let ctx;
 
   beforeEach(() => {
-    // Mock the global db object used by the command
-    global.db = {
-      get: jest.fn(),
-      add: jest.fn(),
-      subtract: jest.fn(),
-    };
+    // Reset mocks before each test
+    db.get.mockReset();
+    db.add.mockReset();
+    db.subtract.mockReset();
 
     ctx = {
       args: [],
@@ -94,9 +78,7 @@ describe('transfer command', () => {
     await transferCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith(
-      '❎ Invalid amount: Invalid input: expected number, received NaN'
-    );
+    expect(ctx.reply).toHaveBeenCalledWith('❎ Invalid amount: The amount must be a number.');
     expect(db.add).not.toHaveBeenCalled();
   });
 

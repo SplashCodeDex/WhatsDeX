@@ -23,7 +23,7 @@ class ApplicationError extends Error {
       message: this.message,
       statusCode: this.statusCode,
       details: this.details,
-      timestamp: this.timestamp
+      timestamp: this.timestamp,
     };
   }
 }
@@ -65,9 +65,7 @@ class AuthorizationError extends ApplicationError {
  */
 class NotFoundError extends ApplicationError {
   constructor(resource = 'Resource', id = null) {
-    const message = id
-      ? `${resource} with ID '${id}' not found`
-      : `${resource} not found`;
+    const message = id ? `${resource} with ID '${id}' not found` : `${resource} not found`;
     super(message, 404, { resource, id });
   }
 }
@@ -136,7 +134,7 @@ class CommandError extends ApplicationError {
   constructor(commandName, reason, statusCode = 400) {
     super(`Command '${commandName}' failed: ${reason}`, statusCode, {
       commandName,
-      reason
+      reason,
     });
   }
 }
@@ -177,7 +175,7 @@ function errorHandler(err, req, res, next) {
     path: req.path,
     method: req.method,
     timestamp: new Date().toISOString(),
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 
   // Handle Prisma errors
@@ -185,7 +183,7 @@ function errorHandler(err, req, res, next) {
     return res.status(500).json({
       error: 'DatabaseError',
       message: 'Database operation failed',
-      statusCode: 500
+      statusCode: 500,
     });
   }
 
@@ -195,7 +193,7 @@ function errorHandler(err, req, res, next) {
       error: 'ValidationError',
       message: 'Invalid input data',
       errors: err.array(),
-      statusCode: 400
+      statusCode: 400,
     });
   }
 
@@ -207,10 +205,8 @@ function errorHandler(err, req, res, next) {
   // Handle unknown errors
   res.status(500).json({
     error: 'InternalServerError',
-    message: process.env.NODE_ENV === 'development'
-      ? err.message
-      : 'An unexpected error occurred',
-    statusCode: 500
+    message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred',
+    statusCode: 500,
   });
 }
 
@@ -238,7 +234,7 @@ function formatWhatsAppError(error) {
     ExternalAPIError: '🌐',
     CommandError: '❌',
     MediaProcessingError: '🎬',
-    ContentModerationError: '🛡️'
+    ContentModerationError: '🛡️',
   };
 
   const icon = emoji[error.name] || '❗';
@@ -267,5 +263,5 @@ module.exports = {
   asyncHandler,
 
   // Utilities
-  formatWhatsAppError
+  formatWhatsAppError,
 };

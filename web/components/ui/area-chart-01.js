@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export const description = "An interactive area chart"
+export const description = "An interactive area chart";
 
 const chartData = [
   { date: "2024-04-01", desktop: 222, mobile: 150 },
@@ -127,9 +127,9 @@ const chartConfig = {
     label: "Mobile",
     color: "var(--chart-2)",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-export function ChartAreaDefault() {
+export default function ChartAreaDefault() {
   const [timeRange, setTimeRange] = React.useState("90d")
 
   const filteredData = chartData.filter((item) => {

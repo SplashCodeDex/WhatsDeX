@@ -2,10 +2,10 @@
 module.exports = {
   testEnvironment: 'node',
   transform: {
-    '^.+\\.jsx?$': 'babel-jest'  // ADD THIS
+    '^.+\\.(js|jsx|mjs)$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!(playwright|@google/generative-ai)/)'  // Transform ESM packages
+    '/node_modules/(?!(playwright|@google/generative-ai)/)', // Transform ESM packages
   ],
   collectCoverageFrom: [
     'commands/**/*.js',

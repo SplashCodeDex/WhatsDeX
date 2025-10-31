@@ -1,9 +1,5 @@
-// Add these lines at the top of your file
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+/* eslint-env node */
+/* global process, __dirname */
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

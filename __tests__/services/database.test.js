@@ -51,20 +51,14 @@ describe('DatabaseService', () => {
 
 describe('Migrations', () => {
   let testPrisma;
-  const dbPath = './test.db';
 
   beforeAll(async () => {
-    // Set a test database URL
-    process.env.DATABASE_URL = `file:${dbPath}`;
+    // Set a test database URL for PostgreSQL
+    process.env.DATABASE_URL = 'postgresql://postgres:password@localhost:5432/testdb?schema=public';
 
     // Use a fresh Prisma client instance for the migration tests
     const { PrismaClient } = require('@prisma/client');
     testPrisma = new PrismaClient();
-
-    // Ensure database file is clean
-    if (fs.existsSync(dbPath)) {
-      fs.unlinkSync(dbPath);
-    }
 
     // Connect and run migrations
     await testPrisma.$connect();
@@ -76,10 +70,6 @@ describe('Migrations', () => {
 
   afterAll(async () => {
     await testPrisma.$disconnect();
-    // Clean up the test database file
-    if (fs.existsSync(dbPath)) {
-      fs.unlinkSync(dbPath);
-    }
     // Restore the default DATABASE_URL to prevent side effects
     delete process.env.DATABASE_URL;
   });
@@ -89,6 +79,8 @@ describe('Migrations', () => {
     const user = await testPrisma.user.create({
       data: { name: 'test', jid: 'testuser@s.whatsapp.net' },
     });
+    console.log('Created user:', user); // Debug check
+    expect(user).toBeDefined(); // Debug check
     expect(user).toHaveProperty('id');
 
     // Test UserViolation

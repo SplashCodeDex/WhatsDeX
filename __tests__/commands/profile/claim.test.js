@@ -1,5 +1,13 @@
 const claimCommand = require('../../../commands/profile/claim.js');
 const formatters = require('../../../utils/formatters');
+const { db } = require('../../../src/utils');
+
+jest.mock('../../../src/utils', () => ({
+  db: {
+    get: jest.fn(),
+    set: jest.fn(),
+  },
+}));
 
 jest.mock('../../../utils/formatters', () => ({
   convertMsToDuration: jest.fn(ms => `${ms / 1000} seconds`),
@@ -11,12 +19,6 @@ describe('claim command', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock the global db object
-    global.db = {
-      get: jest.fn().mockResolvedValue({}),
-      set: jest.fn().mockResolvedValue(true),
-    };
 
     // Mock Date.now()
     dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(1700000000000); // A fixed point in time
@@ -69,7 +71,7 @@ describe('claim command', () => {
 
     // Assert
     expect(ctx.reply).toHaveBeenCalledWith(
-      '❎ Invalid option: expected one of "daily"|"weekly"|"monthly"|"yearly"'
+      '❎ Invalid claim type. Use ".claim list" to see available claims.'
     );
     expect(db.set).not.toHaveBeenCalled();
   });

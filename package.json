@@ -3,13 +3,14 @@
   "version": "1.4.13-alpha.1",
   "description": "Advanced WhatsApp Bot with AI Integration and Multi-Platform Support",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "commands": "commands",
     "events": "events",
     "tools": "tools"
   },
   "scripts": {
-    "test": "cross-env DATABASE_URL=\"file:./dev.db\" jest",
+    "test": "jest",
     "lint": "eslint",
     "start": "node .",
     "start:prod": "node .",
