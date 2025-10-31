@@ -93,7 +93,7 @@ global.testUtils = {
 
     // Clean up any test files
     const fs = require('fs').promises;
-    import path from 'path';
+    const path = require('path');
 
     const testFiles = ['test.db', 'test.db-journal'];
 
