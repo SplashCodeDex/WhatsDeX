@@ -1,5 +1,5 @@
-const logger = require('../utils/logger');
 const { EventEmitter } = require('events');
+const logger = require('../utils/logger');
 
 /**
  * Automated Reconnection Engine
@@ -24,7 +24,7 @@ class AutoReconnectionEngine extends EventEmitter {
       retryCount: 0,
       totalRetries: 0,
       successRate: 1.0,
-      averageReconnectionTime: 0
+      averageReconnectionTime: 0,
     };
 
     // AI learning data
@@ -33,7 +33,7 @@ class AutoReconnectionEngine extends EventEmitter {
       failedStrategies: [],
       networkPatterns: new Map(),
       timePatterns: new Map(),
-      devicePatterns: new Map()
+      devicePatterns: new Map(),
     };
 
     // Active reconnection attempts
@@ -51,6 +51,7 @@ class AutoReconnectionEngine extends EventEmitter {
     try {
       const fs = require('fs').promises;
       import path from 'path';
+
       const learningFile = path.join(__dirname, '../../.whatsdex-reconnection-learning.json');
       const data = await fs.readFile(learningFile, 'utf8');
       this.learningData = { ...this.learningData, ...JSON.parse(data) };
@@ -67,6 +68,7 @@ class AutoReconnectionEngine extends EventEmitter {
     try {
       const fs = require('fs').promises;
       import path from 'path';
+
       const learningFile = path.join(__dirname, '../../.whatsdex-reconnection-learning.json');
       await fs.writeFile(learningFile, JSON.stringify(this.learningData, null, 2));
     } catch (error) {
@@ -85,7 +87,7 @@ class AutoReconnectionEngine extends EventEmitter {
       disconnectionId,
       reason,
       context,
-      currentState: this.connectionState
+      currentState: this.connectionState,
     });
 
     // Update connection state
@@ -101,7 +103,7 @@ class AutoReconnectionEngine extends EventEmitter {
       id: disconnectionId,
       reason,
       analysis,
-      timestamp
+      timestamp,
     });
 
     // Start reconnection process
@@ -120,7 +122,7 @@ class AutoReconnectionEngine extends EventEmitter {
       likelyCauses: await this.identifyCauses(reason, context),
       recommendedStrategy: await this.recommendStrategy(reason, context),
       estimatedRecoveryTime: this.estimateRecoveryTime(reason),
-      confidence: 0.8
+      confidence: 0.8,
     };
 
     logger.info('Disconnection analyzed', { reason, analysis });
@@ -134,19 +136,30 @@ class AutoReconnectionEngine extends EventEmitter {
   categorizeDisconnection(reason) {
     const reasonStr = reason?.toString().toLowerCase() || '';
 
-    if (reasonStr.includes('network') || reasonStr.includes('timeout') || reasonStr.includes('connection')) {
+    if (
+      reasonStr.includes('network') ||
+      reasonStr.includes('timeout') ||
+      reasonStr.includes('connection')
+    ) {
       return 'network';
-    } else if (reasonStr.includes('auth') || reasonStr.includes('login') || reasonStr.includes('session')) {
-      return 'authentication';
-    } else if (reasonStr.includes('device') || reasonStr.includes('phone')) {
-      return 'device';
-    } else if (reasonStr.includes('server') || reasonStr.includes('maintenance')) {
-      return 'server';
-    } else if (reasonStr.includes('rate') || reasonStr.includes('limit')) {
-      return 'rate_limit';
-    } else {
-      return 'unknown';
     }
+    if (
+      reasonStr.includes('auth') ||
+      reasonStr.includes('login') ||
+      reasonStr.includes('session')
+    ) {
+      return 'authentication';
+    }
+    if (reasonStr.includes('device') || reasonStr.includes('phone')) {
+      return 'device';
+    }
+    if (reasonStr.includes('server') || reasonStr.includes('maintenance')) {
+      return 'server';
+    }
+    if (reasonStr.includes('rate') || reasonStr.includes('limit')) {
+      return 'rate_limit';
+    }
+    return 'unknown';
   }
 
   /**
@@ -157,13 +170,14 @@ class AutoReconnectionEngine extends EventEmitter {
 
     if (reasonStr.includes('banned') || reasonStr.includes('blocked')) {
       return 'critical';
-    } else if (reasonStr.includes('auth') || reasonStr.includes('login')) {
-      return 'high';
-    } else if (reasonStr.includes('network') || reasonStr.includes('timeout')) {
-      return 'medium';
-    } else {
-      return 'low';
     }
+    if (reasonStr.includes('auth') || reasonStr.includes('login')) {
+      return 'high';
+    }
+    if (reasonStr.includes('network') || reasonStr.includes('timeout')) {
+      return 'medium';
+    }
+    return 'low';
   }
 
   /**
@@ -230,7 +244,7 @@ class AutoReconnectionEngine extends EventEmitter {
       reason,
       strategy,
       historicalSuccess,
-      currentConditions
+      currentConditions,
     });
 
     return strategy;
@@ -270,7 +284,7 @@ class AutoReconnectionEngine extends EventEmitter {
       deviceStatus: this.assessDeviceStatus(context),
       timeOfDay: this.getTimeOfDay(),
       serverLoad: 'unknown', // Would be determined by monitoring
-      userActivity: context.userActivity || 'unknown'
+      userActivity: context.userActivity || 'unknown',
     };
 
     return conditions;
@@ -287,7 +301,7 @@ class AutoReconnectionEngine extends EventEmitter {
       device: ['device_check', 'app_restart', 'notification_send'],
       server: ['server_wait', 'regional_switch', 'maintenance_check'],
       rate_limit: ['rate_limit_wait', 'request_spread', 'quota_check'],
-      unknown: ['immediate_retry', 'exponential_backoff', 'manual_intervention']
+      unknown: ['immediate_retry', 'exponential_backoff', 'manual_intervention'],
     };
 
     // Find strategy with highest historical success rate
@@ -341,7 +355,7 @@ class AutoReconnectionEngine extends EventEmitter {
       device: { min: 30000, max: 300000, average: 120000 },
       server: { min: 60000, max: 600000, average: 300000 },
       rate_limit: { min: 60000, max: 3600000, average: 600000 },
-      unknown: { min: 10000, max: 60000, average: 30000 }
+      unknown: { min: 10000, max: 60000, average: 30000 },
     };
 
     return estimates[reasonType] || estimates.unknown;
@@ -357,7 +371,7 @@ class AutoReconnectionEngine extends EventEmitter {
       disconnectionId,
       attemptId,
       strategy: analysis.recommendedStrategy,
-      estimatedRecovery: analysis.estimatedRecoveryTime.average
+      estimatedRecovery: analysis.estimatedRecoveryTime.average,
     });
 
     // Create reconnection attempt
@@ -369,7 +383,7 @@ class AutoReconnectionEngine extends EventEmitter {
       status: 'starting',
       retryCount: 0,
       maxRetries: this.calculateMaxRetries(analysis),
-      analysis
+      analysis,
     };
 
     this.activeAttempts.set(attemptId, attempt);
@@ -391,7 +405,7 @@ class AutoReconnectionEngine extends EventEmitter {
       critical: 1,
       high: 3,
       medium: 5,
-      low: 10
+      low: 10,
     };
 
     return Math.min(baseRetries[analysis.severity] || 5, this.maxRetries);
@@ -401,7 +415,7 @@ class AutoReconnectionEngine extends EventEmitter {
    * Execute reconnection strategy
    */
   async executeReconnectionStrategy(attempt, context) {
-    const strategy = attempt.strategy;
+    const { strategy } = attempt;
 
     try {
       switch (strategy) {
@@ -430,7 +444,7 @@ class AutoReconnectionEngine extends EventEmitter {
       logger.error('Reconnection strategy execution failed', {
         attemptId: attempt.id,
         strategy,
-        error: error.message
+        error: error.message,
       });
 
       // Record failed strategy
@@ -453,7 +467,7 @@ class AutoReconnectionEngine extends EventEmitter {
       logger.info('Executing immediate retry', {
         attemptId: attempt.id,
         retryCount: attempt.retryCount,
-        delay
+        delay,
       });
 
       // Wait for delay
@@ -479,7 +493,7 @@ class AutoReconnectionEngine extends EventEmitter {
       attempt.retryCount = i + 1;
 
       // Calculate delay with exponential backoff and jitter
-      const baseDelay = this.baseDelay * Math.pow(this.backoffMultiplier, i);
+      const baseDelay = this.baseDelay * this.backoffMultiplier ** i;
       const jitter = baseDelay * this.jitterFactor * (Math.random() * 2 - 1);
       const delay = Math.min(baseDelay + jitter, this.maxDelay);
 
@@ -487,7 +501,7 @@ class AutoReconnectionEngine extends EventEmitter {
         attemptId: attempt.id,
         retryCount: attempt.retryCount,
         delay: Math.round(delay),
-        baseDelay: Math.round(baseDelay)
+        baseDelay: Math.round(baseDelay),
       });
 
       // Wait for delay
@@ -594,15 +608,14 @@ class AutoReconnectionEngine extends EventEmitter {
         attemptId: attempt.id,
         success,
         successProbability,
-        retryCount: attempt.retryCount
+        retryCount: attempt.retryCount,
       });
 
       return success;
-
     } catch (error) {
       logger.error('Reconnection attempt failed', {
         attemptId: attempt.id,
-        error: error.message
+        error: error.message,
       });
       return false;
     }
@@ -624,7 +637,7 @@ class AutoReconnectionEngine extends EventEmitter {
       qr_refresh: 0.95,
       pairing_code: 0.9,
       device_check: 0.85,
-      network_wait: 0.75
+      network_wait: 0.75,
     };
 
     probability *= strategyMultipliers[attempt.strategy] || 0.8;
@@ -647,7 +660,7 @@ class AutoReconnectionEngine extends EventEmitter {
       attemptId: attempt.id,
       reconnectionTime,
       retryCount: attempt.retryCount,
-      strategy: attempt.strategy
+      strategy: attempt.strategy,
     });
 
     // Update connection state
@@ -669,7 +682,7 @@ class AutoReconnectionEngine extends EventEmitter {
       attemptId: attempt.id,
       reconnectionTime,
       strategy: attempt.strategy,
-      retryCount: attempt.retryCount
+      retryCount: attempt.retryCount,
     });
 
     // Clean up attempt
@@ -684,7 +697,7 @@ class AutoReconnectionEngine extends EventEmitter {
       attemptId: attempt.id,
       reason,
       totalRetries: attempt.retryCount,
-      strategy: attempt.strategy
+      strategy: attempt.strategy,
     });
 
     // Update success rate
@@ -698,7 +711,7 @@ class AutoReconnectionEngine extends EventEmitter {
       attemptId: attempt.id,
       reason,
       strategy: attempt.strategy,
-      retryCount: attempt.retryCount
+      retryCount: attempt.retryCount,
     });
 
     // Clean up attempt
@@ -715,7 +728,7 @@ class AutoReconnectionEngine extends EventEmitter {
       qr_refresh: 'pairing_code',
       pairing_code: 'device_check',
       device_check: 'network_wait',
-      network_wait: 'manual_intervention'
+      network_wait: 'manual_intervention',
     };
 
     const fallbackStrategy = fallbackStrategies[attempt.strategy];
@@ -724,7 +737,7 @@ class AutoReconnectionEngine extends EventEmitter {
       logger.info('Trying fallback strategy', {
         attemptId: attempt.id,
         originalStrategy: attempt.strategy,
-        fallbackStrategy
+        fallbackStrategy,
       });
 
       attempt.strategy = fallbackStrategy;
@@ -750,8 +763,8 @@ class AutoReconnectionEngine extends EventEmitter {
       conditions: {
         networkQuality: 'unknown', // Would be determined
         deviceStatus: 'unknown',
-        timeOfDay: this.getTimeOfDay()
-      }
+        timeOfDay: this.getTimeOfDay(),
+      },
     };
 
     this.learningData.successfulStrategies.push(record);
@@ -773,7 +786,7 @@ class AutoReconnectionEngine extends EventEmitter {
       reasonType: attempt.analysis.type,
       error: error?.message || error,
       retryCount: attempt.retryCount,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     this.learningData.failedStrategies.push(record);
@@ -791,9 +804,9 @@ class AutoReconnectionEngine extends EventEmitter {
    */
   updateSuccessRate(success) {
     const totalAttempts = this.connectionState.totalRetries + 1;
-    const successfulAttempts = success ?
-      (this.connectionState.successRate * this.connectionState.totalRetries) + 1 :
-      (this.connectionState.successRate * this.connectionState.totalRetries);
+    const successfulAttempts = success
+      ? this.connectionState.successRate * this.connectionState.totalRetries + 1
+      : this.connectionState.successRate * this.connectionState.totalRetries;
 
     this.connectionState.successRate = successfulAttempts / totalAttempts;
     this.connectionState.totalRetries = totalAttempts;
@@ -803,8 +816,8 @@ class AutoReconnectionEngine extends EventEmitter {
    * Update average reconnection time
    */
   updateAverageReconnectionTime(time) {
-    const totalTimes = this.connectionState.averageReconnectionTime *
-      (this.connectionState.totalRetries - 1) + time;
+    const totalTimes =
+      this.connectionState.averageReconnectionTime * (this.connectionState.totalRetries - 1) + time;
     this.connectionState.averageReconnectionTime = totalTimes / this.connectionState.totalRetries;
   }
 
@@ -898,8 +911,8 @@ class AutoReconnectionEngine extends EventEmitter {
         failedStrategies: this.learningData.failedStrategies.length,
         networkPatterns: this.learningData.networkPatterns.size,
         timePatterns: this.learningData.timePatterns.size,
-        devicePatterns: this.learningData.devicePatterns.size
-      }
+        devicePatterns: this.learningData.devicePatterns.size,
+      },
     };
   }
 

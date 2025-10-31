@@ -5,28 +5,30 @@ class AnalyticsService {
     // Real analytics service using Prisma database
   }
 
-
   async getSystemOverview(dateFilters = {}) {
     try {
       const { startDate, endDate } = dateFilters;
-      const dateFilter = startDate && endDate ? {
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
-      } : {};
+      const dateFilter =
+        startDate && endDate
+          ? {
+              createdAt: {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+              },
+            }
+          : {};
 
       // Get user statistics
       const totalUsers = await context.database.user.count();
       const activeUsers = await context.database.user.count({
         where: {
           lastActiveAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Active in last 24 hours
-          }
-        }
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Active in last 24 hours
+          },
+        },
       });
       const premiumUsers = await context.database.user.count({
-        where: { isPremium: true }
+        where: { isPremium: true },
       });
 
       // Get command statistics
@@ -37,14 +39,14 @@ class AnalyticsService {
       const successfulAIRequests = await context.database.aiRequestLog.count({
         where: {
           ...dateFilter,
-          success: true
-        }
+          success: true,
+        },
       });
 
       // Get revenue statistics
       const revenueResult = await context.database.subscription.aggregate({
         _sum: { amount: true },
-        where: dateFilter
+        where: dateFilter,
       });
       const totalRevenue = revenueResult._sum.amount || 0;
 
@@ -52,20 +54,22 @@ class AnalyticsService {
       const moderationActions = await context.database.moderationLog.count(dateFilter);
 
       // Calculate growth metrics (compare with previous period)
-      const periodLength = startDate && endDate ?
-        (new Date(endDate) - new Date(startDate)) :
-        30 * 24 * 60 * 60 * 1000; // 30 days default
+      const periodLength =
+        startDate && endDate ? new Date(endDate) - new Date(startDate) : 30 * 24 * 60 * 60 * 1000; // 30 days default
 
-      const previousStart = new Date((startDate ? new Date(startDate) : new Date(Date.now() - periodLength)).getTime() - periodLength);
+      const previousStart = new Date(
+        (startDate ? new Date(startDate) : new Date(Date.now() - periodLength)).getTime() -
+          periodLength
+      );
       const previousEnd = startDate ? new Date(startDate) : new Date();
 
       const previousCommands = await context.database.commandLog.count({
         where: {
           createdAt: {
             gte: previousStart,
-            lte: previousEnd
-          }
-        }
+            lte: previousEnd,
+          },
+        },
       });
 
       const previousRevenue = await context.database.subscription.aggregate({
@@ -73,9 +77,9 @@ class AnalyticsService {
         where: {
           createdAt: {
             gte: previousStart,
-            lte: previousEnd
-          }
-        }
+            lte: previousEnd,
+          },
+        },
       });
 
       return {
@@ -85,31 +89,35 @@ class AnalyticsService {
           totalCommands,
           totalRevenue,
           aiRequests,
-          moderationActions
+          moderationActions,
         },
         growth: {
           userGrowth: { daily: 0, weekly: 0, monthly: 0 }, // Would need historical data
           revenueGrowth: {
             daily: 0,
             weekly: 0,
-            monthly: totalCommands > 0 ? ((totalCommands - previousCommands) / previousCommands) * 100 : 0
-          }
+            monthly:
+              totalCommands > 0 ? ((totalCommands - previousCommands) / previousCommands) * 100 : 0,
+          },
         },
         health: {
           uptime: 99.9, // Would need monitoring system
           errorRate: 0.1, // Would need error tracking
-          averageResponseTime: 250 // Would need performance monitoring
+          averageResponseTime: 250, // Would need performance monitoring
         },
         comparison: {
-          totalConnectionsChange: previousCommands > 0 ? ((totalCommands - previousCommands) / previousCommands) * 100 : 0,
-          successRateChange: aiRequests > 0 ? ((successfulAIRequests / aiRequests) * 100) - 95 : 0,
-          averageConnectionTimeChange: 0 // Would need historical timing data
+          totalConnectionsChange:
+            previousCommands > 0
+              ? ((totalCommands - previousCommands) / previousCommands) * 100
+              : 0,
+          successRateChange: aiRequests > 0 ? (successfulAIRequests / aiRequests) * 100 - 95 : 0,
+          averageConnectionTimeChange: 0, // Would need historical timing data
         },
         timeRange: {
           startDate: dateFilters.startDate,
-          endDate: dateFilters.endDate
+          endDate: dateFilters.endDate,
         },
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error getting system overview:', error);
@@ -120,24 +128,27 @@ class AnalyticsService {
   async getUserAnalytics(dateFilters = {}, groupBy = 'day') {
     try {
       const { startDate, endDate } = dateFilters;
-      const dateFilter = startDate && endDate ? {
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
-      } : {};
+      const dateFilter =
+        startDate && endDate
+          ? {
+              createdAt: {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+              },
+            }
+          : {};
 
       // Get user statistics
       const totalUsers = await context.database.user.count();
       const activeUsers = await context.database.user.count({
         where: {
           lastActiveAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-          }
-        }
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          },
+        },
       });
       const premiumUsers = await context.database.user.count({
-        where: { isPremium: true }
+        where: { isPremium: true },
       });
 
       // Calculate new users for different periods
@@ -147,13 +158,13 @@ class AnalyticsService {
       const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
       const newToday = await context.database.user.count({
-        where: { createdAt: { gte: today } }
+        where: { createdAt: { gte: today } },
       });
       const newThisWeek = await context.database.user.count({
-        where: { createdAt: { gte: weekAgo } }
+        where: { createdAt: { gte: weekAgo } },
       });
       const newThisMonth = await context.database.user.count({
-        where: { createdAt: { gte: monthAgo } }
+        where: { createdAt: { gte: monthAgo } },
       });
 
       // Generate time series data
@@ -186,25 +197,25 @@ class AnalyticsService {
           where: {
             createdAt: {
               gte: periodStart,
-              lt: periodEnd
-            }
-          }
+              lt: periodEnd,
+            },
+          },
         });
 
         const activeUsersInPeriod = await context.database.user.count({
           where: {
             lastActiveAt: {
               gte: periodStart,
-              lt: periodEnd
-            }
-          }
+              lt: periodEnd,
+            },
+          },
         });
 
         timeSeriesData.push({
           date: periodStart.toISOString().split('T')[0],
           newUsers: newUsersInPeriod,
           activeUsers: activeUsersInPeriod,
-          premiumUsers: premiumUsers // This would need historical tracking
+          premiumUsers, // This would need historical tracking
         });
       }
 
@@ -215,19 +226,19 @@ class AnalyticsService {
           premiumUsers,
           newToday,
           newThisWeek,
-          newThisMonth
+          newThisMonth,
         },
         growth: {
           daily: 0, // Would need historical comparison
           weekly: 0,
-          monthly: 0
+          monthly: 0,
         },
         timeSeries: timeSeriesData,
         groupBy,
         timeRange: {
           startDate: dateFilters.startDate,
-          endDate: dateFilters.endDate
-        }
+          endDate: dateFilters.endDate,
+        },
       };
     } catch (error) {
       console.error('Error getting user analytics:', error);
@@ -238,12 +249,15 @@ class AnalyticsService {
   async getCommandAnalytics(dateFilters = {}, limit = 20) {
     try {
       const { startDate, endDate } = dateFilters;
-      const dateFilter = startDate && endDate ? {
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
-      } : {};
+      const dateFilter =
+        startDate && endDate
+          ? {
+              createdAt: {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+              },
+            }
+          : {};
 
       // Get command statistics
       const totalExecuted = await context.database.commandLog.count(dateFilter);
@@ -252,7 +266,7 @@ class AnalyticsService {
       const uniqueCommandsResult = await context.database.commandLog.groupBy({
         by: ['command'],
         where: dateFilter,
-        _count: { command: true }
+        _count: { command: true },
       });
       const uniqueCommands = uniqueCommandsResult.length;
 
@@ -262,13 +276,13 @@ class AnalyticsService {
         where: dateFilter,
         _count: { command: true },
         orderBy: { _count: { command: 'desc' } },
-        take: limit
+        take: limit,
       });
 
       const topCommands = topCommandsRaw.map((cmd, index) => ({
         name: cmd.command,
         count: cmd._count.command,
-        percentage: totalExecuted > 0 ? (cmd._count.command / totalExecuted) * 100 : 0
+        percentage: totalExecuted > 0 ? (cmd._count.command / totalExecuted) * 100 : 0,
       }));
 
       // Calculate average per user
@@ -279,7 +293,7 @@ class AnalyticsService {
       const usageByHourRaw = await context.database.commandLog.groupBy({
         by: ['createdAt'],
         where: dateFilter,
-        _count: { id: true }
+        _count: { id: true },
       });
 
       const usageByHour = Array.from({ length: 24 }, (_, hour) => {
@@ -289,13 +303,14 @@ class AnalyticsService {
         });
         return {
           hour,
-          count: hourCommands.reduce((sum, log) => sum + log._count.id, 0)
+          count: hourCommands.reduce((sum, log) => sum + log._count.id, 0),
         };
       });
 
       // Find peak hour
-      const peakHour = usageByHour.reduce((max, current) =>
-        current.count > max.count ? current : max, { hour: 0, count: 0 }
+      const peakHour = usageByHour.reduce(
+        (max, current) => (current.count > max.count ? current : max),
+        { hour: 0, count: 0 }
       ).hour;
 
       return {
@@ -303,14 +318,14 @@ class AnalyticsService {
           totalExecuted,
           uniqueCommands,
           averagePerUser,
-          peakHour
+          peakHour,
         },
         topCommands,
         usageByHour,
         timeRange: {
           startDate: dateFilters.startDate,
-          endDate: dateFilters.endDate
-        }
+          endDate: dateFilters.endDate,
+        },
       };
     } catch (error) {
       console.error('Error getting command analytics:', error);
@@ -321,17 +336,20 @@ class AnalyticsService {
   async getAIUsageAnalytics(dateFilters = {}, groupBy = 'day') {
     try {
       const { startDate, endDate } = dateFilters;
-      const dateFilter = startDate && endDate ? {
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
-      } : {};
+      const dateFilter =
+        startDate && endDate
+          ? {
+              createdAt: {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+              },
+            }
+          : {};
 
       // Get AI request statistics
       const totalRequests = await context.database.aiRequestLog.count(dateFilter);
       const successfulRequests = await context.database.aiRequestLog.count({
-        where: { ...dateFilter, success: true }
+        where: { ...dateFilter, success: true },
       });
       const failedRequests = totalRequests - successfulRequests;
 
@@ -341,7 +359,7 @@ class AnalyticsService {
       // Get average response time
       const avgResponseTimeResult = await context.database.aiRequestLog.aggregate({
         _avg: { responseTime: true },
-        where: { ...dateFilter, success: true }
+        where: { ...dateFilter, success: true },
       });
       const averageResponseTime = avgResponseTimeResult._avg.responseTime || 0;
 
@@ -351,13 +369,13 @@ class AnalyticsService {
         where: dateFilter,
         _count: { provider: true },
         orderBy: { _count: { provider: 'desc' } },
-        take: 5
+        take: 5,
       });
 
       const topProviders = topProvidersRaw.map(provider => ({
         name: provider.provider,
         requests: provider._count.provider,
-        percentage: totalRequests > 0 ? (provider._count.provider / totalRequests) * 100 : 0
+        percentage: totalRequests > 0 ? (provider._count.provider / totalRequests) * 100 : 0,
       }));
 
       // Get usage by time period
@@ -389,14 +407,14 @@ class AnalyticsService {
           where: {
             createdAt: {
               gte: periodStart,
-              lt: periodEnd
-            }
-          }
+              lt: periodEnd,
+            },
+          },
         });
 
         usageByPeriod.push({
           date: periodStart.toISOString().split('T')[0],
-          requests: requestsInPeriod
+          requests: requestsInPeriod,
         });
       }
 
@@ -406,15 +424,15 @@ class AnalyticsService {
           successfulRequests,
           failedRequests,
           successRate,
-          averageResponseTime
+          averageResponseTime,
         },
         topProviders,
         usageByDay: usageByPeriod,
         groupBy,
         timeRange: {
           startDate: dateFilters.startDate,
-          endDate: dateFilters.endDate
-        }
+          endDate: dateFilters.endDate,
+        },
       };
     } catch (error) {
       console.error('Error getting AI usage analytics:', error);
@@ -425,17 +443,20 @@ class AnalyticsService {
   async getRevenueAnalytics(dateFilters = {}, groupBy = 'month') {
     try {
       const { startDate, endDate } = dateFilters;
-      const dateFilter = startDate && endDate ? {
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
-      } : {};
+      const dateFilter =
+        startDate && endDate
+          ? {
+              createdAt: {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+              },
+            }
+          : {};
 
       // Get revenue statistics
       const revenueResult = await context.database.subscription.aggregate({
         _sum: { amount: true },
-        where: dateFilter
+        where: dateFilter,
       });
       const totalRevenue = revenueResult._sum.amount || 0;
 
@@ -443,9 +464,9 @@ class AnalyticsService {
       const activeSubscriptions = await context.database.subscription.findMany({
         where: {
           status: 'active',
-          ...dateFilter
+          ...dateFilter,
         },
-        select: { amount: true, interval: true }
+        select: { amount: true, interval: true },
       });
 
       const monthlyRecurringRevenue = activeSubscriptions
@@ -463,14 +484,14 @@ class AnalyticsService {
         _sum: { amount: true },
         _count: { planName: true },
         orderBy: { _sum: { amount: 'desc' } },
-        take: 5
+        take: 5,
       });
 
       const topPlans = topPlansRaw.map(plan => ({
         name: plan.planName,
         revenue: plan._sum.amount || 0,
         users: plan._count.planName,
-        percentage: totalRevenue > 0 ? ((plan._sum.amount || 0) / totalRevenue) * 100 : 0
+        percentage: totalRevenue > 0 ? ((plan._sum.amount || 0) / totalRevenue) * 100 : 0,
       }));
 
       // Get revenue by time period
@@ -490,14 +511,14 @@ class AnalyticsService {
           where: {
             createdAt: {
               gte: monthStart,
-              lte: monthEnd
-            }
-          }
+              lte: monthEnd,
+            },
+          },
         });
 
         revenueByMonth.push({
           month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          revenue: monthRevenue._sum.amount || 0
+          revenue: monthRevenue._sum.amount || 0,
         });
       }
 
@@ -505,15 +526,15 @@ class AnalyticsService {
         overview: {
           totalRevenue,
           monthlyRecurringRevenue,
-          averageRevenuePerUser
+          averageRevenuePerUser,
         },
         topPlans,
         revenueByMonth,
         groupBy,
         timeRange: {
           startDate: dateFilters.startDate,
-          endDate: dateFilters.endDate
-        }
+          endDate: dateFilters.endDate,
+        },
       };
     } catch (error) {
       console.error('Error getting revenue analytics:', error);
@@ -524,29 +545,32 @@ class AnalyticsService {
   async getModerationAnalytics(dateFilters = {}, groupBy = 'day') {
     try {
       const { startDate, endDate } = dateFilters;
-      const dateFilter = startDate && endDate ? {
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
-      } : {};
+      const dateFilter =
+        startDate && endDate
+          ? {
+              createdAt: {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+              },
+            }
+          : {};
 
       // Get moderation statistics
       const totalModerated = await context.database.moderationLog.count(dateFilter);
       const blockedContent = await context.database.moderationLog.count({
-        where: { ...dateFilter, action: 'block' }
+        where: { ...dateFilter, action: 'block' },
       });
 
       // Calculate approval rate (approved / total)
       const approvedContent = await context.database.moderationLog.count({
-        where: { ...dateFilter, action: 'approve' }
+        where: { ...dateFilter, action: 'approve' },
       });
       const approvalRate = totalModerated > 0 ? (approvedContent / totalModerated) * 100 : 0;
 
       // Get average review time
       const avgReviewTimeResult = await context.database.moderationLog.aggregate({
         _avg: { reviewTime: true },
-        where: dateFilter
+        where: dateFilter,
       });
       const averageReviewTime = avgReviewTimeResult._avg.reviewTime || 0;
 
@@ -554,7 +578,7 @@ class AnalyticsService {
       const violationsByTypeRaw = await context.database.moderationLog.groupBy({
         by: ['violationType'],
         where: dateFilter,
-        _count: { violationType: true }
+        _count: { violationType: true },
       });
 
       const violationsByType = {};
@@ -566,7 +590,7 @@ class AnalyticsService {
       const violationsBySeverityRaw = await context.database.moderationLog.groupBy({
         by: ['severity'],
         where: dateFilter,
-        _count: { severity: true }
+        _count: { severity: true },
       });
 
       const violationsBySeverity = {};
@@ -576,7 +600,7 @@ class AnalyticsService {
 
       // Get appealed decisions (assuming there's an appeal status)
       const appealedDecisions = await context.database.moderationLog.count({
-        where: { ...dateFilter, appealed: true }
+        where: { ...dateFilter, appealed: true },
       });
 
       return {
@@ -585,15 +609,15 @@ class AnalyticsService {
           blockedContent,
           appealedDecisions,
           approvalRate,
-          averageReviewTime
+          averageReviewTime,
         },
         violationsByType,
         violationsBySeverity,
         groupBy,
         timeRange: {
           startDate: dateFilters.startDate,
-          endDate: dateFilters.endDate
-        }
+          endDate: dateFilters.endDate,
+        },
       };
     } catch (error) {
       console.error('Error getting moderation analytics:', error);
@@ -640,28 +664,28 @@ class AnalyticsService {
       const activeUsers = await context.database.user.count({
         where: {
           lastActiveAt: {
-            gte: new Date(Date.now() - 5 * 60 * 1000)
-          }
-        }
+            gte: new Date(Date.now() - 5 * 60 * 1000),
+          },
+        },
       });
 
       // Get commands per minute (last 60 seconds)
       const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
       const commandsPerMinute = await context.database.commandLog.count({
-        where: { createdAt: { gte: oneMinuteAgo } }
+        where: { createdAt: { gte: oneMinuteAgo } },
       });
 
       // Get AI requests per minute
       const aiRequestsPerMinute = await context.database.aiRequestLog.count({
-        where: { createdAt: { gte: oneMinuteAgo } }
+        where: { createdAt: { gte: oneMinuteAgo } },
       });
 
       // Get errors per minute (failed operations)
       const errorsPerMinute = await context.database.commandLog.count({
         where: {
           createdAt: { gte: oneMinuteAgo },
-          success: false
-        }
+          success: false,
+        },
       });
 
       // Get average response time (last hour)
@@ -670,8 +694,8 @@ class AnalyticsService {
         _avg: { responseTime: true },
         where: {
           createdAt: { gte: oneHourAgo },
-          success: true
-        }
+          success: true,
+        },
       });
       const averageResponseTime = avgResponseTimeResult._avg.responseTime || 0;
 
@@ -685,7 +709,7 @@ class AnalyticsService {
         errorsPerMinute,
         averageResponseTime,
         serverLoad,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error getting real-time analytics:', error);
@@ -697,7 +721,7 @@ class AnalyticsService {
         errorsPerMinute: 0,
         averageResponseTime: 0,
         serverLoad: 0,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -734,10 +758,9 @@ class AnalyticsService {
 
     if (format === 'json') {
       return JSON.stringify(data, null, 2);
-    } else {
-      // Simple CSV conversion (would be more sophisticated in real implementation)
-      return `Analytics Type: ${type}\n${JSON.stringify(data, null, 2)}`;
     }
+    // Simple CSV conversion (would be more sophisticated in real implementation)
+    return `Analytics Type: ${type}\n${JSON.stringify(data, null, 2)}`;
   }
 
   async getDashboardAnalytics() {
@@ -753,7 +776,7 @@ class AnalyticsService {
         alerts.push({
           type: 'error',
           message: `High error rate detected: ${realTime.errorsPerMinute} errors/minute`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
 
@@ -762,7 +785,7 @@ class AnalyticsService {
         alerts.push({
           type: 'info',
           message: `User milestone reached: ${overview.summary.totalUsers} total users`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
 
@@ -771,7 +794,7 @@ class AnalyticsService {
         alerts.push({
           type: 'warning',
           message: `High server load: ${realTime.serverLoad}%`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
 
@@ -779,7 +802,7 @@ class AnalyticsService {
       const trends = {
         userGrowth: '+0%', // Would need historical comparison
         revenueGrowth: '+0%',
-        commandUsage: '+0%'
+        commandUsage: '+0%',
       };
 
       return {
@@ -787,7 +810,7 @@ class AnalyticsService {
         realTime,
         alerts,
         trends,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error getting dashboard analytics:', error);
@@ -808,14 +831,14 @@ class AnalyticsService {
         const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
 
         const dataPoint = {
-          date: dayStart.toISOString().split('T')[0]
+          date: dayStart.toISOString().split('T')[0],
         };
 
         const dateFilter = {
           createdAt: {
             gte: dayStart,
-            lte: dayEnd
-          }
+            lte: dayEnd,
+          },
         };
 
         if (metrics.includes('users') || metrics.length === 0) {
@@ -831,7 +854,7 @@ class AnalyticsService {
         if (metrics.includes('revenue') || metrics.length === 0) {
           const revenueResult = await context.database.subscription.aggregate({
             _sum: { amount: true },
-            where: dateFilter
+            where: dateFilter,
           });
           dataPoint.revenue = revenueResult._sum.amount || 0;
         }
@@ -840,8 +863,8 @@ class AnalyticsService {
           const errors = await context.database.commandLog.count({
             where: {
               ...dateFilter,
-              success: false
-            }
+              success: false,
+            },
           });
           dataPoint.errors = errors;
         }
@@ -853,7 +876,7 @@ class AnalyticsService {
         period,
         metrics: metrics.length > 0 ? metrics : ['users', 'commands', 'revenue', 'errors'],
         data: trendData,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error getting trends analytics:', error);

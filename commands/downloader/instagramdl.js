@@ -1,45 +1,47 @@
-const axios = require("axios");
+const axios = require('axios');
 
 module.exports = {
-    name: "instagramdl",
-    aliases: ["ig", "igdl", "instagram"],
-    category: "downloader",
-    permissions: {
-        coin: 10
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config } = ctx.bot.context;
-        const url = ctx.args[0] || null;
+  name: 'instagramdl',
+  aliases: ['ig', 'igdl', 'instagram'],
+  category: 'downloader',
+  permissions: {
+    coin: 10,
+  },
+  code: async ctx => {
+    const { formatter, tools, config } = ctx.bot.context;
+    const url = ctx.args[0] || null;
 
-        if (!url) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://www.instagram.com/p/DLzgi9pORzS"))
-        );
+    if (!url)
+      return await ctx.reply(
+        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
+          tools.msg.generateCmdExample(ctx.used, 'https://www.instagram.com/p/DLzgi9pORzS')
+        )}`
+      );
 
-        const isUrl = tools.cmd.isUrl(url);
-        if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
+    const isUrl = tools.cmd.isUrl(url);
+    if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
 
-        try {
-            const apiUrl = tools.api.createUrl("zell", "/download/instagram", {
-                url
-            });
-            const result = (await axios.get(apiUrl)).data.result.url;
-            const album = result.map(res => {
-                const isVideo = res.type === "mp4";
-                return {
-                    [isVideo ? "video" : "image"]: {
-                        url: res.url
-                    },
-                    mimetype: tools.mime.lookup(res.ext)
-                };
-            });
+    try {
+      const apiUrl = tools.api.createUrl('zell', '/download/instagram', {
+        url,
+      });
+      const result = (await axios.get(apiUrl)).data.result.url;
+      const album = result.map(res => {
+        const isVideo = res.type === 'mp4';
+        return {
+          [isVideo ? 'video' : 'image']: {
+            url: res.url,
+          },
+          mimetype: tools.mime.lookup(res.ext),
+        };
+      });
 
-            await ctx.reply({
-                album,
-                caption: formatter.quote(`URL: ${url}`)
-            });
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
-        }
+      await ctx.reply({
+        album,
+        caption: formatter.quote(`URL: ${url}`),
+      });
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error, true);
     }
+  },
 };

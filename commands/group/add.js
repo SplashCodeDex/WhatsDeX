@@ -1,32 +1,35 @@
 module.exports = {
-    name: "add",
-    category: "group",
-    permissions: {
-        admin: true,
-        botAdmin: true,
-        group: true,
-        restrict: true
-    },
-    code: async (ctx) => {
-        const { formatter, tools } = ctx.bot.context;
-        const input = ctx.args.join(" ") || null;
+  name: 'add',
+  category: 'group',
+  permissions: {
+    admin: true,
+    botAdmin: true,
+    group: true,
+    restrict: true,
+  },
+  code: async ctx => {
+    const { formatter, tools } = ctx.bot.context;
+    const input = ctx.args.join(' ') || null;
 
-        if (!input) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, ctx.getId(ctx.sender.jid)))
-        );
+    if (!input)
+      return await ctx.reply(
+        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
+          tools.msg.generateCmdExample(ctx.used, ctx.getId(ctx.sender.jid))
+        )}`
+      );
 
-        const accountJid = input.replace(/[^\d]/g, "") + "@s.whatsapp.net";
+    const accountJid = `${input.replace(/[^\d]/g, '')}@s.whatsapp.net`;
 
-        const isOnWhatsApp = await ctx.core.onWhatsApp(accountJid);
-        if (isOnWhatsApp.length === 0) return await ctx.reply(formatter.quote("❎ Akun tidak ada di WhatsApp!"));
+    const isOnWhatsApp = await ctx.core.onWhatsApp(accountJid);
+    if (isOnWhatsApp.length === 0)
+      return await ctx.reply(formatter.quote('❎ Akun tidak ada di WhatsApp!'));
 
-        try {
-            await ctx.group().add(accountJid);
+    try {
+      await ctx.group().add(accountJid);
 
-            await ctx.reply(formatter.quote("✅ Successfully added!"));
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error);
-        }
+      await ctx.reply(formatter.quote('✅ Successfully added!'));
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error);
     }
+  },
 };

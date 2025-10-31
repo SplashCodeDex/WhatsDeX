@@ -11,7 +11,7 @@ module.exports = {
   permissions: {
     coin: 10,
   },
-  code: async (ctx) => {
+  code: async ctx => {
     const { formatter, config } = ctx.bot.context;
 
     try {
@@ -20,18 +20,23 @@ module.exports = {
         '-q': {
           type: 'value',
           key: 'quality',
-          validator: (val) => !Number.isNaN(val) && parseInt(val, 10) > 0,
-          parser: (val) => parseInt(val, 10),
+          validator: val => !Number.isNaN(val) && parseInt(val, 10) > 0,
+          parser: val => parseInt(val, 10),
         },
       });
 
       // --- Validation ---
-      const urlSchema = z.string()
+      const urlSchema = z
+        .string()
         .url({ message: 'Please provide a valid URL.' })
-        .refine((val) => !val.includes(' '), { message: 'The URL cannot contain spaces.' });
+        .refine(val => !val.includes(' '), { message: 'The URL cannot contain spaces.' });
       const urlCheck = urlSchema.safeParse(flag.input || '');
       if (!urlCheck.success) {
-        return ctx.reply(formatter.quote(`❎ ${urlCheck.error.issues[0].message}\n\nExample: .ytv https://youtu.be/example -q 720`));
+        return ctx.reply(
+          formatter.quote(
+            `❎ ${urlCheck.error.issues[0].message}\n\nExample: .ytv https://youtu.be/example -q 720`
+          )
+        );
       }
       const url = urlCheck.data;
 
@@ -43,7 +48,7 @@ module.exports = {
         url,
         format: quality,
       });
-      const result = (await axios.get(apiUrl)).data.result;
+      const { result } = (await axios.get(apiUrl)).data;
 
       const asDocument = flag?.document || false;
       if (asDocument) {

@@ -4,19 +4,19 @@ describe('inputValidation middleware', () => {
   const mockContext = {
     database: {
       auditLog: {
-        create: jest.fn().mockResolvedValue(true)
-      }
-    }
+        create: jest.fn().mockResolvedValue(true),
+      },
+    },
   };
 
   const mockCtx = {
     used: {
       prefix: '!',
-      command: 'youtubevideo'
+      command: 'youtubevideo',
     },
     args: [],
     sender: { jid: 'testuser' },
-    reply: jest.fn().mockResolvedValue(true)
+    reply: jest.fn().mockResolvedValue(true),
   };
 
   beforeEach(() => {
@@ -37,11 +37,13 @@ describe('inputValidation middleware', () => {
     const result = await validateCommand(mockCtx, mockContext);
     expect(result).toBe(false);
     expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Invalid input'));
-    expect(mockContext.database.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      eventType: 'input_validation_fail',
-      action: 'Invalid input for command youtubevideo',
-      actor: 'testuser'
-    }));
+    expect(mockContext.database.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'input_validation_fail',
+        action: 'Invalid input for command youtubevideo',
+        actor: 'testuser',
+      })
+    );
   });
 
   test('valid prompt for chatgpt', async () => {

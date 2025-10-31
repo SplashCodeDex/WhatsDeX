@@ -1,39 +1,39 @@
 module.exports = {
-    name: "listbanneduser",
-    aliases: ["listban", "listbanned"],
-    category: "owner",
-    permissions: {
-        owner: true
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config, database: db } = ctx.bot.context;
-        try {
-            const users = await db.get("user");
-            const bannedUsers = [];
+  name: 'listbanneduser',
+  aliases: ['listban', 'listbanned'],
+  category: 'owner',
+  permissions: {
+    owner: true,
+  },
+  code: async ctx => {
+    const { formatter, tools, config, database: db } = ctx.bot.context;
+    try {
+      const users = await db.get('user');
+      const bannedUsers = [];
 
-            for (const userId in users) {
-                if (users[userId].banned === true) bannedUsers.push(userId);
-            }
+      for (const userId in users) {
+        if (users[userId].banned === true) bannedUsers.push(userId);
+      }
 
-            let resultText = "";
-            let userMentions = [];
+      let resultText = '';
+      const userMentions = [];
 
-            bannedUsers.forEach(userId => {
-                resultText += `${formatter.quote(`@${userId}`)}
+      bannedUsers.forEach(userId => {
+        resultText += `${formatter.quote(`@${userId}`)}
 `;
-            });
+      });
 
-            bannedUsers.forEach(userId => {
-                userMentions.push(userId + "@s.whatsapp.net");
-            });
+      bannedUsers.forEach(userId => {
+        userMentions.push(`${userId}@s.whatsapp.net`);
+      });
 
-            await ctx.reply({
-                text: resultText.trim() || config.msg.notFound,
-                mentions: userMentions,
-                footer: config.msg.footer
-            });
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error);
-        }
+      await ctx.reply({
+        text: resultText.trim() || config.msg.notFound,
+        mentions: userMentions,
+        footer: config.msg.footer,
+      });
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error);
     }
+  },
 };

@@ -1,31 +1,32 @@
-const {
-    exec
-} = require("node:child_process");
-const process = require("node:process");
-const util = require("node:util");
+const { exec } = require('node:child_process');
+const process = require('node:process');
+const util = require('node:util');
 
 module.exports = {
-    name: "restart",
-    aliases: ["r"],
-    category: "owner",
-    permissions: {
-        owner: true
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config, database: db } = ctx.bot.context;
-        if (!process.env.PM2_HOME) return await ctx.reply(formatter.quote("❎ Bot is not running under PM2! Manual restart required."));
+  name: 'restart',
+  aliases: ['r'],
+  category: 'owner',
+  permissions: {
+    owner: true,
+  },
+  code: async ctx => {
+    const { formatter, tools, config, database: db } = ctx.bot.context;
+    if (!process.env.PM2_HOME)
+      return await ctx.reply(
+        formatter.quote('❎ Bot is not running under PM2! Manual restart required.')
+      );
 
-        try {
-            const waitMsg = await ctx.reply(config.msg.wait);
-            await db.set("bot.restart", {
-                jid: ctx.id,
-                key: waitMsg.key,
-                timestamp: Date.now()
-            });
+    try {
+      const waitMsg = await ctx.reply(config.msg.wait);
+      await db.set('bot.restart', {
+        jid: ctx.id,
+        key: waitMsg.key,
+        timestamp: Date.now(),
+      });
 
-            await util.promisify(exec)("pm2 restart $(basename $(pwd))"); // Hanya berfungsi saat menggunakan PM2
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error);
-        }
+      await util.promisify(exec)('pm2 restart $(basename $(pwd))'); // Hanya berfungsi saat menggunakan PM2
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error);
     }
+  },
 };

@@ -1,17 +1,18 @@
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
-const withAuth = (WrappedComponent) => (props) => {
-  const router = useRouter();
+const withAuth = WrappedComponent =>
+  function (props) {
+    const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.replace('/login');
-    }
-  }, [router]);
+    useEffect(() => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.replace('/login');
+      }
+    }, [router]);
 
-  return <WrappedComponent {...props} />;
-};
+    return <WrappedComponent {...props} />;
+  };
 
 export default withAuth;

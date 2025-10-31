@@ -52,8 +52,7 @@ class WhatsDeXBrain {
    */
   isConversationalQuery(nlpResult) {
     const conversationalIntents = ['question', 'chat', 'help', 'general'];
-    return conversationalIntents.includes(nlpResult.intent) ||
-           nlpResult.confidence < 0.8; // Low confidence = conversational
+    return conversationalIntents.includes(nlpResult.intent) || nlpResult.confidence < 0.8; // Low confidence = conversational
   }
 
   /**
@@ -73,7 +72,7 @@ class WhatsDeXBrain {
       await ctx.reply(aiResponse);
     } catch (error) {
       logger.error('Conversational AI error:', error);
-      await ctx.reply('Sorry, I\'m having trouble processing your request right now.');
+      await ctx.reply("Sorry, I'm having trouble processing your request right now.");
     }
   }
 
@@ -99,6 +98,7 @@ class WhatsDeXBrain {
 
     this.conversationMemory.set(userId, memory);
   }
+
   /**
    * Get conversation memory for a user from database (async)
    */
@@ -108,7 +108,7 @@ class WhatsDeXBrain {
       const memory = await context.database.ConversationMemory.findMany({
         where: { userId },
         orderBy: { lastUpdated: 'desc' },
-        take: 1
+        take: 1,
       });
 
       if (memory.length > 0) {
@@ -136,18 +136,18 @@ class WhatsDeXBrain {
 
       await context.database.ConversationMemory.upsert({
         where: {
-          id: `${userId}-memory` // Simple composite key
+          id: `${userId}-memory`, // Simple composite key
         },
         update: {
           messages: JSON.stringify(trimmedMemory),
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
         },
         create: {
           id: `${userId}-memory`,
           userId,
           messages: JSON.stringify(trimmedMemory),
-          lastUpdated: new Date()
-        }
+          lastUpdated: new Date(),
+        },
       });
     } catch (error) {
       console.error('Error updating conversation memory:', error);

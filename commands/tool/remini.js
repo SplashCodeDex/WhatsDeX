@@ -4,37 +4,40 @@ const {
 } = require("@itsreimau/gktw");
 */
 module.exports = {
-    name: "remini",
-    category: "tool",
-    permissions: {
-        coin: 10
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config } = ctx.bot.context;
-        const [checkMedia, checkQuotedMedia] = await Promise.all([
-            tools.cmd.checkMedia(ctx.msg.contentType, "image"),
-            tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, "image")
-        ]);
+  name: 'remini',
+  category: 'tool',
+  permissions: {
+    coin: 10,
+  },
+  code: async ctx => {
+    const { formatter, tools, config } = ctx.bot.context;
+    const [checkMedia, checkQuotedMedia] = await Promise.all([
+      tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
+      tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, 'image'),
+    ]);
 
-        if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], "image")));
+    if (!checkMedia && !checkQuotedMedia)
+      return await ctx.reply(
+        formatter.quote(tools.msg.generateInstruction(['send', 'reply'], 'image'))
+      );
 
-        try {
-            const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted?.media.toBuffer();
-            const uploadUrl = await tools.api.uploadImage(buffer);
-            const apiUrl = tools.api.createUrl("davidcyril", "/remini", {
-                url: uploadUrl
-            });
+    try {
+      const buffer = (await ctx.msg.media.toBuffer()) || (await ctx.quoted?.media.toBuffer());
+      const uploadUrl = await tools.api.uploadImage(buffer);
+      const apiUrl = tools.api.createUrl('davidcyril', '/remini', {
+        url: uploadUrl,
+      });
 
-            await ctx.reply({
-                image: {
-                    url: result
-                },
-                mimetype: tools.mime.lookup("jpg"),
-                caption: formatter.quote("Untukmu, tuan!"),
-                footer: config.msg.footer
-            });
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
-        }
+      await ctx.reply({
+        image: {
+          url: result,
+        },
+        mimetype: tools.mime.lookup('jpg'),
+        caption: formatter.quote('Untukmu, tuan!'),
+        footer: config.msg.footer,
+      });
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error, true);
     }
+  },
 };

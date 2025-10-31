@@ -1,5 +1,6 @@
-const winston = require('winston');
 import path from 'path';
+
+const winston = require('winston');
 
 // Define log levels
 const levels = {
@@ -25,13 +26,14 @@ winston.addColors(colors);
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
   winston.format.colorize({ all: true }),
-  winston.format.printf(
-    (info) => `${info.timestamp} ${info.level}: ${info.message}`,
-  ),
+  winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`)
 );
 
 // Define which logs to show based on environment
-const showLogs = process.env.NODE_ENV === 'production' ? ['error', 'warn', 'info'] : ['error', 'warn', 'info', 'http', 'debug'];
+const showLogs =
+  process.env.NODE_ENV === 'production'
+    ? ['error', 'warn', 'info']
+    : ['error', 'warn', 'info', 'http', 'debug'];
 
 // Create the logger
 const logger = winston.createLogger({
@@ -42,10 +44,7 @@ const logger = winston.createLogger({
     // Console transport for development
     new winston.transports.Console({
       level: 'debug',
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
 
     // File transport for all logs
@@ -56,7 +55,7 @@ const logger = winston.createLogger({
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
         winston.format.json()
-      )
+      ),
     }),
 
     // Separate file for errors
@@ -67,23 +66,21 @@ const logger = winston.createLogger({
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
         winston.format.json()
-      )
+      ),
     }),
 
     // HTTP requests log
     new winston.transports.File({
       filename: path.join(process.cwd(), 'logs', 'http.log'),
       level: 'http',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-      )
-    })
+      format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+    }),
   ],
 });
 
 // Create logs directory if it doesn't exist
 const fs = require('fs');
+
 const logsDir = path.join(process.cwd(), 'logs');
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
@@ -122,7 +119,7 @@ const enhancedLogger = {
       success,
       executionTime,
       error: error?.message || null,
-      stack: error?.stack || null
+      stack: error?.stack || null,
     };
 
     logger.log(level, message, meta);
@@ -145,7 +142,7 @@ const enhancedLogger = {
       url,
       statusCode,
       responseTime,
-      userId
+      userId,
     };
 
     const level = statusCode >= 400 ? 'warn' : 'http';
@@ -163,20 +160,18 @@ const enhancedLogger = {
   },
 
   // Method to log with context
-  withContext: (context) => {
-    return {
-      error: (message, meta = {}) => enhancedLogger.error(message, { ...context, ...meta }),
-      warn: (message, meta = {}) => enhancedLogger.warn(message, { ...context, ...meta }),
-      info: (message, meta = {}) => enhancedLogger.info(message, { ...context, ...meta }),
-      debug: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
-      command: (command, userId, success, executionTime, error) =>
-        enhancedLogger.command(command, userId, success, executionTime, error),
-    };
-  },
+  withContext: context => ({
+    error: (message, meta = {}) => enhancedLogger.error(message, { ...context, ...meta }),
+    warn: (message, meta = {}) => enhancedLogger.warn(message, { ...context, ...meta }),
+    info: (message, meta = {}) => enhancedLogger.info(message, { ...context, ...meta }),
+    debug: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
+    command: (command, userId, success, executionTime, error) =>
+      enhancedLogger.command(command, userId, success, executionTime, error),
+  }),
 
   // Stream for Morgan HTTP logging
   stream: {
-    write: (message) => {
+    write: message => {
       logger.http(message.trim());
     },
   },

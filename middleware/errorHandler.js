@@ -15,7 +15,7 @@ const errorHandler = (err, req, res, next) => {
     userId: req.user?.id,
     body: req.method !== 'GET' ? req.body : undefined,
     query: req.query,
-    params: req.params
+    params: req.params,
   });
 
   // Determine error type and status code
@@ -61,18 +61,16 @@ const errorHandler = (err, req, res, next) => {
     timestamp: new Date().toISOString(),
     ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,
-      details: err.message
-    })
+      details: err.message,
+    }),
   });
 };
 
 /**
  * Async error wrapper for route handlers
  */
-const asyncHandler = (fn) => {
-  return (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
+const asyncHandler = fn => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
 };
 
 /**
@@ -92,12 +90,12 @@ class AppError extends Error {
 /**
  * Validation error handler
  */
-const handleValidationError = (error) => {
+const handleValidationError = error => {
   if (error.name === 'ZodError') {
     const errors = error.errors.map(err => ({
       field: err.path.join('.'),
       message: err.message,
-      code: err.code
+      code: err.code,
     }));
 
     return new AppError('Validation failed', 400, 'VALIDATION_ERROR', { errors });
@@ -109,7 +107,7 @@ const handleValidationError = (error) => {
 /**
  * Database error handler
  */
-const handleDatabaseError = (error) => {
+const handleDatabaseError = error => {
   if (error.code === 'P2002') {
     return new AppError('Resource already exists', 409, 'CONFLICT_ERROR');
   }
@@ -128,7 +126,7 @@ const handleDatabaseError = (error) => {
 /**
  * Authentication error handler
  */
-const handleAuthError = (error) => {
+const handleAuthError = error => {
   if (error.name === 'JsonWebTokenError') {
     return new AppError('Invalid token', 401, 'AUTH_TOKEN_INVALID');
   }
@@ -157,7 +155,7 @@ const handleHealthCheck = (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    version: process.env.npm_package_version || '1.0.0'
+    version: process.env.npm_package_version || '1.0.0',
   });
 };
 
@@ -169,5 +167,5 @@ module.exports = {
   handleDatabaseError,
   handleAuthError,
   notFoundHandler,
-  handleHealthCheck
+  handleHealthCheck,
 };

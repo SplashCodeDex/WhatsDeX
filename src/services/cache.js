@@ -12,10 +12,10 @@ class CacheService {
     try {
       this.client = redis.createClient({
         url: process.env.REDIS_URL || 'redis://localhost:6379',
-        password: process.env.REDIS_PASSWORD
+        password: process.env.REDIS_PASSWORD,
       });
 
-      this.client.on('error', (err) => {
+      this.client.on('error', err => {
         logger.error('Redis connection error:', err);
         this.isConnected = false;
       });
@@ -278,7 +278,7 @@ class CacheService {
       return {
         connected: true,
         dbSize,
-        info: this.parseRedisInfo(info)
+        info: this.parseRedisInfo(info),
       };
     } catch (error) {
       logger.error('Cache stats error:', error);
@@ -320,12 +320,12 @@ class CacheService {
 
       return {
         status: 'healthy',
-        ...stats
+        ...stats,
       };
     } catch (error) {
       return {
         status: 'unhealthy',
-        error: error.message
+        error: error.message,
       };
     }
   }

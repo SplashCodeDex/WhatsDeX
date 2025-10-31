@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useInView } from "motion/react";
 import {
   Children,
@@ -10,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { cn } from "@/lib/utils";
 
 interface SequenceContextValue {
   completeItem: (index: number) => void;
@@ -31,13 +31,13 @@ interface AnimatedSpanProps extends MotionProps {
   startOnView?: boolean;
 }
 
-export const AnimatedSpan = ({
+export function AnimatedSpan({
   children,
   delay = 0,
   className,
   startOnView = false,
   ...props
-}: AnimatedSpanProps) => {
+}: AnimatedSpanProps) {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(elementRef as React.RefObject<Element>, {
     amount: 0.3,
@@ -75,7 +75,7 @@ export const AnimatedSpan = ({
       {children}
     </motion.div>
   );
-};
+}
 
 interface TypingAnimationProps extends MotionProps {
   children: string;
@@ -86,7 +86,7 @@ interface TypingAnimationProps extends MotionProps {
   startOnView?: boolean;
 }
 
-export const TypingAnimation = ({
+export function TypingAnimation({
   children,
   className,
   duration = 60,
@@ -94,7 +94,7 @@ export const TypingAnimation = ({
   as: Component = "span",
   startOnView = true,
   ...props
-}: TypingAnimationProps) => {
+}: TypingAnimationProps) {
   if (typeof children !== "string") {
     throw new Error("TypingAnimation: children must be a string. Received:");
   }
@@ -177,7 +177,7 @@ export const TypingAnimation = ({
       {displayedText}
     </MotionComponent>
   );
-};
+}
 
 interface TerminalProps {
   children: React.ReactNode;
@@ -186,12 +186,12 @@ interface TerminalProps {
   startOnView?: boolean;
 }
 
-export const Terminal = ({
+export function Terminal({
   children,
   className,
   sequence = true,
   startOnView = true,
-}: TerminalProps) => {
+}: TerminalProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(containerRef as React.RefObject<Element>, {
     amount: 0.3,
@@ -201,7 +201,7 @@ export const Terminal = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const sequenceHasStarted = sequence ? !startOnView || isInView : false;
 
-  const contextValue = useMemo<SequenceContextValue | null>(() => {
+  const contextValue = useMemo<SequenceContextValue | (() => {
     if (!sequence) return null;
     return {
       completeItem: (index: number) => {
@@ -212,7 +212,7 @@ export const Terminal = ({
       activeIndex,
       sequenceStarted: sequenceHasStarted,
     };
-  }, [sequence, activeIndex, sequenceHasStarted]);
+  }, [sequence, activeIndex, sequenceHasStarted])<null;
 
   const wrappedChildren = useMemo(() => {
     if (!sequence) return children;
@@ -234,9 +234,9 @@ export const Terminal = ({
     >
       <div className="flex flex-col gap-y-2 border-b border-border p-4">
         <div className="flex flex-row gap-x-2">
-          <div className="h-2 w-2 rounded-full bg-red-500"></div>
-          <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
-          <div className="h-2 w-2 rounded-full bg-green-500"></div>
+          <div className="h-2 w-2 rounded-full bg-red-500" />
+          <div className="h-2 w-2 rounded-full bg-yellow-500" />
+          <div className="h-2 w-2 rounded-full bg-green-500" />
         </div>
       </div>
       <pre className="p-4">
@@ -252,4 +252,4 @@ export const Terminal = ({
       {content}
     </SequenceContext.Provider>
   );
-};
+}

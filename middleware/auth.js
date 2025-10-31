@@ -18,21 +18,26 @@ const authenticateToken = async (req, res, next) => {
     // IP whitelisting check (consolidated)
     const devIPs = ['127.0.0.1', '::1', '0.0.0.0'];
     const isDevIP = devIPs.includes(req.ip);
-    const isWhitelisted = isDevIP || (process.env.WHITELIST_IPS && process.env.WHITELIST_IPS.split(',').includes(req.ip));
+    const isWhitelisted =
+      isDevIP ||
+      (process.env.WHITELIST_IPS && process.env.WHITELIST_IPS.split(',').includes(req.ip));
     if (!isWhitelisted) {
-      require('../src/services/auditLogger').warn('IP not whitelisted', { ip: req.ip, endpoint: req.path });
+      require('../src/services/auditLogger').warn('IP not whitelisted', {
+        ip: req.ip,
+        endpoint: req.path,
+      });
       return res.status(403).json({ error: 'IP address not whitelisted' });
     }
-  
+
     await authRateLimiter.consume(req.ip);
 
-    const authHeader = req.headers['authorization'];
+    const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
       return res.status(401).json({
         error: 'Access token required',
-        code: 'AUTH_TOKEN_MISSING'
+        code: 'AUTH_TOKEN_MISSING',
       });
     }
 
@@ -42,12 +47,12 @@ const authenticateToken = async (req, res, next) => {
         logger.warn('JWT verification failed', {
           error: err.message,
           ip: req.ip,
-          userAgent: req.get('User-Agent')
+          userAgent: req.get('User-Agent'),
         });
 
         return res.status(403).json({
           error: 'Invalid or expired token',
-          code: 'AUTH_TOKEN_INVALID'
+          code: 'AUTH_TOKEN_INVALID',
         });
       }
 
@@ -55,7 +60,7 @@ const authenticateToken = async (req, res, next) => {
       req.user = {
         id: decoded.userId,
         role: decoded.role || 'admin',
-        permissions: decoded.permissions || []
+        permissions: decoded.permissions || [],
       };
 
       // Log successful authentication
@@ -64,21 +69,20 @@ const authenticateToken = async (req, res, next) => {
         role: req.user.role,
         ip: req.ip,
         endpoint: req.path,
-        method: req.method
+        method: req.method,
       });
-    
+
       next();
     });
-
   } catch (rateLimitError) {
     logger.warn('Auth rate limit exceeded', {
       ip: req.ip,
-      endpoint: req.path
+      endpoint: req.path,
     });
 
     return res.status(429).json({
       error: 'Too many authentication attempts',
-      code: 'AUTH_RATE_LIMIT'
+      code: 'AUTH_RATE_LIMIT',
     });
   }
 };
@@ -87,12 +91,13 @@ const authenticateToken = async (req, res, next) => {
  * Role-based Authorization Middleware
  * Checks if user has required role/permission
  */
-const authorize = (requiredRole, requiredPermissions = []) => {
-  return (req, res, next) => {
+const authorize =
+  (requiredRole, requiredPermissions = []) =>
+  (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         error: 'Authentication required',
-        code: 'AUTH_REQUIRED'
+        code: 'AUTH_REQUIRED',
       });
     }
 
@@ -101,10 +106,10 @@ const authorize = (requiredRole, requiredPermissions = []) => {
 
     // Check role hierarchy (admin > moderator > viewer)
     const roleHierarchy = {
-      'viewer': 1,
-      'moderator': 2,
-      'admin': 3,
-      'superadmin': 4
+      viewer: 1,
+      moderator: 2,
+      admin: 3,
+      superadmin: 4,
     };
 
     const userRoleLevel = roleHierarchy[userRole] || 0;
@@ -116,12 +121,12 @@ const authorize = (requiredRole, requiredPermissions = []) => {
         userId: req.user.id,
         userRole,
         requiredRole,
-        endpoint: req.path
+        endpoint: req.path,
       });
 
       return res.status(403).json({
         error: 'Insufficient permissions',
-        code: 'AUTH_INSUFFICIENT_ROLE'
+        code: 'AUTH_INSUFFICIENT_ROLE',
       });
     }
 
@@ -136,19 +141,18 @@ const authorize = (requiredRole, requiredPermissions = []) => {
           userId: req.user.id,
           userPermissions,
           requiredPermissions,
-          endpoint: req.path
+          endpoint: req.path,
         });
 
         return res.status(403).json({
           error: 'Missing required permissions',
-          code: 'AUTH_MISSING_PERMISSIONS'
+          code: 'AUTH_MISSING_PERMISSIONS',
         });
       }
     }
 
     next();
   };
-};
 
 /**
  * Admin-only middleware
@@ -168,9 +172,7 @@ const requireSuperAdmin = authorize('superadmin');
 /**
  * Permission-based middleware factory
  */
-const requirePermission = (permission) => {
-  return authorize('viewer', [permission]);
-};
+const requirePermission = permission => authorize('viewer', [permission]);
 
 /**
  * Optional authentication middleware
@@ -178,7 +180,7 @@ const requirePermission = (permission) => {
  */
 const optionalAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers['authorization'];
+    const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
@@ -187,7 +189,7 @@ const optionalAuth = async (req, res, next) => {
           req.user = {
             id: decoded.userId,
             role: decoded.role || 'viewer',
-            permissions: decoded.permissions || []
+            permissions: decoded.permissions || [],
           };
         }
       });
@@ -209,7 +211,7 @@ const authenticateApiKey = (req, res, next) => {
   if (!apiKey) {
     return res.status(401).json({
       error: 'API key required',
-      code: 'API_KEY_MISSING'
+      code: 'API_KEY_MISSING',
     });
   }
 
@@ -220,12 +222,12 @@ const authenticateApiKey = (req, res, next) => {
     logger.warn('Invalid API key used', {
       ip: req.ip,
       endpoint: req.path,
-      providedKey: apiKey.substring(0, 8) + '...' // Log partial key for debugging
+      providedKey: `${apiKey.substring(0, 8)}...`, // Log partial key for debugging
     });
 
     return res.status(403).json({
       error: 'Invalid API key',
-      code: 'API_KEY_INVALID'
+      code: 'API_KEY_INVALID',
     });
   }
 
@@ -241,5 +243,5 @@ module.exports = {
   requireSuperAdmin,
   requirePermission,
   optionalAuth,
-  authenticateApiKey
+  authenticateApiKey,
 };

@@ -50,11 +50,10 @@ export async function POST(request) {
     logger.log(level, message, {
       ...logData,
       timestamp: new Date().toISOString(),
-      source: 'edge-middleware'
+      source: 'edge-middleware',
     });
 
     return NextResponse.json({ status: 'Log received' }, { status: 200 });
-
   } catch (error) {
     console.error('Failed to process log event:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -71,7 +70,6 @@ export async function GET() {
     const logLines = logs.trim().split('\n').slice(-100); // Last 100 lines
 
     return NextResponse.json({ logs: logLines }, { status: 200 });
-
   } catch (error) {
     console.error('Failed to retrieve logs:', error);
     return NextResponse.json({ error: 'Failed to retrieve logs' }, { status: 500 });

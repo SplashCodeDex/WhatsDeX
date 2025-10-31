@@ -13,7 +13,7 @@ class ContentModerationService {
       violence: 0.7,
       adult: 0.6,
       spam: 0.5,
-      harassment: 0.7
+      harassment: 0.7,
     };
 
     // Content categories to monitor
@@ -26,12 +26,12 @@ class ContentModerationService {
       'bullying',
       'discrimination',
       'self_harm',
-      'illegal_activities'
+      'illegal_activities',
     ];
 
     logger.info('Content moderation service initialized', {
       enabled: this.moderationEnabled,
-      strictMode: this.strictMode
+      strictMode: this.strictMode,
     });
   }
 
@@ -50,7 +50,7 @@ class ContentModerationService {
       logger.debug('Moderating content', {
         contentLength: content.length,
         userId: context.userId,
-        groupId: context.groupId
+        groupId: context.groupId,
       });
 
       const moderationResult = await this.gemini.moderateContent(content);
@@ -65,7 +65,7 @@ class ContentModerationService {
           groupId: context.groupId,
           categories: enhancedResult.categories,
           score: enhancedResult.score,
-          contentPreview: content.substring(0, 100)
+          contentPreview: content.substring(0, 100),
         });
       }
 
@@ -74,7 +74,7 @@ class ContentModerationService {
       logger.error('Content moderation failed', {
         error: error.message,
         contentLength: content.length,
-        userId: context.userId
+        userId: context.userId,
       });
 
       // Default to safe if moderation fails
@@ -83,7 +83,7 @@ class ContentModerationService {
         score: 0,
         categories: [],
         reason: 'Moderation service unavailable',
-        fallback: true
+        fallback: true,
       };
     }
   }
@@ -102,7 +102,9 @@ class ContentModerationService {
     const patternChecks = this.performPatternChecks(content);
 
     // Combine AI and pattern results
-    enhanced.categories = [...new Set([...(enhanced.categories || []), ...patternChecks.categories])];
+    enhanced.categories = [
+      ...new Set([...(enhanced.categories || []), ...patternChecks.categories]),
+    ];
     enhanced.score = Math.max(enhanced.score || 0, patternChecks.score);
 
     // Context-based adjustments
@@ -138,21 +140,21 @@ class ContentModerationService {
       /\b(kike|heeb)\b/i,
       /\b(chink|gook)\b/i,
       /\b(spic|wetback)\b/i,
-      /\b(raghead|towelhead)\b/i
+      /\b(raghead|towelhead)\b/i,
     ];
 
     // Violence patterns
     const violencePatterns = [
       /\b(kill|murder|assassinate)\b.*\b(you|him|her|them)\b/i,
       /\b(bomb|explode|detonate)\b/i,
-      /\b(shoot|stab|beat|rape)\b.*\b(you|him|her|them)\b/i
+      /\b(shoot|stab|beat|rape)\b.*\b(you|him|her|them)\b/i,
     ];
 
     // Spam patterns
     const spamPatterns = [
       /(\+?\d{1,3}[-.\s]?)?\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})/g, // Phone numbers
       /\b(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+\.[a-z]{2,}(?:\/\S*)?/gi, // URLs
-      /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi // Emails
+      /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, // Emails
     ];
 
     // Check hate speech
@@ -168,9 +170,10 @@ class ContentModerationService {
     }
 
     // Check spam
-    const spamMatches = spamPatterns.reduce((count, pattern) => {
-      return count + (lowerContent.match(pattern) || []).length;
-    }, 0);
+    const spamMatches = spamPatterns.reduce(
+      (count, pattern) => count + (lowerContent.match(pattern) || []).length,
+      0
+    );
 
     if (spamMatches > 2) {
       categories.push('spam');
@@ -248,7 +251,7 @@ class ContentModerationService {
         blockedContent: 0,
         categoriesBreakdown: {},
         averageScore: 0,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Failed to get moderation statistics', { error: error.message });
@@ -268,7 +271,7 @@ class ContentModerationService {
       const result = await this.moderateContent(item.content, item.context);
       results.push({
         ...item,
-        moderation: result
+        moderation: result,
       });
     }
 
@@ -289,12 +292,11 @@ class ContentModerationService {
         wasCorrect: correctDecision,
         feedback: feedback.substring(0, 100),
         categories: moderationResult.categories,
-        score: moderationResult.score
+        score: moderationResult.score,
       });
 
       // This would store feedback for model improvement
       // Could be used to fine-tune moderation over time
-
     } catch (error) {
       logger.error('Failed to process moderation feedback', { error: error.message });
     }
@@ -320,7 +322,7 @@ class ContentModerationService {
     logger.info('Moderation settings updated', {
       enabled: this.moderationEnabled,
       strictMode: this.strictMode,
-      thresholds: this.thresholds
+      thresholds: this.thresholds,
     });
   }
 
@@ -339,7 +341,7 @@ class ContentModerationService {
         enabled: this.moderationEnabled,
         strictMode: this.strictMode,
         testResult: result,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Content moderation health check failed', { error: error.message });
@@ -347,7 +349,7 @@ class ContentModerationService {
         status: 'unhealthy',
         service: 'content-moderation',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

@@ -10,14 +10,14 @@ module.exports = {
   permissions: {
     coin: 10,
   },
-  code: async (ctx) => {
+  code: async ctx => {
     const { formatter } = ctx.bot.context;
 
     // Constants for summarization logic
     const {
       SUMMARIZE_THRESHOLD = 16,
       MESSAGES_TO_SUMMARIZE = 10,
-      HISTORY_PRUNE_LENGTH = 6
+      HISTORY_PRUNE_LENGTH = 6,
     } = ctx.bot.context.config.ai.summarization;
 
     try {
@@ -35,7 +35,7 @@ module.exports = {
       const geminiService = new GeminiService();
       const userId = ctx.author.id;
 
-      const chat = await aiChatDB.getChat(userId) || { history: [], summary: '' };
+      const chat = (await aiChatDB.getChat(userId)) || { history: [], summary: '' };
       let currentHistory = chat.history || [];
       let currentSummary = chat.summary || '';
 
@@ -74,14 +74,15 @@ module.exports = {
               let commandOutput = '';
               // The weather command expects args to be a string, not an array.
               // We need to handle different argument structures.
-              const argsForCommand = functionName === 'weather' ?
-                Object.values(functionArgs).join(' ') :
-                Object.values(functionArgs);
+              const argsForCommand =
+                functionName === 'weather'
+                  ? Object.values(functionArgs).join(' ')
+                  : Object.values(functionArgs);
 
               const mockCtx = {
                 ...ctx,
                 args: argsForCommand,
-                reply: (output) => {
+                reply: output => {
                   commandOutput = typeof output === 'object' ? JSON.stringify(output) : output;
                 },
                 // Remove dangerous properties
@@ -111,13 +112,11 @@ module.exports = {
         messages.push(finalResponse.message);
         await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
         return ctx.reply(finalMessageContent);
-
-      } else {
-        const result = responseMessage.content;
-        messages.push(responseMessage);
-        await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
-        return ctx.reply(result);
       }
+      const result = responseMessage.content;
+      messages.push(responseMessage);
+      await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
+      return ctx.reply(result);
     } catch (error) {
       console.error(error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));

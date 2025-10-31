@@ -19,7 +19,7 @@ export default function AuthPage() {
   const timerRef = useRef();
   const startTimeRef = useRef();
 
-  const playVoiceCode = useCallback(async (voiceData) => {
+  const playVoiceCode = useCallback(async voiceData => {
     try {
       // In a real implementation, this would play the audio
       console.log('Playing voice code:', voiceData.text);
@@ -28,7 +28,7 @@ export default function AuthPage() {
     }
   }, []);
 
-  const handleConnectionStatus = useCallback((status) => {
+  const handleConnectionStatus = useCallback(status => {
     setConnectionStatus(status.status);
     setRetryCount(status.retryCount || 0);
 
@@ -44,30 +44,33 @@ export default function AuthPage() {
     }
   }, []);
 
-  const handleQRCode = useCallback((data) => {
+  const handleQRCode = useCallback(data => {
     setQrCode(data);
     setError(null);
   }, []);
 
-  const handlePairingCode = useCallback((data) => {
-    setPairingCode(data);
-    setError(null);
+  const handlePairingCode = useCallback(
+    data => {
+      setPairingCode(data);
+      setError(null);
 
-    // Auto-play voice if enabled
-    if (voiceEnabled && data.voice) {
-      playVoiceCode(data.voice);
-    }
-  }, [voiceEnabled, playVoiceCode]);
+      // Auto-play voice if enabled
+      if (voiceEnabled && data.voice) {
+        playVoiceCode(data.voice);
+      }
+    },
+    [voiceEnabled, playVoiceCode]
+  );
 
-  const handleConnectionProgress = useCallback((progress) => {
+  const handleConnectionProgress = useCallback(progress => {
     setConnectionProgress(progress);
   }, []);
 
-  const handleAnalyticsUpdate = useCallback((data) => {
+  const handleAnalyticsUpdate = useCallback(data => {
     setAnalytics(data);
   }, []);
 
-  const handleError = useCallback((err) => {
+  const handleError = useCallback(err => {
     setError(err.message);
     setIsLoading(false);
   }, []);
@@ -126,30 +129,47 @@ export default function AuthPage() {
         clearInterval(timerRef.current);
       }
     };
-  }, [handleConnectionStatus, handleQRCode, handlePairingCode, handleConnectionProgress, handleAnalyticsUpdate, handleError]);
-  const formatTime = (ms) => {
+  }, [
+    handleConnectionStatus,
+    handleQRCode,
+    handlePairingCode,
+    handleConnectionProgress,
+    handleAnalyticsUpdate,
+    handleError,
+  ]);
+  const formatTime = ms => {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'connected': return 'text-green-600 bg-green-100';
-      case 'connecting': return 'text-blue-600 bg-blue-100';
-      case 'disconnected': return 'text-red-600 bg-red-100';
-      case 'error': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'connected':
+        return 'text-green-600 bg-green-100';
+      case 'connecting':
+        return 'text-blue-600 bg-blue-100';
+      case 'disconnected':
+        return 'text-red-600 bg-red-100';
+      case 'error':
+        return 'text-red-600 bg-red-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = status => {
     switch (status) {
-      case 'connected': return '✅';
-      case 'connecting': return '🔄';
-      case 'disconnected': return '❌';
-      case 'error': return '⚠️';
-      default: return '⏳';
+      case 'connected':
+        return '✅';
+      case 'connecting':
+        return '🔄';
+      case 'disconnected':
+        return '❌';
+      case 'error':
+        return '⚠️';
+      default:
+        return '⏳';
     }
   };
 
@@ -176,8 +196,11 @@ export default function AuthPage() {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold text-gray-800">Connection Status</h2>
-            <div className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(connectionStatus)}`}>
-              {getStatusIcon(connectionStatus)} {connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}
+            <div
+              className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(connectionStatus)}`}
+            >
+              {getStatusIcon(connectionStatus)}{' '}
+              {connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}
             </div>
           </div>
 
@@ -201,7 +224,7 @@ export default function AuthPage() {
             <div
               className="bg-blue-600 h-3 rounded-full transition-all duration-300"
               style={{ width: `${connectionProgress}%` }}
-            ></div>
+            />
           </div>
 
           {/* Control Buttons */}
@@ -244,7 +267,7 @@ export default function AuthPage() {
                 name="method"
                 value="qr"
                 checked={selectedMethod === 'qr'}
-                onChange={(e) => setSelectedMethod(e.target.value)}
+                onChange={e => setSelectedMethod(e.target.value)}
                 className="w-4 h-4 text-blue-600"
               />
             </div>
@@ -252,11 +275,7 @@ export default function AuthPage() {
             {selectedMethod === 'qr' && qrCode && (
               <div className="text-center">
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <img
-                    src={qrCode.qr}
-                    alt="QR Code"
-                    className="mx-auto max-w-full h-auto"
-                  />
+                  <img src={qrCode.qr} alt="QR Code" className="mx-auto max-w-full h-auto" />
                 </div>
 
                 <div className="flex gap-2 justify-center mb-4">
@@ -298,7 +317,7 @@ export default function AuthPage() {
                 name="method"
                 value="pairing"
                 checked={selectedMethod === 'pairing'}
-                onChange={(e) => setSelectedMethod(e.target.value)}
+                onChange={e => setSelectedMethod(e.target.value)}
                 className="w-4 h-4 text-blue-600"
               />
             </div>
@@ -309,9 +328,7 @@ export default function AuthPage() {
                   <div className="text-3xl font-mono font-bold text-blue-600 mb-2">
                     {pairingCode.phonetic}
                   </div>
-                  <div className="text-lg font-mono text-gray-600">
-                    {pairingCode.alphanumeric}
-                  </div>
+                  <div className="text-lg font-mono text-gray-600">{pairingCode.alphanumeric}</div>
                 </div>
 
                 <div className="flex gap-2 justify-center mb-4">
@@ -356,7 +373,7 @@ export default function AuthPage() {
               type="checkbox"
               id="voice"
               checked={voiceEnabled}
-              onChange={(e) => setVoiceEnabled(e.target.checked)}
+              onChange={e => setVoiceEnabled(e.target.checked)}
               className="w-4 h-4 text-blue-600"
             />
             <label htmlFor="voice" className="text-gray-700">
@@ -376,9 +393,7 @@ export default function AuthPage() {
               <div className="text-sm text-gray-500">Total Connections</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {analytics.successRate || 0}%
-              </div>
+              <div className="text-2xl font-bold text-green-600">{analytics.successRate || 0}%</div>
               <div className="text-sm text-gray-500">Success Rate</div>
             </div>
             <div className="text-center">
@@ -388,9 +403,7 @@ export default function AuthPage() {
               <div className="text-sm text-gray-500">Avg Connection Time</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {analytics.activeQRs || 0}
-              </div>
+              <div className="text-2xl font-bold text-purple-600">{analytics.activeQRs || 0}</div>
               <div className="text-sm text-gray-500">Active QR Codes</div>
             </div>
           </div>

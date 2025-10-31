@@ -9,7 +9,8 @@ module.exports = [
         properties: {
           query: {
             type: 'string',
-            description: 'The search query. For example, "best programming tutorials" or "cat videos".',
+            description:
+              'The search query. For example, "best programming tutorials" or "cat videos".',
           },
         },
         required: ['query'],
@@ -43,7 +44,8 @@ module.exports = [
         properties: {
           location: {
             type: 'string',
-            description: 'The city or location to get the weather for, e.g., "San Francisco" or "Tokyo".',
+            description:
+              'The city or location to get the weather for, e.g., "San Francisco" or "Tokyo".',
           },
         },
         required: ['location'],
@@ -64,7 +66,8 @@ module.exports = [
           },
           to: {
             type: 'string',
-            description: 'The 2-letter ISO 639-1 code for the target language, e.g., "en" for English, "es" for Spanish.',
+            description:
+              'The 2-letter ISO 639-1 code for the target language, e.g., "en" for English, "es" for Spanish.',
           },
         },
         required: ['text', 'to'],

@@ -19,7 +19,7 @@ class AnalyticsService {
       aiRequests: 0,
       responseTime: 0,
       errorRate: 0,
-      uptime: 0
+      uptime: 0,
     };
 
     logger.info('Analytics service initialized');
@@ -35,10 +35,10 @@ class AnalyticsService {
       if (config.websocketPort) {
         this.wss = new WebSocket.Server({ port: config.websocketPort });
 
-        this.wss.on('connection', async (ws) => {
+        this.wss.on('connection', async ws => {
           this.clients.add(ws);
 
-          ws.on('message', (message) => {
+          ws.on('message', message => {
             this.handleWebSocketMessage(ws, message);
           });
 
@@ -49,7 +49,7 @@ class AnalyticsService {
           // Send initial data
           this.sendToClient(ws, {
             type: 'welcome',
-            data: await this.getDashboardData()
+            data: await this.getDashboardData(),
           });
         });
 
@@ -61,7 +61,6 @@ class AnalyticsService {
 
       this.isInitialized = true;
       logger.info('Analytics service initialized successfully');
-
     } catch (error) {
       logger.error('Failed to initialize analytics service', { error: error.message });
       throw error;
@@ -82,7 +81,7 @@ class AnalyticsService {
           // Client wants to subscribe to real-time updates
           this.sendToClient(ws, {
             type: 'subscribed',
-            data: { message: 'Successfully subscribed to real-time updates' }
+            data: { message: 'Successfully subscribed to real-time updates' },
           });
           break;
 
@@ -90,7 +89,7 @@ class AnalyticsService {
           const metrics = await this.getMetrics(data.timeframe || '24h');
           this.sendToClient(ws, {
             type: 'metrics',
-            data: metrics
+            data: metrics,
           });
           break;
 
@@ -98,19 +97,18 @@ class AnalyticsService {
           const dashboard = await this.getDashboardData();
           this.sendToClient(ws, {
             type: 'dashboard',
-            data: dashboard
+            data: dashboard,
           });
           break;
 
         default:
           logger.warn('Unknown WebSocket message type', { type: data.type });
       }
-
     } catch (error) {
       logger.error('Failed to handle WebSocket message', { error: error.message });
       this.sendToClient(ws, {
         type: 'error',
-        data: { message: 'Failed to process message' }
+        data: { message: 'Failed to process message' },
       });
     }
   }
@@ -161,18 +159,20 @@ class AnalyticsService {
         this.broadcast({
           type: 'dashboard_update',
           data: dashboardData,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-
       } catch (error) {
         logger.error('Failed to update metrics', { error: error.message });
       }
     }, 30000);
 
     // Clean cache every 10 minutes
-    setInterval(() => {
-      this.cleanCache();
-    }, 10 * 60 * 1000);
+    setInterval(
+      () => {
+        this.cleanCache();
+      },
+      10 * 60 * 1000
+    );
 
     logger.info('Metrics collection started');
   }
@@ -190,61 +190,61 @@ class AnalyticsService {
       const activeUsers = await this.database.prisma.user.count({
         where: {
           lastActivity: {
-            gte: oneHourAgo
-          }
-        }
+            gte: oneHourAgo,
+          },
+        },
       });
 
       // Total commands in last 24 hours
       const totalCommands = await this.database.prisma.commandUsage.count({
         where: {
           usedAt: {
-            gte: oneDayAgo
-          }
-        }
+            gte: oneDayAgo,
+          },
+        },
       });
 
       // AI requests in last 24 hours
       const aiRequests = await this.database.prisma.commandUsage.count({
         where: {
           usedAt: {
-            gte: oneDayAgo
+            gte: oneDayAgo,
           },
-          category: 'ai-chat'
-        }
+          category: 'ai-chat',
+        },
       });
 
       // Average response time
       const responseTimeData = await this.database.prisma.commandUsage.aggregate({
         where: {
           usedAt: {
-            gte: oneDayAgo
+            gte: oneDayAgo,
           },
           executionTime: {
-            not: null
-          }
+            not: null,
+          },
         },
         _avg: {
-          executionTime: true
-        }
+          executionTime: true,
+        },
       });
 
       // Error rate
       const totalUsage = await this.database.prisma.commandUsage.count({
         where: {
           usedAt: {
-            gte: oneDayAgo
-          }
-        }
+            gte: oneDayAgo,
+          },
+        },
       });
 
       const errorCount = await this.database.prisma.commandUsage.count({
         where: {
           usedAt: {
-            gte: oneDayAgo
+            gte: oneDayAgo,
           },
-          success: false
-        }
+          success: false,
+        },
       });
 
       // Update metrics
@@ -255,11 +255,10 @@ class AnalyticsService {
         responseTime: responseTimeData._avg.executionTime || 0,
         errorRate: totalUsage > 0 ? (errorCount / totalUsage) * 100 : 0,
         uptime: process.uptime(),
-        timestamp: now.toISOString()
+        timestamp: now.toISOString(),
       };
 
       logger.debug('Metrics updated', this.metrics);
-
     } catch (error) {
       logger.error('Failed to update metrics', { error: error.message });
     }
@@ -274,7 +273,7 @@ class AnalyticsService {
       const cacheKey = 'dashboard_data';
       const cached = this.cache.get(cacheKey);
 
-      if (cached && (Date.now() - cached.timestamp) < this.cacheTimeout) {
+      if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
         return cached.data;
       }
 
@@ -286,8 +285,8 @@ class AnalyticsService {
       const totalUsers = await this.database.prisma.user.count();
       const premiumUsers = await this.database.prisma.subscription.count({
         where: {
-          status: 'active'
-        }
+          status: 'active',
+        },
       });
 
       // Command statistics
@@ -295,12 +294,12 @@ class AnalyticsService {
         by: ['category'],
         where: {
           usedAt: {
-            gte: oneDayAgo
-          }
+            gte: oneDayAgo,
+          },
         },
         _count: {
-          id: true
-        }
+          id: true,
+        },
       });
 
       // Revenue statistics
@@ -308,27 +307,27 @@ class AnalyticsService {
         where: {
           status: 'completed',
           createdAt: {
-            gte: sevenDaysAgo
-          }
+            gte: sevenDaysAgo,
+          },
         },
         _sum: {
-          amount: true
-        }
+          amount: true,
+        },
       });
 
       // Recent activity
       const recentActivity = await this.database.prisma.commandUsage.findMany({
         take: 10,
         orderBy: {
-          usedAt: 'desc'
+          usedAt: 'desc',
         },
         include: {
           user: {
             select: {
-              name: true
-            }
-          }
-        }
+              name: true,
+            },
+          },
+        },
       });
 
       // System health
@@ -336,7 +335,7 @@ class AnalyticsService {
         database: await this.database.healthCheck(),
         uptime: process.uptime(),
         memory: process.memoryUsage(),
-        cpu: process.cpuUsage()
+        cpu: process.cpuUsage(),
       };
 
       const dashboardData = {
@@ -346,12 +345,12 @@ class AnalyticsService {
           activeUsers: this.metrics.activeUsers,
           totalCommands: this.metrics.totalCommands,
           aiRequests: this.metrics.aiRequests,
-          revenue: revenueData._sum.amount || 0
+          revenue: revenueData._sum.amount || 0,
         },
         performance: {
           responseTime: this.metrics.responseTime,
           errorRate: this.metrics.errorRate,
-          uptime: this.metrics.uptime
+          uptime: this.metrics.uptime,
         },
         commandStats: commandStats.reduce((acc, stat) => {
           acc[stat.category] = stat._count.id;
@@ -363,20 +362,19 @@ class AnalyticsService {
           command: activity.command,
           category: activity.category,
           success: activity.success,
-          timestamp: activity.usedAt
+          timestamp: activity.usedAt,
         })),
         systemHealth,
-        timestamp: now.toISOString()
+        timestamp: now.toISOString(),
       };
 
       // Cache the data
       this.cache.set(cacheKey, {
         data: dashboardData,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       return dashboardData;
-
     } catch (error) {
       logger.error('Failed to get dashboard data', { error: error.message });
       throw error;
@@ -415,15 +413,15 @@ class AnalyticsService {
         by: ['createdAt'],
         where: {
           createdAt: {
-            gte: startDate
-          }
+            gte: startDate,
+          },
         },
         _count: {
-          id: true
+          id: true,
         },
         orderBy: {
-          createdAt: 'asc'
-        }
+          createdAt: 'asc',
+        },
       });
 
       // Command usage over time
@@ -431,15 +429,15 @@ class AnalyticsService {
         by: ['usedAt'],
         where: {
           usedAt: {
-            gte: startDate
-          }
+            gte: startDate,
+          },
         },
         _count: {
-          id: true
+          id: true,
         },
         orderBy: {
-          usedAt: 'asc'
-        }
+          usedAt: 'asc',
+        },
       });
 
       // Revenue over time
@@ -447,16 +445,16 @@ class AnalyticsService {
         by: ['createdAt'],
         where: {
           createdAt: {
-            gte: startDate
+            gte: startDate,
           },
-          status: 'completed'
+          status: 'completed',
         },
         _sum: {
-          amount: true
+          amount: true,
         },
         orderBy: {
-          createdAt: 'asc'
-        }
+          createdAt: 'asc',
+        },
       });
 
       // Error rate over time
@@ -464,52 +462,62 @@ class AnalyticsService {
         by: ['usedAt'],
         where: {
           usedAt: {
-            gte: startDate
-          }
+            gte: startDate,
+          },
         },
         _count: {
           id: true,
-          success: true
+          success: true,
         },
         orderBy: {
-          usedAt: 'asc'
-        }
+          usedAt: 'asc',
+        },
       });
 
       return {
         timeframe,
         userGrowth: userGrowth.map(item => ({
           date: item.createdAt.toISOString().split('T')[0],
-          count: item._count.id
+          count: item._count.id,
         })),
         commandUsage: commandUsage.map(item => ({
           timestamp: item.usedAt.toISOString(),
-          count: item._count.id
+          count: item._count.id,
         })),
         revenue: revenueOverTime.map(item => ({
           date: item.createdAt.toISOString().split('T')[0],
-          amount: item._sum.amount || 0
+          amount: item._sum.amount || 0,
         })),
         errorRate: errorRate.map(item => ({
           timestamp: item.usedAt.toISOString(),
           total: item._count.id,
           errors: item._count.id - (item._count.success || 0),
-          rate: item._count.id > 0 ? ((item._count.id - (item._count.success || 0)) / item._count.id) * 100 : 0
+          rate:
+            item._count.id > 0
+              ? ((item._count.id - (item._count.success || 0)) / item._count.id) * 100
+              : 0,
         })),
         summary: {
           totalUsers: userGrowth.reduce((sum, item) => sum + item._count.id, 0),
           totalCommands: commandUsage.reduce((sum, item) => sum + item._count.id, 0),
           totalRevenue: revenueOverTime.reduce((sum, item) => sum + (item._sum.amount || 0), 0),
-          averageErrorRate: errorRate.length > 0
-            ? errorRate.reduce((sum, item) => sum + (item._count.id > 0 ? ((item._count.id - (item._count.success || 0)) / item._count.id) * 100 : 0), 0) / errorRate.length
-            : 0
-        }
+          averageErrorRate:
+            errorRate.length > 0
+              ? errorRate.reduce(
+                  (sum, item) =>
+                    sum +
+                    (item._count.id > 0
+                      ? ((item._count.id - (item._count.success || 0)) / item._count.id) * 100
+                      : 0),
+                  0
+                ) / errorRate.length
+              : 0,
+        },
       };
-
     } catch (error) {
       logger.error('Failed to get detailed metrics', {
         timeframe,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -531,10 +539,10 @@ class AnalyticsService {
           metadata: JSON.stringify({
             userId,
             event,
-            ...properties
+            ...properties,
           }),
-          recordedAt: new Date()
-        }
+          recordedAt: new Date(),
+        },
       });
 
       // Broadcast event to WebSocket clients
@@ -544,17 +552,16 @@ class AnalyticsService {
           userId,
           event,
           properties,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
 
       logger.debug('Event tracked', { userId, event, properties });
-
     } catch (error) {
       logger.error('Failed to track event', {
         userId,
         event,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -571,7 +578,7 @@ class AnalyticsService {
         type: reportType,
         generatedAt: new Date().toISOString(),
         filters,
-        data: {}
+        data: {},
       };
 
       switch (reportType) {
@@ -599,16 +606,15 @@ class AnalyticsService {
       const cacheKey = `bi_report_${reportType}_${JSON.stringify(filters)}`;
       this.cache.set(cacheKey, {
         data: report,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       return report;
-
     } catch (error) {
       logger.error('Failed to generate BI report', {
         reportType,
         filters,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -620,7 +626,9 @@ class AnalyticsService {
    * @returns {Promise<Object>} User engagement data
    */
   async generateUserEngagementReport(filters) {
-    const startDate = filters.startDate ? new Date(filters.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const startDate = filters.startDate
+      ? new Date(filters.startDate)
+      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = filters.endDate ? new Date(filters.endDate) : new Date();
 
     // Daily active users
@@ -629,12 +637,12 @@ class AnalyticsService {
       where: {
         lastActivity: {
           gte: startDate,
-          lte: endDate
-        }
+          lte: endDate,
+        },
       },
       _count: {
-        id: true
-      }
+        id: true,
+      },
     });
 
     // Command usage by user
@@ -643,18 +651,18 @@ class AnalyticsService {
       where: {
         usedAt: {
           gte: startDate,
-          lte: endDate
-        }
+          lte: endDate,
+        },
       },
       _count: {
-        id: true
+        id: true,
       },
       orderBy: {
         _count: {
-          id: 'desc'
-        }
+          id: 'desc',
+        },
       },
-      take: 10
+      take: 10,
     });
 
     // Session duration analysis
@@ -662,35 +670,39 @@ class AnalyticsService {
       where: {
         startedAt: {
           gte: startDate,
-          lte: endDate
-        }
-      }
+          lte: endDate,
+        },
+      },
     });
 
     return {
       period: { startDate, endDate },
       dailyActiveUsers: dau.map(item => ({
         date: item.lastActivity.toISOString().split('T')[0],
-        count: item._count.id
+        count: item._count.id,
       })),
-      topUsers: await Promise.all(topUsers.map(async (user) => {
-        const userData = await this.database.prisma.user.findUnique({
-          where: { id: user.userId },
-          select: { name: true }
-        });
-        return {
-          userId: user.userId,
-          name: userData?.name || 'Unknown',
-          commandCount: user._count.id
-        };
-      })),
+      topUsers: await Promise.all(
+        topUsers.map(async user => {
+          const userData = await this.database.prisma.user.findUnique({
+            where: { id: user.userId },
+            select: { name: true },
+          });
+          return {
+            userId: user.userId,
+            name: userData?.name || 'Unknown',
+            commandCount: user._count.id,
+          };
+        })
+      ),
       sessionStats: {
         totalSessions: sessionData.length,
-        averageDuration: sessionData.length > 0
-          ? sessionData.reduce((sum, session) => sum + (session.duration || 0), 0) / sessionData.length
-          : 0,
-        totalDuration: sessionData.reduce((sum, session) => sum + (session.duration || 0), 0)
-      }
+        averageDuration:
+          sessionData.length > 0
+            ? sessionData.reduce((sum, session) => sum + (session.duration || 0), 0) /
+              sessionData.length
+            : 0,
+        totalDuration: sessionData.reduce((sum, session) => sum + (session.duration || 0), 0),
+      },
     };
   }
 
@@ -700,7 +712,9 @@ class AnalyticsService {
    * @returns {Promise<Object>} Revenue analysis data
    */
   async generateRevenueAnalysisReport(filters) {
-    const startDate = filters.startDate ? new Date(filters.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const startDate = filters.startDate
+      ? new Date(filters.startDate)
+      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = filters.endDate ? new Date(filters.endDate) : new Date();
 
     // Revenue by plan
@@ -710,12 +724,12 @@ class AnalyticsService {
         status: 'completed',
         createdAt: {
           gte: startDate,
-          lte: endDate
-        }
+          lte: endDate,
+        },
       },
       _sum: {
-        amount: true
-      }
+        amount: true,
+      },
     });
 
     // Monthly recurring revenue
@@ -723,12 +737,12 @@ class AnalyticsService {
       where: {
         status: 'active',
         createdAt: {
-          lte: endDate
-        }
+          lte: endDate,
+        },
       },
       _count: {
-        id: true
-      }
+        id: true,
+      },
     });
 
     // Churn rate
@@ -737,29 +751,33 @@ class AnalyticsService {
         status: 'canceled',
         cancelledAt: {
           gte: startDate,
-          lte: endDate
-        }
-      }
+          lte: endDate,
+        },
+      },
     });
 
     return {
       period: { startDate, endDate },
       totalRevenue: revenueByPlan.reduce((sum, item) => sum + (item._sum.amount || 0), 0),
       monthlyRecurringRevenue: mrr._count.id * 9.99, // Assuming average plan price
-      revenueByPlan: await Promise.all(revenueByPlan.map(async (item) => {
-        const subscription = await this.database.prisma.subscription.findFirst({
-          where: { userId: item.userId },
-          select: { planKey: true }
-        });
-        return {
-          plan: subscription?.planKey || 'unknown',
-          revenue: item._sum.amount || 0
-        };
-      })),
+      revenueByPlan: await Promise.all(
+        revenueByPlan.map(async item => {
+          const subscription = await this.database.prisma.subscription.findFirst({
+            where: { userId: item.userId },
+            select: { planKey: true },
+          });
+          return {
+            plan: subscription?.planKey || 'unknown',
+            revenue: item._sum.amount || 0,
+          };
+        })
+      ),
       churnRate: churnData.length,
-      averageRevenuePerUser: revenueByPlan.length > 0
-        ? revenueByPlan.reduce((sum, item) => sum + (item._sum.amount || 0), 0) / revenueByPlan.length
-        : 0
+      averageRevenuePerUser:
+        revenueByPlan.length > 0
+          ? revenueByPlan.reduce((sum, item) => sum + (item._sum.amount || 0), 0) /
+            revenueByPlan.length
+          : 0,
     };
   }
 
@@ -769,7 +787,9 @@ class AnalyticsService {
    * @returns {Promise<Object>} Feature usage data
    */
   async generateFeatureUsageReport(filters) {
-    const startDate = filters.startDate ? new Date(filters.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const startDate = filters.startDate
+      ? new Date(filters.startDate)
+      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = filters.endDate ? new Date(filters.endDate) : new Date();
 
     // Command usage by category
@@ -778,15 +798,15 @@ class AnalyticsService {
       where: {
         usedAt: {
           gte: startDate,
-          lte: endDate
-        }
+          lte: endDate,
+        },
       },
       _count: {
-        id: true
+        id: true,
       },
       _avg: {
-        executionTime: true
-      }
+        executionTime: true,
+      },
     });
 
     // AI feature usage
@@ -795,15 +815,15 @@ class AnalyticsService {
       where: {
         usedAt: {
           gte: startDate,
-          lte: endDate
+          lte: endDate,
         },
         category: {
-          in: ['ai-chat', 'ai-image', 'ai-video', 'ai-misc']
-        }
+          in: ['ai-chat', 'ai-image', 'ai-video', 'ai-misc'],
+        },
       },
       _count: {
-        id: true
-      }
+        id: true,
+      },
     });
 
     return {
@@ -812,11 +832,11 @@ class AnalyticsService {
         category: item.category,
         command: item.command,
         usage: item._count.id,
-        averageResponseTime: item._avg.executionTime || 0
+        averageResponseTime: item._avg.executionTime || 0,
       })),
       aiUsage: aiUsage.map(item => ({
         feature: item.command,
-        usage: item._count.id
+        usage: item._count.id,
       })),
       topCommands: commandUsage
         .sort((a, b) => b._count.id - a._count.id)
@@ -824,8 +844,8 @@ class AnalyticsService {
         .map(item => ({
           command: item.command,
           category: item.category,
-          usage: item._count.id
-        }))
+          usage: item._count.id,
+        })),
     };
   }
 
@@ -835,7 +855,9 @@ class AnalyticsService {
    * @returns {Promise<Object>} Performance metrics data
    */
   async generatePerformanceMetricsReport(filters) {
-    const startDate = filters.startDate ? new Date(filters.startDate) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const startDate = filters.startDate
+      ? new Date(filters.startDate)
+      : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const endDate = filters.endDate ? new Date(filters.endDate) : new Date();
 
     // Response time trends
@@ -843,20 +865,20 @@ class AnalyticsService {
       where: {
         usedAt: {
           gte: startDate,
-          lte: endDate
+          lte: endDate,
         },
         executionTime: {
-          not: null
-        }
+          not: null,
+        },
       },
       select: {
         executionTime: true,
         usedAt: true,
-        success: true
+        success: true,
       },
       orderBy: {
-        usedAt: 'asc'
-      }
+        usedAt: 'asc',
+      },
     });
 
     // Error rate trends
@@ -865,46 +887,60 @@ class AnalyticsService {
       where: {
         usedAt: {
           gte: startDate,
-          lte: endDate
-        }
+          lte: endDate,
+        },
       },
       _count: {
         id: true,
-        success: true
+        success: true,
       },
       orderBy: {
-        usedAt: 'asc'
-      }
+        usedAt: 'asc',
+      },
     });
 
     return {
       period: { startDate, endDate },
       responseTime: {
-        average: responseTimeData.length > 0
-          ? responseTimeData.reduce((sum, item) => sum + item.executionTime, 0) / responseTimeData.length
-          : 0,
-        p95: this.calculatePercentile(responseTimeData.map(item => item.executionTime), 95),
-        p99: this.calculatePercentile(responseTimeData.map(item => item.executionTime), 99),
+        average:
+          responseTimeData.length > 0
+            ? responseTimeData.reduce((sum, item) => sum + item.executionTime, 0) /
+              responseTimeData.length
+            : 0,
+        p95: this.calculatePercentile(
+          responseTimeData.map(item => item.executionTime),
+          95
+        ),
+        p99: this.calculatePercentile(
+          responseTimeData.map(item => item.executionTime),
+          99
+        ),
         trend: responseTimeData.slice(-10).map(item => ({
           timestamp: item.usedAt.toISOString(),
-          value: item.executionTime
-        }))
+          value: item.executionTime,
+        })),
       },
       errorRate: {
-        overall: errorData.length > 0
-          ? errorData.reduce((sum, item) => sum + (item._count.id - (item._count.success || 0)), 0) /
-            errorData.reduce((sum, item) => sum + item._count.id, 0) * 100
-          : 0,
+        overall:
+          errorData.length > 0
+            ? (errorData.reduce(
+                (sum, item) => sum + (item._count.id - (item._count.success || 0)),
+                0
+              ) /
+                errorData.reduce((sum, item) => sum + item._count.id, 0)) *
+              100
+            : 0,
         trend: errorData.map(item => ({
           timestamp: item.usedAt.toISOString(),
-          rate: item._count.id > 0
-            ? ((item._count.id - (item._count.success || 0)) / item._count.id) * 100
-            : 0
-        }))
+          rate:
+            item._count.id > 0
+              ? ((item._count.id - (item._count.success || 0)) / item._count.id) * 100
+              : 0,
+        })),
       },
       uptime: process.uptime(),
       memoryUsage: process.memoryUsage(),
-      throughput: responseTimeData.length / ((endDate - startDate) / (1000 * 60 * 60 * 24)) // requests per day
+      throughput: responseTimeData.length / ((endDate - startDate) / (1000 * 60 * 60 * 24)), // requests per day
     };
   }
 
@@ -963,7 +999,7 @@ class AnalyticsService {
         websocketClients: clientCount,
         cacheEntries: cacheSize,
         metrics: this.metrics,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Analytics health check failed', { error: error.message });
@@ -971,7 +1007,7 @@ class AnalyticsService {
         status: 'unhealthy',
         service: 'analytics',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

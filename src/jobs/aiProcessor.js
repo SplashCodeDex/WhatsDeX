@@ -25,7 +25,7 @@ class AIProcessor {
         jobId: job.id,
         type,
         userId,
-        promptLength: prompt.length
+        promptLength: prompt.length,
       });
 
       let result;
@@ -72,16 +72,15 @@ class AIProcessor {
         metadata: {
           userId,
           promptLength: prompt.length,
-          resultLength: result.length
-        }
+          resultLength: result.length,
+        },
       };
-
     } catch (error) {
       logger.error('AI content generation failed', {
         jobId: job.id,
         type,
         userId,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`AI processing failed: ${error.message}`);
@@ -102,7 +101,7 @@ class AIProcessor {
         jobId: job.id,
         itemCount: items.length,
         analysisType,
-        userId
+        userId,
       });
 
       const results = [];
@@ -140,26 +139,25 @@ class AIProcessor {
             id: item.id,
             content: item.content,
             analysis,
-            success: true
+            success: true,
           });
-
         } catch (itemError) {
           logger.warn('Failed to analyze item in batch', {
             jobId: job.id,
             itemId: item.id,
-            error: itemError.message
+            error: itemError.message,
           });
 
           results.push({
             id: item.id,
             content: item.content,
             error: itemError.message,
-            success: false
+            success: false,
           });
         }
 
         // Update job progress
-        job.progress((i + 1) / items.length * 100);
+        job.progress(((i + 1) / items.length) * 100);
       }
 
       return {
@@ -168,15 +166,14 @@ class AIProcessor {
         totalItems: items.length,
         successfulAnalyses: results.filter(r => r.success).length,
         results,
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('Batch AI analysis failed', {
         jobId: job.id,
         analysisType,
         userId,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Batch analysis failed: ${error.message}`);
@@ -196,7 +193,7 @@ class AIProcessor {
       logger.info('Processing AI content moderation', {
         jobId: job.id,
         userId,
-        contentLength: content.length
+        contentLength: content.length,
       });
 
       const moderationResult = await this.gemini.moderateContent(content, context);
@@ -207,7 +204,7 @@ class AIProcessor {
           jobId: job.id,
           userId,
           categories: moderationResult.categories,
-          score: moderationResult.score
+          score: moderationResult.score,
         });
       }
 
@@ -219,15 +216,14 @@ class AIProcessor {
         metadata: {
           userId,
           categories: moderationResult.categories,
-          score: moderationResult.score
-        }
+          score: moderationResult.score,
+        },
       };
-
     } catch (error) {
       logger.error('AI content moderation failed', {
         jobId: job.id,
         userId,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Content moderation failed: ${error.message}`);
@@ -248,7 +244,7 @@ class AIProcessor {
         jobId: job.id,
         userId,
         conversationCount: conversations.length,
-        modelType
+        modelType,
       });
 
       const processedData = [];
@@ -263,25 +259,24 @@ class AIProcessor {
           processedData.push({
             conversationId: conversation.id,
             trainingExample,
-            success: true
+            success: true,
           });
-
         } catch (convError) {
           logger.warn('Failed to process conversation for fine-tuning', {
             jobId: job.id,
             conversationId: conversation.id,
-            error: convError.message
+            error: convError.message,
           });
 
           processedData.push({
             conversationId: conversation.id,
             error: convError.message,
-            success: false
+            success: false,
           });
         }
 
         // Update job progress
-        job.progress((i + 1) / conversations.length * 100);
+        job.progress(((i + 1) / conversations.length) * 100);
       }
 
       return {
@@ -289,15 +284,14 @@ class AIProcessor {
         modelType,
         totalConversations: conversations.length,
         processedData,
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('AI fine-tuning data processing failed', {
         jobId: job.id,
         userId,
         modelType,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Fine-tuning data processing failed: ${error.message}`);
@@ -334,9 +328,15 @@ Generate a JSON training example with the following format:
     } catch (parseError) {
       // If parsing fails, create a basic structure
       return {
-        input: messages.filter(m => m.role === 'user').map(m => m.content).join(' '),
-        output: messages.filter(m => m.role === 'assistant').map(m => m.content).join(' '),
-        context: context || {}
+        input: messages
+          .filter(m => m.role === 'user')
+          .map(m => m.content)
+          .join(' '),
+        output: messages
+          .filter(m => m.role === 'assistant')
+          .map(m => m.content)
+          .join(' '),
+        context: context || {},
       };
     }
   }
@@ -355,7 +355,7 @@ Generate a JSON training example with the following format:
         jobId: job.id,
         userId,
         timeRange,
-        metrics: metrics.join(', ')
+        metrics: metrics.join(', '),
       });
 
       // This would analyze AI performance metrics
@@ -368,20 +368,19 @@ Generate a JSON training example with the following format:
         userSatisfaction: 4.7,
         errorRate: 1.5,
         timeRange,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
       };
 
       return {
         success: true,
         analytics,
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('AI performance analytics processing failed', {
         jobId: job.id,
         userId,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Performance analytics processing failed: ${error.message}`);

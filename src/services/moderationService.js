@@ -22,7 +22,7 @@ class ModerationService {
         metadata: { messageLength: 58, hasLinks: false },
         priority: 'normal',
         status: 'pending',
-        createdAt: new Date(Date.now() - 30 * 60 * 1000) // 30 minutes ago
+        createdAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
       },
       {
         id: 2,
@@ -33,8 +33,8 @@ class ModerationService {
         metadata: { messageLength: 35, hasLinks: false },
         priority: 'low',
         status: 'pending',
-        createdAt: new Date(Date.now() - 15 * 60 * 1000) // 15 minutes ago
-      }
+        createdAt: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
+      },
     ];
 
     this.moderationQueue = mockQueueItems;
@@ -53,7 +53,7 @@ class ModerationService {
         duration: 0,
         status: 'active',
         moderatorId: 'admin-1',
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       },
       {
         id: 2,
@@ -66,8 +66,8 @@ class ModerationService {
         duration: 24, // 24 hours
         status: 'active',
         moderatorId: 'admin-1',
-        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000) // 1 hour ago
-      }
+        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+      },
     ];
 
     mockViolations.forEach(violation => {
@@ -108,7 +108,7 @@ class ModerationService {
       items: paginatedItems,
       total,
       page,
-      limit
+      limit,
     };
   }
 
@@ -133,7 +133,7 @@ class ModerationService {
   async bulkReviewModerationItems(itemIds, reviewData) {
     const results = {
       successful: [],
-      failed: []
+      failed: [],
     };
 
     for (const itemId of itemIds) {
@@ -193,19 +193,25 @@ class ModerationService {
         totalQueued,
         pendingItems,
         reviewedItems,
-        approvalRate: reviewedItems > 0 ? (queueItems.filter(item => item.status === 'approved').length / reviewedItems * 100).toFixed(1) : 0
+        approvalRate:
+          reviewedItems > 0
+            ? (
+                (queueItems.filter(item => item.status === 'approved').length / reviewedItems) *
+                100
+              ).toFixed(1)
+            : 0,
       },
       violations: {
         totalViolations,
         activeViolations,
         violationsByType,
-        violationsBySeverity
+        violationsBySeverity,
       },
       timeRange: {
         startDate: dateFilters.startDate,
-        endDate: dateFilters.endDate
+        endDate: dateFilters.endDate,
       },
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     };
   }
 
@@ -229,7 +235,7 @@ class ModerationService {
       violations: paginatedViolations,
       total,
       page,
-      limit
+      limit,
     };
   }
 
@@ -239,7 +245,7 @@ class ModerationService {
       userId,
       ...violationData,
       status: 'active',
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     if (!this.userViolations.has(userId)) {
@@ -269,16 +275,16 @@ class ModerationService {
       bannedWords: ['spam', 'scam', 'offensive'],
       maxMessageLength: 4096,
       rateLimitEnabled: true,
-      spamDetectionEnabled: true
+      spamDetectionEnabled: true,
     };
   }
 
   async updateModerationSettings(settings) {
     // In a real implementation, this would update the settings
     return {
-      ...await this.getModerationSettings(),
+      ...(await this.getModerationSettings()),
       ...settings,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
   }
 }

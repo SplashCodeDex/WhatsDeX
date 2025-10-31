@@ -1,5 +1,5 @@
-const googlesearchCommand = require('../../../commands/search/googlesearch.js');
 const axios = require('axios');
+const googlesearchCommand = require('../../../commands/search/googlesearch.js');
 const apiTools = require('../../../tools/api');
 
 // Mock dependencies
@@ -16,7 +16,7 @@ describe('googlesearch command', () => {
       bot: {
         context: {
           formatter: {
-            quote: (str) => str,
+            quote: str => str,
           },
           config: {
             msg: {
@@ -36,8 +36,16 @@ describe('googlesearch command', () => {
     const mockApiResponse = {
       data: {
         result: [
-          { title: 'Haddaway - What Is Love', desc: 'Music video', url: 'http://example.com/haddaway' },
-          { title: 'What Is Love? - Wikipedia', desc: 'Wikipedia article', url: 'http://example.com/wiki' },
+          {
+            title: 'Haddaway - What Is Love',
+            desc: 'Music video',
+            url: 'http://example.com/haddaway',
+          },
+          {
+            title: 'What Is Love? - Wikipedia',
+            desc: 'Wikipedia article',
+            url: 'http://example.com/wiki',
+          },
         ],
       },
     };
@@ -62,7 +70,9 @@ describe('googlesearch command', () => {
     await googlesearchCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith(expect.stringContaining('Please provide a search query.'));
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining('Please provide a search query.')
+    );
     expect(axios.get).not.toHaveBeenCalled();
   });
 

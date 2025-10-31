@@ -18,6 +18,8 @@ test.describe('Bot Flows', () => {
     // Upload mock NSFW image - assume file input
     await page.setInputFiles('#file-input', 'path/to/mock-nsfw.jpg'); // Provide mock path
     await page.click('#upload-button');
-    await expect(page.locator('#moderation-message')).toContainText('Blocked: NSFW content detected');
+    await expect(page.locator('#moderation-message')).toContainText(
+      'Blocked: NSFW content detected'
+    );
   });
 });

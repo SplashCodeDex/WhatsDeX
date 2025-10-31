@@ -34,7 +34,6 @@ async function testSmartAuth() {
     }
 
     console.log('\n🎉 Smart Authentication System is working!');
-
   } catch (error) {
     console.error('❌ Test failed:', error.message);
     console.error('Stack:', error.stack);

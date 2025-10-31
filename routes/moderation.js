@@ -14,7 +14,8 @@ const auditLogger = require('../src/services/auditLogger');
  * GET /api/moderation/queue
  * Get moderation queue with filtering
  */
-router.get('/queue',
+router.get(
+  '/queue',
   requireModerator,
   [
     query('page').optional().isInt({ min: 1 }).toInt(),
@@ -23,7 +24,7 @@ router.get('/queue',
     query('priority').optional().isIn(['low', 'normal', 'high', 'urgent']),
     query('contentType').optional().isIn(['message', 'image', 'file', 'profile']),
     query('sortBy').optional().isIn(['createdAt', 'priority', 'contentType']),
-    query('sortOrder').optional().isIn(['asc', 'desc'])
+    query('sortOrder').optional().isIn(['asc', 'desc']),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -38,7 +39,7 @@ router.get('/queue',
       priority,
       contentType,
       sortBy = 'createdAt',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
     } = req.query;
 
     const filters = {
@@ -46,7 +47,7 @@ router.get('/queue',
       priority,
       contentType,
       sortBy,
-      sortOrder
+      sortOrder,
     };
 
     const result = await moderationService.getModerationQueue(filters, { page, limit });
@@ -58,9 +59,9 @@ router.get('/queue',
         page,
         limit,
         total: result.total,
-        totalPages: Math.ceil(result.total / limit)
+        totalPages: Math.ceil(result.total / limit),
       },
-      filters
+      filters,
     });
   })
 );
@@ -69,11 +70,10 @@ router.get('/queue',
  * GET /api/moderation/queue/:id
  * Get specific moderation queue item
  */
-router.get('/queue/:id',
+router.get(
+  '/queue/:id',
   requireModerator,
-  [
-    param('id').isString().notEmpty()
-  ],
+  [param('id').isString().notEmpty()],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -89,7 +89,7 @@ router.get('/queue/:id',
 
     res.json({
       success: true,
-      data: item
+      data: item,
     });
   })
 );
@@ -98,13 +98,14 @@ router.get('/queue/:id',
  * POST /api/moderation/queue/:id/review
  * Review a moderation queue item
  */
-router.post('/queue/:id/review',
+router.post(
+  '/queue/:id/review',
   requireModerator,
   [
     param('id').isString().notEmpty(),
     body('action').isIn(['approve', 'reject', 'escalate']),
     body('reason').optional().isString().trim(),
-    body('notes').optional().isString().trim()
+    body('notes').optional().isString().trim(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -119,7 +120,7 @@ router.post('/queue/:id/review',
       action,
       reason,
       notes,
-      moderatorId: req.user.id
+      moderatorId: req.user.id,
     });
 
     // Log admin action
@@ -135,17 +136,18 @@ router.post('/queue/:id/review',
         reason,
         notes,
         contentType: result.contentType,
-        userId: result.userId
+        userId: result.userId,
       },
-      riskLevel: action === 'escalate' ? auditLogger.RISK_LEVELS.HIGH : auditLogger.RISK_LEVELS.MEDIUM,
+      riskLevel:
+        action === 'escalate' ? auditLogger.RISK_LEVELS.HIGH : auditLogger.RISK_LEVELS.MEDIUM,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
       data: result,
-      message: `Item ${action}d successfully`
+      message: `Item ${action}d successfully`,
     });
   })
 );
@@ -154,14 +156,15 @@ router.post('/queue/:id/review',
  * POST /api/moderation/bulk-review
  * Bulk review moderation queue items
  */
-router.post('/bulk-review',
+router.post(
+  '/bulk-review',
   requireModerator,
   [
     body('itemIds').isArray({ min: 1 }),
     body('itemIds.*').isString().notEmpty(),
     body('action').isIn(['approve', 'reject', 'escalate']),
     body('reason').optional().isString().trim(),
-    body('notes').optional().isString().trim()
+    body('notes').optional().isString().trim(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -175,7 +178,7 @@ router.post('/bulk-review',
       action,
       reason,
       notes,
-      moderatorId: req.user.id
+      moderatorId: req.user.id,
     });
 
     // Log admin action
@@ -191,17 +194,17 @@ router.post('/bulk-review',
         successfulCount: result.successful.length,
         failedCount: result.failed.length,
         reason,
-        notes
+        notes,
       },
       riskLevel: auditLogger.RISK_LEVELS.HIGH,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
       data: result,
-      message: `Bulk review completed: ${result.successful.length} successful, ${result.failed.length} failed`
+      message: `Bulk review completed: ${result.successful.length} successful, ${result.failed.length} failed`,
     });
   })
 );
@@ -210,12 +213,10 @@ router.post('/bulk-review',
  * GET /api/moderation/statistics
  * Get moderation statistics
  */
-router.get('/statistics',
+router.get(
+  '/statistics',
   requireModerator,
-  [
-    query('startDate').optional().isISO8601(),
-    query('endDate').optional().isISO8601()
-  ],
+  [query('startDate').optional().isISO8601(), query('endDate').optional().isISO8601()],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -227,7 +228,7 @@ router.get('/statistics',
 
     res.json({
       success: true,
-      data: stats
+      data: stats,
     });
   })
 );
@@ -236,13 +237,14 @@ router.get('/statistics',
  * GET /api/moderation/user-violations/:userId
  * Get violation history for a specific user
  */
-router.get('/user-violations/:userId',
+router.get(
+  '/user-violations/:userId',
   requireModerator,
   [
     param('userId').isString().notEmpty(),
     query('page').optional().isInt({ min: 1 }).toInt(),
     query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
-    query('status').optional().isIn(['active', 'expired', 'appealed'])
+    query('status').optional().isIn(['active', 'expired', 'appealed']),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -251,11 +253,7 @@ router.get('/user-violations/:userId',
     }
 
     const { userId } = req.params;
-    const {
-      page = 1,
-      limit = 50,
-      status
-    } = req.query;
+    const { page = 1, limit = 50, status } = req.query;
 
     const result = await moderationService.getUserViolations(userId, { status }, { page, limit });
 
@@ -266,12 +264,12 @@ router.get('/user-violations/:userId',
         page,
         limit,
         total: result.total,
-        totalPages: Math.ceil(result.total / limit)
+        totalPages: Math.ceil(result.total / limit),
       },
       user: {
         id: userId,
-        totalViolations: result.total
-      }
+        totalViolations: result.total,
+      },
     });
   })
 );
@@ -280,17 +278,27 @@ router.get('/user-violations/:userId',
  * POST /api/moderation/user-violations/:userId
  * Add a violation for a user
  */
-router.post('/user-violations/:userId',
+router.post(
+  '/user-violations/:userId',
   requireModerator,
   [
     param('userId').isString().notEmpty(),
-    body('violationType').isIn(['hate_speech', 'violence', 'spam', 'harassment', 'bullying', 'discrimination', 'self_harm', 'illegal_activities']),
+    body('violationType').isIn([
+      'hate_speech',
+      'violence',
+      'spam',
+      'harassment',
+      'bullying',
+      'discrimination',
+      'self_harm',
+      'illegal_activities',
+    ]),
     body('severity').isIn(['low', 'medium', 'high', 'critical']),
     body('reason').isString().trim().isLength({ min: 1, max: 500 }),
     body('evidence').optional().isString(),
     body('action').isIn(['warn', 'ban', 'delete', 'none']),
     body('duration').optional().isInt({ min: 1 }), // duration in hours
-    body('notes').optional().isString().trim()
+    body('notes').optional().isString().trim(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -301,7 +309,7 @@ router.post('/user-violations/:userId',
     const { userId } = req.params;
     const violationData = {
       ...req.body,
-      moderatorId: req.user.id
+      moderatorId: req.user.id,
     };
 
     const violation = await moderationService.addUserViolation(userId, violationData);
@@ -320,17 +328,17 @@ router.post('/user-violations/:userId',
         severity: violationData.severity,
         action: violationData.action,
         duration: violationData.duration,
-        reason: violationData.reason
+        reason: violationData.reason,
       },
       riskLevel: auditLogger.RISK_LEVELS.HIGH,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.status(201).json({
       success: true,
       data: violation,
-      message: 'Violation added successfully'
+      message: 'Violation added successfully',
     });
   })
 );
@@ -339,12 +347,13 @@ router.post('/user-violations/:userId',
  * PUT /api/moderation/user-violations/:violationId
  * Update a user violation
  */
-router.put('/user-violations/:violationId',
+router.put(
+  '/user-violations/:violationId',
   requireModerator,
   [
     param('violationId').isString().notEmpty(),
     body('status').optional().isIn(['active', 'expired', 'appealed']),
-    body('notes').optional().isString().trim()
+    body('notes').optional().isString().trim(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -372,17 +381,17 @@ router.put('/user-violations/:violationId',
       details: {
         changes: updateData,
         violationType: updatedViolation.violationType,
-        userId: updatedViolation.userId
+        userId: updatedViolation.userId,
       },
       riskLevel: auditLogger.RISK_LEVELS.MEDIUM,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
       data: updatedViolation,
-      message: 'Violation updated successfully'
+      message: 'Violation updated successfully',
     });
   })
 );
@@ -391,14 +400,15 @@ router.put('/user-violations/:violationId',
  * GET /api/moderation/settings
  * Get moderation settings
  */
-router.get('/settings',
+router.get(
+  '/settings',
   requireAdmin,
   asyncHandler(async (req, res) => {
     const settings = await moderationService.getModerationSettings();
 
     res.json({
       success: true,
-      data: settings
+      data: settings,
     });
   })
 );
@@ -407,7 +417,8 @@ router.get('/settings',
  * PUT /api/moderation/settings
  * Update moderation settings
  */
-router.put('/settings',
+router.put(
+  '/settings',
   requireAdmin,
   [
     body('contentModerationEnabled').optional().isBoolean(),
@@ -416,7 +427,7 @@ router.put('/settings',
     body('bannedWords').optional().isArray(),
     body('maxMessageLength').optional().isInt({ min: 1 }),
     body('rateLimitEnabled').optional().isBoolean(),
-    body('spamDetectionEnabled').optional().isBoolean()
+    body('spamDetectionEnabled').optional().isBoolean(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -436,17 +447,17 @@ router.put('/settings',
       resource: 'moderation_settings',
       details: {
         settings: Object.keys(settings),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       },
       riskLevel: auditLogger.RISK_LEVELS.MEDIUM,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
       data: updatedSettings,
-      message: 'Moderation settings updated successfully'
+      message: 'Moderation settings updated successfully',
     });
   })
 );

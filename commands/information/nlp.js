@@ -8,14 +8,18 @@ module.exports = {
   permissions: {
     coin: 5,
   },
-  code: async (ctx) => {
+  code: async ctx => {
     const { config } = ctx.bot.context;
 
     try {
       const input = ctx.args.join(' ') || ctx.quoted?.content || '';
 
       if (!input) {
-        return ctx.reply(formatter.quote('❎ Please provide some text for me to analyze. For example: "download a funny cat video" or "tell me a joke"'));
+        return ctx.reply(
+          formatter.quote(
+            '❎ Please provide some text for me to analyze. For example: "download a funny cat video" or "tell me a joke"'
+          )
+        );
       }
 
       // Initialize NLP service
@@ -28,10 +32,14 @@ module.exports = {
       // Process the input
       const result = await nlpService.processInput(input, {
         userId: ctx.author.id,
-        recentCommands: recentCommands,
+        recentCommands,
         isGroup: ctx.isGroup(),
         isAdmin: ctx.isGroup() ? await ctx.group().isAdmin(ctx.sender.jid) : false,
-        isOwner: ctx.bot.context.tools.cmd.isOwner(config, ctx.getId(ctx.sender.jid), ctx.msg.key.id)
+        isOwner: ctx.bot.context.tools.cmd.isOwner(
+          config,
+          ctx.getId(ctx.sender.jid),
+          ctx.msg.key.id
+        ),
       });
 
       // Format the response
@@ -63,12 +71,13 @@ module.exports = {
 
       await ctx.reply({
         text: response,
-        footer: config.msg.footer
+        footer: config.msg.footer,
       });
-
     } catch (error) {
       console.error('Error in NLP command:', error);
-      return ctx.reply(formatter.quote(`❎ An error occurred while analyzing your input: ${error.message}`));
+      return ctx.reply(
+        formatter.quote(`❎ An error occurred while analyzing your input: ${error.message}`)
+      );
     }
   },
 };

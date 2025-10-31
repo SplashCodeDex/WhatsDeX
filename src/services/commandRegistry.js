@@ -39,7 +39,7 @@ class CommandRegistry {
       usage: command.usage || '',
       rateLimit: command.rateLimit || { maxCalls: 10, windowMs: 60000 },
       permissions: command.permissions || [],
-      execute: command.execute
+      execute: command.execute,
     });
 
     logger.info(`Registered command: ${command.name}`);
@@ -72,26 +72,26 @@ class CommandRegistry {
     try {
       const result = await Promise.race([
         command.execute(context),
-        this.timeout(30000, `Command ${commandName} timeout`)
+        this.timeout(30000, `Command ${commandName} timeout`),
       ]);
 
       return {
         success: true,
         command: commandName,
         result,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error(`Command execution failed: ${commandName}`, {
         error: error.message,
-        userId: context.userId
+        userId: context.userId,
       });
 
       return {
         success: false,
         command: commandName,
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -172,7 +172,7 @@ class CommandRegistry {
       totalCommands: commands.length,
       categories,
       rateLimiterEnabled: !!this.rateLimiter,
-      cacheEnabled: !!this.cache
+      cacheEnabled: !!this.cache,
     };
   }
 }

@@ -7,13 +7,20 @@
 require('dotenv').config({ path: '.env.test' });
 
 // Mock external dependencies
-jest.mock('@whiskeysockets/baileys', () => ({ default: jest.fn().mockReturnValue({ ev: { on: jest.fn() }, sendMessage: jest.fn(), logout: jest.fn() }), useMultiFileAuthState: jest.fn().mockResolvedValue({ state: {}, saveCreds: jest.fn() }), DisconnectReason: { loggedOut: 'loggedOut' }, S_WHATSAPP_NET: '@s.whatsapp.net' }));
+jest.mock('@whiskeysockets/baileys', () => ({
+  default: jest
+    .fn()
+    .mockReturnValue({ ev: { on: jest.fn() }, sendMessage: jest.fn(), logout: jest.fn() }),
+  useMultiFileAuthState: jest.fn().mockResolvedValue({ state: {}, saveCreds: jest.fn() }),
+  DisconnectReason: { loggedOut: 'loggedOut' },
+  S_WHATSAPP_NET: '@s.whatsapp.net',
+}));
 
 const Formatter = {
-    quote: (text) => `_${text}_`,
-    italic: (text) => `_${text}_`,
-    bold: (text) => `*${text}*`,
-    monospace: (text) => ```${text}```,
+  quote: text => `_${text}_`,
+  italic: text => `_${text}_`,
+  bold: text => `*${text}*`,
+  monospace: text => ```${text}```,
 };
 
 // Mock Prisma
@@ -25,15 +32,15 @@ jest.mock('@prisma/client', () => ({
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      upsert: jest.fn()
+      upsert: jest.fn(),
     },
     group: {
       findUnique: jest.fn(),
       create: jest.fn(),
-      update: jest.fn()
+      update: jest.fn(),
     },
-    $queryRaw: jest.fn()
-  }))
+    $queryRaw: jest.fn(),
+  })),
 }));
 
 // Global test utilities
@@ -44,12 +51,12 @@ global.testUtils = {
     args: [],
     msg: { text: 'test message' },
     sender: { jid: '1234567890@s.whatsapp.net' },
-    getId: (jid) => jid.split('@')[0],
+    getId: jid => jid.split('@')[0],
     reply: jest.fn(),
     replyReact: jest.fn(),
     isGroup: () => false,
     getMessage: () => 'test message',
-    ...overrides
+    ...overrides,
   }),
 
   // Create mock database user
@@ -63,7 +70,7 @@ global.testUtils = {
     premium: false,
     banned: false,
     lastActivity: new Date(),
-    ...overrides
+    ...overrides,
   }),
 
   // Create mock database group
@@ -73,11 +80,11 @@ global.testUtils = {
     name: 'Test Group',
     memberCount: 10,
     ownerJid: '1234567890@s.whatsapp.net',
-    ...overrides
+    ...overrides,
   }),
 
   // Wait for async operations
-  wait: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
+  wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
 
   // Clean up after tests
   cleanup: async () => {
@@ -88,10 +95,7 @@ global.testUtils = {
     const fs = require('fs').promises;
     import path from 'path';
 
-    const testFiles = [
-      'test.db',
-      'test.db-journal'
-    ];
+    const testFiles = ['test.db', 'test.db-journal'];
 
     for (const file of testFiles) {
       try {
@@ -100,7 +104,7 @@ global.testUtils = {
         // File doesn't exist, continue
       }
     }
-  }
+  },
 };
 
 // Set up test environment

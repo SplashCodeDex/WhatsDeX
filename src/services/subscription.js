@@ -16,7 +16,7 @@ class SubscriptionService {
         storage: 100 * 1024 * 1024, // 100MB
         premiumCommands: false,
         analytics: false,
-        apiAccess: false
+        apiAccess: false,
       },
       basic: {
         aiRequests: 100,
@@ -25,7 +25,7 @@ class SubscriptionService {
         storage: 500 * 1024 * 1024, // 500MB
         premiumCommands: false,
         analytics: false,
-        apiAccess: false
+        apiAccess: false,
       },
       pro: {
         aiRequests: -1, // Unlimited
@@ -34,7 +34,7 @@ class SubscriptionService {
         storage: 2 * 1024 * 1024 * 1024, // 2GB
         premiumCommands: true,
         analytics: true,
-        apiAccess: true
+        apiAccess: true,
       },
       enterprise: {
         aiRequests: -1, // Unlimited
@@ -46,8 +46,8 @@ class SubscriptionService {
         apiAccess: true,
         whiteLabel: true,
         customIntegrations: true,
-        dedicatedSupport: true
-      }
+        dedicatedSupport: true,
+      },
     };
 
     logger.info('Subscription service initialized');
@@ -59,14 +59,10 @@ class SubscriptionService {
    */
   async initialize(config) {
     try {
-      await this.stripe.initialize(
-        config.stripeSecretKey,
-        config.stripeWebhookSecret
-      );
+      await this.stripe.initialize(config.stripeSecretKey, config.stripeWebhookSecret);
 
       this.isInitialized = true;
       logger.info('Subscription service initialized successfully');
-
     } catch (error) {
       logger.error('Failed to initialize subscription service', { error: error.message });
       throw error;
@@ -99,21 +95,17 @@ class SubscriptionService {
           userId,
           email: user.email,
           name: user.name,
-          phone: user.phone
+          phone: user.phone,
         });
 
         // Save customer ID to database
         await this.database.updateUser(userId, {
-          stripeCustomerId: customer.id
+          stripeCustomerId: customer.id,
         });
       }
 
       // Create subscription
-      const subscription = await this.stripe.createSubscription(
-        customer.id,
-        planKey,
-        { userId }
-      );
+      const subscription = await this.stripe.createSubscription(customer.id, planKey, { userId });
 
       // Save subscription to database
       const subscriptionData = {
@@ -124,11 +116,11 @@ class SubscriptionService {
         currentPeriodStart: new Date(subscription.current_period_start * 1000),
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       await this.database.prisma.subscription.create({
-        data: subscriptionData
+        data: subscriptionData,
       });
 
       // Reset usage counters for new subscription
@@ -137,19 +129,18 @@ class SubscriptionService {
       logger.info('Subscription created successfully', {
         userId,
         planKey,
-        subscriptionId: subscription.id
+        subscriptionId: subscription.id,
       });
 
       return {
         subscription,
-        clientSecret: subscription.latest_invoice.payment_intent?.client_secret
+        clientSecret: subscription.latest_invoice.payment_intent?.client_secret,
       };
-
     } catch (error) {
       logger.error('Failed to create subscription', {
         userId,
         planKey,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -166,8 +157,8 @@ class SubscriptionService {
       const subscription = await this.database.prisma.subscription.findFirst({
         where: {
           userId,
-          status: { in: ['active', 'trialing'] }
-        }
+          status: { in: ['active', 'trialing'] },
+        },
       });
 
       if (!subscription) {
@@ -185,22 +176,21 @@ class SubscriptionService {
         data: {
           status: stripeSubscription.status,
           cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-          cancelledAt: cancelAtPeriodEnd ? null : new Date()
-        }
+          cancelledAt: cancelAtPeriodEnd ? null : new Date(),
+        },
       });
 
       logger.info('Subscription cancelled', {
         userId,
         subscriptionId: subscription.stripeSubscriptionId,
-        cancelAtPeriodEnd
+        cancelAtPeriodEnd,
       });
 
       return stripeSubscription;
-
     } catch (error) {
       logger.error('Failed to cancel subscription', {
         userId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -221,8 +211,8 @@ class SubscriptionService {
       const subscription = await this.database.prisma.subscription.findFirst({
         where: {
           userId,
-          status: { in: ['active', 'trialing'] }
-        }
+          status: { in: ['active', 'trialing'] },
+        },
       });
 
       if (!subscription) {
@@ -241,23 +231,22 @@ class SubscriptionService {
           planKey: newPlanKey,
           status: stripeSubscription.status,
           currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
-        }
+          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+        },
       });
 
       logger.info('Subscription plan updated', {
         userId,
         oldPlan: subscription.planKey,
-        newPlan: newPlanKey
+        newPlan: newPlanKey,
       });
 
       return stripeSubscription;
-
     } catch (error) {
       logger.error('Failed to update subscription plan', {
         userId,
         newPlanKey,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -299,12 +288,11 @@ class SubscriptionService {
         default:
           return false;
       }
-
     } catch (error) {
       logger.error('Failed to check feature access', {
         userId,
         feature,
-        error: error.message
+        error: error.message,
       });
       return false;
     }
@@ -339,14 +327,14 @@ class SubscriptionService {
       const usageKey = `${feature}_used`;
       const existingUsage = await this.database.prisma.user.findUnique({
         where: { id: userId },
-        select: { [usageKey]: true }
+        select: { [usageKey]: true },
       });
 
       const newUsage = (existingUsage?.[usageKey] || 0) + amount;
 
       await this.database.prisma.user.update({
         where: { id: userId },
-        data: { [usageKey]: newUsage }
+        data: { [usageKey]: newUsage },
       });
 
       // Log usage
@@ -356,8 +344,8 @@ class SubscriptionService {
           value: amount,
           category: 'usage',
           metadata: JSON.stringify({ userId, planKey }),
-          recordedAt: new Date()
-        }
+          recordedAt: new Date(),
+        },
       });
 
       logger.debug('Usage tracked', {
@@ -365,21 +353,20 @@ class SubscriptionService {
         feature,
         amount,
         newTotal: newUsage,
-        limit
+        limit,
       });
 
       return {
         used: newUsage,
         limit,
-        remaining: limit === -1 ? -1 : limit - newUsage
+        remaining: limit === -1 ? -1 : limit - newUsage,
       };
-
     } catch (error) {
       logger.error('Failed to track usage', {
         userId,
         feature,
         amount,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -396,7 +383,7 @@ class SubscriptionService {
       const usageKey = `${feature}_used`;
       const user = await this.database.prisma.user.findUnique({
         where: { id: userId },
-        select: { [usageKey]: true }
+        select: { [usageKey]: true },
       });
 
       return user?.[usageKey] || 0;
@@ -404,7 +391,7 @@ class SubscriptionService {
       logger.error('Failed to get current usage', {
         userId,
         feature,
-        error: error.message
+        error: error.message,
       });
       return 0;
     }
@@ -444,18 +431,18 @@ class SubscriptionService {
       const subscription = await this.database.prisma.subscription.findFirst({
         where: {
           userId,
-          status: { in: ['active', 'trialing'] }
+          status: { in: ['active', 'trialing'] },
         },
         orderBy: {
-          createdAt: 'desc'
-        }
+          createdAt: 'desc',
+        },
       });
 
       return subscription?.planKey || 'free';
     } catch (error) {
       logger.error('Failed to get user plan', {
         userId,
-        error: error.message
+        error: error.message,
       });
       return 'free';
     }
@@ -471,18 +458,18 @@ class SubscriptionService {
       const subscription = await this.database.prisma.subscription.findFirst({
         where: {
           userId,
-          status: { in: ['active', 'trialing'] }
+          status: { in: ['active', 'trialing'] },
         },
         orderBy: {
-          createdAt: 'desc'
-        }
+          createdAt: 'desc',
+        },
       });
 
       if (!subscription) {
         return {
           plan: 'free',
           status: 'none',
-          limits: this.usageLimits.free
+          limits: this.usageLimits.free,
         };
       }
 
@@ -493,18 +480,17 @@ class SubscriptionService {
         currentPeriodStart: subscription.currentPeriodStart,
         currentPeriodEnd: subscription.currentPeriodEnd,
         cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-        limits: this.usageLimits[subscription.planKey] || this.usageLimits.free
+        limits: this.usageLimits[subscription.planKey] || this.usageLimits.free,
       };
-
     } catch (error) {
       logger.error('Failed to get user subscription', {
         userId,
-        error: error.message
+        error: error.message,
       });
       return {
         plan: 'free',
         status: 'error',
-        limits: this.usageLimits.free
+        limits: this.usageLimits.free,
       };
     }
   }
@@ -522,16 +508,15 @@ class SubscriptionService {
           ai_requests_used: 0,
           image_generations_used: 0,
           commands_used: 0,
-          storage_used: 0
-        }
+          storage_used: 0,
+        },
       });
 
       logger.info('Usage counters reset', { userId });
-
     } catch (error) {
       logger.error('Failed to reset usage counters', {
         userId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -546,7 +531,7 @@ class SubscriptionService {
     try {
       const user = await this.database.prisma.user.findUnique({
         where: { id: userId },
-        select: { stripeCustomerId: true }
+        select: { stripeCustomerId: true },
       });
 
       if (!user?.stripeCustomerId) {
@@ -557,7 +542,7 @@ class SubscriptionService {
     } catch (error) {
       logger.error('Failed to get Stripe customer', {
         userId,
-        error: error.message
+        error: error.message,
       });
       return null;
     }
@@ -599,11 +584,10 @@ class SubscriptionService {
         default:
           logger.debug('Unhandled webhook event', { type: event.type });
       }
-
     } catch (error) {
       logger.error('Failed to handle webhook', {
         eventType: event.type,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -616,7 +600,7 @@ class SubscriptionService {
   async handleSubscriptionUpdate(subscription) {
     try {
       const localSubscription = await this.database.prisma.subscription.findFirst({
-        where: { stripeSubscriptionId: subscription.id }
+        where: { stripeSubscriptionId: subscription.id },
       });
 
       if (localSubscription) {
@@ -626,8 +610,8 @@ class SubscriptionService {
             status: subscription.status,
             currentPeriodStart: new Date(subscription.current_period_start * 1000),
             currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            cancelAtPeriodEnd: subscription.cancel_at_period_end
-          }
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          },
         });
 
         // Reset usage counters on renewal
@@ -637,14 +621,13 @@ class SubscriptionService {
 
         logger.info('Subscription updated from webhook', {
           subscriptionId: subscription.id,
-          status: subscription.status
+          status: subscription.status,
         });
       }
-
     } catch (error) {
       logger.error('Failed to handle subscription update', {
         subscriptionId: subscription.id,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -659,18 +642,17 @@ class SubscriptionService {
         where: { stripeSubscriptionId: subscription.id },
         data: {
           status: 'canceled',
-          cancelledAt: new Date()
-        }
+          cancelledAt: new Date(),
+        },
       });
 
       logger.info('Subscription cancelled from webhook', {
-        subscriptionId: subscription.id
+        subscriptionId: subscription.id,
       });
-
     } catch (error) {
       logger.error('Failed to handle subscription cancellation', {
         subscriptionId: subscription.id,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -691,20 +673,19 @@ class SubscriptionService {
           paymentMethod: 'stripe',
           transactionId: invoice.id,
           description: `Subscription payment - ${invoice.subscription}`,
-          createdAt: new Date()
-        }
+          createdAt: new Date(),
+        },
       });
 
       logger.info('Payment recorded', {
         invoiceId: invoice.id,
         amount: invoice.amount_due,
-        customerId: invoice.customer
+        customerId: invoice.customer,
       });
-
     } catch (error) {
       logger.error('Failed to handle payment success', {
         invoiceId: invoice.id,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -725,19 +706,18 @@ class SubscriptionService {
           paymentMethod: 'stripe',
           transactionId: invoice.id,
           description: `Failed payment - ${invoice.subscription}`,
-          createdAt: new Date()
-        }
+          createdAt: new Date(),
+        },
       });
 
       logger.warn('Payment failed', {
         invoiceId: invoice.id,
-        customerId: invoice.customer
+        customerId: invoice.customer,
       });
-
     } catch (error) {
       logger.error('Failed to handle payment failure', {
         invoiceId: invoice.id,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -764,7 +744,7 @@ class SubscriptionService {
         initialized: this.isInitialized,
         stripe: stripeHealth,
         plansCount: Object.keys(this.usageLimits).length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Subscription health check failed', { error: error.message });
@@ -772,7 +752,7 @@ class SubscriptionService {
         status: 'unhealthy',
         service: 'subscription',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

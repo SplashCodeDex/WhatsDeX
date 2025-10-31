@@ -5,8 +5,9 @@
  * Clean and minimal launcher focused only on starting the bot
  */
 
-const { spawn } = require('child_process');
 import path from 'path';
+
+const { spawn } = require('child_process');
 
 class SimpleLauncher {
   constructor() {
@@ -67,7 +68,7 @@ The launcher will:
       // Start the main bot process
       const botProcess = spawn('node', ['index.js'], {
         cwd: path.join(__dirname, '..'),
-        stdio: this.verbose ? 'inherit' : 'pipe'
+        stdio: this.verbose ? 'inherit' : 'pipe',
       });
 
       this.botProcess = botProcess;
@@ -82,7 +83,7 @@ The launcher will:
         process.exit(code || 0);
       });
 
-      botProcess.on('error', (error) => {
+      botProcess.on('error', error => {
         console.error('❌ Failed to start bot:', error.message);
         process.exit(1);
       });
@@ -107,7 +108,6 @@ The launcher will:
       console.log('✅ Bot started successfully!');
       console.log('📱 Scan the QR code above to authenticate');
       console.log('💡 Press Ctrl+C to stop the bot\n');
-
     } catch (error) {
       console.error('❌ Failed to start bot:', error.message);
       process.exit(1);
@@ -116,7 +116,7 @@ The launcher will:
 }
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('❌ Uncaught Exception:', error.message);
   process.exit(1);
 });

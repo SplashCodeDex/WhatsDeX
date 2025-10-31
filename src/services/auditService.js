@@ -21,8 +21,8 @@ class AuditService {
           userAgent: eventData.userAgent,
           sessionId: eventData.sessionId,
           location: eventData.location,
-          metadata: eventData.metadata || {}
-        }
+          metadata: eventData.metadata || {},
+        },
       });
 
       return logEntry;
@@ -89,14 +89,14 @@ class AuditService {
         where,
         orderBy,
         skip: (page - 1) * limit,
-        take: limit
+        take: limit,
       });
 
       return {
         logs,
         total,
         page,
-        limit
+        limit,
       };
     } catch (error) {
       console.error('Error getting audit logs:', error);
@@ -107,7 +107,7 @@ class AuditService {
   async getAuditLogById(id) {
     try {
       return await context.database.auditLog.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: parseInt(id) },
       });
     } catch (error) {
       console.error('Error getting audit log by ID:', error);
@@ -136,7 +136,7 @@ class AuditService {
       const eventsByTypeRaw = await context.database.auditLog.groupBy({
         by: ['eventType'],
         where,
-        _count: { eventType: true }
+        _count: { eventType: true },
       });
 
       const eventsByType = {};
@@ -148,7 +148,7 @@ class AuditService {
       const eventsByRiskRaw = await context.database.auditLog.groupBy({
         by: ['riskLevel'],
         where,
-        _count: { riskLevel: true }
+        _count: { riskLevel: true },
       });
 
       const eventsByRisk = {};
@@ -160,7 +160,7 @@ class AuditService {
       const recentEvents = await context.database.auditLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        take: 10
+        take: 10,
       });
 
       return {
@@ -170,8 +170,8 @@ class AuditService {
         recentEvents,
         timeRange: {
           startDate: filters.startDate,
-          endDate: filters.endDate
-        }
+          endDate: filters.endDate,
+        },
       };
     } catch (error) {
       console.error('Error getting audit statistics:', error);
@@ -184,8 +184,17 @@ class AuditService {
 
     if (format === 'csv') {
       const headers = [
-        'ID', 'Timestamp', 'Event Type', 'Actor', 'Actor ID', 'Action',
-        'Resource', 'Resource ID', 'Risk Level', 'IP Address', 'Details'
+        'ID',
+        'Timestamp',
+        'Event Type',
+        'Actor',
+        'Actor ID',
+        'Action',
+        'Resource',
+        'Resource ID',
+        'Risk Level',
+        'IP Address',
+        'Details',
       ];
 
       const rows = logs.map(log => [
@@ -199,7 +208,7 @@ class AuditService {
         log.resourceId || '',
         log.riskLevel,
         log.ipAddress || '',
-        JSON.stringify(log.details).replace(/"/g, '""')
+        JSON.stringify(log.details).replace(/"/g, '""'),
       ]);
 
       return [headers, ...rows].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
@@ -212,13 +221,13 @@ class AuditService {
     try {
       const eventTypesRaw = await context.database.auditLog.groupBy({
         by: ['eventType'],
-        _count: { eventType: true }
+        _count: { eventType: true },
       });
 
       return eventTypesRaw.map(item => ({
         value: item.eventType,
         label: item.eventType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        count: item._count.eventType
+        count: item._count.eventType,
       }));
     } catch (error) {
       console.error('Error getting event types:', error);
@@ -233,7 +242,7 @@ class AuditService {
 
       // Build OR conditions for search
       const whereConditions = fields.map(field => ({
-        [field]: { contains: searchTerm, mode: 'insensitive' }
+        [field]: { contains: searchTerm, mode: 'insensitive' },
       }));
 
       const where = { OR: whereConditions };
@@ -244,14 +253,14 @@ class AuditService {
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
-        take: limit
+        take: limit,
       });
 
       return {
         logs,
         total,
         page,
-        limit
+        limit,
       };
     } catch (error) {
       console.error('Error searching audit logs:', error);
@@ -281,14 +290,14 @@ class AuditService {
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
-        take: limit
+        take: limit,
       });
 
       return {
         logs,
         total,
         page,
-        limit
+        limit,
       };
     } catch (error) {
       console.error('Error getting user activity:', error);
@@ -302,7 +311,7 @@ class AuditService {
 
       const where = {
         resource,
-        resourceId
+        resourceId,
       };
 
       if (dateFilters.startDate || dateFilters.endDate) {
@@ -321,14 +330,14 @@ class AuditService {
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
-        take: limit
+        take: limit,
       });
 
       return {
         logs,
         total,
         page,
-        limit
+        limit,
       };
     } catch (error) {
       console.error('Error getting resource activity:', error);
@@ -344,15 +353,15 @@ class AuditService {
       const deletedLogs = await context.database.auditLog.deleteMany({
         where: {
           createdAt: {
-            lt: cutoffDate
-          }
-        }
+            lt: cutoffDate,
+          },
+        },
       });
 
       return {
         deletedCount: deletedLogs.count,
         retentionDays: days,
-        cutoffDate: cutoffDate.toISOString()
+        cutoffDate: cutoffDate.toISOString(),
       };
     } catch (error) {
       console.error('Error cleaning up old logs:', error);

@@ -1,5 +1,6 @@
-const winston = require('winston');
 import path from 'path';
+
+const winston = require('winston');
 const fs = require('fs').promises;
 
 class AuditLogger {
@@ -11,7 +12,7 @@ class AuditLogger {
       retentionDays: options.retentionDays || 90,
       maxFileSize: options.maxFileSize || '10m',
       maxFiles: options.maxFiles || 5,
-      ...options
+      ...options,
     };
 
     this.logger = null;
@@ -62,7 +63,7 @@ class AuditLogger {
       // API events
       API_REQUEST: 'api_request',
       API_ERROR: 'api_error',
-      API_RATE_LIMIT: 'api_rate_limit'
+      API_RATE_LIMIT: 'api_rate_limit',
     };
 
     // Risk levels
@@ -70,7 +71,7 @@ class AuditLogger {
       LOW: 'low',
       MEDIUM: 'medium',
       HIGH: 'high',
-      CRITICAL: 'critical'
+      CRITICAL: 'critical',
     };
   }
 
@@ -97,7 +98,7 @@ class AuditLogger {
               winston.format.json()
             ),
             maxsize: this.parseFileSize(this.options.maxFileSize),
-            maxFiles: this.options.maxFiles
+            maxFiles: this.options.maxFiles,
           })
         );
 
@@ -112,7 +113,7 @@ class AuditLogger {
               winston.format.json()
             ),
             maxsize: this.parseFileSize(this.options.maxFileSize),
-            maxFiles: this.options.maxFiles
+            maxFiles: this.options.maxFiles,
           })
         );
       }
@@ -122,10 +123,7 @@ class AuditLogger {
         transports.push(
           new winston.transports.Console({
             level: 'debug',
-            format: winston.format.combine(
-              winston.format.colorize(),
-              winston.format.simple()
-            )
+            format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
           })
         );
       }
@@ -137,7 +135,7 @@ class AuditLogger {
           winston.format.errors({ stack: true }),
           winston.format.json()
         ),
-        transports
+        transports,
       });
 
       this.isInitialized = true;
@@ -151,13 +149,12 @@ class AuditLogger {
         details: {
           version: process.env.npm_package_version || '1.0.0',
           environment: process.env.NODE_ENV || 'development',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         },
         riskLevel: this.RISK_LEVELS.LOW,
         ipAddress: 'system',
-        userAgent: 'audit-logger'
+        userAgent: 'audit-logger',
       });
-
     } catch (error) {
       console.error('Failed to initialize audit logger:', error);
       throw error;
@@ -173,7 +170,7 @@ class AuditLogger {
     const units = {
       k: 1024,
       m: 1024 * 1024,
-      g: 1024 * 1024 * 1024
+      g: 1024 * 1024 * 1024,
     };
 
     const match = size.toLowerCase().match(/^(\d+)([kmg]?)$/);
@@ -209,7 +206,7 @@ class AuditLogger {
         userAgent: eventData.userAgent,
         sessionId: eventData.sessionId,
         location: eventData.location,
-        metadata: eventData.metadata || {}
+        metadata: eventData.metadata || {},
       };
 
       // Log to Winston
@@ -232,8 +229,8 @@ class AuditLogger {
             userAgent: auditEntry.userAgent,
             sessionId: auditEntry.sessionId,
             location: auditEntry.location,
-            metadata: JSON.stringify(auditEntry.metadata)
-          }
+            metadata: JSON.stringify(auditEntry.metadata),
+          },
         });
       }
 
@@ -247,11 +244,10 @@ class AuditLogger {
             actor: auditEntry.actor,
             action: auditEntry.action,
             timestamp: auditEntry.timestamp,
-            riskLevel: auditEntry.riskLevel
-          }
+            riskLevel: auditEntry.riskLevel,
+          },
         });
       }
-
     } catch (error) {
       console.error('Failed to log audit event:', error);
       // Fallback to console logging
@@ -305,13 +301,13 @@ class AuditLogger {
         method: data.method || 'password',
         success: data.success,
         failureReason: data.failureReason,
-        deviceInfo: data.deviceInfo
+        deviceInfo: data.deviceInfo,
       },
       riskLevel: data.success ? this.RISK_LEVELS.LOW : this.RISK_LEVELS.MEDIUM,
       ipAddress: data.ipAddress,
       userAgent: data.userAgent,
       sessionId: data.sessionId,
-      location: data.location
+      location: data.location,
     });
   }
 
@@ -320,7 +316,9 @@ class AuditLogger {
    * @param {Object} data - User management data
    */
   async logUserManagement(data) {
-    let eventType, action, riskLevel;
+    let eventType;
+    let action;
+    let riskLevel;
 
     switch (data.action) {
       case 'create':
@@ -365,12 +363,12 @@ class AuditLogger {
         targetUser: data.targetUser,
         changes: data.changes,
         reason: data.reason,
-        duration: data.duration
+        duration: data.duration,
       },
       riskLevel,
       ipAddress: data.ipAddress,
       userAgent: data.userAgent,
-      sessionId: data.sessionId
+      sessionId: data.sessionId,
     });
   }
 
@@ -379,7 +377,9 @@ class AuditLogger {
    * @param {Object} data - Payment data
    */
   async logPayment(data) {
-    let eventType, action, riskLevel;
+    let eventType;
+    let action;
+    let riskLevel;
 
     switch (data.type) {
       case 'success':
@@ -415,12 +415,12 @@ class AuditLogger {
         method: data.method,
         subscriptionId: data.subscriptionId,
         plan: data.plan,
-        failureReason: data.failureReason
+        failureReason: data.failureReason,
       },
       riskLevel,
       ipAddress: data.ipAddress,
       userAgent: data.userAgent,
-      sessionId: data.sessionId
+      sessionId: data.sessionId,
     });
   }
 
@@ -429,7 +429,9 @@ class AuditLogger {
    * @param {Object} data - Security event data
    */
   async logSecurity(data) {
-    let eventType, action, riskLevel;
+    let eventType;
+    let action;
+    let riskLevel;
 
     switch (data.type) {
       case 'permission_denied':
@@ -463,13 +465,13 @@ class AuditLogger {
         reason: data.reason,
         attempts: data.attempts,
         threshold: data.threshold,
-        blocked: data.blocked
+        blocked: data.blocked,
       },
       riskLevel,
       ipAddress: data.ipAddress,
       userAgent: data.userAgent,
       sessionId: data.sessionId,
-      location: data.location
+      location: data.location,
     });
   }
 
@@ -478,9 +480,7 @@ class AuditLogger {
    * @param {Object} data - API event data
    */
   async logAPI(data) {
-    const eventType = data.error
-      ? this.EVENT_TYPES.API_ERROR
-      : this.EVENT_TYPES.API_REQUEST;
+    const eventType = data.error ? this.EVENT_TYPES.API_ERROR : this.EVENT_TYPES.API_REQUEST;
 
     await this.logEvent({
       eventType,
@@ -496,12 +496,12 @@ class AuditLogger {
         error: data.error,
         userAgent: data.userAgent,
         query: data.query,
-        body: data.body
+        body: data.body,
       },
       riskLevel: data.error ? this.RISK_LEVELS.MEDIUM : this.RISK_LEVELS.LOW,
       ipAddress: data.ipAddress,
       userAgent: data.userAgent,
-      sessionId: data.sessionId
+      sessionId: data.sessionId,
     });
   }
 
@@ -510,7 +510,9 @@ class AuditLogger {
    * @param {Object} data - System event data
    */
   async logSystem(data) {
-    let eventType, action, riskLevel;
+    let eventType;
+    let action;
+    let riskLevel;
 
     switch (data.type) {
       case 'start':
@@ -549,10 +551,10 @@ class AuditLogger {
         uptime: data.uptime,
         memoryUsage: data.memoryUsage,
         error: data.error,
-        maintenanceType: data.maintenanceType
+        maintenanceType: data.maintenanceType,
       },
       riskLevel,
-      metadata: data.metadata || {}
+      metadata: data.metadata || {},
     });
   }
 
@@ -586,13 +588,13 @@ class AuditLogger {
       where,
       orderBy: { createdAt: 'desc' },
       take: filters.limit || 100,
-      skip: filters.offset || 0
+      skip: filters.offset || 0,
     });
 
     return logs.map(log => ({
       ...log,
       details: JSON.parse(log.details || '{}'),
-      metadata: JSON.parse(log.metadata || '{}')
+      metadata: JSON.parse(log.metadata || '{}'),
     }));
   }
 
@@ -613,28 +615,23 @@ class AuditLogger {
       if (filters.endDate) where.createdAt.lte = new Date(filters.endDate);
     }
 
-    const [
-      totalEvents,
-      eventsByType,
-      eventsByRisk,
-      recentEvents
-    ] = await Promise.all([
+    const [totalEvents, eventsByType, eventsByRisk, recentEvents] = await Promise.all([
       this.database.prisma.auditLog.count({ where }),
       this.database.prisma.auditLog.groupBy({
         by: ['eventType'],
         where,
-        _count: { id: true }
+        _count: { id: true },
       }),
       this.database.prisma.auditLog.groupBy({
         by: ['riskLevel'],
         where,
-        _count: { id: true }
+        _count: { id: true },
       }),
       this.database.prisma.auditLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        take: 10
-      })
+        take: 10,
+      }),
     ]);
 
     return {
@@ -649,8 +646,8 @@ class AuditLogger {
       }, {}),
       recentEvents: recentEvents.map(event => ({
         ...event,
-        details: JSON.parse(event.details || '{}')
-      }))
+        details: JSON.parse(event.details || '{}'),
+      })),
     };
   }
 
@@ -667,9 +664,9 @@ class AuditLogger {
     const result = await this.database.prisma.auditLog.deleteMany({
       where: {
         createdAt: {
-          lt: cutoffDate
-        }
-      }
+          lt: cutoffDate,
+        },
+      },
     });
 
     await this.logEvent({
@@ -680,9 +677,9 @@ class AuditLogger {
       details: {
         deletedCount: result.count,
         retentionDays: this.options.retentionDays,
-        cutoffDate: cutoffDate.toISOString()
+        cutoffDate: cutoffDate.toISOString(),
       },
-      riskLevel: this.RISK_LEVELS.LOW
+      riskLevel: this.RISK_LEVELS.LOW,
     });
 
     return result.count;
@@ -716,7 +713,7 @@ class AuditLogger {
         'Resource ID',
         'Risk Level',
         'IP Address',
-        'Details'
+        'Details',
       ];
 
       const csvRows = logs.map(log => [
@@ -730,7 +727,7 @@ class AuditLogger {
         log.resourceId || '',
         log.riskLevel,
         log.ipAddress || '',
-        JSON.stringify(log.details).replace(/"/g, '""')
+        JSON.stringify(log.details).replace(/"/g, '""'),
       ]);
 
       const csvContent = [csvHeaders, ...csvRows]
@@ -751,9 +748,9 @@ class AuditLogger {
         format,
         recordCount: logs.length,
         filters,
-        filepath
+        filepath,
       },
-      riskLevel: this.RISK_LEVELS.LOW
+      riskLevel: this.RISK_LEVELS.LOW,
     });
 
     return filepath;
@@ -787,9 +784,9 @@ class AuditLogger {
         resource: 'audit_logger',
         details: {
           uptime: process.uptime(),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         },
-        riskLevel: this.RISK_LEVELS.LOW
+        riskLevel: this.RISK_LEVELS.LOW,
       });
 
       this.logger.end();

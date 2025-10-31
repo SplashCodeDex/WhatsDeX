@@ -2,7 +2,7 @@ const claimCommand = require('../../../commands/profile/claim.js');
 const formatters = require('../../../utils/formatters');
 
 jest.mock('../../../utils/formatters', () => ({
-  convertMsToDuration: jest.fn((ms) => `${ms / 1000} seconds`),
+  convertMsToDuration: jest.fn(ms => `${ms / 1000} seconds`),
 }));
 
 describe('claim command', () => {
@@ -25,11 +25,11 @@ describe('claim command', () => {
       args: [],
       isOwner: false,
       sender: { jid: 'user123@s.whatsapp.net' },
-      getId: (jid) => jid.split('@')[0],
+      getId: jid => jid.split('@')[0],
       bot: {
         context: {
           formatter: {
-            quote: (str) => str,
+            quote: str => str,
           },
           config: {
             msg: { footer: 'test-footer' },
@@ -55,7 +55,9 @@ describe('claim command', () => {
     // Assert
     expect(db.set).toHaveBeenCalledWith('user.user123.coin', 150);
     expect(db.set).toHaveBeenCalledWith('user.user123.lastClaim.daily', 1700000000000);
-    expect(ctx.reply).toHaveBeenCalledWith('✅ You successfully claimed the daily reward of 100 coins! Your current balance is 150.');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '✅ You successfully claimed the daily reward of 100 coins! Your current balance is 150.'
+    );
   });
 
   it('should show an error if the claim type is invalid', async () => {
@@ -66,7 +68,9 @@ describe('claim command', () => {
     await claimCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith('❎ Invalid option: expected one of "daily"|\"weekly\"|\"monthly\"|\"yearly\"');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '❎ Invalid option: expected one of "daily"|\"weekly\"|\"monthly\"|\"yearly\"'
+    );
     expect(db.set).not.toHaveBeenCalled();
   });
 
@@ -79,21 +83,25 @@ describe('claim command', () => {
     await claimCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith('❎ You need to be level 15 to claim this. Your current level is 10.');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '❎ You need to be level 15 to claim this. Your current level is 10.'
+    );
   });
 
   it('should show an error if the claim is on cooldown', async () => {
     // Arrange
     ctx.args = ['daily'];
     const now = 1700000000000;
-    const oneHourAgo = now - (60 * 60 * 1000);
+    const oneHourAgo = now - 60 * 60 * 1000;
     db.get.mockResolvedValue({ level: 5, coin: 50, lastClaim: { daily: oneHourAgo } });
 
     // Act
     await claimCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith('⏳ You have already claimed the daily reward. Please wait 82800 seconds.');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '⏳ You have already claimed the daily reward. Please wait 82800 seconds.'
+    );
   });
 
   it('should prevent owner from claiming', async () => {

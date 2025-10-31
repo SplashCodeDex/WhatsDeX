@@ -8,7 +8,7 @@ module.exports = {
   permissions: {
     coin: 10,
   },
-  code: async (ctx) => {
+  code: async ctx => {
     const { formatter } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 

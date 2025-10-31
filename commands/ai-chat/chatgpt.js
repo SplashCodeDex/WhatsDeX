@@ -14,8 +14,8 @@ module.exports = {
   permissions: {
     coin: 15,
   },
-  code: async (ctx) => {
-   const { formatter, config } = ctx.bot.context;
+  code: async ctx => {
+    const { formatter, config } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
     if (!config.api.openai) {
@@ -30,7 +30,7 @@ module.exports = {
       const openAIService = new OpenAIService(config.api.openai);
       const userId = ctx.author.id;
 
-      const chat = await aiChatDB.getChat(userId) || { history: [], summary: '' };
+      const chat = (await aiChatDB.getChat(userId)) || { history: [], summary: '' };
       let currentHistory = chat.history || [];
       let currentSummary = chat.summary || '';
 
@@ -57,21 +57,36 @@ module.exports = {
 
       // Whitelist of safe commands for tool calls (only read-only, no modifications)
       const SAFE_COMMANDS = new Set([
-        'ping', 'about', 'uptime', 'price', 'suggest', 'tqto', 'listapis',
-        'googlesearch', 'youtubesearch', 'githubsearch', 'npmsearch',
-        'translate', 'weather', 'gempa', 'holiday', 'faktaunik', 'quotes', 'proverb'
+        'ping',
+        'about',
+        'uptime',
+        'price',
+        'suggest',
+        'tqto',
+        'listapis',
+        'googlesearch',
+        'youtubesearch',
+        'githubsearch',
+        'npmsearch',
+        'translate',
+        'weather',
+        'gempa',
+        'holiday',
+        'faktaunik',
+        'quotes',
+        'proverb',
       ]);
-  
+
       if (response.finish_reason === 'tool_calls' && responseMessage.tool_calls) {
         messages.push(responseMessage);
         // eslint-disable-next-line no-restricted-syntax
         for (const toolCall of responseMessage.tool_calls) {
           const functionName = toolCall.function.name;
           const functionArgs = JSON.parse(toolCall.function.arguments);
-          
+
           // Log tool call attempt
           console.log(`AI Tool Call: ${functionName} with args ${JSON.stringify(functionArgs)}`);
-  
+
           // Check whitelist
           if (!SAFE_COMMANDS.has(functionName)) {
             console.warn(`Unsafe tool call blocked: ${functionName}`);
@@ -79,11 +94,11 @@ module.exports = {
               tool_call_id: toolCall.id,
               role: 'tool',
               name: functionName,
-              content: `Error: Command "${functionName}" is not allowed for tool execution.`
+              content: `Error: Command "${functionName}" is not allowed for tool execution.`,
             });
             continue;
           }
-  
+
           const commandToExecute = ctx.bot.cmd.get(functionName);
           let toolResponse = 'Error: Command not found.';
           if (commandToExecute) {
@@ -93,7 +108,7 @@ module.exports = {
               const sandboxedCtx = {
                 ...ctx,
                 args: Object.values(functionArgs),
-                reply: (output) => {
+                reply: output => {
                   commandOutput = typeof output === 'object' ? JSON.stringify(output) : output;
                 },
                 // Remove dangerous properties
@@ -113,10 +128,13 @@ module.exports = {
             }
           }
           messages.push({
-            tool_call_id: toolCall.id, role: 'tool', name: functionName, content: toolResponse,
+            tool_call_id: toolCall.id,
+            role: 'tool',
+            name: functionName,
+            content: toolResponse,
           });
         }
-  
+
         const finalResponse = await openAIService.getChatCompletion(messages);
         const finalMessageContent = finalResponse.message.content;
         messages.push(finalResponse.message);

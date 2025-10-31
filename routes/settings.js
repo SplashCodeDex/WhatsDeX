@@ -14,14 +14,15 @@ const auditLogger = require('../src/services/auditLogger');
  * GET /api/settings
  * Get all system settings
  */
-router.get('/',
+router.get(
+  '/',
   requireAdmin,
   asyncHandler(async (req, res) => {
     const settings = await settingsService.getAllSettings();
 
     res.json({
       success: true,
-      data: settings
+      data: settings,
     });
   })
 );
@@ -30,7 +31,8 @@ router.get('/',
  * GET /api/settings/:category
  * Get settings for a specific category
  */
-router.get('/:category',
+router.get(
+  '/:category',
   requireAdmin,
   asyncHandler(async (req, res) => {
     const { category } = req.params;
@@ -42,7 +44,7 @@ router.get('/:category',
 
     res.json({
       success: true,
-      data: settings
+      data: settings,
     });
   })
 );
@@ -51,11 +53,12 @@ router.get('/:category',
  * PUT /api/settings/:category/:key
  * Update a specific setting
  */
-router.put('/:category/:key',
+router.put(
+  '/:category/:key',
   requireAdmin,
   [
     body('value').exists().withMessage('Value is required'),
-    body('description').optional().isString().trim()
+    body('description').optional().isString().trim(),
   ],
   asyncHandler(async (req, res) => {
     const validationErrors = validationResult(req);
@@ -73,7 +76,13 @@ router.put('/:category/:key',
     }
 
     const oldSetting = await settingsService.getSetting(category, key);
-    const updatedSetting = await settingsService.updateSetting(category, key, value, description, req.user.id);
+    const updatedSetting = await settingsService.updateSetting(
+      category,
+      key,
+      value,
+      description,
+      req.user.id
+    );
 
     // Log admin action
     await auditLogger.logEvent({
@@ -88,17 +97,17 @@ router.put('/:category/:key',
         key,
         oldValue: oldSetting?.value,
         newValue: value,
-        description
+        description,
       },
       riskLevel: auditLogger.RISK_LEVELS.MEDIUM,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
       data: updatedSetting,
-      message: 'Setting updated successfully'
+      message: 'Setting updated successfully',
     });
   })
 );
@@ -107,13 +116,14 @@ router.put('/:category/:key',
  * PUT /api/settings/bulk
  * Update multiple settings at once
  */
-router.put('/bulk',
+router.put(
+  '/bulk',
   requireAdmin,
   [
     body('settings').isArray({ min: 1 }),
     body('settings.*.category').isString().notEmpty(),
     body('settings.*.key').isString().notEmpty(),
-    body('settings.*.value').exists()
+    body('settings.*.value').exists(),
   ],
   asyncHandler(async (req, res) => {
     const validationErrors = validationResult(req);
@@ -137,13 +147,15 @@ router.put('/bulk',
         settingErrors.push({
           category: setting.category,
           key: setting.key,
-          error: validation.message
+          error: validation.message,
         });
       }
     }
 
     if (settingErrors.length > 0) {
-      throw new AppError('Some settings failed validation', 400, 'VALIDATION_ERROR', { errors: settingErrors });
+      throw new AppError('Some settings failed validation', 400, 'VALIDATION_ERROR', {
+        errors: settingErrors,
+      });
     }
 
     // Update all settings
@@ -163,7 +175,7 @@ router.put('/bulk',
         settingErrors.push({
           category: setting.category,
           key: setting.key,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -178,20 +190,20 @@ router.put('/bulk',
       details: {
         updatedCount: results.length,
         errorCount: settingErrors.length,
-        settings: settings.map(s => `${s.category}.${s.key}`)
+        settings: settings.map(s => `${s.category}.${s.key}`),
       },
       riskLevel: auditLogger.RISK_LEVELS.HIGH,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
       data: {
         updated: results,
-        errors: settingErrors
+        errors: settingErrors,
       },
-      message: `Updated ${results.length} settings${settingErrors.length > 0 ? `, ${settingErrors.length} failed` : ''}`
+      message: `Updated ${results.length} settings${settingErrors.length > 0 ? `, ${settingErrors.length} failed` : ''}`,
     });
   })
 );

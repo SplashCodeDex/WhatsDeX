@@ -29,7 +29,7 @@ function AdminDashboard() {
   useEffect(() => {
     // Simulate loading data
     const loadData = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       setSystemStats({
         totalUsers: 12543,
@@ -86,9 +86,7 @@ function AdminDashboard() {
     loadData();
   }, []);
 
-  const StatCard = ({
-    title, value, change, icon: Icon, color = 'blue',
-  }) => {
+  function StatCard({ title, value, change, icon: Icon, color = 'blue' }) {
     const colors = {
       blue: 'bg-blue-500',
       green: 'bg-green-500',
@@ -105,17 +103,9 @@ function AdminDashboard() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {title}
-            </p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-              {value}
-            </p>
-            {change && (
-              <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                {change}
-              </p>
-            )}
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{value}</p>
+            {change && <p className="text-sm text-green-600 dark:text-green-400 mt-1">{change}</p>}
           </div>
           <div className={`p-3 rounded-full ${colors[color]} bg-opacity-10`}>
             <Icon className={`w-6 h-6 ${colors[color].replace('bg-', 'text-')}`} />
@@ -123,10 +113,10 @@ function AdminDashboard() {
         </div>
       </motion.div>
     );
-  };
+  }
 
-  const ActivityItem = ({ activity }) => {
-    const getStatusIcon = (status) => {
+  function ActivityItem({ activity }) {
+    const getStatusIcon = status => {
       switch (status) {
         case 'success':
           return <CheckCircle className="w-5 h-5 text-green-500" />;
@@ -147,16 +137,14 @@ function AdminDashboard() {
       >
         {getStatusIcon(activity.status)}
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
-            {activity.action}
-          </p>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.action}</p>
           <p className="text-xs text-gray-600 dark:text-gray-400">
             {activity.user} • {activity.timestamp.toLocaleTimeString()}
           </p>
         </div>
       </motion.div>
     );
-  };
+  }
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: BarChart3 },
@@ -174,19 +162,15 @@ function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                WhatsDeX Admin
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">WhatsDeX Admin</h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
                 System administration and monitoring
               </p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  System Online
-                </span>
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">System Online</span>
               </div>
             </div>
           </div>
@@ -198,7 +182,7 @@ function AdminDashboard() {
           {/* Sidebar */}
           <div className="w-64 flex-shrink-0">
             <nav className="space-y-2">
-              {tabs.map((tab) => {
+              {tabs.map(tab => {
                 const Icon = tab.icon;
                 return (
                   <button
@@ -226,9 +210,12 @@ function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {loading ? (
                     Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 animate-pulse">
-                        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-4"></div>
-                        <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+                      <div
+                        key={i}
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 animate-pulse"
+                      >
+                        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-4" />
+                        <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-1/2" />
                       </div>
                     ))
                   ) : (
@@ -297,21 +284,19 @@ function AdminDashboard() {
                     Recent Activity
                   </h2>
                   <div className="space-y-4">
-                    {loading ? (
-                      Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="flex items-center space-x-4 p-4 animate-pulse">
-                          <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                          <div className="flex-1">
-                            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
-                            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+                    {loading
+                      ? Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className="flex items-center space-x-4 p-4 animate-pulse">
+                            <div className="w-5 h-5 bg-gray-300 dark:bg-gray-600 rounded-full" />
+                            <div className="flex-1">
+                              <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-2" />
+                              <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2" />
+                            </div>
                           </div>
-                        </div>
-                      ))
-                    ) : (
-                      recentActivity.map((activity) => (
-                        <ActivityItem key={activity.id} activity={activity} />
-                      ))
-                    )}
+                        ))
+                      : recentActivity.map(activity => (
+                          <ActivityItem key={activity.id} activity={activity} />
+                        ))}
                   </div>
                 </div>
 

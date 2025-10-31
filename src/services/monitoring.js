@@ -10,7 +10,7 @@ class MonitoringService {
       commandUsage: new Map(),
       activeConnections: 0,
       memoryUsage: 0,
-      cacheHitRate: 0
+      cacheHitRate: 0,
     };
 
     // Start periodic cleanup and aggregation
@@ -31,8 +31,8 @@ class MonitoringService {
           metric: 'response_time',
           value: responseTime,
           category: 'api',
-          metadata: JSON.stringify({ endpoint, statusCode })
-        }
+          metadata: JSON.stringify({ endpoint, statusCode }),
+        },
       });
 
       // Keep in-memory metrics for quick access
@@ -40,7 +40,7 @@ class MonitoringService {
         endpoint,
         responseTime,
         statusCode,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       // Keep only last 1000 entries
@@ -53,7 +53,7 @@ class MonitoringService {
         logger.warn('Slow API response', {
           endpoint,
           responseTime,
-          statusCode
+          statusCode,
         });
       }
     } catch (error) {
@@ -78,8 +78,8 @@ class MonitoringService {
           category: this.categorizeCommand(command),
           success,
           executionTime,
-          errorMessage: success ? null : 'Command failed'
-        }
+          errorMessage: success ? null : 'Command failed',
+        },
       });
 
       // Update in-memory counters
@@ -91,7 +91,7 @@ class MonitoringService {
         command,
         userId,
         success,
-        executionTime
+        executionTime,
       });
     } catch (error) {
       logger.error('Failed to record command usage:', error);
@@ -116,8 +116,8 @@ class MonitoringService {
           stack: error.stack,
           userId: context.userId,
           command: context.command,
-          metadata: JSON.stringify(context)
-        }
+          metadata: JSON.stringify(context),
+        },
       });
 
       // Log critical errors
@@ -125,7 +125,7 @@ class MonitoringService {
         logger.error('Critical error recorded', {
           error: error.message,
           stack: error.stack,
-          context
+          context,
         });
       }
     } catch (dbError) {
@@ -153,8 +153,8 @@ class MonitoringService {
           userAgent: event.userAgent,
           sessionId: event.sessionId,
           location: event.location,
-          metadata: event.metadata ? JSON.stringify(event.metadata) : null
-        }
+          metadata: event.metadata ? JSON.stringify(event.metadata) : null,
+        },
       });
 
       // Log high-risk events immediately
@@ -182,13 +182,14 @@ class MonitoringService {
    */
   getMetricsSummary() {
     const now = Date.now();
-    const lastHour = now - (60 * 60 * 1000);
+    const lastHour = now - 60 * 60 * 1000;
 
     // Calculate response time stats from last hour
     const recentResponses = this.metrics.responseTimes.filter(r => r.timestamp > lastHour);
-    const avgResponseTime = recentResponses.length > 0
-      ? recentResponses.reduce((sum, r) => sum + r.responseTime, 0) / recentResponses.length
-      : 0;
+    const avgResponseTime =
+      recentResponses.length > 0
+        ? recentResponses.reduce((sum, r) => sum + r.responseTime, 0) / recentResponses.length
+        : 0;
 
     // Calculate error rate
     const totalCommands = Array.from(this.metrics.commandUsage.values()).reduce((a, b) => a + b, 0);
@@ -203,9 +204,9 @@ class MonitoringService {
       errorRate: parseFloat(errorRate.toFixed(2)),
       memoryUsage: this.metrics.memoryUsage,
       cacheHitRate: this.metrics.cacheHitRate,
-      totalCommands: totalCommands,
+      totalCommands,
       recentResponses: recentResponses.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -217,36 +218,36 @@ class MonitoringService {
   async getDetailedAnalytics(timeRange = '24h') {
     try {
       const hours = this.parseTimeRange(timeRange);
-      const since = new Date(Date.now() - (hours * 60 * 60 * 1000));
+      const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
       const [responseTimes, commandStats, errorStats] = await Promise.all([
         this.prisma.analytics.findMany({
           where: {
             recordedAt: { gte: since },
-            metric: 'response_time'
+            metric: 'response_time',
           },
-          orderBy: { recordedAt: 'desc' }
+          orderBy: { recordedAt: 'desc' },
         }),
         this.prisma.commandUsage.groupBy({
           by: ['command', 'success'],
           where: { usedAt: { gte: since } },
-          _count: true
+          _count: true,
         }),
         this.prisma.errorLog.findMany({
           where: { createdAt: { gte: since } },
-          select: { level: true, message: true, createdAt: true }
-        })
+          select: { level: true, message: true, createdAt: true },
+        }),
       ]);
 
       return {
         responseTimes: responseTimes.map(rt => ({
           value: rt.value,
           timestamp: rt.recordedAt,
-          metadata: JSON.parse(rt.metadata || '{}')
+          metadata: JSON.parse(rt.metadata || '{}'),
         })),
         commandStats,
         errorStats,
-        timeRange
+        timeRange,
       };
     } catch (error) {
       logger.error('Failed to get detailed analytics:', error);
@@ -269,14 +270,14 @@ class MonitoringService {
         status: 'healthy',
         database: 'connected',
         metrics,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         database: 'disconnected',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -286,19 +287,27 @@ class MonitoringService {
    */
   startPeriodicTasks() {
     // Clean up old in-memory metrics every hour
-    setInterval(() => {
-      const oneHourAgo = Date.now() - (60 * 60 * 1000);
-      this.metrics.responseTimes = this.metrics.responseTimes.filter(r => r.timestamp > oneHourAgo);
-    }, 60 * 60 * 1000); // Every hour
+    setInterval(
+      () => {
+        const oneHourAgo = Date.now() - 60 * 60 * 1000;
+        this.metrics.responseTimes = this.metrics.responseTimes.filter(
+          r => r.timestamp > oneHourAgo
+        );
+      },
+      60 * 60 * 1000
+    ); // Every hour
 
     // Aggregate and archive old data daily
-    setInterval(async () => {
-      try {
-        await this.archiveOldData();
-      } catch (error) {
-        logger.error('Failed to archive old data:', error);
-      }
-    }, 24 * 60 * 60 * 1000); // Daily
+    setInterval(
+      async () => {
+        try {
+          await this.archiveOldData();
+        } catch (error) {
+          logger.error('Failed to archive old data:', error);
+        }
+      },
+      24 * 60 * 60 * 1000
+    ); // Daily
   }
 
   /**
@@ -306,26 +315,26 @@ class MonitoringService {
    */
   async archiveOldData() {
     try {
-      const thirtyDaysAgo = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
       // Archive old analytics data (keep last 30 days in main table)
       const oldAnalyticsCount = await this.prisma.analytics.deleteMany({
         where: {
-          recordedAt: { lt: thirtyDaysAgo }
-        }
+          recordedAt: { lt: thirtyDaysAgo },
+        },
       });
 
       // Archive old command usage (keep last 90 days)
-      const ninetyDaysAgo = new Date(Date.now() - (90 * 24 * 60 * 60 * 1000));
+      const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
       const oldCommandCount = await this.prisma.commandUsage.deleteMany({
         where: {
-          usedAt: { lt: ninetyDaysAgo }
-        }
+          usedAt: { lt: ninetyDaysAgo },
+        },
       });
 
       logger.info('Archived old monitoring data', {
         analyticsDeleted: oldAnalyticsCount.count,
-        commandsDeleted: oldCommandCount.count
+        commandsDeleted: oldCommandCount.count,
       });
     } catch (error) {
       logger.error('Failed to archive old data:', error);
@@ -344,7 +353,7 @@ class MonitoringService {
       games: ['game', 'quiz', 'play', 'suit'],
       utility: ['ping', 'help', 'menu', 'info'],
       social: ['menfes', 'confess', 'profile'],
-      admin: ['ban', 'kick', 'promote', 'demote']
+      admin: ['ban', 'kick', 'promote', 'demote'],
     };
 
     for (const [category, keywords] of Object.entries(categories)) {
@@ -363,9 +372,11 @@ class MonitoringService {
    */
   isCriticalError(error) {
     const criticalErrors = ['DatabaseError', 'ConnectionError', 'AuthenticationError'];
-    return criticalErrors.includes(error.name) ||
-           error.message.toLowerCase().includes('critical') ||
-           error.message.toLowerCase().includes('fatal');
+    return (
+      criticalErrors.includes(error.name) ||
+      error.message.toLowerCase().includes('critical') ||
+      error.message.toLowerCase().includes('fatal')
+    );
   }
 
   /**
@@ -378,7 +389,7 @@ class MonitoringService {
       '1h': 1,
       '24h': 24,
       '7d': 168,
-      '30d': 720
+      '30d': 720,
     };
     return ranges[timeRange] || 24;
   }

@@ -13,19 +13,19 @@ class DatabaseService {
     });
 
     // Log database events
-    this.prisma.$on('query', (e) => {
+    this.prisma.$on('query', e => {
       logger.debug(`Query: ${e.query}`, { duration: e.duration, params: e.params });
     });
 
-    this.prisma.$on('info', (e) => {
+    this.prisma.$on('info', e => {
       logger.info(`Database Info: ${e.message}`);
     });
 
-    this.prisma.$on('warn', (e) => {
+    this.prisma.$on('warn', e => {
       logger.warn(`Database Warning: ${e.message}`);
     });
 
-    this.prisma.$on('error', (e) => {
+    this.prisma.$on('error', e => {
       logger.error(`Database Error: ${e.message}`);
     });
 
@@ -34,7 +34,10 @@ class DatabaseService {
 
   async connect() {
     try {
-      console.log('Attempting DB connect; DATABASE_URL exists:', !!process.env.DATABASE_URL ? 'yes (masked)' : 'no');
+      console.log(
+        'Attempting DB connect; DATABASE_URL exists:',
+        process.env.DATABASE_URL ? 'yes (masked)' : 'no'
+      );
       console.log('Prisma client initialized:', !!this.prisma);
       await this.prisma.$connect();
       this.isConnected = true;
@@ -66,18 +69,18 @@ class DatabaseService {
         include: {
           groups: {
             include: {
-              group: true
-            }
+              group: true,
+            },
           },
           subscriptions: {
             include: {
-              plan: true
+              plan: true,
             },
             where: {
-              status: 'active'
-            }
-          }
-        }
+              status: 'active',
+            },
+          },
+        },
       });
 
       if (user) {
@@ -85,7 +88,7 @@ class DatabaseService {
         return {
           ...user,
           premium: user.premium || user.subscriptions.length > 0,
-          groups: user.groups.map(ug => ug.groupId)
+          groups: user.groups.map(ug => ug.groupId),
         };
       }
 
@@ -108,8 +111,8 @@ class DatabaseService {
           level: userData.level || 1,
           coin: userData.coin || 0,
           premium: userData.premium || false,
-          banned: userData.banned || false
-        }
+          banned: userData.banned || false,
+        },
       });
 
       logger.info('User created', { userId: user.id, jid: user.jid });
@@ -124,7 +127,7 @@ class DatabaseService {
     try {
       const user = await this.prisma.user.update({
         where: { jid },
-        data: updateData
+        data: updateData,
       });
 
       logger.info('User updated', { jid, updates: Object.keys(updateData) });
@@ -149,8 +152,8 @@ class DatabaseService {
           level: userData.level || 1,
           coin: userData.coin || 0,
           premium: userData.premium || false,
-          banned: userData.banned || false
-        }
+          banned: userData.banned || false,
+        },
       });
 
       return user;
@@ -168,11 +171,11 @@ class DatabaseService {
         include: {
           users: {
             include: {
-              user: true
-            }
+              user: true,
+            },
           },
-          settings: true
-        }
+          settings: true,
+        },
       });
 
       if (group) {
@@ -180,12 +183,12 @@ class DatabaseService {
           ...group,
           members: group.users.map(ug => ({
             jid: ug.user.jid,
-            role: ug.role
+            role: ug.role,
           })),
           settings: group.settings.reduce((acc, setting) => {
             acc[setting.settingKey] = setting.settingValue;
             return acc;
-          }, {})
+          }, {}),
         };
       }
 
@@ -205,8 +208,8 @@ class DatabaseService {
           description: groupData.description,
           avatar: groupData.avatar,
           ownerJid: groupData.ownerJid,
-          memberCount: groupData.memberCount || 0
-        }
+          memberCount: groupData.memberCount || 0,
+        },
       });
 
       logger.info('Group created', { groupId: group.id, jid: group.jid });
@@ -221,7 +224,7 @@ class DatabaseService {
     try {
       const group = await this.prisma.group.update({
         where: { jid },
-        data: updateData
+        data: updateData,
       });
 
       logger.info('Group updated', { jid, updates: Object.keys(updateData) });
@@ -239,8 +242,8 @@ class DatabaseService {
         data: {
           userId: (await this.getUser(userJid)).id,
           groupId: (await this.getGroup(groupJid)).id,
-          role
-        }
+          role,
+        },
       });
 
       logger.info('User added to group', { userJid, groupJid, role });
@@ -260,9 +263,9 @@ class DatabaseService {
         where: {
           userId_groupId: {
             userId: user.id,
-            groupId: group.id
-          }
-        }
+            groupId: group.id,
+          },
+        },
       });
 
       logger.info('User removed from group', { userJid, groupJid });
@@ -273,7 +276,14 @@ class DatabaseService {
   }
 
   // Command usage tracking
-  async logCommandUsage(userJid, command, category, success = true, executionTime = null, error = null) {
+  async logCommandUsage(
+    userJid,
+    command,
+    category,
+    success = true,
+    executionTime = null,
+    error = null
+  ) {
     try {
       const user = await this.getUser(userJid);
       if (!user) return;
@@ -285,8 +295,8 @@ class DatabaseService {
           category,
           success,
           executionTime,
-          errorMessage: error?.message
-        }
+          errorMessage: error?.message,
+        },
       });
 
       logger.command(command, userJid, success, executionTime, error);
@@ -303,8 +313,8 @@ class DatabaseService {
           metric,
           value: parseFloat(value),
           category,
-          metadata: JSON.stringify(metadata)
-        }
+          metadata: JSON.stringify(metadata),
+        },
       });
     } catch (error) {
       logger.error('Error recording analytics', { metric, value, category, error: error.message });
@@ -318,17 +328,17 @@ class DatabaseService {
       const analytics = await this.prisma.analytics.findMany({
         where: {
           recordedAt: {
-            gte: startDate
-          }
+            gte: startDate,
+          },
         },
         orderBy: {
-          recordedAt: 'desc'
-        }
+          recordedAt: 'desc',
+        },
       });
 
       return analytics.map(item => ({
         ...item,
-        metadata: JSON.parse(item.metadata || '{}')
+        metadata: JSON.parse(item.metadata || '{}'),
       }));
     } catch (error) {
       logger.error('Error getting analytics', { timeframe, error: error.message });
@@ -348,7 +358,7 @@ class DatabaseService {
       hour: 60 * 60 * 1000,
       day: 24 * 60 * 60 * 1000,
       week: 7 * 24 * 60 * 60 * 1000,
-      month: 30 * 24 * 60 * 60 * 1000
+      month: 30 * 24 * 60 * 60 * 1000,
     };
 
     return value * multipliers[unit];
@@ -362,9 +372,8 @@ class DatabaseService {
         await this.prisma.$queryRaw`SELECT 1`;
         console.log('Health check passed');
         return { status: 'healthy', database: 'connected' };
-      } else {
-        throw new Error('$queryRaw not available on prisma client');
       }
+      throw new Error('$queryRaw not available on prisma client');
     } catch (error) {
       console.log('Health check failed:', error.message);
       logger.error('Database health check failed', { error: error.message });
@@ -382,7 +391,7 @@ class DatabaseService {
       for (const [jid, userData] of Object.entries(users)) {
         await this.upsertUser({
           jid,
-          ...userData
+          ...userData,
         });
       }
 
@@ -391,7 +400,7 @@ class DatabaseService {
       for (const [jid, groupData] of Object.entries(groups)) {
         await this.createGroup({
           jid,
-          ...groupData
+          ...groupData,
         });
       }
 

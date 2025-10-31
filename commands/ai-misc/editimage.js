@@ -1,46 +1,51 @@
-const tools = require("../../tools/exports");
+const tools = require('../../tools/exports');
 
 module.exports = {
-    name: "editimage",
-    aliases: ["editimg"],
-    category: "ai-misc",
-    permissions: {
-        premium: true
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config } = ctx.bot.context;
-        const input = ctx.args.join(" ") || null;
+  name: 'editimage',
+  aliases: ['editimg'],
+  category: 'ai-misc',
+  permissions: {
+    premium: true,
+  },
+  code: async ctx => {
+    const { formatter, tools, config } = ctx.bot.context;
+    const input = ctx.args.join(' ') || null;
 
-        if (!input) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "make it evangelion art style"))
-        );
+    if (!input)
+      return await ctx.reply(
+        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
+          tools.msg.generateCmdExample(ctx.used, 'make it evangelion art style')
+        )}`
+      );
 
-        const [checkMedia, checkQuotedMedia] = await Promise.all([
-            tools.cmd.checkMedia(ctx.msg.contentType, "image"),
-            tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, "image")
-        ]);
+    const [checkMedia, checkQuotedMedia] = await Promise.all([
+      tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
+      tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, 'image'),
+    ]);
 
-        if (!checkMedia && !checkQuotedMedia) return await ctx.reply(formatter.quote(tools.msg.generateInstruction(["send", "reply"], "image")));
+    if (!checkMedia && !checkQuotedMedia)
+      return await ctx.reply(
+        formatter.quote(tools.msg.generateInstruction(['send', 'reply'], 'image'))
+      );
 
-        try {
-            const buffer = await ctx.msg.media.toBuffer() || await ctx.quoted?.media.toBuffer();
-            const uploadUrl = await tools.api.uploadImage(buffer);
-            const result = tools.api.createUrl("zell", "/ai/editimg", {
-                imageUrl: uploadUrl,
-                prompt: input
-            });
+    try {
+      const buffer = (await ctx.msg.media.toBuffer()) || (await ctx.quoted?.media.toBuffer());
+      const uploadUrl = await tools.api.uploadImage(buffer);
+      const result = tools.api.createUrl('zell', '/ai/editimg', {
+        imageUrl: uploadUrl,
+        prompt: input,
+      });
 
-            await ctx.reply({
-                image: {
-                    url: result
-                },
-                mimetype: tools.mime.lookup("png"),
-                caption: formatter.quote("Untukmu, tuan!"),
-                footer: config.msg.footer
-            });
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
-        }
+      await ctx.reply({
+        image: {
+          url: result,
+        },
+        mimetype: tools.mime.lookup('png'),
+        caption: formatter.quote('Untukmu, tuan!'),
+        footer: config.msg.footer,
+      });
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error, true);
     }
+  },
 };

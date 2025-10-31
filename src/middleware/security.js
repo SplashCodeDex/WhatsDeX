@@ -1,5 +1,5 @@
-const logger = require('../utils/logger');
 const crypto = require('crypto');
+const logger = require('../utils/logger');
 
 class SecurityMiddleware {
   constructor() {
@@ -8,7 +8,7 @@ class SecurityMiddleware {
       /\b(sql|script|injection|attack)\b/i,
       /\b(password|token|key|secret)\b.*\b(leak|steal|dump)\b/i,
       /\b(ddos|spam|botnet)\b/i,
-      /\b(malware|virus|ransomware)\b/i
+      /\b(malware|virus|ransomware)\b/i,
     ];
 
     this.rateLimitCache = new Map();
@@ -37,7 +37,7 @@ class SecurityMiddleware {
           remoteJid,
           reason: contentCheck.reason,
           content: message.substring(0, 100),
-          clientInfo
+          clientInfo,
         });
         return { allowed: false, reason: contentCheck.reason };
       }
@@ -50,7 +50,7 @@ class SecurityMiddleware {
           userJid,
           remoteJid,
           reason: rateCheck.reason,
-          clientInfo
+          clientInfo,
         });
         return { allowed: false, reason: rateCheck.reason };
       }
@@ -63,7 +63,7 @@ class SecurityMiddleware {
           userJid,
           remoteJid,
           reason: spamCheck.reason,
-          clientInfo
+          clientInfo,
         });
         return { allowed: false, reason: spamCheck.reason };
       }
@@ -75,7 +75,7 @@ class SecurityMiddleware {
           userJid,
           remoteJid,
           reason: 'User is blocked',
-          clientInfo
+          clientInfo,
         });
         return { allowed: false, reason: 'Access denied' };
       }
@@ -89,13 +89,12 @@ class SecurityMiddleware {
           remoteJid,
           reason: injectionCheck.reason,
           content: message,
-          clientInfo
+          clientInfo,
         });
         return { allowed: false, reason: injectionCheck.reason };
       }
 
       return { allowed: true };
-
     } catch (error) {
       logger.error('Security middleware error:', error);
       // Fail-safe: allow request but log the error
@@ -103,7 +102,7 @@ class SecurityMiddleware {
         userId,
         userJid,
         remoteJid,
-        error: error.message
+        error: error.message,
       });
       return { allowed: true };
     }
@@ -124,7 +123,7 @@ class SecurityMiddleware {
       if (pattern.test(content)) {
         return {
           blocked: true,
-          reason: 'Message contains suspicious content'
+          reason: 'Message contains suspicious content',
         };
       }
     }
@@ -134,7 +133,7 @@ class SecurityMiddleware {
     if (capsRatio > 0.7 && content.length > 10) {
       return {
         blocked: true,
-        reason: 'Message contains excessive capital letters (possible spam)'
+        reason: 'Message contains excessive capital letters (possible spam)',
       };
     }
 
@@ -142,7 +141,7 @@ class SecurityMiddleware {
     if (/(.)\1{10,}/.test(content)) {
       return {
         blocked: true,
-        reason: 'Message contains repetitive characters'
+        reason: 'Message contains repetitive characters',
       };
     }
 
@@ -154,7 +153,7 @@ class SecurityMiddleware {
         if (this.isSuspiciousUrl(url)) {
           return {
             blocked: true,
-            reason: 'Message contains suspicious URL'
+            reason: 'Message contains suspicious URL',
           };
         }
       }
@@ -183,7 +182,7 @@ class SecurityMiddleware {
     if (validRequests.length >= maxRequests) {
       return {
         allowed: false,
-        reason: `Rate limit exceeded: ${maxRequests} requests per minute`
+        reason: `Rate limit exceeded: ${maxRequests} requests per minute`,
       };
     }
 
@@ -192,7 +191,8 @@ class SecurityMiddleware {
     this.rateLimitCache.set(key, validRequests);
 
     // Cleanup old entries periodically
-    if (Math.random() < 0.01) { // 1% chance
+    if (Math.random() < 0.01) {
+      // 1% chance
       this.cleanupRateLimitCache();
     }
 
@@ -216,7 +216,7 @@ class SecurityMiddleware {
     if (userMessages.includes(content)) {
       return {
         blocked: true,
-        reason: 'Duplicate message detected (possible spam)'
+        reason: 'Duplicate message detected (possible spam)',
       };
     }
 
@@ -228,14 +228,14 @@ class SecurityMiddleware {
     this.rateLimitCache.set(userKey, userMessages);
 
     // Check for message flooding
-    const recentMessages = userMessages.filter(msg =>
-      Date.now() - (this.rateLimitCache.get(`${userKey}:time:${msg}`) || 0) < 10000 // 10 seconds
+    const recentMessages = userMessages.filter(
+      msg => Date.now() - (this.rateLimitCache.get(`${userKey}:time:${msg}`) || 0) < 10000 // 10 seconds
     );
 
     if (recentMessages.length > 5) {
       return {
         blocked: true,
-        reason: 'Message flooding detected'
+        reason: 'Message flooding detected',
       };
     }
 
@@ -258,14 +258,14 @@ class SecurityMiddleware {
       /<\?php/i, // PHP code
       /<script/i, // Script tags
       /javascript:/i, // JavaScript URLs
-      /data:text\/html/i // Data URLs
+      /data:text\/html/i, // Data URLs
     ];
 
     for (const pattern of injectionPatterns) {
       if (pattern.test(content)) {
         return {
           blocked: true,
-          reason: 'Potential command injection detected'
+          reason: 'Potential command injection detected',
         };
       }
     }
@@ -290,8 +290,11 @@ class SecurityMiddleware {
    */
   isSuspiciousUrl(url) {
     const suspiciousDomains = [
-      'bit.ly', 'tinyurl.com', 'goo.gl', // URL shorteners
-      'pastebin.com', 'hastebin.com', // Paste sites
+      'bit.ly',
+      'tinyurl.com',
+      'goo.gl', // URL shorteners
+      'pastebin.com',
+      'hastebin.com', // Paste sites
       /\.onion/, // Tor hidden services
       /[\w-]+\.ru$/, // Russian domains (often malicious)
       /[\w-]+\.cn$/, // Chinese domains (often malicious)
@@ -323,7 +326,7 @@ class SecurityMiddleware {
       userAgent: context.userAgent || 'unknown',
       platform: context.platform || 'unknown',
       ip: this.hashIdentifier(context.remoteJid || 'unknown'), // Hash for privacy
-      sessionId: context.sessionId || 'unknown'
+      sessionId: context.sessionId || 'unknown',
     };
   }
 
@@ -353,12 +356,12 @@ class SecurityMiddleware {
         details: {
           reason: details.reason,
           content: details.content,
-          clientInfo: details.clientInfo
+          clientInfo: details.clientInfo,
         },
         riskLevel: this.getRiskLevel(eventType),
         ipAddress: details.clientInfo?.ip,
         userAgent: details.clientInfo?.userAgent,
-        sessionId: details.clientInfo?.sessionId
+        sessionId: details.clientInfo?.sessionId,
       });
     } catch (error) {
       logger.error('Failed to log security event:', error);
@@ -372,12 +375,12 @@ class SecurityMiddleware {
    */
   getRiskLevel(eventType) {
     const riskLevels = {
-      'content_blocked': 'medium',
-      'rate_limit_exceeded': 'low',
-      'spam_detected': 'medium',
-      'blocked_user': 'high',
-      'command_injection': 'critical',
-      'middleware_error': 'medium'
+      content_blocked: 'medium',
+      rate_limit_exceeded: 'low',
+      spam_detected: 'medium',
+      blocked_user: 'high',
+      command_injection: 'critical',
+      middleware_error: 'medium',
     };
 
     return riskLevels[eventType] || 'low';
@@ -388,7 +391,8 @@ class SecurityMiddleware {
    * @param {string} ip - IP address to block
    * @param {number} duration - Block duration in milliseconds
    */
-  blockIP(ip, duration = 3600000) { // Default 1 hour
+  blockIP(ip, duration = 3600000) {
+    // Default 1 hour
     this.blockedIPs.add(ip);
     setTimeout(() => {
       this.blockedIPs.delete(ip);
@@ -433,7 +437,7 @@ class SecurityMiddleware {
       blockedIPs: this.blockedIPs.size,
       suspiciousUsers: this.suspiciousUsers.size,
       rateLimitCacheSize: this.rateLimitCache.size,
-      suspiciousPatterns: this.suspiciousPatterns.length
+      suspiciousPatterns: this.suspiciousPatterns.length,
     };
   }
 }

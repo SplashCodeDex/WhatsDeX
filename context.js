@@ -1,13 +1,13 @@
 // Simplified context with single Prisma database system
-const config = require("./config.js");
-const pkg = require("./package.json");
-const tools = require("./tools/exports.js");
-const formatter = require("./utils/formatter.js");
+const { PrismaClient } = require('@prisma/client');
+const config = require('./config.js');
+const pkg = require('./package.json');
+const tools = require('./tools/exports.js');
+const formatter = require('./utils/formatter.js');
 
-const logger = require("./src/utils/logger");
+const logger = require('./src/utils/logger');
 
 // Initialize Prisma database service
-const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });
@@ -25,20 +25,20 @@ class DatabaseService {
         where: { jid },
         include: {
           groups: {
-            include: { group: true }
+            include: { group: true },
           },
           subscriptions: {
             include: { plan: true },
-            where: { status: 'active' }
-          }
-        }
+            where: { status: 'active' },
+          },
+        },
       });
 
       if (user) {
         return {
           ...user,
           premium: user.premium || user.subscriptions.length > 0,
-          groups: user.groups.map(ug => ug.groupId)
+          groups: user.groups.map(ug => ug.groupId),
         };
       }
       return null;
@@ -60,8 +60,8 @@ class DatabaseService {
           level: userData.level || 1,
           coin: userData.coin || 0,
           premium: userData.premium || false,
-          banned: userData.banned || false
-        }
+          banned: userData.banned || false,
+        },
       });
     } catch (error) {
       logger.error('Database error in createUser:', error);
@@ -73,7 +73,7 @@ class DatabaseService {
     try {
       return await this.prisma.user.update({
         where: { jid },
-        data: updateData
+        data: updateData,
       });
     } catch (error) {
       logger.error('Database error in updateUser:', error);
@@ -95,8 +95,8 @@ class DatabaseService {
           level: userData.level || 1,
           coin: userData.coin || 0,
           premium: userData.premium || false,
-          banned: userData.banned || false
-        }
+          banned: userData.banned || false,
+        },
       });
     } catch (error) {
       logger.error('Database error in upsertUser:', error);
@@ -111,8 +111,8 @@ class DatabaseService {
         where: { jid },
         include: {
           users: { include: { user: true } },
-          settings: true
-        }
+          settings: true,
+        },
       });
 
       if (group) {
@@ -120,12 +120,12 @@ class DatabaseService {
           ...group,
           members: group.users.map(ug => ({
             jid: ug.user.jid,
-            role: ug.role
+            role: ug.role,
           })),
           settings: group.settings.reduce((acc, setting) => {
             acc[setting.settingKey] = setting.settingValue;
             return acc;
-          }, {})
+          }, {}),
         };
       }
       return null;
@@ -144,8 +144,8 @@ class DatabaseService {
           description: groupData.description,
           avatar: groupData.avatar,
           ownerJid: groupData.ownerJid,
-          memberCount: groupData.memberCount || 0
-        }
+          memberCount: groupData.memberCount || 0,
+        },
       });
     } catch (error) {
       logger.error('Database error in createGroup:', error);
@@ -157,7 +157,7 @@ class DatabaseService {
     try {
       return await this.prisma.group.update({
         where: { jid },
-        data: updateData
+        data: updateData,
       });
     } catch (error) {
       logger.error('Database error in updateGroup:', error);
@@ -236,7 +236,6 @@ class DatabaseService {
     }
   }
 
-
   // Health check
   async healthCheck() {
     try {
@@ -275,35 +274,36 @@ const databaseService = new DatabaseService();
 // Legacy database interface for backward compatibility
 const database = {
   user: {
-    get: (jid) => databaseService.getUser(jid),
-    create: (userData) => databaseService.createUser(userData),
+    get: jid => databaseService.getUser(jid),
+    create: userData => databaseService.createUser(userData),
     update: (jid, data) => databaseService.updateUser(jid, data),
-    upsert: (userData) => databaseService.upsertUser(userData)
+    upsert: userData => databaseService.upsertUser(userData),
   },
   group: {
-    get: (jid) => databaseService.getGroup(jid),
-    create: (groupData) => databaseService.createGroup(groupData),
-    update: (jid, data) => databaseService.updateGroup(jid, data)
+    get: jid => databaseService.getGroup(jid),
+    create: groupData => databaseService.createGroup(groupData),
+    update: (jid, data) => databaseService.updateGroup(jid, data),
   },
   bot: {
-    get: (key) => databaseService.getBotSetting(key),
-    set: (key, value, category, description, updatedBy) => databaseService.setBotSetting(key, value, category, description, updatedBy),
-    update: (key, data) => databaseService.updateBotSetting(key, data)
+    get: key => databaseService.getBotSetting(key),
+    set: (key, value, category, description, updatedBy) =>
+      databaseService.setBotSetting(key, value, category, description, updatedBy),
+    update: (key, data) => databaseService.updateBotSetting(key, data),
   },
   menfess: {
-    get: (id) => databaseService.getMenfess(id),
-    create: (menfessData) => databaseService.createMenfess(menfessData),
-    delete: (id) => databaseService.deleteMenfess(id)
-  }
+    get: id => databaseService.getMenfess(id),
+    create: menfessData => databaseService.createMenfess(menfessData),
+    delete: id => databaseService.deleteMenfess(id),
+  },
 };
 
-const state = require("./state.js");
+const state = require('./state.js');
 
 const context = {
   config,
   database,
   databaseService,
-  
+
   formatter,
   state,
   tools,
@@ -329,7 +329,7 @@ const context = {
       logger.error('Error during services shutdown:', error);
       throw error;
     }
-  }
+  },
 };
 
 module.exports = context;

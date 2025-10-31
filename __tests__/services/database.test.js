@@ -63,7 +63,10 @@ describe('Migrations', () => {
 
     // Connect and run migrations
     await testPrisma.$connect();
-    execSync(`npx prisma migrate dev --name test-migrate --schema=./prisma/schema.prisma --skip-seed --skip-generate`, { stdio: 'inherit' });
+    execSync(
+      `npx prisma migrate dev --name test-migrate --schema=./prisma/schema.prisma --skip-seed --skip-generate`,
+      { stdio: 'inherit' }
+    );
   }, 30000); // Increase timeout for migrations
 
   afterAll(async () => {
@@ -79,13 +82,13 @@ describe('Migrations', () => {
   test('Models created after migrate', async () => {
     // Test User
     const user = await testPrisma.user.create({
-      data: { name: 'test', jid: 'testuser@s.whatsapp.net' }
+      data: { name: 'test', jid: 'testuser@s.whatsapp.net' },
     });
     expect(user).toHaveProperty('id');
 
     // Test UserViolation
     const violation = await testPrisma.userViolation.create({
-      data: { userId: user.id, violationType: 'spam' }
+      data: { userId: user.id, violationType: 'spam' },
     });
     expect(violation).toHaveProperty('severity', 'low');
   });

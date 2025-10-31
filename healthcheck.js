@@ -6,10 +6,10 @@ const options = {
   port: process.env.PORT || 3000,
   path: '/health',
   method: 'GET',
-  timeout: 5000
+  timeout: 5000,
 };
 
-const req = http.request(options, (res) => {
+const req = http.request(options, res => {
   if (res.statusCode === 200) {
     console.log('Health check passed');
     process.exit(0);
@@ -19,7 +19,7 @@ const req = http.request(options, (res) => {
   }
 });
 
-req.on('error', (err) => {
+req.on('error', err => {
   console.log(`Health check failed with error: ${err.message}`);
   process.exit(1);
 });

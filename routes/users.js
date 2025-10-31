@@ -14,7 +14,8 @@ const auditLogger = require('../src/services/auditLogger');
  * GET /api/users
  * Get users with pagination, filtering, and search
  */
-router.get('/',
+router.get(
+  '/',
   requireModerator,
   [
     query('page').optional().isInt({ min: 1 }).toInt(),
@@ -23,7 +24,7 @@ router.get('/',
     query('status').optional().isIn(['active', 'inactive', 'banned']),
     query('plan').optional().isIn(['free', 'basic', 'pro', 'enterprise']),
     query('sortBy').optional().isIn(['name', 'email', 'createdAt', 'lastActivity', 'level']),
-    query('sortOrder').optional().isIn(['asc', 'desc'])
+    query('sortOrder').optional().isIn(['asc', 'desc']),
   ],
   asyncHandler(async (req, res) => {
     // Check validation errors
@@ -39,7 +40,7 @@ router.get('/',
       status,
       plan,
       sortBy = 'createdAt',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
     } = req.query;
 
     const filters = {
@@ -47,7 +48,7 @@ router.get('/',
       status,
       plan,
       sortBy,
-      sortOrder
+      sortOrder,
     };
 
     const result = await userService.getUsers(filters, { page, limit });
@@ -63,11 +64,11 @@ router.get('/',
         filters,
         page,
         limit,
-        resultCount: result.users.length
+        resultCount: result.users.length,
       },
       riskLevel: auditLogger.RISK_LEVELS.LOW,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
@@ -77,9 +78,9 @@ router.get('/',
         page,
         limit,
         total: result.total,
-        totalPages: Math.ceil(result.total / limit)
+        totalPages: Math.ceil(result.total / limit),
       },
-      filters
+      filters,
     });
   })
 );
@@ -88,11 +89,10 @@ router.get('/',
  * GET /api/users/:id
  * Get user details by ID
  */
-router.get('/:id',
+router.get(
+  '/:id',
   requireModerator,
-  [
-    param('id').isString().notEmpty()
-  ],
+  [param('id').isString().notEmpty()],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -117,16 +117,16 @@ router.get('/:id',
       details: {
         userId: id,
         userName: user.name,
-        userEmail: user.email
+        userEmail: user.email,
       },
       riskLevel: auditLogger.RISK_LEVELS.LOW,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
-      data: user
+      data: user,
     });
   })
 );
@@ -135,7 +135,8 @@ router.get('/:id',
  * POST /api/users
  * Create new user
  */
-router.post('/',
+router.post(
+  '/',
   requireAdmin,
   [
     body('name').optional().isString().trim().isLength({ min: 1, max: 100 }),
@@ -143,7 +144,7 @@ router.post('/',
     body('phone').optional().isString().trim(),
     body('plan').optional().isIn(['free', 'basic', 'pro', 'enterprise']),
     body('premium').optional().isBoolean(),
-    body('premiumExpiry').optional().isISO8601()
+    body('premiumExpiry').optional().isISO8601(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -166,18 +167,18 @@ router.post('/',
         userData: {
           name: userData.name,
           email: userData.email,
-          plan: userData.plan
-        }
+          plan: userData.plan,
+        },
       },
       riskLevel: auditLogger.RISK_LEVELS.MEDIUM,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.status(201).json({
       success: true,
       data: newUser,
-      message: 'User created successfully'
+      message: 'User created successfully',
     });
   })
 );
@@ -186,7 +187,8 @@ router.post('/',
  * PUT /api/users/:id
  * Update user
  */
-router.put('/:id',
+router.put(
+  '/:id',
   requireModerator,
   [
     param('id').isString().notEmpty(),
@@ -197,7 +199,7 @@ router.put('/:id',
     body('premium').optional().isBoolean(),
     body('premiumExpiry').optional().isISO8601(),
     body('banned').optional().isBoolean(),
-    body('banReason').optional().isString().trim()
+    body('banReason').optional().isString().trim(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -225,17 +227,17 @@ router.put('/:id',
       details: {
         changes: updateData,
         userName: updatedUser.name,
-        userEmail: updatedUser.email
+        userEmail: updatedUser.email,
       },
       riskLevel: auditLogger.RISK_LEVELS.MEDIUM,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
       data: updatedUser,
-      message: 'User updated successfully'
+      message: 'User updated successfully',
     });
   })
 );
@@ -244,11 +246,10 @@ router.put('/:id',
  * DELETE /api/users/:id
  * Delete user
  */
-router.delete('/:id',
+router.delete(
+  '/:id',
   requireAdmin,
-  [
-    param('id').isString().notEmpty()
-  ],
+  [param('id').isString().notEmpty()],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -273,16 +274,16 @@ router.delete('/:id',
       details: {
         userName: deletedUser.name,
         userEmail: deletedUser.email,
-        deletionTime: new Date().toISOString()
+        deletionTime: new Date().toISOString(),
       },
       riskLevel: auditLogger.RISK_LEVELS.HIGH,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'User deleted successfully',
     });
   })
 );
@@ -291,14 +292,15 @@ router.delete('/:id',
  * POST /api/users/bulk-action
  * Bulk operations on users
  */
-router.post('/bulk-action',
+router.post(
+  '/bulk-action',
   requireAdmin,
   [
     body('action').isIn(['ban', 'unban', 'delete', 'update_plan']),
     body('userIds').isArray({ min: 1 }),
     body('userIds.*').isString().notEmpty(),
     body('plan').optional().isIn(['free', 'basic', 'pro', 'enterprise']),
-    body('reason').optional().isString().trim()
+    body('reason').optional().isString().trim(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -322,17 +324,17 @@ router.post('/bulk-action',
         userCount: userIds.length,
         plan,
         reason,
-        affectedUsers: userIds
+        affectedUsers: userIds,
       },
       riskLevel: auditLogger.RISK_LEVELS.HIGH,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.json({
       success: true,
       data: result,
-      message: `Successfully ${action}ed ${result.successful.length} users`
+      message: `Successfully ${action}ed ${result.successful.length} users`,
     });
   })
 );
@@ -341,12 +343,13 @@ router.post('/bulk-action',
  * GET /api/users/export
  * Export users to CSV/JSON
  */
-router.get('/export',
+router.get(
+  '/export',
   requireModerator,
   [
     query('format').optional().isIn(['csv', 'json']),
     query('status').optional().isIn(['active', 'inactive', 'banned']),
-    query('plan').optional().isIn(['free', 'basic', 'pro', 'enterprise'])
+    query('plan').optional().isIn(['free', 'basic', 'pro', 'enterprise']),
   ],
   asyncHandler(async (req, res) => {
     const { format = 'csv', status, plan } = req.query;
@@ -376,11 +379,11 @@ router.get('/export',
       details: {
         format,
         filters,
-        exportTime: new Date().toISOString()
+        exportTime: new Date().toISOString(),
       },
       riskLevel: auditLogger.RISK_LEVELS.MEDIUM,
       ipAddress: req.ip,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get('User-Agent'),
     });
 
     res.send(exportData);
@@ -391,14 +394,15 @@ router.get('/export',
  * GET /api/users/statistics
  * Get user statistics and analytics
  */
-router.get('/statistics',
+router.get(
+  '/statistics',
   requireModerator,
   asyncHandler(async (req, res) => {
     const stats = await userService.getStatistics();
 
     res.json({
       success: true,
-      data: stats
+      data: stats,
     });
   })
 );

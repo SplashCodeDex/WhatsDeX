@@ -1,5 +1,5 @@
-const translateCommand = require('../../../commands/tool/translate.js');
 const axios = require('axios');
+const translateCommand = require('../../../commands/tool/translate.js');
 const apiTools = require('../../../tools/api');
 
 // Mock dependencies
@@ -17,7 +17,7 @@ describe('translate command', () => {
       bot: {
         context: {
           formatter: {
-            quote: (str) => str,
+            quote: str => str,
           },
           config: {
             msg: {
@@ -80,7 +80,9 @@ describe('translate command', () => {
     await translateCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith(expect.stringContaining('Please provide text to translate.'));
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining('Please provide text to translate.')
+    );
     expect(axios.get).not.toHaveBeenCalled();
   });
 

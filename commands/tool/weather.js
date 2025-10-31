@@ -11,7 +11,7 @@ module.exports = {
   permissions: {
     coin: 10,
   },
-  code: async (ctx) => {
+  code: async ctx => {
     const { formatter, config } = ctx.bot.context;
 
     try {
@@ -21,7 +21,11 @@ module.exports = {
       const locationSchema = z.string().min(1, { message: 'Please provide a location.' });
       const validationResult = locationSchema.safeParse(input);
       if (!validationResult.success) {
-        return ctx.reply(formatter.quote(`❎ ${validationResult.error.issues[0].message}\n\nExample: .weather London`));
+        return ctx.reply(
+          formatter.quote(
+            `❎ ${validationResult.error.issues[0].message}\n\nExample: .weather London`
+          )
+        );
       }
       const location = validationResult.data;
 
@@ -31,11 +35,20 @@ module.exports = {
       });
       console.log('Weather API URL:', apiUrl);
       const response = await axios.get(apiUrl);
-      const result = response.data.result;
+      const { result } = response.data;
       console.log('Weather API result keys:', result ? Object.keys(result) : 'undefined');
 
-      if (!result || !result.name || !result.weather || !Array.isArray(result.weather) || result.weather.length === 0 || !result.main) {
-        throw new Error(`Weather data not found for "${location}". The API may be down or location invalid. Try another city.`);
+      if (
+        !result ||
+        !result.name ||
+        !result.weather ||
+        !Array.isArray(result.weather) ||
+        result.weather.length === 0 ||
+        !result.main
+      ) {
+        throw new Error(
+          `Weather data not found for "${location}". The API may be down or location invalid. Try another city.`
+        );
       }
 
       const replyText = [
@@ -54,10 +67,12 @@ module.exports = {
         `Wind Gust: ${result.wind.gust || 'N/A'} m/s`,
         '· · ─ ·✶· ─ · ·',
         `Clouds: ${result.clouds.all}%`,
-        `Visibility: ${result.visibility ? (result.visibility / 1000).toFixed(1) + ' km' : 'N/A'}`,
+        `Visibility: ${result.visibility ? `${(result.visibility / 1000).toFixed(1)} km` : 'N/A'}`,
         `Sunrise: ${moment.unix(result.sys.sunrise).tz('Africa/Accra').format('HH:mm')} GMT`,
         `Sunset: ${moment.unix(result.sys.sunset).tz('Africa/Accra').format('HH:mm')} GMT`,
-      ].map((line) => formatter.quote(line)).join('\n');
+      ]
+        .map(line => formatter.quote(line))
+        .join('\n');
 
       return ctx.reply({
         text: replyText,

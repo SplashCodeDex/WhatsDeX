@@ -39,24 +39,24 @@ Copy output to .env (replace the "CHANGE_THIS..." placeholders)
 ```javascript
 // Add whitelist of safe commands for tool calls
 const SAFE_COMMANDS = new Set([
-  "ping",
-  "about",
-  "uptime",
-  "price",
-  "suggest",
-  "tqto",
-  "listapis",
-  "googlesearch",
-  "youtubesearch",
-  "githubsearch",
-  "npmsearch",
-  "translate",
-  "weather",
-  "gempa",
-  "holiday",
-  "faktaunik",
-  "quotes",
-  "proverb",
+  'ping',
+  'about',
+  'uptime',
+  'price',
+  'suggest',
+  'tqto',
+  'listapis',
+  'googlesearch',
+  'youtubesearch',
+  'githubsearch',
+  'npmsearch',
+  'translate',
+  'weather',
+  'gempa',
+  'holiday',
+  'faktaunik',
+  'quotes',
+  'proverb',
 ]);
 ```
 
@@ -68,16 +68,14 @@ for (const toolCall of responseMessage.tool_calls) {
   const functionArgs = JSON.parse(toolCall.function.arguments);
 
   // Log tool call attempt
-  console.log(
-    `AI Tool Call: ${functionName} with args ${JSON.stringify(functionArgs)}`
-  );
+  console.log(`AI Tool Call: ${functionName} with args ${JSON.stringify(functionArgs)}`);
 
   // Check whitelist
   if (!SAFE_COMMANDS.has(functionName)) {
     console.warn(`Unsafe tool call blocked: ${functionName}`);
     messages.push({
       tool_call_id: toolCall.id,
-      role: "tool",
+      role: 'tool',
       name: functionName,
       content: `Error: Command "${functionName}" is not allowed for tool execution.`,
     });
@@ -85,22 +83,21 @@ for (const toolCall of responseMessage.tool_calls) {
   }
 
   const commandToExecute = ctx.bot.cmd.get(functionName);
-  let toolResponse = "Error: Command not found.";
+  let toolResponse = 'Error: Command not found.';
 
   if (commandToExecute) {
     try {
-      let commandOutput = "";
+      let commandOutput = '';
       const argsForCommand =
-        functionName === "weather"
-          ? Object.values(functionArgs).join(" ")
+        functionName === 'weather'
+          ? Object.values(functionArgs).join(' ')
           : Object.values(functionArgs);
 
       const mockCtx = {
         ...ctx,
         args: argsForCommand,
-        reply: (output) => {
-          commandOutput =
-            typeof output === "object" ? JSON.stringify(output) : output;
+        reply: output => {
+          commandOutput = typeof output === 'object' ? JSON.stringify(output) : output;
         },
         // Remove dangerous properties
         group: undefined,
@@ -120,7 +117,7 @@ for (const toolCall of responseMessage.tool_calls) {
 
   messages.push({
     tool_call_id: toolCall.id,
-    role: "tool",
+    role: 'tool',
     name: functionName,
     content: toolResponse,
   });
@@ -160,7 +157,7 @@ const { config, formatter } = ctx.bot.context;
 **Replace lines 14-27 with:**
 
 ```javascript
-const logger = require("../src/utils/logger");
+const logger = require('../src/utils/logger');
 
 let isConnected = false;
 
@@ -179,10 +176,10 @@ async function connect() {
         socketTimeoutMS: 45000,
       });
       isConnected = true;
-      logger.info("Successfully connected to AI Chat MongoDB", { attempt });
+      logger.info('Successfully connected to AI Chat MongoDB', { attempt });
       return;
     } catch (error) {
-      logger.error("Error connecting to AI Chat MongoDB", {
+      logger.error('Error connecting to AI Chat MongoDB', {
         attempt,
         maxRetries: MAX_RETRIES,
         error: error.message,
@@ -194,7 +191,7 @@ async function connect() {
         );
       }
 
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
     }
   }
 }
@@ -372,19 +369,16 @@ Old keys have been revoked. System is secure.
 **If Something Goes Wrong:**
 
 1. **API Keys Still Exposed:**
-
    - Immediately disable affected services
    - Contact support@openai.com
    - Document incident
 
 2. **Bot Crashes:**
-
    - Check logs: `tail -f logs/app.log`
    - Check Docker: `docker logs whatsdex-bot`
    - Restart: `pm2 restart whatsdex` or `docker-compose restart`
 
 3. **Database Issues:**
-
    - Check connection: `curl http://localhost:3000/health`
    - Verify MongoDB: `mongo mongodb://localhost:27017`
    - Check Prisma: `npx prisma studio`
@@ -401,13 +395,11 @@ Old keys have been revoked. System is secure.
 After fixing critical issues, update:
 
 1. **README.md**
-
    - Add security section
    - Document key rotation process
    - Add troubleshooting guide
 
 2. **CONTRIBUTING.md**
-
    - Add security guidelines
    - Document .env handling
    - Add pre-commit checklist
@@ -462,7 +454,6 @@ After fixing critical issues, update:
    ```
 
 2. **Set Up Cost Alerts**
-
    - OpenAI: Set budget alerts at $50, $100, $200
    - Stripe: Monitor test vs live mode
    - Google: Set quota alerts
@@ -472,9 +463,9 @@ After fixing critical issues, update:
    ```javascript
    // Add to services/monitoring.js
    setInterval(async () => {
-     const last24h = await getAPIUsage("24h");
+     const last24h = await getAPIUsage('24h');
      if (last24h.cost > 100) {
-       sendAlert("High API usage detected!");
+       sendAlert('High API usage detected!');
      }
    }, 3600000); // Check hourly
    ```

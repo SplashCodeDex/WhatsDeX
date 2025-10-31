@@ -1,8 +1,10 @@
 !## Read registry.md before reading this ##
 
 ---
+
 title: MCP Server
 description: MCP support for registry developers
+
 ---
 
 The [shadcn MCP server](/docs/mcp) works out of the box with any shadcn-compatible registry. You do not need to do anything special to enable MCP support for your registry.

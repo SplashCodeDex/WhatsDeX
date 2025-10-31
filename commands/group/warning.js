@@ -1,49 +1,60 @@
 module.exports = {
-    name: "warning",
-    category: "group",
-    permissions: {
-        admin: true,
-        botAdmin: true,
-        group: true,
-        restrict: true
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config, database: db } = ctx.bot.context;
-        const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
-        const accountId = ctx.getId(accountJid);
+  name: 'warning',
+  category: 'group',
+  permissions: {
+    admin: true,
+    botAdmin: true,
+    group: true,
+    restrict: true,
+  },
+  code: async ctx => {
+    const { formatter, tools, config, database: db } = ctx.bot.context;
+    const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
+    const accountId = ctx.getId(accountJid);
 
-        if (!accountJid) return await ctx.reply({
-            text: `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-                `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${ctx.getId(ctx.sender.jid)}`))}\n` +
-                formatter.quote(tools.msg.generateNotes(["Balas atau kutip pesan untuk menjadikan pengirim sebagai akun target."])),
-            mentions: [ctx.sender.jid]
+    if (!accountJid)
+      return await ctx.reply({
+        text:
+          `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
+          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${ctx.getId(ctx.sender.jid)}`))}\n${formatter.quote(
+            tools.msg.generateNotes([
+              'Balas atau kutip pesan untuk menjadikan pengirim sebagai akun target.',
+            ])
+          )}`,
+        mentions: [ctx.sender.jid],
+      });
+
+    if (accountId === config.bot.id)
+      return await ctx.reply(formatter.quote(`❎ Tidak bisa memberikan warning ke bot!`));
+    if (await ctx.group().isOwner(accountJid))
+      return await ctx.reply(formatter.quote('❎ Tidak bisa memberikan warning ke admin grup!'));
+
+    try {
+      const groupId = ctx.getId(ctx.id);
+      const groupDb = (await db.get(`group.${groupId}`)) || {};
+      const warnings = groupDb?.warnings || [];
+
+      const userWarning = warnings.find(warning => warning.userId === accountId);
+      const currentWarnings = userWarning ? userWarning.count : 0;
+      const newWarning = currentWarnings + 1;
+
+      if (userWarning) {
+        userWarning.count = newWarning;
+      } else {
+        warnings.push({
+          userId: accountId,
+          count: newWarning,
         });
+      }
 
-        if (accountId === config.bot.id) return await ctx.reply(formatter.quote(`❎ Tidak bisa memberikan warning ke bot!`));
-        if (await ctx.group().isOwner(accountJid)) return await ctx.reply(formatter.quote("❎ Tidak bisa memberikan warning ke admin grup!"));
-
-        try {
-            const groupId = ctx.getId(ctx.id);
-            const groupDb = await db.get(`group.${groupId}`) || {};
-            const warnings = groupDb?.warnings || [];
-
-            const userWarning = warnings.find(warning => warning.userId === accountId);
-            let currentWarnings = userWarning ? userWarning.count : 0;
-            const newWarning = currentWarnings + 1;
-
-            if (userWarning) {
-                userWarning.count = newWarning;
-            } else {
-                warnings.push({
-                    userId: accountId,
-                    count: newWarning
-                });
-            }
-
-            await db.set(`group.${groupId}.warnings`, warnings);
-            await ctx.reply(formatter.quote(`✅ Berhasil menambahkan warning pengguna itu menjadi ${newWarning}/${groupDb?.maxwarnings || 3}.`));
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error);
-        }
+      await db.set(`group.${groupId}.warnings`, warnings);
+      await ctx.reply(
+        formatter.quote(
+          `✅ Berhasil menambahkan warning pengguna itu menjadi ${newWarning}/${groupDb?.maxwarnings || 3}.`
+        )
+      );
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error);
     }
+  },
 };

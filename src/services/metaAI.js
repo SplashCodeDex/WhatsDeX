@@ -8,17 +8,21 @@ class MetaAIService {
 
   async generateReply(prompt, options = {}) {
     try {
-      const response = await axios.post(`${this.baseURL}/chat/completions`, {
-        model: options.model || 'llama-3.1-8b',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: options.maxTokens || 150,
-        temperature: options.temperature || 0.7
-      }, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
+      const response = await axios.post(
+        `${this.baseURL}/chat/completions`,
+        {
+          model: options.model || 'llama-3.1-8b',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: options.maxTokens || 150,
+          temperature: options.temperature || 0.7,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       return response.data.choices[0].message.content;
     } catch (error) {
@@ -29,15 +33,19 @@ class MetaAIService {
 
   async transcribeVoice(audioBuffer) {
     try {
-      const response = await axios.post(`${this.baseURL}/audio/transcriptions`, {
-        file: audioBuffer,
-        model: 'whisper-1' // Assuming Meta uses Whisper-like model
-      }, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'multipart/form-data'
+      const response = await axios.post(
+        `${this.baseURL}/audio/transcriptions`,
+        {
+          file: audioBuffer,
+          model: 'whisper-1', // Assuming Meta uses Whisper-like model
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'multipart/form-data',
+          },
         }
-      });
+      );
 
       return response.data.text;
     } catch (error) {
@@ -48,16 +56,20 @@ class MetaAIService {
 
   async generateImage(prompt) {
     try {
-      const response = await axios.post(`${this.baseURL}/images/generations`, {
-        prompt,
-        n: 1,
-        size: '512x512'
-      }, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
+      const response = await axios.post(
+        `${this.baseURL}/images/generations`,
+        {
+          prompt,
+          n: 1,
+          size: '512x512',
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       return response.data.data[0].url;
     } catch (error) {
@@ -68,23 +80,27 @@ class MetaAIService {
 
   async analyzeImage(imageUrl, prompt = 'Describe this image') {
     try {
-      const response = await axios.post(`${this.baseURL}/chat/completions`, {
-        model: 'llama-3.1-vision',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt },
-              { type: 'image_url', image_url: { url: imageUrl } }
-            ]
-          }
-        ]
-      }, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
+      const response = await axios.post(
+        `${this.baseURL}/chat/completions`,
+        {
+          model: 'llama-3.1-vision',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                { type: 'image_url', image_url: { url: imageUrl } },
+              ],
+            },
+          ],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       return response.data.choices[0].message.content;
     } catch (error) {

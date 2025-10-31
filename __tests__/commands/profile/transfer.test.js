@@ -17,14 +17,14 @@ describe('transfer command', () => {
       isOwner: false,
       sender: { jid: 'sender@s.whatsapp.net' },
       getMentioned: jest.fn().mockResolvedValue([]),
-      getId: (jid) => jid.split('@')[0],
+      getId: jid => jid.split('@')[0],
       core: {
         onWhatsApp: jest.fn().mockResolvedValue(['exists']),
       },
       bot: {
         context: {
           formatter: {
-            quote: (str) => str,
+            quote: str => str,
           },
         },
       },
@@ -56,7 +56,9 @@ describe('transfer command', () => {
     await transferCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith('❎ Invalid amount: The amount must be a positive whole number.');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '❎ Invalid amount: The amount must be a positive whole number.'
+    );
     expect(db.add).not.toHaveBeenCalled();
   });
 
@@ -69,7 +71,9 @@ describe('transfer command', () => {
     await transferCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith('❎ Invalid amount: Invalid input: expected number, received NaN');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '❎ Invalid amount: Invalid input: expected number, received NaN'
+    );
     expect(db.add).not.toHaveBeenCalled();
   });
 
@@ -95,6 +99,8 @@ describe('transfer command', () => {
     await transferCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith('Please specify a user and an amount to transfer.\n\nExample: .transfer @user 100');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      'Please specify a user and an amount to transfer.\n\nExample: .transfer @user 100'
+    );
   });
 });

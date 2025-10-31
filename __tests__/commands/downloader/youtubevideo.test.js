@@ -1,5 +1,5 @@
-const youtubevideoCommand = require('../../../commands/downloader/youtubevideo.js');
 const axios = require('axios');
+const youtubevideoCommand = require('../../../commands/downloader/youtubevideo.js');
 const apiTools = require('../../../tools/api');
 
 // Mock dependencies
@@ -16,7 +16,7 @@ describe('youtubevideo command', () => {
       bot: {
         context: {
           formatter: {
-            quote: (str) => str,
+            quote: str => str,
           },
           config: {
             msg: {
@@ -48,10 +48,12 @@ describe('youtubevideo command', () => {
 
     // Assert
     expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('http://mockapi.com'));
-    expect(ctx.reply).toHaveBeenCalledWith(expect.objectContaining({
-      video: { url: 'http://example.com/video.mp4' },
-      caption: expect.stringContaining('URL: https://www.youtube.com/watch?v=dQw4w9WgXcQ'),
-    }));
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        video: { url: 'http://example.com/video.mp4' },
+        caption: expect.stringContaining('URL: https://www.youtube.com/watch?v=dQw4w9WgXcQ'),
+      })
+    );
   });
 
   it('should reply with an error for an invalid URL', async () => {
@@ -88,8 +90,8 @@ describe('youtubevideo command', () => {
 
     // Assert
     expect(apiTools.createUrl).toHaveBeenCalledWith('izumi', '/downloader/youtube', {
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        format: '480',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      format: '480',
     });
   });
 
@@ -101,7 +103,9 @@ describe('youtubevideo command', () => {
     await youtubevideoCommand.code(ctx);
 
     // Assert
-    expect(ctx.reply).toHaveBeenCalledWith(expect.stringContaining('The URL cannot contain spaces.'));
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining('The URL cannot contain spaces.')
+    );
     expect(axios.get).not.toHaveBeenCalled();
   });
 });

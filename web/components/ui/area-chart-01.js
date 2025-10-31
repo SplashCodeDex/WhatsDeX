@@ -226,12 +226,10 @@ export function ChartAreaDefault() {
               cursor={false}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
+                  labelFormatter={(value) => new Date(value).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
-                    })
-                  }}
+                    })}
                   indicator="dot"
                 />
               }

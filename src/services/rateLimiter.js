@@ -11,10 +11,10 @@ class RateLimiterService {
       const redis = require('redis');
       this.redisClient = redis.createClient({
         url: process.env.REDIS_URL || 'redis://localhost:6379',
-        password: process.env.REDIS_PASSWORD
+        password: process.env.REDIS_PASSWORD,
       });
 
-      this.redisClient.on('error', (err) => {
+      this.redisClient.on('error', err => {
         logger.error('Rate limiter Redis connection error:', err);
       });
 
@@ -47,20 +47,23 @@ class RateLimiterService {
         throw new Error('Redis client not available for rate limiting');
       }
 
-      this.limiters.set(key, new RateLimiterRedis({
-        storeClient: this.redisClient,
-        points: config.points,
-        duration: config.duration,
-        keyPrefix: config.keyPrefix || 'rl',
-        inmemoryBlockOnConsumed: config.points, // Block if consumed all points
-        inmemoryBlockDuration: config.blockDuration || 60, // Block duration in seconds
-        insuranceLimiter: new RateLimiterRedis({
+      this.limiters.set(
+        key,
+        new RateLimiterRedis({
           storeClient: this.redisClient,
-          points: Math.floor(config.points / 2),
-          duration: config.duration * 2,
-          keyPrefix: `${config.keyPrefix || 'rl'}_insurance`
+          points: config.points,
+          duration: config.duration,
+          keyPrefix: config.keyPrefix || 'rl',
+          inmemoryBlockOnConsumed: config.points, // Block if consumed all points
+          inmemoryBlockDuration: config.blockDuration || 60, // Block duration in seconds
+          insuranceLimiter: new RateLimiterRedis({
+            storeClient: this.redisClient,
+            points: Math.floor(config.points / 2),
+            duration: config.duration * 2,
+            keyPrefix: `${config.keyPrefix || 'rl'}_insurance`,
+          }),
         })
-      }));
+      );
     }
 
     return this.limiters.get(key);
@@ -83,7 +86,7 @@ class RateLimiterService {
         points: config.points,
         duration: config.duration,
         remainingPoints: rejRes.remainingPoints,
-        msBeforeNext: rejRes.msBeforeNext
+        msBeforeNext: rejRes.msBeforeNext,
       });
       return false;
     }
@@ -104,7 +107,7 @@ class RateLimiterService {
         remainingPoints: res.remainingPoints,
         msBeforeNext: res.msBeforeNext,
         consumedPoints: res.consumedPoints,
-        isBlocked: false
+        isBlocked: false,
       };
     } catch (error) {
       return {
@@ -112,7 +115,7 @@ class RateLimiterService {
         msBeforeNext: 0,
         consumedPoints: config.points,
         isBlocked: true,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -201,43 +204,43 @@ class RateLimiterService {
       aiChat: {
         points: 20, // 20 requests
         duration: 60, // per minute
-        keyPrefix: 'ai_chat'
+        keyPrefix: 'ai_chat',
       },
 
       // General commands - moderate limits
       generalCommands: {
         points: 50, // 50 requests
         duration: 60, // per minute
-        keyPrefix: 'general'
+        keyPrefix: 'general',
       },
 
       // Media processing - lower limits due to resource usage
       mediaProcessing: {
         points: 10, // 10 requests
         duration: 60, // per minute
-        keyPrefix: 'media'
+        keyPrefix: 'media',
       },
 
       // API endpoints - higher limits for web dashboard
       apiRequests: {
         points: 100, // 100 requests
         duration: 60, // per minute
-        keyPrefix: 'api'
+        keyPrefix: 'api',
       },
 
       // File uploads - strict limits
       fileUploads: {
         points: 5, // 5 uploads
         duration: 300, // per 5 minutes
-        keyPrefix: 'upload'
+        keyPrefix: 'upload',
       },
 
       // Admin actions - very strict limits
       adminActions: {
         points: 10, // 10 actions
         duration: 60, // per minute
-        keyPrefix: 'admin'
-      }
+        keyPrefix: 'admin',
+      },
     };
   }
 
@@ -249,7 +252,7 @@ class RateLimiterService {
     const stats = {
       connected: !!this.redisClient,
       limitersCount: this.limiters.size,
-      limiters: []
+      limiters: [],
     };
 
     if (this.redisClient) {
@@ -268,7 +271,7 @@ class RateLimiterService {
         key,
         points: limiter.points,
         duration: limiter.duration,
-        keyPrefix: limiter.keyPrefix
+        keyPrefix: limiter.keyPrefix,
       });
     }
 
@@ -309,13 +312,13 @@ class RateLimiterService {
       return {
         status: 'healthy',
         service: 'rate-limiter',
-        limiters: this.limiters.size
+        limiters: this.limiters.size,
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         service: 'rate-limiter',
-        error: error.message
+        error: error.message,
       };
     }
   }

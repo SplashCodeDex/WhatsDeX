@@ -28,15 +28,15 @@ class JobQueueService {
         concurrency: 3,
         priority: 8,
       },
-      'notification': {
+      notification: {
         concurrency: 5,
         priority: 5,
       },
-      'analytics': {
+      analytics: {
         concurrency: 1,
         priority: 3,
       },
-      'cleanup': {
+      cleanup: {
         concurrency: 1,
         priority: 1,
       },
@@ -112,18 +112,18 @@ class JobQueueService {
       logger.info(`Queue '${queueName}' is ready`);
     });
 
-    queue.on('error', (error) => {
+    queue.on('error', error => {
       logger.error(`Queue '${queueName}' error`, { error: error.message });
     });
 
-    queue.on('waiting', (jobId) => {
+    queue.on('waiting', jobId => {
       logger.debug(`Job ${jobId} is waiting in queue '${queueName}'`);
     });
 
     queue.on('active', (job, jobPromise) => {
       logger.debug(`Job ${job.id} started in queue '${queueName}'`, {
         jobName: job.name,
-        data: job.data
+        data: job.data,
       });
     });
 
@@ -131,7 +131,7 @@ class JobQueueService {
       logger.info(`Job ${job.id} completed in queue '${queueName}'`, {
         jobName: job.name,
         duration: job.finishedOn - job.processedOn,
-        result: typeof result === 'object' ? JSON.stringify(result) : result
+        result: typeof result === 'object' ? JSON.stringify(result) : result,
       });
     });
 
@@ -140,13 +140,13 @@ class JobQueueService {
         jobName: job.name,
         error: err.message,
         attemptsMade: job.attemptsMade,
-        attemptsRemaining: job.opts.attempts - job.attemptsMade
+        attemptsRemaining: job.opts.attempts - job.attemptsMade,
       });
     });
 
-    queue.on('stalled', (job) => {
+    queue.on('stalled', job => {
       logger.warn(`Job ${job.id} stalled in queue '${queueName}'`, {
-        jobName: job.name
+        jobName: job.name,
       });
     });
   }
@@ -186,8 +186,14 @@ class JobQueueService {
       try {
         serializableData = JSON.parse(JSON.stringify(data));
       } catch (serializeError) {
-        logger.warn('Data contains circular references, serializing with fallback', { error: serializeError.message });
-        serializableData = { jobName, timestamp: Date.now(), originalDataSize: Object.keys(data).length };
+        logger.warn('Data contains circular references, serializing with fallback', {
+          error: serializeError.message,
+        });
+        serializableData = {
+          jobName,
+          timestamp: Date.now(),
+          originalDataSize: Object.keys(data).length,
+        };
       }
 
       const jobOptions = {
@@ -201,14 +207,14 @@ class JobQueueService {
       logger.debug(`Job added to queue '${queueName}'`, {
         jobId: job.id,
         jobName,
-        data: JSON.stringify(serializableData).substring(0, 200)
+        data: JSON.stringify(serializableData).substring(0, 200),
       });
 
       return job;
     } catch (error) {
       logger.error(`Failed to add job to queue '${queueName}'`, {
         jobName,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -230,7 +236,7 @@ class JobQueueService {
       const processorKey = `${queueName}:${jobName}`;
       this.processors.set(processorKey, processor);
 
-      queue.process(jobName, this.queueConfigs[queueName]?.concurrency || 1, async (job) => {
+      queue.process(jobName, this.queueConfigs[queueName]?.concurrency || 1, async job => {
         const startTime = Date.now();
 
         try {
@@ -242,7 +248,7 @@ class JobQueueService {
           logger.debug(`Job ${job.id} processed successfully`, {
             jobName,
             duration,
-            result: typeof result === 'object' ? JSON.stringify(result) : result
+            result: typeof result === 'object' ? JSON.stringify(result) : result,
           });
 
           return result;
@@ -252,7 +258,7 @@ class JobQueueService {
             jobName,
             duration,
             error: error.message,
-            stack: error.stack
+            stack: error.stack,
           });
           throw error;
         }
@@ -262,7 +268,7 @@ class JobQueueService {
     } catch (error) {
       logger.error(`Failed to register processor for job '${jobName}'`, {
         queueName,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -357,7 +363,7 @@ class JobQueueService {
     } catch (error) {
       logger.error(`Failed to clear queue '${queueName}'`, {
         state,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -369,7 +375,7 @@ class JobQueueService {
   async closeAllQueues() {
     logger.info('Closing all job queues...');
 
-    const closePromises = Array.from(this.queues.values()).map(async (queue) => {
+    const closePromises = Array.from(this.queues.values()).map(async queue => {
       try {
         await queue.close();
         logger.debug('Queue closed successfully');
@@ -399,7 +405,7 @@ class JobQueueService {
         totalJobs,
         activeJobs,
         queuesStatus: stats,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Job queue health check failed', { error: error.message });
@@ -407,7 +413,7 @@ class JobQueueService {
         status: 'unhealthy',
         service: 'job-queue',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

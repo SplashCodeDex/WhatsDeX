@@ -1,6 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const logger = require('../src/utils/logger');
 const crypto = require('crypto');
+const logger = require('../src/utils/logger');
 
 class GeminiService {
   constructor() {
@@ -26,7 +26,9 @@ class GeminiService {
       const CacheService = require('../src/services/cache');
       this.cache = new CacheService();
     } catch (error) {
-      logger.warn('Cache service not available, proceeding without caching', { error: error.message });
+      logger.warn('Cache service not available, proceeding without caching', {
+        error: error.message,
+      });
     }
 
     logger.info('Gemini service initialized with official Google Generative AI SDK');
@@ -73,7 +75,7 @@ class GeminiService {
         logger.info('Gemini chat completion request', {
           correlationId,
           attempt,
-          textLength: text.length
+          textLength: text.length,
         });
 
         const result = await this.model.generateContent(text);
@@ -93,7 +95,7 @@ class GeminiService {
         logger.info('Gemini chat completion success', {
           correlationId,
           attempt,
-          responseLength: message.length
+          responseLength: message.length,
         });
         return message;
       } catch (error) {
@@ -102,20 +104,20 @@ class GeminiService {
           attempt,
           maxRetries,
           error: error.message,
-          retryAfter: attempt < maxRetries ? baseDelay * Math.pow(2, attempt - 1) : null
+          retryAfter: attempt < maxRetries ? baseDelay * 2 ** (attempt - 1) : null,
         });
 
         if (attempt === maxRetries) {
           logger.error('Gemini chat completion failed after retries', {
             correlationId,
             error: error.message,
-            text: text.substring(0, 100) + '...'
+            text: `${text.substring(0, 100)}...`,
           });
           throw new Error(`Failed to get response from Gemini API: ${error.message}`);
         }
 
         // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt - 1)));
+        await new Promise(resolve => setTimeout(resolve, baseDelay * 2 ** (attempt - 1)));
       }
     }
   }
@@ -152,23 +154,23 @@ class GeminiService {
         logger.info('Gemini chat completion with history request', {
           correlationId,
           attempt,
-          messageCount: messages.length
+          messageCount: messages.length,
         });
 
         // Convert messages to Gemini format
         const history = messages.slice(0, -1).map(msg => ({
           role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }]
+          parts: [{ text: msg.content }],
         }));
 
         const chat = this.model.startChat({
-          history: history,
+          history,
           generationConfig: {
             temperature: 0.7,
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 2048,
-          }
+          },
         });
 
         const lastMessage = messages[messages.length - 1];
@@ -185,7 +187,7 @@ class GeminiService {
         logger.info('Gemini chat completion with history success', {
           correlationId,
           attempt,
-          responseLength: message.length
+          responseLength: message.length,
         });
         return message;
       } catch (error) {
@@ -195,19 +197,19 @@ class GeminiService {
           maxRetries,
           error: error.message,
           messageCount: messages.length,
-          retryAfter: attempt < maxRetries ? baseDelay * Math.pow(2, attempt - 1) : null
+          retryAfter: attempt < maxRetries ? baseDelay * 2 ** (attempt - 1) : null,
         });
 
         if (attempt === maxRetries) {
           logger.error('Gemini chat completion with history failed after retries', {
             correlationId,
             error: error.message,
-            messageCount: messages.length
+            messageCount: messages.length,
           });
           throw new Error(`Failed to get response from Gemini API: ${error.message}`);
         }
 
-        await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt - 1)));
+        await new Promise(resolve => setTimeout(resolve, baseDelay * 2 ** (attempt - 1)));
       }
     }
   }
@@ -224,7 +226,12 @@ class GeminiService {
     }
 
     // Create cache key for tool-based conversations
-    const toolKey = tools ? tools.map(t => t.function?.name).sort().join(',') : 'no-tools';
+    const toolKey = tools
+      ? tools
+          .map(t => t.function?.name)
+          .sort()
+          .join(',')
+      : 'no-tools';
     const conversationKey = `${messages.map(m => `${m.role}:${m.content}`).join('|')}|tools:${toolKey}`;
     const cacheKey = this.generateCacheKey(conversationKey, 'tools');
 
@@ -240,7 +247,7 @@ class GeminiService {
     try {
       logger.debug('Sending chat completion with tools to Gemini', {
         messageCount: messages.length,
-        toolCount: tools?.length || 0
+        toolCount: tools?.length || 0,
       });
 
       // Convert tools to Gemini format
@@ -260,11 +267,11 @@ class GeminiService {
       // Convert messages to Gemini format
       const geminiMessages = messages.map(msg => ({
         role: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }]
+        parts: [{ text: msg.content }],
       }));
 
       const chat = modelWithTools.startChat({
-        history: geminiMessages.slice(0, -1)
+        history: geminiMessages.slice(0, -1),
       });
 
       const lastMessage = geminiMessages[geminiMessages.length - 1];
@@ -285,18 +292,18 @@ class GeminiService {
               id: `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               function: {
                 name: call.name,
-                arguments: JSON.stringify(call.args)
-              }
-            }))
-          }
+                arguments: JSON.stringify(call.args),
+              },
+            })),
+          },
         };
       } else {
         responseData = {
           finish_reason: 'stop',
           message: {
             role: 'assistant',
-            content: response.text()
-          }
+            content: response.text(),
+          },
         };
       }
 
@@ -310,7 +317,7 @@ class GeminiService {
     } catch (error) {
       logger.error('Error fetching Gemini completion with tools', {
         error: error.message,
-        messageCount: messages.length
+        messageCount: messages.length,
       });
       throw new Error(`Failed to get response from Gemini API with tools: ${error.message}`);
     }
@@ -341,7 +348,7 @@ class GeminiService {
 
     try {
       logger.debug('Generating conversation summary with Gemini', {
-        messageCount: messagesToSummarize.length
+        messageCount: messagesToSummarize.length,
       });
 
       const summaryPrompt = `Please provide a concise summary of the following conversation, capturing the key points and main topics discussed:
@@ -365,7 +372,7 @@ Summary:`;
     } catch (error) {
       logger.error('Error generating summary with Gemini', {
         error: error.message,
-        messageCount: messagesToSummarize.length
+        messageCount: messagesToSummarize.length,
       });
       throw new Error(`Failed to generate summary: ${error.message}`);
     }
@@ -435,17 +442,17 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
     } catch (error) {
       logger.error('Error moderating content with Gemini - ALERT: Manual review required', {
         error: error.message,
-        content: content.substring(0, 100) + '...'
+        content: `${content.substring(0, 100)}...`,
       });
 
       // Broadcast alert to admin dashboard via WebSocket
       try {
         const AdminServer = require('../server');
         AdminServer.broadcast('moderation_alert', {
-          content: content.substring(0, 200) + '...',
+          content: `${content.substring(0, 200)}...`,
           reason: 'Moderation failure - manual review required',
           timestamp: new Date().toISOString(),
-          severity: 'high'
+          severity: 'high',
         });
       } catch (broadcastError) {
         logger.warn('Failed to broadcast moderation alert', { error: broadcastError.message });
@@ -460,7 +467,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
           action: 'content_moderation_failed',
           resource: 'moderation',
           details: { contentPreview: content.substring(0, 100), error: error.message },
-          riskLevel: 'high'
+          riskLevel: 'high',
         });
       } catch (auditError) {
         logger.warn('Failed to log moderation failure to audit', { error: auditError.message });
@@ -479,7 +486,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
     return tools.map(tool => ({
       name: tool.function.name,
       description: tool.function.description,
-      parameters: tool.function.parameters
+      parameters: tool.function.parameters,
     }));
   }
 
@@ -513,7 +520,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
         model: 'gemini-2.0-flash-exp',
         responseTime,
         testResponse: text ? 'OK' : 'No response',
-        cache: this.cache ? 'enabled' : 'disabled'
+        cache: this.cache ? 'enabled' : 'disabled',
       };
     } catch (error) {
       logger.error('Gemini health check failed', { error: error.message });
@@ -521,7 +528,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
         status: 'unhealthy',
         error: error.message,
         timestamp: Date.now(),
-        cache: this.cache ? 'enabled' : 'disabled'
+        cache: this.cache ? 'enabled' : 'disabled',
       };
     }
   }

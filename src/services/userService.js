@@ -25,7 +25,7 @@ class UserService {
         aiRequests: 340,
         totalSpent: 299.99,
         level: 15,
-        xp: 8750
+        xp: 8750,
       },
       {
         id: 'user-2',
@@ -40,7 +40,7 @@ class UserService {
         aiRequests: 156,
         totalSpent: 149.99,
         level: 12,
-        xp: 6200
+        xp: 6200,
       },
       {
         id: 'user-3',
@@ -55,8 +55,8 @@ class UserService {
         aiRequests: 12,
         totalSpent: 0,
         level: 3,
-        xp: 180
-      }
+        xp: 180,
+      },
     ];
 
     mockUsers.forEach(user => {
@@ -72,10 +72,11 @@ class UserService {
     // Apply filters
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
-      users = users.filter(user =>
-        user.name.toLowerCase().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm) ||
-        user.phone.includes(searchTerm)
+      users = users.filter(
+        user =>
+          user.name.toLowerCase().includes(searchTerm) ||
+          user.email.toLowerCase().includes(searchTerm) ||
+          user.phone.includes(searchTerm)
       );
     }
 
@@ -108,7 +109,7 @@ class UserService {
       users: paginatedUsers,
       total,
       page,
-      limit
+      limit,
     };
   }
 
@@ -127,7 +128,7 @@ class UserService {
       aiRequests: 0,
       totalSpent: 0,
       level: 1,
-      xp: 0
+      xp: 0,
     };
 
     this.users.set(id, newUser);
@@ -154,7 +155,7 @@ class UserService {
   async bulkAction(action, userIds, options = {}) {
     const results = {
       successful: [],
-      failed: []
+      failed: [],
     };
 
     for (const userId of userIds) {
@@ -197,7 +198,21 @@ class UserService {
     const { users } = await this.getUsers(filters, { limit: 10000 });
 
     if (format === 'csv') {
-      const headers = ['ID', 'Name', 'Email', 'Phone', 'Plan', 'Status', 'Join Date', 'Last Activity', 'Commands Used', 'AI Requests', 'Total Spent', 'Level', 'XP'];
+      const headers = [
+        'ID',
+        'Name',
+        'Email',
+        'Phone',
+        'Plan',
+        'Status',
+        'Join Date',
+        'Last Activity',
+        'Commands Used',
+        'AI Requests',
+        'Total Spent',
+        'Level',
+        'XP',
+      ];
       const rows = users.map(user => [
         user.id,
         user.name,
@@ -211,7 +226,7 @@ class UserService {
         user.aiRequests,
         user.totalSpent,
         user.level,
-        user.xp
+        user.xp,
       ]);
 
       return [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -236,20 +251,23 @@ class UserService {
         totalUsers,
         activeUsers,
         premiumUsers,
-        bannedUsers
+        bannedUsers,
       },
       activity: {
         totalCommands,
         totalAIRequests,
         averageCommandsPerUser: totalUsers > 0 ? Math.round(totalCommands / totalUsers) : 0,
-        averageAIRequestsPerUser: totalUsers > 0 ? Math.round(totalAIRequests / totalUsers) : 0
+        averageAIRequestsPerUser: totalUsers > 0 ? Math.round(totalAIRequests / totalUsers) : 0,
       },
       revenue: {
         totalRevenue,
-        averageRevenuePerUser: totalUsers > 0 ? Math.round(totalRevenue / totalUsers * 100) / 100 : 0,
-        premiumRevenue: users.filter(u => u.plan !== 'free').reduce((sum, u) => sum + u.totalSpent, 0)
+        averageRevenuePerUser:
+          totalUsers > 0 ? Math.round((totalRevenue / totalUsers) * 100) / 100 : 0,
+        premiumRevenue: users
+          .filter(u => u.plan !== 'free')
+          .reduce((sum, u) => sum + u.totalSpent, 0),
       },
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     };
   }
 }

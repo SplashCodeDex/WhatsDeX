@@ -8,16 +8,33 @@ class CommandSuggestionsService {
       ai: ['gemini', 'chatgpt', 'deepseek', 'felo', 'hika', 'venice'],
       image: ['dalle', 'flux', 'animagine', 'deepdreams', 'text2image'],
       video: ['videogpt'],
-      misc: ['editimage', 'geminicanvas', 'geminiedit', 'image2prompt', 'removewm', 'upscale', 'youtubesummarizer'],
+      misc: [
+        'editimage',
+        'geminicanvas',
+        'geminiedit',
+        'image2prompt',
+        'removewm',
+        'upscale',
+        'youtubesummarizer',
+      ],
       converter: ['sticker', 'stickerwm', 'toaudio', 'togif', 'toimage', 'tovid', 'tovn'],
-      downloader: ['youtubevideo', 'youtubeaudio', 'instagramdl', 'facebookdl', 'tiktokdl', 'twitterdl', 'spotifydl', 'soundclouddl'],
+      downloader: [
+        'youtubevideo',
+        'youtubeaudio',
+        'instagramdl',
+        'facebookdl',
+        'tiktokdl',
+        'twitterdl',
+        'spotifydl',
+        'soundclouddl',
+      ],
       entertainment: ['meme', 'joke', 'quotes', 'cecan', 'waifu', 'animeinfo', 'mangainfo'],
       game: ['tebakgambar', 'tebaklagu', 'family100', 'suit', 'kuis'],
       group: ['add', 'kick', 'promote', 'demote', 'tagall', 'hidetag'],
       information: ['ping', 'about', 'server', 'uptime', 'speedtest'],
       profile: ['profile', 'coin', 'leaderboard', 'claim'],
       search: ['googlesearch', 'youtubesearch', 'githubsearch', 'npmsearch'],
-      tool: ['weather', 'translate', 'ocr', 'fetch', 'screenshot']
+      tool: ['weather', 'translate', 'ocr', 'fetch', 'screenshot'],
     };
 
     this.commandDescriptions = {
@@ -39,7 +56,7 @@ class CommandSuggestionsService {
       // Utilities
       translate: 'Translate text between languages',
       ping: 'Check bot response time',
-      profile: 'View your profile information'
+      profile: 'View your profile information',
     };
   }
 
@@ -57,7 +74,7 @@ class CommandSuggestionsService {
     try {
       logger.debug('Analyzing user input for command suggestions', {
         inputLength: userInput.length,
-        recentCommandsCount: recentCommands.length
+        recentCommandsCount: recentCommands.length,
       });
 
       // Create context for AI analysis
@@ -71,14 +88,14 @@ class CommandSuggestionsService {
 
       logger.debug('Generated command suggestions', {
         input: userInput.substring(0, 50),
-        suggestionsCount: rankedSuggestions.length
+        suggestionsCount: rankedSuggestions.length,
       });
 
       return rankedSuggestions.slice(0, 5); // Return top 5 suggestions
     } catch (error) {
       logger.error('Error generating command suggestions', {
         error: error.message,
-        userInput: userInput.substring(0, 100)
+        userInput: userInput.substring(0, 100),
       });
 
       // Fallback to basic keyword matching
@@ -136,7 +153,10 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
       const response = await this.gemini.getChatCompletion(prompt);
 
       // Clean the response to ensure it's valid JSON
-      const cleanedResponse = response.trim().replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      const cleanedResponse = response
+        .trim()
+        .replace(/^```json\s*/, '')
+        .replace(/\s*```$/, '');
 
       const suggestions = JSON.parse(cleanedResponse);
 
@@ -148,7 +168,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
     } catch (error) {
       logger.warn('Failed to parse Gemini suggestions response', {
         error: error.message,
-        response: error.response?.data || 'No response data'
+        response: error.response?.data || 'No response data',
       });
 
       // Return empty array on parsing error
@@ -179,9 +199,10 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
       // Boost score for keyword matches in user input
       const keywords = this.extractKeywords(userInput);
       const commandDesc = this.commandDescriptions[suggestion.command] || '';
-      const keywordMatches = keywords.filter(keyword =>
-        commandDesc.toLowerCase().includes(keyword.toLowerCase()) ||
-        suggestion.command.toLowerCase().includes(keyword.toLowerCase())
+      const keywordMatches = keywords.filter(
+        keyword =>
+          commandDesc.toLowerCase().includes(keyword.toLowerCase()) ||
+          suggestion.command.toLowerCase().includes(keyword.toLowerCase())
       ).length;
 
       score += keywordMatches * 0.1;
@@ -200,7 +221,8 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         category: suggestion.category,
         confidence: score,
         reason: suggestion.reason || 'AI suggested',
-        description: this.commandDescriptions[suggestion.command] || `${suggestion.command} command`
+        description:
+          this.commandDescriptions[suggestion.command] || `${suggestion.command} command`,
       });
     }
 
@@ -217,18 +239,32 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
     const keywords = [];
 
     // Common action words
-    const actions = ['download', 'convert', 'generate', 'create', 'get', 'find', 'search', 'play', 'show', 'tell'];
+    const actions = [
+      'download',
+      'convert',
+      'generate',
+      'create',
+      'get',
+      'find',
+      'search',
+      'play',
+      'show',
+      'tell',
+    ];
     const media = ['video', 'image', 'photo', 'music', 'song', 'sticker', 'gif', 'audio'];
     const platforms = ['youtube', 'instagram', 'facebook', 'tiktok', 'twitter', 'spotify'];
 
     const words = input.toLowerCase().split(/\s+/);
 
-    keywords.push(...words.filter(word =>
-      actions.includes(word) ||
-      media.includes(word) ||
-      platforms.includes(word) ||
-      word.length > 3 // Longer words are likely more specific
-    ));
+    keywords.push(
+      ...words.filter(
+        word =>
+          actions.includes(word) ||
+          media.includes(word) ||
+          platforms.includes(word) ||
+          word.length > 3 // Longer words are likely more specific
+      )
+    );
 
     return [...new Set(keywords)]; // Remove duplicates
   }
@@ -249,7 +285,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         category: 'tool',
         confidence: 0.8,
         reason: 'Weather-related keywords detected',
-        description: 'Get weather information'
+        description: 'Get weather information',
       });
     }
 
@@ -259,7 +295,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         category: 'tool',
         confidence: 0.8,
         reason: 'Translation keywords detected',
-        description: 'Translate text between languages'
+        description: 'Translate text between languages',
       });
     }
 
@@ -269,7 +305,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         category: 'image',
         confidence: 0.7,
         reason: 'Image-related keywords detected',
-        description: 'Generate images using DALL-E'
+        description: 'Generate images using DALL-E',
       });
     }
 
@@ -279,7 +315,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         category: 'downloader',
         confidence: 0.7,
         reason: 'Video/YouTube keywords detected',
-        description: 'Download videos from YouTube'
+        description: 'Download videos from YouTube',
       });
     }
 
@@ -289,7 +325,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         category: 'converter',
         confidence: 0.7,
         reason: 'Sticker-related keywords detected',
-        description: 'Convert images to WhatsApp stickers'
+        description: 'Convert images to WhatsApp stickers',
       });
     }
 
@@ -299,7 +335,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         category: 'entertainment',
         confidence: 0.6,
         reason: 'Humor-related keywords detected',
-        description: 'Get random jokes'
+        description: 'Get random jokes',
       });
     }
 
@@ -335,17 +371,16 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
       logger.debug('Learning from user interaction', {
         userId,
         selectedCommand,
-        inputLength: originalInput.length
+        inputLength: originalInput.length,
       });
 
       // This would store learning data for future improvements
       // Could be used to fine-tune the AI suggestions over time
-
     } catch (error) {
       logger.error('Error learning from user interaction', {
         userId,
         selectedCommand,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -361,29 +396,29 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         category: 'ai-chat',
         confidence: 0.9,
         reason: 'Most popular AI chat command',
-        description: 'Chat with Google Gemini AI assistant'
+        description: 'Chat with Google Gemini AI assistant',
       },
       {
         command: 'ping',
         category: 'information',
         confidence: 0.8,
         reason: 'Frequently used status check',
-        description: 'Check bot response time'
+        description: 'Check bot response time',
       },
       {
         command: 'weather',
         category: 'tool',
         confidence: 0.7,
         reason: 'Popular utility command',
-        description: 'Get weather information'
+        description: 'Get weather information',
       },
       {
         command: 'sticker',
         category: 'converter',
         confidence: 0.6,
         reason: 'Popular media conversion',
-        description: 'Convert images to WhatsApp stickers'
-      }
+        description: 'Convert images to WhatsApp stickers',
+      },
     ];
   }
 
@@ -401,7 +436,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         service: 'command-suggestions',
         testInput,
         suggestionsCount: suggestions.length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Command suggestions health check failed', { error: error.message });
@@ -409,7 +444,7 @@ Respond with ONLY a valid JSON array. No additional text or formatting.`;
         status: 'unhealthy',
         service: 'command-suggestions',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

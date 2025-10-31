@@ -1,20 +1,24 @@
 module.exports = {
-    name: "getinput",
-    category: "misc",
-    code: async (ctx) => {
-        const { formatter, tools } = ctx.bot.context;
-        const input = ctx.args.join(" ") || ctx.quoted?.content || null;
+  name: 'getinput',
+  category: 'misc',
+  code: async ctx => {
+    const { formatter, tools } = ctx.bot.context;
+    const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
-        if (!input) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            `${formatter.quote(tools.msg.generateCmdExample(ctx.used, "rei ayanami"))}\n` +
-            formatter.quote(tools.msg.generateNotes(["Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru."]))
-        );
+    if (!input)
+      return await ctx.reply(
+        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
+          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, 'rei ayanami'))}\n${formatter.quote(
+            tools.msg.generateNotes([
+              'Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.',
+            ])
+          )}`
+      );
 
-        try {
-            await ctx.reply(input);
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error);
-        }
+    try {
+      await ctx.reply(input);
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error);
     }
+  },
 };

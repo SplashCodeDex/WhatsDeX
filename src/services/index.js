@@ -10,134 +10,145 @@ const enhancedDownloadersService = require('./enhancedDownloadersService');
 const menfesService = require('./menfesService');
 
 class ServicesManager {
-    constructor() {
-        this.initialized = false;
-        this.services = {};
-    }
+  constructor() {
+    this.initialized = false;
+    this.services = {};
+  }
 
-    /**
-     * Initialize all services
-     */
-    async initialize() {
+  /**
+   * Initialize all services
+   */
+  async initialize() {
+    try {
+      console.log('🔄 Initializing services...');
+
+      // Initialize services in order
+      await this.initializeService('funCommands', async () => {
+        await funCommandsService.initialize();
+        return funCommandsService;
+      });
+
+      // Initialize other services
+      this.services.games = gamesService;
+      this.services.sticker = stickerService;
+      this.services.enhancedDownloaders = enhancedDownloadersService;
+      this.services.menfes = menfesService;
+
+      // Set up cleanup intervals
+      this.setupCleanupIntervals();
+
+      this.initialized = true;
+      console.log('✅ All services initialized successfully');
+    } catch (error) {
+      console.error('❌ Error initializing services:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Initialize individual service
+   * @param {string} name - Service name
+   * @param {Function} initFunction - Initialization function
+   */
+  async initializeService(name, initFunction) {
+    try {
+      console.log(`🔄 Initializing ${name} service...`);
+      this.services[name] = await initFunction();
+      console.log(`✅ ${name} service initialized`);
+    } catch (error) {
+      console.error(`❌ Error initializing ${name} service:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set up cleanup intervals for services
+   */
+  setupCleanupIntervals() {
+    // Clean up games every 5 minutes
+    setInterval(
+      () => {
         try {
-            console.log('🔄 Initializing services...');
-
-            // Initialize services in order
-            await this.initializeService('funCommands', async () => {
-                await funCommandsService.initialize();
-                return funCommandsService;
-            });
-
-            // Initialize other services
-            this.services.games = gamesService;
-            this.services.sticker = stickerService;
-            this.services.enhancedDownloaders = enhancedDownloadersService;
-            this.services.menfes = menfesService;
-
-            // Set up cleanup intervals
-            this.setupCleanupIntervals();
-
-            this.initialized = true;
-            console.log('✅ All services initialized successfully');
-
+          gamesService.cleanupInactiveGames();
         } catch (error) {
-            console.error('❌ Error initializing services:', error);
-            throw error;
+          console.error('Error cleaning up games:', error);
         }
-    }
+      },
+      5 * 60 * 1000
+    );
 
-    /**
-     * Initialize individual service
-     * @param {string} name - Service name
-     * @param {Function} initFunction - Initialization function
-     */
-    async initializeService(name, initFunction) {
+    // Clean up menfes sessions every 2 minutes
+    setInterval(
+      () => {
         try {
-            console.log(`🔄 Initializing ${name} service...`);
-            this.services[name] = await initFunction();
-            console.log(`✅ ${name} service initialized`);
+          menfesService.cleanup();
         } catch (error) {
-            console.error(`❌ Error initializing ${name} service:`, error);
-            throw error;
+          console.error('Error cleaning up menfes:', error);
         }
-    }
+      },
+      2 * 60 * 1000
+    );
 
-    /**
-     * Set up cleanup intervals for services
-     */
-    setupCleanupIntervals() {
-        // Clean up games every 5 minutes
-        setInterval(() => {
-            try {
-                gamesService.cleanupInactiveGames();
-            } catch (error) {
-                console.error('Error cleaning up games:', error);
-            }
-        }, 5 * 60 * 1000);
-
-        // Clean up menfes sessions every 2 minutes
-        setInterval(() => {
-            try {
-                menfesService.cleanup();
-            } catch (error) {
-                console.error('Error cleaning up menfes:', error);
-            }
-        }, 2 * 60 * 1000);
-
-        // Clean up downloaders sessions every 10 minutes
-        setInterval(() => {
-            try {
-                enhancedDownloadersService.cleanupOldSessions();
-            } catch (error) {
-                console.error('Error cleaning up downloaders:', error);
-            }
-        }, 10 * 60 * 1000);
-
-        // Clean up sticker temp files every hour
-        setInterval(() => {
-            try {
-                stickerService.cleanupTempFiles();
-            } catch (error) {
-                console.error('Error cleaning up sticker files:', error);
-            }
-        }, 60 * 60 * 1000);
-    }
-
-    /**
-     * Get service instance
-     * @param {string} name - Service name
-     */
-    getService(name) {
-        if (!this.initialized) {
-            throw new Error('Services not initialized. Call initialize() first.');
+    // Clean up downloaders sessions every 10 minutes
+    setInterval(
+      () => {
+        try {
+          enhancedDownloadersService.cleanupOldSessions();
+        } catch (error) {
+          console.error('Error cleaning up downloaders:', error);
         }
+      },
+      10 * 60 * 1000
+    );
 
-        const service = this.services[name];
-        if (!service) {
-            throw new Error(`Service '${name}' not found`);
+    // Clean up sticker temp files every hour
+    setInterval(
+      () => {
+        try {
+          stickerService.cleanupTempFiles();
+        } catch (error) {
+          console.error('Error cleaning up sticker files:', error);
         }
+      },
+      60 * 60 * 1000
+    );
+  }
 
-        return service;
+  /**
+   * Get service instance
+   * @param {string} name - Service name
+   */
+  getService(name) {
+    if (!this.initialized) {
+      throw new Error('Services not initialized. Call initialize() first.');
     }
 
-    /**
-     * Check if services are initialized
-     */
-    isInitialized() {
-        return this.initialized;
+    const service = this.services[name];
+    if (!service) {
+      throw new Error(`Service '${name}' not found`);
     }
 
-    /**
-     * Get initialization status
-     */
-    getStatus() {
-        return {
-            initialized: this.initialized,
-            services: Object.keys(this.services),
-            activeGames: gamesService.getActiveGamesCount(),
-            activeMenfes: menfesService.getActiveSessionsCount()
-        };
-    }
+    return service;
+  }
+
+  /**
+   * Check if services are initialized
+   */
+  isInitialized() {
+    return this.initialized;
+  }
+
+  /**
+   * Get initialization status
+   */
+  getStatus() {
+    return {
+      initialized: this.initialized,
+      services: Object.keys(this.services),
+      activeGames: gamesService.getActiveGamesCount(),
+      activeMenfes: menfesService.getActiveSessionsCount(),
+    };
+  }
 }
 
 // Export singleton instance

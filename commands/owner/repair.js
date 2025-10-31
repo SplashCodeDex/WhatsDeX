@@ -1,14 +1,14 @@
-const UnifiedSmartAuth = require("../../src/services/auth/UnifiedSmartAuth");
+const UnifiedSmartAuth = require('../../src/services/auth/UnifiedSmartAuth');
 
 /**
  * Re-pair Command
  * Allows users to force re-pairing with different authentication methods
  */
 module.exports = {
-  name: "repair",
-  alias: ["reconnect", "reauth", "repair"],
-  category: "owner",
-  desc: "Force re-pairing with different authentication method",
+  name: 'repair',
+  alias: ['reconnect', 'reauth', 'repair'],
+  category: 'owner',
+  desc: 'Force re-pairing with different authentication method',
   isOwner: true,
   async run({ msg, args }, { config }) {
     try {
@@ -17,20 +17,22 @@ module.exports = {
       // Validate method
       const validMethods = ['qr', 'pairing', 'hybrid'];
       if (method && !validMethods.includes(method)) {
-        return msg.reply(`❌ Invalid method. Choose from: ${validMethods.join(', ')}\n\n💡 Usage: .repair [method]\n   .repair qr - Force QR code authentication\n   .repair pairing - Force pairing code authentication\n   .repair hybrid - Use both methods\n   .repair - Auto-detect best method`);
+        return msg.reply(
+          `❌ Invalid method. Choose from: ${validMethods.join(', ')}\n\n💡 Usage: .repair [method]\n   .repair qr - Force QR code authentication\n   .repair pairing - Force pairing code authentication\n   .repair hybrid - Use both methods\n   .repair - Auto-detect best method`
+        );
       }
 
-      await msg.reply("🔄 Starting re-pairing process...");
+      await msg.reply('🔄 Starting re-pairing process...');
 
       // Create unified smart auth manager instance
       const smartAuth = new UnifiedSmartAuth(global.config, global.bot);
-    
+
       // Execute re-pairing
       const authResult = await smartAuth.detectExistingSession(); // Adjust method as needed based on class API
       // Note: UnifiedSmartAuth may not have executeSmartAuth; adapt based on actual methods
 
       // Display results
-      let response = "✅ Re-pairing initiated!\n\n";
+      let response = '✅ Re-pairing initiated!\n\n';
 
       if (authResult.isRepaired) {
         response += `🔄 **Forced Re-pairing Mode**\n`;
@@ -106,10 +108,11 @@ module.exports = {
       if (global.context) {
         global.context.lastRepairResult = authResult;
       }
-
     } catch (error) {
       console.error('Re-pairing command error:', error);
-      await msg.reply(`❌ Re-pairing failed: ${error.message}\n\n💡 Try again or check your configuration.`);
+      await msg.reply(
+        `❌ Re-pairing failed: ${error.message}\n\n💡 Try again or check your configuration.`
+      );
     }
-  }
+  },
 };

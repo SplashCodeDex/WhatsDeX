@@ -147,7 +147,7 @@ npx shadcn@latest add @magicui/globe
 The command above will add the `Globe` component to your project. You can then import it like this:
 
 ```tsx {1,6} showLineNumbers
-import { Globe } from "@/components/ui/globe";
+import { Globe } from '@/components/ui/globe';
 
 export default function Home() {
   return <Globe />;

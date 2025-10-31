@@ -19,23 +19,30 @@
 WhatsDeX provides a comprehensive REST API and WebSocket interface for programmatic access to bot functionality, analytics, and management features.
 
 ### Base URL
+
 ```
 https://api.whatsdex.com/v1
 # For local development: http://localhost:3000/api/v1
 ```
 
 ### Authentication
+
 All API requests require authentication via Bearer token:
+
 ```http
 Authorization: Bearer YOUR_API_TOKEN
 ```
 
 ### Response Format
+
 All responses follow this structure:
+
 ```json
 {
   "success": true,
-  "data": { /* response data */ },
+  "data": {
+    /* response data */
+  },
   "message": "Optional message",
   "timestamp": "2024-10-24T12:00:00Z",
   "requestId": "req_123456789"
@@ -47,6 +54,7 @@ All responses follow this structure:
 ## 🔐 Authentication
 
 ### Login
+
 Authenticate and receive access token.
 
 ```http
@@ -61,6 +69,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -81,6 +90,7 @@ Content-Type: application/json
 ```
 
 ### Refresh Token
+
 Refresh your access token before it expires.
 
 ```http
@@ -89,6 +99,7 @@ Authorization: Bearer YOUR_REFRESH_TOKEN
 ```
 
 ### Logout
+
 Invalidate your session.
 
 ```http
@@ -101,6 +112,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ## 👥 User Management
 
 ### List Users
+
 Get paginated list of bot users.
 
 ```http
@@ -109,6 +121,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Query Parameters:**
+
 - `page` (number): Page number (default: 1)
 - `limit` (number): Items per page (default: 50, max: 100)
 - `search` (string): Search by name, phone, or email
@@ -117,6 +130,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `sortOrder` (string): Sort order (asc, desc)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -147,6 +161,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### Get User Details
+
 Get detailed information about a specific user.
 
 ```http
@@ -155,6 +170,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -188,6 +204,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### Update User
+
 Update user information and permissions.
 
 ```http
@@ -207,6 +224,7 @@ Content-Type: application/json
 ```
 
 ### Ban/Unban User
+
 Manage user access.
 
 ```http
@@ -226,6 +244,7 @@ Content-Type: application/json
 ## 🤖 Bot Commands
 
 ### Execute Command
+
 Execute a bot command programmatically.
 
 ```http
@@ -245,12 +264,14 @@ Content-Type: application/json
 ```
 
 **Request Body:**
+
 - `command` (string, required): Command name
 - `args` (array): Command arguments
 - `userId` (string, required): User executing the command
 - `context` (object): Additional context data
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -268,6 +289,7 @@ Content-Type: application/json
 ```
 
 ### Get Command History
+
 Retrieve command execution history.
 
 ```http
@@ -276,6 +298,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -303,6 +326,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### List Available Commands
+
 Get all available bot commands.
 
 ```http
@@ -315,6 +339,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ## 📊 Analytics
 
 ### Overview Dashboard
+
 Get comprehensive analytics overview.
 
 ```http
@@ -323,9 +348,11 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Query Parameters:**
+
 - `period` (string): Time period (1h, 24h, 7d, 30d, 90d)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -356,6 +383,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### Command Analytics
+
 Detailed command usage statistics.
 
 ```http
@@ -364,6 +392,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### User Analytics
+
 User engagement and behavior metrics.
 
 ```http
@@ -372,6 +401,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### Performance Metrics
+
 System performance and health metrics.
 
 ```http
@@ -384,6 +414,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ## ⚙️ System Management
 
 ### System Health
+
 Check system status and health.
 
 ```http
@@ -392,6 +423,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -415,6 +447,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### System Configuration
+
 Get and update system settings.
 
 ```http
@@ -424,6 +457,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### Logs
+
 Retrieve system and application logs.
 
 ```http
@@ -432,6 +466,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 ### Backup & Restore
+
 Manage system backups.
 
 ```http
@@ -447,6 +482,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -464,6 +500,7 @@ Content-Type: application/json
 ## 🔌 WebSocket API
 
 ### Connection
+
 Connect to real-time WebSocket events.
 
 ```javascript
@@ -471,8 +508,8 @@ import io from 'socket.io-client';
 
 const socket = io('https://api.whatsdex.com', {
   auth: {
-    token: 'YOUR_ACCESS_TOKEN'
-  }
+    token: 'YOUR_ACCESS_TOKEN',
+  },
 });
 
 // Connection established
@@ -481,7 +518,7 @@ socket.on('connect', () => {
 });
 
 // Handle disconnections
-socket.on('disconnect', (reason) => {
+socket.on('disconnect', reason => {
   console.log('Disconnected:', reason);
 });
 ```
@@ -489,9 +526,10 @@ socket.on('disconnect', (reason) => {
 ### Real-time Events
 
 #### User Activity
+
 ```javascript
 // Listen for user joins
-socket.on('user_joined', (data) => {
+socket.on('user_joined', data => {
   console.log('New user:', data);
   // {
   //   userId: "user_123",
@@ -501,7 +539,7 @@ socket.on('user_joined', (data) => {
 });
 
 // Listen for user activity
-socket.on('user_active', (data) => {
+socket.on('user_active', data => {
   console.log('User active:', data);
   // {
   //   userId: "user_123",
@@ -511,9 +549,10 @@ socket.on('user_active', (data) => {
 ```
 
 #### Command Execution
+
 ```javascript
 // Listen for command executions
-socket.on('command_executed', (data) => {
+socket.on('command_executed', data => {
   console.log('Command executed:', data);
   // {
   //   commandId: "cmd_456",
@@ -527,9 +566,10 @@ socket.on('command_executed', (data) => {
 ```
 
 #### System Events
+
 ```javascript
 // System alerts and notifications
-socket.on('system_alert', (data) => {
+socket.on('system_alert', data => {
   console.log('System alert:', data);
   // {
   //   type: "error",
@@ -540,7 +580,7 @@ socket.on('system_alert', (data) => {
 });
 
 // Performance metrics
-socket.on('performance_update', (data) => {
+socket.on('performance_update', data => {
   console.log('Performance update:', data);
   // {
   //   responseTime: 245,
@@ -554,20 +594,22 @@ socket.on('performance_update', (data) => {
 ### Emitting Events
 
 #### Send Message to User
+
 ```javascript
 socket.emit('send_message', {
   userId: 'user_123',
   message: 'Hello from API!',
-  type: 'text'
+  type: 'text',
 });
 ```
 
 #### Broadcast to All Users
+
 ```javascript
 socket.emit('broadcast', {
   message: 'System maintenance in 5 minutes',
   type: 'warning',
-  target: 'all' // or 'premium', 'active', etc.
+  target: 'all', // or 'premium', 'active', etc.
 });
 ```
 
@@ -577,17 +619,17 @@ socket.emit('broadcast', {
 
 ### HTTP Status Codes
 
-| Code | Meaning | Description |
-|------|---------|-------------|
-| 200 | OK | Request successful |
-| 201 | Created | Resource created successfully |
-| 400 | Bad Request | Invalid request parameters |
-| 401 | Unauthorized | Authentication required |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource not found |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
-| 503 | Service Unavailable | Service temporarily unavailable |
+| Code | Meaning               | Description                     |
+| ---- | --------------------- | ------------------------------- |
+| 200  | OK                    | Request successful              |
+| 201  | Created               | Resource created successfully   |
+| 400  | Bad Request           | Invalid request parameters      |
+| 401  | Unauthorized          | Authentication required         |
+| 403  | Forbidden             | Insufficient permissions        |
+| 404  | Not Found             | Resource not found              |
+| 429  | Too Many Requests     | Rate limit exceeded             |
+| 500  | Internal Server Error | Server error                    |
+| 503  | Service Unavailable   | Service temporarily unavailable |
 
 ### Error Response Format
 
@@ -610,27 +652,29 @@ socket.emit('broadcast', {
 
 ### Common Error Codes
 
-| Error Code | HTTP Status | Description |
-|------------|-------------|-------------|
-| `VALIDATION_ERROR` | 400 | Invalid request data |
-| `AUTHENTICATION_ERROR` | 401 | Invalid or missing credentials |
-| `AUTHORIZATION_ERROR` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
-| `QUOTA_EXCEEDED` | 429 | API quota exceeded |
-| `SERVICE_UNAVAILABLE` | 503 | Service temporarily down |
+| Error Code             | HTTP Status | Description                    |
+| ---------------------- | ----------- | ------------------------------ |
+| `VALIDATION_ERROR`     | 400         | Invalid request data           |
+| `AUTHENTICATION_ERROR` | 401         | Invalid or missing credentials |
+| `AUTHORIZATION_ERROR`  | 403         | Insufficient permissions       |
+| `NOT_FOUND`            | 404         | Resource not found             |
+| `RATE_LIMIT_EXCEEDED`  | 429         | Too many requests              |
+| `QUOTA_EXCEEDED`       | 429         | API quota exceeded             |
+| `SERVICE_UNAVAILABLE`  | 503         | Service temporarily down       |
 
 ---
 
 ## 🔒 Rate Limiting
 
 ### Rate Limits
+
 - **Authenticated Requests**: 1000 requests per hour
 - **Anonymous Requests**: 100 requests per hour
 - **File Uploads**: 50 MB per hour
 - **AI Requests**: 100 requests per hour per user
 
 ### Rate Limit Headers
+
 ```http
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 999
@@ -639,12 +683,13 @@ X-RateLimit-Retry-After: 3600
 ```
 
 ### Handling Rate Limits
+
 ```javascript
 // Check rate limit status
 const response = await fetch('/api/v1/users', {
   headers: {
-    'Authorization': `Bearer ${token}`
-  }
+    Authorization: `Bearer ${token}`,
+  },
 });
 
 if (response.status === 429) {
@@ -658,12 +703,13 @@ if (response.status === 429) {
 ## 📚 SDK & Libraries
 
 ### JavaScript SDK
+
 ```javascript
 import { WhatsDeX } from '@whatsdex/sdk';
 
 const client = new WhatsDeX({
   apiKey: 'YOUR_API_TOKEN',
-  baseURL: 'https://api.whatsdex.com/v1'
+  baseURL: 'https://api.whatsdex.com/v1',
 });
 
 // Authenticate
@@ -677,6 +723,7 @@ const result = await client.commands.execute('gemini', ['hello world']);
 ```
 
 ### Python SDK
+
 ```python
 from whatsdex import WhatsDeX
 
@@ -693,6 +740,7 @@ result = client.commands.execute('weather', args=['Tokyo'])
 ```
 
 ### cURL Examples
+
 ```bash
 # Login
 curl -X POST https://api.whatsdex.com/v1/auth/login \
@@ -722,16 +770,13 @@ import { WhatsDeX } from '@whatsdex/sdk';
 class WhatsDeXIntegration {
   constructor() {
     this.client = new WhatsDeX({
-      apiKey: process.env.WHATSDEX_API_KEY
+      apiKey: process.env.WHATSDEX_API_KEY,
     });
   }
 
   async initialize() {
     try {
-      await this.client.auth.login(
-        process.env.ADMIN_EMAIL,
-        process.env.ADMIN_PASSWORD
-      );
+      await this.client.auth.login(process.env.ADMIN_EMAIL, process.env.ADMIN_PASSWORD);
       console.log('✅ Connected to WhatsDeX API');
     } catch (error) {
       console.error('❌ Failed to connect:', error);
@@ -741,7 +786,7 @@ class WhatsDeXIntegration {
   async getActiveUsers() {
     const users = await this.client.users.list({
       status: 'active',
-      limit: 100
+      limit: 100,
     });
     return users.data.users;
   }
@@ -749,14 +794,14 @@ class WhatsDeXIntegration {
   async sendBroadcast(message) {
     const result = await this.client.commands.execute('broadcast', [message], {
       target: 'all',
-      priority: 'high'
+      priority: 'high',
     });
     return result;
   }
 
   async monitorPerformance() {
     // Real-time performance monitoring
-    this.client.on('performance_update', (data) => {
+    this.client.on('performance_update', data => {
       console.log('Performance:', data);
     });
   }
@@ -773,17 +818,20 @@ const users = await integration.getActiveUsers();
 ## 📞 Support & Resources
 
 ### Getting Help
+
 - **📖 Documentation**: [Full API Docs](../docs/README.md)
 - **🐛 Issue Tracker**: [GitHub Issues](../../issues)
 - **💬 Community**: [Discord Server](https://discord.gg/whatsdex)
 - **📧 Enterprise Support**: enterprise@whatsdex.com
 
 ### API Status
+
 - **Status Page**: [status.whatsdex.com](https://status.whatsdex.com)
 - **Uptime**: 99.8% SLA
 - **Response Time**: <300ms average
 
 ### Changelog
+
 - **API Version**: v1.0.0 (Stable)
 - **Last Updated**: October 2024
 - **[View Changelog](../../CHANGELOG.md)**
@@ -798,6 +846,6 @@ const users = await integration.getActiveUsers();
 
 ---
 
-*API Version: v1.0.0 | Last Updated: October 2024*
+_API Version: v1.0.0 | Last Updated: October 2024_
 
 </div>

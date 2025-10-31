@@ -10,9 +10,9 @@ export async function GET() {
     const activeUsers = await prisma.user.count({
       where: {
         lastActivity: {
-          gte: twentyFourHoursAgo
-        }
-      }
+          gte: twentyFourHoursAgo,
+        },
+      },
     });
 
     // Get messages today
@@ -21,30 +21,33 @@ export async function GET() {
     const messagesToday = await prisma.commandUsage.count({
       where: {
         usedAt: {
-          gte: today
-        }
-      }
+          gte: today,
+        },
+      },
     });
 
     // Get average response time from recent commands
     const recentCommands = await prisma.commandUsage.findMany({
       where: {
         usedAt: {
-          gte: twentyFourHoursAgo
+          gte: twentyFourHoursAgo,
         },
         executionTime: {
-          not: null
-        }
+          not: null,
+        },
       },
       select: {
-        executionTime: true
+        executionTime: true,
       },
-      take: 1000
+      take: 1000,
     });
 
-    const avgResponseTime = recentCommands.length > 0
-      ? Math.round(recentCommands.reduce((sum, cmd) => sum + cmd.executionTime, 0) / recentCommands.length)
-      : 0;
+    const avgResponseTime =
+      recentCommands.length > 0
+        ? Math.round(
+            recentCommands.reduce((sum, cmd) => sum + cmd.executionTime, 0) / recentCommands.length
+          )
+        : 0;
 
     // Get system uptime (mock for now - would come from monitoring service)
     const uptime = Math.floor(process.uptime());
@@ -56,13 +59,13 @@ export async function GET() {
     const errors24h = await prisma.commandUsage.count({
       where: {
         usedAt: {
-          gte: twentyFourHoursAgo
+          gte: twentyFourHoursAgo,
         },
-        success: false
-      }
+        success: false,
+      },
     });
 
-    const errorRate = messagesToday > 0 ? (errors24h / messagesToday * 100).toFixed(2) : 0;
+    const errorRate = messagesToday > 0 ? ((errors24h / messagesToday) * 100).toFixed(2) : 0;
 
     const metrics = {
       activeUsers,
@@ -70,16 +73,13 @@ export async function GET() {
       avgResponseTime,
       uptime,
       totalCommands,
-      errorRate: parseFloat(errorRate)
+      errorRate: parseFloat(errorRate),
     };
 
     return NextResponse.json(metrics);
   } catch (error) {
     console.error('Failed to fetch metrics:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch metrics' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch metrics' }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

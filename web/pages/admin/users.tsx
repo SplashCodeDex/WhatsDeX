@@ -22,24 +22,35 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  DataTable
-} from '@/components/ui/datatable';
+import { DataTable } from '@/components/ui/datatable';
 import {
   Pagination,
   PaginationContent,
@@ -48,7 +59,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
+} from '@/components/ui/pagination';
 import withAuth from '../../components/common/withAuth';
 
 interface User {
@@ -115,14 +126,20 @@ function UserManagement() {
         setUsers(formattedUsers);
         setFilteredUsers(formattedUsers); // Initially, all users are shown
 
-        const calculatedStats: Stats = formattedUsers.reduce((acc: Stats, user: User) => ({
-          total: acc.total + 1,
-          active: acc.active + (user.status === 'active' ? 1 : 0),
-          premium: acc.premium + (user.plan !== 'free' ? 1 : 0),
-          banned: acc.banned + (user.status === 'banned' ? 1 : 0),
-        }), {
-          total: 0, active: 0, premium: 0, banned: 0,
-        });
+        const calculatedStats: Stats = formattedUsers.reduce(
+          (acc: Stats, user: User) => ({
+            total: acc.total + 1,
+            active: acc.active + (user.status === 'active' ? 1 : 0),
+            premium: acc.premium + (user.plan !== 'free' ? 1 : 0),
+            banned: acc.banned + (user.status === 'banned' ? 1 : 0),
+          }),
+          {
+            total: 0,
+            active: 0,
+            premium: 0,
+            banned: 0,
+          }
+        );
 
         setStats(calculatedStats);
       } catch (error) {
@@ -137,10 +154,11 @@ function UserManagement() {
   }, []);
 
   useEffect(() => {
-    const filtered = users.filter((user) => {
-      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase())
-                           || user.email.toLowerCase().includes(searchTerm.toLowerCase())
-                           || user.phone.includes(searchTerm);
+    const filtered = users.filter(user => {
+      const matchesSearch =
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.phone.includes(searchTerm);
       const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
       const matchesPlan = filterPlan === 'all' || user.plan === filterPlan;
       return matchesSearch && matchesStatus && matchesPlan;
@@ -161,18 +179,20 @@ function UserManagement() {
 
   const handleUserAction = async (action: string, userId: string) => {
     console.log(`${action} user:`, userId);
-    setUsers(users.map((user) => {
-      if (user.id === userId) {
-        let newStatus = user.status;
-        if (action === 'ban') {
-          newStatus = 'banned';
-        } else if (action === 'unban') {
-          newStatus = 'active';
+    setUsers(
+      users.map(user => {
+        if (user.id === userId) {
+          let newStatus = user.status;
+          if (action === 'ban') {
+            newStatus = 'banned';
+          } else if (action === 'unban') {
+            newStatus = 'active';
+          }
+          return { ...user, status: newStatus };
         }
-        return { ...user, status: newStatus };
-      }
-      return user;
-    }));
+        return user;
+      })
+    );
   };
 
   const handleBulkAction = async (action: string) => {
@@ -180,24 +200,26 @@ function UserManagement() {
 
     console.log(`${action} users:`, selectedUsers);
 
-    setUsers(users.map((user) => {
-      if (selectedUsers.includes(user.id)) {
-        let newStatus = user.status;
-        if (action === 'ban') {
-          newStatus = 'banned';
-        } else if (action === 'unban') {
-          newStatus = 'active';
+    setUsers(
+      users.map(user => {
+        if (selectedUsers.includes(user.id)) {
+          let newStatus = user.status;
+          if (action === 'ban') {
+            newStatus = 'banned';
+          } else if (action === 'unban') {
+            newStatus = 'active';
+          }
+          return { ...user, status: newStatus };
         }
-        return { ...user, status: newStatus };
-      }
-      return user;
-    }));
+        return user;
+      })
+    );
 
     setSelectedUsers([]);
   };
 
   const exportUsers = () => {
-    const csvData = filteredUsers.map((user) => ({
+    const csvData = filteredUsers.map(user => ({
       ID: user.id,
       Name: user.name,
       Email: user.email,
@@ -215,7 +237,7 @@ function UserManagement() {
 
     const csvString = [
       Object.keys(csvData[0]).join(','),
-      ...csvData.map((row) => Object.values(row).join(',')),
+      ...csvData.map(row => Object.values(row).join(',')),
     ].join('\n');
 
     const blob = new Blob([csvString], { type: 'text/csv' });
@@ -236,20 +258,29 @@ function UserManagement() {
 
   const getStatusVariant = (status: User['status']) => {
     switch (status) {
-      case 'active': return 'default' as const;
-      case 'inactive': return 'secondary' as const;
-      case 'banned': return 'destructive' as const;
-      default: return 'secondary' as const;
+      case 'active':
+        return 'default' as const;
+      case 'inactive':
+        return 'secondary' as const;
+      case 'banned':
+        return 'destructive' as const;
+      default:
+        return 'secondary' as const;
     }
   };
 
   const getPlanVariant = (plan: User['plan']) => {
     switch (plan) {
-      case 'free': return 'secondary' as const;
-      case 'basic': return 'outline' as const;
-      case 'pro': return 'default' as const;
-      case 'enterprise': return 'secondary' as const;
-      default: return 'secondary' as const;
+      case 'free':
+        return 'secondary' as const;
+      case 'basic':
+        return 'outline' as const;
+      case 'pro':
+        return 'default' as const;
+      case 'enterprise':
+        return 'secondary' as const;
+      default:
+        return 'secondary' as const;
     }
   };
 
@@ -259,11 +290,7 @@ function UserManagement() {
       header: 'User',
       cell: ({ row }: any) => (
         <div className="flex items-center space-x-3">
-          <img
-            className="h-8 w-8 rounded-full"
-            src={row.original.avatar}
-            alt={row.original.name}
-          />
+          <img className="h-8 w-8 rounded-full" src={row.original.avatar} alt={row.original.name} />
           <div>
             <div className="font-medium">{row.original.name}</div>
             <div className="text-sm text-muted-foreground">{row.original.email}</div>
@@ -275,9 +302,7 @@ function UserManagement() {
       accessorKey: 'plan',
       header: 'Plan',
       cell: ({ row }: any) => (
-        <Badge variant={getPlanVariant(row.original.plan)}>
-          {row.original.plan.toUpperCase()}
-        </Badge>
+        <Badge variant={getPlanVariant(row.original.plan)}>{row.original.plan.toUpperCase()}</Badge>
       ),
     },
     {
@@ -304,9 +329,13 @@ function UserManagement() {
       cell: ({ row }: any) => (
         <div className="flex items-center space-x-2">
           <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" onClick={() => {
-              setSelectedUser(row.original);
-            }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedUser(row.original);
+              }}
+            >
               <Eye className="h-4 w-4" />
             </Button>
           </DialogTrigger>
@@ -319,9 +348,18 @@ function UserManagement() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => handleUserAction(row.original.status === 'banned' ? 'unban' : 'ban', row.original.id)}
+                onClick={() =>
+                  handleUserAction(
+                    row.original.status === 'banned' ? 'unban' : 'ban',
+                    row.original.id
+                  )
+                }
               >
-                {row.original.status === 'banned' ? <CheckCircle className="mr-2 h-4 w-4" /> : <Ban className="mr-2 h-4 w-4" />}
+                {row.original.status === 'banned' ? (
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                ) : (
+                  <Ban className="mr-2 h-4 w-4" />
+                )}
                 {row.original.status === 'banned' ? 'Unban' : 'Ban'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -343,7 +381,7 @@ function UserManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -353,9 +391,7 @@ function UserManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            User Management
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Manage user accounts, subscriptions, and permissions
           </p>
@@ -424,7 +460,7 @@ function UserManagement() {
               <Input
                 placeholder="Search users by name, email, or phone..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -489,21 +525,19 @@ function UserManagement() {
       <Card>
         <CardHeader>
           <CardTitle>Users</CardTitle>
-          <CardDescription>
-            Manage and view user accounts
-          </CardDescription>
+          <CardDescription>Manage and view user accounts</CardDescription>
         </CardHeader>
         <CardContent>
           <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <DataTable columns={columns} data={paginatedUsers} searchKey="name" />
-          </motion.div>
-        </AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <DataTable columns={columns} data={paginatedUsers} searchKey="name" />
+            </motion.div>
+          </AnimatePresence>
         </CardContent>
         <div className="flex justify-center py-4">
           <Pagination>
@@ -511,12 +545,16 @@ function UserManagement() {
               <PaginationItem>
                 <PaginationPrevious
                   href="#"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : undefined}
                 />
               </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                if (totalPages > 5 && ((page > 2 && page < currentPage - 1) || (page < totalPages - 1 && page > currentPage + 1))) {
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                if (
+                  totalPages > 5 &&
+                  ((page > 2 && page < currentPage - 1) ||
+                    (page < totalPages - 1 && page > currentPage + 1))
+                ) {
                   return <PaginationEllipsis key={page} />;
                 }
                 return (
@@ -534,8 +572,10 @@ function UserManagement() {
               <PaginationItem>
                 <PaginationNext
                   href="#"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : undefined}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className={
+                    currentPage === totalPages ? 'pointer-events-none opacity-50' : undefined
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -548,9 +588,7 @@ function UserManagement() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
-            <DialogDescription>
-              View and manage user information
-            </DialogDescription>
+            <DialogDescription>View and manage user information</DialogDescription>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-6">
@@ -590,7 +628,8 @@ function UserManagement() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <div className="flex items-center justify-center text-2xl font-bold text-primary">
-                    <TrendingUp className="h-6 w-6 mr-1" />{selectedUser.commandsUsed}
+                    <TrendingUp className="h-6 w-6 mr-1" />
+                    {selectedUser.commandsUsed}
                   </div>
                   <div className="text-sm text-muted-foreground">Commands Used</div>
                 </div>
@@ -600,7 +639,8 @@ function UserManagement() {
                 </div>
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <div className="flex items-center justify-center text-2xl font-bold text-success">
-                    <DollarSign className="h-6 w-6 mr-1" />{selectedUser.totalSpent}
+                    <DollarSign className="h-6 w-6 mr-1" />
+                    {selectedUser.totalSpent}
                   </div>
                   <div className="text-sm text-muted-foreground">Total Spent</div>
                 </div>
@@ -611,12 +651,18 @@ function UserManagement() {
               </div>
 
               <DialogFooter>
-                <Button variant="destructive" onClick={() => handleUserAction(selectedUser.status === 'banned' ? 'unban' : 'ban', selectedUser.id)}>
+                <Button
+                  variant="destructive"
+                  onClick={() =>
+                    handleUserAction(
+                      selectedUser.status === 'banned' ? 'unban' : 'ban',
+                      selectedUser.id
+                    )
+                  }
+                >
                   {selectedUser.status === 'banned' ? 'Unban User' : 'Ban User'}
                 </Button>
-                <Button onClick={() => handleUserAction('edit', selectedUser.id)}>
-                  Edit User
-                </Button>
+                <Button onClick={() => handleUserAction('edit', selectedUser.id)}>Edit User</Button>
                 <Button variant="outline" onClick={() => setShowUserModal(false)}>
                   Close
                 </Button>

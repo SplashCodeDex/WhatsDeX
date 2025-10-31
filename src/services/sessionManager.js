@@ -1,6 +1,7 @@
+import path from 'path';
+
 const crypto = require('crypto');
 const fs = require('fs').promises;
-import path from 'path';
 const logger = require('../utils/logger');
 
 /**
@@ -32,7 +33,7 @@ class UltraSmartSessionManager {
     logger.info('Ultra-Smart Session Manager initialized', {
       sessionDir: this.sessionDir,
       maxDevices: this.maxDevices,
-      sessionTimeout: this.sessionTimeout
+      sessionTimeout: this.sessionTimeout,
     });
   }
 
@@ -101,19 +102,19 @@ class UltraSmartSessionManager {
         browser: deviceInfo.browser || 'unknown',
         ip: deviceInfo.ip || 'unknown',
         userAgent: deviceInfo.userAgent || 'unknown',
-        ...deviceInfo
+        ...deviceInfo,
       },
       metadata: {
         version: '1.0',
         createdBy: 'UltraSmartSessionManager',
-        tags: deviceInfo.tags || []
+        tags: deviceInfo.tags || [],
       },
       stats: {
         connections: 1,
         reconnections: 0,
         dataTransferred: 0,
-        lastBackup: null
-      }
+        lastBackup: null,
+      },
     };
 
     // Check device limit
@@ -137,7 +138,7 @@ class UltraSmartSessionManager {
     logger.info('Session created', {
       sessionId,
       deviceId: session.device.id,
-      deviceType: session.device.type
+      deviceType: session.device.type,
     });
 
     return session;
@@ -214,13 +215,13 @@ class UltraSmartSessionManager {
     this.sessionHistory.set(sessionId, {
       ...session,
       destroyed: Date.now(),
-      reason: 'manual'
+      reason: 'manual',
     });
 
     logger.info('Session destroyed', {
       sessionId,
       deviceId: session.device.id,
-      duration: Date.now() - session.created
+      duration: Date.now() - session.created,
     });
 
     return true;
@@ -264,7 +265,7 @@ class UltraSmartSessionManager {
     logger.info('Session transferred', {
       sessionId,
       fromDevice: oldDeviceId,
-      toDevice: newDeviceInfo.id
+      toDevice: newDeviceInfo.id,
     });
 
     return session;
@@ -292,7 +293,7 @@ class UltraSmartSessionManager {
       id: crypto.randomUUID(),
       created: Date.now(),
       device: { ...originalSession.device, ...newDeviceInfo },
-      stats: { ...originalSession.stats, connections: 1, reconnections: 0 }
+      stats: { ...originalSession.stats, connections: 1, reconnections: 0 },
     };
 
     // Save cloned session
@@ -303,7 +304,7 @@ class UltraSmartSessionManager {
     logger.info('Session cloned', {
       originalSessionId: sessionId,
       clonedSessionId: clonedSession.id,
-      deviceId: newDeviceInfo.id
+      deviceId: newDeviceInfo.id,
     });
 
     return clonedSession;
@@ -343,7 +344,7 @@ class UltraSmartSessionManager {
       sessionId: session.id,
       timestamp: Date.now(),
       data: JSON.stringify(session),
-      checksum: crypto.createHash('sha256').update(JSON.stringify(session)).digest('hex')
+      checksum: crypto.createHash('sha256').update(JSON.stringify(session)).digest('hex'),
     };
 
     this.recoveryPoints.set(recoveryId, recoveryData);
@@ -353,7 +354,7 @@ class UltraSmartSessionManager {
 
     // Clean old recovery points (keep last 10)
     const sessionRecoveryPoints = Array.from(this.recoveryPoints.entries())
-      .filter(([key]) => key.startsWith(session.id + '_'))
+      .filter(([key]) => key.startsWith(`${session.id}_`))
       .sort((a, b) => b[1].timestamp - a[1].timestamp);
 
     if (sessionRecoveryPoints.length > 10) {
@@ -374,16 +375,18 @@ class UltraSmartSessionManager {
     for (const [deviceId, sessions] of this.deviceSessions.entries()) {
       deviceStats[deviceId] = {
         count: sessions.size,
-        types: [...new Set(Array.from(sessions).map(s => s.device.type))]
+        types: [...new Set(Array.from(sessions).map(s => s.device.type))],
       };
     }
 
-    const sessionDurations = Array.from(this.activeSessions.values())
-      .map(session => now - session.created);
+    const sessionDurations = Array.from(this.activeSessions.values()).map(
+      session => now - session.created
+    );
 
-    const averageDuration = sessionDurations.length > 0
-      ? sessionDurations.reduce((a, b) => a + b, 0) / sessionDurations.length
-      : 0;
+    const averageDuration =
+      sessionDurations.length > 0
+        ? sessionDurations.reduce((a, b) => a + b, 0) / sessionDurations.length
+        : 0;
 
     return {
       activeSessions: activeCount,
@@ -391,7 +394,7 @@ class UltraSmartSessionManager {
       deviceStats,
       averageSessionDuration: Math.round(averageDuration / 1000 / 60), // minutes
       recoveryPoints: this.recoveryPoints.size,
-      sessionHistory: this.sessionHistory.size
+      sessionHistory: this.sessionHistory.size,
     };
   }
 
@@ -427,8 +430,8 @@ class UltraSmartSessionManager {
         metadata: {
           version: '1.0',
           totalSessions: this.activeSessions.size,
-          checksum: ''
-        }
+          checksum: '',
+        },
       };
 
       // Calculate checksum
@@ -447,9 +450,8 @@ class UltraSmartSessionManager {
 
       logger.info('Sessions backup completed', {
         file: backupFile,
-        sessionsCount: backupData.sessions.length
+        sessionsCount: backupData.sessions.length,
       });
-
     } catch (error) {
       logger.error('Failed to backup sessions', { error: error.message });
     }
@@ -485,11 +487,10 @@ class UltraSmartSessionManager {
       logger.info('Sessions restored from backup', {
         file: backupFile,
         restored,
-        total: backupData.sessions.length
+        total: backupData.sessions.length,
       });
 
       return restored;
-
     } catch (error) {
       logger.error('Failed to restore from backup', { backupFile, error: error.message });
       throw error;
@@ -538,7 +539,7 @@ class UltraSmartSessionManager {
     } catch (error) {
       logger.error('Failed to save session to file', {
         sessionId: session.id,
-        error: error.message
+        error: error.message,
       });
     }
   }

@@ -1,4 +1,3 @@
-
 import { createContext, useState, useEffect, useMemo } from 'react';
 
 export const ThemeContext = createContext();
@@ -31,9 +30,5 @@ export function ThemeProvider({ children }) {
 
   const value = useMemo(() => ({ darkMode, toggleDarkMode }), [darkMode]);
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

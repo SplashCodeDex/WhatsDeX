@@ -1,36 +1,38 @@
 module.exports = {
-    name: "videydl",
-    aliases: ["videy"],
-    category: "downloader",
-    permissions: {
-        premium: true
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config } = ctx.bot.context;
-        const url = ctx.args[0] || null;
+  name: 'videydl',
+  aliases: ['videy'],
+  category: 'downloader',
+  permissions: {
+    premium: true,
+  },
+  code: async ctx => {
+    const { formatter, tools, config } = ctx.bot.context;
+    const url = ctx.args[0] || null;
 
-        if (!url) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://videy.co/v/?id=RMuikV761"))
-        );
+    if (!url)
+      return await ctx.reply(
+        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
+          tools.msg.generateCmdExample(ctx.used, 'https://videy.co/v/?id=RMuikV761')
+        )}`
+      );
 
-        const isUrl = tools.cmd.isUrl(url);
-        if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
+    const isUrl = tools.cmd.isUrl(url);
+    if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
 
-        try {
-            const id = new URL(url).searchParams.get("id");
-            const result = `https://cdn.videy.co/${id}.mp4`;
+    try {
+      const id = new URL(url).searchParams.get('id');
+      const result = `https://cdn.videy.co/${id}.mp4`;
 
-            await ctx.reply({
-                video: {
-                    url: result
-                },
-                mimetype: tools.mime.lookup("mp4"),
-                caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer
-            });
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
-        }
+      await ctx.reply({
+        video: {
+          url: result,
+        },
+        mimetype: tools.mime.lookup('mp4'),
+        caption: formatter.quote(`URL: ${url}`),
+        footer: config.msg.footer,
+      });
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error, true);
     }
+  },
 };

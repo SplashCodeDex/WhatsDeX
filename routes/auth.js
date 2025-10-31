@@ -1,4 +1,5 @@
 const express = require('express');
+
 const router = express.Router();
 const UnifiedSmartAuth = require('../src/services/auth/UnifiedSmartAuth');
 const AutoReconnectionEngine = require('../src/services/autoReconnectionEngine');
@@ -10,10 +11,10 @@ const unifiedAuth = new UnifiedSmartAuth({
     phoneNumber: process.env.BOT_PHONE_NUMBER || '1234567890',
     authAdapter: {
       default: {
-        authDir: './auth_info_baileys'
-      }
-    }
-  }
+        authDir: './auth_info_baileys',
+      },
+    },
+  },
 });
 const reconnectionEngine = new AutoReconnectionEngine();
 
@@ -25,7 +26,7 @@ let connectionStatus = {
   retryCount: 0,
   connectionTime: 0,
   progress: 0,
-  sessionId: null
+  sessionId: null,
 };
 
 // WebSocket connections for real-time updates
@@ -34,7 +35,8 @@ const webSocketClients = new Set();
 // Broadcast to all connected WebSocket clients
 const broadcast = (event, data) => {
   webSocketClients.forEach(client => {
-    if (client.readyState === 1) { // OPEN
+    if (client.readyState === 1) {
+      // OPEN
       client.send(JSON.stringify({ event, data }));
     }
   });
@@ -56,7 +58,7 @@ const updateConnectionStatus = async (status, additionalData = {}) => {
           retryCount: connectionStatus.retryCount,
           connectionTime: connectionStatus.connectionTime,
           progress: connectionStatus.progress,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         create: {
           id: connectionStatus.sessionId,
@@ -66,8 +68,8 @@ const updateConnectionStatus = async (status, additionalData = {}) => {
           pairingCode: connectionStatus.pairingCode,
           retryCount: connectionStatus.retryCount,
           connectionTime: connectionStatus.connectionTime,
-          progress: connectionStatus.progress
-        }
+          progress: connectionStatus.progress,
+        },
       });
     } catch (error) {
       console.error('Failed to persist session status:', error);
@@ -88,7 +90,7 @@ router.get('/status', async (req, res) => {
     // Load latest session data from database
     if (connectionStatus.sessionId) {
       const sessionData = await context.database.userSession.findUnique({
-        where: { id: connectionStatus.sessionId }
+        where: { id: connectionStatus.sessionId },
       });
       if (sessionData) {
         connectionStatus = {
@@ -98,7 +100,7 @@ router.get('/status', async (req, res) => {
           pairingCode: sessionData.pairingCode,
           retryCount: sessionData.retryCount,
           connectionTime: sessionData.connectionTime,
-          progress: sessionData.progress
+          progress: sessionData.progress,
         };
       }
     }
@@ -108,15 +110,15 @@ router.get('/status', async (req, res) => {
       data: {
         ...connectionStatus,
         analytics: {
-          reconnectionStats: reconnectionEngine.getStats()
-        }
-      }
+          reconnectionStats: reconnectionEngine.getStats(),
+        },
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to retrieve status',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -138,7 +140,7 @@ router.post('/start', async (req, res) => {
       status: 'connecting',
       retryCount: 0,
       connectionTime: 0,
-      progress: 10
+      progress: 10,
     });
 
     if (method === 'qr') {
@@ -147,8 +149,8 @@ router.post('/start', async (req, res) => {
       const qrCode = await unifiedAuth.getQRCode();
 
       await updateConnectionStatus({
-        qrCode: qrCode,
-        progress: 30
+        qrCode,
+        progress: 30,
       });
 
       // Listen for connection events
@@ -156,18 +158,17 @@ router.post('/start', async (req, res) => {
         await updateConnectionStatus({
           status: 'connected',
           progress: 100,
-          connectionTime: Date.now()
+          connectionTime: Date.now(),
         });
       });
-
     } else if (method === 'pairing') {
       // Generate real pairing code using UnifiedSmartAuth
       await unifiedAuth.connect();
       const pairingCode = await unifiedAuth.getPairingCode(phoneNumber);
 
       await updateConnectionStatus({
-        pairingCode: pairingCode,
-        progress: 30
+        pairingCode,
+        progress: 30,
       });
 
       // Listen for connection events
@@ -175,7 +176,7 @@ router.post('/start', async (req, res) => {
         await updateConnectionStatus({
           status: 'connected',
           progress: 100,
-          connectionTime: Date.now()
+          connectionTime: Date.now(),
         });
       });
     }
@@ -183,19 +184,18 @@ router.post('/start', async (req, res) => {
     res.json({
       success: true,
       message: 'Authentication process started',
-      data: { method, sessionId }
+      data: { method, sessionId },
     });
-
   } catch (error) {
     await updateConnectionStatus({
       status: 'error',
-      error: error.message
+      error: error.message,
     });
 
     res.status(500).json({
       success: false,
       message: 'Failed to start authentication',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -213,18 +213,18 @@ router.post('/stop', async (req, res) => {
       status: 'disconnected',
       qrCode: null,
       pairingCode: null,
-      progress: 0
+      progress: 0,
     });
 
     res.json({
       success: true,
-      message: 'Authentication process stopped'
+      message: 'Authentication process stopped',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to stop authentication',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -241,25 +241,24 @@ router.post('/refresh-qr', async (req, res) => {
     if (!newQR) {
       return res.status(400).json({
         success: false,
-        message: 'Unable to generate new QR code'
+        message: 'Unable to generate new QR code',
       });
     }
 
     await updateConnectionStatus({
-      qrCode: newQR
+      qrCode: newQR,
     });
 
     res.json({
       success: true,
       message: 'QR code refreshed',
-      data: newQR
+      data: newQR,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to refresh QR code',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -275,27 +274,26 @@ router.post('/refresh-pairing', async (req, res) => {
     if (!phoneNumber) {
       return res.status(400).json({
         success: false,
-        message: 'Phone number is required'
+        message: 'Phone number is required',
       });
     }
 
     const newPairingCode = await unifiedAuth.getPairingCode(phoneNumber);
 
     await updateConnectionStatus({
-      pairingCode: newPairingCode
+      pairingCode: newPairingCode,
     });
 
     res.json({
       success: true,
       message: 'Pairing code refreshed',
-      data: newPairingCode
+      data: newPairingCode,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to refresh pairing code',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -308,19 +306,19 @@ router.get('/analytics', async (req, res) => {
   try {
     // Get real analytics from database
     const totalConnections = await context.database.userSession.count({
-      where: { status: 'connected' }
+      where: { status: 'connected' },
     });
 
     const successfulConnections = await context.database.userSession.count({
       where: {
         status: 'connected',
-        connectionTime: { not: null }
-      }
+        connectionTime: { not: null },
+      },
     });
 
     const avgConnectionTime = await context.database.userSession.aggregate({
       _avg: { connectionTime: true },
-      where: { connectionTime: { not: null } }
+      where: { connectionTime: { not: null } },
     });
 
     const analytics = {
@@ -329,19 +327,19 @@ router.get('/analytics', async (req, res) => {
         totalConnections,
         successRate: totalConnections > 0 ? (successfulConnections / totalConnections) * 100 : 0,
         averageConnectionTime: avgConnectionTime._avg.connectionTime || 0,
-        activeConnections: connectionStatus.status === 'connected' ? 1 : 0
-      }
+        activeConnections: connectionStatus.status === 'connected' ? 1 : 0,
+      },
     };
 
     res.json({
       success: true,
-      data: analytics
+      data: analytics,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to retrieve analytics',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -361,26 +359,25 @@ router.post('/disconnect', async (req, res) => {
     await reconnectionEngine.handleDisconnection(reason, {
       networkType: 'unknown', // Could be detected from system
       deviceType: 'server',
-      userActivity: 'manual_disconnect'
+      userActivity: 'manual_disconnect',
     });
 
     await updateConnectionStatus({
       status: 'disconnected',
       qrCode: null,
       pairingCode: null,
-      progress: 0
+      progress: 0,
     });
 
     res.json({
       success: true,
-      message: 'Disconnection handled, reconnection initiated'
+      message: 'Disconnection handled, reconnection initiated',
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to handle disconnection',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -394,22 +391,26 @@ if (typeof router.ws === 'function') {
     webSocketClients.add(ws);
 
     // Send initial status
-    ws.send(JSON.stringify({
-      event: 'connection_status',
-      data: connectionStatus
-    }));
+    ws.send(
+      JSON.stringify({
+        event: 'connection_status',
+        data: connectionStatus,
+      })
+    );
 
     // Handle client messages
-    ws.on('message', (message) => {
+    ws.on('message', message => {
       try {
         const data = JSON.parse(message.toString());
 
         switch (data.type) {
           case 'get_status':
-            ws.send(JSON.stringify({
-              event: 'connection_status',
-              data: connectionStatus
-            }));
+            ws.send(
+              JSON.stringify({
+                event: 'connection_status',
+                data: connectionStatus,
+              })
+            );
             break;
 
           case 'start_connection':
@@ -421,7 +422,7 @@ if (typeof router.ws === 'function') {
               status: 'disconnected',
               qrCode: null,
               pairingCode: null,
-              progress: 0
+              progress: 0,
             });
             break;
         }
@@ -436,14 +437,16 @@ if (typeof router.ws === 'function') {
     });
 
     // Handle errors
-    ws.on('error', (error) => {
+    ws.on('error', error => {
       console.error('WebSocket error:', error);
       webSocketClients.delete(ws);
     });
   });
 } else {
   // Fallback: WebSocket not available, router.ws not supported
-  console.warn('WebSocket support not available for auth router. Consider using socket.io as alternative.');
+  console.warn(
+    'WebSocket support not available for auth router. Consider using socket.io as alternative.'
+  );
 }
 
 /**
@@ -457,26 +460,26 @@ router.get('/qr-stats', async (req, res) => {
       select: {
         createdAt: true,
         updatedAt: true,
-        status: true
-      }
+        status: true,
+      },
     });
 
     const stats = {
       totalGenerated: qrSessions.length,
       successfulScans: qrSessions.filter(s => s.status === 'connected').length,
       averageGenerationTime: 0, // Could calculate from timestamps
-      lastGenerated: qrSessions[qrSessions.length - 1]?.createdAt || null
+      lastGenerated: qrSessions[qrSessions.length - 1]?.createdAt || null,
     };
 
     res.json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to retrieve QR stats',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -492,26 +495,26 @@ router.get('/pairing-stats', async (req, res) => {
       select: {
         createdAt: true,
         updatedAt: true,
-        status: true
-      }
+        status: true,
+      },
     });
 
     const stats = {
       totalGenerated: pairingSessions.length,
       successfulUses: pairingSessions.filter(s => s.status === 'connected').length,
       averageGenerationTime: 0, // Could calculate from timestamps
-      lastGenerated: pairingSessions[pairingSessions.length - 1]?.createdAt || null
+      lastGenerated: pairingSessions[pairingSessions.length - 1]?.createdAt || null,
     };
 
     res.json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to retrieve pairing stats',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -523,7 +526,7 @@ router.get('/pairing-stats', async (req, res) => {
 router.get('/reconnection-stats', (req, res) => {
   res.json({
     success: true,
-    data: reconnectionEngine.getStats()
+    data: reconnectionEngine.getStats(),
   });
 });
 
@@ -537,7 +540,7 @@ router.post('/validate-pairing', (req, res) => {
   res.json({
     success: true,
     message: 'Pairing code validation is handled automatically',
-    data: { valid: true, autoValidated: true }
+    data: { valid: true, autoValidated: true },
   });
 });
 
@@ -555,20 +558,19 @@ router.post('/record-scan', async (req, res) => {
       data: {
         status: success ? 'connected' : 'failed',
         connectionTime: success ? scanTime : null,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     res.json({
       success: true,
-      message: 'Scan recorded successfully'
+      message: 'Scan recorded successfully',
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to record scan',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -587,82 +589,81 @@ router.post('/record-usage', async (req, res) => {
       data: {
         status: success ? 'connected' : 'failed',
         connectionTime: success ? useTime : null,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     res.json({
       success: true,
-      message: 'Usage recorded successfully'
+      message: 'Usage recorded successfully',
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to record usage',
-      error: error.message
+      error: error.message,
     });
   }
 });
 
- // Cleanup expired sessions periodically
- setInterval(async () => {
-   try {
-     // Clean up old disconnected sessions
-     await context.database.userSession.deleteMany({
-       where: {
-         status: 'disconnected',
-         updatedAt: {
-           lt: new Date(Date.now() - 24 * 60 * 60 * 1000) // Older than 24 hours
-         }
-       }
-     });
-   } catch (error) {
-     console.error('Failed to cleanup expired sessions:', error);
-   }
- }, 60000); // Every minute
+// Cleanup expired sessions periodically
+setInterval(async () => {
+  try {
+    // Clean up old disconnected sessions
+    await context.database.userSession.deleteMany({
+      where: {
+        status: 'disconnected',
+        updatedAt: {
+          lt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Older than 24 hours
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Failed to cleanup expired sessions:', error);
+  }
+}, 60000); // Every minute
 
- // Graceful shutdown
- process.on('SIGINT', async () => {
-   await unifiedAuth.disconnect();
-   await reconnectionEngine.shutdown();
- });
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  await unifiedAuth.disconnect();
+  await reconnectionEngine.shutdown();
+});
 
- process.on('SIGTERM', async () => {
-   await unifiedAuth.disconnect();
-   await reconnectionEngine.shutdown();
- });
+process.on('SIGTERM', async () => {
+  await unifiedAuth.disconnect();
+  await reconnectionEngine.shutdown();
+});
 
- // Single enhanced logout endpoint for session invalidation
- router.post('/logout', async (req, res) => {
-   try {
-     const authHeader = req.headers['authorization'];
-     const token = authHeader && authHeader.split(' ')[1];
-     if (!token) {
-       return res.status(401).json({ error: 'Access token required' });
-     }
+// Single enhanced logout endpoint for session invalidation
+router.post('/logout', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'Access token required' });
+    }
 
-     const jwt = require('jsonwebtoken');
-     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret');
-     const sessionId = decoded.sessionId || `session_${decoded.userId}`;
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret');
+    const sessionId = decoded.sessionId || `session_${decoded.userId}`;
 
-     let invalidTokens = new Set(); // Fallback in-memory
+    const invalidTokens = new Set(); // Fallback in-memory
 
-     if (process.env.REDIS_URL) {
-       const { createClient } = require('redis');
-       const redis = createClient({ url: process.env.REDIS_URL });
-       await redis.connect();
-       await redis.del(sessionId);
-       await redis.setEx(`invalid_token:${token}`, 3600, '1'); // 1h expiration
-       await redis.quit();
-     } else {
-       invalidTokens.add(token);
-     }
+    if (process.env.REDIS_URL) {
+      const { createClient } = require('redis');
+      const redis = createClient({ url: process.env.REDIS_URL });
+      await redis.connect();
+      await redis.del(sessionId);
+      await redis.setEx(`invalid_token:${token}`, 3600, '1'); // 1h expiration
+      await redis.quit();
+    } else {
+      invalidTokens.add(token);
+    }
 
-     res.json({ success: true, message: 'Session invalidated' });
-   } catch (error) {
-     res.status(500).json({ error: 'Logout failed', message: error.message });
-   }
- });
+    res.json({ success: true, message: 'Session invalidated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Logout failed', message: error.message });
+  }
+});
 
- module.exports = router;
+module.exports = router;

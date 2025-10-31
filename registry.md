@@ -41,9 +41,11 @@ Ready to create your own registry? In the next section, we'll walk you through s
   </LinkedCard>
 
 <LinkedCard
-  href="/docs/registry/authentication"
-  className="items-start text-sm md:p-6"
+href="/docs/registry/authentication"
+className="items-start text-sm md:p-6"
+
 >
+
   <div className="font-medium">Authentication</div>
   <div className="text-muted-foreground">
     Secure your registry with authentication
@@ -79,8 +81,10 @@ Ready to create your own registry? In the next section, we'll walk you through s
 </div>
 
 ---
+
 title: Getting Started
 description: Learn how to get setup and run your own component registry.
+
 ---
 
 This guide will walk you through the process of setting up your own component registry. It assumes you already have a project with components and would like to turn it into a registry.
@@ -125,10 +129,10 @@ This `registry.json` file must conform to the [registry schema specification](/d
 Add your first component. Here's an example of a simple `<HelloWorld />` component:
 
 ```tsx title="registry/new-york/hello-world/hello-world.tsx" showLineNumbers
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 
 export function HelloWorld() {
-  return <Button>Hello World</Button>
+  return <Button>Hello World</Button>;
 }
 ```
 
@@ -251,9 +255,12 @@ npx shadcn@latest add http://localhost:3000/r/hello-world.json
 See the [Namespaced
 Registries](/docs/registry/namespace) docs for more information on
 how to install registry items from a namespaced registry.
+
 ---
+
 title: Namespaces
 description: Configure and use multiple resource registries with namespace support.
+
 ---
 
 Namespaced registries let you configure multiple resource sources in one project. This means you can install components, libraries, utilities, AI prompts, configuration files, and other resources from various registries, whether they're public, third-party, or your own custom private libraries.
@@ -1164,9 +1171,12 @@ When a component has dependencies from different registries, the resolver:
 - Use fully qualified names (`@namespace/resource`) to avoid ambiguity
 - Check for circular dependencies between registries
 - Ensure resource types are compatible when mixing registries
+
 ---
+
 title: Examples
 description: "Examples of registry items: styles, components, css vars, etc."
+
 ---
 
 ## registry:style
@@ -1187,11 +1197,7 @@ The following registry item is a custom style that extends shadcn/ui. On `npx sh
   "name": "example-style",
   "type": "registry:style",
   "dependencies": ["@tabler/icons-react"],
-  "registryDependencies": [
-    "login-01",
-    "calendar",
-    "https://example.com/r/editor.json"
-  ],
+  "registryDependencies": ["login-01", "calendar", "https://example.com/r/editor.json"],
   "cssVars": {
     "theme": {
       "font-sans": "Inter, sans-serif"
@@ -1605,11 +1611,7 @@ When you add multiple plugins, they are automatically grouped together and dedup
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "multiple-plugins",
   "type": "registry:item",
-  "dependencies": [
-    "@tailwindcss/typography",
-    "@tailwindcss/forms",
-    "tw-animate-css"
-  ],
+  "dependencies": ["@tailwindcss/typography", "@tailwindcss/forms", "tw-animate-css"],
   "css": {
     "@plugin \"@tailwindcss/typography\"": {},
     "@plugin \"@tailwindcss/forms\"": {},

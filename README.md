@@ -81,7 +81,7 @@ graph TB
     style W fill:#e0f2f1
 ```
 
-*Figure 1: WhatsDeX Architecture Overview - Click nodes to explore component details*
+_Figure 1: WhatsDeX Architecture Overview - Click nodes to explore component details_
 
 ---
 
@@ -89,12 +89,12 @@ graph TB
 
 ### Quick Start Series
 
-| Tutorial | Duration | Level | Preview | Link |
-|----------|----------|-------|---------|------|
-| **Setup in 5 Minutes** | 5:23 | Beginner | ![Setup Preview](https://img.youtube.com/vi/setup/maxresdefault.jpg) | [▶️ Watch](https://youtube.com/watch?v=setup) |
-| **First AI Conversation** | 8:45 | Beginner | ![AI Chat Preview](https://img.youtube.com/vi/ai-chat/maxresdefault.jpg) | [▶️ Watch](https://youtube.com/watch?v=ai-chat) |
-| **Custom Commands** | 12:30 | Intermediate | ![Custom Cmd Preview](https://img.youtube.com/vi/custom-cmd/maxresdefault.jpg) | [▶️ Watch](https://youtube.com/watch?v=custom-cmd) |
-| **Production Deployment** | 15:20 | Advanced | ![Deploy Preview](https://img.youtube.com/vi/deploy/maxresdefault.jpg) | [▶️ Watch](https://youtube.com/watch?v=deploy) |
+| Tutorial                  | Duration | Level        | Preview                                                                        | Link                                               |
+| ------------------------- | -------- | ------------ | ------------------------------------------------------------------------------ | -------------------------------------------------- |
+| **Setup in 5 Minutes**    | 5:23     | Beginner     | ![Setup Preview](https://img.youtube.com/vi/setup/maxresdefault.jpg)           | [▶️ Watch](https://youtube.com/watch?v=setup)      |
+| **First AI Conversation** | 8:45     | Beginner     | ![AI Chat Preview](https://img.youtube.com/vi/ai-chat/maxresdefault.jpg)       | [▶️ Watch](https://youtube.com/watch?v=ai-chat)    |
+| **Custom Commands**       | 12:30    | Intermediate | ![Custom Cmd Preview](https://img.youtube.com/vi/custom-cmd/maxresdefault.jpg) | [▶️ Watch](https://youtube.com/watch?v=custom-cmd) |
+| **Production Deployment** | 15:20    | Advanced     | ![Deploy Preview](https://img.youtube.com/vi/deploy/maxresdefault.jpg)         | [▶️ Watch](https://youtube.com/watch?v=deploy)     |
 
 ### 🎮 Interactive Playground
 
@@ -145,9 +145,10 @@ That's it! Your AI-powered WhatsApp bot and admin dashboard will be running loca
 
 **Step 1: Scan QR Code**
 ![QR Code Setup](screenshots/qr-setup.png)
-*Figure 2: WhatsApp Web QR Code scanning process*
+_Figure 2: WhatsApp Web QR Code scanning process_
 
 **Step 2: Send Your First Message**
+
 ```
 You: Hello WhatsDeX!
 Bot: 👋 Hello! I'm your AI-powered WhatsApp assistant!
@@ -245,6 +246,7 @@ STRIPE_SECRET_KEY=your_stripe_key
 WhatsDeX supports multiple database adapters:
 
 #### PostgreSQL (Recommended for Production)
+
 ```bash
 # Install PostgreSQL and create database
 createdb whatsdex
@@ -255,6 +257,7 @@ npm run generate
 ```
 
 #### MySQL
+
 ```bash
 # Create MySQL database
 mysql -u root -p -e "CREATE DATABASE whatsdex;"
@@ -264,6 +267,7 @@ npm run install:adapter
 ```
 
 #### MongoDB
+
 ```bash
 # Start MongoDB service
 mongosh
@@ -283,7 +287,7 @@ npm run install:adapter
 
 **Example: Natural Conversation Flow**
 ![AI Chat Demo](screenshots/ai-chat-demo.png)
-*Figure 3: WhatsDeX AI chat interface showing context-aware responses*
+_Figure 3: WhatsDeX AI chat interface showing context-aware responses_
 
 - **Natural Conversations**: Context-aware responses using Google's Gemini 1.5 Flash
 - **Function Calling**: Execute bot commands through AI conversations
@@ -292,16 +296,16 @@ npm run install:adapter
 
 #### Command Categories (100+ Commands)
 
-| Category | Commands | Description | Example Usage |
-|----------|----------|-------------|---------------|
-| 🤖 **AI Chat** | `gemini`, `chatgpt`, `deepseek`, `felo`, `venice` | Multiple AI providers with conversation memory | `/gemini Tell me about quantum physics` |
-| 🎬 **Media** | `sticker`, `toimage`, `togif`, `upscale`, `removebg` | Image/video processing and conversion | `/sticker [send image]` → 🎨 AI sticker |
-| 🎵 **Downloader** | `youtube`, `instagram`, `tiktok`, `spotify` | Social media content downloading | `/youtube https://youtube.com/watch?v=...` |
-| 🎮 **Games** | `family100`, `tebakgambar`, `kuis`, `suit` | Interactive games and quizzes | `/family100` → Family trivia game |
-| 🛠️ **Tools** | `translate`, `weather`, `ocr`, `carbonify` | Utility functions and APIs | `/weather Tokyo` → 🌤️ Weather info |
-| 🎭 **Fun** | `meme`, `joke`, `quote`, `artinama` | Entertainment and lifestyle | `/joke` → 😂 Random joke |
-| 👥 **Group** | `add`, `kick`, `promote`, `hidetag` | Group management tools | `/hidetag Hello everyone!` |
-| 📚 **Education** | `mathquiz`, `translate`, `alkitab` | Learning and reference | `/mathquiz` → 🧮 Math problems |
+| Category          | Commands                                             | Description                                    | Example Usage                              |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------- | ------------------------------------------ |
+| 🤖 **AI Chat**    | `gemini`, `chatgpt`, `deepseek`, `felo`, `venice`    | Multiple AI providers with conversation memory | `/gemini Tell me about quantum physics`    |
+| 🎬 **Media**      | `sticker`, `toimage`, `togif`, `upscale`, `removebg` | Image/video processing and conversion          | `/sticker [send image]` → 🎨 AI sticker    |
+| 🎵 **Downloader** | `youtube`, `instagram`, `tiktok`, `spotify`          | Social media content downloading               | `/youtube https://youtube.com/watch?v=...` |
+| 🎮 **Games**      | `family100`, `tebakgambar`, `kuis`, `suit`           | Interactive games and quizzes                  | `/family100` → Family trivia game          |
+| 🛠️ **Tools**      | `translate`, `weather`, `ocr`, `carbonify`           | Utility functions and APIs                     | `/weather Tokyo` → 🌤️ Weather info         |
+| 🎭 **Fun**        | `meme`, `joke`, `quote`, `artinama`                  | Entertainment and lifestyle                    | `/joke` → 😂 Random joke                   |
+| 👥 **Group**      | `add`, `kick`, `promote`, `hidetag`                  | Group management tools                         | `/hidetag Hello everyone!`                 |
+| 📚 **Education**  | `mathquiz`, `translate`, `alkitab`                   | Learning and reference                         | `/mathquiz` → 🧮 Math problems             |
 
 ### 🎛️ Admin Dashboard
 
@@ -309,7 +313,7 @@ npm run install:adapter
 
 **Performance Dashboard**
 ![Dashboard Screenshot](screenshots/dashboard-analytics.png)
-*Figure 4: Real-time analytics dashboard with performance metrics*
+_Figure 4: Real-time analytics dashboard with performance metrics_
 
 - **Performance Metrics**: Response times, cache hit rates, error tracking
 - **User Statistics**: Active users, command usage, engagement metrics
@@ -319,7 +323,7 @@ npm run install:adapter
 
 **User Management Interface**
 ![User Management](screenshots/user-management.png)
-*Figure 5: Comprehensive user management with role-based access*
+_Figure 5: Comprehensive user management with role-based access_
 
 - **Role-Based Access**: Admin, moderator, and user permissions
 - **Bulk Operations**: Mass messaging, user imports/exports
@@ -329,7 +333,7 @@ npm run install:adapter
 
 **AI-Powered Moderation**
 ![Content Moderation](screenshots/content-moderation.png)
-*Figure 6: Advanced content moderation with AI filtering*
+_Figure 6: Advanced content moderation with AI filtering_
 
 - **AI-Powered Filtering**: Automatic content analysis and flagging
 - **Manual Review Queue**: Human oversight for sensitive content
@@ -340,6 +344,7 @@ npm run install:adapter
 #### Enterprise Security Features
 
 **Security Architecture**
+
 ```mermaid
 graph LR
     A[User Request] --> B[Rate Limiting]
@@ -384,16 +389,19 @@ graph LR
 ### 📖 User Guides
 
 #### For Beginners
+
 1. **[Getting Started](docs/getting-started.md)** - Complete setup guide for new users
 2. **[Basic Commands](docs/basic-commands.md)** - Essential bot commands and usage
 3. **[Configuration](docs/configuration.md)** - Environment setup and customization
 
 #### For Developers
+
 1. **[API Reference](docs/api-reference.md)** - Complete API documentation
 2. **[Plugin Development](docs/plugin-development.md)** - Create custom commands
 3. **[Database Schema](docs/database-schema.md)** - Data models and relationships
 
 #### For Administrators
+
 1. **[Deployment Guide](docs/deployment.md)** - Production deployment strategies
 2. **[Security Best Practices](docs/security.md)** - Security hardening and compliance
 3. **[Monitoring & Maintenance](docs/monitoring.md)** - System monitoring and troubleshooting
@@ -401,6 +409,7 @@ graph LR
 ### 🛠️ Development
 
 #### Project Structure
+
 ```
 whatsdex/
 ├── 📁 commands/          # Bot command modules (100+ commands)
@@ -433,25 +442,28 @@ whatsdex/
 #### Code Examples
 
 ##### Basic Bot Command
+
 ```javascript
 module.exports = {
   name: 'hello',
   category: 'main',
   permissions: { coin: 0 },
-  code: async (ctx) => {
+  code: async ctx => {
     const { formatter } = ctx.bot.context;
     return ctx.reply(formatter.success('Hello! 👋 Welcome to WhatsDeX!'));
-  }
+  },
 };
 ```
 
 ##### AI Command with Tool Calling
+
 ```javascript
 // See commands/ai-chat/gemini.js for full implementation
 // Features: conversation memory, tool execution, summarization
 ```
 
 ##### Custom Middleware
+
 ```javascript
 // middleware/customAuth.js
 module.exports = async (ctx, next) => {
@@ -470,6 +482,7 @@ module.exports = async (ctx, next) => {
 ### REST API Endpoints
 
 #### Authentication
+
 ```http
 POST /api/auth/login
 POST /api/auth/logout
@@ -477,6 +490,7 @@ GET  /api/auth/session
 ```
 
 #### User Management
+
 ```http
 GET    /api/users
 POST   /api/users
@@ -486,6 +500,7 @@ DELETE /api/users/:id
 ```
 
 #### Analytics
+
 ```http
 GET /api/analytics/overview
 GET /api/analytics/commands
@@ -494,6 +509,7 @@ GET /api/analytics/performance
 ```
 
 #### System Management
+
 ```http
 GET  /api/system/health
 GET  /api/system/logs
@@ -504,20 +520,21 @@ GET  /api/system/config
 ### WebSocket Events
 
 #### Real-Time Updates
+
 ```javascript
 // Connect to WebSocket
 const socket = io('http://localhost:3000');
 
 // Listen for events
-socket.on('user_joined', (data) => {
+socket.on('user_joined', data => {
   console.log('New user:', data);
 });
 
-socket.on('command_executed', (data) => {
+socket.on('command_executed', data => {
   console.log('Command executed:', data);
 });
 
-socket.on('system_alert', (data) => {
+socket.on('system_alert', data => {
   console.log('System alert:', data);
 });
 ```
@@ -525,18 +542,19 @@ socket.on('system_alert', (data) => {
 ### Bot Commands API
 
 #### Programmatic Command Execution
+
 ```javascript
 const { WhatsDeX } = require('whatsdex');
 
 // Initialize bot
 const bot = new WhatsDeX({
-  apiKey: process.env.GOOGLE_GEMINI_API_KEY
+  apiKey: process.env.GOOGLE_GEMINI_API_KEY,
 });
 
 // Execute command programmatically
 await bot.executeCommand('gemini', {
   text: 'Hello AI!',
-  userId: '1234567890'
+  userId: '1234567890',
 });
 ```
 
@@ -557,6 +575,7 @@ npm run dev:full
 ### Production Deployment
 
 #### Using PM2 (Recommended)
+
 ```bash
 # Start with PM2
 npm run start:pm2
@@ -569,6 +588,7 @@ pm2 logs whatsdex
 ```
 
 #### Using Docker
+
 ```bash
 # Build production image
 docker build -t whatsdex:prod .
@@ -584,6 +604,7 @@ docker run -d \
 #### Cloud Deployment
 
 ##### Vercel (Dashboard Only)
+
 ```bash
 cd web
 npm install -g vercel
@@ -591,6 +612,7 @@ vercel --prod
 ```
 
 ##### Railway
+
 ```bash
 # Connect GitHub repo to Railway
 # Automatic deployments on push
@@ -598,6 +620,7 @@ vercel --prod
 ```
 
 ##### AWS/Heroku
+
 ```bash
 # Standard Node.js deployment
 npm run build
@@ -607,11 +630,13 @@ npm run start:prod
 ### Scaling Considerations
 
 #### Horizontal Scaling
+
 - **PM2 Clustering**: `pm2 start ecosystem.config.js`
 - **Load Balancing**: Nginx reverse proxy configuration
 - **Database Sharding**: For high-traffic deployments
 
 #### Performance Optimization
+
 - **Redis Caching**: Enable for AI responses and session data
 - **CDN Integration**: For static assets and media files
 - **Database Indexing**: Optimize queries for large datasets
@@ -624,14 +649,14 @@ npm run start:prod
 
 **Test Environment:** AWS t3.medium, 10 concurrent users
 
-| Metric | Value | Status | Trend |
-|--------|-------|--------|-------|
-| **Response Time** | 245ms avg | ✅ Excellent | 📈 +5ms |
-| **Cache Hit Rate** | 94.5% | ✅ Excellent | 📈 +2.1% |
-| **Error Rate** | 0.2% | ✅ Excellent | 📉 -0.1% |
-| **Memory Usage** | 180MB | ✅ Good | ➡️ Stable |
-| **CPU Usage** | 15% | ✅ Good | ➡️ Stable |
-| **Uptime** | 99.8% | ✅ Excellent | 📈 +0.1% |
+| Metric             | Value     | Status       | Trend     |
+| ------------------ | --------- | ------------ | --------- |
+| **Response Time**  | 245ms avg | ✅ Excellent | 📈 +5ms   |
+| **Cache Hit Rate** | 94.5%     | ✅ Excellent | 📈 +2.1%  |
+| **Error Rate**     | 0.2%      | ✅ Excellent | 📉 -0.1%  |
+| **Memory Usage**   | 180MB     | ✅ Good      | ➡️ Stable |
+| **CPU Usage**      | 15%       | ✅ Good      | ➡️ Stable |
+| **Uptime**         | 99.8%     | ✅ Excellent | 📈 +0.1%  |
 
 ### Load Testing Results
 
@@ -648,14 +673,14 @@ Load Test Results (k6)
 
 ### AI Provider Comparison
 
-| Feature | Gemini 1.5 Flash | GPT-4 | Claude | WhatsDeX Choice |
-|---------|------------------|-------|--------|-----------------|
-| **Context Window** | 1M tokens | 128K tokens | 200K tokens | ✅ Gemini |
-| **Function Calling** | ✅ Native | ✅ Tools | ✅ Tools | ✅ Gemini |
-| **Cost** | $0.0015/1K | $0.03/1K | $0.015/1K | ✅ Gemini |
-| **WhatsApp Integration** | ⚡ Optimized | ⚡ Good | ⚡ Good | ✅ Gemini |
-| **Real-time Response** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ Gemini |
-| **Memory Management** | ✅ Advanced | ⚠️ Limited | ✅ Good | ✅ Gemini |
+| Feature                  | Gemini 1.5 Flash | GPT-4       | Claude      | WhatsDeX Choice |
+| ------------------------ | ---------------- | ----------- | ----------- | --------------- |
+| **Context Window**       | 1M tokens        | 128K tokens | 200K tokens | ✅ Gemini       |
+| **Function Calling**     | ✅ Native        | ✅ Tools    | ✅ Tools    | ✅ Gemini       |
+| **Cost**                 | $0.0015/1K       | $0.03/1K    | $0.015/1K   | ✅ Gemini       |
+| **WhatsApp Integration** | ⚡ Optimized     | ⚡ Good     | ⚡ Good     | ✅ Gemini       |
+| **Real-time Response**   | ⭐⭐⭐⭐⭐       | ⭐⭐⭐⭐    | ⭐⭐⭐⭐⭐  | ✅ Gemini       |
+| **Memory Management**    | ✅ Advanced      | ⚠️ Limited  | ✅ Good     | ✅ Gemini       |
 
 ---
 
@@ -664,6 +689,7 @@ Load Test Results (k6)
 ### Common Issues
 
 #### Authentication Problems
+
 ```bash
 # Clear session data
 rm -rf sessions/*
@@ -676,6 +702,7 @@ tail -f logs/bot.log
 ```
 
 #### Performance Issues
+
 ```bash
 # Check system resources
 top
@@ -689,6 +716,7 @@ npm run db:status
 ```
 
 #### API Errors
+
 ```bash
 # Test Gemini API
 curl -H "Authorization: Bearer $GOOGLE_GEMINI_API_KEY" \
@@ -743,11 +771,13 @@ npm run dev:full
 ### Contribution Guidelines
 
 #### Code Style
+
 - **ESLint**: Follow the configured ESLint rules
 - **Prettier**: Code formatting is enforced
 - **TypeScript**: Preferred for new components
 
 #### Testing
+
 ```bash
 # Run all tests
 npm test
@@ -760,6 +790,7 @@ npm run e2e
 ```
 
 #### Pull Request Process
+
 1. **Fork** the repository
 2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
 3. **Commit** your changes (`git commit -m 'Add some amazing feature'`)
@@ -767,6 +798,7 @@ npm run e2e
 5. **Open** a Pull Request
 
 #### Commit Convention
+
 ```bash
 # Format: type(scope): description
 feat(auth): add OAuth2 support
@@ -778,30 +810,35 @@ test(commands): add unit tests for AI commands
 ### Areas for Contribution
 
 #### 🔧 Core Development
+
 - **New AI Providers**: Add support for Claude, Mistral, etc.
 - **Command Modules**: Create new utility or entertainment commands
 - **Database Adapters**: Support for additional databases
 - **API Integrations**: Weather, news, social media APIs
 
 #### 🎨 Frontend Development
+
 - **Dashboard Components**: New analytics widgets and tools
 - **UI/UX Improvements**: Enhanced user experience and accessibility
 - **Theme System**: Dark/light mode and custom themes
 - **Mobile Responsiveness**: Optimize for mobile devices
 
 #### 📊 Analytics & Monitoring
+
 - **Performance Metrics**: Advanced monitoring and alerting
 - **User Analytics**: Behavior tracking and insights
 - **Audit System**: Enhanced compliance and security logging
 - **Reporting Tools**: Automated report generation
 
 #### 🧪 Testing & Quality
+
 - **Unit Tests**: Increase test coverage
 - **Integration Tests**: API and database testing
 - **E2E Tests**: User journey automation
 - **Performance Testing**: Load and stress testing
 
 #### 📚 Documentation
+
 - **API Documentation**: OpenAPI/Swagger specs
 - **User Guides**: Tutorials and examples
 - **Video Tutorials**: Screencasts and demos
@@ -810,6 +847,7 @@ test(commands): add unit tests for AI commands
 ### Recognition
 
 Contributors are recognized in:
+
 - **Release Notes**: Featured in changelog
 - **Contributors File**: Listed in repository
 - **Hall of Fame**: Top contributors highlighted
@@ -821,23 +859,24 @@ Contributors are recognized in:
 
 <div align="center">
 
-| Metric | Value | Change | Status |
-|--------|-------|--------|--------|
-| **GitHub Stars** | ⭐ 2.1K | +15% | 📈 Growing |
-| **Downloads** | 📦 50K/month | +25% | 📈 Growing |
-| **Active Bots** | 🤖 10K+ | +30% | 📈 Growing |
-| **Commands Executed** | ⚡ 2M/day | +40% | 📈 Growing |
-| **Uptime** | 🟢 99.8% | +0.1% | ✅ Stable |
-| **User Satisfaction** | ⭐ 4.8/5 | +0.2 | ✅ Excellent |
+| Metric                | Value        | Change | Status       |
+| --------------------- | ------------ | ------ | ------------ |
+| **GitHub Stars**      | ⭐ 2.1K      | +15%   | 📈 Growing   |
+| **Downloads**         | 📦 50K/month | +25%   | 📈 Growing   |
+| **Active Bots**       | 🤖 10K+      | +30%   | 📈 Growing   |
+| **Commands Executed** | ⚡ 2M/day    | +40%   | 📈 Growing   |
+| **Uptime**            | 🟢 99.8%     | +0.1%  | ✅ Stable    |
+| **User Satisfaction** | ⭐ 4.8/5     | +0.2   | ✅ Excellent |
 
-*Last updated: October 2024*
+_Last updated: October 2024_
 
 </div>
 
 ### 🌟 Success Stories
 
 #### 🏢 Enterprise Implementation: TechCorp Inc.
-*"WhatsDeX transformed our customer support workflow. The AI integration reduced response times by 60% while maintaining 95% customer satisfaction."*
+
+_"WhatsDeX transformed our customer support workflow. The AI integration reduced response times by 60% while maintaining 95% customer satisfaction."_
 
 - **Industry:** SaaS Technology
 - **Users:** 50,000+ customers
@@ -846,7 +885,8 @@ Contributors are recognized in:
 - **ROI:** 300% in first year
 
 #### 🏥 Healthcare: MedCenter Pro
-*"GDPR compliance and HIPAA-ready security made WhatsDeX perfect for our patient communication needs."*
+
+_"GDPR compliance and HIPAA-ready security made WhatsDeX perfect for our patient communication needs."_
 
 - **Industry:** Healthcare
 - **Use Case:** Patient appointment reminders
@@ -855,7 +895,8 @@ Contributors are recognized in:
 - **Compliance:** HIPAA & GDPR compliant
 
 #### 📚 Education: Global University
-*"Students love the interactive AI tutor features. We've seen a 40% increase in student engagement."*
+
+_"Students love the interactive AI tutor features. We've seen a 40% increase in student engagement."_
 
 - **Industry:** Higher Education
 - **Features:** AI-powered Q&A, assignment help
@@ -911,6 +952,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ### Third-Party Licenses
 
 WhatsDeX uses several open-source libraries:
+
 - **@whiskeysockets/baileys**: WhatsApp Web API (MIT)
 - **@google/generative-ai**: Gemini AI SDK (Apache 2.0)
 - **express**: Web framework (MIT)
@@ -921,10 +963,12 @@ WhatsDeX uses several open-source libraries:
 ## 🙏 Acknowledgments
 
 ### Core Team
+
 - **CodeDeX** - Project Lead & Core Developer
 - **Contributors** - Open source community members
 
 ### Technologies & Services
+
 - **Google Gemini AI** - Conversational AI capabilities
 - **WhatsApp Web** - Messaging platform integration
 - **Node.js** - Runtime environment
@@ -935,6 +979,7 @@ WhatsDeX uses several open-source libraries:
 - **Docker** - Containerization
 
 ### Community
+
 - **Open Source Contributors** - Bug fixes, features, documentation
 - **Beta Testers** - Feedback and testing
 - **Users** - Adoption and support
@@ -944,17 +989,20 @@ WhatsDeX uses several open-source libraries:
 ## 📞 Support
 
 ### Community Support
+
 - **GitHub Discussions**: General questions and community chat
 - **Discord Server**: Real-time help and community events
 - **Stack Overflow**: Technical questions (tag: `whatsdex`)
 
 ### Enterprise Support
+
 - **24/7 Support**: Priority response for enterprise customers
 - **Dedicated SRE**: Site reliability engineering support
 - **Custom Development**: Bespoke features and integrations
 - **Training**: Team training and onboarding
 
 ### Contact Information
+
 - **Email**: support@whatsdex.com
 - **Enterprise**: enterprise@whatsdex.com
 - **Security**: security@whatsdex.com
@@ -965,6 +1013,7 @@ WhatsDeX uses several open-source libraries:
 ## 🔄 Changelog
 
 ### Version 1.4.13-alpha.1 (Latest)
+
 - ✨ **AI Integration**: Enhanced Gemini AI with function calling
 - 🔒 **Security**: Improved rate limiting and content moderation
 - 🎛️ **Dashboard**: Complete admin interface with real-time analytics
@@ -973,6 +1022,7 @@ WhatsDeX uses several open-source libraries:
 - 🧪 **Testing**: Expanded test coverage and CI/CD pipeline
 
 ### Previous Versions
+
 - [View Full Changelog](CHANGELOG.md)
 
 ---
@@ -985,7 +1035,7 @@ WhatsDeX uses several open-source libraries:
 
 ---
 
-*WhatsDeX is not affiliated with WhatsApp, Meta, or any other third-party services. Use responsibly and in accordance with platform terms of service.*
+_WhatsDeX is not affiliated with WhatsApp, Meta, or any other third-party services. Use responsibly and in accordance with platform terms of service._
 
 </div>
 

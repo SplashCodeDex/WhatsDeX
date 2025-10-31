@@ -84,7 +84,8 @@ class Cooldown {
    * Clean up expired cooldowns
    * @param {number} maxAge - Maximum age in milliseconds for cleanup
    */
-  cleanup(maxAge = 3600000) { // Default 1 hour
+  cleanup(maxAge = 3600000) {
+    // Default 1 hour
     const now = Date.now();
     for (const [key, timestamp] of this.cooldowns) {
       if (now - timestamp > maxAge) {
@@ -101,7 +102,7 @@ class Cooldown {
     return {
       totalCooldowns: this.cooldowns.size,
       uniqueUsers: new Set([...this.cooldowns.keys()].map(key => key.split(':')[0])).size,
-      uniqueCommands: new Set([...this.cooldowns.keys()].map(key => key.split(':')[1])).size
+      uniqueCommands: new Set([...this.cooldowns.keys()].map(key => key.split(':')[1])).size,
     };
   }
 }

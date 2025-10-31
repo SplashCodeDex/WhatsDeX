@@ -1,40 +1,42 @@
-const axios = require("axios");
+const axios = require('axios');
 
 module.exports = {
-    name: "sfiledl",
-    category: "downloader",
-    permissions: {
-        premium: true
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config } = ctx.bot.context;
-        const url = ctx.args[0] || null;
+  name: 'sfiledl',
+  category: 'downloader',
+  permissions: {
+    premium: true,
+  },
+  code: async ctx => {
+    const { formatter, tools, config } = ctx.bot.context;
+    const url = ctx.args[0] || null;
 
-        if (!url) return await ctx.reply(
-            `${formatter.quote(tools.msg.generateInstruction(["send"], ["text"]))}\n` +
-            formatter.quote(tools.msg.generateCmdExample(ctx.used, "https://sfile.mobi/a1NTccB8T6m"))
-        );
+    if (!url)
+      return await ctx.reply(
+        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
+          tools.msg.generateCmdExample(ctx.used, 'https://sfile.mobi/a1NTccB8T6m')
+        )}`
+      );
 
-        const isUrl = tools.cmd.isUrl(url);
-        if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
+    const isUrl = tools.cmd.isUrl(url);
+    if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
 
-        try {
-            const apiUrl = tools.api.createUrl("zell", "/download/sfile", {
-                url
-            });
-            const result = (await axios.get(apiUrl)).data.result;
+    try {
+      const apiUrl = tools.api.createUrl('zell', '/download/sfile', {
+        url,
+      });
+      const { result } = (await axios.get(apiUrl)).data;
 
-            await ctx.reply({
-                document: {
-                    url: result.download_url
-                },
-                fileName: result.metadata.filename,
-                mimetype: result.metadata.mimetype || "application/octet-stream",
-                caption: formatter.quote(`URL: ${url}`),
-                footer: config.msg.footer
-            });
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
-        }
+      await ctx.reply({
+        document: {
+          url: result.download_url,
+        },
+        fileName: result.metadata.filename,
+        mimetype: result.metadata.mimetype || 'application/octet-stream',
+        caption: formatter.quote(`URL: ${url}`),
+        footer: config.msg.footer,
+      });
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error, true);
     }
+  },
 };

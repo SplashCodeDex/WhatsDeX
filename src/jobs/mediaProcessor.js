@@ -1,6 +1,7 @@
+import path from 'path';
+
 const sharp = require('sharp');
 const fs = require('fs').promises;
-import path from 'path';
 const logger = require('../utils/logger');
 
 /**
@@ -13,7 +14,7 @@ class MediaProcessor {
     this.supportedFormats = {
       images: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff'],
       videos: ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'],
-      audio: ['mp3', 'wav', 'ogg', 'aac', 'flac']
+      audio: ['mp3', 'wav', 'ogg', 'aac', 'flac'],
     };
 
     this.tempDir = path.join(process.cwd(), 'temp');
@@ -50,7 +51,7 @@ class MediaProcessor {
         jobId: job.id,
         userId,
         imagePath,
-        options
+        options,
       });
 
       const inputPath = path.resolve(imagePath);
@@ -67,7 +68,7 @@ class MediaProcessor {
       if (options.width || options.height) {
         sharpInstance = sharpInstance.resize(options.width, options.height, {
           fit: options.fit || 'cover',
-          withoutEnlargement: options.withoutEnlargement !== false
+          withoutEnlargement: options.withoutEnlargement !== false,
         });
       }
 
@@ -85,14 +86,17 @@ class MediaProcessor {
       const stats = await fs.stat(outputPath);
       const originalStats = await fs.stat(inputPath);
 
-      const compressionRatio = ((originalStats.size - stats.size) / originalStats.size * 100).toFixed(2);
+      const compressionRatio = (
+        ((originalStats.size - stats.size) / originalStats.size) *
+        100
+      ).toFixed(2);
 
       logger.info('Image optimization completed', {
         jobId: job.id,
         originalSize: originalStats.size,
         optimizedSize: stats.size,
         compressionRatio: `${compressionRatio}%`,
-        outputPath
+        outputPath,
       });
 
       return {
@@ -105,17 +109,16 @@ class MediaProcessor {
         metadata: {
           width: metadata.width,
           height: metadata.height,
-          format: metadata.format
+          format: metadata.format,
         },
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('Image optimization failed', {
         jobId: job.id,
         userId,
         imagePath,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Image optimization failed: ${error.message}`);
@@ -136,7 +139,7 @@ class MediaProcessor {
         jobId: job.id,
         userId,
         imageCount: images.length,
-        options
+        options,
       });
 
       const results = [];
@@ -145,34 +148,36 @@ class MediaProcessor {
         const imageData = images[i];
 
         try {
-          const result = await this.processImageOptimization({
-            imagePath: imageData.path,
-            options: { ...options, ...imageData.options },
-            userId
-          }, { ...job, id: `${job.id}_${i}` });
+          const result = await this.processImageOptimization(
+            {
+              imagePath: imageData.path,
+              options: { ...options, ...imageData.options },
+              userId,
+            },
+            { ...job, id: `${job.id}_${i}` }
+          );
 
           results.push({
             id: imageData.id,
             ...result,
-            success: true
+            success: true,
           });
-
         } catch (imageError) {
           logger.warn('Failed to process image in batch', {
             jobId: job.id,
             imageId: imageData.id,
-            error: imageError.message
+            error: imageError.message,
           });
 
           results.push({
             id: imageData.id,
             error: imageError.message,
-            success: false
+            success: false,
           });
         }
 
         // Update job progress
-        job.progress((i + 1) / images.length * 100);
+        job.progress(((i + 1) / images.length) * 100);
       }
 
       const successful = results.filter(r => r.success).length;
@@ -183,14 +188,13 @@ class MediaProcessor {
         successful,
         failed: images.length - successful,
         results,
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('Batch image processing failed', {
         jobId: job.id,
         userId,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Batch image processing failed: ${error.message}`);
@@ -212,12 +216,15 @@ class MediaProcessor {
         userId,
         videoPath,
         timestamp,
-        size
+        size,
       });
 
       // For now, create a placeholder thumbnail
       // In a real implementation, you would use ffmpeg or similar
-      const thumbnailPath = path.join(this.outputDir, `${path.basename(videoPath, path.extname(videoPath))}_thumbnail.jpg`);
+      const thumbnailPath = path.join(
+        this.outputDir,
+        `${path.basename(videoPath, path.extname(videoPath))}_thumbnail.jpg`
+      );
 
       // Create a simple colored rectangle as placeholder
       await sharp({
@@ -225,11 +232,11 @@ class MediaProcessor {
           width: size?.width || 320,
           height: size?.height || 180,
           channels: 3,
-          background: { r: 100, g: 100, b: 100 }
-        }
+          background: { r: 100, g: 100, b: 100 },
+        },
       })
-      .jpeg()
-      .toFile(thumbnailPath);
+        .jpeg()
+        .toFile(thumbnailPath);
 
       // Get file sizes
       const videoStats = await fs.stat(videoPath);
@@ -244,17 +251,16 @@ class MediaProcessor {
         timestamp: timestamp || 0,
         size: {
           width: size?.width || 320,
-          height: size?.height || 180
+          height: size?.height || 180,
         },
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('Video thumbnail generation failed', {
         jobId: job.id,
         userId,
         videoPath,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Video thumbnail generation failed: ${error.message}`);
@@ -276,16 +282,17 @@ class MediaProcessor {
         userId,
         inputPath,
         outputFormat,
-        options
+        options,
       });
 
       const inputExt = path.extname(inputPath).toLowerCase().slice(1);
       const filename = path.basename(inputPath, path.extname(inputPath));
       const outputPath = path.join(this.outputDir, `${filename}.${outputFormat}`);
 
-      if (this.supportedFormats.images.includes(inputExt) &&
-          this.supportedFormats.images.includes(outputFormat)) {
-
+      if (
+        this.supportedFormats.images.includes(inputExt) &&
+        this.supportedFormats.images.includes(outputFormat)
+      ) {
         // Image format conversion
         let sharpInstance = sharp(inputPath);
 
@@ -306,14 +313,13 @@ class MediaProcessor {
         }
 
         await sharpInstance.toFile(outputPath);
-
       } else {
         // For unsupported conversions, just copy the file
         await fs.copyFile(inputPath, outputPath);
         logger.warn('Unsupported conversion, file copied as-is', {
           jobId: job.id,
           inputFormat: inputExt,
-          outputFormat
+          outputFormat,
         });
       }
 
@@ -329,16 +335,15 @@ class MediaProcessor {
         outputFormat,
         inputSize: inputStats.size,
         outputSize: outputStats.size,
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('File conversion failed', {
         jobId: job.id,
         userId,
         inputPath,
         outputFormat,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`File conversion failed: ${error.message}`);
@@ -359,10 +364,10 @@ class MediaProcessor {
         jobId: job.id,
         userId,
         olderThan,
-        patterns
+        patterns,
       });
 
-      const cutoffTime = Date.now() - (olderThan * 60 * 60 * 1000); // Convert hours to milliseconds
+      const cutoffTime = Date.now() - olderThan * 60 * 60 * 1000; // Convert hours to milliseconds
       let deletedCount = 0;
       let freedSpace = 0;
 
@@ -374,9 +379,9 @@ class MediaProcessor {
 
         if (stats.mtime.getTime() < cutoffTime) {
           // Check if file matches cleanup patterns
-          const shouldDelete = !patterns || patterns.some(pattern =>
-            file.includes(pattern) || file.match(new RegExp(pattern))
-          );
+          const shouldDelete =
+            !patterns ||
+            patterns.some(pattern => file.includes(pattern) || file.match(new RegExp(pattern)));
 
           if (shouldDelete) {
             await fs.unlink(filePath);
@@ -387,7 +392,7 @@ class MediaProcessor {
               jobId: job.id,
               file,
               size: stats.size,
-              age: (Date.now() - stats.mtime.getTime()) / (60 * 60 * 1000)
+              age: (Date.now() - stats.mtime.getTime()) / (60 * 60 * 1000),
             });
           }
         }
@@ -400,7 +405,7 @@ class MediaProcessor {
         const stats = await fs.stat(filePath);
 
         // Only delete very old processed files (7 days)
-        const processedCutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        const processedCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
         if (stats.mtime.getTime() < processedCutoff) {
           await fs.unlink(filePath);
           deletedCount++;
@@ -409,7 +414,7 @@ class MediaProcessor {
           logger.debug('Cleaned up processed file', {
             jobId: job.id,
             file,
-            size: stats.size
+            size: stats.size,
           });
         }
       }
@@ -420,14 +425,13 @@ class MediaProcessor {
         freedSpace,
         tempDir: this.tempDir,
         outputDir: this.outputDir,
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('Media cleanup failed', {
         jobId: job.id,
         userId,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Media cleanup failed: ${error.message}`);
@@ -447,7 +451,7 @@ class MediaProcessor {
       logger.info('Processing media analytics', {
         jobId: job.id,
         userId,
-        timeRange
+        timeRange,
       });
 
       // This would analyze media processing metrics
@@ -461,20 +465,19 @@ class MediaProcessor {
         successRate: 97.8,
         popularFormats: ['jpg', 'png', 'mp4'],
         timeRange,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
       };
 
       return {
         success: true,
         analytics,
-        processingTime: Date.now() - job.processedOn
+        processingTime: Date.now() - job.processedOn,
       };
-
     } catch (error) {
       logger.error('Media analytics processing failed', {
         jobId: job.id,
         userId,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Media analytics processing failed: ${error.message}`);

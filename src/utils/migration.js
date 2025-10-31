@@ -1,7 +1,8 @@
+import path from 'path';
+
 const DatabaseService = require('../services/database');
 const logger = require('./logger');
 const fs = require('fs').promises;
-import path from 'path';
 
 class MigrationService {
   constructor() {
@@ -39,8 +40,8 @@ class MigrationService {
       const migrationFiles = await this.getMigrationFiles();
       const executedMigrations = await this.getExecutedMigrations();
 
-      const pendingMigrations = migrationFiles.filter(file =>
-        !executedMigrations.includes(file.replace('.sql', ''))
+      const pendingMigrations = migrationFiles.filter(
+        file => !executedMigrations.includes(file.replace('.sql', ''))
       );
 
       if (pendingMigrations.length === 0) {
@@ -103,9 +104,7 @@ class MigrationService {
     }
 
     const files = await fs.readdir(this.migrationPath);
-    return files
-      .filter(file => file.endsWith('.sql'))
-      .sort(); // Ensure consistent order
+    return files.filter(file => file.endsWith('.sql')).sort(); // Ensure consistent order
   }
 
   // Get list of executed migrations
@@ -170,7 +169,7 @@ ${sql}
             level: userData.level || 1,
             coin: userData.coin || 0,
             premium: userData.premium || false,
-            banned: userData.banned || false
+            banned: userData.banned || false,
           });
         }
       }
@@ -185,7 +184,7 @@ ${sql}
             description: groupData.description,
             avatar: groupData.avatar,
             ownerJid: groupData.ownerJid,
-            memberCount: groupData.memberCount || 0
+            memberCount: groupData.memberCount || 0,
           });
         }
       }
@@ -204,8 +203,8 @@ ${sql}
               mediaType: menfessData.mediaType,
               sentAt: new Date(menfessData.sentAt || Date.now()),
               delivered: menfessData.delivered || false,
-              read: menfessData.read || false
-            }
+              read: menfessData.read || false,
+            },
           });
         }
       }
@@ -282,7 +281,7 @@ ${sql}
         total: migrationFiles.length,
         executed: executedMigrations.length,
         pending: migrationFiles.length - executedMigrations.length,
-        migrations: []
+        migrations: [],
       };
 
       for (const file of migrationFiles) {
@@ -290,7 +289,7 @@ ${sql}
         status.migrations.push({
           name,
           status: executedMigrations.includes(name) ? 'executed' : 'pending',
-          file
+          file,
         });
       }
 

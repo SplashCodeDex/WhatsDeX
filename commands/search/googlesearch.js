@@ -9,7 +9,7 @@ module.exports = {
   permissions: {
     coin: 10,
   },
-  code: async (ctx) => {
+  code: async ctx => {
     const { formatter, config } = ctx.bot.context;
 
     try {
@@ -20,7 +20,11 @@ module.exports = {
       const queryCheck = querySchema.safeParse(input);
 
       if (!queryCheck.success) {
-        return ctx.reply(formatter.quote(`❎ ${queryCheck.error.issues[0].message}\n\nExample: .google what is whatsapp`));
+        return ctx.reply(
+          formatter.quote(
+            `❎ ${queryCheck.error.issues[0].message}\n\nExample: .google what is whatsapp`
+          )
+        );
       }
       const query = queryCheck.data;
 
@@ -28,15 +32,19 @@ module.exports = {
       const apiUrl = createUrl('neko', '/search/google', {
         q: query,
       });
-      const result = (await axios.get(apiUrl)).data.result;
+      const { result } = (await axios.get(apiUrl)).data;
 
       if (!result || result.length === 0) {
         return ctx.reply(formatter.quote(config.msg.notFound));
       }
 
-      const resultText = result.map((res) => `${formatter.quote(`Title: ${res.title}`)}\n`
-                    + `${formatter.quote(`Description: ${res.desc}`)}\n`
-                    + formatter.quote(`URL: ${res.url}`)).join(`\n${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
+      const resultText = result
+        .map(
+          res =>
+            `${formatter.quote(`Title: ${res.title}`)}\n` +
+            `${formatter.quote(`Description: ${res.desc}`)}\n${formatter.quote(`URL: ${res.url}`)}`
+        )
+        .join(`\n${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
 
       return ctx.reply({
         text: resultText,

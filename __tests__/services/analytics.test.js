@@ -163,15 +163,9 @@ describe('AnalyticsService', () => {
     });
 
     test('should update metrics successfully', async () => {
-      const mockUsers = [
-        { lastActivity: new Date() },
-        { lastActivity: new Date() },
-      ];
+      const mockUsers = [{ lastActivity: new Date() }, { lastActivity: new Date() }];
 
-      const mockCommands = [
-        { usedAt: new Date() },
-        { usedAt: new Date() },
-      ];
+      const mockCommands = [{ usedAt: new Date() }, { usedAt: new Date() }];
 
       mockDatabase.prisma.user.count.mockResolvedValue(2);
       mockDatabase.prisma.commandUsage.count.mockResolvedValue(2);
@@ -239,7 +233,7 @@ describe('AnalyticsService', () => {
       expect(result.overview).toEqual(mockOverview);
       expect(result.commandStats).toEqual({
         'ai-chat': 200,
-        'downloader': 150,
+        downloader: 150,
       });
     });
 
@@ -266,21 +260,13 @@ describe('AnalyticsService', () => {
       const startDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const endDate = new Date();
 
-      const mockUserGrowth = [
-        { createdAt: new Date(), _count: { id: 10 } },
-      ];
+      const mockUserGrowth = [{ createdAt: new Date(), _count: { id: 10 } }];
 
-      const mockCommandUsage = [
-        { usedAt: new Date(), _count: { id: 50 } },
-      ];
+      const mockCommandUsage = [{ usedAt: new Date(), _count: { id: 50 } }];
 
-      const mockRevenue = [
-        { createdAt: new Date(), _sum: { amount: 500 } },
-      ];
+      const mockRevenue = [{ createdAt: new Date(), _sum: { amount: 500 } }];
 
-      const mockErrorRate = [
-        { usedAt: new Date(), _count: { id: 10, success: 5 } },
-      ];
+      const mockErrorRate = [{ usedAt: new Date(), _count: { id: 10, success: 5 } }];
 
       mockDatabase.prisma.user.groupBy.mockResolvedValue(mockUserGrowth);
       mockDatabase.prisma.commandUsage.groupBy
@@ -332,11 +318,7 @@ describe('AnalyticsService', () => {
         recordedAt: new Date(),
       });
 
-      await analyticsService.trackEvent(
-        eventData.userId,
-        eventData.event,
-        eventData.properties
-      );
+      await analyticsService.trackEvent(eventData.userId, eventData.event, eventData.properties);
 
       expect(mockDatabase.prisma.analytics.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -423,9 +405,9 @@ describe('AnalyticsService', () => {
     });
 
     test('should handle unknown report types', async () => {
-      await expect(
-        analyticsService.generateBIReport('unknown_report')
-      ).rejects.toThrow('Unknown report type: unknown_report');
+      await expect(analyticsService.generateBIReport('unknown_report')).rejects.toThrow(
+        'Unknown report type: unknown_report'
+      );
     });
   });
 
@@ -471,7 +453,9 @@ describe('AnalyticsService', () => {
     });
 
     test('should return unhealthy status on error', async () => {
-      analyticsService.healthCheck = jest.fn().mockResolvedValue({ status: 'unhealthy', service: 'analytics' });
+      analyticsService.healthCheck = jest
+        .fn()
+        .mockResolvedValue({ status: 'unhealthy', service: 'analytics' });
 
       const health = await analyticsService.healthCheck();
 

@@ -1,8 +1,8 @@
-const pingCommand = require('../../../commands/information/ping.js');
 const { performance } = require('perf_hooks');
+const pingCommand = require('../../../commands/information/ping.js');
 
 jest.mock('../../../utils/formatters', () => ({
-  convertMsToDuration: jest.fn((ms) => `${ms.toFixed(2)} ms`),
+  convertMsToDuration: jest.fn(ms => `${ms.toFixed(2)} ms`),
 }));
 
 describe('ping command', () => {
@@ -16,7 +16,7 @@ describe('ping command', () => {
       bot: {
         context: {
           formatter: {
-            quote: (str) => str,
+            quote: str => str,
           },
         },
       },
@@ -25,7 +25,8 @@ describe('ping command', () => {
 
   it('should reply with Pong! and edit the message with the response time', async () => {
     // Arrange
-    const performanceSpy = jest.spyOn(performance, 'now')
+    const performanceSpy = jest
+      .spyOn(performance, 'now')
       .mockReturnValueOnce(1000) // Start time
       .mockReturnValueOnce(1550); // End time
 

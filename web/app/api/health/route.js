@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const health = {
       timestamp: new Date().toISOString(),
-      services: {}
+      services: {},
     };
 
     // Database health check
@@ -24,7 +24,7 @@ export async function GET() {
     try {
       const redisClient = redis.createClient({
         url: process.env.REDIS_URL || 'redis://localhost:6379',
-        password: process.env.REDIS_PASSWORD
+        password: process.env.REDIS_PASSWORD,
       });
 
       await redisClient.connect();
@@ -42,7 +42,7 @@ export async function GET() {
     // Gemini AI service check
     try {
       const response = await fetch('http://localhost:3001/health/gemini', {
-        timeout: 5000
+        timeout: 5000,
       });
       if (response.ok) {
         health.services.gemini = 'healthy';
@@ -59,7 +59,7 @@ export async function GET() {
       memoryUsage: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
       cpuUsage: 'N/A', // Would need additional monitoring
       uptime: Math.floor(process.uptime()),
-      nodeVersion: process.version
+      nodeVersion: process.version,
     };
 
     // Overall status
@@ -73,7 +73,7 @@ export async function GET() {
       {
         status: 'unhealthy',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       { status: 500 }
     );

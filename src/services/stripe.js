@@ -19,8 +19,8 @@ class StripeService {
           '100 AI requests per month',
           'Basic image generation',
           'Standard support',
-          'Community access'
-        ]
+          'Community access',
+        ],
       },
       pro: {
         id: 'pro_monthly',
@@ -34,8 +34,8 @@ class StripeService {
           'Priority support',
           'Custom commands',
           'Analytics dashboard',
-          'API access'
-        ]
+          'API access',
+        ],
       },
       enterprise: {
         id: 'enterprise_monthly',
@@ -50,9 +50,9 @@ class StripeService {
           'Custom integrations',
           'Advanced analytics',
           'SLA guarantee',
-          'Custom training'
-        ]
-      }
+          'Custom training',
+        ],
+      },
     };
 
     logger.info('Stripe service initialized');
@@ -82,7 +82,6 @@ class StripeService {
 
       // Create or verify subscription products
       await this.initializeProducts();
-
     } catch (error) {
       logger.error('Failed to initialize Stripe service', { error: error.message });
       throw error;
@@ -110,8 +109,8 @@ class StripeService {
             description: `${planConfig.name} subscription plan`,
             metadata: {
               plan_key: planKey,
-              features: JSON.stringify(planConfig.features)
-            }
+              features: JSON.stringify(planConfig.features),
+            },
           });
           logger.info(`Created Stripe product: ${product.name}`);
         }
@@ -119,13 +118,14 @@ class StripeService {
         // Check if price exists
         const prices = await this.stripe.prices.list({
           product: product.id,
-          active: true
+          active: true,
         });
 
-        let price = prices.data.find(p =>
-          p.unit_amount === planConfig.price &&
-          p.currency === planConfig.currency &&
-          p.recurring?.interval === planConfig.interval
+        let price = prices.data.find(
+          p =>
+            p.unit_amount === planConfig.price &&
+            p.currency === planConfig.currency &&
+            p.recurring?.interval === planConfig.interval
         );
 
         if (!price) {
@@ -136,11 +136,11 @@ class StripeService {
             currency: planConfig.currency,
             recurring: {
               interval: planConfig.interval,
-              interval_count: 1
+              interval_count: 1,
             },
             metadata: {
-              plan_key: planKey
-            }
+              plan_key: planKey,
+            },
           });
           logger.info(`Created Stripe price: ${price.id} for ${planConfig.name}`);
         }
@@ -151,7 +151,6 @@ class StripeService {
       }
 
       logger.info('Stripe products and prices initialized successfully');
-
     } catch (error) {
       logger.error('Failed to initialize Stripe products', { error: error.message });
       throw error;
@@ -171,20 +170,20 @@ class StripeService {
         phone: customerData.phone,
         metadata: {
           userId: customerData.userId,
-          source: 'whatsdex'
-        }
+          source: 'whatsdex',
+        },
       });
 
       logger.info('Stripe customer created', {
         customerId: customer.id,
-        userId: customerData.userId
+        userId: customerData.userId,
       });
 
       return customer;
     } catch (error) {
       logger.error('Failed to create Stripe customer', {
         userId: customerData.userId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -206,12 +205,14 @@ class StripeService {
 
       const subscriptionData = {
         customer: customerId,
-        items: [{
-          price: plan.priceId,
-        }],
+        items: [
+          {
+            price: plan.priceId,
+          },
+        ],
         metadata: {
           planKey,
-          userId: options.userId
+          userId: options.userId,
         },
         payment_behavior: 'default_incomplete',
         expand: ['latest_invoice.payment_intent'],
@@ -233,7 +234,7 @@ class StripeService {
         subscriptionId: subscription.id,
         customerId,
         planKey,
-        status: subscription.status
+        status: subscription.status,
       });
 
       return subscription;
@@ -241,7 +242,7 @@ class StripeService {
       logger.error('Failed to create Stripe subscription', {
         customerId,
         planKey,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -262,14 +263,14 @@ class StripeService {
       logger.info('Stripe subscription cancelled', {
         subscriptionId,
         cancelAtPeriodEnd,
-        status: subscription.status
+        status: subscription.status,
       });
 
       return subscription;
     } catch (error) {
       logger.error('Failed to cancel Stripe subscription', {
         subscriptionId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -292,17 +293,19 @@ class StripeService {
       const subscriptionItem = subscription.items.data[0];
 
       const updatedSubscription = await this.stripe.subscriptions.update(subscriptionId, {
-        items: [{
-          id: subscriptionItem.id,
-          price: newPlan.priceId,
-        }],
+        items: [
+          {
+            id: subscriptionItem.id,
+            price: newPlan.priceId,
+          },
+        ],
         proration_behavior: 'create_prorations',
       });
 
       logger.info('Stripe subscription plan updated', {
         subscriptionId,
         oldPlan: subscription.metadata.planKey,
-        newPlan: newPlanKey
+        newPlan: newPlanKey,
       });
 
       return updatedSubscription;
@@ -310,7 +313,7 @@ class StripeService {
       logger.error('Failed to update Stripe subscription plan', {
         subscriptionId,
         newPlanKey,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -324,23 +327,19 @@ class StripeService {
    */
   async handleWebhook(payload, signature) {
     try {
-      const event = this.stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        this.webhookSecret
-      );
+      const event = this.stripe.webhooks.constructEvent(payload, signature, this.webhookSecret);
 
       // Idempotency check for webhook replay protection
       const { database } = require('../context');
       const existing = await database.auditLog.findFirst({
         where: {
           details: {
-            contains: event.id
+            contains: event.id,
           },
           createdAt: {
-            gt: new Date(Date.now() - 5 * 60 * 1000) // 5 minutes
-          }
-        }
+            gt: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes
+          },
+        },
       });
 
       if (existing) {
@@ -354,18 +353,18 @@ class StripeService {
         actor: 'stripe',
         action: event.type,
         details: JSON.stringify({ eventId: event.id, type: event.type }),
-        riskLevel: 'high'
+        riskLevel: 'high',
       });
 
       logger.info('Stripe webhook received', {
         type: event.type,
-        id: event.id
+        id: event.id,
       });
 
       return event;
     } catch (error) {
       logger.error('Failed to handle Stripe webhook', {
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -384,7 +383,7 @@ class StripeService {
         metadata: {
           userId: paymentData.userId,
           type: paymentData.type || 'one_time',
-          description: paymentData.description
+          description: paymentData.description,
         },
         receipt_email: paymentData.email,
       });
@@ -392,14 +391,14 @@ class StripeService {
       logger.info('Stripe payment intent created', {
         paymentIntentId: paymentIntent.id,
         amount: paymentData.amount,
-        userId: paymentData.userId
+        userId: paymentData.userId,
       });
 
       return paymentIntent;
     } catch (error) {
       logger.error('Failed to create Stripe payment intent', {
         userId: paymentData.userId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -421,7 +420,7 @@ class StripeService {
     } catch (error) {
       logger.error('Failed to get customer payment methods', {
         customerId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -440,21 +439,21 @@ class StripeService {
         duration_in_months: couponData.durationInMonths,
         metadata: {
           code: couponData.code,
-          description: couponData.description
-        }
+          description: couponData.description,
+        },
       });
 
       logger.info('Stripe coupon created', {
         couponId: coupon.id,
         percentOff: couponData.percentOff,
-        code: couponData.code
+        code: couponData.code,
       });
 
       return coupon;
     } catch (error) {
       logger.error('Failed to create Stripe coupon', {
         code: couponData.code,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -472,7 +471,7 @@ class StripeService {
     } catch (error) {
       logger.error('Failed to get Stripe subscription', {
         subscriptionId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -490,7 +489,7 @@ class StripeService {
     } catch (error) {
       logger.error('Failed to get Stripe customer', {
         customerId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -506,14 +505,14 @@ class StripeService {
       const subscriptions = await this.stripe.subscriptions.list({
         customer: customerId,
         status: 'all',
-        limit: 100
+        limit: 100,
       });
 
       return subscriptions.data;
     } catch (error) {
       logger.error('Failed to list customer subscriptions', {
         customerId,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -549,7 +548,7 @@ class StripeService {
         service: 'stripe',
         initialized: this.isInitialized,
         plansCount: Object.keys(this.plans).length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Stripe health check failed', { error: error.message });
@@ -557,7 +556,7 @@ class StripeService {
         status: 'unhealthy',
         service: 'stripe',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

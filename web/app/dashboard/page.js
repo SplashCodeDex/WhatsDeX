@@ -2,11 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState({
@@ -15,7 +28,7 @@ export default function DashboardPage() {
     avgResponseTime: 0,
     uptime: 0,
     totalCommands: 0,
-    errorRate: 0
+    errorRate: 0,
   });
 
   const [commandStats, setCommandStats] = useState([]);
@@ -26,7 +39,7 @@ export default function DashboardPage() {
   useEffect(() => {
     // Initialize Socket.IO connection
     const socketConnection = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
     });
 
     socketConnection.on('connect', () => {
@@ -34,19 +47,19 @@ export default function DashboardPage() {
       socketConnection.emit('subscribe:metrics');
     });
 
-    socketConnection.on('metrics:update', (data) => {
+    socketConnection.on('metrics:update', data => {
       setMetrics(data);
     });
 
-    socketConnection.on('command:stats', (data) => {
+    socketConnection.on('command:stats', data => {
       setCommandStats(data);
     });
 
-    socketConnection.on('user:activity', (data) => {
+    socketConnection.on('user:activity', data => {
       setUserActivity(prev => [data, ...prev.slice(0, 49)]); // Keep last 50 entries
     });
 
-    socketConnection.on('system:health', (data) => {
+    socketConnection.on('system:health', data => {
       setSystemHealth(data);
     });
 
@@ -65,7 +78,7 @@ export default function DashboardPage() {
       const [metricsRes, commandsRes, healthRes] = await Promise.all([
         fetch('/api/metrics'),
         fetch('/api/commands/stats'),
-        fetch('/api/health')
+        fetch('/api/health'),
       ]);
 
       if (metricsRes.ok) setMetrics(await metricsRes.json());
@@ -76,23 +89,19 @@ export default function DashboardPage() {
     }
   };
 
-  const formatUptime = (uptime) => {
+  const formatUptime = uptime => {
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
     const minutes = Math.floor((uptime % 3600) / 60);
     return `${days}d ${hours}h ${minutes}m`;
   };
 
-  const formatResponseTime = (ms) => {
-    return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(2)}s`;
-  };
+  const formatResponseTime = ms => (ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(2)}s`);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          WhatsDeX Dashboard
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">WhatsDeX Dashboard</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
           Real-time monitoring and analytics for your WhatsApp bot
         </p>
@@ -107,9 +116,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.activeUsers.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Currently online
-            </p>
+            <p className="text-xs text-muted-foreground">Currently online</p>
           </CardContent>
         </Card>
 
@@ -120,24 +127,20 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.messagesToday.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Total messages processed
-            </p>
+            <p className="text-xs text-muted-foreground">Total messages processed</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
-            <Badge variant={metrics.avgResponseTime < 500 ? "default" : "destructive"}>
-              {metrics.avgResponseTime < 500 ? "Good" : "Slow"}
+            <Badge variant={metrics.avgResponseTime < 500 ? 'default' : 'destructive'}>
+              {metrics.avgResponseTime < 500 ? 'Good' : 'Slow'}
             </Badge>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatResponseTime(metrics.avgResponseTime)}</div>
-            <p className="text-xs text-muted-foreground">
-              Command execution time
-            </p>
+            <p className="text-xs text-muted-foreground">Command execution time</p>
           </CardContent>
         </Card>
 
@@ -148,9 +151,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatUptime(metrics.uptime)}</div>
-            <p className="text-xs text-muted-foreground">
-              Continuous operation
-            </p>
+            <p className="text-xs text-muted-foreground">Continuous operation</p>
           </CardContent>
         </Card>
       </div>
@@ -189,13 +190,15 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={[
-                    { range: '<100ms', count: 45 },
-                    { range: '100-500ms', count: 32 },
-                    { range: '500-1000ms', count: 15 },
-                    { range: '1-2s', count: 6 },
-                    { range: '>2s', count: 2 }
-                  ]}>
+                  <BarChart
+                    data={[
+                      { range: '<100ms', count: 45 },
+                      { range: '100-500ms', count: 32 },
+                      { range: '500-1000ms', count: 15 },
+                      { range: '1-2s', count: 6 },
+                      { range: '>2s', count: 2 },
+                    ]}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="range" />
                     <YAxis />
@@ -261,7 +264,9 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span>WhatsApp Connection</span>
-                  <Badge variant={systemHealth.whatsapp === 'connected' ? 'default' : 'destructive'}>
+                  <Badge
+                    variant={systemHealth.whatsapp === 'connected' ? 'default' : 'destructive'}
+                  >
                     {systemHealth.whatsapp || 'unknown'}
                   </Badge>
                 </div>

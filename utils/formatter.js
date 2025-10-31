@@ -1,29 +1,18 @@
+const quote = text => `> ${text}`;
 
-const quote = (text) => {
-  return `> ${text}`;
-};
+const bold = text => `*${text}*`;
 
-const bold = (text) => {
-  return `*${text}*`;
-};
+const italic = text => `_${text}_`;
 
-const italic = (text) => {
-  return `_${text}_`;
-};
-
-const monospace = (text) => {
-  return `\
+const monospace = text => `\
 \
 ${text}\
 \
 `;
-};
 
-const inlineCode = (text) => {
-  return `\
+const inlineCode = text => `\
 ${text}\
 `;
-};
 
 module.exports = {
   quote,

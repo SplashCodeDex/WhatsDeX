@@ -26,25 +26,25 @@ export default function AnalyticsPage() {
     const interval = setInterval(fetchAnalytics, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
   }, [timeRange, fetchAnalytics]);
-  const formatNumber = (num) => {
+  const formatNumber = num => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
   };
 
-  const formatTime = (ms) => {
+  const formatTime = ms => {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     return `${(ms / 60000).toFixed(1)}m`;
   };
 
-  const formatPercentage = (value) => `${(value * 100).toFixed(1)}%`;
+  const formatPercentage = value => `${(value * 100).toFixed(1)}%`;
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading analytics...</p>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
             <div className="flex gap-4">
               <select
                 value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
+                onChange={e => setTimeRange(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="1h">Last Hour</option>
@@ -87,7 +87,7 @@ export default function AnalyticsPage() {
 
               <select
                 value={selectedMetric}
-                onChange={(e) => setSelectedMetric(e.target.value)}
+                onChange={e => setSelectedMetric(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="overview">Overview</option>
@@ -116,9 +116,7 @@ export default function AnalyticsPage() {
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {formatNumber(analytics.overall?.totalConnections || 0)}
               </div>
-              <div className="text-sm text-gray-500">
-                +12% from last period
-              </div>
+              <div className="text-sm text-gray-500">+12% from last period</div>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -129,9 +127,7 @@ export default function AnalyticsPage() {
               <div className="text-3xl font-bold text-green-600 mb-2">
                 {formatPercentage(analytics.overall?.successRate / 100 || 0)}
               </div>
-              <div className="text-sm text-gray-500">
-                +2.1% from last period
-              </div>
+              <div className="text-sm text-gray-500">+2.1% from last period</div>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -142,9 +138,7 @@ export default function AnalyticsPage() {
               <div className="text-3xl font-bold text-orange-600 mb-2">
                 {formatTime(analytics.overall?.averageConnectionTime * 1000 || 0)}
               </div>
-              <div className="text-sm text-gray-500">
-                -1.2s from last period
-              </div>
+              <div className="text-sm text-gray-500">-1.2s from last period</div>
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -155,9 +149,7 @@ export default function AnalyticsPage() {
               <div className="text-3xl font-bold text-purple-600 mb-2">
                 {analytics.overall?.activeConnections || 0}
               </div>
-              <div className="text-sm text-gray-500">
-                Currently online
-              </div>
+              <div className="text-sm text-gray-500">Currently online</div>
             </div>
           </div>
         )}
@@ -178,15 +170,21 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Success Rate</span>
-                  <span className="font-semibold text-green-600">{analytics.qrStats?.averageSuccessRate || 'N/A'}</span>
+                  <span className="font-semibold text-green-600">
+                    {analytics.qrStats?.averageSuccessRate || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Generation Time</span>
-                  <span className="font-semibold">{analytics.qrStats?.averageGenerationTime || 'N/A'}</span>
+                  <span className="font-semibold">
+                    {analytics.qrStats?.averageGenerationTime || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Optimal Refresh Time</span>
-                  <span className="font-semibold">{analytics.qrStats?.optimalRefreshTime || 'N/A'}</span>
+                  <span className="font-semibold">
+                    {analytics.qrStats?.optimalRefreshTime || 'N/A'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -196,14 +194,19 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Successful Patterns</span>
-                  <span className="font-semibold text-green-600">{analytics.qrStats?.learningPatterns?.successful || 0}</span>
+                  <span className="font-semibold text-green-600">
+                    {analytics.qrStats?.learningPatterns?.successful || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Failed Patterns</span>
-                  <span className="font-semibold text-red-600">{analytics.qrStats?.learningPatterns?.failed || 0}</span>
+                  <span className="font-semibold text-red-600">
+                    {analytics.qrStats?.learningPatterns?.failed || 0}
+                  </span>
                 </div>
                 <div className="text-sm text-gray-500 mt-4">
-                  AI continuously learns from authentication patterns to optimize QR code generation and refresh timing.
+                  AI continuously learns from authentication patterns to optimize QR code generation
+                  and refresh timing.
                 </div>
               </div>
             </div>
@@ -214,7 +217,9 @@ export default function AnalyticsPage() {
         {selectedMetric === 'pairing-codes' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">🔢 Pairing Code Performance</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                🔢 Pairing Code Performance
+              </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Active Codes</span>
@@ -222,19 +227,27 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Total Generated</span>
-                  <span className="font-semibold">{analytics.pairingStats?.totalGenerated || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.pairingStats?.totalGenerated || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Success Rate</span>
-                  <span className="font-semibold text-green-600">{analytics.pairingStats?.successRate || 'N/A'}</span>
+                  <span className="font-semibold text-green-600">
+                    {analytics.pairingStats?.successRate || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Avg Usage Time</span>
-                  <span className="font-semibold">{analytics.pairingStats?.averageUseTime || 'N/A'}</span>
+                  <span className="font-semibold">
+                    {analytics.pairingStats?.averageUseTime || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Accessibility Usage</span>
-                  <span className="font-semibold text-blue-600">{analytics.pairingStats?.accessibilityUsage || 0}</span>
+                  <span className="font-semibold text-blue-600">
+                    {analytics.pairingStats?.accessibilityUsage || 0}
+                  </span>
                 </div>
               </div>
             </div>
@@ -244,19 +257,29 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Preferred Format</span>
-                  <span className="font-semibold capitalize">{analytics.pairingStats?.userPreferences?.format || 'phonetic'}</span>
+                  <span className="font-semibold capitalize">
+                    {analytics.pairingStats?.userPreferences?.format || 'phonetic'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Preferred Length</span>
-                  <span className="font-semibold capitalize">{analytics.pairingStats?.userPreferences?.length || 'medium'}</span>
+                  <span className="font-semibold capitalize">
+                    {analytics.pairingStats?.userPreferences?.length || 'medium'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Voice Guidance</span>
-                  <span className="font-semibold">{analytics.pairingStats?.userPreferences?.voice ? '✅ Enabled' : '❌ Disabled'}</span>
+                  <span className="font-semibold">
+                    {analytics.pairingStats?.userPreferences?.voice ? '✅ Enabled' : '❌ Disabled'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Accessibility</span>
-                  <span className="font-semibold">{analytics.pairingStats?.userPreferences?.accessibility ? '✅ Enabled' : '❌ Disabled'}</span>
+                  <span className="font-semibold">
+                    {analytics.pairingStats?.userPreferences?.accessibility
+                      ? '✅ Enabled'
+                      : '❌ Disabled'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -271,25 +294,41 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Connection Status</span>
-                  <span className={`font-semibold ${analytics.reconnectionStats?.connectionState?.isConnected ? 'text-green-600' : 'text-red-600'}`}>
-                    {analytics.reconnectionStats?.connectionState?.isConnected ? '✅ Connected' : '❌ Disconnected'}
+                  <span
+                    className={`font-semibold ${analytics.reconnectionStats?.connectionState?.isConnected ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {analytics.reconnectionStats?.connectionState?.isConnected
+                      ? '✅ Connected'
+                      : '❌ Disconnected'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Active Attempts</span>
-                  <span className="font-semibold">{analytics.reconnectionStats?.activeAttempts || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.reconnectionStats?.activeAttempts || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Success Rate</span>
-                  <span className="font-semibold text-green-600">{formatPercentage(analytics.reconnectionStats?.connectionState?.successRate || 0)}</span>
+                  <span className="font-semibold text-green-600">
+                    {formatPercentage(
+                      analytics.reconnectionStats?.connectionState?.successRate || 0
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Avg Reconnection Time</span>
-                  <span className="font-semibold">{formatTime(analytics.reconnectionStats?.connectionState?.averageReconnectionTime || 0)}</span>
+                  <span className="font-semibold">
+                    {formatTime(
+                      analytics.reconnectionStats?.connectionState?.averageReconnectionTime || 0
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Total Retries</span>
-                  <span className="font-semibold">{analytics.reconnectionStats?.connectionState?.totalRetries || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.reconnectionStats?.connectionState?.totalRetries || 0}
+                  </span>
                 </div>
               </div>
             </div>
@@ -299,23 +338,33 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Successful Strategies</span>
-                  <span className="font-semibold text-green-600">{analytics.reconnectionStats?.learningData?.successfulStrategies?.length || 0}</span>
+                  <span className="font-semibold text-green-600">
+                    {analytics.reconnectionStats?.learningData?.successfulStrategies?.length || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Failed Strategies</span>
-                  <span className="font-semibold text-red-600">{analytics.reconnectionStats?.learningData?.failedStrategies?.length || 0}</span>
+                  <span className="font-semibold text-red-600">
+                    {analytics.reconnectionStats?.learningData?.failedStrategies?.length || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Network Patterns</span>
-                  <span className="font-semibold">{analytics.reconnectionStats?.learningData?.networkPatterns?.size || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.reconnectionStats?.learningData?.networkPatterns?.size || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Time Patterns</span>
-                  <span className="font-semibold">{analytics.reconnectionStats?.learningData?.timePatterns?.size || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.reconnectionStats?.learningData?.timePatterns?.size || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Device Patterns</span>
-                  <span className="font-semibold">{analytics.reconnectionStats?.learningData?.devicePatterns?.size || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.reconnectionStats?.learningData?.devicePatterns?.size || 0}
+                  </span>
                 </div>
               </div>
             </div>
@@ -330,7 +379,9 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Active Sessions</span>
-                  <span className="font-semibold">{analytics.sessionStats?.activeSessions || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.sessionStats?.activeSessions || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Total Devices</span>
@@ -338,15 +389,21 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Avg Session Duration</span>
-                  <span className="font-semibold">{analytics.sessionStats?.averageSessionDuration || 0} min</span>
+                  <span className="font-semibold">
+                    {analytics.sessionStats?.averageSessionDuration || 0} min
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Recovery Points</span>
-                  <span className="font-semibold">{analytics.sessionStats?.recoveryPoints || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.sessionStats?.recoveryPoints || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Session History</span>
-                  <span className="font-semibold">{analytics.sessionStats?.sessionHistory || 0}</span>
+                  <span className="font-semibold">
+                    {analytics.sessionStats?.sessionHistory || 0}
+                  </span>
                 </div>
               </div>
             </div>
@@ -354,23 +411,27 @@ export default function AnalyticsPage() {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">📱 Device Distribution</h3>
               <div className="space-y-3">
-                {analytics.sessionStats?.deviceStats && Object.entries(analytics.sessionStats.deviceStats).map(([deviceId, stats]) => (
-                  <div key={deviceId} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-medium text-gray-800">{deviceId.substring(0, 8)}...</div>
-                      <div className="text-sm text-gray-500">
-                        {stats.types.join(', ')} • {stats.count} session{stats.count !== 1 ? 's' : ''}
+                {analytics.sessionStats?.deviceStats &&
+                  Object.entries(analytics.sessionStats.deviceStats).map(([deviceId, stats]) => (
+                    <div
+                      key={deviceId}
+                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-800">
+                          {deviceId.substring(0, 8)}...
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {stats.types.join(', ')} • {stats.count} session
+                          {stats.count !== 1 ? 's' : ''}
+                        </div>
                       </div>
+                      <div className="text-lg">{stats.types.includes('mobile') ? '📱' : '💻'}</div>
                     </div>
-                    <div className="text-lg">
-                      {stats.types.includes('mobile') ? '📱' : '💻'}
-                    </div>
-                  </div>
-                ))}
-                {(!analytics.sessionStats?.deviceStats || Object.keys(analytics.sessionStats.deviceStats).length === 0) && (
-                  <div className="text-center text-gray-500 py-8">
-                    No device data available
-                  </div>
+                  ))}
+                {(!analytics.sessionStats?.deviceStats ||
+                  Object.keys(analytics.sessionStats.deviceStats).length === 0) && (
+                  <div className="text-center text-gray-500 py-8">No device data available</div>
                 )}
               </div>
             </div>

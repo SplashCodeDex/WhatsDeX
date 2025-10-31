@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useToast } from '@/hooks/use-toast';
 import {
   ChartBarIcon,
   UsersIcon,
@@ -27,20 +26,21 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import toast, { Toaster } from 'react-hot-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { ChartAreaInteractive } from '@/components/ui/shadcn-io/area-chart-01';
 import { Badge } from '@/components/ui/badge';
 import Layout from '@/components/common/Layout';
 import { cn } from '@/lib/utils';
-import toast, { Toaster } from 'react-hot-toast';
 import { getSocket } from '@/socket';
 import { AnimatedList } from '@/components/ui/animated-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const getChangeTypeClass = (changeType) => {
+const getChangeTypeClass = changeType => {
   switch (changeType) {
     case 'positive':
       return 'text-green-600 dark:text-green-400';
@@ -52,7 +52,7 @@ const getChangeTypeClass = (changeType) => {
 };
 
 // Activity Status Badge Configuration
-const getActivityStatusConfig = (status) => {
+const getActivityStatusConfig = status => {
   switch (status) {
     case 'success':
       return {
@@ -93,7 +93,7 @@ const getActivityStatusConfig = (status) => {
   }
 };
 
-export const ActivityItem = ({ activity }) => {
+export function ActivityItem({ activity }) {
   const statusConfig = getActivityStatusConfig(activity.status);
   const StatusIcon = statusConfig.icon;
 
@@ -125,26 +125,28 @@ export const ActivityItem = ({ activity }) => {
       </CardContent>
     </Card>
   );
-};
+}
 
-const StatCard = ({ title, value, change, changeType, icon: Icon, variant = 'default' }) => (
-  <Card className={cn('w-full', variant === 'accent' && 'bg-accent/50')}>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      <Icon className="h-4 w-4 text-muted-foreground" />
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">
-        <NumberTicker value={value} />
-      </div>
-      {change && (
-        <p className={cn('text-xs text-muted-foreground', getChangeTypeClass(changeType))}>
-          {change} from last month
-        </p>
-      )}
-    </CardContent>
-  </Card>
-);
+function StatCard({ title, value, change, changeType, icon: Icon, variant = 'default' }) {
+  return (
+    <Card className={cn('w-full', variant === 'accent' && 'bg-accent/50')}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">
+          <NumberTicker value={value} />
+        </div>
+        {change && (
+          <p className={cn('text-xs text-muted-foreground', getChangeTypeClass(changeType))}>
+            {change} from last month
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -154,12 +156,12 @@ export default function Dashboard() {
   useEffect(() => {
     const socket = getSocket();
 
-    const handleUpdateStats = (newStats) => {
+    const handleUpdateStats = newStats => {
       setStats(newStats);
     };
 
-    const handleNewActivity = (newActivity) => {
-      setRecentActivity((prevActivity) => [newActivity, ...prevActivity]);
+    const handleNewActivity = newActivity => {
+      setRecentActivity(prevActivity => [newActivity, ...prevActivity]);
     };
 
     if (socket) {
@@ -179,7 +181,7 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       setStats({
         totalUsers: 12543,
@@ -255,10 +257,6 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-
-
-
-
   return (
     <Layout title="Dashboard">
       <div className="space-y-8">
@@ -269,7 +267,10 @@ export default function Dashboard() {
           className="text-center"
         >
           <h1 className="text-4xl font-bold text-secondary-900 dark:text-white mb-2">
-            Welcome to <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">WhatsDeX</span>
+            Welcome to{' '}
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              WhatsDeX
+            </span>
           </h1>
           <p className="text-lg text-secondary-600 dark:text-secondary-400">
             Your AI-powered WhatsApp bot management dashboard
@@ -291,7 +292,7 @@ export default function Dashboard() {
                   <Skeleton className="h-64" />
                 ) : (
                   <AnimatedList>
-                    {recentActivity.map((activity) => (
+                    {recentActivity.map(activity => (
                       <ActivityItem key={activity.id} activity={activity} />
                     ))}
                   </AnimatedList>
@@ -301,80 +302,47 @@ export default function Dashboard() {
           </BentoCard>
         </BentoGrid>
 
-                {/* Main Content Grid */}
+        {/* Main Content Grid */}
 
-                <BentoGrid className="grid-cols-1 lg:grid-cols-3 gap-8">
+        <BentoGrid className="grid-cols-1 lg:grid-cols-3 gap-8">
+          <BentoCard
+            name="Performance Metrics"
+            description="Detailed view of system performance over time."
+            Icon={ChartBarIcon}
+            href="#"
+            cta="View Report"
+            className="lg:col-span-2"
+            background={<ChartAreaInteractive />}
+          />
 
-                  <BentoCard
+          <BentoCard
+            name="Recent Activity"
+            description="Latest user interactions and system events."
+            Icon={ClockIcon}
+            href="#"
+            cta="View All"
+            className="lg:col-span-1"
+            background={
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Recent Activity</CardTitle>
+                </CardHeader>
 
-                    name="Performance Metrics"
-
-                    description="Detailed view of system performance over time."
-
-                    Icon={ChartBarIcon}
-
-                    href="#"
-
-                    cta="View Report"
-
-                    className="lg:col-span-2"
-
-                    background={<ChartAreaInteractive />}
-
-                  />
-
-                  <BentoCard
-
-                    name="Recent Activity"
-
-                    description="Latest user interactions and system events."
-
-                    Icon={ClockIcon}
-
-                    href="#"
-
-                    cta="View All"
-
-                    className="lg:col-span-1"
-
-                    background={
-
-                      <Card>
-
-                        <CardHeader>
-
-                          <CardTitle className="text-xl font-bold">Recent Activity</CardTitle>
-
-                        </CardHeader>
-
-                        <CardContent>
-
-                          {loading ? (
-
-                            <Skeleton className="h-64" />
-
-                          ) : (
-
-                            <AnimatedList>
-
-                              {recentActivity.map((activity) => (
-
-                                <ActivityItem key={activity.id} activity={activity} />
-
-                              ))}
-
-                            </AnimatedList>
-
-                          )}
-
-                        </CardContent>
-
-                      </Card>
-
-                    }
-
-                  />
-                </BentoGrid>
+                <CardContent>
+                  {loading ? (
+                    <Skeleton className="h-64" />
+                  ) : (
+                    <AnimatedList>
+                      {recentActivity.map(activity => (
+                        <ActivityItem key={activity.id} activity={activity} />
+                      ))}
+                    </AnimatedList>
+                  )}
+                </CardContent>
+              </Card>
+            }
+          />
+        </BentoGrid>
 
         {/* Quick Actions */}
         <Card>

@@ -1,33 +1,35 @@
-const axios = require("axios");
+const axios = require('axios');
 
 module.exports = {
-    name: "fufufafa",
-    category: "entertainment",
-    permissions: {
-        coin: 10
-    },
-    code: async (ctx) => {
-        const { formatter, tools, config } = ctx.bot.context;
-        try {
-            const apiUrl = tools.api.createUrl("https://fufufafapi.vanirvan.my.id", "/api");
-            const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data);
+  name: 'fufufafa',
+  category: 'entertainment',
+  permissions: {
+    coin: 10,
+  },
+  code: async ctx => {
+    const { formatter, tools, config } = ctx.bot.context;
+    try {
+      const apiUrl = tools.api.createUrl('https://fufufafapi.vanirvan.my.id', '/api');
+      const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data);
 
-            await ctx.reply({
-                image: {
-                    url: result.image_url
-                },
-                mimetype: tools.mime.lookup("jpg"),
-                caption: formatter.quote(`Doksli: ${result.doksli}`),
-                footer: config.msg.footer,
-                buttons: [{
-                    buttonId: ctx.used.prefix + ctx.used.command,
-                    buttonText: {
-                        displayText: "Ambil Lagi"
-                    }
-                }]
-            });
-        } catch (error) {
-            await tools.cmd.handleError(ctx, error, true);
-        }
+      await ctx.reply({
+        image: {
+          url: result.image_url,
+        },
+        mimetype: tools.mime.lookup('jpg'),
+        caption: formatter.quote(`Doksli: ${result.doksli}`),
+        footer: config.msg.footer,
+        buttons: [
+          {
+            buttonId: ctx.used.prefix + ctx.used.command,
+            buttonText: {
+              displayText: 'Ambil Lagi',
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      await tools.cmd.handleError(ctx, error, true);
     }
+  },
 };

@@ -27,16 +27,20 @@ class MessageQueueService {
     });
 
     // Create worker to process messages
-    this.worker = new Worker('whatsdex-messages', async (job) => {
-      console.log(`Processing job ${job.id} with data:`, job.data.serializableMsg.key.id);
-      await messageProcessor(job);
-    }, {
-      connection: this.redisConnection,
-      concurrency: 5, // Process up to 5 messages concurrently
-    });
+    this.worker = new Worker(
+      'whatsdex-messages',
+      async job => {
+        console.log(`Processing job ${job.id} with data:`, job.data.serializableMsg.key.id);
+        await messageProcessor(job);
+      },
+      {
+        connection: this.redisConnection,
+        concurrency: 5, // Process up to 5 messages concurrently
+      }
+    );
 
     // Event listeners for monitoring
-    this.worker.on('completed', (job) => {
+    this.worker.on('completed', job => {
       console.log(`Job ${job.id} completed successfully`);
     });
 
@@ -54,7 +58,7 @@ class MessageQueueService {
     try {
       const job = await this.messageQueue.add('process-message', {
         serializableMsg,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       console.log(`Added message to queue: ${job.id}`);
       return job;

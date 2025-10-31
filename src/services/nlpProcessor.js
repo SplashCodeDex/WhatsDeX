@@ -12,82 +12,91 @@ class NLPProcessorService {
       // AI/Chat commands
       chat: {
         keywords: ['talk', 'chat', 'ask', 'tell', 'explain', 'help', 'question', 'answer'],
-        commands: ['gemini', 'chatgpt', 'deepseek', 'felo', 'hika', 'venice']
+        commands: ['gemini', 'chatgpt', 'deepseek', 'felo', 'hika', 'venice'],
       },
 
       // Image commands
       image: {
         keywords: ['image', 'picture', 'photo', 'generate', 'create', 'draw', 'design', 'art'],
-        commands: ['dalle', 'flux', 'animagine', 'deepdreams', 'text2image']
+        commands: ['dalle', 'flux', 'animagine', 'deepdreams', 'text2image'],
       },
 
       // Video commands
       video: {
         keywords: ['video', 'movie', 'film', 'clip', 'download', 'stream'],
-        commands: ['videogpt', 'youtubevideo']
+        commands: ['videogpt', 'youtubevideo'],
       },
 
       // Download commands
       download: {
         keywords: ['download', 'get', 'save', 'fetch', 'retrieve'],
-        commands: ['youtubevideo', 'youtubeaudio', 'instagramdl', 'facebookdl', 'tiktokdl', 'twitterdl', 'spotifydl', 'soundclouddl']
+        commands: [
+          'youtubevideo',
+          'youtubeaudio',
+          'instagramdl',
+          'facebookdl',
+          'tiktokdl',
+          'twitterdl',
+          'spotifydl',
+          'soundclouddl',
+        ],
       },
 
       // Entertainment commands
       entertainment: {
         keywords: ['fun', 'joke', 'meme', 'quote', 'game', 'play', 'entertain'],
-        commands: ['joke', 'meme', 'quotes', 'cecan', 'waifu', 'animeinfo', 'mangainfo']
+        commands: ['joke', 'meme', 'quotes', 'cecan', 'waifu', 'animeinfo', 'mangainfo'],
       },
 
       // Utility commands
       utility: {
         keywords: ['weather', 'translate', 'convert', 'sticker', 'ocr', 'search'],
-        commands: ['weather', 'translate', 'sticker', 'ocr', 'googlesearch', 'youtubesearch']
+        commands: ['weather', 'translate', 'sticker', 'ocr', 'googlesearch', 'youtubesearch'],
       },
 
       // Information commands
       info: {
         keywords: ['info', 'information', 'about', 'status', 'ping', 'uptime', 'server'],
-        commands: ['ping', 'about', 'server', 'uptime', 'speedtest']
+        commands: ['ping', 'about', 'server', 'uptime', 'speedtest'],
       },
 
       // Profile commands
       profile: {
         keywords: ['profile', 'level', 'xp', 'coin', 'balance', 'stats', 'leaderboard'],
-        commands: ['profile', 'coin', 'leaderboard', 'claim']
+        commands: ['profile', 'coin', 'leaderboard', 'claim'],
       },
 
       // Greeting commands
       greeting: {
         keywords: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'],
-        commands: ['hello']
+        commands: ['hello'],
       },
 
       // Farewell commands
       farewell: {
         keywords: ['goodbye', 'bye', 'see you', 'take care'],
-        commands: ['goodbye']
-      }
+        commands: ['goodbye'],
+      },
     };
 
     // Intent mapping
     this.intentMap = {
-      'create_image': 'dalle',
-      'generate_image': 'dalle',
-      'make_sticker': 'sticker',
-      'download_video': 'youtubevideo',
-      'download_music': 'youtubeaudio',
-      'get_weather': 'weather',
-      'translate_text': 'translate',
-      'tell_joke': 'joke',
-      'show_meme': 'meme',
-      'check_profile': 'profile',
-      'search_google': 'googlesearch',
-      'search_youtube': 'youtubesearch',
-      'play_game': 'family100',
-      'get_quote': 'quotes',
-      'greeting': 'hello',
-      'farewell': 'goodbye'
+      create_image: 'dalle',
+      generate_image: 'dalle',
+      make_sticker: 'sticker',
+      download_video: 'youtubevideo',
+      download_music: 'youtubeaudio',
+      get_weather: 'weather',
+      translate_text: 'translate',
+      tell_joke: 'joke',
+      show_meme: 'meme',
+      check_profile: 'profile',
+      search_google: 'googlesearch',
+      search_youtube: 'youtubesearch',
+      play_game: 'family100',
+      get_quote: 'quotes',
+      greeting: 'hello',
+      farewell: 'goodbye',
     };
 
     logger.info('NLP Processor service initialized');
@@ -107,7 +116,7 @@ class NLPProcessorService {
     try {
       logger.debug('Processing natural language input', {
         inputLength: input.length,
-        userId: context.userId
+        userId: context.userId,
       });
 
       // Check cache first
@@ -127,14 +136,14 @@ class NLPProcessorService {
       logger.debug('NLP processing completed', {
         intent: result.intent,
         confidence: result.confidence,
-        command: result.command
+        command: result.command,
       });
 
       return result;
     } catch (error) {
       logger.error('NLP processing failed', {
         error: error.message,
-        input: input.substring(0, 100)
+        input: input.substring(0, 100),
       });
 
       // Fallback to pattern matching
@@ -166,11 +175,11 @@ class NLPProcessorService {
 
     return {
       intent: intentResult.intent,
-      confidence: confidence,
+      confidence,
       command: commandResult.command,
       parameters: commandResult.parameters,
       alternatives: commandResult.alternatives,
-      explanation: intentResult.explanation
+      explanation: intentResult.explanation,
     };
   }
 
@@ -198,7 +207,22 @@ class NLPProcessorService {
     const keywords = [];
 
     // Extract meaningful words (longer than 2 chars, not common words)
-    const stopWords = ['the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'an', 'a'];
+    const stopWords = [
+      'the',
+      'and',
+      'or',
+      'but',
+      'in',
+      'on',
+      'at',
+      'to',
+      'for',
+      'of',
+      'with',
+      'by',
+      'an',
+      'a',
+    ];
 
     for (const word of words) {
       if (word.length > 2 && !stopWords.includes(word)) {
@@ -249,7 +273,7 @@ Respond with ONLY valid JSON, no additional text.`;
       return {
         intent: result.intent || 'unknown',
         confidence: result.confidence || 0.5,
-        explanation: result.explanation || 'AI-classified intent'
+        explanation: result.explanation || 'AI-classified intent',
       };
     } catch (error) {
       logger.warn('AI intent classification failed, using fallback', { error: error.message });
@@ -265,21 +289,23 @@ Respond with ONLY valid JSON, no additional text.`;
    * @returns {Object} Command mapping result
    */
   mapToCommand(intentResult, keywords, context) {
-    const intent = intentResult.intent;
+    const { intent } = intentResult;
 
     // Direct intent mapping
     if (this.intentMap[intent]) {
       return {
         command: this.intentMap[intent],
         parameters: this.extractParameters(intent, keywords),
-        alternatives: this.getAlternativeCommands(intent)
+        alternatives: this.getAlternativeCommands(intent),
       };
     }
 
     // Pattern-based mapping
     for (const [category, data] of Object.entries(this.commandPatterns)) {
       const keywordMatch = keywords.some(keyword =>
-        data.keywords.some(catKeyword => catKeyword.includes(keyword) || keyword.includes(catKeyword))
+        data.keywords.some(
+          catKeyword => catKeyword.includes(keyword) || keyword.includes(catKeyword)
+        )
       );
 
       if (keywordMatch) {
@@ -287,7 +313,7 @@ Respond with ONLY valid JSON, no additional text.`;
         return {
           command: bestCommand,
           parameters: this.extractParameters(intent, keywords),
-          alternatives: data.commands.filter(cmd => cmd !== bestCommand)
+          alternatives: data.commands.filter(cmd => cmd !== bestCommand),
         };
       }
     }
@@ -296,7 +322,7 @@ Respond with ONLY valid JSON, no additional text.`;
     return {
       command: 'gemini',
       parameters: {},
-      alternatives: ['chatgpt', 'ping', 'help']
+      alternatives: ['chatgpt', 'ping', 'help'],
     };
   }
 
@@ -346,8 +372,8 @@ Respond with ONLY valid JSON, no additional text.`;
 
     // Extract location for weather
     if (intent === 'get_weather') {
-      const locationKeywords = keywords.filter(keyword =>
-        !['weather', 'get', 'check', 'show', 'tell'].includes(keyword)
+      const locationKeywords = keywords.filter(
+        keyword => !['weather', 'get', 'check', 'show', 'tell'].includes(keyword)
       );
       if (locationKeywords.length > 0) {
         params.location = locationKeywords.join(' ');
@@ -356,9 +382,12 @@ Respond with ONLY valid JSON, no additional text.`;
 
     // Extract search query
     if (['search_web', 'download_video', 'download_music'].includes(intent)) {
-      params.query = keywords.filter(keyword =>
-        !['download', 'search', 'find', 'get', 'video', 'music', 'song'].includes(keyword)
-      ).join(' ');
+      params.query = keywords
+        .filter(
+          keyword =>
+            !['download', 'search', 'find', 'get', 'video', 'music', 'song'].includes(keyword)
+        )
+        .join(' ');
     }
 
     // Extract translation parameters
@@ -377,11 +406,11 @@ Respond with ONLY valid JSON, no additional text.`;
    */
   getAlternativeCommands(intent) {
     const alternatives = {
-      'create_image': ['flux', 'animagine', 'deepdreams'],
-      'download_video': ['instagramdl', 'facebookdl', 'tiktokdl'],
-      'get_weather': ['ping'], // Limited alternatives
-      'tell_joke': ['meme', 'quotes'],
-      'search_web': ['youtubesearch', 'githubsearch']
+      create_image: ['flux', 'animagine', 'deepdreams'],
+      download_video: ['instagramdl', 'facebookdl', 'tiktokdl'],
+      get_weather: ['ping'], // Limited alternatives
+      tell_joke: ['meme', 'quotes'],
+      search_web: ['youtubesearch', 'githubsearch'],
     };
 
     return alternatives[intent] || [];
@@ -429,11 +458,19 @@ Respond with ONLY valid JSON, no additional text.`;
     }
 
     if (input.includes('image') || input.includes('picture') || input.includes('generate')) {
-      return { intent: 'create_image', confidence: 0.8, explanation: 'Image-related keywords detected' };
+      return {
+        intent: 'create_image',
+        confidence: 0.8,
+        explanation: 'Image-related keywords detected',
+      };
     }
 
     if (input.includes('download') || input.includes('video')) {
-      return { intent: 'download_video', confidence: 0.7, explanation: 'Download keywords detected' };
+      return {
+        intent: 'download_video',
+        confidence: 0.7,
+        explanation: 'Download keywords detected',
+      };
     }
 
     if (input.includes('joke') || input.includes('funny')) {
@@ -468,7 +505,7 @@ Respond with ONLY valid JSON, no additional text.`;
             confidence: 0.6,
             command: data.commands[0], // Use first command as default
             parameters: {},
-            alternatives: data.commands.slice(1)
+            alternatives: data.commands.slice(1),
           };
         }
       }
@@ -480,7 +517,7 @@ Respond with ONLY valid JSON, no additional text.`;
       confidence: 0.2,
       command: 'gemini',
       parameters: {},
-      alternatives: ['ping', 'help']
+      alternatives: ['ping', 'help'],
     };
   }
 
@@ -492,7 +529,9 @@ Respond with ONLY valid JSON, no additional text.`;
    */
   generateCacheKey(input, context) {
     const hash = require('crypto').createHash('md5');
-    hash.update(`${input}:${context.userId || 'anonymous'}:${context.recentCommands?.join(',') || ''}`);
+    hash.update(
+      `${input}:${context.userId || 'anonymous'}:${context.recentCommands?.join(',') || ''}`
+    );
     return `nlp:${hash.digest('hex')}`;
   }
 
@@ -520,7 +559,7 @@ Respond with ONLY valid JSON, no additional text.`;
   setCachedResult(key, result) {
     this.intentCache.set(key, {
       result,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -552,7 +591,7 @@ Respond with ONLY valid JSON, no additional text.`;
         cacheSize: this.intentCache.size,
         testInput,
         testResult: result.intent,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('NLP processor health check failed', { error: error.message });
@@ -560,7 +599,7 @@ Respond with ONLY valid JSON, no additional text.`;
         status: 'unhealthy',
         service: 'nlp-processor',
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

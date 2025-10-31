@@ -3,21 +3,37 @@ const { z } = require('zod');
 // Define Zod schemas for key commands
 const schemas = new Map([
   // Downloader: youtubevideo - validate URL
-  ['youtubevideo', z.object({
-    url: z.string().url().startsWith('https://www.youtube.com/').or(z.string().url().startsWith('https://youtu.be/'))
-  })],
+  [
+    'youtubevideo',
+    z.object({
+      url: z
+        .string()
+        .url()
+        .startsWith('https://www.youtube.com/')
+        .or(z.string().url().startsWith('https://youtu.be/')),
+    }),
+  ],
   // AI chat: chatgpt - validate prompt length
-  ['chatgpt', z.object({
-    prompt: z.string().min(1).max(2000)
-  })],
+  [
+    'chatgpt',
+    z.object({
+      prompt: z.string().min(1).max(2000),
+    }),
+  ],
   // General text commands: max length
-  ['proverb', z.object({
-    query: z.string().max(500)
-  })],
+  [
+    'proverb',
+    z.object({
+      query: z.string().max(500),
+    }),
+  ],
   // Add more as needed, e.g., for other downloaders or AI
-  ['tiktokdl', z.object({
-    url: z.string().url().startsWith('https://www.tiktok.com/')
-  })],
+  [
+    'tiktokdl',
+    z.object({
+      url: z.string().url().startsWith('https://www.tiktok.com/'),
+    }),
+  ],
   // Default for unknown: no validation
 ]);
 

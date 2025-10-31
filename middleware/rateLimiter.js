@@ -5,7 +5,7 @@ module.exports = async (ctx, { config }) => {
   const senderJid = ctx.sender.jid;
   const lastRequest = userRequests.get(senderJid);
 
-  if (lastRequest && (now - lastRequest) < config.system.cooldown) {
+  if (lastRequest && now - lastRequest < config.system.cooldown) {
     await ctx.reply(config.msg.cooldown);
     return false; // Block the command
   }

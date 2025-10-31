@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import withAuth from '../../components/common/withAuth';
 
-const SystemSettings = () => {
+function SystemSettings() {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,7 +36,7 @@ const SystemSettings = () => {
   // Mock settings data - replace with actual API calls
   useEffect(() => {
     const loadSettings = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const mockSettings = {
         general: {
@@ -159,7 +159,7 @@ const SystemSettings = () => {
   ];
 
   const handleSettingChange = (category, key, value) => {
-    setSettings((prev) => ({
+    setSettings(prev => ({
       ...prev,
       [category]: {
         ...prev[category],
@@ -167,7 +167,7 @@ const SystemSettings = () => {
       },
     }));
     setHasChanges(true);
-    setValidationErrors((prev) => ({ ...prev, [`${category}.${key}`]: null }));
+    setValidationErrors(prev => ({ ...prev, [`${category}.${key}`]: null }));
   };
 
   const validateSettings = () => {
@@ -189,7 +189,10 @@ const SystemSettings = () => {
     }
 
     // URL validation
-    if (settings.notifications?.webhookUrl && !/^https?:\/\/.+/.test(settings.notifications.webhookUrl)) {
+    if (
+      settings.notifications?.webhookUrl &&
+      !/^https?:\/\/.+/.test(settings.notifications.webhookUrl)
+    ) {
       errors['notifications.webhookUrl'] = 'Invalid URL format';
     }
 
@@ -205,7 +208,7 @@ const SystemSettings = () => {
     setSaving(true);
     try {
       // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       setLastSaved(new Date());
       setHasChanges(false);
     } catch (error) {
@@ -232,11 +235,11 @@ const SystemSettings = () => {
     linkElement.click();
   };
 
-  const importSettings = (event) => {
+  const importSettings = event => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         try {
           const importedSettings = JSON.parse(e.target.result);
           setSettings(importedSettings);
@@ -252,7 +255,11 @@ const SystemSettings = () => {
   const renderSettingField = (category, key, value, type = 'text', options = {}) => {
     const fieldId = `${category}.${key}`;
     const error = validationErrors[fieldId];
-    const isPassword = type === 'password' || key.toLowerCase().includes('password') || key.toLowerCase().includes('secret') || key.toLowerCase().includes('token');
+    const isPassword =
+      type === 'password' ||
+      key.toLowerCase().includes('password') ||
+      key.toLowerCase().includes('secret') ||
+      key.toLowerCase().includes('token');
     const showPwd = showPassword[fieldId];
 
     let inputElement;
@@ -260,7 +267,7 @@ const SystemSettings = () => {
       inputElement = (
         <textarea
           value={value || ''}
-          onChange={(e) => handleSettingChange(category, key, e.target.value)}
+          onChange={e => handleSettingChange(category, key, e.target.value)}
           rows={4}
           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
           placeholder={options.placeholder}
@@ -270,10 +277,10 @@ const SystemSettings = () => {
       inputElement = (
         <select
           value={value || ''}
-          onChange={(e) => handleSettingChange(category, key, e.target.value)}
+          onChange={e => handleSettingChange(category, key, e.target.value)}
           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
         >
-          {options.options?.map((option) => (
+          {options.options?.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -286,7 +293,7 @@ const SystemSettings = () => {
           <input
             type="checkbox"
             checked={value || false}
-            onChange={(e) => handleSettingChange(category, key, e.target.checked)}
+            onChange={e => handleSettingChange(category, key, e.target.checked)}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
@@ -300,14 +307,14 @@ const SystemSettings = () => {
           <input
             type={isPassword && !showPwd ? 'password' : 'text'}
             value={value || ''}
-            onChange={(e) => handleSettingChange(category, key, e.target.value)}
+            onChange={e => handleSettingChange(category, key, e.target.value)}
             className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
             placeholder={options.placeholder}
           />
           {isPassword && (
             <button
               type="button"
-              onClick={() => setShowPassword((prev) => ({ ...prev, [fieldId]: !prev[fieldId] }))}
+              onClick={() => setShowPassword(prev => ({ ...prev, [fieldId]: !prev[fieldId] }))}
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
             >
               {showPwd ? (
@@ -324,7 +331,7 @@ const SystemSettings = () => {
     return (
       <div key={fieldId} className="space-y-2">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          {options.label || key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
+          {options.label || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
           {options.required && <span className="text-red-500 ml-1">*</span>}
         </label>
         {inputElement}
@@ -335,9 +342,7 @@ const SystemSettings = () => {
           </p>
         )}
         {options.description && type !== 'checkbox' && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {options.description}
-          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{options.description}</p>
         )}
       </div>
     );
@@ -351,10 +356,16 @@ const SystemSettings = () => {
           required: true,
           description: 'The display name of your bot',
         })}
-        {renderSettingField('general', 'botDescription', settings.general?.botDescription, 'textarea', {
-          label: 'Bot Description',
-          description: 'Brief description of your bot\'s functionality',
-        })}
+        {renderSettingField(
+          'general',
+          'botDescription',
+          settings.general?.botDescription,
+          'textarea',
+          {
+            label: 'Bot Description',
+            description: "Brief description of your bot's functionality",
+          }
+        )}
         {renderSettingField('general', 'ownerName', settings.general?.ownerName, 'text', {
           label: 'Owner Name',
           required: true,
@@ -385,9 +396,15 @@ const SystemSettings = () => {
       </div>
 
       <div className="space-y-4">
-        {renderSettingField('general', 'maintenanceMode', settings.general?.maintenanceMode, 'checkbox', {
-          description: 'Enable maintenance mode (bot will be temporarily unavailable)',
-        })}
+        {renderSettingField(
+          'general',
+          'maintenanceMode',
+          settings.general?.maintenanceMode,
+          'checkbox',
+          {
+            description: 'Enable maintenance mode (bot will be temporarily unavailable)',
+          }
+        )}
         {renderSettingField('general', 'debugMode', settings.general?.debugMode, 'checkbox', {
           description: 'Enable debug mode (additional logging and error details)',
         })}
@@ -407,39 +424,81 @@ const SystemSettings = () => {
           label: 'Bcrypt Rounds',
           description: 'Number of rounds for password hashing (higher = more secure but slower)',
         })}
-        {renderSettingField('security', 'sessionTimeout', settings.security?.sessionTimeout, 'number', {
-          label: 'Session Timeout (hours)',
-          description: 'How long user sessions remain active',
-        })}
-        {renderSettingField('security', 'maxLoginAttempts', settings.security?.maxLoginAttempts, 'number', {
-          label: 'Max Login Attempts',
-          description: 'Maximum failed login attempts before account lockout',
-        })}
-        {renderSettingField('security', 'lockoutDuration', settings.security?.lockoutDuration, 'number', {
-          label: 'Lockout Duration (minutes)',
-          description: 'How long to lock account after failed attempts',
-        })}
-        {renderSettingField('security', 'rateLimitWindow', settings.security?.rateLimitWindow, 'number', {
-          label: 'Rate Limit Window (minutes)',
-          description: 'Time window for rate limiting',
-        })}
-        {renderSettingField('security', 'rateLimitMaxRequests', settings.security?.rateLimitMaxRequests, 'number', {
-          label: 'Max Requests per Window',
-          description: 'Maximum requests allowed in the rate limit window',
-        })}
-        {renderSettingField('security', 'passwordMinLength', settings.security?.passwordMinLength, 'number', {
-          label: 'Minimum Password Length',
-          description: 'Minimum characters required for passwords',
-        })}
+        {renderSettingField(
+          'security',
+          'sessionTimeout',
+          settings.security?.sessionTimeout,
+          'number',
+          {
+            label: 'Session Timeout (hours)',
+            description: 'How long user sessions remain active',
+          }
+        )}
+        {renderSettingField(
+          'security',
+          'maxLoginAttempts',
+          settings.security?.maxLoginAttempts,
+          'number',
+          {
+            label: 'Max Login Attempts',
+            description: 'Maximum failed login attempts before account lockout',
+          }
+        )}
+        {renderSettingField(
+          'security',
+          'lockoutDuration',
+          settings.security?.lockoutDuration,
+          'number',
+          {
+            label: 'Lockout Duration (minutes)',
+            description: 'How long to lock account after failed attempts',
+          }
+        )}
+        {renderSettingField(
+          'security',
+          'rateLimitWindow',
+          settings.security?.rateLimitWindow,
+          'number',
+          {
+            label: 'Rate Limit Window (minutes)',
+            description: 'Time window for rate limiting',
+          }
+        )}
+        {renderSettingField(
+          'security',
+          'rateLimitMaxRequests',
+          settings.security?.rateLimitMaxRequests,
+          'number',
+          {
+            label: 'Max Requests per Window',
+            description: 'Maximum requests allowed in the rate limit window',
+          }
+        )}
+        {renderSettingField(
+          'security',
+          'passwordMinLength',
+          settings.security?.passwordMinLength,
+          'number',
+          {
+            label: 'Minimum Password Length',
+            description: 'Minimum characters required for passwords',
+          }
+        )}
       </div>
 
       <div className="space-y-4">
         {renderSettingField('security', 'enable2FA', settings.security?.enable2FA, 'checkbox', {
           description: 'Enable two-factor authentication for admin accounts',
         })}
-        {renderSettingField('security', 'requireSpecialChars', settings.security?.requireSpecialChars, 'checkbox', {
-          description: 'Require special characters in passwords',
-        })}
+        {renderSettingField(
+          'security',
+          'requireSpecialChars',
+          settings.security?.requireSpecialChars,
+          'checkbox',
+          {
+            description: 'Require special characters in passwords',
+          }
+        )}
       </div>
     </div>
   );
@@ -454,7 +513,10 @@ const SystemSettings = () => {
               Security Warning
             </h3>
             <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-              <p>API keys contain sensitive information. Ensure you are on a secure connection and consider using environment variables for production deployments.</p>
+              <p>
+                API keys contain sensitive information. Ensure you are on a secure connection and
+                consider using environment variables for production deployments.
+              </p>
             </div>
           </div>
         </div>
@@ -469,18 +531,30 @@ const SystemSettings = () => {
           label: 'Stripe Secret Key',
           description: 'Required for payment processing and subscriptions',
         })}
-        {renderSettingField('api', 'stripeWebhookSecret', settings.api?.stripeWebhookSecret, 'password', {
-          label: 'Stripe Webhook Secret',
-          description: 'Required for webhook signature verification',
-        })}
+        {renderSettingField(
+          'api',
+          'stripeWebhookSecret',
+          settings.api?.stripeWebhookSecret,
+          'password',
+          {
+            label: 'Stripe Webhook Secret',
+            description: 'Required for webhook signature verification',
+          }
+        )}
         {renderSettingField('api', 'firebaseProjectId', settings.api?.firebaseProjectId, 'text', {
           label: 'Firebase Project ID',
           description: 'Required for Firebase authentication and database',
         })}
-        {renderSettingField('api', 'googleCloudApiKey', settings.api?.googleCloudApiKey, 'password', {
-          label: 'Google Cloud API Key',
-          description: 'Required for Google Cloud services integration',
-        })}
+        {renderSettingField(
+          'api',
+          'googleCloudApiKey',
+          settings.api?.googleCloudApiKey,
+          'password',
+          {
+            label: 'Google Cloud API Key',
+            description: 'Required for Google Cloud services integration',
+          }
+        )}
         {renderSettingField('api', 'telegramBotToken', settings.api?.telegramBotToken, 'password', {
           label: 'Telegram Bot Token',
           description: 'Required for Telegram bot integration',
@@ -496,7 +570,7 @@ const SystemSettings = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -506,9 +580,7 @@ const SystemSettings = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            System Configuration
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">System Configuration</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Manage system settings, API keys, and configuration parameters
           </p>
@@ -524,12 +596,7 @@ const SystemSettings = () => {
           <label className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
             <Upload className="w-4 h-4" />
             <span>Import</span>
-            <input
-              type="file"
-              accept=".json"
-              onChange={importSettings}
-              className="hidden"
-            />
+            <input type="file" accept=".json" onChange={importSettings} className="hidden" />
           </label>
           <button
             onClick={handleReset}
@@ -547,11 +614,7 @@ const SystemSettings = () => {
                 : 'bg-gray-400 text-gray-200 cursor-not-allowed'
             }`}
           >
-            {saving ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>{saving ? 'Saving...' : 'Save Changes'}</span>
           </button>
         </div>
@@ -568,16 +631,15 @@ const SystemSettings = () => {
         {lastSaved && (
           <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
             <CheckCircle className="w-4 h-4" />
-            <span className="text-sm">
-              Last saved: {lastSaved.toLocaleTimeString()}
-            </span>
+            <span className="text-sm">Last saved: {lastSaved.toLocaleTimeString()}</span>
           </div>
         )}
         {Object.keys(validationErrors).length > 0 && (
           <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
             <AlertTriangle className="w-4 h-4" />
             <span className="text-sm">
-              {Object.keys(validationErrors).length} validation error{Object.keys(validationErrors).length > 1 ? 's' : ''}
+              {Object.keys(validationErrors).length} validation error
+              {Object.keys(validationErrors).length > 1 ? 's' : ''}
             </span>
           </div>
         )}
@@ -587,7 +649,7 @@ const SystemSettings = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-8 px-6">
-            {tabs.map((tab) => {
+            {tabs.map(tab => {
               const Icon = tab.icon;
               return (
                 <button
@@ -632,22 +694,46 @@ const SystemSettings = () => {
                       label: 'Database Port',
                       required: true,
                     })}
-                    {renderSettingField('database', 'database', settings.database?.database, 'text', {
-                      label: 'Database Name',
-                      required: true,
-                    })}
-                    {renderSettingField('database', 'username', settings.database?.username, 'text', {
-                      label: 'Database Username',
-                      required: true,
-                    })}
-                    {renderSettingField('database', 'password', settings.database?.password, 'password', {
-                      label: 'Database Password',
-                      required: true,
-                    })}
-                    {renderSettingField('database', 'connectionPoolSize', settings.database?.connectionPoolSize, 'number', {
-                      label: 'Connection Pool Size',
-                      description: 'Maximum number of database connections',
-                    })}
+                    {renderSettingField(
+                      'database',
+                      'database',
+                      settings.database?.database,
+                      'text',
+                      {
+                        label: 'Database Name',
+                        required: true,
+                      }
+                    )}
+                    {renderSettingField(
+                      'database',
+                      'username',
+                      settings.database?.username,
+                      'text',
+                      {
+                        label: 'Database Username',
+                        required: true,
+                      }
+                    )}
+                    {renderSettingField(
+                      'database',
+                      'password',
+                      settings.database?.password,
+                      'password',
+                      {
+                        label: 'Database Password',
+                        required: true,
+                      }
+                    )}
+                    {renderSettingField(
+                      'database',
+                      'connectionPoolSize',
+                      settings.database?.connectionPoolSize,
+                      'number',
+                      {
+                        label: 'Connection Pool Size',
+                        description: 'Maximum number of database connections',
+                      }
+                    )}
                   </div>
                   <div className="space-y-4">
                     {renderSettingField('database', 'ssl', settings.database?.ssl, 'checkbox', {
@@ -672,10 +758,16 @@ const SystemSettings = () => {
                       label: 'SMTP Username',
                       required: true,
                     })}
-                    {renderSettingField('email', 'smtpPassword', settings.email?.smtpPassword, 'password', {
-                      label: 'SMTP Password',
-                      required: true,
-                    })}
+                    {renderSettingField(
+                      'email',
+                      'smtpPassword',
+                      settings.email?.smtpPassword,
+                      'password',
+                      {
+                        label: 'SMTP Password',
+                        required: true,
+                      }
+                    )}
                     {renderSettingField('email', 'fromEmail', settings.email?.fromEmail, 'text', {
                       label: 'From Email Address',
                       required: true,
@@ -686,146 +778,320 @@ const SystemSettings = () => {
                     })}
                   </div>
                   <div className="space-y-4">
-                    {renderSettingField('email', 'enableTLS', settings.email?.enableTLS, 'checkbox', {
-                      description: 'Enable TLS encryption for email connections',
-                    })}
-                    {renderSettingField('email', 'enableAuth', settings.email?.enableAuth, 'checkbox', {
-                      description: 'Enable SMTP authentication',
-                    })}
+                    {renderSettingField(
+                      'email',
+                      'enableTLS',
+                      settings.email?.enableTLS,
+                      'checkbox',
+                      {
+                        description: 'Enable TLS encryption for email connections',
+                      }
+                    )}
+                    {renderSettingField(
+                      'email',
+                      'enableAuth',
+                      settings.email?.enableAuth,
+                      'checkbox',
+                      {
+                        description: 'Enable SMTP authentication',
+                      }
+                    )}
                   </div>
                 </div>
               )}
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
                   <div className="space-y-4">
-                    {renderSettingField('notifications', 'emailNotifications', settings.notifications?.emailNotifications, 'checkbox', {
-                      description: 'Enable email notifications for system events',
-                    })}
-                    {renderSettingField('notifications', 'pushNotifications', settings.notifications?.pushNotifications, 'checkbox', {
-                      description: 'Enable push notifications for important events',
-                    })}
-                    {renderSettingField('notifications', 'smsNotifications', settings.notifications?.smsNotifications, 'checkbox', {
-                      description: 'Enable SMS notifications for critical alerts',
-                    })}
+                    {renderSettingField(
+                      'notifications',
+                      'emailNotifications',
+                      settings.notifications?.emailNotifications,
+                      'checkbox',
+                      {
+                        description: 'Enable email notifications for system events',
+                      }
+                    )}
+                    {renderSettingField(
+                      'notifications',
+                      'pushNotifications',
+                      settings.notifications?.pushNotifications,
+                      'checkbox',
+                      {
+                        description: 'Enable push notifications for important events',
+                      }
+                    )}
+                    {renderSettingField(
+                      'notifications',
+                      'smsNotifications',
+                      settings.notifications?.smsNotifications,
+                      'checkbox',
+                      {
+                        description: 'Enable SMS notifications for critical alerts',
+                      }
+                    )}
                   </div>
                   <div className="grid grid-cols-1 gap-6">
-                    {renderSettingField('notifications', 'webhookUrl', settings.notifications?.webhookUrl, 'text', {
-                      label: 'Webhook URL',
-                      placeholder: 'https://your-webhook-url.com',
-                    })}
-                    {renderSettingField('notifications', 'slackWebhook', settings.notifications?.slackWebhook, 'password', {
-                      label: 'Slack Webhook URL',
-                      placeholder: 'https://hooks.slack.com/your-slack-webhook',
-                    })}
-                    {renderSettingField('notifications', 'discordWebhook', settings.notifications?.discordWebhook, 'password', {
-                      label: 'Discord Webhook URL',
-                      placeholder: 'https://discord.com/api/webhooks/your-webhook',
-                    })}
+                    {renderSettingField(
+                      'notifications',
+                      'webhookUrl',
+                      settings.notifications?.webhookUrl,
+                      'text',
+                      {
+                        label: 'Webhook URL',
+                        placeholder: 'https://your-webhook-url.com',
+                      }
+                    )}
+                    {renderSettingField(
+                      'notifications',
+                      'slackWebhook',
+                      settings.notifications?.slackWebhook,
+                      'password',
+                      {
+                        label: 'Slack Webhook URL',
+                        placeholder: 'https://hooks.slack.com/your-slack-webhook',
+                      }
+                    )}
+                    {renderSettingField(
+                      'notifications',
+                      'discordWebhook',
+                      settings.notifications?.discordWebhook,
+                      'password',
+                      {
+                        label: 'Discord Webhook URL',
+                        placeholder: 'https://discord.com/api/webhooks/your-webhook',
+                      }
+                    )}
                   </div>
                 </div>
               )}
               {activeTab === 'performance' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {renderSettingField('performance', 'cacheTTL', settings.performance?.cacheTTL, 'number', {
-                      label: 'Cache TTL (seconds)',
-                      description: 'How long to cache data in Redis',
-                    })}
-                    {renderSettingField('performance', 'maxFileSize', settings.performance?.maxFileSize, 'number', {
-                      label: 'Max File Size (bytes)',
-                      description: 'Maximum file size for uploads',
-                    })}
-                    {renderSettingField('performance', 'uploadPath', settings.performance?.uploadPath, 'text', {
-                      label: 'Upload Path',
-                      description: 'Directory path for file uploads',
-                    })}
-                    {renderSettingField('performance', 'gzipLevel', settings.performance?.gzipLevel, 'number', {
-                      label: 'GZIP Compression Level',
-                      description: 'Compression level for responses (1-9)',
-                    })}
+                    {renderSettingField(
+                      'performance',
+                      'cacheTTL',
+                      settings.performance?.cacheTTL,
+                      'number',
+                      {
+                        label: 'Cache TTL (seconds)',
+                        description: 'How long to cache data in Redis',
+                      }
+                    )}
+                    {renderSettingField(
+                      'performance',
+                      'maxFileSize',
+                      settings.performance?.maxFileSize,
+                      'number',
+                      {
+                        label: 'Max File Size (bytes)',
+                        description: 'Maximum file size for uploads',
+                      }
+                    )}
+                    {renderSettingField(
+                      'performance',
+                      'uploadPath',
+                      settings.performance?.uploadPath,
+                      'text',
+                      {
+                        label: 'Upload Path',
+                        description: 'Directory path for file uploads',
+                      }
+                    )}
+                    {renderSettingField(
+                      'performance',
+                      'gzipLevel',
+                      settings.performance?.gzipLevel,
+                      'number',
+                      {
+                        label: 'GZIP Compression Level',
+                        description: 'Compression level for responses (1-9)',
+                      }
+                    )}
                   </div>
                   <div className="space-y-4">
-                    {renderSettingField('performance', 'cacheEnabled', settings.performance?.cacheEnabled, 'checkbox', {
-                      description: 'Enable Redis caching for improved performance',
-                    })}
-                    {renderSettingField('performance', 'compressionEnabled', settings.performance?.compressionEnabled, 'checkbox', {
-                      description: 'Enable GZIP compression for responses',
-                    })}
+                    {renderSettingField(
+                      'performance',
+                      'cacheEnabled',
+                      settings.performance?.cacheEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable Redis caching for improved performance',
+                      }
+                    )}
+                    {renderSettingField(
+                      'performance',
+                      'compressionEnabled',
+                      settings.performance?.compressionEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable GZIP compression for responses',
+                      }
+                    )}
                   </div>
                   <div className="grid grid-cols-1 gap-6">
-                    {renderSettingField('performance', 'redisUrl', settings.performance?.redisUrl, 'text', {
-                      label: 'Redis URL',
-                      placeholder: 'redis://localhost:6379',
-                    })}
+                    {renderSettingField(
+                      'performance',
+                      'redisUrl',
+                      settings.performance?.redisUrl,
+                      'text',
+                      {
+                        label: 'Redis URL',
+                        placeholder: 'redis://localhost:6379',
+                      }
+                    )}
                   </div>
                 </div>
               )}
               {activeTab === 'monetization' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {renderSettingField('monetization', 'freeTrialDays', settings.monetization?.freeTrialDays, 'number', {
-                      label: 'Free Trial Days',
-                      description: 'Number of free trial days for new users',
-                    })}
-                    {renderSettingField('monetization', 'defaultCurrency', settings.monetization?.defaultCurrency, 'select', {
-                      label: 'Default Currency',
-                      options: [
-                        { value: 'USD', label: 'US Dollar (USD)' },
-                        { value: 'EUR', label: 'Euro (EUR)' },
-                        { value: 'GBP', label: 'British Pound (GBP)' },
-                        { value: 'JPY', label: 'Japanese Yen (JPY)' },
-                      ],
-                    })}
-                    {renderSettingField('monetization', 'taxRate', settings.monetization?.taxRate, 'number', {
-                      label: 'Tax Rate (%)',
-                      description: 'Tax rate applied to transactions',
-                    })}
-                    {renderSettingField('monetization', 'minimumPayout', settings.monetization?.minimumPayout, 'number', {
-                      label: 'Minimum Payout Amount',
-                      description: 'Minimum amount required for payouts',
-                    })}
+                    {renderSettingField(
+                      'monetization',
+                      'freeTrialDays',
+                      settings.monetization?.freeTrialDays,
+                      'number',
+                      {
+                        label: 'Free Trial Days',
+                        description: 'Number of free trial days for new users',
+                      }
+                    )}
+                    {renderSettingField(
+                      'monetization',
+                      'defaultCurrency',
+                      settings.monetization?.defaultCurrency,
+                      'select',
+                      {
+                        label: 'Default Currency',
+                        options: [
+                          { value: 'USD', label: 'US Dollar (USD)' },
+                          { value: 'EUR', label: 'Euro (EUR)' },
+                          { value: 'GBP', label: 'British Pound (GBP)' },
+                          { value: 'JPY', label: 'Japanese Yen (JPY)' },
+                        ],
+                      }
+                    )}
+                    {renderSettingField(
+                      'monetization',
+                      'taxRate',
+                      settings.monetization?.taxRate,
+                      'number',
+                      {
+                        label: 'Tax Rate (%)',
+                        description: 'Tax rate applied to transactions',
+                      }
+                    )}
+                    {renderSettingField(
+                      'monetization',
+                      'minimumPayout',
+                      settings.monetization?.minimumPayout,
+                      'number',
+                      {
+                        label: 'Minimum Payout Amount',
+                        description: 'Minimum amount required for payouts',
+                      }
+                    )}
                   </div>
                   <div className="space-y-4">
-                    {renderSettingField('monetization', 'stripeEnabled', settings.monetization?.stripeEnabled, 'checkbox', {
-                      description: 'Enable Stripe payment processing',
-                    })}
-                    {renderSettingField('monetization', 'paypalEnabled', settings.monetization?.paypalEnabled, 'checkbox', {
-                      description: 'Enable PayPal payment processing',
-                    })}
-                    {renderSettingField('monetization', 'coinbaseEnabled', settings.monetization?.coinbaseEnabled, 'checkbox', {
-                      description: 'Enable Coinbase Commerce for crypto payments',
-                    })}
-                    {renderSettingField('monetization', 'subscriptionEnabled', settings.monetization?.subscriptionEnabled, 'checkbox', {
-                      description: 'Enable subscription-based pricing',
-                    })}
+                    {renderSettingField(
+                      'monetization',
+                      'stripeEnabled',
+                      settings.monetization?.stripeEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable Stripe payment processing',
+                      }
+                    )}
+                    {renderSettingField(
+                      'monetization',
+                      'paypalEnabled',
+                      settings.monetization?.paypalEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable PayPal payment processing',
+                      }
+                    )}
+                    {renderSettingField(
+                      'monetization',
+                      'coinbaseEnabled',
+                      settings.monetization?.coinbaseEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable Coinbase Commerce for crypto payments',
+                      }
+                    )}
+                    {renderSettingField(
+                      'monetization',
+                      'subscriptionEnabled',
+                      settings.monetization?.subscriptionEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable subscription-based pricing',
+                      }
+                    )}
                   </div>
                 </div>
               )}
               {activeTab === 'moderation' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {renderSettingField('moderation', 'moderationThreshold', settings.moderation?.moderationThreshold, 'number', {
-                      label: 'Moderation Threshold',
-                      description: 'Confidence threshold for content moderation (0.0-1.0)',
-                    })}
-                    {renderSettingField('moderation', 'maxMessageLength', settings.moderation?.maxMessageLength, 'number', {
-                      label: 'Max Message Length',
-                      description: 'Maximum allowed message length in characters',
-                    })}
+                    {renderSettingField(
+                      'moderation',
+                      'moderationThreshold',
+                      settings.moderation?.moderationThreshold,
+                      'number',
+                      {
+                        label: 'Moderation Threshold',
+                        description: 'Confidence threshold for content moderation (0.0-1.0)',
+                      }
+                    )}
+                    {renderSettingField(
+                      'moderation',
+                      'maxMessageLength',
+                      settings.moderation?.maxMessageLength,
+                      'number',
+                      {
+                        label: 'Max Message Length',
+                        description: 'Maximum allowed message length in characters',
+                      }
+                    )}
                   </div>
                   <div className="space-y-4">
-                    {renderSettingField('moderation', 'contentModerationEnabled', settings.moderation?.contentModerationEnabled, 'checkbox', {
-                      description: 'Enable AI-powered content moderation',
-                    })}
-                    {renderSettingField('moderation', 'autoModeration', settings.moderation?.autoModeration, 'checkbox', {
-                      description: 'Automatically moderate content based on AI analysis',
-                    })}
-                    {renderSettingField('moderation', 'rateLimitEnabled', settings.moderation?.rateLimitEnabled, 'checkbox', {
-                      description: 'Enable rate limiting to prevent spam',
-                    })}
-                    {renderSettingField('moderation', 'spamDetectionEnabled', settings.moderation?.spamDetectionEnabled, 'checkbox', {
-                      description: 'Enable spam detection and filtering',
-                    })}
+                    {renderSettingField(
+                      'moderation',
+                      'contentModerationEnabled',
+                      settings.moderation?.contentModerationEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable AI-powered content moderation',
+                      }
+                    )}
+                    {renderSettingField(
+                      'moderation',
+                      'autoModeration',
+                      settings.moderation?.autoModeration,
+                      'checkbox',
+                      {
+                        description: 'Automatically moderate content based on AI analysis',
+                      }
+                    )}
+                    {renderSettingField(
+                      'moderation',
+                      'rateLimitEnabled',
+                      settings.moderation?.rateLimitEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable rate limiting to prevent spam',
+                      }
+                    )}
+                    {renderSettingField(
+                      'moderation',
+                      'spamDetectionEnabled',
+                      settings.moderation?.spamDetectionEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable spam detection and filtering',
+                      }
+                    )}
                   </div>
                   <div className="space-y-4">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -833,7 +1099,13 @@ const SystemSettings = () => {
                     </label>
                     <textarea
                       value={settings.moderation?.bannedWords?.join('\n') || ''}
-                      onChange={(e) => handleSettingChange('moderation', 'bannedWords', e.target.value.split('\n').filter((word) => word.trim()))}
+                      onChange={e =>
+                        handleSettingChange(
+                          'moderation',
+                          'bannedWords',
+                          e.target.value.split('\n').filter(word => word.trim())
+                        )
+                      }
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       placeholder="Enter banned words, one per line"
@@ -847,37 +1119,79 @@ const SystemSettings = () => {
               {activeTab === 'backup' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {renderSettingField('backup', 'backupFrequency', settings.backup?.backupFrequency, 'select', {
-                      label: 'Backup Frequency',
-                      options: [
-                        { value: 'hourly', label: 'Hourly' },
-                        { value: 'daily', label: 'Daily' },
-                        { value: 'weekly', label: 'Weekly' },
-                        { value: 'monthly', label: 'Monthly' },
-                      ],
-                    })}
-                    {renderSettingField('backup', 'backupRetention', settings.backup?.backupRetention, 'number', {
-                      label: 'Backup Retention (days)',
-                      description: 'How long to keep backup files',
-                    })}
-                    {renderSettingField('backup', 'backupPath', settings.backup?.backupPath, 'text', {
-                      label: 'Backup Path',
-                      description: 'Directory path for storing backups',
-                    })}
+                    {renderSettingField(
+                      'backup',
+                      'backupFrequency',
+                      settings.backup?.backupFrequency,
+                      'select',
+                      {
+                        label: 'Backup Frequency',
+                        options: [
+                          { value: 'hourly', label: 'Hourly' },
+                          { value: 'daily', label: 'Daily' },
+                          { value: 'weekly', label: 'Weekly' },
+                          { value: 'monthly', label: 'Monthly' },
+                        ],
+                      }
+                    )}
+                    {renderSettingField(
+                      'backup',
+                      'backupRetention',
+                      settings.backup?.backupRetention,
+                      'number',
+                      {
+                        label: 'Backup Retention (days)',
+                        description: 'How long to keep backup files',
+                      }
+                    )}
+                    {renderSettingField(
+                      'backup',
+                      'backupPath',
+                      settings.backup?.backupPath,
+                      'text',
+                      {
+                        label: 'Backup Path',
+                        description: 'Directory path for storing backups',
+                      }
+                    )}
                   </div>
                   <div className="space-y-4">
-                    {renderSettingField('backup', 'autoBackupEnabled', settings.backup?.autoBackupEnabled, 'checkbox', {
-                      description: 'Enable automatic backup scheduling',
-                    })}
-                    {renderSettingField('backup', 'compressionEnabled', settings.backup?.compressionEnabled, 'checkbox', {
-                      description: 'Compress backup files to save space',
-                    })}
-                    {renderSettingField('backup', 'encryptionEnabled', settings.backup?.encryptionEnabled, 'checkbox', {
-                      description: 'Encrypt backup files for security',
-                    })}
-                    {renderSettingField('backup', 'cloudBackupEnabled', settings.backup?.cloudBackupEnabled, 'checkbox', {
-                      description: 'Enable cloud backup storage (AWS S3, Google Cloud, etc.)',
-                    })}
+                    {renderSettingField(
+                      'backup',
+                      'autoBackupEnabled',
+                      settings.backup?.autoBackupEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable automatic backup scheduling',
+                      }
+                    )}
+                    {renderSettingField(
+                      'backup',
+                      'compressionEnabled',
+                      settings.backup?.compressionEnabled,
+                      'checkbox',
+                      {
+                        description: 'Compress backup files to save space',
+                      }
+                    )}
+                    {renderSettingField(
+                      'backup',
+                      'encryptionEnabled',
+                      settings.backup?.encryptionEnabled,
+                      'checkbox',
+                      {
+                        description: 'Encrypt backup files for security',
+                      }
+                    )}
+                    {renderSettingField(
+                      'backup',
+                      'cloudBackupEnabled',
+                      settings.backup?.cloudBackupEnabled,
+                      'checkbox',
+                      {
+                        description: 'Enable cloud backup storage (AWS S3, Google Cloud, etc.)',
+                      }
+                    )}
                   </div>
                 </div>
               )}
@@ -887,6 +1201,6 @@ const SystemSettings = () => {
       </div>
     </div>
   );
-};
+}
 
 export default withAuth(SystemSettings);

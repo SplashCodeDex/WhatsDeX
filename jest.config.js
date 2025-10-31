@@ -1,9 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
-  transformIgnorePatterns: [
-    '/node_modules/(?!(playwright)/)',
-  ],
+  transformIgnorePatterns: ['/node_modules/(?!(playwright)/)'],
   collectCoverageFrom: [
     'commands/**/*.js',
     'middleware/**/*.js',
@@ -14,7 +12,7 @@ module.exports = {
     '!src/**/*.spec.js',
     '!**/*.config.js',
     '!**/node_modules/**',
-    '!**/coverage/**'
+    '!**/coverage/**',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
@@ -23,21 +21,18 @@ module.exports = {
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80
-    }
+      statements: 80,
+    },
   },
-  testMatch: [
-    '**/__tests__/**/*.test.js',
-    '**/?(*.)+(spec|test).js'
-  ],
+  testMatch: ['**/__tests__/**/*.test.js', '**/?(*.)+(spec|test).js'],
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/tests/e2e/' // Exclude e2e tests
+    '/tests/e2e/', // Exclude e2e tests
   ],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   testTimeout: 10000,
   verbose: true,
   forceExit: true,
   detectOpenHandles: true,
-  maxWorkers: '50%'
+  maxWorkers: '50%',
 };

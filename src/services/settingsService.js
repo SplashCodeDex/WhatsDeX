@@ -16,7 +16,7 @@ class SettingsService {
         value: 'WhatsDeX',
         valueType: 'string',
         description: 'Bot display name',
-        isEncrypted: false
+        isEncrypted: false,
       },
       'general.botDescription': {
         category: 'general',
@@ -24,7 +24,7 @@ class SettingsService {
         value: 'Advanced WhatsApp Bot with AI Features',
         valueType: 'string',
         description: 'Bot description',
-        isEncrypted: false
+        isEncrypted: false,
       },
       'general.ownerName': {
         category: 'general',
@@ -32,7 +32,7 @@ class SettingsService {
         value: 'CodeDeX',
         valueType: 'string',
         description: 'Bot owner name',
-        isEncrypted: false
+        isEncrypted: false,
       },
       'general.timezone': {
         category: 'general',
@@ -40,7 +40,7 @@ class SettingsService {
         value: 'Africa/Accra',
         valueType: 'string',
         description: 'System timezone',
-        isEncrypted: false
+        isEncrypted: false,
       },
 
       // Security settings
@@ -50,7 +50,7 @@ class SettingsService {
         value: 'your-jwt-secret-key',
         valueType: 'string',
         description: 'JWT signing secret',
-        isEncrypted: true
+        isEncrypted: true,
       },
       'security.bcryptRounds': {
         category: 'security',
@@ -58,7 +58,7 @@ class SettingsService {
         value: 12,
         valueType: 'number',
         description: 'BCrypt hashing rounds',
-        isEncrypted: false
+        isEncrypted: false,
       },
       'security.maxLoginAttempts': {
         category: 'security',
@@ -66,7 +66,7 @@ class SettingsService {
         value: 5,
         valueType: 'number',
         description: 'Maximum login attempts before lockout',
-        isEncrypted: false
+        isEncrypted: false,
       },
 
       // API settings
@@ -76,7 +76,7 @@ class SettingsService {
         value: 'sk-your-openai-key',
         valueType: 'string',
         description: 'OpenAI API key',
-        isEncrypted: true
+        isEncrypted: true,
       },
       'api.stripeSecretKey': {
         category: 'api',
@@ -84,7 +84,7 @@ class SettingsService {
         value: 'sk_test_your-stripe-key',
         valueType: 'string',
         description: 'Stripe secret key',
-        isEncrypted: true
+        isEncrypted: true,
       },
 
       // Database settings
@@ -94,7 +94,7 @@ class SettingsService {
         value: 'localhost',
         valueType: 'string',
         description: 'Database host',
-        isEncrypted: false
+        isEncrypted: false,
       },
       'database.port': {
         category: 'database',
@@ -102,7 +102,7 @@ class SettingsService {
         value: 5432,
         valueType: 'number',
         description: 'Database port',
-        isEncrypted: false
+        isEncrypted: false,
       },
       'database.database': {
         category: 'database',
@@ -110,7 +110,7 @@ class SettingsService {
         value: 'whatsdex',
         valueType: 'string',
         description: 'Database name',
-        isEncrypted: false
+        isEncrypted: false,
       },
 
       // Moderation settings
@@ -120,7 +120,7 @@ class SettingsService {
         value: true,
         valueType: 'boolean',
         description: 'Enable content moderation',
-        isEncrypted: false
+        isEncrypted: false,
       },
       'moderation.autoModeration': {
         category: 'moderation',
@@ -128,7 +128,7 @@ class SettingsService {
         value: true,
         valueType: 'boolean',
         description: 'Enable automatic moderation',
-        isEncrypted: false
+        isEncrypted: false,
       },
       'moderation.moderationThreshold': {
         category: 'moderation',
@@ -136,8 +136,8 @@ class SettingsService {
         value: 0.8,
         valueType: 'number',
         description: 'Moderation confidence threshold',
-        isEncrypted: false
-      }
+        isEncrypted: false,
+      },
     };
 
     Object.entries(defaultSettings).forEach(([key, setting]) => {
@@ -183,7 +183,7 @@ class SettingsService {
       ...existingSetting,
       value,
       description: description || existingSetting.description,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.settings.set(settingKey, updatedSetting);
@@ -275,7 +275,7 @@ class SettingsService {
       setting.valueType,
       setting.description || '',
       setting.isEncrypted,
-      setting.updatedAt.toISOString()
+      setting.updatedAt.toISOString(),
     ]);
 
     return [headers, ...rows].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
@@ -303,7 +303,13 @@ class SettingsService {
         const validation = await this.validateSetting(category, settingKey, settingData.value);
 
         if (validation.valid) {
-          await this.updateSetting(category, settingKey, settingData.value, settingData.description, updatedBy);
+          await this.updateSetting(
+            category,
+            settingKey,
+            settingData.value,
+            settingData.description,
+            updatedBy
+          );
           imported.push({ category, key: settingKey, value: settingData.value });
         } else {
           errors.push({ key, error: validation.message });
@@ -325,7 +331,7 @@ class SettingsService {
     return Array.from(categories).map(category => ({
       name: category,
       label: category.charAt(0).toUpperCase() + category.slice(1),
-      count: Array.from(this.settings.values()).filter(s => s.category === category).length
+      count: Array.from(this.settings.values()).filter(s => s.category === category).length,
     }));
   }
 }

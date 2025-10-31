@@ -13,7 +13,8 @@ const auditService = require('../src/services/auditService');
  * GET /api/audit
  * Get audit logs with filtering and pagination
  */
-router.get('/',
+router.get(
+  '/',
   requireModerator,
   [
     query('page').optional().isInt({ min: 1 }).toInt(),
@@ -27,7 +28,7 @@ router.get('/',
     query('startDate').optional().isISO8601(),
     query('endDate').optional().isISO8601(),
     query('sortBy').optional().isIn(['createdAt', 'eventType', 'actor', 'riskLevel']),
-    query('sortOrder').optional().isIn(['asc', 'desc'])
+    query('sortOrder').optional().isIn(['asc', 'desc']),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -47,7 +48,7 @@ router.get('/',
       startDate,
       endDate,
       sortBy = 'createdAt',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
     } = req.query;
 
     const filters = {
@@ -60,7 +61,7 @@ router.get('/',
       startDate,
       endDate,
       sortBy,
-      sortOrder
+      sortOrder,
     };
 
     const result = await auditService.getAuditLogs(filters, { page, limit });
@@ -72,9 +73,9 @@ router.get('/',
         page,
         limit,
         total: result.total,
-        totalPages: Math.ceil(result.total / limit)
+        totalPages: Math.ceil(result.total / limit),
       },
-      filters
+      filters,
     });
   })
 );

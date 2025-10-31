@@ -20,77 +20,82 @@ let bot;
 // not the REST API URL/TOKEN used by @upstash/redis.
 // You will need to get the REDIS_HOST, REDIS_PORT, and REDIS_PASSWORD for direct connection from Upstash.
 const messageQueue = new Queue('whatsapp-messages', {
-    connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD,
-        tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
-    }
+  connection: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD,
+    tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+  },
 });
 
 async function connectToWhatsApp() {
-    const { state, saveCreds } = await useRedisAuthState({
-        host: process.env.UPSTASH_REDIS_REST_URL, // This is for baileys-redis-auth
-        password: process.env.UPSTASH_REDIS_REST_TOKEN, // This is for baileys-redis-auth
-    }, 'whatsapp-session');
+  const { state, saveCreds } = await useRedisAuthState(
+    {
+      host: process.env.UPSTASH_REDIS_REST_URL, // This is for baileys-redis-auth
+      password: process.env.UPSTASH_REDIS_REST_TOKEN, // This is for baileys-redis-auth
+    },
+    'whatsapp-session'
+  );
 
-    bot = makeWASocket({
-        auth: state,
-        logger: pino({ level: 'silent' }),
-        browser: ['WhatsDeX', 'Chrome', '1.0.0']
-    });
+  bot = makeWASocket({
+    auth: state,
+    logger: pino({ level: 'silent' }),
+    browser: ['WhatsDeX', 'Chrome', '1.0.0'],
+  });
 
-    bot.ev.on('creds.update', saveCreds);
+  bot.ev.on('creds.update', saveCreds);
 
-    bot.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
+  bot.ev.on('connection.update', update => {
+    const { connection, lastDisconnect, qr } = update;
 
-        if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect.error instanceof Boom) ?
-                lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut : true;
+    if (connection === 'close') {
+      const shouldReconnect =
+        lastDisconnect.error instanceof Boom
+          ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
+          : true;
 
-            console.log('Connection closed, reconnecting:', shouldReconnect);
-            if (shouldReconnect) {
-                setTimeout(() => connectToWhatsApp(), 5000);
-            }
-        } else if (connection === 'open') {
-            console.log('✅ Bot connected!');
-        }
-    });
+      console.log('Connection closed, reconnecting:', shouldReconnect);
+      if (shouldReconnect) {
+        setTimeout(() => connectToWhatsApp(), 5000);
+      }
+    } else if (connection === 'open') {
+      console.log('✅ Bot connected!');
+    }
+  });
 
-    // Add messages to BullMQ queue
-    bot.ev.on('messages.upsert', async (m) => {
-        const msg = m.messages[0];
-        if (!msg.message) return;
+  // Add messages to BullMQ queue
+  bot.ev.on('messages.upsert', async m => {
+    const msg = m.messages[0];
+    if (!msg.message) return;
 
-        try {
-            await messageQueue.add('incoming-whatsapp-message', { msg });
-            console.log('Message added to queue:', msg.key.id);
-        } catch (error) {
-            console.error('Failed to add message to queue:', error);
-        }
-    });
+    try {
+      await messageQueue.add('incoming-whatsapp-message', { msg });
+      console.log('Message added to queue:', msg.key.id);
+    } catch (error) {
+      console.error('Failed to add message to queue:', error);
+    }
+  });
 
-    return bot;
+  return bot;
 }
 
 // API endpoint for Next.js to trigger actions
 app.post('/send', async (req, res) => {
-    try {
-        const { to, message } = req.body;
-        if (!bot) {
-            return res.status(503).send({ error: 'Bot not connected' });
-        }
-        await bot.sendMessage(to, message);
-        res.status(200).send({ status: 'Message sent' });
-    } catch (error) {
-        res.status(500).send({ error: error.message });
+  try {
+    const { to, message } = req.body;
+    if (!bot) {
+      return res.status(503).send({ error: 'Bot not connected' });
     }
+    await bot.sendMessage(to, message);
+    res.status(200).send({ status: 'Message sent' });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
 });
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
-    console.log(`Bot service listening on port ${port}`);
+  console.log(`Bot service listening on port ${port}`);
 });
 
 connectToWhatsApp();

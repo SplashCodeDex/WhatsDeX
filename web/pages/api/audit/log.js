@@ -15,10 +15,7 @@ async function getLogger() {
 
   const fileTransport = new transports.File({
     filename: path.join(logsDir, 'audit.log'),
-    format: format.combine(
-      format.timestamp(),
-      format.json()
-    ),
+    format: format.combine(format.timestamp(), format.json()),
   });
 
   logger = createLogger({

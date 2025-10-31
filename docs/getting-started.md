@@ -19,12 +19,14 @@
 Before you begin, ensure you have the following:
 
 ### System Requirements
+
 - **Node.js 18+** - [Download here](https://nodejs.org/)
 - **WhatsApp Account** - Personal or Business account
 - **Stable Internet Connection** - For API calls and WhatsApp Web
 - **2GB RAM** minimum, 4GB recommended
 
 ### Optional (for advanced features)
+
 - **Database**: PostgreSQL, MySQL, or MongoDB
 - **Redis**: For caching and session management
 - **Docker**: For containerized deployment
@@ -62,6 +64,7 @@ nano .env  # or use your preferred editor
 ```
 
 **Essential Configuration:**
+
 ```env
 # Required: Google Gemini AI API Key
 GOOGLE_GEMINI_API_KEY=your_gemini_api_key_here
@@ -74,6 +77,7 @@ REDIS_URL=
 ```
 
 > 💡 **Get your Gemini API Key:**
+>
 > 1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
 > 2. Create a new API key
 > 3. Copy and paste it into your `.env` file
@@ -97,7 +101,7 @@ npm run dev:full
 3. **Wait for connection** - you'll see "Connected" status
 
 ![QR Code Setup](../screenshots/qr-setup.png)
-*Figure 1: WhatsApp Web QR code scanning process*
+_Figure 1: WhatsApp Web QR code scanning process_
 
 ---
 
@@ -123,6 +127,7 @@ Bot: 🤖 WhatsDeX Command Menu
 ### Try AI Features
 
 **Example 1: AI Chat**
+
 ```
 You: /gemini Tell me a joke about programming
 Bot: 🤖 Why do programmers prefer dark mode?
@@ -130,6 +135,7 @@ Bot: 🤖 Why do programmers prefer dark mode?
 ```
 
 **Example 2: Weather Information**
+
 ```
 You: /weather Tokyo
 Bot: 🌤️ Weather in Tokyo:
@@ -140,6 +146,7 @@ Bot: 🌤️ Weather in Tokyo:
 ```
 
 **Example 3: Media Processing**
+
 ```
 You: [Send an image]
 Bot: 📸 Image received! Processing...
@@ -162,18 +169,21 @@ Bot: 🎨 AI-generated sticker created!
 ### Key Dashboard Features
 
 #### 📊 Real-Time Analytics
+
 - **Active Users**: See who's using your bot
 - **Command Usage**: Track popular commands
 - **Performance Metrics**: Response times and error rates
 - **System Health**: Uptime and resource usage
 
 #### 👥 User Management
+
 - **User List**: View all bot users
 - **Role Assignment**: Set admin/moderator permissions
 - **Bulk Actions**: Send messages to multiple users
 - **Activity Logs**: Complete user activity history
 
 #### ⚙️ System Configuration
+
 - **Bot Settings**: Configure command permissions
 - **AI Settings**: Adjust Gemini parameters
 - **Security Settings**: Rate limiting and moderation
@@ -186,22 +196,25 @@ Bot: 🎨 AI-generated sticker created!
 ### Essential Settings
 
 #### 1. Bot Permissions
+
 ```javascript
 // In your .env file
-BOT_MAX_COMMANDS_PER_HOUR=1000
-BOT_MAX_USERS_PER_GROUP=500
-BOT_RATE_LIMIT_WINDOW=60000  // 1 minute
+BOT_MAX_COMMANDS_PER_HOUR = 1000;
+BOT_MAX_USERS_PER_GROUP = 500;
+BOT_RATE_LIMIT_WINDOW = 60000; // 1 minute
 ```
 
 #### 2. AI Configuration
+
 ```javascript
 // Gemini AI settings
-GEMINI_TEMPERATURE=0.7
-GEMINI_MAX_TOKENS=2048
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_TEMPERATURE = 0.7;
+GEMINI_MAX_TOKENS = 2048;
+GEMINI_MODEL = gemini - 1.5 - flash;
 ```
 
 #### 3. Database Setup (Optional)
+
 ```bash
 # For PostgreSQL
 DATABASE_URL=postgresql://user:password@localhost:5432/whatsdex
@@ -216,6 +229,7 @@ DATABASE_URL=mongodb://localhost:27017/whatsdex
 ### Advanced Settings
 
 #### Redis Caching (Recommended for Production)
+
 ```bash
 # Install Redis
 # Ubuntu/Debian: sudo apt install redis-server
@@ -228,6 +242,7 @@ CACHE_TTL=1800  // 30 minutes
 ```
 
 #### External API Keys
+
 ```env
 # Optional: Additional AI providers
 OPENAI_API_KEY=your_openai_key
@@ -268,6 +283,7 @@ npm run test:db
 ### Troubleshooting Common Issues
 
 #### Connection Problems
+
 ```bash
 # Clear WhatsApp session
 rm -rf sessions/*
@@ -277,6 +293,7 @@ npm run dev
 ```
 
 #### API Key Issues
+
 ```bash
 # Test Gemini API key
 curl -H "Authorization: Bearer $GOOGLE_GEMINI_API_KEY" \
@@ -284,6 +301,7 @@ curl -H "Authorization: Bearer $GOOGLE_GEMINI_API_KEY" \
 ```
 
 #### Database Errors
+
 ```bash
 # Reset database
 npm run migrate:reset
@@ -297,25 +315,29 @@ npm run migrate
 ### Level Up Your Bot
 
 #### 1. **Add Custom Commands**
+
 Learn to create your own bot commands:
+
 ```javascript
 // Save as commands/custom/hello.js
 module.exports = {
   name: 'hello',
   category: 'custom',
-  code: async (ctx) => {
+  code: async ctx => {
     return ctx.reply('👋 Hello from my custom command!');
-  }
+  },
 };
 ```
 
 #### 2. **Explore Advanced Features**
+
 - **Plugin System**: Extend bot functionality
 - **Webhook Integration**: Connect external services
 - **Multi-Language Support**: Add localization
 - **Custom AI Prompts**: Create specialized AI behaviors
 
 #### 3. **Production Deployment**
+
 - **PM2 Clustering**: Scale your bot
 - **Docker Containers**: Easy deployment
 - **Cloud Hosting**: AWS, Railway, or Vercel
@@ -324,16 +346,19 @@ module.exports = {
 ### Learning Resources
 
 #### 📚 Documentation
+
 - **[Command Reference](features/commands/)** - Complete command list
 - **[API Documentation](api-reference.md)** - Technical API docs
 - **[Deployment Guide](../deployment/production.md)** - Production setup
 
 #### 🎥 Video Tutorials
+
 - **"Building Your First WhatsDeX Bot"** - Step-by-step video guide
 - **"Custom Commands Deep Dive"** - Advanced command creation
 - **"Production Deployment"** - Scaling and monitoring
 
 #### 💬 Community
+
 - **GitHub Discussions** - Ask questions and share ideas
 - **Discord Server** - Real-time help and community chat
 - **Stack Overflow** - Technical Q&A with `whatsdex` tag
@@ -343,6 +368,7 @@ module.exports = {
 ## 🎯 Quick Reference
 
 ### Essential Commands
+
 ```bash
 # Development
 npm run dev              # Start development server
@@ -364,6 +390,7 @@ npm run docker:run      # Run Docker container
 ```
 
 ### File Structure
+
 ```
 whatsdex/
 ├── 📁 commands/         # Bot command modules
@@ -376,6 +403,7 @@ whatsdex/
 ```
 
 ### Support Contacts
+
 - **📧 General Help**: support@whatsdex.com
 - **🐛 Bug Reports**: [GitHub Issues](../../issues)
 - **💬 Community**: [Discord Server](https://discord.gg/whatsdex)
@@ -391,6 +419,6 @@ whatsdex/
 
 ---
 
-*Need help? Join our [Discord community](https://discord.gg/whatsdex) or check the [troubleshooting guide](../support/troubleshooting.md)*
+_Need help? Join our [Discord community](https://discord.gg/whatsdex) or check the [troubleshooting guide](../support/troubleshooting.md)_
 
 </div>

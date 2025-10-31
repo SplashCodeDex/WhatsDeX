@@ -26,7 +26,7 @@ class ErrorHandler {
       AUTHORIZATION_ERROR: 'AuthorizationError',
       NOT_FOUND_ERROR: 'NotFoundError',
       RATE_LIMIT_ERROR: 'RateLimitError',
-      EXTERNAL_API_ERROR: 'ExternalApiError'
+      EXTERNAL_API_ERROR: 'ExternalApiError',
     };
   }
 
@@ -38,7 +38,7 @@ class ErrorHandler {
       message: error.message,
       stack: error.stack,
       context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Don't expose internal errors to users
@@ -54,7 +54,7 @@ class ErrorHandler {
       message: error.message,
       stack: error.stack,
       context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // For programming errors, we might want to exit the process
@@ -62,10 +62,9 @@ class ErrorHandler {
     if (process.env.NODE_ENV === 'production') {
       // Log and continue
       return { success: false, message: 'An unexpected error occurred' };
-    } else {
-      // In development, throw to get full stack trace
-      throw error;
     }
+    // In development, throw to get full stack trace
+    throw error;
   }
 
   /**
@@ -77,7 +76,7 @@ class ErrorHandler {
       message: error.message,
       code: error.code,
       meta: error.meta,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Handle specific database errors
@@ -101,7 +100,7 @@ class ErrorHandler {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     const status = error.response?.status;
@@ -128,7 +127,7 @@ class ErrorHandler {
       operation,
       message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Handle specific WhatsApp errors
@@ -149,11 +148,11 @@ class ErrorHandler {
   getUserFriendlyMessage(error) {
     // Map technical errors to user-friendly messages
     const errorMappings = {
-      'ENOTFOUND': 'Service temporarily unavailable',
-      'ECONNREFUSED': 'Connection failed',
-      'ETIMEDOUT': 'Request timed out',
-      'EACCES': 'Permission denied',
-      'ENOENT': 'Resource not found'
+      ENOTFOUND: 'Service temporarily unavailable',
+      ECONNREFUSED: 'Connection failed',
+      ETIMEDOUT: 'Request timed out',
+      EACCES: 'Permission denied',
+      ENOENT: 'Resource not found',
     };
 
     const technicalCode = error.code || error.errno;
@@ -177,7 +176,7 @@ class ErrorHandler {
     const baseResponse = {
       success: false,
       timestamp: new Date().toISOString(),
-      context
+      context,
     };
 
     if (error instanceof AppError) {
@@ -185,7 +184,7 @@ class ErrorHandler {
         ...baseResponse,
         message: error.message,
         statusCode: error.statusCode,
-        type: 'AppError'
+        type: 'AppError',
       };
     }
 
@@ -196,7 +195,7 @@ class ErrorHandler {
         message: 'Invalid input data',
         statusCode: 400,
         type: 'ValidationError',
-        details: error.details
+        details: error.details,
       };
     }
 
@@ -205,7 +204,7 @@ class ErrorHandler {
         ...baseResponse,
         message: 'Invalid data format',
         statusCode: 400,
-        type: 'CastError'
+        type: 'CastError',
       };
     }
 
@@ -214,7 +213,7 @@ class ErrorHandler {
       ...baseResponse,
       message: this.getUserFriendlyMessage(error),
       statusCode: 500,
-      type: 'UnknownError'
+      type: 'UnknownError',
     };
   }
 
@@ -223,11 +222,11 @@ class ErrorHandler {
    */
   asyncHandler(fn) {
     return (req, res, next) => {
-      Promise.resolve(fn(req, res, next)).catch((error) => {
+      Promise.resolve(fn(req, res, next)).catch(error => {
         const errorResponse = this.createErrorResponse(error, {
           url: req.url,
           method: req.method,
-          ip: req.ip
+          ip: req.ip,
         });
 
         logger.error('Unhandled async error:', error);
@@ -241,7 +240,7 @@ class ErrorHandler {
    * WhatsApp command error wrapper
    */
   commandHandler(fn) {
-    return async (ctx) => {
+    return async ctx => {
       try {
         return await fn(ctx);
       } catch (error) {
@@ -249,12 +248,12 @@ class ErrorHandler {
           command: ctx.used?.command,
           user: ctx.getId(ctx.sender.jid),
           error: error.message,
-          stack: error.stack
+          stack: error.stack,
         });
 
         const errorResponse = this.handleOperationalError(error, {
           command: ctx.used?.command,
-          user: ctx.getId(ctx.sender.jid)
+          user: ctx.getId(ctx.sender.jid),
         });
 
         return ctx.reply(errorResponse.message);

@@ -15,21 +15,24 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module', // ESM modules
   },
-  plugins: [
-    '@typescript-eslint',
-    'prettier',
-  ],
+  plugins: ['@typescript-eslint', 'prettier'],
   rules: {
-    'prettier/prettier': ['error', {
-      singleQuote: true,
-      semi: true,
-      trailingComma: 'es5',
-    }],
+    'prettier/prettier': [
+      'error',
+      {
+        singleQuote: true,
+        semi: true,
+        trailingComma: 'es5',
+      },
+    ],
     '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': ['warn', {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_'
-    }],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      },
+    ],
   },
   overrides: [
     {
@@ -37,7 +40,7 @@ module.exports = {
       files: ['**/__tests__/**/*', '**/*.test.js', '**/*.test.ts', '**/*.spec.js'],
       plugins: ['jest'],
       env: {
-        'jest/globals': true,  // Enables Jest globals (describe, it, expect)
+        'jest/globals': true, // Enables Jest globals (describe, it, expect)
       },
       extends: ['plugin:jest/recommended'],
       rules: {

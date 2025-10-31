@@ -7,6 +7,8 @@ module.exports = async (nlpResult, ctx, bot, context) => {
   if (suggestedCommand) {
     ctx.reply(`I'm sorry, I don't understand. Did you mean "${suggestedCommand}"?`);
   } else {
-    ctx.reply("I'm sorry, I don't understand. I am still learning. You can try asking me a question or using a command. To see the list of commands, type /help.");
+    ctx.reply(
+      "I'm sorry, I don't understand. I am still learning. You can try asking me a question or using a command. To see the list of commands, type /help."
+    );
   }
 };
