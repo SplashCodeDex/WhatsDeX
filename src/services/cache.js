@@ -1,288 +1,298 @@
-const Redis = require('ioredis');
+const redis = require('redis');
 const logger = require('../utils/logger');
 
 class CacheService {
   constructor() {
-    this.redis = null;
+    this.client = null;
     this.isConnected = false;
-    this.defaultTTL = 3600; // 1 hour default TTL
+    this.connect();
   }
 
   async connect() {
     try {
-      this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-        password: process.env.REDIS_PASSWORD || undefined,
-        retryDelayOnFailover: 100,
-        maxRetriesPerRequest: 3,
-        lazyConnect: true,
+      this.client = redis.createClient({
+        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        password: process.env.REDIS_PASSWORD
       });
 
-      // Event handlers
-      this.redis.on('connect', () => {
+      this.client.on('error', (err) => {
+        logger.error('Redis connection error:', err);
+        this.isConnected = false;
+      });
+
+      this.client.on('connect', () => {
+        logger.info('Connected to Redis');
         this.isConnected = true;
-        logger.info('Redis connected successfully');
       });
 
-      this.redis.on('error', (error) => {
+      this.client.on('ready', () => {
+        this.isConnected = true;
+      });
+
+      this.client.on('end', () => {
         this.isConnected = false;
-        logger.error('Redis connection error', { error: error.message });
       });
 
-      this.redis.on('ready', () => {
-        logger.info('Redis is ready to receive commands');
-      });
-
-      await this.redis.connect();
+      await this.client.connect();
     } catch (error) {
-      logger.error('Failed to connect to Redis', { error: error.message });
-      throw error;
+      logger.error('Failed to connect to Redis:', error);
+      this.isConnected = false;
     }
   }
 
-  async disconnect() {
-    try {
-      if (this.redis) {
-        await this.redis.quit();
-        this.isConnected = false;
-        logger.info('Redis disconnected successfully');
-      }
-    } catch (error) {
-      logger.error('Failed to disconnect from Redis', { error: error.message });
-      throw error;
-    }
-  }
-
-  // Generic cache methods
+  /**
+   * Get a value from cache
+   * @param {string} key - Cache key
+   * @returns {Promise<any>} Cached value or null
+   */
   async get(key) {
-    try {
-      if (!this.isConnected) return null;
-
-      const value = await this.redis.get(key);
-      if (value) {
-        logger.debug(`Cache hit for key: ${key}`);
-        return JSON.parse(value);
-      }
-
-      logger.debug(`Cache miss for key: ${key}`);
+    if (!this.isConnected || !this.client) {
       return null;
+    }
+
+    try {
+      const value = await this.client.get(key);
+      return value ? JSON.parse(value) : null;
     } catch (error) {
-      logger.error('Error getting from cache', { key, error: error.message });
+      logger.error('Cache get error:', error);
       return null;
     }
   }
 
-  async set(key, value, ttl = this.defaultTTL) {
+  /**
+   * Set a value in cache
+   * @param {string} key - Cache key
+   * @param {any} value - Value to cache
+   * @param {number} ttlSeconds - Time to live in seconds (default: 3600)
+   * @returns {Promise<boolean>} Success status
+   */
+  async set(key, value, ttlSeconds = 3600) {
+    if (!this.isConnected || !this.client) {
+      return false;
+    }
+
     try {
-      if (!this.isConnected) return false;
-
       const serializedValue = JSON.stringify(value);
-      const result = await this.redis.setex(key, ttl, serializedValue);
-
-      logger.debug(`Cache set for key: ${key}, TTL: ${ttl}s`);
-      return result === 'OK';
+      if (ttlSeconds > 0) {
+        await this.client.setEx(key, ttlSeconds, serializedValue);
+      } else {
+        await this.client.set(key, serializedValue);
+      }
+      return true;
     } catch (error) {
-      logger.error('Error setting cache', { key, error: error.message });
+      logger.error('Cache set error:', error);
       return false;
     }
   }
 
-  async del(key) {
-    try {
-      if (!this.isConnected) return 0;
+  /**
+   * Delete a key from cache
+   * @param {string} key - Cache key
+   * @returns {Promise<boolean>} Success status
+   */
+  async delete(key) {
+    if (!this.isConnected || !this.client) {
+      return false;
+    }
 
-      const result = await this.redis.del(key);
-      logger.debug(`Cache deleted for key: ${key}`);
-      return result;
+    try {
+      await this.client.del(key);
+      return true;
     } catch (error) {
-      logger.error('Error deleting from cache', { key, error: error.message });
-      return 0;
+      logger.error('Cache delete error:', error);
+      return false;
     }
   }
 
+  /**
+   * Check if key exists
+   * @param {string} key - Cache key
+   * @returns {Promise<boolean>} Whether key exists
+   */
   async exists(key) {
-    try {
-      if (!this.isConnected) return false;
+    if (!this.isConnected || !this.client) {
+      return false;
+    }
 
-      const result = await this.redis.exists(key);
+    try {
+      const result = await this.client.exists(key);
       return result === 1;
     } catch (error) {
-      logger.error('Error checking cache existence', { key, error: error.message });
+      logger.error('Cache exists error:', error);
       return false;
     }
   }
 
-  // User-specific cache methods
-  getUserKey(jid) {
-    return `user:${jid}`;
-  }
-
-  async getUser(jid) {
-    const key = this.getUserKey(jid);
-    return await this.get(key);
-  }
-
-  async setUser(jid, userData, ttl = 1800) { // 30 minutes
-    const key = this.getUserKey(jid);
-    return await this.set(key, userData, ttl);
-  }
-
-  async invalidateUser(jid) {
-    const key = this.getUserKey(jid);
-    return await this.del(key);
-  }
-
-  // Group-specific cache methods
-  getGroupKey(jid) {
-    return `group:${jid}`;
-  }
-
-  async getGroup(jid) {
-    const key = this.getGroupKey(jid);
-    return await this.get(key);
-  }
-
-  async setGroup(jid, groupData, ttl = 1800) { // 30 minutes
-    const key = this.getGroupKey(jid);
-    return await this.set(key, groupData, ttl);
-  }
-
-  async invalidateGroup(jid) {
-    const key = this.getGroupKey(jid);
-    return await this.del(key);
-  }
-
-  // Command-specific cache methods
-  getCommandKey(command, userId = null) {
-    return userId ? `cmd:${command}:${userId}` : `cmd:${command}`;
-  }
-
-  async getCommandResult(command, userId = null, ttl = 300) { // 5 minutes
-    const key = this.getCommandKey(command, userId);
-    return await this.get(key);
-  }
-
-  async setCommandResult(command, result, userId = null, ttl = 300) {
-    const key = this.getCommandKey(command, userId);
-    return await this.set(key, result, ttl);
-  }
-
-  // AI response caching
-  getAIKey(prompt, model = 'gpt-4o-mini') {
-    const hash = require('crypto').createHash('md5').update(prompt).digest('hex');
-    return `ai:${model}:${hash}`;
-  }
-
-  async getAIResponse(prompt, model = 'gpt-4o-mini') {
-    const key = this.getAIKey(prompt, model);
-    return await this.get(key);
-  }
-
-  async setAIResponse(prompt, response, model = 'gpt-4o-mini', ttl = 3600) { // 1 hour
-    const key = this.getAIKey(prompt, model);
-    return await this.set(key, response, ttl);
-  }
-
-  // Rate limiting cache methods
-  getRateLimitKey(identifier, action = 'general') {
-    return `ratelimit:${action}:${identifier}`;
-  }
-
-  async checkRateLimit(identifier, action = 'general', limit = 100, windowMs = 900000) { // 15 minutes
-    const key = this.getRateLimitKey(identifier, action);
+  /**
+   * Set multiple keys at once
+   * @param {Object} keyValuePairs - Object with key-value pairs
+   * @param {number} ttlSeconds - Time to live in seconds
+   * @returns {Promise<boolean>} Success status
+   */
+  async mset(keyValuePairs, ttlSeconds = 3600) {
+    if (!this.isConnected || !this.client) {
+      return false;
+    }
 
     try {
-      const current = await this.redis.get(key) || 0;
-      const count = parseInt(current) + 1;
-
-      if (count > limit) {
-        return { allowed: false, remaining: 0, resetTime: windowMs };
-      }
-
-      // Set or increment the counter
-      await this.redis.setex(key, Math.ceil(windowMs / 1000), count);
-
-      return {
-        allowed: true,
-        remaining: limit - count,
-        resetTime: windowMs
-      };
+      const pipeline = this.client.multi();
+      Object.entries(keyValuePairs).forEach(([key, value]) => {
+        const serializedValue = JSON.stringify(value);
+        if (ttlSeconds > 0) {
+          pipeline.setEx(key, ttlSeconds, serializedValue);
+        } else {
+          pipeline.set(key, serializedValue);
+        }
+      });
+      await pipeline.exec();
+      return true;
     } catch (error) {
-      logger.error('Error checking rate limit', { identifier, action, error: error.message });
-      return { allowed: true, remaining: limit, resetTime: windowMs }; // Allow on error
+      logger.error('Cache mset error:', error);
+      return false;
     }
   }
 
-  // Session management
-  getSessionKey(sessionId) {
-    return `session:${sessionId}`;
+  /**
+   * Get multiple keys at once
+   * @param {Array<string>} keys - Array of cache keys
+   * @returns {Promise<Object>} Object with key-value pairs
+   */
+  async mget(keys) {
+    if (!this.isConnected || !this.client) {
+      return {};
+    }
+
+    try {
+      const values = await this.client.mGet(keys);
+      const result = {};
+      keys.forEach((key, index) => {
+        if (values[index]) {
+          try {
+            result[key] = JSON.parse(values[index]);
+          } catch (parseError) {
+            logger.warn(`Failed to parse cached value for key ${key}:`, parseError);
+            result[key] = null;
+          }
+        } else {
+          result[key] = null;
+        }
+      });
+      return result;
+    } catch (error) {
+      logger.error('Cache mget error:', error);
+      return {};
+    }
   }
 
-  async getSession(sessionId) {
-    const key = this.getSessionKey(sessionId);
-    return await this.get(key);
+  /**
+   * Increment a numeric value
+   * @param {string} key - Cache key
+   * @param {number} amount - Amount to increment by (default: 1)
+   * @returns {Promise<number|null>} New value or null on error
+   */
+  async increment(key, amount = 1) {
+    if (!this.isConnected || !this.client) {
+      return null;
+    }
+
+    try {
+      return await this.client.incrBy(key, amount);
+    } catch (error) {
+      logger.error('Cache increment error:', error);
+      return null;
+    }
   }
 
-  async setSession(sessionId, sessionData, ttl = 86400) { // 24 hours
-    const key = this.getSessionKey(sessionId);
-    return await this.set(key, sessionData, ttl);
+  /**
+   * Set expiration time for a key
+   * @param {string} key - Cache key
+   * @param {number} ttlSeconds - Time to live in seconds
+   * @returns {Promise<boolean>} Success status
+   */
+  async expire(key, ttlSeconds) {
+    if (!this.isConnected || !this.client) {
+      return false;
+    }
+
+    try {
+      return await this.client.expire(key, ttlSeconds);
+    } catch (error) {
+      logger.error('Cache expire error:', error);
+      return false;
+    }
   }
 
-  async destroySession(sessionId) {
-    const key = this.getSessionKey(sessionId);
-    return await this.del(key);
+  /**
+   * Get time to live for a key
+   * @param {string} key - Cache key
+   * @returns {Promise<number>} TTL in seconds (-2 if key doesn't exist, -1 if no expiration)
+   */
+  async ttl(key) {
+    if (!this.isConnected || !this.client) {
+      return -2;
+    }
+
+    try {
+      return await this.client.ttl(key);
+    } catch (error) {
+      logger.error('Cache ttl error:', error);
+      return -2;
+    }
   }
 
-  // Analytics caching
-  async getAnalyticsCache(timeframe = '24h') {
-    const key = `analytics:${timeframe}`;
-    return await this.get(key);
-  }
-
-  async setAnalyticsCache(timeframe, data, ttl = 300) { // 5 minutes
-    const key = `analytics:${timeframe}`;
-    return await this.set(key, data, ttl);
-  }
-
-  // Bulk operations
+  /**
+   * Clear cache by pattern
+   * @param {string} pattern - Pattern to match (e.g., 'user:*')
+   * @returns {Promise<number>} Number of keys deleted
+   */
   async invalidatePattern(pattern) {
+    if (!this.isConnected || !this.client) {
+      return 0;
+    }
+
     try {
-      if (!this.isConnected) return 0;
-
-      const keys = await this.redis.keys(pattern);
+      const keys = await this.client.keys(pattern);
       if (keys.length > 0) {
-        const result = await this.redis.del(...keys);
-        logger.debug(`Invalidated ${result} keys matching pattern: ${pattern}`);
-        return result;
+        return await this.client.del(keys);
       }
-
       return 0;
     } catch (error) {
-      logger.error('Error invalidating pattern', { pattern, error: error.message });
+      logger.error('Cache invalidate pattern error:', error);
       return 0;
     }
   }
 
-  // Cache statistics
+  /**
+   * Get cache statistics
+   * @returns {Promise<Object>} Cache statistics
+   */
   async getStats() {
-    try {
-      if (!this.isConnected) return null;
+    if (!this.isConnected || !this.client) {
+      return { connected: false };
+    }
 
-      const info = await this.redis.info();
-      const dbSize = await this.redis.dbsize();
+    try {
+      const info = await this.client.info();
+      const dbSize = await this.client.dbSize();
 
       return {
-        connected: this.isConnected,
+        connected: true,
         dbSize,
         info: this.parseRedisInfo(info)
       };
     } catch (error) {
-      logger.error('Error getting cache stats', { error: error.message });
-      return null;
+      logger.error('Cache stats error:', error);
+      return { connected: false, error: error.message };
     }
   }
 
+  /**
+   * Parse Redis INFO command output
+   * @param {string} info - Raw Redis info
+   * @returns {Object} Parsed info object
+   */
   parseRedisInfo(info) {
-    const lines = info.split('\r\n');
+    const lines = info.split('\n');
     const parsed = {};
 
     lines.forEach(line => {
@@ -295,56 +305,38 @@ class CacheService {
     return parsed;
   }
 
-  // Health check
+  /**
+   * Health check
+   * @returns {Promise<Object>} Health status
+   */
   async healthCheck() {
     try {
-      if (!this.isConnected) return { status: 'disconnected' };
+      if (!this.isConnected || !this.client) {
+        return { status: 'disconnected' };
+      }
 
-      await this.redis.ping();
-      return { status: 'healthy', latency: await this.redis.ping() };
+      await this.client.ping();
+      const stats = await this.getStats();
+
+      return {
+        status: 'healthy',
+        ...stats
+      };
     } catch (error) {
-      logger.error('Cache health check failed', { error: error.message });
-      return { status: 'unhealthy', error: error.message };
+      return {
+        status: 'unhealthy',
+        error: error.message
+      };
     }
   }
 
-  // Pub/Sub methods for real-time features
-  async publish(channel, message) {
-    try {
-      if (!this.isConnected) return 0;
-
-      const result = await this.redis.publish(channel, JSON.stringify(message));
-      logger.debug(`Published message to channel: ${channel}`);
-      return result;
-    } catch (error) {
-      logger.error('Error publishing message', { channel, error: error.message });
-      return 0;
-    }
-  }
-
-  async subscribe(channel, callback) {
-    try {
-      if (!this.isConnected) return;
-
-      const subscriber = this.redis.duplicate();
-      await subscriber.subscribe(channel);
-
-      subscriber.on('message', (ch, message) => {
-        if (ch === channel) {
-          try {
-            const data = JSON.parse(message);
-            callback(data);
-          } catch (error) {
-            logger.error('Error parsing pub/sub message', { channel, message, error: error.message });
-          }
-        }
-      });
-
-      logger.debug(`Subscribed to channel: ${channel}`);
-      return subscriber;
-    } catch (error) {
-      logger.error('Error subscribing to channel', { channel, error: error.message });
-      throw error;
+  /**
+   * Close connection
+   */
+  async close() {
+    if (this.client) {
+      await this.client.quit();
+      this.isConnected = false;
     }
   }
 }
