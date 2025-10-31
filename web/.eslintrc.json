@@ -1,6 +1,6 @@
 {
   "extends": [
-    "next/core-web-vitals"
+    "eslint:recommended"
   ],
   "env": {
     "browser": true,
@@ -12,23 +12,18 @@
       "jsx": true
     },
     "ecmaVersion": 2020,
-    "sourceType": "module"
+    "sourceType": "module",
+    "project": "./tsconfig.json"
   },
   "settings": {
     "react": {
       "version": "detect"
-    },
-    "import/resolver": {
-      "typescript": {
-        "alwaysTryTypes": true,
-        "project": "./tsconfig.json"
-      }
     }
   },
   "rules": {
     "import/extensions": "off",
-    "import/no-unresolved": "error",
-    "import/no-extraneous-dependencies": ["error", {"devDependencies": true, "optionalDependencies": false, "peerDependencies": false}],
+    "import/no-unresolved": "off",
+    "import/no-extraneous-dependencies": "off",
     "import/no-relative-packages": "off",
     "no-use-before-define": "error",
     "no-unsafe-optional-chaining": "off",

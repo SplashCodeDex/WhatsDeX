@@ -7,7 +7,7 @@ const __dirname = dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@whatsdex/shared'],
+  transpilePackages: ['@whatsdex/shared', '@whiskeysockets/baileys'],
   reactStrictMode: true,
 
   // Image optimization
@@ -29,12 +29,11 @@ const nextConfig = {
 
   // Experimental features
   experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
+    esmExternals: 'loose',
   },
 
   // Server external packages
-  serverExternalPackages: ['sharp'],
+  // serverExternalPackages: ['sharp'],
 
   // Headers for security and performance
   async headers() {
@@ -82,15 +81,15 @@ const nextConfig = {
   },
 
   // Turbopack configuration
-  turbopack: {
-    root: join(__dirname, '../..'),
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
+  // turbopack: {
+  //   root: join(__dirname, '../..'),
+  //   rules: {
+  //     '*.svg': {
+  //       loaders: ['@svgr/webpack'],
+  //       as: '*.js',
+  //     },
+  //   },
+  // },
 
   // Build optimization
   compiler: {
