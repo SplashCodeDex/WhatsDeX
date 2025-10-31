@@ -2,9 +2,10 @@
 // Status values: "PENDING", "APPROVED", "REJECTED", "EXPIRED", "CANCELLED"
 // RiskLevel values: "LOW", "MEDIUM", "HIGH", "CRITICAL"
 
-// Prisma schema for WhatsDeX enhanced database
+// Prisma schema for WhatsDeX enhanced database with queryCompiler for performance
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["queryCompiler"]
 }
 
 datasource db {

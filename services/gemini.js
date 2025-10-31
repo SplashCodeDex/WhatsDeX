@@ -11,7 +11,7 @@ class GeminiService {
 
     this.genAI = new GoogleGenerativeAI(this.apiKey);
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash-exp',
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -247,7 +247,7 @@ class GeminiService {
       const geminiTools = tools ? this.convertToolsToGeminiFormat(tools) : [];
 
       const modelWithTools = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash-exp',
         tools: geminiTools.length > 0 ? [{ functionDeclarations: geminiTools }] : [],
         generationConfig: {
           temperature: 0.7,
@@ -510,7 +510,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
 
       return {
         status: 'healthy',
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash-exp',
         responseTime,
         testResponse: text ? 'OK' : 'No response',
         cache: this.cache ? 'enabled' : 'disabled'
