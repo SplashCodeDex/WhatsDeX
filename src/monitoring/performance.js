@@ -26,7 +26,7 @@ class PerformanceMonitor {
       if (lag > 50) {
         logger.warn('⚠️ Event loop lag detected', {
           lag: `${lag}ms`,
-          threshold: '50ms'
+          threshold: '50ms',
         });
       }
 
@@ -41,7 +41,7 @@ class PerformanceMonitor {
         heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
         rss: Math.round(memUsage.rss / 1024 / 1024),
         external: Math.round(memUsage.external / 1024 / 1024),
-        arrayBuffers: Math.round(memUsage.arrayBuffers / 1024 / 1024)
+        arrayBuffers: Math.round(memUsage.arrayBuffers / 1024 / 1024),
       };
 
       // Alert if memory usage > 80% of heap total
@@ -50,7 +50,7 @@ class PerformanceMonitor {
         logger.warn('⚠️ High memory usage detected', {
           usagePercent: `${memoryUsagePercent.toFixed(1)}%`,
           heapUsed: `${this.memoryStats.heapUsed}MB`,
-          heapTotal: `${this.memoryStats.heapTotal}MB`
+          heapTotal: `${this.memoryStats.heapTotal}MB`,
         });
       }
     }, 5000); // Every 5 seconds
@@ -65,7 +65,7 @@ class PerformanceMonitor {
         logger.warn('⚠️ High CPU usage detected', {
           userPercent: `${userPercent.toFixed(1)}%`,
           systemPercent: `${systemPercent.toFixed(1)}%`,
-          totalPercent: `${(userPercent + systemPercent).toFixed(1)}%`
+          totalPercent: `${(userPercent + systemPercent).toFixed(1)}%`,
         });
       }
 
@@ -85,8 +85,8 @@ class PerformanceMonitor {
         pid: process.pid,
         platform: process.platform,
         nodeVersion: process.version,
-        environment: process.env.NODE_ENV || 'development'
-      }
+        environment: process.env.NODE_ENV || 'development',
+      },
     };
   }
 
@@ -98,13 +98,13 @@ class PerformanceMonitor {
       const endTime = performance.now();
 
       logger.info('Manual garbage collection completed', {
-        duration: `${(endTime - startTime).toFixed(2)}ms`
+        duration: `${(endTime - startTime).toFixed(2)}ms`,
       });
 
       return {
         duration: endTime - startTime,
         memoryBefore: this.memoryStats,
-        memoryAfter: process.memoryUsage()
+        memoryAfter: process.memoryUsage(),
       };
     } else {
       logger.warn('Manual GC not available. Run with --expose-gc flag');
@@ -115,13 +115,12 @@ class PerformanceMonitor {
   // Health check method
   getHealthStatus() {
     const metrics = this.getMetrics();
-    const isHealthy = metrics.eventLoopLag < 100 &&
-                     metrics.memoryUsage.heapUsed < 200; // MB
+    const isHealthy = metrics.eventLoopLag < 100 && metrics.memoryUsage.heapUsed < 200; // MB
 
     return {
       status: isHealthy ? 'healthy' : 'degraded',
       metrics,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }

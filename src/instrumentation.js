@@ -6,7 +6,7 @@ import { logger } from './utils/logger.js';
 const sdk = new NodeSDK({
   traceExporter: new PrometheusExporter({
     port: process.env.OTEL_PROMETHEUS_PORT || 9464,
-    endpoint: '/metrics'
+    endpoint: '/metrics',
   }),
   instrumentations: [
     getNodeAutoInstrumentations({
@@ -18,25 +18,26 @@ const sdk = new NodeSDK({
         // Ignore health check endpoints
         ignoreIncomingPaths: ['/health', '/metrics'],
         // Ignore outgoing requests to localhost
-        ignoreOutgoingUrls: [/^https?:\/\/(localhost|127\.0\.0\.1)/]
+        ignoreOutgoingUrls: [/^https?:\/\/(localhost|127\.0\.0\.1)/],
       },
       // Configure database instrumentation
       '@opentelemetry/instrumentation-pg': { enabled: true },
-      '@opentelemetry/instrumentation-redis': { enabled: true }
-    })
+      '@opentelemetry/instrumentation-redis': { enabled: true },
+    }),
   ],
   serviceName: 'whatsdex-bot',
-  serviceVersion: process.env.npm_package_version || '1.0.0'
+  serviceVersion: process.env.npm_package_version || '1.0.0',
 });
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
-  sdk.shutdown()
+  sdk
+    .shutdown()
     .then(() => {
       logger.info('OpenTelemetry SDK shut down successfully');
       process.exit(0);
     })
-    .catch((error) => {
+    .catch(error => {
       logger.error('Error shutting down OpenTelemetry SDK', { error: error.message });
       process.exit(1);
     });
@@ -45,5 +46,5 @@ process.on('SIGTERM', () => {
 sdk.start();
 logger.info('OpenTelemetry instrumentation started', {
   serviceName: 'whatsdex-bot',
-  prometheusPort: process.env.OTEL_PROMETHEUS_PORT || 9464
+  prometheusPort: process.env.OTEL_PROMETHEUS_PORT || 9464,
 });

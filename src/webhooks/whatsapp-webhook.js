@@ -35,7 +35,7 @@ router.post('/webhook/whatsapp', express.json(), async (req, res) => {
 
     logger.info('WhatsApp webhook message received', {
       body: req.body,
-      signature: signature ? '***' : null
+      signature: signature ? '***' : null,
     });
 
     // Process incoming message

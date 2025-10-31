@@ -79,7 +79,7 @@ module.exports = {
 
       if (response.finish_reason === 'tool_calls' && responseMessage.tool_calls) {
         messages.push(responseMessage);
-        // eslint-disable-next-line no-restricted-syntax
+
         for (const toolCall of responseMessage.tool_calls) {
           const functionName = toolCall.function.name;
           const functionArgs = JSON.parse(toolCall.function.arguments);
@@ -118,7 +118,7 @@ module.exports = {
                 getId: ctx.getId,
                 // No access to bot.cmd full set, database, etc.
               };
-              // eslint-disable-next-line no-await-in-loop
+
               await commandToExecute.code(sandboxedCtx);
               toolResponse = commandOutput;
               console.log(`Tool execution success: ${functionName}`);

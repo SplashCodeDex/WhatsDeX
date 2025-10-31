@@ -8,7 +8,7 @@ export class EnhancedAnalytics {
       averageResponseTime: 0,
       userSatisfaction: 0,
       commandUsage: new Map(),
-      dropoffPoints: new Map()
+      dropoffPoints: new Map(),
     };
   }
 
@@ -27,7 +27,7 @@ export class EnhancedAnalytics {
           commandUsed: metrics.command,
           errorOccurred: metrics.error || false,
           dropoffPoint: metrics.dropoff,
-          createdAt: new Date()
+          createdAt: new Date(),
         },
       });
 
@@ -52,8 +52,7 @@ export class EnhancedAnalytics {
     }
 
     if (metrics.satisfaction) {
-      this.metrics.userSatisfaction =
-        (this.metrics.userSatisfaction + metrics.satisfaction) / 2;
+      this.metrics.userSatisfaction = (this.metrics.userSatisfaction + metrics.satisfaction) / 2;
     }
 
     if (metrics.command) {
@@ -80,7 +79,7 @@ export class EnhancedAnalytics {
         _count: true,
         where: {
           dropoffPoint: { not: null },
-          createdAt: { gte: startDate }
+          createdAt: { gte: startDate },
         },
         orderBy: { _count: { dropoffPoint: 'desc' } },
         take: 10,
@@ -104,7 +103,7 @@ export class EnhancedAnalytics {
         by: ['commandUsed'],
         where: {
           errorOccurred: true,
-          createdAt: { gte: startDate }
+          createdAt: { gte: startDate },
         },
         _count: true,
         orderBy: { _count: { commandUsed: 'desc' } },
@@ -114,21 +113,21 @@ export class EnhancedAnalytics {
       return {
         dropoffs: dropoffs.map(d => ({
           point: d.dropoffPoint,
-          count: d._count
+          count: d._count,
         })),
         commandPerformance: commandPerformance.map(cp => ({
           command: cp.commandUsed,
           usage: cp._count,
           avgResponseTime: Math.round(cp._avg.responseTime || 0),
-          avgSatisfaction: Math.round((cp._avg.userSatisfaction || 0) * 100) / 100
+          avgSatisfaction: Math.round((cp._avg.userSatisfaction || 0) * 100) / 100,
         })),
         satisfactionTrend,
         errorAnalysis: errorAnalysis.map(ea => ({
           command: ea.commandUsed,
-          errors: ea._count
+          errors: ea._count,
         })),
         timeframe,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Failed to get conversation insights', { error: error.message });
@@ -155,7 +154,7 @@ export class EnhancedAnalytics {
       return trend.map(row => ({
         date: row.date.toISOString().split('T')[0],
         satisfaction: Math.round((parseFloat(row.avg_satisfaction) || 0) * 100) / 100,
-        conversations: parseInt(row.total_conversations)
+        conversations: parseInt(row.total_conversations),
       }));
     } catch (error) {
       logger.error('Failed to get satisfaction trend', { error: error.message });
@@ -188,10 +187,14 @@ export class EnhancedAnalytics {
         totalMessages: parseInt(result.total_messages),
         avgResponseTime: Math.round(parseFloat(result.avg_response_time) || 0),
         avgSatisfaction: Math.round((parseFloat(result.avg_satisfaction) || 0) * 100) / 100,
-        errorRate: result.total_messages > 0 ?
-          Math.round((parseInt(result.total_errors) / parseInt(result.total_messages)) * 10000) / 100 : 0,
+        errorRate:
+          result.total_messages > 0
+            ? Math.round(
+                (parseInt(result.total_errors) / parseInt(result.total_messages)) * 10000
+              ) / 100
+            : 0,
         timeframe,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
       };
     } catch (error) {
       logger.error('Failed to get user engagement metrics', { error: error.message });
@@ -207,7 +210,7 @@ export class EnhancedAnalytics {
       ...this.metrics,
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      memoryUsage: process.memoryUsage()
+      memoryUsage: process.memoryUsage(),
     };
   }
 
@@ -237,7 +240,7 @@ export class EnhancedAnalytics {
       errorAnalysis: [],
       timeframe: '7d',
       generatedAt: new Date().toISOString(),
-      error: 'Database unavailable'
+      error: 'Database unavailable',
     };
   }
 
@@ -253,7 +256,7 @@ export class EnhancedAnalytics {
       errorRate: 0,
       timeframe: '30d',
       generatedAt: new Date().toISOString(),
-      error: 'Database unavailable'
+      error: 'Database unavailable',
     };
   }
 
@@ -267,8 +270,8 @@ export class EnhancedAnalytics {
 
       const deleted = await prisma.conversationAnalytics.deleteMany({
         where: {
-          createdAt: { lt: ninetyDaysAgo }
-        }
+          createdAt: { lt: ninetyDaysAgo },
+        },
       });
 
       logger.info('Cleaned up old analytics data', { deletedCount: deleted.count });
