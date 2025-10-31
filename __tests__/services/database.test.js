@@ -14,7 +14,12 @@ const mockPrisma = {
   },
   $connect: jest.fn(),
   $disconnect: jest.fn(),
-  $on: jest.fn(),
+  $on: jest.fn((event, callback) => {
+    // Mock the event listener
+    if (event === 'query') {
+      // Mock query event
+    }
+  }),
   $use: jest.fn(),
   $queryRaw: jest.fn(),
 };
@@ -88,7 +93,12 @@ describe('Migrations', () => {
 
     // Test UserViolation
     const violation = await testPrisma.userViolation.create({
-      data: { userId: user.id, violationType: 'spam' },
+      data: {
+        userId: user.id,
+        violationType: 'spam',
+        reason: 'Test violation',
+        severity: 'low', // Explicitly adding the required 'severity' field
+      },
     });
     expect(violation).toHaveProperty('severity', 'low');
   });

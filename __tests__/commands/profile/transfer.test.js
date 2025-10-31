@@ -1,5 +1,27 @@
-const transferCommand = require('../../../commands/profile/transfer.js');
-const { db } = require('../../../src/utils');
+// Make sure the mock includes everything expected by the DatabaseService constructor
+const mockPrisma = {
+  user: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    upsert: jest.fn(),
+  },
+  $connect: jest.fn(),
+  $disconnect: jest.fn(),
+  $on: jest.fn(), // <--- This is the key addition to fix the TypeError
+  $use: jest.fn(),
+  $queryRaw: jest.fn(),
+};
+
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => mockPrisma),
+}));
+
+const transferCommand = require('../../../commands/profile/transfer.js');</search>
+</search_and_replace>
 
 describe('transfer command', () => {
   let ctx;
