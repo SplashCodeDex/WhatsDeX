@@ -1,0 +1,14 @@
+# Heroku Procfile for WhatsDeX AI Bot
+# Defines process types and commands
+
+# Main web process (API and bot)
+web: npm run heroku:start
+
+# Background worker for message processing
+worker: npm run heroku:worker
+
+# Release process for database migrations
+release: npm run heroku:release
+
+# Scheduled tasks (if using Heroku Scheduler)
+scheduler: npm run heroku:scheduler

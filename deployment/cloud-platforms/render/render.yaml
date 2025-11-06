@@ -1,0 +1,178 @@
+# Render.com Blueprint for WhatsDeX AI Bot
+# Complete infrastructure as code for production deployment
+
+services:
+  # Main WhatsDeX AI Bot Service
+  - type: web
+    name: whatsdx-ai-bot
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npm run build && npm run generate
+    startCommand: npm start
+    healthCheckPath: /api/health
+    env: node
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AI_INTELLIGENCE_MODE
+        value: true
+      - key: ANALYTICS_ENABLED
+        value: true
+      - key: PORT
+        value: 10000
+      - key: RENDER_DEPLOYMENT
+        value: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: whatsdx-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: whatsdx-redis
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: META_AI_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true
+        length: 32
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+        length: 32
+    domains:
+      - api-whatsdx.onrender.com
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+      targetMemoryPercent: 80
+      targetCPUPercent: 70
+
+  # Analytics Dashboard (Next.js)
+  - type: web
+    name: whatsdx-dashboard
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: cd web && npm install && npm run build
+    startCommand: cd web && npm start
+    healthCheckPath: /api/health
+    env: node
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://api-whatsdx.onrender.com
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+        length: 32
+      - key: ANALYTICS_API_URL
+        value: https://api-whatsdx.onrender.com
+    domains:
+      - dashboard-whatsdx.onrender.com
+
+  # Background Worker for Message Processing
+  - type: worker
+    name: whatsdx-worker
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npm run generate
+    startCommand: node src/worker.js
+    env: node
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WORKER_MODE
+        value: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: whatsdx-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: whatsdx-redis
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+    scaling:
+      minInstances: 1
+      maxInstances: 2
+
+  # Cron Jobs Service
+  - type: cron
+    name: whatsdx-cron
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npm run generate
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    startCommand: node scripts/cron-jobs.js
+    env: node
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CRON_MODE
+        value: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: whatsdx-postgres
+          property: connectionString
+
+# Databases
+databases:
+  - name: whatsdx-postgres
+    databaseName: whatsdx_production
+    user: whatsdx_user
+    plan: starter
+    region: oregon
+    postgresMajorVersion: 15
+
+# Redis Cache
+services:
+  - type: redis
+    name: whatsdx-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    
+# Environment Groups (shared across services)
+envVarGroups:
+  - name: whatsdx-shared
+    envVars:
+      - key: APP_NAME
+        value: "WhatsDeX AI Bot"
+      - key: APP_VERSION
+        value: "2.0.0"
+      - key: TIMEZONE
+        value: "UTC"
+      - key: LOG_LEVEL
+        value: "info"
+      - key: CORS_ORIGINS
+        value: "https://dashboard-whatsdx.onrender.com,https://api-whatsdx.onrender.com"
+
+# Notification settings
+notifications:
+  - type: slack
+    name: deployment-notifications
+    url: ${SLACK_WEBHOOK_URL}  # Set in Render dashboard
+    events:
+      - deploy-started
+      - deploy-succeeded
+      - deploy-failed
+      - service-unhealthy
+
+# Custom headers for security
+headers:
+  - path: "/*"
+    headers:
+      X-Frame-Options: DENY
+      X-Content-Type-Options: nosniff
+      X-XSS-Protection: "1; mode=block"
+      Strict-Transport-Security: "max-age=31536000; includeSubDomains"
+      Referrer-Policy: "strict-origin-when-cross-origin"
