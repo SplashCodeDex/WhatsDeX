@@ -13,13 +13,6 @@ const schemas = new Map([
         .or(z.string().url().startsWith('https://youtu.be/')),
     }),
   ],
-  // AI chat: chatgpt - validate prompt length
-  [
-    'chatgpt',
-    z.object({
-      prompt: z.string().min(1).max(2000),
-    }),
-  ],
   // General text commands: max length
   [
     'proverb',
@@ -54,9 +47,8 @@ module.exports = async (ctx, context) => {
     case 'tiktokdl':
       input = { url: ctx.args[0] || '' };
       break;
-    case 'chatgpt':
     case 'proverb':
-      input = { prompt: ctx.args.join(' '), query: ctx.args.join(' ') };
+      input = { query: ctx.args.join(' ') };
       break;
     default:
       input = { args: ctx.args.join(' ') };

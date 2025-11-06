@@ -5,7 +5,7 @@ class CommandSuggestionsService {
   constructor() {
     this.gemini = new GeminiService();
     this.commandCategories = {
-      ai: ['gemini', 'chatgpt', 'deepseek', 'felo', 'hika', 'venice'],
+      ai: ['gemini', 'deepseek', 'felo', 'hika', 'venice'],
       image: ['dalle', 'flux', 'animagine', 'deepdreams', 'text2image'],
       video: ['videogpt'],
       misc: [
@@ -40,7 +40,6 @@ class CommandSuggestionsService {
     this.commandDescriptions = {
       // AI commands
       gemini: 'Chat with Google Gemini AI assistant',
-      chatgpt: 'Chat with OpenAI GPT models',
       dalle: 'Generate images using DALL-E',
 
       // Media commands

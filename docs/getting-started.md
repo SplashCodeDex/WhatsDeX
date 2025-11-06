@@ -117,7 +117,7 @@ Bot: 👋 Hello! I'm your AI-powered WhatsApp assistant!
 
 You: /menu
 Bot: 🤖 WhatsDeX Command Menu
-      🤖 AI Chat: /gemini, /chatgpt, /deepseek
+      🤖 AI Chat: /gemini, /deepseek
       🎵 Media: /sticker, /toimage, /download
       🛠️ Tools: /weather, /translate, /ocr
       🎮 Games: /quiz, /family100, /suit

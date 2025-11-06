@@ -46,23 +46,6 @@ describe('inputValidation middleware', () => {
     );
   });
 
-  test('valid prompt for chatgpt', async () => {
-    mockCtx.args = ['Hello, how are you?'];
-    mockCtx.used.command = 'chatgpt';
-    const result = await validateCommand(mockCtx, mockContext);
-    expect(result).toBe(true);
-    expect(mockCtx.reply).not.toHaveBeenCalled();
-  });
-
-  test('invalid prompt too long for chatgpt', async () => {
-    const longPrompt = 'a'.repeat(2001);
-    mockCtx.args = [longPrompt];
-    mockCtx.used.command = 'chatgpt';
-    const result = await validateCommand(mockCtx, mockContext);
-    expect(result).toBe(false);
-    expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Invalid input'));
-    expect(mockContext.database.auditLog.create).toHaveBeenCalled();
-  });
 
   test('unknown command allows execution', async () => {
     mockCtx.used.command = 'unknown';

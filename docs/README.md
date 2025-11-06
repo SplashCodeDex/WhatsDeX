@@ -93,7 +93,7 @@ docs/
 
 | Category          | Commands                           | Description            |
 | ----------------- | ---------------------------------- | ---------------------- |
-| 🤖 **AI Chat**    | `gemini`, `chatgpt`, `deepseek`    | Multiple AI providers  |
+| 🤖 **AI Chat**    | `gemini`, `deepseek`               | Multiple AI providers  |
 | 🎬 **Media**      | `sticker`, `toimage`, `upscale`    | Image/video processing |
 | 🎵 **Downloader** | `youtube`, `instagram`, `tiktok`   | Social media content   |
 | 🎮 **Games**      | `family100`, `tebakgambar`, `kuis` | Interactive games      |

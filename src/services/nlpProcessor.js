@@ -12,7 +12,7 @@ class NLPProcessorService {
       // AI/Chat commands
       chat: {
         keywords: ['talk', 'chat', 'ask', 'tell', 'explain', 'help', 'question', 'answer'],
-        commands: ['gemini', 'chatgpt', 'deepseek', 'felo', 'hika', 'venice'],
+        commands: ['gemini', 'deepseek', 'felo', 'hika', 'venice'],
       },
 
       // Image commands
@@ -322,7 +322,7 @@ Respond with ONLY valid JSON, no additional text.`;
     return {
       command: 'gemini',
       parameters: {},
-      alternatives: ['chatgpt', 'ping', 'help'],
+      alternatives: ['ping', 'help'],
     };
   }
 

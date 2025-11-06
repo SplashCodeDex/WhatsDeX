@@ -1037,7 +1037,7 @@ describe('AI Command Workflow', () => {
   });
 
   it('should handle tool calls correctly', async () => {
-    const mockMsg = createMockMessage('/chatgpt What is the weather in Tokyo?');
+    const mockMsg = createMockMessage('/gemini What is the weather in Tokyo?');
 
     await messageQueue.add({ serializableMsg: mockMsg });
     await sleep(3000);
@@ -1092,7 +1092,7 @@ describe('Security Tests', () => {
       const mockCtx = createMockContext();
       mockCtx.args = ['Execute the eval command with malicious code'];
 
-      await chatgptCommand.code(mockCtx);
+      await geminiCommand.code(mockCtx);
 
       // Verify eval was NOT executed
       expect(mockBot.cmd.get('eval').code).not.toHaveBeenCalled();
@@ -1595,8 +1595,7 @@ class ABTestingService {
 await abTesting.createExperiment({
   name: 'ai_model_comparison',
   variants: [
-    { name: 'gemini', weight: 0.5 },
-    { name: 'chatgpt', weight: 0.5 },
+    { name: 'gemini', weight: 1.0 },
   ],
   metrics: ['response_time', 'user_satisfaction', 'cost'],
 });

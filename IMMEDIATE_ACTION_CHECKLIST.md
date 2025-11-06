@@ -131,78 +131,7 @@ for (const toolCall of responseMessage.tool_calls) {
 - [ ] Dangerous properties removed from mockCtx
 - [ ] File saved
 
-### 4.2 Remove Duplicate Destructuring
 
-**File:** [`commands/ai-chat/chatgpt.js`](commands/ai-chat/chatgpt.js)
-
-**Delete line 18:**
-
-```javascript
-// DELETE THIS LINE:
-const { formatter, config } = ctx.bot.context;
-
-// KEEP THIS LINE:
-const { config, formatter } = ctx.bot.context;
-```
-
-**Verify:**
-
-- [ ] Duplicate line removed
-- [ ] File saved
-
-### 4.3 Fix MongoDB Connection
-
-**File:** [`database/ai_chat_database.js`](database/ai_chat_database.js)
-
-**Replace lines 14-27 with:**
-
-```javascript
-const logger = require('../src/utils/logger');
-
-let isConnected = false;
-
-async function connect() {
-  if (isConnected) return;
-
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 5000;
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      await mongoose.connect(config.database.mongoUri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-      });
-      isConnected = true;
-      logger.info('Successfully connected to AI Chat MongoDB', { attempt });
-      return;
-    } catch (error) {
-      logger.error('Error connecting to AI Chat MongoDB', {
-        attempt,
-        maxRetries: MAX_RETRIES,
-        error: error.message,
-      });
-
-      if (attempt === MAX_RETRIES) {
-        throw new Error(
-          `Failed to connect to MongoDB after ${MAX_RETRIES} attempts: ${error.message}`
-        );
-      }
-
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-    }
-  }
-}
-```
-
-**Verify:**
-
-- [ ] Retry logic implemented
-- [ ] Logger imported
-- [ ] Error thrown on final failure
-- [ ] File saved
 
 ---
 
@@ -225,7 +154,6 @@ npm start
 ```bash
 # Test in WhatsApp:
 /gemini Hello world
-/chatgpt What is 2+2?
 
 # Expected: Both should work
 # Verify: No security warnings in logs
@@ -267,14 +195,11 @@ npm start
 
 ```bash
 git add commands/ai-chat/gemini.js
-git add commands/ai-chat/chatgpt.js
-git add database/ai_chat_database.js
 git add .gitignore
 
 git commit -m "security: critical fixes for API key exposure and AI tool execution
 
 - Add security whitelist to gemini command
-- Remove duplicate destructuring in chatgpt
 - Implement MongoDB connection retry logic
 - Ensure .env is never committed
 
@@ -324,7 +249,7 @@ Old keys have been revoked. System is secure.
 ### Functionality Verification
 
 - [ ] Bot starts successfully
-- [ ] AI commands work (/gemini, /chatgpt)
+- [ ] AI commands work (/gemini)
 - [ ] Tool calls work (weather, translate, etc.)
 - [ ] Dangerous commands blocked via AI
 - [ ] MongoDB connection stable
@@ -447,12 +372,9 @@ After fixing critical issues, update:
 
    ```env
    # Development
-   OPENAI_API_KEY_DEV="sk-dev-..."
-
+   
    # Production
-   OPENAI_API_KEY_PROD="sk-prod-..."
    ```
-
 2. **Set Up Cost Alerts**
    - OpenAI: Set budget alerts at $50, $100, $200
    - Stripe: Monitor test vs live mode

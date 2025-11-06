@@ -4,7 +4,7 @@ Based on my comprehensive review of the WhatsDeX project, I'll provide a detaile
 
 ### 1. **Bot Commands & Categories** (Backend: `commands/` directory)
 
-- **AI Chat Commands** (6 commands): chatgpt, clearchat, deepseek, felo, gemini, hika, venice
+- **AI Chat Commands** (5 commands): clearchat, deepseek, felo, gemini, hika, venice
 - **AI Image Commands** (5 commands): animagine, dalle, deepdreams, flux, text2image
 - **AI Miscellaneous** (8 commands): editimage, geminicanvas, geminiedit, hijabkan, hitamkan, image2prompt, removewm, upscale, youtubesummarizer
 - **AI Video** (1 command): videogpt
@@ -54,7 +54,7 @@ Based on my comprehensive review of the WhatsDeX project, I'll provide a detaile
 
 ### 3. **Services & APIs** (Backend: `services/`, `src/services/`)
 
-- **AI Services**: Gemini, OpenAI integration
+- **AI Services**: Gemini
 - **Analytics Service**: metrics collection and reporting
 - **Audit Service**: compliance and security logging
 - **Authentication Service**: user verification, session management
@@ -110,7 +110,7 @@ Based on my comprehensive review of the WhatsDeX project, I'll provide a detaile
 
 - **Bot Configuration**: name, prefix, phone, thumbnail, group settings
 - **Database**: MongoDB/Prisma configuration
-- **API Keys**: service integrations (OpenAI, etc.)
+- **API Keys**: service integrations
 - **AI Settings**: summarization parameters
 - **System Settings**: always online, anti-call, auto-read, cooldowns, restrictions
 - **Owner Information**: contact details

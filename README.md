@@ -155,7 +155,7 @@ Bot: 👋 Hello! I'm your AI-powered WhatsApp assistant!
 
 You: /menu
 Bot: 🤖 WhatsDeX Command Menu
-      🤖 AI Chat: /gemini, /chatgpt, /deepseek
+      🤖 AI Chat: /gemini, /deepseek
       🎵 Media: /sticker, /toimage, /download
       🛠️ Tools: /weather, /translate, /ocr
       🎮 Games: /quiz, /family100, /suit
@@ -298,7 +298,7 @@ _Figure 3: WhatsDeX AI chat interface showing context-aware responses_
 
 | Category          | Commands                                             | Description                                    | Example Usage                              |
 | ----------------- | ---------------------------------------------------- | ---------------------------------------------- | ------------------------------------------ |
-| 🤖 **AI Chat**    | `gemini`, `chatgpt`, `deepseek`, `felo`, `venice`    | Multiple AI providers with conversation memory | `/gemini Tell me about quantum physics`    |
+| 🤖 **AI Chat**    | `gemini`, `deepseek`, `felo`, `venice`               | Multiple AI providers with conversation memory | `/gemini Tell me about quantum physics`    |
 | 🎬 **Media**      | `sticker`, `toimage`, `togif`, `upscale`, `removebg` | Image/video processing and conversion          | `/sticker [send image]` → 🎨 AI sticker    |
 | 🎵 **Downloader** | `youtube`, `instagram`, `tiktok`, `spotify`          | Social media content downloading               | `/youtube https://youtube.com/watch?v=...` |
 | 🎮 **Games**      | `family100`, `tebakgambar`, `kuis`, `suit`           | Interactive games and quizzes                  | `/family100` → Family trivia game          |
