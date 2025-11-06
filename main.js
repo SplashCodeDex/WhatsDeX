@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 import messageQueue from './src/worker.js';
+import IntelligentMessageProcessor from './src/IntelligentMessageProcessor.js';
 // Enhanced reconnection state management
 let reconnectionState = {
   isReconnecting: false,
@@ -108,12 +109,16 @@ const main = async context => {
     }
   });
 
+  // Initialize Intelligent Message Processor
+  const intelligentProcessor = new IntelligentMessageProcessor(bot, context);
+  
   bot.ev.on('messages.upsert', async m => {
     const msg = m.messages[0];
     if (!msg.message) return;
+    if (msg.key.fromMe) return; // Ignore own messages
 
-    // Serialize msg to avoid circular references
-    const serializableMsg = {
+    // Enhanced serialization for intelligent processing
+    const intelligentMsg = {
       key: {
         remoteJid: msg.key.remoteJid,
         fromMe: msg.key.fromMe,
@@ -123,9 +128,20 @@ const main = async context => {
       type: Object.keys(msg.message)[0],
       pushName: msg.pushName,
       messageTimestamp: msg.messageTimestamp,
+      // Add additional context for AI processing
+      intelligentContext: {
+        receivedAt: Date.now(),
+        processingMode: 'intelligent',
+        aiEnabled: true
+      }
     };
 
-    messageQueue.add({ serializableMsg });
+    // Route to intelligent processing queue
+    messageQueue.add('processIntelligentMessage', {
+      messageData: intelligentMsg,
+      botContext: context,
+      processor: intelligentProcessor
+    });
   });
 
   return bot;
