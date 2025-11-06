@@ -1,18 +1,10 @@
-// Impor modul dan dependensi yang diperlukan
-const {
-  jidDecode,
-  proto,
-  getContentType,
-  S_WHATSAPP_NET,
-  STORIES_JID,
-  META_AI_JID,
-} = require('@whiskeysockets/baileys');
-const axios = require('axios');
-const didYouMean = require('didyoumean');
-const util = require('node:util');
-const api = require('./api.js');
-const config = require('../config.js');
-const formatter = require('../utils/formatter.js');
+import { jidDecode, proto, getContentType, S_WHATSAPP_NET, STORIES_JID, META_AI_JID } from '@whiskeysockets/baileys';
+import axios from 'axios';
+import didYouMean from 'didyoumean';
+import util from 'node:util';
+import * as api from './api.js';
+import config from '../config.js';
+import * as formatter from '../utils/formatter.js';
 
 const formatBotName = botName => {
   if (!botName) return null;
@@ -233,7 +225,7 @@ async function translate(text, to) {
   }
 }
 
-module.exports = {
+export {
   checkMedia,
   checkQuotedMedia,
   fakeMetaAiQuotedText,

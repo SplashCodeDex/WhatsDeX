@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   uptime: '0 detik',
   dbSize: 'N/A',
 };

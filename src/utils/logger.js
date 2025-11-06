@@ -1,6 +1,7 @@
-const path = require('path');
+import path from 'path';
+import winston from 'winston';
+import fs from 'fs';
 
-const winston = require('winston');
 
 // Define log levels
 const levels = {
@@ -79,8 +80,6 @@ const logger = winston.createLogger({
 });
 
 // Create logs directory if it doesn't exist
-const fs = require('fs');
-
 const logsDir = path.join(process.cwd(), 'logs');
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
@@ -177,4 +176,4 @@ const enhancedLogger = {
   },
 };
 
-module.exports = enhancedLogger;
+export default enhancedLogger;

@@ -37,6 +37,6 @@ async function addWarning(ctx, groupDb, senderJid, groupId) {
   }
 }
 
-module.exports = {
+export {
   addWarning,
 };

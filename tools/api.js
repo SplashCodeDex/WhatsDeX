@@ -1,7 +1,6 @@
-// Impor modul dan dependensi yang diperlukan
-const util = require('node:util');
-const axios = require('axios');
-const FormData = require('form-data');
+import util from 'node:util';
+import axios from 'axios';
+import FormData from 'form-data';
 
 // Daftar API gratis
 const APIs = {
@@ -87,7 +86,7 @@ async function uploadFile(buffer, filename) {
   return data.link;
 }
 
-module.exports = {
+export {
   createUrl,
   listUrl,
   uploadImage,

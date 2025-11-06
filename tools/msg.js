@@ -1,4 +1,4 @@
-const formatter = require('../utils/formatter.js');
+import * as formatter from '../utils/formatter.js';
 
 const bytes = [
   'yBytes',
@@ -172,7 +172,7 @@ function ucwords(text) {
   return text.toLowerCase().replace(/\b\w/g, t => t.toUpperCase());
 }
 
-module.exports = {
+export {
   convertMsToDuration,
   formatSize,
   formatSizePerSecond,

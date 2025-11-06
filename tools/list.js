@@ -1,8 +1,7 @@
-// Impor modul dan dependensi yang diperlukan
-const axios = require('axios');
-const util = require('node:util');
-const formatter = require('../utils/formatter.js');
-const api = require('./api.js');
+import axios from 'axios';
+import util from 'node:util';
+import * as formatter from '../utils/formatter.js';
+import * as api from './api.js';
 
 async function get(type) {
   try {
@@ -233,6 +232,6 @@ async function get(type) {
   }
 }
 
-module.exports = {
+export {
   get,
 };

@@ -1,15 +1,15 @@
-const makeWASocket = require('@whiskeysockets/baileys').default;
-const { useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
-const pino = require('pino');
-const path = require('node:path');
-const { Boom } = require('@hapi/boom');
-const qrcode = require('qrcode-terminal');
-const messageQueue = require('./src/worker.js');
+import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
+import pino from 'pino';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Boom } from '@hapi/boom';
+import qrcode from 'qrcode-terminal';
+import messageQueue from './src/worker.js';
 
-module.exports = async context => {
+const main = async context => {
   const { config } = context;
 
-  const authDir = path.resolve(__dirname, config.bot.authAdapter.default.authDir);
+  const authDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), config.bot.authAdapter.default.authDir);
   const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
   const logger = pino({
@@ -45,7 +45,7 @@ module.exports = async context => {
       );
 
       if (shouldReconnect) {
-        setTimeout(() => module.exports(context), 5000); // Re-run the main function to reconnect after 5 seconds
+        setTimeout(() => main(context), 5000); // Re-run the main function to reconnect after 5 seconds
       }
     } else if (connection === 'open') {
       console.log('✅ Bot connected to WhatsApp!');
@@ -76,3 +76,5 @@ module.exports = async context => {
 
   return bot;
 };
+
+export default main;

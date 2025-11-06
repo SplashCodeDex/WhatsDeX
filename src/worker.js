@@ -1,7 +1,7 @@
 import path from 'path';
 
-const Bull = require('bull');
-const { createClient } = require('redis');
+import Bull from 'bull';
+import { createClient } from 'redis';
 
 const redisClient = createClient({
   username: process.env.REDIS_USERNAME || 'default',
@@ -18,8 +18,8 @@ const messageQueue = new Bull('message-queue', { redis: redisClient });
 
 messageQueue.process(async job => {
   console.log('worker.js: Processing job:', job.id);
-  const processor = require(path.join(__dirname, 'message-processor.js'));
+  const processor = (await import(path.join(import.meta.url, 'message-processor.js'))).default;
   await processor(job);
 });
 
-module.exports = messageQueue;
+export default messageQueue;

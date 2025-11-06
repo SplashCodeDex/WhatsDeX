@@ -14,7 +14,7 @@ const inlineCode = text => `\
 ${text}\
 `;
 
-module.exports = {
+export {
   quote,
   bold,
   italic,

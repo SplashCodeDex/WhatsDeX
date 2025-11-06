@@ -1,12 +1,12 @@
 // Impor modul dan dependensi yang diperlukan
-const CFonts = require('cfonts');
-const http = require('node:http');
-const context = require('./context.js');
-const main = require('./main.js');
+import CFonts from 'cfonts';
+import http from 'node:http';
+import context from './context.js';
+import main from './main.js';
+import pkg from './package.json' with { type: 'json' };
 
-const { config, pkg } = {
+const { config } = {
   config: context.config,
-  pkg: require('./package.json'),
 };
 
 console.log('🚀 Starting WhatsDeX...'); // Logging initial process
@@ -23,7 +23,7 @@ CFonts.say(`${pkg.description} - By ${pkg.author}`, {
   align: 'center',
 });
 
-const { initSocket } = require('./server.js');
+import { initSocket } from './server.js';
 
 // Jalankan server jika diaktifkan dalam konfigurasi
 if (config.system.useServer) {

@@ -1,14 +1,18 @@
-// Import required modules and dependencies
-const mime = require('mime-types');
+import mime from 'mime-types';
+import * as api from './api.js';
+import * as cmd from './cmd.js';
+import * as list from './list.js';
+import * as msg from './msg.js';
+import * as warn from './warn.js';
 
 // Export required modules or functions
 const tools = {
-  api: require('./api.js'),
-  cmd: require('./cmd.js'),
-  list: require('./list.js'),
+  api,
+  cmd,
+  list,
   mime,
-  msg: require('./msg.js'),
-  warn: require('./warn.js'),
+  msg,
+  warn,
 };
 
-module.exports = tools;
+export default tools;

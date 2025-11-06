@@ -1,11 +1,11 @@
 // Simplified context with single Prisma database system
-const { PrismaClient } = require('@prisma/client');
-const config = require('./config.js');
-const pkg = require('./package.json');
-const tools = require('./tools/exports.js');
-const formatter = require('./utils/formatter.js');
-
-const logger = require('./src/utils/logger');
+import { PrismaClient } from '@prisma/client';
+import config from './config.js';
+import pkg from './package.json' with { type: 'json' };
+import tools from './tools/exports.js';
+import * as formatter from './utils/formatter.js';
+import logger from './src/utils/logger.js';
+import state from './state.js';
 
 // Initialize Prisma database service
 const prisma = new PrismaClient({
@@ -297,8 +297,6 @@ const database = {
   },
 };
 
-const state = require('./state.js');
-
 const context = {
   config,
   database,
@@ -332,4 +330,4 @@ const context = {
   },
 };
 
-module.exports = context;
+export default context;
