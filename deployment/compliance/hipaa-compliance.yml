@@ -1,0 +1,325 @@
+# HIPAA Compliance Configuration for WhatsDeX AI Bot
+# Health Insurance Portability and Accountability Act (US) compliance
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hipaa-compliance-config
+  namespace: whatsdx-ai
+  labels:
+    compliance: hipaa
+    regulation: us
+data:
+  hipaa-config.json: |
+    {
+      "hipaa": {
+        "enabled": true,
+        "version": "45 CFR 164",
+        "coveredEntity": {
+          "name": "Your Healthcare Organization",
+          "type": "healthcare_provider",
+          "contact": "compliance@yourdomain.com",
+          "npi": "1234567890"
+        },
+        "businessAssociate": {
+          "agreementRequired": true,
+          "safeguards": ["administrative", "physical", "technical"],
+          "incidentReporting": true
+        },
+        "safeguardRules": {
+          "administrative": {
+            "securityOfficer": "required",
+            "conductedSecurityEvaluations": true,
+            "assignedSecurityResponsibilities": true,
+            "informationAccessManagement": true,
+            "workforceTraining": true,
+            "informationBackupPlan": true,
+            "emergencyAccessProcedures": true,
+            "incidentResponseProcedures": true
+          },
+          "physical": {
+            "facilityAccessControls": true,
+            "workstationUse": true,
+            "deviceAndMediaControls": true,
+            "physicalSafeguards": true
+          },
+          "technical": {
+            "accessControl": true,
+            "auditControls": true,
+            "integrity": true,
+            "personOrEntityAuthentication": true,
+            "transmissionSecurity": true
+          }
+        },
+        "phi": {
+          "minimumNecessary": true,
+          "authorization": true,
+          "disclosure": "limited",
+          "retentionPeriod": "6 years",
+          "encryption": "AES-256",
+          "deidentification": true
+        },
+        "accessControls": {
+          "uniqueUserIdentification": true,
+          "emergencyAccessProcedure": true,
+          "automaticLogoff": true,
+          "encryptionDecryption": true
+        },
+        "auditRequirements": {
+          "auditLogs": true,
+          "auditReview": "monthly",
+          "auditReporting": true,
+          "auditLogProtection": true
+        },
+        "breachNotification": {
+          "hhs": "within 60 days",
+          "individuals": "within 60 days",
+          "media": "if >500 individuals",
+          "riskAssessment": true
+        }
+      }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hipaa-security-policies
+  namespace: whatsdx-ai
+  labels:
+    compliance: hipaa
+    type: security-policies
+data:
+  security-policies.json: |
+    {
+      "accessControl": {
+        "policy": "Minimum necessary access to PHI",
+        "implementation": {
+          "uniqueUserIdentification": true,
+          "roleBasedAccess": true,
+          "emergencyAccess": true,
+          "automaticLogoff": "15 minutes",
+          "sessionTimeout": "30 minutes"
+        },
+        "auditRequirements": {
+          "logAccess": true,
+          "logModification": true,
+          "logDeletion": true,
+          "logFailedAttempts": true
+        }
+      },
+      "auditControls": {
+        "policy": "Comprehensive audit logging of PHI access",
+        "implementation": {
+          "auditLogs": "all_phi_interactions",
+          "logRetention": "6 years",
+          "logReview": "monthly",
+          "automaticMonitoring": true,
+          "alerting": true
+        },
+        "logContents": [
+          "user_identification",
+          "timestamp",
+          "action_performed",
+          "data_accessed",
+          "source_ip",
+          "success_failure"
+        ]
+      },
+      "integrity": {
+        "policy": "PHI integrity protection",
+        "implementation": {
+          "checksums": true,
+          "digitalSignatures": true,
+          "versionControl": true,
+          "changeTracking": true,
+          "backupIntegrity": true
+        }
+      },
+      "authentication": {
+        "policy": "Strong authentication for PHI access",
+        "implementation": {
+          "multiFactorAuth": true,
+          "passwordComplexity": {
+            "minLength": 12,
+            "requireSpecialChars": true,
+            "requireNumbers": true,
+            "requireUppercase": true,
+            "requireLowercase": true
+          },
+          "accountLockout": {
+            "maxAttempts": 3,
+            "lockoutDuration": "30 minutes"
+          },
+          "sessionManagement": {
+            "secureTokens": true,
+            "tokenExpiration": "8 hours",
+            "singleSignOn": false
+          }
+        }
+      },
+      "transmissionSecurity": {
+        "policy": "Secure PHI transmission",
+        "implementation": {
+          "encryption": "TLS 1.3",
+          "vpnRequired": true,
+          "messageIntegrity": true,
+          "endToEndEncryption": true,
+          "certificateValidation": true
+        }
+      }
+    }
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hipaa-encryption-keys
+  namespace: whatsdx-ai
+  labels:
+    compliance: hipaa
+    type: encryption
+type: Opaque
+data:
+  # Base64 encoded encryption keys (replace with actual keys)
+  phi-encryption-key: <BASE64_ENCODED_PHI_ENCRYPTION_KEY>
+  audit-signing-key: <BASE64_ENCODED_AUDIT_SIGNING_KEY>
+  backup-encryption-key: <BASE64_ENCODED_BACKUP_ENCRYPTION_KEY>
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hipaa-audit-review
+  namespace: whatsdx-ai
+  labels:
+    compliance: hipaa
+    type: audit-job
+spec:
+  schedule: "0 1 1 * *"  # Monthly on the 1st at 1 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hipaa-audit
+            image: whatsdx/hipaa-compliance-tools:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting HIPAA audit review..."
+              
+              # Generate audit report
+              node /app/scripts/hipaa-audit-review.js --month=$(date +%Y-%m)
+              
+              # Check for policy violations
+              node /app/scripts/hipaa-policy-check.js
+              
+              # Generate compliance dashboard
+              node /app/scripts/hipaa-dashboard.js
+              
+              # Send audit report
+              node /app/scripts/hipaa-report-sender.js
+              
+              echo "HIPAA audit review completed"
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: whatsdx-secrets
+                  key: DATABASE_URL
+            - name: HIPAA_COMPLIANCE_MODE
+              value: "true"
+            - name: AUDIT_EMAIL
+              value: "compliance@yourdomain.com"
+            volumeMounts:
+            - name: hipaa-config
+              mountPath: /app/config/hipaa
+            - name: audit-logs
+              mountPath: /app/audit-logs
+          volumes:
+          - name: hipaa-config
+            configMap:
+              name: hipaa-compliance-config
+          - name: audit-logs
+            persistentVolumeClaim:
+              claimName: hipaa-audit-logs-pvc
+          restartPolicy: OnFailure
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hipaa-audit-logs-pvc
+  namespace: whatsdx-ai
+  labels:
+    compliance: hipaa
+    type: audit-storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: encrypted-storage
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hipaa-network-isolation
+  namespace: whatsdx-ai
+  labels:
+    compliance: hipaa
+    type: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      compliance: hipaa
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: whatsdx-ai
+    - podSelector:
+        matchLabels:
+          hipaa-authorized: "true"
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: whatsdx-ai
+    ports:
+    - protocol: TCP
+      port: 5432  # Database
+    - protocol: TCP
+      port: 6379  # Redis
+  - to: []  # Allow DNS
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: hipaa-compliance-monitoring
+  namespace: whatsdx-ai
+  labels:
+    compliance: hipaa
+    type: monitoring
+spec:
+  selector:
+    matchLabels:
+      compliance: hipaa
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

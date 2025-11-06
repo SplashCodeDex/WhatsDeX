@@ -1,0 +1,298 @@
+# GDPR Compliance Configuration for WhatsDeX AI Bot
+# General Data Protection Regulation (EU) compliance settings
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gdpr-compliance-config
+  namespace: whatsdx-ai
+  labels:
+    compliance: gdpr
+    regulation: eu
+data:
+  # GDPR Configuration
+  gdpr-config.json: |
+    {
+      "gdpr": {
+        "enabled": true,
+        "version": "2018/679/EU",
+        "controller": {
+          "name": "Your Organization Name",
+          "contact": "dpo@yourdomain.com",
+          "address": "Your Organization Address",
+          "country": "EU Member State"
+        },
+        "dataProtectionOfficer": {
+          "name": "Data Protection Officer Name",
+          "email": "dpo@yourdomain.com",
+          "phone": "+XX XXX XXX XXXX"
+        },
+        "lawfulBasis": [
+          "consent",
+          "contract",
+          "legitimate_interest"
+        ],
+        "dataRetention": {
+          "userMessages": "30 days",
+          "analyticsData": "90 days",
+          "authenticationData": "2 years",
+          "auditLogs": "6 years"
+        },
+        "dataMinimization": {
+          "collectOnlyNecessary": true,
+          "anonymizeAfterRetention": true,
+          "pseudonymization": true
+        },
+        "userRights": {
+          "accessRequest": true,
+          "rectification": true,
+          "erasure": true,
+          "portability": true,
+          "restriction": true,
+          "objection": true,
+          "automatedDecisionMaking": false
+        },
+        "privacyByDesign": {
+          "dataProtectionByDefault": true,
+          "privacyImpactAssessment": true,
+          "encryptionAtRest": true,
+          "encryptionInTransit": true
+        },
+        "consentManagement": {
+          "explicitConsent": true,
+          "granularConsent": true,
+          "consentWithdrawal": true,
+          "consentRecords": true
+        },
+        "breachNotification": {
+          "supervisoryAuthority": "within 72 hours",
+          "dataSubjects": "without undue delay",
+          "highRisk": true
+        }
+      }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gdpr-data-retention-policy
+  namespace: whatsdx-ai
+  labels:
+    compliance: gdpr
+    type: retention-policy
+data:
+  retention-policy.json: |
+    {
+      "dataCategories": {
+        "personalData": {
+          "userProfiles": {
+            "retentionPeriod": "2 years",
+            "autoDelete": true,
+            "anonymizationAfter": "90 days"
+          },
+          "conversationData": {
+            "retentionPeriod": "30 days",
+            "autoDelete": true,
+            "encryption": "AES-256"
+          },
+          "contactInformation": {
+            "retentionPeriod": "2 years",
+            "autoDelete": false,
+            "consentRequired": true
+          }
+        },
+        "specialCategories": {
+          "healthData": {
+            "retentionPeriod": "0 days",
+            "prohibited": true,
+            "autoReject": true
+          },
+          "biometricData": {
+            "retentionPeriod": "0 days",
+            "prohibited": true,
+            "autoReject": true
+          }
+        },
+        "technicalData": {
+          "accessLogs": {
+            "retentionPeriod": "6 months",
+            "autoDelete": true,
+            "anonymization": true
+          },
+          "errorLogs": {
+            "retentionPeriod": "1 year",
+            "autoDelete": true,
+            "personalDataFiltering": true
+          },
+          "analyticsData": {
+            "retentionPeriod": "90 days",
+            "autoDelete": true,
+            "aggregationOnly": true
+          }
+        }
+      },
+      "automatedProcesses": {
+        "dataMinimization": {
+          "enabled": true,
+          "frequency": "daily",
+          "scope": "all_personal_data"
+        },
+        "anonymization": {
+          "enabled": true,
+          "frequency": "weekly",
+          "method": "k-anonymity"
+        },
+        "deletion": {
+          "enabled": true,
+          "frequency": "daily",
+          "cascading": true
+        }
+      }
+    }
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gdpr-data-retention-cleanup
+  namespace: whatsdx-ai
+  labels:
+    compliance: gdpr
+    type: cleanup-job
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: gdpr-cleanup
+            image: whatsdx/compliance-tools:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting GDPR compliance cleanup..."
+              
+              # Delete expired personal data
+              node /app/scripts/gdpr-cleanup.js --type=personal-data
+              
+              # Anonymize old analytics data
+              node /app/scripts/gdpr-cleanup.js --type=analytics --anonymize
+              
+              # Clean up conversation data
+              node /app/scripts/gdpr-cleanup.js --type=conversations
+              
+              # Generate compliance report
+              node /app/scripts/gdpr-report.js --date=$(date +%Y-%m-%d)
+              
+              echo "GDPR compliance cleanup completed"
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: whatsdx-secrets
+                  key: DATABASE_URL
+            - name: GDPR_COMPLIANCE_MODE
+              value: "true"
+            - name: LOG_LEVEL
+              value: "info"
+            volumeMounts:
+            - name: gdpr-config
+              mountPath: /app/config/gdpr
+          volumes:
+          - name: gdpr-config
+            configMap:
+              name: gdpr-compliance-config
+          restartPolicy: OnFailure
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gdpr-compliance-api
+  namespace: whatsdx-ai
+  labels:
+    compliance: gdpr
+    type: api-service
+spec:
+  selector:
+    app: gdpr-compliance-api
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gdpr-compliance-api
+  namespace: whatsdx-ai
+  labels:
+    app: gdpr-compliance-api
+    compliance: gdpr
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gdpr-compliance-api
+  template:
+    metadata:
+      labels:
+        app: gdpr-compliance-api
+        compliance: gdpr
+    spec:
+      containers:
+      - name: gdpr-api
+        image: whatsdx/gdpr-compliance-api:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: GDPR_COMPLIANCE_MODE
+          value: "true"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: whatsdx-secrets
+              key: DATABASE_URL
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: whatsdx-secrets
+              key: ENCRYPTION_KEY
+        volumeMounts:
+        - name: gdpr-config
+          mountPath: /app/config/gdpr
+        - name: gdpr-policies
+          mountPath: /app/policies
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: gdpr-config
+        configMap:
+          name: gdpr-compliance-config
+      - name: gdpr-policies
+        configMap:
+          name: gdpr-data-retention-policy

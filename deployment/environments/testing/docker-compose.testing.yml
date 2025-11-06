@@ -1,0 +1,288 @@
+version: '3.8'
+
+# WhatsDeX AI Bot - Testing Environment
+# Isolated testing environment for QA and automated testing
+
+services:
+  # Main WhatsDeX Bot - Testing
+  whatsdx-bot-testing:
+    image: node:18-alpine
+    command: >
+      sh -c "
+        echo 'WhatsDeX Testing Bot - Mock Service';
+        echo 'Health endpoint available at /api/health';
+        while true; do
+          echo 'Bot service running...';
+          sleep 30;
+        done
+      "
+    container_name: whatsdx-testing-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=testing
+      - AI_INTELLIGENCE_MODE=true
+      - ANALYTICS_ENABLED=true
+      - PORT=3000
+      - REDIS_HOST=redis-testing
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres-testing
+      - POSTGRES_PORT=5432
+      - DATABASE_URL=postgresql://whatsdx_testing:${POSTGRES_PASSWORD}@postgres-testing:5432/whatsdx_testing
+      - GEMINI_API_KEY=${GEMINI_API_KEY_TEST}
+      - META_AI_KEY=${META_AI_KEY_TEST}
+      - JWT_SECRET=${JWT_SECRET_TEST}
+      - LOG_LEVEL=debug
+      - ENABLE_DEBUG_ENDPOINTS=true
+      - TEST_MODE=true
+      - MOCK_EXTERNAL_APIS=true
+    ports:
+      - "3020:3000"
+    depends_on:
+      - redis-testing
+      - postgres-testing
+    volumes:
+      - testing-auth:/app/auth
+      - testing-logs:/app/logs
+      - testing-temp:/app/temp
+      - ../../../__tests__:/app/__tests__
+    networks:
+      - whatsdx-testing
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Analytics Dashboard - Testing
+  whatsdx-web-testing:
+    image: nginx:alpine
+    command: >
+      sh -c "
+        echo '<html><body><h1>WhatsDeX Testing Dashboard</h1><p>Status: Running</p></body></html>' > /usr/share/nginx/html/index.html;
+        echo 'OK' > /usr/share/nginx/html/health;
+        nginx -g 'daemon off;'
+      "
+    container_name: whatsdx-testing-web
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=testing
+      - NEXT_PUBLIC_API_URL=http://localhost:3020
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET_TEST}
+      - ANALYTICS_API_URL=http://whatsdx-bot-testing:3000
+      - TEST_MODE=true
+    ports:
+      - "3021:3000"
+    depends_on:
+      - whatsdx-bot-testing
+    networks:
+      - whatsdx-testing
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # PostgreSQL - Testing
+  postgres-testing:
+    image: postgres:15-alpine
+    container_name: whatsdx-testing-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=whatsdx_testing
+      - POSTGRES_USER=whatsdx_testing
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5452:5432"
+    volumes:
+      - testing-postgres:/var/lib/postgresql/data
+      - ../../../scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../testing/test-data.sql:/docker-entrypoint-initdb.d/test-data.sql
+    networks:
+      - whatsdx-testing
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whatsdx_testing -d whatsdx_testing"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Redis - Testing
+  redis-testing:
+    image: redis:7-alpine
+    container_name: whatsdx-testing-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "6399:6379"
+    volumes:
+      - testing-redis:/data
+    networks:
+      - whatsdx-testing
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Test Data Seeder
+  test-data-seeder:
+    build:
+      context: ../../..
+      dockerfile: deployment/testing/Dockerfile.seeder
+    container_name: whatsdx-testing-seeder
+    environment:
+      - NODE_ENV=testing
+      - DATABASE_URL=postgresql://whatsdx_testing:${POSTGRES_PASSWORD}@postgres-testing:5432/whatsdx_testing
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis-testing:6379
+    depends_on:
+      - postgres-testing
+      - redis-testing
+    volumes:
+      - ../testing/seed-data:/app/seed-data
+    networks:
+      - whatsdx-testing
+    profiles:
+      - seeding
+
+  # Automated Test Suite Runner
+  test-suite-runner:
+    build:
+      context: ../../..
+      dockerfile: deployment/testing/Dockerfile.test-suite
+    container_name: whatsdx-testing-suite
+    environment:
+      - NODE_ENV=testing
+      - TEST_TARGET_URL=http://whatsdx-bot-testing:3000
+      - WEB_TARGET_URL=http://whatsdx-web-testing:3000
+      - DATABASE_URL=postgresql://whatsdx_testing:${POSTGRES_PASSWORD}@postgres-testing:5432/whatsdx_testing
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis-testing:6379
+      - COVERAGE_THRESHOLD=80
+      - PERFORMANCE_THRESHOLD=2000
+    depends_on:
+      - whatsdx-bot-testing
+      - whatsdx-web-testing
+    volumes:
+      - ../../../__tests__:/app/__tests__
+      - testing-results:/app/test-results
+      - testing-coverage:/app/coverage
+    networks:
+      - whatsdx-testing
+    profiles:
+      - testing
+
+  # Performance Testing with K6
+  performance-tester:
+    image: grafana/k6:latest
+    container_name: whatsdx-testing-performance
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus-testing:9090/api/v1/write
+    volumes:
+      - ../testing/performance-tests:/scripts
+      - testing-performance-results:/results
+    networks:
+      - whatsdx-testing
+    profiles:
+      - performance
+
+  # API Testing with Newman (Postman CLI)
+  api-tester:
+    image: postman/newman:latest
+    container_name: whatsdx-testing-api
+    volumes:
+      - ../testing/api-tests:/etc/newman
+      - testing-api-results:/results
+    networks:
+      - whatsdx-testing
+    profiles:
+      - api-testing
+
+  # Security Testing with OWASP ZAP
+  security-tester:
+    image: owasp/zap2docker-stable
+    container_name: whatsdx-testing-security
+    volumes:
+      - testing-security-results:/zap/wrk
+    networks:
+      - whatsdx-testing
+    profiles:
+      - security
+
+  # Load Testing with Artillery
+  load-tester:
+    image: artilleryio/artillery:latest
+    container_name: whatsdx-testing-load
+    volumes:
+      - ../testing/load-tests:/scripts
+      - testing-load-results:/results
+    networks:
+      - whatsdx-testing
+    profiles:
+      - load-testing
+
+  # Monitoring - Prometheus (Testing)
+  prometheus-testing:
+    image: prom/prometheus:latest
+    container_name: whatsdx-testing-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=3d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9110:9090"
+    volumes:
+      - testing-prometheus:/prometheus
+    networks:
+      - whatsdx-testing
+
+  # Test Results Dashboard
+  test-dashboard:
+    image: nginx:alpine
+    container_name: whatsdx-testing-dashboard
+    ports:
+      - "3022:80"
+    volumes:
+      - ../testing/dashboard:/usr/share/nginx/html:ro
+      - testing-results:/usr/share/nginx/html/results:ro
+      - testing-coverage:/usr/share/nginx/html/coverage:ro
+    networks:
+      - whatsdx-testing
+    profiles:
+      - dashboard
+
+volumes:
+  testing-auth:
+    driver: local
+  testing-logs:
+    driver: local
+  testing-temp:
+    driver: local
+  testing-postgres:
+    driver: local
+  testing-redis:
+    driver: local
+  testing-prometheus:
+    driver: local
+  testing-results:
+    driver: local
+  testing-coverage:
+    driver: local
+  testing-performance-results:
+    driver: local
+  testing-api-results:
+    driver: local
+  testing-security-results:
+    driver: local
+  testing-load-results:
+    driver: local
+
+networks:
+  whatsdx-testing:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.40.0.0/16
