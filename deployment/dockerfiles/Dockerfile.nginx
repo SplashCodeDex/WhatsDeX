@@ -1,0 +1,55 @@
+# WhatsDeX Nginx - Production Load Balancer
+# Optimized for high performance and security
+
+FROM nginx:1.25-alpine
+
+# Install additional packages
+RUN apk add --no-cache \
+    curl \
+    wget \
+    ca-certificates \
+    certbot \
+    certbot-nginx \
+    openssl \
+    && rm -rf /var/cache/apk/*
+
+# Create nginx user with specific UID/GID
+RUN addgroup -g 101 -S nginx && \
+    adduser -S nginx -u 101 -G nginx
+
+# Copy custom nginx configuration
+COPY deployment/nginx.prod.conf /etc/nginx/nginx.conf
+COPY deployment/nginx/ssl/ /etc/nginx/ssl/
+COPY deployment/nginx/html/ /usr/share/nginx/html/
+
+# Create necessary directories
+RUN mkdir -p /var/cache/nginx /var/log/nginx /etc/nginx/ssl /var/run/nginx && \
+    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /etc/nginx/ssl /var/run/nginx && \
+    chmod -R 755 /var/cache/nginx /var/log/nginx
+
+# Create self-signed SSL certificate for development
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/nginx/ssl/privkey.pem \
+    -out /etc/nginx/ssl/fullchain.pem \
+    -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+
+# Set proper permissions
+RUN chmod 600 /etc/nginx/ssl/privkey.pem && \
+    chmod 644 /etc/nginx/ssl/fullchain.pem
+
+# Add health check script
+COPY deployment/scripts/nginx-health.sh /usr/local/bin/nginx-health.sh
+RUN chmod +x /usr/local/bin/nginx-health.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD /usr/local/bin/nginx-health.sh
+
+# Switch to nginx user
+USER nginx
+
+# Expose ports
+EXPOSE 80 443
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
