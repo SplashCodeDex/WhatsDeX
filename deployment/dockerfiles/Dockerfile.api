@@ -1,0 +1,54 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    sqlite \
+    python3 \
+    make \
+    g++
+
+# Copy package files first for better caching
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Copy application code
+COPY src ./src
+COPY routes ./routes
+COPY tools ./tools
+COPY utils ./utils
+COPY commands ./commands
+COPY database ./database
+COPY middleware ./middleware
+COPY services ./services
+COPY config ./config
+COPY errors ./errors
+COPY events ./events
+COPY lib ./lib
+COPY main.js ./
+COPY context.js ./
+COPY server.js ./
+
+# Create necessary directories
+RUN mkdir -p uploads logs temp
+
+# Set permissions
+RUN chown -R node:node /app
+USER node
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+EXPOSE 3001
+
+# Use the multi-tenant server as entry point
+CMD ["node", "src/server/multiTenantApp.js"]

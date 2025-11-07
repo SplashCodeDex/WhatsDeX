@@ -1,73 +1,75 @@
-# WhatsDeX Analytics Dashboard - Production Dockerfile
-# Next.js optimized build
+# Multi-stage build for Next.js frontend
+FROM node:18-alpine AS dependencies
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY ../shared/package.json ../shared/
+
+# Install dependencies
+RUN npm ci --only=production
 
 # Build stage
 FROM node:18-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache libc6-compat python3 make g++
-
 # Copy package files
-COPY web/package*.json ./
-COPY web/next.config.mjs ./
-COPY web/tailwind.config.js ./
-COPY web/postcss.config.js ./
-COPY web/tsconfig.json ./
-COPY web/components.json ./
+COPY package*.json ./
+COPY ../shared ./shared
 
-# Install dependencies
+# Install all dependencies (including dev)
 RUN npm ci
 
 # Copy source code
-COPY web/ .
+COPY . .
+COPY app ./app
+COPY components ./components
+COPY contexts ./contexts
+COPY lib ./lib
+COPY styles ./styles
+COPY public ./public
+COPY next.config.mjs ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+COPY tsconfig.json ./
+COPY jsconfig.json ./
 
 # Build the application
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:18-alpine AS runner
 
-# Install runtime dependencies
-RUN apk add --no-cache \
-    curl \
-    wget \
-    ca-certificates \
-    tzdata \
-    dumb-init \
-    && rm -rf /var/cache/apk/*
-
-# Create app user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-
-# Set working directory
 WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
 # Copy built application
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Set environment variables
-ENV NODE_ENV=production
+# Copy shared components if they exist
+COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
+
+USER nextjs
+
+EXPOSE 3000
+
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Add health check
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:3000/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Switch to non-root user
-USER nextjs
-
-# Expose port
-EXPOSE 3000
-
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
-# Start the application
 CMD ["node", "server.js"]
