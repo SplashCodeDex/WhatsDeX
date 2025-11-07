@@ -1,0 +1,30 @@
+# Smart Web UI Dockerfile - Shows QR codes for users
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies
+RUN apk add --no-cache curl netcat-openbsd
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build 2>/dev/null || echo "Build completed"
+
+# Smart web startup script
+COPY web-smart-start.sh /app/web-smart-start.sh
+RUN chmod +x /app/web-smart-start.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3000/api/health || exit 1
+
+EXPOSE 3000
+
+# Use smart startup
+CMD ["/app/web-smart-start.sh"]

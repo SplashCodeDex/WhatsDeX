@@ -1,0 +1,34 @@
+# Backup Service Dockerfile
+FROM alpine:latest
+
+# Install required tools
+RUN apk add --no-cache \
+    curl \
+    postgresql-client \
+    redis \
+    tar \
+    gzip \
+    cron \
+    bash
+
+# Create backup user
+RUN adduser -D -s /bin/bash backup
+
+# Create backup directories
+RUN mkdir -p /backups /scripts && \
+    chown -R backup:backup /backups /scripts
+
+# Copy backup scripts
+COPY deployment/scripts/backup.sh /scripts/backup.sh
+RUN chmod +x /scripts/backup.sh
+
+# Setup cron for backup user
+USER backup
+WORKDIR /home/backup
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=10s --retries=3 \
+    CMD test -f /backups/last_backup.log
+
+# Start cron daemon
+CMD ["crond", "-f", "-l", "2"]

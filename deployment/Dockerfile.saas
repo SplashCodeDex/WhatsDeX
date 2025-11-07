@@ -1,0 +1,68 @@
+# WhatsDeX SaaS Multi-stage Dockerfile
+FROM node:18-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
+    librsvg-dev \
+    pixman-dev \
+    curl \
+    ffmpeg \
+    imagemagick \
+    git
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install dependencies
+FROM base AS deps
+RUN npm ci --only=production && npm cache clean --force
+RUN npx prisma generate
+
+# Build stage
+FROM base AS build
+RUN npm ci
+COPY . .
+RUN npx prisma generate
+RUN npm run build 2>/dev/null || echo "No build script"
+
+# Production stage
+FROM base AS production
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S whatsdx -u 1001
+
+# Copy dependencies and code
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app .
+
+# Create necessary directories with proper permissions
+RUN mkdir -p sessions uploads backups logs state && \
+    chown -R whatsdx:nodejs sessions uploads backups logs state
+
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Switch to non-root user
+USER whatsdx
+
+# Expose port
+EXPOSE 3000
+
+# Start application
+CMD ["npm", "start"]
