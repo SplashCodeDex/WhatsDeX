@@ -1,0 +1,211 @@
+# WhatsDeX Alerting Rules
+# Comprehensive monitoring alerts for production deployment
+
+groups:
+  - name: whatsdx.bot.alerts
+    rules:
+      # Bot Service Health
+      - alert: WhatsDeXBotDown
+        expr: up{job="whatsdex-bot"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: whatsdex-bot
+        annotations:
+          summary: "WhatsDeX Bot is down"
+          description: "WhatsDeX Bot service has been down for more than 1 minute"
+          runbook_url: "https://docs.whatsdex.com/runbooks/bot-down"
+
+      - alert: WhatsDeXBotHighErrorRate
+        expr: rate(http_requests_total{job="whatsdex-bot",status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: whatsdx-bot
+        annotations:
+          summary: "High error rate in WhatsDeX Bot"
+          description: "Error rate is {{ $value }} errors per second"
+
+      - alert: WhatsDeXBotHighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="whatsdex-bot"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: whatsdx-bot
+        annotations:
+          summary: "High response time in WhatsDeX Bot"
+          description: "95th percentile response time is {{ $value }}s"
+
+      # Message Processing Alerts
+      - alert: MessageProcessingBacklog
+        expr: whatsdx_message_queue_size > 1000
+        for: 2m
+        labels:
+          severity: warning
+          service: message-processing
+        annotations:
+          summary: "Large message processing backlog"
+          description: "Message queue has {{ $value }} pending messages"
+
+      - alert: MessageProcessingFailed
+        expr: rate(whatsdx_messages_failed_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          service: message-processing
+        annotations:
+          summary: "High message processing failure rate"
+          description: "{{ $value }} messages per second are failing to process"
+
+  - name: whatsdx.infrastructure.alerts
+    rules:
+      # Database Alerts
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL has been down for more than 1 minute"
+
+      - alert: PostgreSQLHighConnections
+        expr: pg_stat_activity_count / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "PostgreSQL connection usage high"
+          description: "Connection usage is {{ $value }}%"
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration[5m]) > 60
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "Queries taking longer than 60 seconds detected"
+
+      # Redis Alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 1 minute"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis memory usage is {{ $value }}%"
+
+  - name: whatsdx.system.alerts
+    rules:
+      # System Resource Alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Disk space low"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }}:{{ $labels.mountpoint }}"
+
+      - alert: HighDiskIOUsage
+        expr: rate(node_disk_io_time_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High disk I/O usage"
+          description: "Disk I/O usage is {{ $value }} on {{ $labels.instance }}"
+
+  - name: whatsdx.ssl.alerts
+    rules:
+      # SSL Certificate Alerts
+      - alert: SSLCertificateExpiringSoon
+        expr: ssl_cert_not_after - time() < 86400 * 7  # 7 days
+        for: 0m
+        labels:
+          severity: warning
+          service: ssl
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+      - alert: SSLCertificateExpired
+        expr: ssl_cert_not_after - time() <= 0
+        for: 0m
+        labels:
+          severity: critical
+          service: ssl
+        annotations:
+          summary: "SSL certificate expired"
+          description: "SSL certificate for {{ $labels.instance }} has expired"
+
+  - name: whatsdx.business.alerts
+    rules:
+      # Business Logic Alerts
+      - alert: LowUserEngagement
+        expr: rate(whatsdx_messages_received_total[1h]) < 10
+        for: 30m
+        labels:
+          severity: info
+          service: business
+        annotations:
+          summary: "Low user engagement detected"
+          description: "Message rate is {{ $value }} messages per second (avg over 1h)"
+
+      - alert: CommandFailureRateHigh
+        expr: rate(whatsdx_commands_failed_total[5m]) / rate(whatsdx_commands_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "High command failure rate"
+          description: "Command failure rate is high"
+
+      - alert: APIRateLimitHit
+        expr: rate(whatsdx_api_rate_limit_exceeded_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "API rate limits being exceeded"
+          description: "Rate limit exceeded {{ $value }} times per second"

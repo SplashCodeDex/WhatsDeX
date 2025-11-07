@@ -109,6 +109,18 @@ const main = async context => {
     }
   });
 
+  // Initialize commands map
+  bot.cmd = new Map();
+  
+  // Load commands from directories
+  try {
+    const { loadCommands } = await import('./tmp_rovodev_fix_commands.js');
+    await loadCommands(bot);
+  } catch (error) {
+    console.warn('Failed to load commands:', error.message);
+    bot.cmd = new Map(); // Ensure cmd is always a Map
+  }
+
   // Initialize Intelligent Message Processor
   const intelligentProcessor = new IntelligentMessageProcessor(bot, context);
   

@@ -1,6 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const crypto = require('crypto');
-const logger = require('../src/utils/logger');
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import crypto from 'crypto';
+import logger from '../src/utils/logger.js';
 
 class GeminiService {
   constructor() {
@@ -534,4 +534,4 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
   }
 }
 
-module.exports = GeminiService;
+export default GeminiService;

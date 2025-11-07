@@ -1,0 +1,276 @@
+# Enhanced Monitoring Stack for WhatsDeX
+# Comprehensive monitoring with Prometheus, Grafana, and additional exporters
+
+services:
+  # Prometheus with enhanced configuration
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: whatsdex-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--log.level=info'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus-simple.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    environment:
+      - TZ=UTC
+    networks:
+      - whatsdx-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Grafana with pre-configured dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: whatsdex-grafana
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_SERVER_ROOT_URL=https://monitoring.yourdomain.com
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_COOKIE_SAMESITE=strict
+    networks:
+      - whatsdx-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: whatsdex-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.netdev.device-exclude=^lo$$'
+      - '--collector.diskstats.ignored-devices=^(ram|loop|fd|(h|s|v)d[a-z]|nvme\\d+n\\d+p)\\d+$$'
+    networks:
+      - whatsdx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 200M
+
+  # cAdvisor for container metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: whatsdx-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - whatsdx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 300M
+
+  # Nginx Prometheus Exporter
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: whatsdx-nginx-exporter
+    restart: unless-stopped
+    ports:
+      - "9113:9113"
+    command:
+      - '-nginx.scrape-uri=http://nginx/nginx_status'
+      - '-web.listen-address=:9113'
+    networks:
+      - whatsdx-network
+    # depends_on:
+      # - nginx  # Uncomment when running with main application
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 50M
+
+  # PostgreSQL Exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: whatsdx-postgres-exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER:-whatsdex}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-whatsdex}?sslmode=disable
+      - PG_EXPORTER_EXTEND_QUERY_PATH=/etc/postgres_exporter/queries.yaml
+    volumes:
+      - ./postgres-queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+    networks:
+      - whatsdx-network
+    # depends_on:
+      # - postgres  # Uncomment when running with main application
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 100M
+
+  # Redis Exporter
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: whatsdx-redis-exporter
+    restart: unless-stopped
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    networks:
+      - whatsdx-network
+    # depends_on:
+      # - redis  # Uncomment when running with main application
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 50M
+
+  # SSL Certificate Exporter
+  ssl-exporter:
+    image: ribbybibby/ssl-exporter:latest
+    container_name: whatsdx-ssl-exporter
+    restart: unless-stopped
+    ports:
+      - "9219:9219"
+    command:
+      - '--config.file=/etc/ssl-exporter/ssl-exporter.yml'
+    volumes:
+      - ./ssl-exporter-config.yml:/etc/ssl-exporter/ssl-exporter.yml:ro
+    networks:
+      - whatsdx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 50M
+
+  # Alertmanager for alert routing
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: whatsdx-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+      - '--cluster.advertise-address=0.0.0.0:9093'
+    networks:
+      - whatsdx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 200M
+
+  # Loki for log aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: whatsdx-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-simple.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - whatsdx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Promtail for log collection
+  promtail:
+    image: grafana/promtail:latest
+    container_name: whatsdx-promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
+    networks:
+      - whatsdx-network
+    depends_on:
+      - loki
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  alertmanager-data:
+    driver: local
+  loki-data:
+    driver: local
+
+networks:
+  whatsdx-network:
+    driver: bridge
+    name: whatsdx-network

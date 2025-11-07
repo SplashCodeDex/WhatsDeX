@@ -1,5 +1,5 @@
-const EnhancedAIBrain = require('./services/EnhancedAIBrain');
-const logger = require('./utils/logger');
+import EnhancedAIBrain from './services/EnhancedAIBrain.js';
+import logger from './utils/logger.js';
 
 /**
  * Intelligent Message Processor - Routes ALL messages through AI intelligence
@@ -219,7 +219,7 @@ class IntelligentMessageProcessor {
     
     for (const middlewareName of middlewareList) {
       try {
-        const middleware = require(`../middleware/${middlewareName}`);
+        const middleware = await import(`../middleware/${middlewareName}.js`);
         const result = await middleware(ctx, this.bot, this.context);
         
         if (result === false) {
@@ -330,4 +330,4 @@ class IntelligentMessageProcessor {
   }
 }
 
-module.exports = IntelligentMessageProcessor;
+export default IntelligentMessageProcessor;

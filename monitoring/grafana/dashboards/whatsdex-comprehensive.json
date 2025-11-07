@@ -1,0 +1,278 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "WhatsDeX - Comprehensive Monitoring",
+    "tags": ["whatsdex", "monitoring", "comprehensive"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Status Overview",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=~\"whatsdex-.*\"}",
+            "legendFormat": "{{service}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"options": {"0": {"text": "DOWN", "color": "red"}}, "type": "value"},
+              {"options": {"1": {"text": "UP", "color": "green"}}, "type": "value"}
+            ],
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "center",
+          "orientation": "horizontal"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Message Processing Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "rate(whatsdx_messages_received_total[5m])",
+            "legendFormat": "Messages Received/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(whatsdx_messages_processed_total[5m])",
+            "legendFormat": "Messages Processed/sec",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(whatsdx_messages_failed_total[5m])",
+            "legendFormat": "Messages Failed/sec",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {"label": "Messages/second", "min": 0}
+        ],
+        "legend": {"show": true},
+        "tooltip": {"shared": true}
+      },
+      {
+        "id": 3,
+        "title": "Response Time Distribution",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"whatsdex-bot\"}[5m]))",
+            "legendFormat": "50th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.90, rate(http_request_duration_seconds_bucket{job=\"whatsdex-bot\"}[5m]))",
+            "legendFormat": "90th percentile",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"whatsdx-bot\"}[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "C"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"whatsdx-bot\"}[5m]))",
+            "legendFormat": "99th percentile",
+            "refId": "D"
+          }
+        ],
+        "yAxes": [
+          {"label": "Response Time (seconds)", "min": 0}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "System Resources",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage %",
+            "refId": "A"
+          },
+          {
+            "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
+            "legendFormat": "Memory Usage %",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {"label": "Percentage", "min": 0, "max": 100}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Database Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_tup_inserted[5m])",
+            "legendFormat": "Inserts/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_updated[5m])",
+            "legendFormat": "Updates/sec",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_deleted[5m])",
+            "legendFormat": "Deletes/sec",
+            "refId": "C"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Redis Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(redis_commands_processed_total[5m])",
+            "legendFormat": "Commands/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "redis_connected_clients",
+            "legendFormat": "Connected Clients",
+            "refId": "B"
+          },
+          {
+            "expr": "redis_memory_used_bytes / 1024 / 1024",
+            "legendFormat": "Memory Usage (MB)",
+            "refId": "C"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Error Rates by Service",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) by (service)",
+            "legendFormat": "{{service}} - 5xx errors/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(http_requests_total{status=~\"4..\"}[5m]) by (service)",
+            "legendFormat": "{{service}} - 4xx errors/sec",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {"label": "Errors/second", "min": 0}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Top Commands Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "targets": [
+          {
+            "expr": "topk(10, rate(whatsdx_commands_total[5m]) by (command))",
+            "legendFormat": "{{command}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {"label": "Commands/second", "min": 0}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Network Traffic",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "rate(node_network_receive_bytes_total[5m]) * 8",
+            "legendFormat": "Inbound (bps)",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(node_network_transmit_bytes_total[5m]) * 8",
+            "legendFormat": "Outbound (bps)",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {"label": "Bits per second", "min": 0}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "SSL Certificate Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+        "targets": [
+          {
+            "expr": "(ssl_cert_not_after - time()) / 86400",
+            "legendFormat": "Days until expiry: {{instance}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "days",
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 7},
+                {"color": "green", "value": 30}
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "service",
+          "type": "query",
+          "query": "label_values(up, service)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true
+        }
+      ]
+    },
+    "annotations": {
+      "list": []
+    },
+    "refresh": "10s",
+    "schemaVersion": 27,
+    "version": 0,
+    "links": []
+  }
+}

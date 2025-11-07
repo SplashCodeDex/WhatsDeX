@@ -1,4 +1,5 @@
-version: '3.8'
+# Docker Compose configuration for WhatsDeX Bot
+# Note: 'version' is obsolete in newer Docker Compose versions
 
 services:
   # PostgreSQL Database with enhanced configuration

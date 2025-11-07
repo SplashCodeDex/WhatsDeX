@@ -1,4 +1,5 @@
-version: '3.8'
+# Production Docker Compose configuration for WhatsDeX
+# Note: 'version' is obsolete in newer Docker Compose versions
 
 services:
   # Main WhatsDeX Bot with AI Intelligence
@@ -27,7 +28,6 @@ services:
     depends_on:
       - redis
       - postgres
-      - nginx
     volumes:
       - bot-auth:/app/auth
       - bot-logs:/app/logs
@@ -54,13 +54,13 @@ services:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=https://api.yourdomain.com
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - ANALYTICS_API_URL=http://whatsdx-bot:3000
+      - ANALYTICS_API_URL=http://whatsdex-bot:3000
     ports:
       - "3001:3000"
     depends_on:
       - whatsdex-bot
     networks:
-      - whatsdx-network
+      - whatsdex-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
@@ -136,7 +136,7 @@ services:
   # Monitoring with Prometheus
   prometheus:
     image: prom/prometheus:latest
-    container_name: whatsdx-prometheus
+    container_name: whatsdex-prometheus
     restart: unless-stopped
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -151,7 +151,7 @@ services:
       - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     networks:
-      - whatsdx-network
+      - whatsdex-network
 
   # Grafana for analytics visualization
   grafana:

@@ -1,4 +1,5 @@
-version: '3.8'
+# Production overrides for Docker Compose
+# Note: 'version' is obsolete in newer Docker Compose versions
 
 services:
   whatsdex:
@@ -68,6 +69,7 @@ services:
           memory: '512M'
 
   prometheus:
+    image: prom/prometheus:latest
     deploy:
       resources:
         limits:

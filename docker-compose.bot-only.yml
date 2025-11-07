@@ -1,0 +1,80 @@
+# WhatsDeX Bot + Database + Monitoring
+# Simplified deployment focusing on the bot functionality
+
+services:
+  # WhatsDeX Bot Service
+  whatsdx-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.monolith
+    container_name: whatsdx-bot
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - BOT_NAME=WhatsDeX-Test
+      - DATABASE_URL=postgresql://whatsdx:password@postgres:5432/whatsdx
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - whatsdx-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: whatsdx-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=whatsdx
+      - POSTGRES_USER=whatsdx
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - whatsdx-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whatsdx"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: whatsdx-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - whatsdx-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  whatsdx-network:
+    external: true

@@ -1,0 +1,154 @@
+# Enhanced Prometheus Configuration for WhatsDeX
+# Comprehensive monitoring with alerting rules
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'whatsdex-prod'
+    replica: '1'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load alerting rules
+rule_files:
+  - "alerts/*.yml"
+
+scrape_configs:
+  # WhatsDeX Bot Service
+  - job_name: 'whatsdex-bot'
+    static_configs:
+      - targets: ['whatsdex-bot:3000']
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    scrape_timeout: 5s
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'whatsdex-bot'
+
+  # Web Dashboard
+  - job_name: 'whatsdex-web'
+    static_configs:
+      - targets: ['whatsdex-web:3000']
+    scrape_interval: 15s
+    metrics_path: '/api/metrics'
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'whatsdex-web'
+
+  # Database (PostgreSQL)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'postgres'
+
+  # Redis Cache
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'redis'
+
+  # Nginx Reverse Proxy
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:9113']  # nginx-prometheus-exporter
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'nginx'
+
+  # Node Exporter for System Metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'system'
+
+  # Docker Container Metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'containers'
+
+  # Prometheus Self-Monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    honor_labels: true
+
+  # Grafana Monitoring
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'grafana'
+
+  # SSL Certificate Monitoring
+  - job_name: 'ssl-exporter'
+    static_configs:
+      - targets: ['ssl-exporter:9219']
+    scrape_interval: 300s  # Check every 5 minutes
+    metrics_path: '/metrics'
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'ssl-monitoring'
+
+  # WhatsApp Bot Custom Metrics
+  - job_name: 'whatsdex-custom-metrics'
+    static_configs:
+      - targets: ['whatsdex-bot:3000']
+    scrape_interval: 30s
+    metrics_path: '/api/metrics/custom'
+    honor_labels: true
+    params:
+      'format': ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'whatsdex-custom'
+
+# Performance and storage configuration

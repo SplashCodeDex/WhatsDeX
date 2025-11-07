@@ -1,6 +1,6 @@
-const GeminiService = require('./gemini');
-const logger = require('../utils/logger');
-const { EventEmitter } = require('events');
+import GeminiService from '../../services/gemini.js';
+import logger from '../utils/logger.js';
+import { EventEmitter } from 'events';
 
 /**
  * Enhanced AI Brain - Next Generation Intelligence System
@@ -614,4 +614,4 @@ Respond in the user's language if they're not using English.
   }
 }
 
-module.exports = EnhancedAIBrain;
+export default EnhancedAIBrain;

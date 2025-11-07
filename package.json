@@ -35,7 +35,16 @@
     "launch": "node scripts/simple-launcher.js",
     "e2e": "playwright test",
     "security-audit": "npm audit --audit-level=high",
-    "seed": "cross-env DATABASE_URL=\"file:./dev.db\" node scripts/seed.js"
+    "seed": "cross-env DATABASE_URL=\"file:./dev.db\" node scripts/seed.js",
+    "backup": "bash scripts/backup.sh manual",
+    "restore": "bash scripts/restore.sh",
+    "restore:latest": "bash scripts/restore.sh latest",
+    "restore:list": "bash scripts/restore.sh list",
+    "setup-multitenant": "node scripts/setup-multitenant.js",
+    "start:multitenant": "node src/server/multiTenantApp.js",
+    "dev:multitenant": "node scripts/start-multitenant.js",
+    "dev:full": "concurrently \"npm run dev:web\" \"npm run dev\"",
+    "dev:web": "cd web && npm run dev"
   },
   "repository": {
     "type": "git",

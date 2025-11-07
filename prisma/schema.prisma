@@ -1,16 +1,269 @@
+// Multi-tenant WhatsDeX SaaS Database Schema
 // Enums not supported in SQLite; use String with code validation
 // Status values: "PENDING", "APPROVED", "REJECTED", "EXPIRED", "CANCELLED"
 // RiskLevel values: "LOW", "MEDIUM", "HIGH", "CRITICAL"
 
-// Prisma schema for WhatsDeX enhanced database with queryCompiler for performance
 generator client {
   provider = "prisma-client-js"
   previewFeatures = ["queryCompiler"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+// Multi-tenancy: Customer Organizations
+model Tenant {
+  id                String    @id @default(cuid())
+  name              String
+  subdomain         String    @unique
+  email             String    @unique
+  phone             String?
+  description       String?
+  logo              String?
+  website           String?
+  status            String    @default("active") // active, suspended, cancelled
+  plan              String    @default("free") // free, basic, pro, enterprise
+  planLimits        String?   // JSON of plan limits
+  customSettings    String?   // JSON of custom settings
+  stripeCustomerId  String?   @unique
+  trialEndsAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  tenantUsers       TenantUser[]
+  botInstances      BotInstance[]
+  subscriptions     TenantSubscription[]
+  payments          TenantPayment[]
+  apiKeys           TenantApiKey[]
+  analytics         TenantAnalytics[]
+  auditLogs         TenantAuditLog[]
+
+  @@map("tenants")
+}
+
+// Tenant Users (Customer's team members)
+model TenantUser {
+  id              String    @id @default(cuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email           String
+  name            String
+  passwordHash    String
+  role            String    @default("user") // admin, user, viewer
+  avatar          String?
+  permissions     String?   // JSON of specific permissions
+  isActive        Boolean   @default(true)
+  lastLoginAt     DateTime?
+  emailVerified   Boolean   @default(false)
+  invitedBy       String?
+  invitedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  sessions        TenantUserSession[]
+  auditLogs       TenantAuditLog[]
+
+  @@unique([tenantId, email])
+  @@map("tenant_users")
+}
+
+// Tenant User Sessions
+model TenantUserSession {
+  id          String      @id @default(cuid())
+  userId      String
+  user        TenantUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String      @unique
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+  createdAt   DateTime    @default(now())
+
+  @@map("tenant_user_sessions")
+}
+
+// WhatsApp Bot Instances per Tenant
+model BotInstance {
+  id              String    @id @default(cuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name            String
+  phoneNumber     String?
+  qrCode          String?
+  status          String    @default("disconnected") // connected, disconnected, scanning, error
+  sessionData     String?   // Encrypted session data
+  config          String?   // JSON bot configuration
+  lastActivity    DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  users           BotUser[]
+  groups          BotGroup[]
+  messages        BotMessage[]
+  analytics       BotAnalytics[]
+
+  @@unique([tenantId, phoneNumber])
+  @@map("bot_instances")
+}
+
+// Bot Users (WhatsApp users interacting with the bot)
+model BotUser {
+  id            String      @id @default(cuid())
+  botInstanceId String
+  botInstance   BotInstance @relation(fields: [botInstanceId], references: [id], onDelete: Cascade)
+  jid           String
+  name          String?
+  phone         String?
+  avatar        String?
+  isBlocked     Boolean     @default(false)
+  lastActivity  DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  messages      BotMessage[]
+
+  @@unique([botInstanceId, jid])
+  @@map("bot_users")
+}
+
+// Bot Groups
+model BotGroup {
+  id            String      @id @default(cuid())
+  botInstanceId String
+  botInstance   BotInstance @relation(fields: [botInstanceId], references: [id], onDelete: Cascade)
+  jid           String
+  name          String?
+  description   String?
+  memberCount   Int         @default(0)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([botInstanceId, jid])
+  @@map("bot_groups")
+}
+
+// Bot Messages
+model BotMessage {
+  id            String      @id @default(cuid())
+  botInstanceId String
+  botInstance   BotInstance @relation(fields: [botInstanceId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          BotUser?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messageId     String
+  fromJid       String
+  toJid         String
+  type          String      // text, image, audio, video, document
+  content       String?
+  mediaUrl      String?
+  command       String?
+  isIncoming    Boolean     @default(true)
+  timestamp     DateTime    @default(now())
+
+  @@unique([botInstanceId, messageId])
+  @@map("bot_messages")
+}
+
+// Tenant Subscriptions
+model TenantSubscription {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId  String    @unique
+  stripePriceId         String
+  status                String    // active, canceled, past_due, etc.
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  cancelAtPeriodEnd     Boolean   @default(false)
+  trialStart            DateTime?
+  trialEnd              DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("tenant_subscriptions")
+}
+
+// Tenant Payments
+model TenantPayment {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stripePaymentId     String    @unique
+  amount              Int       // Amount in cents
+  currency            String    @default("usd")
+  status              String    // succeeded, pending, failed
+  description         String?
+  invoiceUrl          String?
+  receiptUrl          String?
+  createdAt           DateTime  @default(now())
+
+  @@map("tenant_payments")
+}
+
+// Tenant API Keys
+model TenantApiKey {
+  id        String    @id @default(cuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  keyHash   String    @unique
+  keyPrefix String
+  lastUsed  DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  @@map("tenant_api_keys")
+}
+
+// Tenant Analytics
+model TenantAnalytics {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  metric    String
+  value     Float
+  metadata  String?  // JSON metadata
+  date      DateTime @default(now())
+
+  @@map("tenant_analytics")
+}
+
+// Bot Analytics
+model BotAnalytics {
+  id            String      @id @default(cuid())
+  botInstanceId String
+  botInstance   BotInstance @relation(fields: [botInstanceId], references: [id], onDelete: Cascade)
+  metric        String
+  value         Float
+  metadata      String?     // JSON metadata
+  date          DateTime    @default(now())
+
+  @@map("bot_analytics")
+}
+
+// Tenant Audit Logs
+model TenantAuditLog {
+  id         String      @id @default(cuid())
+  tenantId   String
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       TenantUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  resource   String
+  resourceId String?
+  details    String?     // JSON details
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  @@map("tenant_audit_logs")
 }
 
 // User management
