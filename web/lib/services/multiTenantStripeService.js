@@ -63,6 +63,26 @@ export class MultiTenantStripeService {
     // Placeholder for Stripe webhook handling
     return { received: true };
   }
+
+  async createCustomer(tenantId, customerData) {
+    // Demo Stripe customer creation
+    const { email, name, phone } = customerData;
+    
+    // Simulate Stripe customer creation
+    const customer = {
+      id: `cus_demo_${Date.now()}`,
+      email,
+      name,
+      phone,
+      created: Math.floor(Date.now() / 1000),
+      metadata: {
+        tenantId
+      }
+    };
+
+    console.log(`Created Stripe customer for tenant ${tenantId}:`, customer);
+    return customer;
+  }
 }
 
 export default new MultiTenantStripeService();

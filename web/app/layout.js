@@ -1,4 +1,5 @@
 import '../styles/globals.css'
+import { Providers } from './providers'
 
 export const metadata = {
   title: 'WhatsDeX Dashboard',
@@ -15,7 +16,9 @@ export default function RootLayout({ children }) {
           
           {/* Main content */}
           <div className="relative z-10">
-            {children}
+            <Providers>
+              {children}
+            </Providers>
           </div>
         </div>
       </body>

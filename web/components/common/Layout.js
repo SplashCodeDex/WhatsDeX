@@ -30,7 +30,18 @@ const getNavigationItemClass = (item, darkMode) => {
 
 function Layout({ children, title = 'WhatsDeX Dashboard' }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { darkMode, toggleDarkMode } = useContext(ThemeContext);
+  const { darkMode, toggleDarkMode, mounted } = useContext(ThemeContext);
+
+  // Don't render theme-dependent content until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-white">Loading...</div>
+        </div>
+      </div>
+    );
+  }
   const [notifications, setNotifications] = useState([]);
 
   // Simulate new notifications

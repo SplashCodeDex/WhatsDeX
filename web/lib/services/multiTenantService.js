@@ -175,6 +175,23 @@ export class MultiTenantService {
 
     return newBot;
   }
+
+  async recordAnalytic(tenantId, event, value, metadata = {}) {
+    // Simple analytics recording for demo
+    console.log(`Analytics: ${tenantId} - ${event}: ${value}`, metadata);
+    return { success: true, recorded: new Date() };
+  }
+
+  async logAction(tenantId, userId, action, resourceType, resourceId, metadata = {}, ipAddress = 'unknown', userAgent = '') {
+    // Simple action logging for demo
+    console.log(`Action Log: ${tenantId}/${userId} - ${action} on ${resourceType}:${resourceId}`, {
+      metadata,
+      ipAddress,
+      userAgent,
+      timestamp: new Date()
+    });
+    return { success: true, logged: new Date() };
+  }
 }
 
 export default new MultiTenantService();

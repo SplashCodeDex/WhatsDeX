@@ -1,25 +1,45 @@
-// Simplified Stripe service for Next.js
+import apiClient from '../../lib/apiClient.js';
+
+// API-based Stripe service for Next.js
 export class MultiTenantStripeService {
   constructor() {
-    this.isInitialized = false;
-    this.plans = {
-      free: { id: 'free', name: 'Free', price: 0 },
-      basic: { id: 'basic', name: 'Basic', price: 2999 },
-      pro: { id: 'pro', name: 'Pro', price: 9999 },
-      enterprise: { id: 'enterprise', name: 'Enterprise', price: 29999 }
-    };
+    this.apiClient = apiClient;
   }
 
-  getAllPlans() {
-    return Object.entries(this.plans).map(([key, plan]) => ({
-      id: key,
-      ...plan
-    }));
+  async getAllPlans() {
+    try {
+      const response = await this.apiClient.getAllPlans();
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async initialize() {
-    this.isInitialized = true;
-    return true;
+  async createCustomer(tenantId, customerData) {
+    try {
+      const response = await this.apiClient.createCustomer(tenantId, customerData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getSubscriptionInfo(tenantId) {
+    try {
+      const response = await this.apiClient.getSubscriptionInfo(tenantId);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async handleWebhook(body, signature) {
+    try {
+      const response = await this.apiClient.handleStripeWebhook(body, signature);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

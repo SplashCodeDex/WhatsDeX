@@ -8,6 +8,7 @@ import logger from '../utils/logger.js';
 import multiTenantService from '../services/multiTenantService.js';
 import multiTenantStripeService from '../services/multiTenantStripeService.js';
 import multiTenantBotService from '../services/multiTenantBotService.js';
+import multiTenantRoutes from '../../routes/multiTenant.js';
 
 const prisma = new PrismaClient();
 
@@ -110,6 +111,9 @@ export class MultiTenantApp {
         version: process.env.npm_package_version || '1.0.0'
       });
     });
+
+    // Internal API routes for web frontend
+    this.app.use('/api/internal', multiTenantRoutes);
 
     // Tenant management endpoints
     this.app.get('/api/tenants', async (req, res) => {

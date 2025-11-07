@@ -1,21 +1,35 @@
+'use client';
+
 import { createContext, useState, useEffect, useMemo } from 'react';
 
 export const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true); // Default to dark mode
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setMounted(true);
+    
+    // Only access localStorage and DOM after mounting (client-side)
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
+      const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+      setDarkMode(shouldBeDark);
+      
+      if (shouldBeDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
   }, []);
 
   const toggleDarkMode = () => {
+    if (typeof window === 'undefined') return;
+    
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
 
@@ -28,7 +42,16 @@ export function ThemeProvider({ children }) {
     }
   };
 
-  const value = useMemo(() => ({ darkMode, toggleDarkMode }), [darkMode]);
+  const value = useMemo(() => ({ 
+    darkMode, 
+    toggleDarkMode,
+    mounted 
+  }), [darkMode, mounted]);
+
+  // Prevent hydration mismatch by not rendering theme-dependent content until mounted
+  if (!mounted) {
+    return <ThemeContext.Provider value={{ darkMode: true, toggleDarkMode: () => {}, mounted: false }}>{children}</ThemeContext.Provider>;
+  }
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

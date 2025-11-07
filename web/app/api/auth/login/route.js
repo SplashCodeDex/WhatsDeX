@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import multiTenantService from '../../../lib/services/multiTenantService';
+import multiTenantService from '../../../../src/services/multiTenantService';
 
 export async function POST(request) {
   try {
