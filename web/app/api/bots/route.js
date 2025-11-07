@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import multiTenantService from '../../../src/services/multiTenantService.js';
-import multiTenantBotService from '../../../src/services/multiTenantBotService.js';
+import multiTenantService from '../../../src/services/multiTenantService';
+import multiTenantBotService from '../../../src/services/multiTenantBotService';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
