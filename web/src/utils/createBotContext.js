@@ -1,6 +1,6 @@
-const moment = require('moment-timezone'); // Assuming moment-timezone is used
-const { getJid, getSender, getGroup } = require('./baileysUtils');
-const { Cooldown } = require('../middleware/cooldown.js'); // Re-adding the import
+import moment from 'moment-timezone';
+import { getJid, getSender, getGroup } from './baileysUtils.js';
+import { Cooldown } from '../middleware/cooldown.js';
 
 const createBotContext = async (
   botInstance,
@@ -143,4 +143,4 @@ const createBotContext = async (
   return ctx;
 };
 
-module.exports = createBotContext;
+export default createBotContext;

@@ -10,8 +10,4 @@ const getSender = msg =>
 
 const getGroup = msg => (msg.key.remoteJid.endsWith('@g.us') ? msg.key.remoteJid : null);
 
-module.exports = {
-  getJid,
-  getSender,
-  getGroup,
-};
+export { getJid, getSender, getGroup };

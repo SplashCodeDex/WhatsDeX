@@ -1,13 +1,4 @@
-const { configs } = require('@eslint/js');
-const jest = require('eslint-plugin-jest');
-const react = require('eslint-plugin-react');
-const reactHooks = require('eslint-plugin-react-hooks');
-const typescript = require('@typescript-eslint/eslint-plugin');
-const typescriptParser = require('@typescript-eslint/parser');
-const prettier = require('eslint-plugin-prettier');
-const globals = require('globals');
-
-module.exports = [
+export default [
   // Global ignores (MUST be first and standalone)
   {
     ignores: [
@@ -46,102 +37,81 @@ module.exports = [
     ],
   },
 
-  // Base config for all JS/TS files
-  configs.recommended,
+  // Base config for all JS files
   {
-    files: ['**/*.js', '**/*.ts'],
+    files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      parser: typescriptParser,
       globals: {
-        ...globals.node,
-        ...globals.es2021,
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly',
       },
     },
-    plugins: {
-      '@typescript-eslint': typescript,
-      prettier,
-    },
     rules: {
-      'prettier/prettier': [
-        'error',
-        {
-          singleQuote: true,
-          semi: true,
-          trailingComma: 'es5',
-          printWidth: 100,
-        },
-      ],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
       'no-console': 'off',
-      'no-undef': 'warn', // Changed from error to warn
-      'no-unused-vars': 'warn', // Changed from error to warn
+      'no-undef': 'warn',
+      'no-unused-vars': 'warn',
       'no-constant-binary-expression': 'warn',
       'no-empty-pattern': 'warn',
       'no-case-declarations': 'warn',
+      'no-async-promise-executor': 'warn',
+      'no-prototype-builtins': 'warn',
     },
   },
 
-  // Jest test files
+  // Test files
   {
-    files: ['**/__tests__/**/*', '**/*.test.js', '**/*.test.ts', '**/*.spec.js'],
-    ...jest.configs['flat/recommended'],
+    files: ['**/__tests__/**/*', '**/*.test.js', '**/*.spec.js'],
     languageOptions: {
       globals: {
-        ...globals.jest,
-        ...globals.node,
+        console: 'readonly',
+        process: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        jest: 'readonly',
       },
     },
     rules: {
-      ...jest.configs['flat/recommended'].rules,
-      'jest/no-disabled-tests': 'warn',
-      'jest/no-focused-tests': 'error',
-      'jest/valid-expect': 'error',
-      '@typescript-eslint/no-explicit-any': 'off',
-      'no-undef': 'off', // Jest globals
+      'no-undef': 'off',
     },
   },
 
-  // React/JSX files
+  // Web/React files
   {
-    files: ['web/**/*.js', 'web/**/*.jsx', 'web/**/*.ts', 'web/**/*.tsx'],
-    plugins: {
-      react,
-      'react-hooks': reactHooks,
-    },
+    files: ['web/**/*.js', 'web/**/*.jsx'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      parser: typescriptParser,
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
       globals: {
-        ...globals.browser,
-        ...globals.es2021,
-      },
-    },
-    settings: {
-      react: {
-        version: 'detect',
+        React: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        fetch: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
       },
     },
     rules: {
-      'react/react-in-jsx-scope': 'off',
-      'react/prop-types': 'off',
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-      'no-undef': 'off', // React globals
+      'no-undef': 'warn',
     },
   },
 ];

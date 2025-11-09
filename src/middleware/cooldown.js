@@ -107,4 +107,4 @@ class Cooldown {
   }
 }
 
-module.exports = { Cooldown };
+export { Cooldown };

@@ -3,7 +3,7 @@ export default {
   transform: {
     '^.+\\.(js|jsx|mjs)$': 'babel-jest',
   },
-
+  extensionsToTreatAsEsm: ['.js', '.jsx', '.mjs'],
   collectCoverageFrom: [
     'commands/**/*.js',
     'middleware/**/*.js',
@@ -34,7 +34,5 @@ export default {
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   testTimeout: 10000,
   verbose: true,
-  forceExit: true,
-  detectOpenHandles: true,
   maxWorkers: '50%',
 };

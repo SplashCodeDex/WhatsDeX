@@ -25,7 +25,7 @@ export default {
 
       await ctx.reply({
         image: {
-          url: result,
+          url: apiUrl,
         },
         mimetype: tools.mime.lookup('png'),
         caption: formatter.quote(`Prompt: ${input}`),

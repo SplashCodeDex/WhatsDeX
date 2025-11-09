@@ -1,5 +1,3 @@
-import tools from '../../tools/exports.js';
-
 export default {
   name: 'editimage',
   aliases: ['editimg'],

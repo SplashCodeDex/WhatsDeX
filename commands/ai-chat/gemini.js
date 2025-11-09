@@ -2,7 +2,7 @@ import { z } from 'zod';
 import GeminiService from '../../services/gemini.js';
 import aiTools from '../../tools/ai-tools.js';
 import aiChatDB from '../../database/ai_chat_database.js';
-import dbManager from '../../src/utils/DatabaseManager.js';
+// import dbManager from '../../src/utils/DatabaseManager.js';
 import performanceMonitor from '../../src/utils/PerformanceMonitor.js';
 import RateLimiter from '../../src/utils/RateLimiter.js';
 
@@ -162,6 +162,7 @@ export default {
       console.error('Gemini command error:', error);
       
       // Log error with context
+      const input = ctx.args.join(' ') || ctx.quoted?.content || '';
       console.error('Error details:', {
         userId: ctx.author.id,
         input: input?.substring(0, 100),
