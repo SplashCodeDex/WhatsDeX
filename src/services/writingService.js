@@ -5,9 +5,10 @@
 
 import path from 'path';
 
-const fs = require('fs').promises;
-const { spawn } = require('child_process');
-const context = require('../../context');
+import path from 'path';
+import { promises as fs } from 'fs';
+import { spawn } from 'child_process';
+import context from '../../context.js';
 
 class WritingService {
   constructor() {
@@ -333,4 +334,4 @@ class WritingService {
   }
 }
 
-module.exports = new WritingService();
+export default new WritingService();

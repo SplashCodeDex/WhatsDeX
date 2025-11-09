@@ -2,6 +2,7 @@ import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeys
 import pino from 'pino';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { existsSync, rmSync } from 'node:fs';
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 import messageQueue from './src/worker.js';
@@ -32,19 +33,24 @@ class ConnectionManager {
       await this.waitForCircuitReset();
     }
 
+    // Check max retries BEFORE incrementing
     if (this.state.attemptCount >= this.state.maxRetries) {
       console.error('💀 Max reconnection attempts reached. Manual intervention required.');
       throw new Error(`Connection failed after ${this.state.maxRetries} attempts`);
     }
 
-    this.state.isReconnecting = true;
+    // Increment attempt count
     this.state.attemptCount++;
     this.state.consecutiveFailures++;
+    this.state.isReconnecting = true;
     this.state.lastError = error;
 
     const delay = this.calculateBackoffDelay();
-    console.log(`🔄 Reconnection attempt ${this.state.attemptCount}/${this.state.maxRetries} in ${delay}ms`);
+    
+    // Show correct attempt numbers
+    console.log(`🔄 Reconnection attempt ${this.state.attemptCount}/${this.state.maxRetries} in ${Math.round(delay)}ms`);
     console.log(`❌ Last error: ${error?.message || 'Unknown'}`);
+    console.log(`📊 Total failures: ${this.state.consecutiveFailures}, Success rate: ${((this.state.attemptCount - this.state.consecutiveFailures) / this.state.attemptCount * 100).toFixed(1)}%`);
 
     // Clear any existing timeout
     if (this.reconnectionTimeout) {
@@ -52,10 +58,13 @@ class ConnectionManager {
     }
 
     try {
+      // Wait with proper delay
       await new Promise(resolve => {
         this.reconnectionTimeout = setTimeout(resolve, delay);
       });
 
+      console.log(`⚡ Executing reconnection attempt ${this.state.attemptCount}...`);
+      
       // Try reconnection
       await this.attemptReconnection(context);
       
@@ -65,7 +74,9 @@ class ConnectionManager {
     } catch (reconnectionError) {
       console.error(`🔥 Reconnection attempt ${this.state.attemptCount} failed:`, reconnectionError.message);
       
+      // Check if we should continue trying
       if (this.state.attemptCount < this.state.maxRetries) {
+        console.log(`🔄 Will retry... (${this.state.maxRetries - this.state.attemptCount} attempts remaining)`);
         return this.handleReconnection(reconnectionError, context);
       } else {
         this.onReconnectionFailure();
@@ -116,7 +127,17 @@ class ConnectionManager {
   }
 
   onReconnectionSuccess() {
-    console.log(`✅ Reconnection successful after ${this.state.attemptCount} attempts`);
+    const totalAttempts = this.state.attemptCount;
+    const reconnectionTime = Date.now() - this.state.lastDisconnected;
+    
+    console.log(`✅ Reconnection successful after ${totalAttempts} attempts`);
+    console.log(`⏱️  Total reconnection time: ${Math.round(reconnectionTime/1000)}s`);
+    
+    // Track statistics before resetting
+    this.state.totalSuccessfulReconnections = (this.state.totalSuccessfulReconnections || 0) + 1;
+    this.state.totalReconnectionTime = (this.state.totalReconnectionTime || 0) + reconnectionTime;
+    
+    // Reset reconnection state
     this.state.isReconnecting = false;
     this.state.attemptCount = 0;
     this.state.consecutiveFailures = 0;
@@ -127,6 +148,10 @@ class ConnectionManager {
       clearTimeout(this.reconnectionTimeout);
       this.reconnectionTimeout = null;
     }
+    
+    // Log success statistics
+    const avgReconnectionTime = this.state.totalReconnectionTime / this.state.totalSuccessfulReconnections;
+    console.log(`📈 Reconnection stats: ${this.state.totalSuccessfulReconnections} successful, avg time: ${Math.round(avgReconnectionTime/1000)}s`);
   }
 
   onReconnectionFailure() {
@@ -243,28 +268,71 @@ const main = async context => {
     }
 
     if (connection === 'close') {
+      // Track disconnection time for statistics
+      connectionManager.state.lastDisconnected = Date.now();
+      
       const error = lastDisconnect?.error;
-      const shouldReconnect = error instanceof Boom
-        ? error.output.statusCode !== DisconnectReason.loggedOut
-        : true;
+      let shouldReconnect = true;
+      let errorCode = 'unknown';
+      let errorMessage = 'Unknown error';
 
-      // Enhanced error logging with specific handling for stream errors
-      if (error) {
-        const errorCode = error.output?.statusCode;
-        const errorMessage = error.message || 'Unknown error';
+      // Enhanced error analysis
+      if (error instanceof Boom) {
+        errorCode = error.output?.statusCode;
+        errorMessage = error.message || error.output?.payload?.message || 'Boom error';
         
-        console.log(`❌ Connection closed: ${errorMessage} (Code: ${errorCode})`);
+        // Check against actual DisconnectReason values
+        shouldReconnect = errorCode !== DisconnectReason.loggedOut && 
+                         errorCode !== DisconnectReason.forbidden;
+      } else if (error) {
+        errorMessage = error.message || 'Generic error';
+        errorCode = error.code || error.statusCode || 'unknown';
+      }
+
+      console.log(`❌ Connection closed: ${errorMessage} (Code: ${errorCode})`);
+      
+      // Map known error codes to readable descriptions
+      const errorDescriptions = {
+        [DisconnectReason.connectionClosed]: 'Connection closed by WhatsApp (428)',
+        [DisconnectReason.connectionLost]: 'Connection lost/timed out (408)', 
+        [DisconnectReason.connectionReplaced]: 'Connection replaced by another session (440)',
+        [DisconnectReason.loggedOut]: 'Account logged out (401)',
+        [DisconnectReason.restartRequired]: 'WhatsApp restart required (515)',
+        [DisconnectReason.badSession]: 'Bad session data (500)',
+        [DisconnectReason.multideviceMismatch]: 'Multi-device mismatch (411)',
+        [DisconnectReason.forbidden]: 'Access forbidden (403)',
+        [DisconnectReason.unavailableService]: 'WhatsApp service unavailable (503)',
+        405: 'Method not allowed - likely session/auth issue (405)'
+      };
+
+      if (errorDescriptions[errorCode]) {
+        console.log(`🔍 Error details: ${errorDescriptions[errorCode]}`);
+      }
+
+      // Special handling for specific error codes
+      if (errorCode === 405) {
+        console.log('⚠️  HTTP 405 detected - this suggests session/authentication issues');
+        console.log('🔧 Clearing session and forcing fresh authentication...');
+        shouldReconnect = true;
         
-        // Special handling for stream errors (code 515)
-        if (errorCode === 515 || errorMessage.includes('Stream Errored')) {
-          console.log('🔧 Detected WebSocket stream error - using enhanced reconnection');
+        // Clear session data for 405 errors
+        try {
+          const authDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), context.config.bot.authAdapter.default.authDir);
+          if (existsSync(authDir)) {
+            rmSync(authDir, { recursive: true, force: true });
+            console.log('✅ Session cleared - will generate new QR code');
+          }
+        } catch (clearError) {
+          console.warn('⚠️  Could not clear session:', clearError.message);
         }
       }
 
       if (shouldReconnect) {
+        // Ensure reconnection attempt counter is properly tracked
+        console.log(`🔄 Initiating reconnection (Attempt will be: ${connectionManager.state.attemptCount + 1}/${connectionManager.state.maxRetries})`);
         await connectionManager.handleReconnection(error, context);
       } else {
-        console.log('🛑 Bot logged out - manual intervention required');
+        console.log(`🛑 Bot logged out or forbidden - manual intervention required (Code: ${errorCode})`);
       }
     } else if (connection === 'open') {
       console.log('✅ Bot connected to WhatsApp!');

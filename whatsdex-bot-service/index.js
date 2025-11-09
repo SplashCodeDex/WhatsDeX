@@ -28,6 +28,10 @@ const messageQueue = new Queue('whatsapp-messages', {
   },
 });
 
+let retryCount = 0;
+const maxRetries = 10;
+const initialDelay = 5000; // 5 seconds
+
 async function connectToWhatsApp() {
   const { state, saveCreds } = await useRedisAuthState(
     {
@@ -37,10 +41,13 @@ async function connectToWhatsApp() {
     'whatsapp-session'
   );
 
+  const version = [2, 2413, 1]; // Pinned version
+
   bot = makeWASocket({
     auth: state,
     logger: pino({ level: 'silent' }),
     browser: ['WhatsDeX', 'Chrome', '1.0.0'],
+    version,
   });
 
   bot.ev.on('creds.update', saveCreds);
@@ -54,12 +61,20 @@ async function connectToWhatsApp() {
           ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
           : true;
 
-      console.log('Connection closed, reconnecting:', shouldReconnect);
-      if (shouldReconnect) {
-        setTimeout(() => connectToWhatsApp(), 5000);
+      if (shouldReconnect && retryCount < maxRetries) {
+        retryCount++;
+        const delay = initialDelay * Math.pow(2, retryCount - 1);
+        console.log(`Connection closed, reconnecting in ${delay / 1000}s... (Attempt ${retryCount}/${maxRetries})`);
+        setTimeout(() => connectToWhatsApp(), delay);
+      } else if (retryCount >= maxRetries) {
+        console.error('Max reconnection attempts reached. Exiting.');
+        process.exit(1); // or some other error handling
+      } else {
+        console.log('Connection closed. Not reconnecting.');
       }
     } else if (connection === 'open') {
       console.log('✅ Bot connected!');
+      retryCount = 0; // Reset retry count on successful connection
     }
   });
 

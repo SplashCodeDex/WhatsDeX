@@ -5,9 +5,10 @@
 
 import path from 'path';
 
-const axios = require('axios');
-const fs = require('fs').promises;
-const context = require('../../context');
+import path from 'path';
+import axios from 'axios';
+import { promises as fs } from 'fs';
+import context from '../../context.js';
 
 class TextToSpeechService {
   constructor() {
@@ -295,4 +296,4 @@ class TextToSpeechService {
   }
 }
 
-module.exports = new TextToSpeechService();
+export default new TextToSpeechService();
