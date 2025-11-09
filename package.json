@@ -6,8 +6,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "start:smart": "node smart-start.js",
     "start:complete": "node start-whatsdx.js",
-    "start:dev": "node index.js",
+    "start:dev": "node index.js", 
     "start:web": "cd web && npm run dev",
     "start:saas": "PERSIST_SESSIONS=true WEB_QR_ENABLED=true PRINT_QR_IN_TERMINAL=false node index.js",
     "dev": "nodemon .",

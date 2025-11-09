@@ -7,7 +7,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import logger from '../utils/logger.js';
+// Fixed imports - using existing working modules
 import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
 
@@ -27,7 +27,7 @@ export class UnifiedCommandSystem {
     // Command prefixes
     this.prefixes = ['.', '!', '/', '#'];
     
-    logger.info('🔧 Unified Command System initialized');
+    console.log('🔧 Unified Command System initialized');
   }
 
   /**
@@ -111,7 +111,7 @@ export class UnifiedCommandSystem {
       };
       
     } catch (error) {
-      logger.error(`Failed to load command: ${commandPath}`, { error: error.message });
+      console.error(`Failed to load command: ${commandPath}`, error.message);
       return null;
     }
   }
@@ -122,7 +122,7 @@ export class UnifiedCommandSystem {
   registerCommand(command, categoryName) {
     // Register main command
     if (this.commands.has(command.name)) {
-      logger.warn(`Command name conflict: ${command.name} already exists`);
+      console.warn(`Command name conflict: ${command.name} already exists`);
     }
     
     this.commands.set(command.name, command);
@@ -131,7 +131,7 @@ export class UnifiedCommandSystem {
     if (command.aliases && Array.isArray(command.aliases)) {
       command.aliases.forEach(alias => {
         if (this.commands.has(alias)) {
-          logger.warn(`Alias conflict: ${alias} already exists`);
+          console.warn(`Alias conflict: ${alias} already exists`);
         }
         
         this.aliases.set(alias, command.name);
@@ -155,17 +155,17 @@ export class UnifiedCommandSystem {
    */
   validateCommand(command) {
     if (!command || typeof command !== 'object') {
-      logger.warn('Invalid command: not an object');
+      console.warn('Invalid command: not an object');
       return false;
     }
     
     if (!command.name || typeof command.name !== 'string') {
-      logger.warn('Invalid command: missing or invalid name');
+      console.warn('Invalid command: missing or invalid name');
       return false;
     }
     
     if (!command.code || typeof command.code !== 'function') {
-      logger.warn(`Invalid command ${command.name}: missing or invalid code function`);
+      console.warn(`Invalid command ${command.name}: missing or invalid code function`);
       return false;
     }
     
@@ -257,7 +257,7 @@ export class UnifiedCommandSystem {
       await command.code(ctx);
       
       const duration = timer.end();
-      logger.logCommand(command.name, { id: ctx.sender }, true, duration, {
+      console.log(`✅ Command executed: ${command.name} (${duration}ms)`, {
         category: command.category,
         argsCount: commandInfo.args.length
       });
@@ -266,7 +266,7 @@ export class UnifiedCommandSystem {
       
     } catch (error) {
       const duration = timer.end();
-      logger.error(`Command execution failed: ${command.name}`, {
+      console.error(`Command execution failed: ${command.name}`, {
         error: error.message,
         userId: messageData.key.remoteJid
       });
@@ -414,7 +414,7 @@ export class UnifiedCommandSystem {
     try {
       await this.bot.sendMessage(messageData.key.remoteJid, { text });
     } catch (error) {
-      logger.error('Failed to send message', { error: error.message });
+      console.error('Failed to send message', error.message);
     }
   }
 
@@ -427,7 +427,7 @@ export class UnifiedCommandSystem {
         }
       });
     } catch (error) {
-      logger.error('Failed to react to message', { error: error.message });
+      console.error('Failed to react to message', error.message);
     }
   }
 
