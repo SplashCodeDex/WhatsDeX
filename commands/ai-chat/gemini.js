@@ -1,10 +1,16 @@
-const z = require('zod');
-const GeminiService = require('../../services/gemini');
-const aiTools = require('../../tools/ai-tools');
-const aiChatDB = require('../../database/ai_chat_database');
+import { z } from 'zod';
+import GeminiService from '../../services/gemini.js';
+import aiTools from '../../tools/ai-tools.js';
+import aiChatDB from '../../database/ai_chat_database.js';
+import dbManager from '../../src/utils/DatabaseManager.js';
+import performanceMonitor from '../../src/utils/PerformanceMonitor.js';
+import RateLimiter from '../../src/utils/RateLimiter.js';
+
+// Initialize rate limiter
+const rateLimiter = new RateLimiter();
 
 // Constants for summarization logic
-module.exports = {
+export default {
   name: 'gemini',
   category: 'ai-chat',
   permissions: {
@@ -20,8 +26,20 @@ module.exports = {
       HISTORY_PRUNE_LENGTH = 6,
     } = ctx.bot.context.config.ai.summarization;
 
+    // Start performance monitoring
+    const timer = performanceMonitor.startTimer('gemini_command_execution', {
+      userId: ctx.author.id,
+      hasQuoted: !!ctx.quoted
+    });
+
     try {
       const input = ctx.args.join(' ') || ctx.quoted?.content || '';
+
+      // ADDED: Rate limiting check
+      const rateLimitResult = await rateLimiter.checkCommandRateLimit(ctx.author.id, 'gemini');
+      if (!rateLimitResult.allowed) {
+        return ctx.reply(formatter.quote(`⏰ Rate limit exceeded for ${rateLimitResult.failedCheck}. Try again later.`));
+      }
 
       // Validation
       const inputSchema = z.string().min(1, { message: 'Please provide an input text.' });
@@ -39,14 +57,35 @@ module.exports = {
       let currentHistory = chat.history || [];
       let currentSummary = chat.summary || '';
 
-      // Summarization Logic
+      // FIXED: Enhanced Summarization Logic with proper memory management
       if (currentHistory.length >= SUMMARIZE_THRESHOLD) {
         const messagesToSummarize = currentHistory.slice(0, MESSAGES_TO_SUMMARIZE);
         if (messagesToSummarize.length > 0) {
-          const newSummary = await geminiService.getSummary(messagesToSummarize);
-          currentSummary = currentSummary ? `${currentSummary}\n\n${newSummary}` : newSummary;
-          currentHistory = currentHistory.slice(-HISTORY_PRUNE_LENGTH);
-          // The database update will happen in the next step.
+          try {
+            const newSummary = await geminiService.getSummary(messagesToSummarize);
+            
+            // Limit summary length to prevent unbounded growth
+            const maxSummaryLength = 1000;
+            if (currentSummary) {
+              const combinedSummary = `${currentSummary}\\n\\n${newSummary}`;
+              currentSummary = combinedSummary.length > maxSummaryLength 
+                ? combinedSummary.substring(combinedSummary.length - maxSummaryLength)
+                : combinedSummary;
+            } else {
+              currentSummary = newSummary.length > maxSummaryLength
+                ? newSummary.substring(0, maxSummaryLength)
+                : newSummary;
+            }
+            
+            // Keep only recent messages
+            currentHistory = currentHistory.slice(-HISTORY_PRUNE_LENGTH);
+            
+            console.log(`Memory optimized: History=${currentHistory.length}, Summary=${currentSummary.length} chars`);
+          } catch (summaryError) {
+            console.warn('Summary generation failed, using fallback truncation:', summaryError.message);
+            // Fallback: just truncate history without summarizing
+            currentHistory = currentHistory.slice(-HISTORY_PRUNE_LENGTH);
+          }
         }
       }
 
@@ -116,9 +155,20 @@ module.exports = {
       const result = responseMessage.content;
       messages.push(responseMessage);
       await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
+      timer.end();
       return ctx.reply(result);
     } catch (error) {
-      console.error(error);
+      timer.end();
+      console.error('Gemini command error:', error);
+      
+      // Log error with context
+      console.error('Error details:', {
+        userId: ctx.author.id,
+        input: input?.substring(0, 100),
+        error: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      });
+      
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
   },

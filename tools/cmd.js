@@ -225,6 +225,76 @@ async function translate(text, to) {
   }
 }
 
+/**
+ * RESTORED: Sophisticated command loading system
+ */
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+async function loadCommands(bot) {
+  const commandsDir = path.join(__dirname, '..', 'commands');
+  bot.cmd = new Map();
+  
+  console.log('🔄 Loading sophisticated command system...');
+  
+  try {
+    const categories = await fs.readdir(commandsDir, { withFileTypes: true });
+    let totalCommands = 0;
+    
+    for (const category of categories) {
+      if (category.isDirectory()) {
+        const categoryPath = path.join(commandsDir, category.name);
+        const commandFiles = await fs.readdir(categoryPath);
+        
+        console.log(`📂 Loading category: ${category.name}`);
+        
+        for (const file of commandFiles) {
+          if (file.endsWith('.js')) {
+            try {
+              const commandPath = path.join(categoryPath, file);
+              const relativePath = path.relative(__dirname, commandPath);
+              
+              // Import the command module
+              const commandModule = await import(`../${relativePath}`);
+              const command = commandModule.default;
+              
+              if (command && command.name && typeof command.code === 'function') {
+                bot.cmd.set(command.name, {
+                  ...command,
+                  category: category.name,
+                  filePath: relativePath
+                });
+                
+                // Register aliases
+                if (command.aliases && Array.isArray(command.aliases)) {
+                  command.aliases.forEach(alias => {
+                    bot.cmd.set(alias, command);
+                  });
+                }
+                
+                totalCommands++;
+                console.log(`  ✅ ${command.name}`);
+              }
+            } catch (error) {
+              console.error(`  ❌ Error loading ${file}:`, error.message);
+            }
+          }
+        }
+      }
+    }
+    
+    console.log(`🎉 Successfully loaded ${totalCommands} sophisticated commands`);
+    
+  } catch (error) {
+    console.error('❌ Command loading failed:', error.message);
+    throw error;
+  }
+}
+
 export {
   checkMedia,
   checkQuotedMedia,
@@ -235,6 +305,7 @@ export {
   isCmd,
   isOwner,
   isUrl,
+  loadCommands,  // RESTORED: Export sophisticated command loader
   parseFlag,
   translate,
 };

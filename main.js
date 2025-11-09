@@ -6,26 +6,159 @@ import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 import messageQueue from './src/worker.js';
 import IntelligentMessageProcessor from './src/IntelligentMessageProcessor.js';
-// Enhanced reconnection state management
-let reconnectionState = {
-  isReconnecting: false,
-  attemptCount: 0,
-  lastError: null,
-  maxRetries: 10,
-  baseDelay: 2000, // 2 seconds
-  maxDelay: 300000, // 5 minutes
-  backoffMultiplier: 1.5
-};
+// Robust reconnection manager with circuit breaker
+class ConnectionManager {
+  constructor() {
+    this.state = {
+      isReconnecting: false,
+      attemptCount: 0,
+      consecutiveFailures: 0,
+      lastError: null,
+      lastSuccessTime: Date.now(),
+      maxRetries: 10,
+      baseDelay: 2000,
+      maxDelay: 300000,
+      backoffMultiplier: 1.5,
+      circuitBreakerThreshold: 5,
+      circuitBreakerTimeout: 600000 // 10 minutes
+    };
+    this.reconnectionTimeout = null;
+  }
+
+  async handleReconnection(error, context) {
+    // Circuit breaker check
+    if (this.isCircuitOpen()) {
+      console.log('⚡ Circuit breaker OPEN - waiting before retry');
+      await this.waitForCircuitReset();
+    }
+
+    if (this.state.attemptCount >= this.state.maxRetries) {
+      console.error('💀 Max reconnection attempts reached. Manual intervention required.');
+      throw new Error(`Connection failed after ${this.state.maxRetries} attempts`);
+    }
+
+    this.state.isReconnecting = true;
+    this.state.attemptCount++;
+    this.state.consecutiveFailures++;
+    this.state.lastError = error;
+
+    const delay = this.calculateBackoffDelay();
+    console.log(`🔄 Reconnection attempt ${this.state.attemptCount}/${this.state.maxRetries} in ${delay}ms`);
+    console.log(`❌ Last error: ${error?.message || 'Unknown'}`);
+
+    // Clear any existing timeout
+    if (this.reconnectionTimeout) {
+      clearTimeout(this.reconnectionTimeout);
+    }
+
+    try {
+      await new Promise(resolve => {
+        this.reconnectionTimeout = setTimeout(resolve, delay);
+      });
+
+      // Try reconnection
+      await this.attemptReconnection(context);
+      
+      // Reset state on success
+      this.onReconnectionSuccess();
+
+    } catch (reconnectionError) {
+      console.error(`🔥 Reconnection attempt ${this.state.attemptCount} failed:`, reconnectionError.message);
+      
+      if (this.state.attemptCount < this.state.maxRetries) {
+        return this.handleReconnection(reconnectionError, context);
+      } else {
+        this.onReconnectionFailure();
+        throw reconnectionError;
+      }
+    }
+  }
+
+  async attemptReconnection(context) {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Reconnection timeout'));
+      }, 30000); // 30 second timeout
+
+      main(context)
+        .then(() => {
+          clearTimeout(timeout);
+          resolve();
+        })
+        .catch(error => {
+          clearTimeout(timeout);
+          reject(error);
+        });
+    });
+  }
+
+  calculateBackoffDelay() {
+    const exponentialDelay = this.state.baseDelay * Math.pow(this.state.backoffMultiplier, this.state.attemptCount - 1);
+    const jitterDelay = exponentialDelay * (0.5 + Math.random() * 0.5); // Add jitter
+    return Math.min(jitterDelay, this.state.maxDelay);
+  }
+
+  isCircuitOpen() {
+    return this.state.consecutiveFailures >= this.state.circuitBreakerThreshold &&
+           (Date.now() - this.state.lastSuccessTime) > this.state.circuitBreakerTimeout;
+  }
+
+  async waitForCircuitReset() {
+    const waitTime = Math.min(
+      this.state.circuitBreakerTimeout - (Date.now() - this.state.lastSuccessTime),
+      300000 // Max 5 minutes
+    );
+    
+    if (waitTime > 0) {
+      console.log(`⏳ Circuit breaker cooling down for ${Math.round(waitTime/1000)}s`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+
+  onReconnectionSuccess() {
+    console.log(`✅ Reconnection successful after ${this.state.attemptCount} attempts`);
+    this.state.isReconnecting = false;
+    this.state.attemptCount = 0;
+    this.state.consecutiveFailures = 0;
+    this.state.lastError = null;
+    this.state.lastSuccessTime = Date.now();
+    
+    if (this.reconnectionTimeout) {
+      clearTimeout(this.reconnectionTimeout);
+      this.reconnectionTimeout = null;
+    }
+  }
+
+  onReconnectionFailure() {
+    console.error('💀 All reconnection attempts failed');
+    this.state.isReconnecting = false;
+    
+    if (this.reconnectionTimeout) {
+      clearTimeout(this.reconnectionTimeout);
+      this.reconnectionTimeout = null;
+    }
+  }
+
+  getStatus() {
+    return {
+      ...this.state,
+      circuitOpen: this.isCircuitOpen(),
+      nextRetryIn: this.reconnectionTimeout ? 'Pending' : 'None'
+    };
+  }
+}
+
+const connectionManager = new ConnectionManager();
 
 const main = async context => {
   const { config } = context;
 
+  // Add comprehensive error handling wrapper
+  try {
+
   // Reset reconnection state on successful main() call
-  if (reconnectionState.isReconnecting) {
-    console.log(`✅ Reconnection successful after ${reconnectionState.attemptCount} attempts`);
-    reconnectionState.isReconnecting = false;
-    reconnectionState.attemptCount = 0;
-    reconnectionState.lastError = null;
+  if (connectionManager.state.isReconnecting) {
+    connectionManager.onReconnectionSuccess();
   }
 
   const authDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), config.bot.authAdapter.default.authDir);
@@ -73,7 +206,40 @@ const main = async context => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      qrcode.generate(qr, { small: true });
+      // OPTIMIZED: Async QR generation to prevent blocking
+      Promise.all([
+        // Terminal QR generation (async)
+        new Promise((resolve) => {
+          setImmediate(() => {
+            qrcode.generate(qr, { small: true });
+            resolve();
+          });
+        }),
+        
+        // Web dashboard integration (async)
+        new Promise((resolve) => {
+          if (global.io) {
+            global.io.emit('qr-code-update', {
+              qr: qr,
+              timestamp: Date.now(),
+              status: 'qr_ready'
+            });
+          }
+          
+          // Store QR for web API access
+          global.currentQR = {
+            code: qr,
+            timestamp: Date.now(),
+            status: 'ready'
+          };
+          
+          resolve();
+        })
+      ]).then(() => {
+        console.log('📱 QR Code generated for all interfaces (async)');
+      }).catch(error => {
+        console.error('QR generation error:', error.message);
+      });
     }
 
     if (connection === 'close') {
@@ -96,7 +262,7 @@ const main = async context => {
       }
 
       if (shouldReconnect) {
-        await handleReconnection(error, context);
+        await connectionManager.handleReconnection(error, context);
       } else {
         console.log('🛑 Bot logged out - manual intervention required');
       }
@@ -104,25 +270,45 @@ const main = async context => {
       console.log('✅ Bot connected to WhatsApp!');
       console.log('Bot JID:', bot.user.id);
       global.bot = bot;
+      
+      // CONSOLIDATED: Single connection success handler with all features
+      if (global.io) {
+        global.io.emit('connection-status', {
+          status: 'connected',
+          timestamp: Date.now(),
+          message: 'WhatsApp connected successfully'
+        });
+      }
+      
+      // Clear QR code data - sophisticated state management
+      global.currentQR = {
+        code: null,
+        timestamp: Date.now(),
+        status: 'connected'
+      };
     } else if (connection === 'connecting') {
       console.log('🔄 Connecting to WhatsApp...');
     }
+    // REMOVED: Duplicate 'connection === open' handler eliminated
   });
 
   // Initialize commands map
   bot.cmd = new Map();
   
-  // Load commands from directories
-  try {
-    const { loadCommands } = await import('./tmp_rovodev_fix_commands.js');
-    await loadCommands(bot);
-  } catch (error) {
-    console.warn('Failed to load commands:', error.message);
-    bot.cmd = new Map(); // Ensure cmd is always a Map
-  }
+  // CONSOLIDATED: Initialize Unified Command System (replaces all command loaders)
+  const { UnifiedCommandSystem } = await import('./src/services/UnifiedCommandSystem.js');
+  const commandSystem = new UnifiedCommandSystem(bot, context);
+  await commandSystem.loadCommands();
+  
+  console.log(`✅ Unified Command System loaded: ${commandSystem.getStats().totalCommands} commands`);
+  console.log(`📂 Categories: ${commandSystem.getAllCategories().join(', ')}`);
+  
+  // Maintain compatibility
+  bot.cmd = commandSystem.commands;
 
-  // Initialize Intelligent Message Processor
-  const intelligentProcessor = new IntelligentMessageProcessor(bot, context);
+  // CONSOLIDATED: Initialize Unified AI Processor (replaces multiple AI systems)
+  const { UnifiedAIProcessor } = await import('./src/services/UnifiedAIProcessor.js');
+  const unifiedAI = new UnifiedAIProcessor(bot, context);
   
   bot.ev.on('messages.upsert', async m => {
     const msg = m.messages[0];
@@ -148,133 +334,39 @@ const main = async context => {
       }
     };
 
-    // Route to intelligent processing queue
-    messageQueue.add('processIntelligentMessage', {
-      messageData: intelligentMsg,
-      botContext: context,
-      processor: intelligentProcessor
-    });
+    // CONSOLIDATED: Smart routing between commands and AI
+    const isCommand = await commandSystem.processMessage(intelligentMsg);
+    
+    if (!isCommand) {
+      // Only process with AI if it's not a command (smart filtering)
+      try {
+        await unifiedAI.processMessage(intelligentMsg);
+      } catch (error) {
+        console.error('Unified AI processing error:', error.message);
+      }
+    }
   });
 
   return bot;
-};
 
-/**
- * Enhanced reconnection handler with intelligent retry logic
- */
-async function handleReconnection(error, context) {
-  if (reconnectionState.isReconnecting) {
-    console.log('⏳ Reconnection already in progress, skipping duplicate attempt');
-    return;
-  }
-
-  reconnectionState.isReconnecting = true;
-  reconnectionState.lastError = error;
-  const errorCode = error?.output?.statusCode;
-  const errorMessage = error?.message || 'Unknown error';
-
-  // Determine reconnection strategy based on error type
-  let strategy = 'exponential_backoff';
-  let maxRetries = reconnectionState.maxRetries;
-
-  if (errorCode === 515 || errorMessage.includes('Stream Errored')) {
-    strategy = 'stream_error_recovery';
-    maxRetries = 15; // More retries for stream errors
-    console.log('🔧 Using stream error recovery strategy');
-  } else if (errorMessage.includes('auth') || errorMessage.includes('login')) {
-    strategy = 'auth_recovery';
-    maxRetries = 5;
-    console.log('🔐 Using authentication recovery strategy');
-  } else if (errorMessage.includes('network') || errorMessage.includes('timeout')) {
-    strategy = 'network_recovery';
-    maxRetries = 12;
-    console.log('🌐 Using network recovery strategy');
-  }
-
-  console.log(`🔄 Starting ${strategy} reconnection (Max retries: ${maxRetries})`);
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    reconnectionState.attemptCount = attempt;
+  } catch (error) {
+    console.error('💀 Critical error in main function:', error.message);
+    console.error('Stack trace:', error.stack);
     
-    try {
-      console.log(`🔄 Reconnection attempt ${attempt}/${maxRetries} (${strategy})`);
-      
-      // Clean up current bot instance
-      if (global.bot) {
-        try {
-          await global.bot.logout();
-        } catch (cleanupError) {
-          console.warn('⚠️ Bot cleanup warning:', cleanupError.message);
-        }
-        global.bot = null;
-      }
-
-      // Calculate delay based on strategy
-      const delay = calculateReconnectionDelay(attempt, strategy);
-      console.log(`⏱️ Waiting ${delay}ms before attempt ${attempt}`);
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Attempt reconnection
-      await main(context);
-      
-      // If we reach here, reconnection was successful
-      console.log(`✅ Reconnection successful on attempt ${attempt}`);
-      return;
-      
-    } catch (reconnectError) {
-      console.error(`❌ Reconnection attempt ${attempt} failed:`, reconnectError.message);
-      
-      if (attempt === maxRetries) {
-        console.error(`💥 All ${maxRetries} reconnection attempts failed. Manual intervention required.`);
-        reconnectionState.isReconnecting = false;
-        
-        // Final fallback - try one more time after 30 seconds
-        console.log('🕐 Scheduling final fallback attempt in 30 seconds...');
-        setTimeout(async () => {
-          try {
-            await main(context);
-          } catch (finalError) {
-            console.error('💀 Final fallback attempt failed:', finalError.message);
-          }
-        }, 30000);
-        return;
-      }
+    // Determine if error is recoverable
+    const isRecoverable = !error.message.includes('EADDRINUSE') && 
+                         !error.message.includes('FATAL') &&
+                         !error.message.includes('Cannot find module');
+    
+    if (isRecoverable && !connectionManager.state.isReconnecting) {
+      console.log('🔄 Attempting recovery from critical error...');
+      throw error; // Let connection manager handle it
+    } else {
+      console.error('💀 Non-recoverable error or already reconnecting');
+      process.exit(1);
     }
   }
-}
+};
 
-/**
- * Calculate reconnection delay based on attempt number and strategy
- */
-function calculateReconnectionDelay(attempt, strategy) {
-  const { baseDelay, maxDelay, backoffMultiplier } = reconnectionState;
-  
-  let delay;
-  
-  switch (strategy) {
-    case 'stream_error_recovery':
-      // Faster retries for stream errors
-      delay = Math.min(baseDelay * Math.pow(1.2, attempt - 1), 30000);
-      break;
-      
-    case 'auth_recovery':
-      // Longer delays for auth issues
-      delay = Math.min(baseDelay * Math.pow(2, attempt - 1), 60000);
-      break;
-      
-    case 'network_recovery':
-      // Standard exponential backoff for network issues
-      delay = Math.min(baseDelay * Math.pow(backoffMultiplier, attempt - 1), maxDelay);
-      break;
-      
-    default:
-      delay = Math.min(baseDelay * Math.pow(backoffMultiplier, attempt - 1), maxDelay);
-  }
-  
-  // Add jitter to avoid thundering herd
-  const jitter = delay * 0.1 * (Math.random() * 2 - 1);
-  return Math.max(1000, delay + jitter); // Minimum 1 second delay
-}
 
 export default main;
