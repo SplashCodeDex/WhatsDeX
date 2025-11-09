@@ -7,6 +7,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+
 // Fixed imports - using existing working modules
 import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
@@ -51,7 +52,7 @@ export class UnifiedCommandSystem {
           this.categories.set(category.name, []);
           
           for (const file of commandFiles) {
-            if (file.endsWith('.js')) {
+            if (file.endsWith('.js') || file.endsWith('.cjs')) {
               try {
                 const commandPath = path.join(categoryPath, file);
                 const command = await this.loadSingleCommand(commandPath, category.name);

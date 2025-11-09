@@ -126,6 +126,7 @@ async function smartStartup() {
       
       // Import main bot function
       const main = (await import('./main.js')).default;
+      const config = (await import('./config.js')).default;
       
       // Create context with all initialized services
       const database = orchestrator.services.get('database').instance;
@@ -136,15 +137,7 @@ async function smartStartup() {
         database,
         commandSystem,
         aiProcessor,
-        config: {
-          ai: {
-            summarization: {
-              SUMMARIZE_THRESHOLD: 16,
-              MESSAGES_TO_SUMMARIZE: 10,
-              HISTORY_PRUNE_LENGTH: 6
-            }
-          }
-        }
+        config
       };
       
       // Start WhatsApp bot with context
@@ -171,7 +164,8 @@ async function smartStartup() {
       
       const webProcess = spawn('npm', ['run', 'dev'], {
         cwd: './web',
-        stdio: ['inherit', 'pipe', 'pipe']
+        stdio: ['inherit', 'pipe', 'pipe'],
+        shell: true
       });
       
       console.log('Web dashboard registered.');

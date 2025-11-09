@@ -1,5 +1,5 @@
-const WebSocket = require('ws');
-const logger = require('../utils/logger');
+import WebSocket from 'ws';
+import logger from '../utils/logger.js';
 
 class AnalyticsService {
   constructor(databaseService) {
@@ -1023,4 +1023,4 @@ class AnalyticsService {
   }
 }
 
-module.exports = AnalyticsService;
+export default AnalyticsService;

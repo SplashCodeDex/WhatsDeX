@@ -1,4 +1,4 @@
-const DatabaseService = require('../services/database');
+import DatabaseService from '../services/database.js';
 
 // Initialize singleton database instance
 const db = new DatabaseService();
@@ -16,7 +16,14 @@ const groupMentions = async (conn, groupId) => {
   // Implementation
 };
 
-module.exports = {
+export {
+  db,
+  collector,
+  groupMentions,
+  DatabaseService,
+};
+
+export default {
   db,
   collector,
   groupMentions,

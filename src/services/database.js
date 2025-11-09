@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const logger = require('../utils/logger');
+import { PrismaClient } from '@prisma/client';
+import logger from '../utils/logger.js';
 
 class DatabaseService {
   constructor() {
@@ -412,4 +412,4 @@ class DatabaseService {
   }
 }
 
-module.exports = DatabaseService;
+export default DatabaseService;
