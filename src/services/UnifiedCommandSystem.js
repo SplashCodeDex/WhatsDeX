@@ -6,7 +6,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 // Fixed imports - using existing working modules
 import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
@@ -86,8 +86,8 @@ export class UnifiedCommandSystem {
    */
   async loadSingleCommand(commandPath, categoryName) {
     try {
-      const relativePath = path.relative(__dirname, commandPath);
-      const commandModule = await import(`../../${relativePath}`);
+      const commandUrl = pathToFileURL(commandPath).href;
+      const commandModule = await import(commandUrl);
       const command = commandModule.default;
       
       if (!this.validateCommand(command)) {
@@ -98,7 +98,7 @@ export class UnifiedCommandSystem {
       return {
         ...command,
         category: categoryName,
-        filePath: relativePath,
+        filePath: commandPath,
         loadedAt: Date.now(),
         aliases: command.aliases || [],
         permissions: command.permissions || {},
