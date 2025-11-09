@@ -1,7 +1,7 @@
-const z = require('zod');
-const { db } = require('../../src/utils');
+import z from 'zod';
+import { db } from '../../src/utils.js';
 
-module.exports = {
+export default {
   name: 'transfer',
   aliases: ['tf'],
   category: 'profile',

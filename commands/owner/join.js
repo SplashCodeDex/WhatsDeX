@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'join',
   aliases: ['j'],
   category: 'owner',

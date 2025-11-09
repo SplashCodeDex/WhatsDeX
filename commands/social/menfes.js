@@ -1,11 +1,11 @@
+import menfesService from '../../src/services/menfesService.js';
+
 /**
  * Menfes Command
  * Anonymous messaging system
  */
 
-const menfesService = require('../../src/services/menfesService');
-
-module.exports = {
+export default {
   name: 'menfes',
   description: 'Start anonymous messaging session',
   category: 'Social',

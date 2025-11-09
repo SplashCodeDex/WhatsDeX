@@ -1,11 +1,11 @@
+import funCommandsService from '../../src/services/funCommandsService.js';
+
 /**
  * Cek Mati Command
  * Age prediction fun command
  */
 
-const funCommandsService = require('../../src/services/funCommandsService');
-
-module.exports = {
+export default {
   name: 'cekmati',
   description: 'Predict death age',
   category: 'Fun',

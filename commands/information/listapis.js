@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'listapis',
   aliases: ['listapi'],
   category: 'information',

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'sc',
   aliases: ['script', 'source', 'sourcecode'],
   category: 'information',

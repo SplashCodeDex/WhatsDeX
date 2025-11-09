@@ -1,6 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-module.exports = {
+export default {
   name: 'sfilesearch',
   aliases: ['sfile', 'sfiles'],
   category: 'search',

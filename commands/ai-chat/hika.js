@@ -1,7 +1,7 @@
-const axios = require('axios');
-const { createUrl } = require('../../tools/api');
+import axios from 'axios';
+import { createUrl } from '../../tools/api.js';
 
-module.exports = {
+export default {
   name: 'hika',
   aliases: ['hikachat'],
   category: 'ai-chat',

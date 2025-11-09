@@ -1,6 +1,6 @@
 const session = new Map();
 
-module.exports = {
+export default {
   name: 'suit',
   category: 'game',
   permissions: {

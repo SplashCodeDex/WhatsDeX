@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'carbonify',
   aliases: ['carbon'],
   category: 'maker',

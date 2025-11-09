@@ -4,7 +4,7 @@ const MessageType = {
   videoMessage: 'videoMessage',
 };
 
-module.exports = {
+export default {
   name: 'readviewonce',
   aliases: ['rvo'],
   category: 'owner',

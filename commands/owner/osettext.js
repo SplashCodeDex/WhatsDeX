@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'osettext',
   aliases: ['osettxt'],
   category: 'owner',

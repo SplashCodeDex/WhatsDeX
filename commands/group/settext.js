@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'settext',
   aliases: ['settxt'],
   category: 'group',

@@ -1,6 +1,6 @@
-const { handleWelcome } = require('../../events/handler.js');
+import { handleWelcome } from '../../events/handler.js';
 
-module.exports = {
+export default {
   name: 'simulate',
   category: 'group',
   permissions: {

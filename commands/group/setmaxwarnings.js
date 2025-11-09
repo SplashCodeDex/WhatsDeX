@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'setmaxwarnings',
   category: 'group',
   permissions: {

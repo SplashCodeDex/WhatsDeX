@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'videydl',
   aliases: ['videy'],
   category: 'downloader',

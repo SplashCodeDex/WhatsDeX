@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'clearchat',
   aliases: ['cchat', 'cleangpt'],
   category: 'ai-chat',

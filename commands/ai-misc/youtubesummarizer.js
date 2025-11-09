@@ -1,6 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-module.exports = {
+export default {
   name: 'youtubesummarizer',
   aliases: ['ytsummarizer'],
   category: 'ai-misc',

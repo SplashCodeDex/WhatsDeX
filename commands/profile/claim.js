@@ -1,8 +1,10 @@
-const z = require('zod');
-const { convertMsToDuration } = require('../../utils/formatters');
-const { db } = require('../../src/utils');
-
 // List of available claim rewards
+import z from 'zod';
+import formatters from '../../utils/formatters.js';
+const { convertMsToDuration  } = formatters;
+const { convertMsToDuration, ucwords } = formatters;
+import { db } from '../../src/utils.js';
+
 const claimRewards = {
   daily: {
     reward: 100,
@@ -32,7 +34,7 @@ const claimRewards = {
 
 const claimTypes = Object.keys(claimRewards);
 
-module.exports = {
+export default {
   name: 'claim',
   aliases: ['bonus', 'klaim'],
   category: 'profile',

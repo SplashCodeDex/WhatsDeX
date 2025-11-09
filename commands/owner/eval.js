@@ -1,6 +1,6 @@
-const util = require('node:util');
+import util from 'node:util';
 
-module.exports = {
+export default {
   name: /^==> |^=> /,
   type: 'hears',
   code: async ctx => {

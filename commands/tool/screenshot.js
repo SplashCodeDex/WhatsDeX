@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'screenshot',
   aliases: ['ss', 'sshp', 'sspc', 'sstab', 'ssweb'],
   category: 'tool',

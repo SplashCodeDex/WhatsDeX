@@ -1,6 +1,6 @@
-const tools = require('../../tools/exports');
+import tools from '../../tools/exports.js';
 
-module.exports = {
+export default {
   name: 'editimage',
   aliases: ['editimg'],
   category: 'ai-misc',

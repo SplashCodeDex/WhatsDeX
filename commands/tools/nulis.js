@@ -1,11 +1,11 @@
+import writingService from '../../src/services/writingService.js';
+
 /**
  * Writing/Handwriting Command
  * Create custom text images with different fonts and templates
  */
 
-const writingService = require('../../src/services/writingService');
-
-module.exports = {
+export default {
   name: 'nulis',
   description: 'Create handwriting/writing images',
   category: 'Tools',

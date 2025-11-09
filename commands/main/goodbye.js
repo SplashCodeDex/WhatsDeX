@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'goodbye',
   category: 'main',
   handler: async (

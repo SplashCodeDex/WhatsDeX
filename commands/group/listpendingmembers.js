@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'listpendingmembers',
   aliases: ['pendingmembers'],
   category: 'group',

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'addpremiumuser',
   aliases: ['addpremuser', 'addprem', 'apu'],
   category: 'owner',

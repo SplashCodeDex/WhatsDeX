@@ -1,7 +1,7 @@
-const axios = require('axios');
-const tools = require('../../tools/exports');
+import axios from 'axios';
+import tools from '../../tools/exports.js';
 
-module.exports = {
+export default {
   name: 'removewm',
   category: 'ai-misc',
   permissions: {

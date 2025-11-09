@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'delsewagroup',
   aliases: ['delsewa', 'delsewagrup', 'dsg'],
   category: 'owner',

@@ -1,6 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-module.exports = {
+export default {
   name: 'ayanamirei',
   aliases: ['ayanami', 'rei', 'reiayanami'],
   category: 'entertainment',

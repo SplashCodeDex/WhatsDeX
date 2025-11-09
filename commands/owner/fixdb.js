@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'fixdb',
   aliases: ['fixdatabase'],
   category: 'owner',

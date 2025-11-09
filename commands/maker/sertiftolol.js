@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'tolol',
   aliases: ['tlm', 'sertiftolol'],
   category: 'maker',

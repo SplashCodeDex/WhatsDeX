@@ -1,6 +1,6 @@
-const { spawn } = require('node:child_process');
+import { spawn } from 'node:child_process';
 
-module.exports = {
+export default {
   name: 'js',
   aliases: ['javascript', 'node'],
   category: 'tool',

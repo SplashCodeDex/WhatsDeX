@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'unbanuser',
   aliases: ['ubu', 'unban'],
   category: 'owner',

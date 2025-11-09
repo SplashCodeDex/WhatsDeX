@@ -8,7 +8,7 @@
     "start": "node index.js",
     "start:smart": "node smart-start.js",
     "start:complete": "node start-whatsdx.js",
-    "start:dev": "node index.js", 
+    "start:dev": "node index.js",
     "start:web": "cd web && npm run dev",
     "start:saas": "PERSIST_SESSIONS=true WEB_QR_ENABLED=true PRINT_QR_IN_TERMINAL=false node index.js",
     "dev": "nodemon .",
@@ -67,7 +67,9 @@
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
+    "mime-types": "^3.0.1",
     "moment": "^2.30.1",
+    "moment-timezone": "^0.6.0",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
@@ -85,8 +87,10 @@
     "socket.io": "^4.8.1",
     "stripe": "^19.3.0",
     "uuid": "^10.0.0",
+    "wa-sticker-formatter": "^4.4.4",
     "winston": "^3.18.3",
-    "ytdl-core": "^4.11.5"
+    "ytdl-core": "^4.11.5",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'setoption',
   aliases: ['setopt'],
   category: 'group',

@@ -1,11 +1,11 @@
+import stickerService from '../../src/services/stickerService.js';
+
 /**
  * Emoji Mix Command
  * Create mixed emoji stickers
  */
 
-const stickerService = require('../../src/services/stickerService');
-
-module.exports = {
+export default {
   name: 'emojimix',
   description: 'Mix two emojis to create new sticker',
   category: 'Sticker',

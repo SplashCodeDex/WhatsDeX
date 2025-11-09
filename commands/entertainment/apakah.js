@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'apakah',
   aliases: ['apa'],
   category: 'entertainment',

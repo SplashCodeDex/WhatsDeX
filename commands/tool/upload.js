@@ -1,10 +1,10 @@
+import { Baileys } from '@itsreimau/gktw';
+
 /* Deprecated: gktw migrated to @whiskeysockets/baileys
-const {
-    Baileys
-} = require("@itsreimau/gktw");
+
 */
 
-module.exports = {
+export default {
   name: 'upload',
   aliases: ['tourl'],
   category: 'tool',

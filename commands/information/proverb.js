@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'proverb',
   category: 'information',
   permissions: {

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'banuser',
   aliases: ['ban', 'bu'],
   category: 'owner',

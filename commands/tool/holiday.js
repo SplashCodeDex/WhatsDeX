@@ -1,7 +1,7 @@
-const axios = require('axios');
-const moment = require('moment-timezone');
+import axios from 'axios';
+import moment from 'moment-timezone';
 
-module.exports = {
+export default {
   name: 'holiday',
   aliases: ['harilibur', 'libur'],
   category: 'tool',

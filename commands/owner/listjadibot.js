@@ -1,11 +1,11 @@
+import multiBotService from '../../src/services/multiBotService.js';
+
 /**
  * List JadiBot Command
  * List all active bot instances
  */
 
-const multiBotService = require('../../src/services/multiBotService');
-
-module.exports = {
+export default {
   name: 'listjadibot',
   description: 'List all active bot instances',
   category: 'Owner',

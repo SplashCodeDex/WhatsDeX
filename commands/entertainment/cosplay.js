@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'cosplay',
   aliases: ['cosplayer'],
   category: 'entertainment',

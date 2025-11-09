@@ -1,11 +1,11 @@
+import mathQuizService from '../../src/services/mathQuizService.js';
+
 /**
  * Math Quiz Command
  * Interactive math challenges with different difficulty levels
  */
 
-const mathQuizService = require('../../src/services/mathQuizService');
-
-module.exports = {
+export default {
   name: 'mathquiz',
   description: 'Interactive math quiz game',
   category: 'Education',

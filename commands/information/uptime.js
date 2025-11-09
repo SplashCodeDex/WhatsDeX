@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'uptime',
   aliases: ['runtime'],
   category: 'information',

@@ -1,9 +1,9 @@
-const axios = require('axios');
-const didYouMean = require('didyoumean');
+import axios from 'axios';
+import didYouMean from 'didyoumean';
 
 const session = new Map();
 
-module.exports = {
+export default {
   name: 'guesssentence',
   category: 'game',
   code: async ctx => {

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'setname',
   category: 'group',
   permissions: {

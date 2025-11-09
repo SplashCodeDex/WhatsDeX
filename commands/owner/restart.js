@@ -1,8 +1,8 @@
-const { exec } = require('node:child_process');
-const process = require('node:process');
-const util = require('node:util');
+import { exec } from 'node:child_process';
+import process from 'node:process';
+import util from 'node:util';
 
-module.exports = {
+export default {
   name: 'restart',
   aliases: ['r'],
   category: 'owner',

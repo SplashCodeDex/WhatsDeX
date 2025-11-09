@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'setbotpp',
   aliases: ['setboticon', 'seticonbot', 'setppbot'],
   category: 'owner',

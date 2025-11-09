@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'iqtest',
   aliases: ['iq', 'testiq'],
   category: 'entertainment',

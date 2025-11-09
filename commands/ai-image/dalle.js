@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'dalle',
   category: 'ai-image',
   permissions: {

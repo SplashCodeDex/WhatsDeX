@@ -1,6 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-module.exports = {
+export default {
   name: 'mediafiredl',
   aliases: ['mediafire', 'mf', 'mfdl'],
   category: 'downloader',

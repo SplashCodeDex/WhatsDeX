@@ -1,10 +1,10 @@
-const axios = require('axios');
-const z = require('zod');
-const { lookup } = require('mime-types');
-const { createUrl } = require('../../tools/api');
-const { parseFlag } = require('../../tools/cmd');
+import axios from 'axios';
+import z from 'zod';
+import { lookup } from 'mime-types';
+import { createUrl } from '../../tools/api.js';
+import { parseFlag } from '../../tools/cmd.js';
 
-module.exports = {
+export default {
   name: 'youtubevideo',
   aliases: ['ytmp4', 'ytv', 'ytvideo'],
   category: 'downloader',

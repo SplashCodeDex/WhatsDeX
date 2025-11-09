@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'ohidetag',
   aliases: ['oht'],
   category: 'owner',

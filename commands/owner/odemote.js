@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'odemote',
   category: 'owner',
   permissions: {

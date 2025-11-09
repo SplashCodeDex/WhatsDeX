@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'mode',
   alises: ['m'],
   category: 'owner',

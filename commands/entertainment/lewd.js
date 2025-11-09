@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'lewd',
   aliases: ['nsfw'],
   category: 'entertainment',

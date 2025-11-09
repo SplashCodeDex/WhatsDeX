@@ -1,11 +1,11 @@
+import funCommandsService from '../../src/services/funCommandsService.js';
+
 /**
  * Cek Sifat Command
  * Personality analysis fun command with proper error handling
  */
 
-const funCommandsService = require('../../src/services/funCommandsService');
-
-module.exports = {
+export default {
   name: 'ceksifat',
   description: 'Analyze personality traits',
   category: 'Fun',

@@ -1,11 +1,11 @@
+import textToSpeechService from '../../src/services/textToSpeechService.js';
+
 /**
  * Text-to-Speech Command
  * Convert text to audio with multiple language support
  */
 
-const textToSpeechService = require('../../src/services/textToSpeechService');
-
-module.exports = {
+export default {
   name: 'tts',
   description: 'Convert text to speech',
   category: 'Tools',

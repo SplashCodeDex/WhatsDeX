@@ -1,11 +1,11 @@
+import stickerService from '../../src/services/stickerService.js';
+
 /**
  * Brat Sticker Command
  * Create brat-style text stickers
  */
 
-const stickerService = require('../../src/services/stickerService');
-
-module.exports = {
+export default {
   name: 'brat',
   description: 'Create brat-style sticker',
   category: 'Sticker',

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'tovn',
   aliases: ['toptt'],
   category: 'converter',

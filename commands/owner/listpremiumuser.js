@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'listpremiumuser',
   aliases: ['listprem', 'listpremium'],
   category: 'owner',

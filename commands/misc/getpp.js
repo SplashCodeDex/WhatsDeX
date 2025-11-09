@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'getpp',
   aliases: ['geticon'],
   category: 'misc',

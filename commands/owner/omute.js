@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'omute',
   category: 'owner',
   permissions: {

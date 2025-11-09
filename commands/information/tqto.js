@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'tqto',
   aliases: ['thanksto'],
   category: 'information',

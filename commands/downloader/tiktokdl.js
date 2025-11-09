@@ -1,6 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-module.exports = {
+export default {
   name: 'tiktokdl',
   aliases: ['tiktok', 'tiktoknowm', 'tt', 'ttdl', 'vt', 'vtdl', 'vtdltiktok', 'vtnowm'],
   category: 'downloader',

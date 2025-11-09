@@ -1,10 +1,12 @@
-const axios = require('axios');
-const moment = require('moment-timezone');
-const z = require('zod');
-const { createUrl } = require('../../tools/api');
-const { ucwords } = require('../../utils/formatters');
+import axios from 'axios';
+import moment from 'moment-timezone';
+import z from 'zod';
+import { createUrl } from '../../tools/api.js';
+import formatters from '../../utils/formatters.js';
+const { ucwords  } = formatters;
+const { convertMsToDuration, ucwords } = formatters;
 
-module.exports = {
+export default {
   name: 'weather',
   aliases: ['cuaca'],
   category: 'tool',

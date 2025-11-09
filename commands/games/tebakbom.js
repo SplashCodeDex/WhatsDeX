@@ -1,11 +1,11 @@
+import gamesService from '../../src/services/gamesService.js';
+
 /**
  * Tebak Bom Game Command
  * Interactive bomb guessing game with proper error handling and rate limiting
  */
 
-const gamesService = require('../../src/services/gamesService');
-
-module.exports = {
+export default {
   name: 'tebakbom',
   description: 'Interactive bomb guessing game',
   category: 'Games',

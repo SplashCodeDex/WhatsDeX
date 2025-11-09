@@ -1,11 +1,11 @@
+import funCommandsService from '../../src/services/funCommandsService.js';
+
 /**
  * Cek Khodam Command
  * Mystical entity checking fun command
  */
 
-const funCommandsService = require('../../src/services/funCommandsService');
-
-module.exports = {
+export default {
   name: 'cekkhodam',
   description: 'Check mystical entity',
   category: 'Fun',

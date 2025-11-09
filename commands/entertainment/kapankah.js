@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'kapankah',
   aliases: ['kapan'],
   category: 'entertainment',

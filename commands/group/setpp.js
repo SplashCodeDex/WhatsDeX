@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'setpp',
   aliases: ['seticon'],
   category: 'group',

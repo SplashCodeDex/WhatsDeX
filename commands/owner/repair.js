@@ -1,10 +1,10 @@
-const UnifiedSmartAuth = require('../../src/services/auth/UnifiedSmartAuth');
+import UnifiedSmartAuth from '../../src/services/auth/UnifiedSmartAuth.js';
 
 /**
  * Re-pair Command
  * Allows users to force re-pairing with different authentication methods
  */
-module.exports = {
+export default {
   name: 'repair',
   alias: ['reconnect', 'reauth', 'repair'],
   category: 'owner',

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'videogpt',
   aliases: ['vidgpt'],
   category: 'ai-video',

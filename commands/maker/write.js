@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'write',
   aliases: ['nulis', 'tulis'],
   category: 'maker',

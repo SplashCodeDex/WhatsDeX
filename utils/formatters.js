@@ -41,7 +41,7 @@ function ucwords(text) {
   return text.toLowerCase().replace(/\b\w/g, t => t.toUpperCase());
 }
 
-module.exports = {
+export default {
   convertMsToDuration,
   ucwords,
 };

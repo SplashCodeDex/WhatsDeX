@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'donate',
   aliases: ['donasi', 'support'],
   category: 'information',

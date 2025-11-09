@@ -1,7 +1,7 @@
-const CommandSuggestionsService = require('../../src/services/commandSuggestions');
-const { formatter } = require('../../src/utils/logger');
+import CommandSuggestionsService from '../../src/services/commandSuggestions.js';
+import { formatter } from '../../src/utils/logger.js';
 
-module.exports = {
+export default {
   name: 'suggest',
   aliases: ['suggestions', 'helpme', 'whatcanido'],
   category: 'information',

@@ -1,9 +1,9 @@
+import { Baileys } from '@itsreimau/gktw';
+
 /* Deprecated: gktw migrated to @whiskeysockets/baileys
-const {
-    Baileys
-} = require("@itsreimau/gktw");
+
 */
-module.exports = {
+export default {
   name: 'remini',
   category: 'tool',
   permissions: {

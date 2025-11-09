@@ -1,11 +1,11 @@
+import gamesService from '../../src/services/gamesService.js';
+
 /**
  * Akinator Game Command
  * AI guessing game with proper error handling and rate limiting
  */
 
-const gamesService = require('../../src/services/gamesService');
-
-module.exports = {
+export default {
   name: 'akinator',
   description: 'AI guessing game',
   category: 'Games',

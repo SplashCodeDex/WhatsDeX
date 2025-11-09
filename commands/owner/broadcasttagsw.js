@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'broadcasttagsw',
   aliases: ['bctagsw'],
   category: 'owner',

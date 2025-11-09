@@ -1,6 +1,6 @@
-const { db, collector } = require('../../src/utils');
+import { db, collector } from '../../src/utils.js';
 
-module.exports = {
+export default {
   name: 'reset',
   category: 'profile',
   permissions: {

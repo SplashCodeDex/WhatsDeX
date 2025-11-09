@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'link',
   aliases: ['gclink', 'grouplink'],
   category: 'group',

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'addcoinuser',
   aliases: ['acu', 'addcoin'],
   category: 'owner',

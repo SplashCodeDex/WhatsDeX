@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'setprofile',
   aliases: ['set', 'setp', 'setprof'],
   category: 'profile',

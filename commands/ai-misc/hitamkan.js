@@ -1,6 +1,6 @@
-const tools = require('../../tools/exports');
+import tools from '../../tools/exports.js';
 
-module.exports = {
+export default {
   name: 'hitamkan',
   aliases: ['hitam', 'penghitaman'],
   category: 'ai-misc',

@@ -1,7 +1,7 @@
-const axios = require('axios');
-const tools = require('../../tools/exports');
+import axios from 'axios';
+import tools from '../../tools/exports.js';
 
-module.exports = {
+export default {
   name: 'image2prompt',
   aliases: ['imagetoprompt', 'img2prompt', 'imgtoprompt'],
   category: 'ai-misc',

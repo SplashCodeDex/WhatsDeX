@@ -1,6 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-module.exports = {
+export default {
   name: 'waifupicsnsfw',
   aliases: ['wpicsnsfw'],
   category: 'entertainment',

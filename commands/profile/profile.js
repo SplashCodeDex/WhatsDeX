@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'profile',
   aliases: ['me', 'prof', 'profil'],
   category: 'profile',

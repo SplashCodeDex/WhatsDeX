@@ -1,11 +1,11 @@
+import multiBotService from '../../src/services/multiBotService.js';
+
 /**
  * Stop JadiBot Command
  * Stop user's bot instance
  */
 
-const multiBotService = require('../../src/services/multiBotService');
-
-module.exports = {
+export default {
   name: 'stopjadibot',
   description: 'Stop your bot instance',
   category: 'Owner',

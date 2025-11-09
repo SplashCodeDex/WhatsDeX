@@ -1,7 +1,7 @@
-const os = require('node:os');
-const process = require('node:process');
+import os from 'node:os';
+import process from 'node:process';
 
-module.exports = {
+export default {
   name: 'server',
   category: 'information',
   code: async ctx => {

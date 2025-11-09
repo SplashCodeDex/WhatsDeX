@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'unmute',
   category: 'group',
   permissions: {

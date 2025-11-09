@@ -1,11 +1,11 @@
+import multiBotService from '../../src/services/multiBotService.js';
+
 /**
  * JadiBot Command
  * Allow users to create their own bot instances
  */
 
-const multiBotService = require('../../src/services/multiBotService');
-
-module.exports = {
+export default {
   name: 'jadibot',
   description: 'Create your own bot instance',
   category: 'Owner',

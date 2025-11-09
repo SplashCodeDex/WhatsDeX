@@ -1,7 +1,7 @@
-const NLPProcessorService = require('../../src/services/nlpProcessor');
-const { formatter } = require('../../src/utils/logger');
+import NLPProcessorService from '../../src/services/nlpProcessor.js';
+import { formatter } from '../../src/utils/logger.js';
 
-module.exports = {
+export default {
   name: 'nlp',
   aliases: ['understand', 'parse', 'intent'],
   category: 'information',

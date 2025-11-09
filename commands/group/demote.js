@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'demote',
   category: 'group',
   permissions: {

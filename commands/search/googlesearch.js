@@ -1,8 +1,8 @@
-const axios = require('axios');
-const z = require('zod');
-const { createUrl } = require('../../tools/api');
+import axios from 'axios';
+import z from 'zod';
+import { createUrl } from '../../tools/api.js';
 
-module.exports = {
+export default {
   name: 'googlesearch',
   aliases: ['google', 'googles'],
   category: 'search',

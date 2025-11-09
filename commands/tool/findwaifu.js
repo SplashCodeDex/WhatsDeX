@@ -1,11 +1,11 @@
-/* Deprecated: gktw migrated to @whiskeysockets/baileys
-const {
-    Baileys
-} = require("@itsreimau/gktw");
-*/
-const axios = require('axios');
+import { Baileys } from '@itsreimau/gktw';
+import axios from 'axios';
 
-module.exports = {
+/* Deprecated: gktw migrated to @whiskeysockets/baileys
+
+*/
+
+export default {
   name: 'findwaifu',
   category: 'tool',
   permissions: {

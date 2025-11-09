@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'flux',
   category: 'ai-image',
   permissions: {

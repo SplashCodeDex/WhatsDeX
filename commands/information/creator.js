@@ -1,6 +1,8 @@
-const VCard = require('vcard-creator').default;
+import VCard from 'vcard-creator';
 
-module.exports = {
+.default;
+
+export default {
   name: 'owner',
   aliases: ['creator', 'developer'],
   category: 'information',

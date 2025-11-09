@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'bluearchive',
   aliases: ['ba'],
   category: 'entertainment',

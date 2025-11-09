@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'botgroup',
   aliases: ['botgc', 'gcbot'],
   category: 'information',

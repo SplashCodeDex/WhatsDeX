@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'delpremiumuser',
   aliases: ['delpremuser', 'delprem', 'dpu'],
   category: 'owner',

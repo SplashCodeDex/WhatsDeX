@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'text2image',
   aliases: ['text2img', 'texttoimage', 'texttoimg'],
   category: 'ai-image',

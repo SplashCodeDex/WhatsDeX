@@ -1,7 +1,7 @@
-const axios = require('axios');
-const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+import axios from 'axios';
+import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
-module.exports = {
+export default {
   name: 'fetch',
   aliases: ['get'],
   category: 'tool',

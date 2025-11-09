@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   name: 'elaina',
   category: 'entertainment',
   permissions: {

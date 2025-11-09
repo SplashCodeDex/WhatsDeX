@@ -1,6 +1,8 @@
-const { convertMsToDuration } = require('../../utils/formatters');
+import formatters from '../../utils/formatters.js';
+const { convertMsToDuration, ucwords } = formatters;
+const { convertMsToDuration } = formatters;
 
-module.exports = {
+export default {
   name: 'ping',
   category: 'information',
   code: async ctx => {
