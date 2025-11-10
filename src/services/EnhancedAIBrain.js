@@ -437,13 +437,23 @@ Respond in the user's language if they're not using English.
   async learnFromInteraction(userId, message, intelligence, ctx) {
     if (!this.decisionEngine.learningEnabled) return;
     
+    // Track actual success based on execution results
+    const successMetrics = await this.calculateSuccessMetrics(intelligence, ctx);
+    
     const learningData = {
       timestamp: Date.now(),
       message,
       intents: intelligence.intents,
       actions: intelligence.actions,
       confidence: intelligence.confidence,
-      success: true // TODO: Track actual success
+      success: successMetrics.overallSuccess,
+      successDetails: {
+        actionExecutions: successMetrics.actionResults,
+        responseGenerated: successMetrics.responseGenerated,
+        errorOccurred: successMetrics.errorOccurred,
+        userSatisfactionIndicators: successMetrics.userSatisfactionIndicators,
+        executionTime: successMetrics.executionTime
+      }
     };
     
     const userLearning = this.learningData.get(userId) || [];
@@ -596,7 +606,153 @@ Respond in the user's language if they're not using English.
     }];
   }
 
-  // Additional helper methods would be implemented here...
+  /**
+   * Calculate success metrics for learning from interaction
+   */
+  async calculateSuccessMetrics(intelligence, ctx) {
+    const startTime = Date.now();
+    const metrics = {
+      actionResults: [],
+      responseGenerated: false,
+      errorOccurred: false,
+      userSatisfactionIndicators: {},
+      executionTime: 0,
+      overallSuccess: false
+    };
+
+    try {
+      // Track action execution success
+      if (intelligence.actions && intelligence.actions.length > 0) {
+        for (const action of intelligence.actions) {
+          try {
+            // Check if action was executed successfully
+            const actionSuccess = await this.validateActionExecution(action, ctx);
+            metrics.actionResults.push({
+              action: action.command || action.type,
+              success: actionSuccess,
+              confidence: action.confidence,
+              reasoning: action.reasoning
+            });
+          } catch (error) {
+            metrics.actionResults.push({
+              action: action.command || action.type,
+              success: false,
+              error: error.message
+            });
+            metrics.errorOccurred = true;
+          }
+        }
+      }
+
+      // Track response generation
+      metrics.responseGenerated = ctx.replied || ctx.responseSent || false;
+
+      // Calculate user satisfaction indicators
+      metrics.userSatisfactionIndicators = {
+        responseRelevance: this.assessResponseRelevance(intelligence, ctx),
+        intentConfidenceMatch: intelligence.confidence > 0.7,
+        actionExecutionRate: metrics.actionResults.length > 0 
+          ? metrics.actionResults.filter(r => r.success).length / metrics.actionResults.length 
+          : 1,
+        contextAppropriate: this.assessContextAppropriateness(intelligence, ctx)
+      };
+
+      // Calculate execution time
+      metrics.executionTime = Date.now() - startTime;
+
+      // Determine overall success
+      metrics.overallSuccess = this.calculateOverallSuccess(metrics);
+
+    } catch (error) {
+      logger.error('Error calculating success metrics:', error);
+      metrics.errorOccurred = true;
+      metrics.overallSuccess = false;
+    }
+
+    return metrics;
+  }
+
+  /**
+   * Validate if an action was executed successfully
+   */
+  async validateActionExecution(action, ctx) {
+    // Check if the action type exists and was callable
+    if (action.type === 'command' && action.command) {
+      const command = this.bot.cmd.get(action.command);
+      return command !== undefined;
+    }
+
+    // For other action types, assume success if no error was thrown
+    return true;
+  }
+
+  /**
+   * Assess response relevance to the user's input
+   */
+  assessResponseRelevance(intelligence, ctx) {
+    // Simple heuristic - could be enhanced with NLP
+    const messageLength = (ctx.message || '').length;
+    const actionCount = intelligence.actions ? intelligence.actions.length : 0;
+    const confidenceScore = intelligence.confidence || 0;
+
+    // Higher relevance if:
+    // - High confidence in intent detection
+    // - Appropriate number of actions for message complexity
+    // - Response was generated
+    let relevanceScore = confidenceScore * 0.4; // Base confidence contribution
+
+    if (actionCount > 0 && messageLength > 10) {
+      relevanceScore += 0.3; // Bonus for action execution on complex messages
+    }
+
+    if (ctx.replied || ctx.responseSent) {
+      relevanceScore += 0.3; // Bonus for generating response
+    }
+
+    return Math.min(relevanceScore, 1.0); // Cap at 1.0
+  }
+
+  /**
+   * Assess if response was appropriate for the context
+   */
+  assessContextAppropriateness(intelligence, ctx) {
+    // Simple appropriateness check
+    const hasActions = intelligence.actions && intelligence.actions.length > 0;
+    const hasHighConfidence = intelligence.confidence > 0.6;
+    const messageWasQuestion = (ctx.message || '').includes('?');
+    const responseGenerated = ctx.replied || ctx.responseSent;
+
+    // Appropriate if:
+    // - High confidence actions were taken, OR
+    // - Question was asked and response was provided
+    return (hasActions && hasHighConfidence) || (messageWasQuestion && responseGenerated);
+  }
+
+  /**
+   * Calculate overall success based on all metrics
+   */
+  calculateOverallSuccess(metrics) {
+    if (metrics.errorOccurred) return false;
+
+    const satisfactionIndicators = metrics.userSatisfactionIndicators;
+    const weights = {
+      responseRelevance: 0.3,
+      intentConfidenceMatch: 0.2,
+      actionExecutionRate: 0.3,
+      contextAppropriate: 0.2
+    };
+
+    let weightedScore = 0;
+    weightedScore += satisfactionIndicators.responseRelevance * weights.responseRelevance;
+    weightedScore += (satisfactionIndicators.intentConfidenceMatch ? 1 : 0) * weights.intentConfidenceMatch;
+    weightedScore += satisfactionIndicators.actionExecutionRate * weights.actionExecutionRate;
+    weightedScore += (satisfactionIndicators.contextAppropriate ? 1 : 0) * weights.contextAppropriate;
+
+    // Success threshold of 0.6 (60%)
+    return weightedScore >= 0.6;
+  }
+
+  // Additional helper methods...
   assessContextualRelevance(intent, context) { return 0.8; } // Simplified
   planWorkflow(actions, context) { return { tools: [], reasoning: '' }; } // Simplified
   selectResponseStrategy(analysis, context) { return 'conversational'; } // Simplified

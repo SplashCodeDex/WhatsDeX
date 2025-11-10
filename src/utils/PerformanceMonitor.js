@@ -5,7 +5,7 @@
 
 import { performance, PerformanceObserver } from 'perf_hooks';
 import { EventEmitter } from 'events';
-import logger from './Logger.js';
+import logger from './logger.js';
 
 export class PerformanceMonitor extends EventEmitter {
   constructor() {

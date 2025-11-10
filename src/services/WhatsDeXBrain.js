@@ -3,6 +3,9 @@ import NLPProcessorService from './nlpProcessor.js';
 import ContentModerationService from './contentModeration.js';
 import MetaAIService from './metaAI.js';
 import logger from '../utils/logger.js';
+// RAG Architecture Services
+import memoryService from './MemoryService.js';
+import embeddingService from './EmbeddingService.js';
 
 class WhatsDeXBrain {
   constructor(bot, context) {
@@ -60,18 +63,30 @@ class WhatsDeXBrain {
   }
 
   /**
-   * Handle conversational AI interactions with memory
+   * Handle conversational AI interactions with RAG-enhanced memory
    */
   async handleConversationalAI(ctx, nlpResult) {
     const userId = ctx.sender.jid;
-    const memory = this.getConversationMemory(userId);
+    const currentMessage = ctx.message;
 
     try {
-      const prompt = `Previous conversation: ${memory.join(' | ')}\nCurrent message: ${ctx.message}\nIntent: ${nlpResult.intent}\nRespond helpfully and contextually.`;
-      const aiResponse = await this.metaAI.generateReply(prompt);
+      // Get recent memory (sliding window)
+      const recentMemory = this.getConversationMemory(userId);
+      
+      // RAG: Retrieve relevant historical context
+      const historicalContext = await this.retrieveHistoricalContext(userId, currentMessage);
+      
+      // Build enhanced prompt with both recent and historical context
+      const enhancedPrompt = this.buildContextualPrompt(currentMessage, recentMemory, historicalContext, nlpResult);
+      
+      // Generate AI response with enhanced context
+      const aiResponse = await this.metaAI.generateReply(enhancedPrompt);
 
-      // Update memory
-      this.updateConversationMemory(userId, ctx.message, aiResponse);
+      // Update recent memory
+      this.updateConversationMemory(userId, currentMessage, aiResponse);
+      
+      // Store conversation in RAG vector database (async, non-blocking)
+      this.storeConversationAsync(userId, currentMessage, aiResponse, nlpResult);
 
       await ctx.reply(aiResponse);
     } catch (error) {
@@ -264,6 +279,104 @@ class WhatsDeXBrain {
       maxCapacity: 1000,
       memoryUsage: (this.conversationMemory.size() / 1000) * 100
     };
+  }
+
+  /**
+   * RAG: Retrieve relevant historical context using vector similarity search
+   */
+  async retrieveHistoricalContext(userId, currentMessage) {
+    try {
+      const contexts = await memoryService.retrieveRelevantContext(userId, currentMessage);
+      return contexts;
+    } catch (error) {
+      logger.error('Error retrieving historical context:', error);
+      return []; // Graceful fallback - continue without historical context
+    }
+  }
+
+  /**
+   * RAG: Build enhanced prompt with recent memory and historical context
+   */
+  buildContextualPrompt(currentMessage, recentMemory, historicalContext, nlpResult) {
+    let prompt = '';
+
+    // Add historical context if available
+    if (historicalContext.length > 0) {
+      prompt += 'Relevant past conversations:\n';
+      historicalContext.forEach((context, index) => {
+        const similarity = (context.similarity * 100).toFixed(1);
+        prompt += `${index + 1}. [${similarity}% relevant] ${context.content}\n`;
+      });
+      prompt += '\n';
+    }
+
+    // Add recent conversation memory
+    if (recentMemory.length > 0) {
+      prompt += `Recent conversation: ${recentMemory.join(' | ')}\n\n`;
+    }
+
+    // Add current context
+    prompt += `Current message: ${currentMessage}\n`;
+    prompt += `Intent: ${nlpResult.intent}\n`;
+    prompt += `Confidence: ${nlpResult.confidence}\n\n`;
+
+    // Instructions for AI
+    prompt += 'Instructions:\n';
+    prompt += '- Use the historical context to understand the user\'s background and preferences\n';
+    prompt += '- Maintain conversation continuity by referencing relevant past discussions\n';
+    prompt += '- Be helpful, contextual, and personalized based on the conversation history\n';
+    prompt += '- If historical context is relevant, acknowledge it naturally in your response\n\n';
+    
+    prompt += 'Respond helpfully and contextually:';
+
+    return prompt;
+  }
+
+  /**
+   * RAG: Store conversation in vector database asynchronously
+   */
+  storeConversationAsync(userId, userMessage, aiResponse, nlpResult) {
+    // Use setImmediate for non-blocking async operation
+    setImmediate(async () => {
+      try {
+        const conversationText = `User: ${userMessage}\nAI: ${aiResponse}`;
+        const metadata = {
+          intent: nlpResult.intent,
+          confidence: nlpResult.confidence,
+          timestamp: new Date().toISOString(),
+          messageLength: userMessage.length,
+          responseLength: aiResponse.length
+        };
+
+        await memoryService.storeConversation(userId, conversationText, metadata);
+        logger.debug(`Stored conversation embedding for user ${userId}`);
+      } catch (error) {
+        logger.error('Error storing conversation embedding:', error);
+        // Don't throw - this is background operation
+      }
+    });
+  }
+
+  /**
+   * RAG: Get conversation statistics including vector database
+   */
+  async getEnhancedMemoryStats(userId = null) {
+    const baseStats = this.getMemoryStats();
+    
+    try {
+      if (userId) {
+        const userStats = await memoryService.getConversationStats(userId);
+        return {
+          ...baseStats,
+          userConversationHistory: userStats
+        };
+      }
+      
+      return baseStats;
+    } catch (error) {
+      logger.error('Error getting enhanced memory stats:', error);
+      return baseStats;
+    }
   }
 }
 

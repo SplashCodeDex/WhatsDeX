@@ -1,21 +1,35 @@
 # WhatsDeX SaaS Multi-stage Dockerfile
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install system dependencies
 RUN apk add --no-cache \
+    git \
+    openssl \
     python3 \
     make \
     g++ \
-    cairo-dev \
+    libtool \
+    autoconf \
+    automake \
+    pkgconfig \
+    libpng-dev \
     jpeg-dev \
-    pango-dev \
     giflib-dev \
-    librsvg-dev \
-    pixman-dev \
-    curl \
+    libwebp-dev \
     ffmpeg \
     imagemagick \
-    git
+    cairo-dev \
+    pango-dev \
+    gdk-pixbuf-dev \
+    libxml2-dev \
+    libxslt-dev \
+    zlib-dev \
+    sqlite-dev \
+    postgresql-client \
+    mariadb-client \
+    mongodb-tools \
+    redis \
+    tini
 
 WORKDIR /app
 
@@ -25,8 +39,8 @@ COPY prisma ./prisma/
 
 # Install dependencies
 FROM base AS deps
-RUN npm ci --only=production && npm cache clean --force
-RUN npx prisma generate
+RUN npm ci && npm cache clean --force
+RUN /app/node_modules/.bin/prisma generate
 
 # Build stage
 FROM base AS build
@@ -42,8 +56,11 @@ FROM base AS production
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S whatsdx -u 1001
 
-# Copy dependencies and code
-COPY --from=deps /app/node_modules ./node_modules
+# Install only production dependencies for final stage
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy generated Prisma client and built application
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app .
 
 # Create necessary directories with proper permissions
