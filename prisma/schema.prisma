@@ -5,12 +5,14 @@
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  previewFeatures = ["driverAdapters", "postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  extensions = [vector(version: "0.7.0")] // Or your installed version
 }
 
 // Multi-tenancy: Customer Organizations
@@ -299,6 +301,7 @@ model User {
   adminSessions      AdminSession[]
   ConversationMemory ConversationMemory[]
   AIGeneratedContent AIGeneratedContent[]
+  ConversationEmbeddings ConversationEmbedding[] // New relation
 
   @@index([lastActivity])
   @@map("users")
@@ -661,4 +664,17 @@ model AIGeneratedContent {
 
   @@index([userId, type, createdAt])
   @@map("ai_generated_content")
+}
+
+model ConversationEmbedding {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String   // Original conversation snippet
+  embedding   Unsupported("vector(1536)") // For text-embedding-3-small
+  timestamp   DateTime @default(now())
+  metadata    Json?    // Topic, sentiment, intent classification
+
+  @@index([userId])
+  @@map("conversation_embeddings")
 }

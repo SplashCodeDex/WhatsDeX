@@ -6,7 +6,7 @@ module.exports = {
           '@babel/preset-env',
           {
             targets: { node: 'current' },
-            modules: 'commonjs', // Convert ESM → CommonJS for tests
+            modules: 'auto', // Convert ESM → CommonJS for tests
           },
         ],
       ],

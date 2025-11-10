@@ -1,6 +1,6 @@
-const moment = require('moment-timezone');
+import moment from 'moment-timezone';
 
-module.exports = async (ctx, context) => {
+export default async (ctx, context) => {
   const { config } = context;
   const { isOwner, userDb } = ctx;
 

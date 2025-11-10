@@ -1,4 +1,4 @@
-module.exports = async (ctx, context) => {
+export default async (ctx, context) => {
   const { formatter, config } = context;
   const { isCmd } = ctx;
 

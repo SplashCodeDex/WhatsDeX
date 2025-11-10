@@ -1,7 +1,7 @@
 // Audit middleware for automatic event logging
-const { RateLimiterMemory } = require('rate-limiter-flexible');
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 
-module.exports = (bot, context) => {
+export default (bot, context) => {
   const { auditLogger, database } = context;
 
   // Rate limiter to prevent audit log spam

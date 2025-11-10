@@ -1,6 +1,7 @@
-const jwt = require('jsonwebtoken');
-const { RateLimiterMemory } = require('rate-limiter-flexible');
-const logger = require('../src/utils/logger');
+import jwt from 'jsonwebtoken';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import logger from '../src/utils/logger.js';
+import auditLogger from '../src/services/auditLogger.js';
 
 // Rate limiter for auth endpoints
 const authRateLimiter = new RateLimiterMemory({
@@ -13,7 +14,7 @@ const authRateLimiter = new RateLimiterMemory({
  * JWT Authentication Middleware
  * Verifies JWT token and attaches user info to request
  */
-const authenticateToken = async (req, res, next) => {
+export const authenticateToken = async (req, res, next) => {
   try {
     // IP whitelisting check (consolidated)
     const devIPs = ['127.0.0.1', '::1', '0.0.0.0'];
@@ -22,7 +23,7 @@ const authenticateToken = async (req, res, next) => {
       isDevIP ||
       (process.env.WHITELIST_IPS && process.env.WHITELIST_IPS.split(',').includes(req.ip));
     if (!isWhitelisted) {
-      require('../src/services/auditLogger').warn('IP not whitelisted', {
+      auditLogger.warn('IP not whitelisted', {
         ip: req.ip,
         endpoint: req.path,
       });
@@ -91,7 +92,7 @@ const authenticateToken = async (req, res, next) => {
  * Role-based Authorization Middleware
  * Checks if user has required role/permission
  */
-const authorize =
+export const authorize =
   (requiredRole, requiredPermissions = []) =>
   (req, res, next) => {
     if (!req.user) {
@@ -157,28 +158,28 @@ const authorize =
 /**
  * Admin-only middleware
  */
-const requireAdmin = authorize('admin');
+export const requireAdmin = authorize('admin');
 
 /**
  * Moderator or higher middleware
  */
-const requireModerator = authorize('moderator');
+export const requireModerator = authorize('moderator');
 
 /**
  * Super admin only middleware
  */
-const requireSuperAdmin = authorize('superadmin');
+export const requireSuperAdmin = authorize('superadmin');
 
 /**
  * Permission-based middleware factory
  */
-const requirePermission = permission => authorize('viewer', [permission]);
+export const requirePermission = permission => authorize('viewer', [permission]);
 
 /**
  * Optional authentication middleware
  * Attaches user info if token is present, but doesn't fail if missing
  */
-const optionalAuth = async (req, res, next) => {
+export const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
@@ -205,7 +206,7 @@ const optionalAuth = async (req, res, next) => {
 /**
  * API Key authentication for service-to-service calls
  */
-const authenticateApiKey = (req, res, next) => {
+export const authenticateApiKey = (req, res, next) => {
   const apiKey = req.headers['x-api-key'] || req.query.apiKey;
 
   if (!apiKey) {
@@ -233,15 +234,4 @@ const authenticateApiKey = (req, res, next) => {
 
   req.apiKey = apiKey;
   next();
-};
-
-module.exports = {
-  authenticateToken,
-  authorize,
-  requireAdmin,
-  requireModerator,
-  requireSuperAdmin,
-  requirePermission,
-  optionalAuth,
-  authenticateApiKey,
 };

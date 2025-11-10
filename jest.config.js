@@ -1,9 +1,5 @@
 export default {
   testEnvironment: 'node',
-  transform: {
-    '^.+\\.(js|jsx|mjs)$': 'babel-jest',
-  },
-  extensionsToTreatAsEsm: ['.js', '.jsx', '.mjs'],
   collectCoverageFrom: [
     'commands/**/*.js',
     'middleware/**/*.js',

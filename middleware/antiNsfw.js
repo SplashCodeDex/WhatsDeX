@@ -1,7 +1,7 @@
-const axios = require('axios');
-// const { Baileys } = require("@whiskeysockets/baileileys");
+import axios from 'axios';
+// import { Baileys } from "@whiskeysockets/baileys";
 
-module.exports = async (ctx, context) => {
+export default async (ctx, context) => {
   const {
     tools: { cmd, api, warn },
     formatter,

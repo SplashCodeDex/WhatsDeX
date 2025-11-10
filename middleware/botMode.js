@@ -1,4 +1,4 @@
-module.exports = async (ctx, context) => {
+export default async (ctx, context) => {
   const { database } = context;
   const { isGroup, isOwner, userDb } = ctx;
 

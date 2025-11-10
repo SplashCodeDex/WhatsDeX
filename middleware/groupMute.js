@@ -1,4 +1,4 @@
-module.exports = async ctx => {
+export default async ctx => {
   const { isGroup, sender, isOwner, isAdmin, groupDb } = ctx;
 
   if (isGroup) {

@@ -1,4 +1,4 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
 // Define Zod schemas for key commands
 const schemas = new Map([
@@ -30,7 +30,7 @@ const schemas = new Map([
   // Default for unknown: no validation
 ]);
 
-module.exports = async (ctx, context) => {
+export default async (ctx, context) => {
   const { database } = context;
   const commandName = ctx.used.command;
   const schema = schemas.get(commandName);

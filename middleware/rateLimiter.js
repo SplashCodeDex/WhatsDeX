@@ -1,6 +1,6 @@
 const userRequests = new Map();
 
-module.exports = async (ctx, { config }) => {
+export default async (ctx, { config }) => {
   const now = Date.now();
   const senderJid = ctx.sender.jid;
   const lastRequest = userRequests.get(senderJid);

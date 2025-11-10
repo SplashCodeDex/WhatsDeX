@@ -10,12 +10,12 @@ CREATE TABLE "users" (
     "level" INTEGER NOT NULL DEFAULT 1,
     "coin" INTEGER NOT NULL DEFAULT 0,
     "premium" BOOLEAN NOT NULL DEFAULT false,
-    "premiumExpiry" DATETIME,
+    "premiumExpiry" TIMESTAMP,
     "banned" BOOLEAN NOT NULL DEFAULT false,
     "banReason" TEXT,
-    "lastActivity" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "lastActivity" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -26,8 +26,8 @@ CREATE TABLE "user_sessions" (
     "ipAddress" TEXT,
     "userAgent" TEXT,
     "platform" TEXT,
-    "startedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "endedAt" DATETIME,
+    "startedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endedAt" TIMESTAMP,
     "duration" INTEGER,
     CONSTRAINT "user_sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -41,7 +41,7 @@ CREATE TABLE "command_usage" (
     "success" BOOLEAN NOT NULL DEFAULT true,
     "errorMessage" TEXT,
     "executionTime" INTEGER,
-    "usedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "usedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "command_usage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -55,8 +55,8 @@ CREATE TABLE "groups" (
     "ownerJid" TEXT,
     "memberCount" INTEGER NOT NULL DEFAULT 0,
     "maxMembers" INTEGER,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -65,7 +65,7 @@ CREATE TABLE "user_groups" (
     "userId" TEXT NOT NULL,
     "groupId" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'member',
-    "joinedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "joinedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "user_groups_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "user_groups_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "groups" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -77,7 +77,7 @@ CREATE TABLE "group_settings" (
     "settingKey" TEXT NOT NULL,
     "settingValue" TEXT NOT NULL,
     "updatedBy" TEXT NOT NULL,
-    "updatedAt" DATETIME NOT NULL,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "group_settings_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "groups" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -90,7 +90,7 @@ CREATE TABLE "menfess" (
     "message" TEXT NOT NULL,
     "mediaUrl" TEXT,
     "mediaType" TEXT,
-    "sentAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "sentAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "delivered" BOOLEAN NOT NULL DEFAULT false,
     "read" BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT "menfess_fromUserId_fkey" FOREIGN KEY ("fromUserId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
@@ -106,7 +106,7 @@ CREATE TABLE "bot_settings" (
     "category" TEXT NOT NULL,
     "description" TEXT,
     "updatedBy" TEXT NOT NULL,
-    "updatedAt" DATETIME NOT NULL
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -118,8 +118,8 @@ CREATE TABLE "feedback" (
     "message" TEXT NOT NULL,
     "rating" INTEGER,
     "status" TEXT NOT NULL DEFAULT 'pending',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "feedback_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -129,13 +129,12 @@ CREATE TABLE "subscriptions" (
     "userId" TEXT NOT NULL,
     "planId" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'active',
-    "currentPeriodStart" DATETIME NOT NULL,
-    "currentPeriodEnd" DATETIME NOT NULL,
+    "currentPeriodStart" TIMESTAMP NOT NULL,
+    "currentPeriodEnd" TIMESTAMP NOT NULL,
     "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "subscriptions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "subscription_plans" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
+    CONSTRAINT "subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -148,8 +147,8 @@ CREATE TABLE "subscription_plans" (
     "interval" TEXT NOT NULL DEFAULT 'month',
     "features" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -162,8 +161,8 @@ CREATE TABLE "payments" (
     "paymentMethod" TEXT NOT NULL,
     "transactionId" TEXT,
     "description" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "payments_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -175,9 +174,9 @@ CREATE TABLE "api_keys" (
     "service" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdBy" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "lastUsed" DATETIME,
-    "expiresAt" DATETIME
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastUsed" TIMESTAMP,
+    "expiresAt" TIMESTAMP
 );
 
 -- CreateTable
@@ -187,7 +186,7 @@ CREATE TABLE "analytics" (
     "value" REAL NOT NULL,
     "category" TEXT NOT NULL,
     "metadata" TEXT,
-    "recordedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "recordedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
@@ -202,8 +201,8 @@ CREATE TABLE "plugins" (
     "price" REAL,
     "downloads" INTEGER NOT NULL DEFAULT 0,
     "rating" REAL NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -215,7 +214,7 @@ CREATE TABLE "error_logs" (
     "userId" TEXT,
     "command" TEXT,
     "metadata" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
@@ -234,7 +233,7 @@ CREATE TABLE "audit_logs" (
     "sessionId" TEXT,
     "location" TEXT,
     "metadata" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
@@ -249,9 +248,9 @@ CREATE TABLE "user_violations" (
     "action" TEXT NOT NULL,
     "duration" INTEGER,
     "status" TEXT NOT NULL DEFAULT 'pending',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "expiresAt" DATETIME,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
+    "expiresAt" TIMESTAMP,
     CONSTRAINT "user_violations_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -266,7 +265,7 @@ CREATE TABLE "system_settings" (
     "isEncrypted" BOOLEAN NOT NULL DEFAULT false,
     "validationRules" TEXT,
     "updatedBy" TEXT NOT NULL,
-    "updatedAt" DATETIME NOT NULL
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -280,9 +279,9 @@ CREATE TABLE "moderation_queue" (
     "priority" TEXT NOT NULL DEFAULT 'normal',
     "status" TEXT NOT NULL DEFAULT 'pending',
     "moderatorId" TEXT,
-    "reviewedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "reviewedAt" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "moderation_queue_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -294,9 +293,9 @@ CREATE TABLE "admin_sessions" (
     "ipAddress" TEXT,
     "userAgent" TEXT,
     "deviceInfo" TEXT,
-    "lastActivity" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expiresAt" DATETIME NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastActivity" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "admin_sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -306,8 +305,8 @@ CREATE TABLE "conversation_memory" (
     "userId" TEXT NOT NULL,
     "sessionId" TEXT,
     "messages" TEXT NOT NULL,
-    "lastUpdated" DATETIME NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastUpdated" TIMESTAMP NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "conversation_memory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -319,7 +318,7 @@ CREATE TABLE "ai_generated_content" (
     "prompt" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "metadata" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "ai_generated_content_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 

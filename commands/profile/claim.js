@@ -1,7 +1,6 @@
 // List of available claim rewards
 import z from 'zod';
 import formatters from '../../utils/formatters.js';
-const { convertMsToDuration  } = formatters;
 const { convertMsToDuration, ucwords } = formatters;
 import { db } from '../../src/utils.js';
 

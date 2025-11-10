@@ -13,9 +13,9 @@ CREATE TABLE "tenants" (
     "planLimits" TEXT,
     "customSettings" TEXT,
     "stripeCustomerId" TEXT,
-    "trialEndsAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "trialEndsAt" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -29,12 +29,12 @@ CREATE TABLE "tenant_users" (
     "avatar" TEXT,
     "permissions" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "lastLoginAt" DATETIME,
+    "lastLoginAt" TIMESTAMP,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "invitedBy" TEXT,
-    "invitedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "invitedAt" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "tenant_users_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -45,8 +45,8 @@ CREATE TABLE "tenant_user_sessions" (
     "sessionId" TEXT NOT NULL,
     "ipAddress" TEXT,
     "userAgent" TEXT,
-    "expiresAt" DATETIME NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "tenant_user_sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "tenant_users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -60,10 +60,10 @@ CREATE TABLE "bot_instances" (
     "status" TEXT NOT NULL DEFAULT 'disconnected',
     "sessionData" TEXT,
     "config" TEXT,
-    "lastActivity" DATETIME,
+    "lastActivity" TIMESTAMP,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "bot_instances_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -76,9 +76,9 @@ CREATE TABLE "bot_users" (
     "phone" TEXT,
     "avatar" TEXT,
     "isBlocked" BOOLEAN NOT NULL DEFAULT false,
-    "lastActivity" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "lastActivity" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "bot_users_botInstanceId_fkey" FOREIGN KEY ("botInstanceId") REFERENCES "bot_instances" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -91,8 +91,8 @@ CREATE TABLE "bot_groups" (
     "description" TEXT,
     "memberCount" INTEGER NOT NULL DEFAULT 0,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "bot_groups_botInstanceId_fkey" FOREIGN KEY ("botInstanceId") REFERENCES "bot_instances" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -109,7 +109,7 @@ CREATE TABLE "bot_messages" (
     "mediaUrl" TEXT,
     "command" TEXT,
     "isIncoming" BOOLEAN NOT NULL DEFAULT true,
-    "timestamp" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "timestamp" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "bot_messages_botInstanceId_fkey" FOREIGN KEY ("botInstanceId") REFERENCES "bot_instances" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "bot_messages_userId_fkey" FOREIGN KEY ("userId") REFERENCES "bot_users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
@@ -121,13 +121,13 @@ CREATE TABLE "tenant_subscriptions" (
     "stripeSubscriptionId" TEXT NOT NULL,
     "stripePriceId" TEXT NOT NULL,
     "status" TEXT NOT NULL,
-    "currentPeriodStart" DATETIME NOT NULL,
-    "currentPeriodEnd" DATETIME NOT NULL,
+    "currentPeriodStart" TIMESTAMP NOT NULL,
+    "currentPeriodEnd" TIMESTAMP NOT NULL,
     "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
-    "trialStart" DATETIME,
-    "trialEnd" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "trialStart" TIMESTAMP,
+    "trialEnd" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "tenant_subscriptions_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -142,7 +142,7 @@ CREATE TABLE "tenant_payments" (
     "description" TEXT,
     "invoiceUrl" TEXT,
     "receiptUrl" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "tenant_payments_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -153,10 +153,10 @@ CREATE TABLE "tenant_api_keys" (
     "name" TEXT NOT NULL,
     "keyHash" TEXT NOT NULL,
     "keyPrefix" TEXT NOT NULL,
-    "lastUsed" DATETIME,
+    "lastUsed" TIMESTAMP,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expiresAt" DATETIME,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP,
     CONSTRAINT "tenant_api_keys_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -167,7 +167,7 @@ CREATE TABLE "tenant_analytics" (
     "metric" TEXT NOT NULL,
     "value" REAL NOT NULL,
     "metadata" TEXT,
-    "date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "tenant_analytics_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -178,7 +178,7 @@ CREATE TABLE "bot_analytics" (
     "metric" TEXT NOT NULL,
     "value" REAL NOT NULL,
     "metadata" TEXT,
-    "date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "bot_analytics_botInstanceId_fkey" FOREIGN KEY ("botInstanceId") REFERENCES "bot_instances" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -193,7 +193,7 @@ CREATE TABLE "tenant_audit_logs" (
     "details" TEXT,
     "ipAddress" TEXT,
     "userAgent" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "tenant_audit_logs_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "tenant_audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "tenant_users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );

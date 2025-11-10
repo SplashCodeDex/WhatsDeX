@@ -1,9 +1,9 @@
-const logger = require('../src/utils/logger');
+import logger from '../src/utils/logger.js';
 
 /**
  * Global error handling middleware
  */
-const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next) => {
   // Log the error
   logger.error('Unhandled error', {
     error: err.message,
@@ -69,14 +69,14 @@ const errorHandler = (err, req, res, next) => {
 /**
  * Async error wrapper for route handlers
  */
-const asyncHandler = fn => (req, res, next) => {
+export const asyncHandler = fn => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
 /**
  * Create custom error class
  */
-class AppError extends Error {
+export class AppError extends Error {
   constructor(message, statusCode = 500, errorCode = 'INTERNAL_ERROR') {
     super(message);
     this.statusCode = statusCode;
@@ -90,7 +90,7 @@ class AppError extends Error {
 /**
  * Validation error handler
  */
-const handleValidationError = error => {
+export const handleValidationError = error => {
   if (error.name === 'ZodError') {
     const errors = error.errors.map(err => ({
       field: err.path.join('.'),
@@ -107,7 +107,7 @@ const handleValidationError = error => {
 /**
  * Database error handler
  */
-const handleDatabaseError = error => {
+export const handleDatabaseError = error => {
   if (error.code === 'P2002') {
     return new AppError('Resource already exists', 409, 'CONFLICT_ERROR');
   }
@@ -126,7 +126,7 @@ const handleDatabaseError = error => {
 /**
  * Authentication error handler
  */
-const handleAuthError = error => {
+export const handleAuthError = error => {
   if (error.name === 'JsonWebTokenError') {
     return new AppError('Invalid token', 401, 'AUTH_TOKEN_INVALID');
   }
@@ -141,7 +141,7 @@ const handleAuthError = error => {
 /**
  * 404 Not Found handler
  */
-const notFoundHandler = (req, res, next) => {
+export const notFoundHandler = (req, res, next) => {
   const error = new AppError(`Route ${req.originalUrl} not found`, 404, 'NOT_FOUND');
   next(error);
 };
@@ -149,7 +149,7 @@ const notFoundHandler = (req, res, next) => {
 /**
  * Health check error handler
  */
-const handleHealthCheck = (req, res) => {
+export const handleHealthCheck = (req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -157,15 +157,4 @@ const handleHealthCheck = (req, res) => {
     memory: process.memoryUsage(),
     version: process.env.npm_package_version || '1.0.0',
   });
-};
-
-module.exports = {
-  errorHandler,
-  asyncHandler,
-  AppError,
-  handleValidationError,
-  handleDatabaseError,
-  handleAuthError,
-  notFoundHandler,
-  handleHealthCheck,
 };

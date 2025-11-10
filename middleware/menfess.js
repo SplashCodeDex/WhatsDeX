@@ -1,6 +1,6 @@
-const { S_WHATSAPP_NET } = require('@whiskeysockets/baileys');
+import { S_WHATSAPP_NET } from '@whiskeysockets/baileys';
 
-module.exports = async (ctx, context) => {
+export default async (ctx, context) => {
   const { database, formatter } = context;
   const { isPrivate, sender, isCmd, msg, m } = ctx;
 

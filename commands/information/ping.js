@@ -1,6 +1,5 @@
 import formatters from '../../utils/formatters.js';
 const { convertMsToDuration, ucwords } = formatters;
-const { convertMsToDuration } = formatters;
 
 export default {
   name: 'ping',
