@@ -74,16 +74,123 @@ export const asyncHandler = fn => (req, res, next) => {
 };
 
 /**
- * Create custom error class
+ * Enhanced Custom Error Classes (consolidated from errors/index.js)
+ */
+
+/**
+ * Base Application Error
  */
 export class AppError extends Error {
-  constructor(message, statusCode = 500, errorCode = 'INTERNAL_ERROR') {
+  constructor(message, statusCode = 500, errorCode = 'INTERNAL_ERROR', details = {}) {
     super(message);
+    this.name = this.constructor.name;
     this.statusCode = statusCode;
     this.errorCode = errorCode;
+    this.details = details;
     this.isOperational = true;
+    this.timestamp = new Date().toISOString();
 
     Error.captureStackTrace(this, this.constructor);
+  }
+
+  toJSON() {
+    return {
+      error: this.name,
+      message: this.message,
+      statusCode: this.statusCode,
+      errorCode: this.errorCode,
+      details: this.details,
+      timestamp: this.timestamp,
+    };
+  }
+}
+
+/**
+ * Validation Error (400)
+ */
+export class ValidationError extends AppError {
+  constructor(message, field = null) {
+    super(message, 400, 'VALIDATION_ERROR', { field });
+    this.field = field;
+  }
+}
+
+/**
+ * Authentication Error (401)
+ */
+export class AuthenticationError extends AppError {
+  constructor(message = 'Authentication required') {
+    super(message, 401, 'AUTH_ERROR');
+  }
+}
+
+/**
+ * Authorization Error (403)
+ */
+export class AuthorizationError extends AppError {
+  constructor(message = 'Permission denied', resource = null) {
+    super(message, 403, 'AUTH_FORBIDDEN', { resource });
+  }
+}
+
+/**
+ * Not Found Error (404)
+ */
+export class NotFoundError extends AppError {
+  constructor(resource = 'Resource', id = null) {
+    const message = id ? `${resource} with ID '${id}' not found` : `${resource} not found`;
+    super(message, 404, 'NOT_FOUND', { resource, id });
+  }
+}
+
+/**
+ * Conflict Error (409)
+ */
+export class ConflictError extends AppError {
+  constructor(message, resource = null) {
+    super(message, 409, 'CONFLICT_ERROR', { resource });
+  }
+}
+
+/**
+ * Rate Limit Error (429)
+ */
+export class RateLimitError extends AppError {
+  constructor(retryAfter = 60) {
+    super('Too many requests. Please try again later.', 429, 'RATE_LIMIT_ERROR', { retryAfter });
+    this.retryAfter = retryAfter;
+  }
+}
+
+/**
+ * Database Error (500)
+ */
+export class DatabaseError extends AppError {
+  constructor(operation, details = null) {
+    const message = details ? `Database ${operation} failed: ${details}` : `Database ${operation} failed`;
+    super(message, 500, 'DATABASE_ERROR', { operation, details });
+  }
+}
+
+/**
+ * External API Error (502)
+ */
+export class ExternalAPIError extends AppError {
+  constructor(service, statusCode = null, message = null) {
+    const errorMessage = message || `External service '${service}' is unavailable`;
+    super(errorMessage, 502, 'EXTERNAL_API_ERROR', { service, externalStatusCode: statusCode });
+  }
+}
+
+/**
+ * Command Error (Bot-specific)
+ */
+export class CommandError extends AppError {
+  constructor(commandName, reason, statusCode = 400) {
+    super(`Command '${commandName}' failed: ${reason}`, statusCode, 'COMMAND_ERROR', {
+      commandName,
+      reason,
+    });
   }
 }
 
@@ -157,4 +264,24 @@ export const handleHealthCheck = (req, res) => {
     memory: process.memoryUsage(),
     version: process.env.npm_package_version || '1.0.0',
   });
+};
+
+/**
+ * Format WhatsApp-friendly error messages
+ */
+export const formatWhatsAppError = (error) => {
+  const emoji = {
+    ValidationError: '⚠️',
+    NotFoundError: '🔍',
+    AuthenticationError: '🔒',
+    AuthorizationError: '🚫',
+    RateLimitError: '⏱️',
+    DatabaseError: '💾',
+    ExternalAPIError: '🌐',
+    CommandError: '❌',
+    ConflictError: '⚠️',
+  };
+
+  const icon = emoji[error.name] || '❗';
+  return `${icon} *Error*\n\n${error.message}`;
 };

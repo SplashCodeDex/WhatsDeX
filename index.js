@@ -33,11 +33,46 @@ if (config.system.useServer) {
   server.listen(port, () => console.log(`✅ ${pkg.name} runs on port ${port}`));
 }
 
+// Global error handling for unhandled promise rejections and uncaught exceptions
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+  // Log the error properly if logger is available
+  if (context?.logger) {
+    context.logger.error('Unhandled Promise Rejection', {
+      reason: reason?.message || reason,
+      stack: reason?.stack,
+      promise: promise
+    });
+  }
+  // Graceful shutdown
+  process.exit(1);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('🚨 Uncaught Exception:', error);
+  // Log the error properly if logger is available
+  if (context?.logger) {
+    context.logger.error('Uncaught Exception', {
+      error: error.message,
+      stack: error.stack
+    });
+  }
+  // Graceful shutdown
+  process.exit(1);
+});
+
 (async () => {
   try {
     await main(context); // Jalankan modul utama dengan async/await
   } catch (error) {
     console.error(`❌ Fatal Error: ${error.message}`);
+    // Log the error properly if logger is available
+    if (context?.logger) {
+      context.logger.error('Main Application Error', {
+        error: error.message,
+        stack: error.stack
+      });
+    }
     process.exit(1);
   }
 })();
