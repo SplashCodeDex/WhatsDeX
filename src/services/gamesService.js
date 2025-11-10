@@ -3,9 +3,10 @@
  * Implements proper architecture with error handling, logging, and rate limiting
  */
 
-const axios = require('axios');
-const { AkinatorAPI, AkinatorAnswer } = require('aki-api');
-const { Chess } = require('chess.js');
+import axios from 'axios';
+import akiApiPkg from 'aki-api';
+const { AkinatorAPI, AkinatorAnswer } = akiApiPkg;
+import { Chess } from 'chess.js';
 
 class GamesService {
   constructor() {
@@ -403,4 +404,6 @@ class GamesService {
   }
 }
 
-module.exports = new GamesService();
+// Create and export service instance as ES module
+const gamesServiceInstance = new GamesService();
+export default gamesServiceInstance;

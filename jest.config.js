@@ -1,5 +1,21 @@
 export default {
   testEnvironment: 'node',
+  
+  // Module transformation for mixed CommonJS/ES module support
+  transform: {
+    '^.+\\.(js|jsx)$': 'babel-jest',
+  },
+  
+  // Module name mapping for ES module imports
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+  
+  // Ensure node_modules are transformed when needed
+  transformIgnorePatterns: [
+    'node_modules/(?!((@whiskeysockets/baileys|@google/generative-ai|node-fetch|ws)/.*))' 
+  ],
+  
   collectCoverageFrom: [
     'commands/**/*.js',
     'middleware/**/*.js',

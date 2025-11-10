@@ -5,8 +5,8 @@
 
 import path from 'path';
 
-const axios = require('axios');
-const fs = require('fs').promises;
+import axios from 'axios';
+import { promises as fs } from 'fs';
 
 class FunCommandsService {
   constructor() {
@@ -357,4 +357,6 @@ class FunCommandsService {
   }
 }
 
-module.exports = new FunCommandsService();
+// Create and export service instance as ES module
+const funCommandsServiceInstance = new FunCommandsService();
+export default funCommandsServiceInstance;

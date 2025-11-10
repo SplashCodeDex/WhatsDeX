@@ -3,7 +3,7 @@
  * Implements private messaging between users with proper privacy and rate limiting
  */
 
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 class MenfesService {
   constructor() {
@@ -320,4 +320,6 @@ class MenfesService {
   }
 }
 
-module.exports = new MenfesService();
+// Create and export service instance as ES module
+const menfesServiceInstance = new MenfesService();
+export default menfesServiceInstance;

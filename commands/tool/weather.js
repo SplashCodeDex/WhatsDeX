@@ -3,7 +3,6 @@ import moment from 'moment-timezone';
 import z from 'zod';
 import { createUrl } from '../../tools/api.js';
 import formatters from '../../utils/formatters.js';
-const { ucwords  } = formatters;
 const { convertMsToDuration, ucwords } = formatters;
 
 export default {

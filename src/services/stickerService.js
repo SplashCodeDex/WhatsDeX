@@ -5,10 +5,11 @@
 
 import path from 'path';
 
-const axios = require('axios');
-const fs = require('fs').promises;
-const { writeExif } = require('../../lib/exif');
-const context = require('../../context');
+import axios from 'axios';
+import { promises as fs, writeFileSync } from 'fs';
+import { spawn } from 'child_process';
+import { writeExif } from '../../lib/exif.js';
+import context from '../../context.js';
 
 class StickerService {
   constructor() {
@@ -144,7 +145,7 @@ class StickerService {
       const outputPath = path.join(tempDir, `brat_video_${Date.now()}.mp4`);
 
       return new Promise((resolve, reject) => {
-        const { spawn } = require('child_process');
+        // spawn is already imported at the top
 
         // Create file list for ffmpeg
         const fileListPath = path.join(tempDir, `filelist_${Date.now()}.txt`);
@@ -160,7 +161,7 @@ class StickerService {
         fileListContent += `duration 3\n`;
 
         // Write file list
-        require('fs').writeFileSync(fileListPath, fileListContent);
+        writeFileSync(fileListPath, fileListContent);
 
         // Create video using ffmpeg
         const ffmpeg = spawn('ffmpeg', [
@@ -362,4 +363,6 @@ class StickerService {
   }
 }
 
-module.exports = new StickerService();
+// Create and export service instance as ES module
+const stickerServiceInstance = new StickerService();
+export default stickerServiceInstance;

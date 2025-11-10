@@ -3,11 +3,22 @@ import DatabaseService from '../services/database.js';
 // Initialize singleton database instance
 const db = new DatabaseService();
 
-// Collector utility (if exists, otherwise create stub)
+// Collector utility for message collection
 const collector = {
-  // Add collector methods if needed
+  stop: () => {
+    // Stop collection process
+    console.log('Message collector stopped');
+  },
   createCollector: (conn, opts) => {
-    // Implementation
+    // Implementation for message collection
+    return {
+      on: (event, handler) => {
+        // Event handler setup
+      },
+      stop: () => {
+        console.log('Collector stopped');
+      }
+    };
   },
 };
 

@@ -364,6 +364,149 @@ class DatabaseService {
     return value * multipliers[unit];
   }
 
+  // Simple key-value operations for backward compatibility
+  async get(key) {
+    try {
+      // Support dot notation like "user.123456789.coin"
+      const parts = key.split('.');
+      if (parts[0] === 'user' && parts.length >= 2) {
+        const jid = parts[1];
+        const user = await this.getUser(jid);
+        if (!user) return null;
+        
+        // Return nested property if specified
+        if (parts.length > 2) {
+          const property = parts.slice(2).join('.');
+          return this.getNestedProperty(user, property);
+        }
+        return user;
+      }
+      
+      // For other keys, use a simple key-value storage table
+      const result = await this.prisma.keyValue.findUnique({
+        where: { key }
+      });
+      
+      return result ? JSON.parse(result.value) : null;
+    } catch (error) {
+      logger.error('Error getting key-value data', { key, error: error.message });
+      return null;
+    }
+  }
+
+  async set(key, value) {
+    try {
+      const parts = key.split('.');
+      if (parts[0] === 'user' && parts.length >= 2) {
+        const jid = parts[1];
+        
+        if (parts.length > 2) {
+          const property = parts.slice(2).join('.');
+          const updateData = this.buildNestedUpdate(property, value);
+          return await this.updateUser(jid, updateData);
+        } else {
+          return await this.upsertUser({ jid, ...value });
+        }
+      }
+      
+      // For other keys, use key-value storage
+      await this.prisma.keyValue.upsert({
+        where: { key },
+        update: { value: JSON.stringify(value) },
+        create: { key, value: JSON.stringify(value) }
+      });
+      
+      return true;
+    } catch (error) {
+      logger.error('Error setting key-value data', { key, value, error: error.message });
+      return false;
+    }
+  }
+
+  async delete(key) {
+    try {
+      const parts = key.split('.');
+      if (parts[0] === 'user' && parts.length >= 2) {
+        const jid = parts[1];
+        
+        if (parts.length > 2) {
+          // Delete specific property
+          const property = parts.slice(2).join('.');
+          const updateData = this.buildNestedDelete(property);
+          return await this.updateUser(jid, updateData);
+        } else {
+          // Delete entire user
+          return await this.prisma.user.delete({
+            where: { jid }
+          });
+        }
+      }
+      
+      // For other keys
+      await this.prisma.keyValue.delete({
+        where: { key }
+      });
+      
+      return true;
+    } catch (error) {
+      logger.error('Error deleting key-value data', { key, error: error.message });
+      return false;
+    }
+  }
+
+  async add(key, amount) {
+    try {
+      const current = (await this.get(key)) || 0;
+      return await this.set(key, current + amount);
+    } catch (error) {
+      logger.error('Error adding to key-value data', { key, amount, error: error.message });
+      return false;
+    }
+  }
+
+  async subtract(key, amount) {
+    try {
+      const current = (await this.get(key)) || 0;
+      return await this.set(key, Math.max(0, current - amount));
+    } catch (error) {
+      logger.error('Error subtracting from key-value data', { key, amount, error: error.message });
+      return false;
+    }
+  }
+
+  // Helper methods for nested property access
+  getNestedProperty(obj, path) {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+  }
+
+  buildNestedUpdate(path, value) {
+    const keys = path.split('.');
+    const result = {};
+    keys.reduce((current, key, index) => {
+      if (index === keys.length - 1) {
+        current[key] = value;
+      } else {
+        current[key] = current[key] || {};
+      }
+      return current[key];
+    }, result);
+    return result;
+  }
+
+  buildNestedDelete(path) {
+    const keys = path.split('.');
+    const result = {};
+    keys.reduce((current, key, index) => {
+      if (index === keys.length - 1) {
+        current[key] = null;
+      } else {
+        current[key] = current[key] || {};
+      }
+      return current[key];
+    }, result);
+    return result;
+  }
+
   // Health check
   async healthCheck() {
     try {

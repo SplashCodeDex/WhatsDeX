@@ -83,20 +83,67 @@ export class UnifiedCommandSystem {
   }
 
   /**
-   * LOAD SINGLE COMMAND - Enhanced command loading with validation
+   * LOAD SINGLE COMMAND - Enhanced command loading with validation and mixed module support
    */
   async loadSingleCommand(commandPath, categoryName) {
     try {
-      const commandUrl = pathToFileURL(commandPath).href;
-      const commandModule = await import(commandUrl);
-      const command = commandModule.default;
+      // Normalize path and ensure it exists
+      const absolutePath = path.resolve(commandPath);
+      
+      // Check if file exists before attempting import
+      try {
+        await fs.access(absolutePath);
+      } catch (accessError) {
+        console.error(`Command file not found: ${absolutePath}`);
+        return null;
+      }
+
+      // Enhanced dynamic import with error handling for both ES modules and CommonJS
+      let commandModule;
+      let command;
+
+      try {
+        // Try ES module import first (for .js files in ES module context)
+        const commandUrl = pathToFileURL(absolutePath).href;
+        commandModule = await import(commandUrl + `?v=${Date.now()}`); // Cache busting
+        command = commandModule.default || commandModule;
+        
+      } catch (esModuleError) {
+        console.warn(`ES module import failed for ${absolutePath}, trying CommonJS compatibility:`, esModuleError.message);
+        
+        try {
+          // Fallback: Try to handle CommonJS modules through dynamic import
+          const commandUrl = pathToFileURL(absolutePath).href;
+          commandModule = await import(commandUrl);
+          command = commandModule.default || commandModule;
+          
+          // If still no command, try accessing as CommonJS export pattern
+          if (!command && commandModule.module && commandModule.module.exports) {
+            command = commandModule.module.exports;
+          }
+          
+        } catch (fallbackError) {
+          console.error(`Both ES module and CommonJS import failed for ${absolutePath}:`, {
+            esError: esModuleError.message,
+            cjsError: fallbackError.message
+          });
+          return null;
+        }
+      }
       
       if (!this.validateCommand(command)) {
+        console.warn(`Command validation failed for ${absolutePath}:`, {
+          hasCommand: !!command,
+          commandType: typeof command,
+          hasName: !!(command && command.name),
+          hasCode: !!(command && command.code),
+          commandKeys: command ? Object.keys(command) : []
+        });
         return null;
       }
       
       // Enhance command with metadata
-      return {
+      const enhancedCommand = {
         ...command,
         category: categoryName,
         filePath: commandPath,
@@ -110,9 +157,17 @@ export class UnifiedCommandSystem {
         middleware: command.middleware || [],
         isEnabled: command.isEnabled !== false
       };
+
+      console.log(`✅ Successfully loaded command: ${command.name} from ${absolutePath}`);
+      return enhancedCommand;
       
     } catch (error) {
-      console.error(`Failed to load command: ${commandPath}`, error.message);
+      console.error(`Failed to load command: ${commandPath}`, {
+        error: error.message,
+        stack: error.stack,
+        commandPath,
+        categoryName
+      });
       return null;
     }
   }

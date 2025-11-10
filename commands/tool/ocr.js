@@ -1,4 +1,4 @@
-import { Baileys } from '@itsreimau/gktw';
+// Note: Removed deprecated @itsreimau/gktw import (migrated to @whiskeysockets/baileys)
 import axios from 'axios';
 
 /* Deprecated: gktw migrated to @whiskeysockets/baileys
