@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import { io } from 'socket.io-client';
 
 const WhatsAppQRCode = ({ userId, sessionId = 'default' }) => {
@@ -178,7 +178,7 @@ const WhatsAppQRCode = ({ userId, sessionId = 'default' }) => {
       {qrCode && (
         <div className="text-center mb-6">
           <div className="bg-white p-4 rounded-lg border-2 border-gray-200 inline-block mb-4">
-            <QRCode value={qrCode} size={200} level="M" />
+            <QRCodeSVG value={qrCode} size={200} level="M" />
           </div>
           <p className="text-sm text-gray-600 mb-4">
             1. Open WhatsApp on your phone<br />

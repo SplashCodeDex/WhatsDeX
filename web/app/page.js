@@ -185,7 +185,7 @@ export default function LandingPage() {
               <a href="#pricing" className="text-gray-700 hover:text-blue-600">Pricing</a>
               <a href="#demo" className="text-gray-700 hover:text-blue-600">Demo</a>
               <a href="/login" className="text-gray-700 hover:text-blue-600">Login</a>
-              <Button href="/register">Start Free Trial</Button>
+              <Button onClick={() => window.location.href = '/register'}>Start Free Trial</Button>
             </div>
           </div>
         </div>
@@ -205,11 +205,20 @@ export default function LandingPage() {
               customer authentication, Stripe billing, and real-time analytics. Ready for enterprise deployment.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4">
+              <Button 
+                size="lg" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4"
+                onClick={() => window.location.href = '/register'}
+              >
                 <Play className="h-5 w-5 mr-2" />
                 Start Free Trial
               </Button>
-              <Button size="lg" variant="outline" className="px-8 py-4">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="px-8 py-4"
+                onClick={() => window.open('#demo', '_self')}
+              >
                 <MessageSquare className="h-5 w-5 mr-2" />
                 Watch Demo
               </Button>
@@ -456,7 +465,12 @@ export default function LandingPage() {
               Start Free Trial
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-white text-white hover:bg-white hover:text-blue-600"
+              onClick={() => alert('Contact us at sales@whatsdex.com or call +1-555-WHATSDX')}
+            >
               <HeadphonesIcon className="h-5 w-5 mr-2" />
               Talk to Sales
             </Button>

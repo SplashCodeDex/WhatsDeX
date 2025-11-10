@@ -30,6 +30,35 @@ const nextConfig = {
     // scrollRestoration: true,
   },
 
+  // Webpack configuration to fix module bundling issues
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Fix for module resolution issues
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+      crypto: false,
+    };
+
+    // Fix chunk splitting issues
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks.cacheGroups,
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      };
+    }
+
+    return config;
+  },
+
   // Server external packages
   // serverExternalPackages: ['sharp'],
 

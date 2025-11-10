@@ -135,6 +135,28 @@ export default function Dashboard() {
     }
   };
 
+  const showBotQRCode = (botId) => {
+    const bot = bots.find(b => b.id === botId);
+    if (bot && bot.qrCode) {
+      // Open QR code in modal or new window
+      window.open(`data:image/png;base64,${bot.qrCode}`, '_blank');
+    } else {
+      // Request new QR code generation
+      alert('Generating QR code for bot connection...');
+      // TODO: Implement QR code generation API call
+    }
+  };
+
+  const openBotSettings = (botId) => {
+    // Navigate to bot settings page
+    window.location.href = `/dashboard/bots/${botId}/settings`;
+  };
+
+  const openBillingManagement = () => {
+    // Navigate to billing management page
+    window.location.href = '/dashboard/billing';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -308,11 +330,21 @@ export default function Dashboard() {
                     )}
 
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => showBotQRCode(bot.id)}
+                      >
                         <QrCode className="h-4 w-4 mr-2" />
                         QR Code
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => openBotSettings(bot.id)}
+                      >
                         <Settings className="h-4 w-4 mr-2" />
                         Config
                       </Button>
@@ -373,7 +405,10 @@ export default function Dashboard() {
                         ${(subscription?.currentPlan?.price || 0) / 100}/month
                       </p>
                     </div>
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={() => openBillingManagement()}
+                    >
                       <CreditCard className="h-4 w-4 mr-2" />
                       Manage
                     </Button>
