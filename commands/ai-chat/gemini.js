@@ -5,6 +5,7 @@ import aiChatDB from '../../database/ai_chat_database.js';
 // import dbManager from '../../src/utils/DatabaseManager.js';
 import performanceMonitor from '../../src/utils/PerformanceMonitor.js';
 import RateLimiter from '../../src/utils/RateLimiter.js';
+import cache from '../../lib/cache.js';
 
 // Initialize rate limiter
 const rateLimiter = new RateLimiter();
@@ -96,6 +97,18 @@ export default {
         { role: 'user', content: validatedInput },
       ];
 
+      // --- Caching Implementation Start ---
+      const cacheKey = cache.createKey(messages);
+      const cachedResponse = await cache.get(cacheKey);
+
+      if (cachedResponse) {
+        console.log(`✅ Cache hit for key: ${cacheKey}`);
+        timer.end();
+        return ctx.reply(cachedResponse);
+      }
+      console.log(`❌ Cache miss for key: ${cacheKey}`);
+      // --- Caching Implementation End ---
+
       const response = await geminiService.getChatCompletionWithTools(messages, aiTools);
       const responseMessage = response.message;
 
@@ -150,11 +163,23 @@ export default {
         const finalMessageContent = finalResponse.message.content;
         messages.push(finalResponse.message);
         await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
+
+        // --- Caching Implementation Start ---
+        await cache.set(cacheKey, finalMessageContent);
+        console.log(`✅ Result stored in cache for key: ${cacheKey}`);
+        // --- Caching Implementation End ---
+
         return ctx.reply(finalMessageContent);
       }
       const result = responseMessage.content;
       messages.push(responseMessage);
       await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
+      
+      // --- Caching Implementation Start ---
+      await cache.set(cacheKey, result);
+      console.log(`✅ Result stored in cache for key: ${cacheKey}`);
+      // --- Caching Implementation End ---
+
       timer.end();
       return ctx.reply(result);
     } catch (error) {

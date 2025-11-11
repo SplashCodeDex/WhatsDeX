@@ -11,6 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 // Fixed imports - using existing working modules
 import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
+import trackCommandUsage from '../../middleware/analytics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -309,6 +310,9 @@ export class UnifiedCommandSystem {
         return true;
       }
       
+      // Track command usage for analytics
+      await trackCommandUsage(command.name);
+
       // Execute command
       await command.code(ctx);
       
@@ -357,13 +361,56 @@ export class UnifiedCommandSystem {
       bot: this.bot,
       
       // Utility functions
-      reply: async (message) => this.sendMessage(messageData, message),
+      reply: async (message) => {
+        if (typeof message === 'string') {
+          return await this.sendMessage(messageData, message);
+        } else {
+          // Handle object-based messages (media, etc.)
+          return await this.bot.sendMessage(messageData.key.remoteJid, message);
+        }
+      },
       react: async (emoji) => this.reactToMessage(messageData, emoji),
+      sendMessage: async (jid, content, options) => {
+        try {
+          return await this.bot.sendMessage(jid, content, options);
+        } catch (error) {
+          console.error('Failed to send message via ctx.sendMessage:', error.message);
+          throw error;
+        }
+      },
+      editMessage: async (key, text) => {
+        console.warn('⚠️ editMessage not implemented - using reply instead');
+        return await this.sendMessage(messageData, text);
+      },
       
       // Enhanced features
       isOwner: () => this.isOwner(messageData.key.remoteJid),
       isGroup: () => messageData.key.remoteJid.endsWith('@g.us'),
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      
+      // Legacy compatibility properties
+      self: this.context || {},
+      id: messageData.key.remoteJid,
+      used: {
+        prefix: commandInfo.prefix,
+        command: command.name
+      },
+      getId: (jid) => {
+        // Extract phone number from JID
+        return jid.split('@')[0];
+      },
+      MessageCollector: (options = {}) => {
+        console.warn('⚠️ MessageCollector not fully implemented - returning mock object');
+        // Return a mock collector that doesn't actually collect
+        return {
+          on: (event, handler) => {
+            console.warn(`⚠️ MessageCollector.on('${event}') called but not implemented`);
+          },
+          stop: () => {
+            console.warn('⚠️ MessageCollector.stop() called but not implemented');
+          }
+        };
+      }
     };
   }
 
@@ -488,7 +535,11 @@ export class UnifiedCommandSystem {
   }
 
   isOwner(jid) {
-    const ownerNumbers = (process.env.OWNER_NUMBER || '').split(',').map(n => n.trim());
+    const ownerNumbers = (process.env.OWNER_NUMBER || '').split(',').map(n => n.trim()).filter(n => n.length > 0);
+    if (ownerNumbers.length === 0) {
+      console.warn('⚠️ OWNER_NUMBER environment variable not set');
+      return false;
+    }
     return ownerNumbers.some(owner => jid.includes(owner));
   }
 

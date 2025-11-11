@@ -7,10 +7,67 @@ import * as formatter from './utils/formatter.js';
 import logger from './src/utils/logger.js';
 import state from './state.js';
 
-// Initialize Prisma database service
+// Initialize Prisma database service with proper connection management
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  },
+  // Add connection pool configuration
+  __internal: {
+    engine: {
+      binary: {
+        queryEngineTimeout: 60000, // 60 seconds
+        queryEngineLibrary: undefined
+      }
+    }
+  }
 });
+
+// Test database connection immediately
+async function testDatabaseConnection() {
+  try {
+    await prisma.$connect();
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('✅ Database connection verified');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    console.error('Please check your DATABASE_URL and ensure the database is running.');
+    process.exit(1);
+  }
+}
+
+// Test connection on startup - wrap in IIFE to handle async
+(async () => {
+  try {
+    await testDatabaseConnection();
+  } catch (error) {
+    // Error already handled in testDatabaseConnection
+  }
+})();
+
+// Add connection error handling and graceful shutdown
+prisma.$on('error', (error) => {
+  console.error('🔴 Database error:', error);
+});
+
+// Graceful shutdown handler
+const gracefulShutdown = async () => {
+  console.log('🔄 Gracefully shutting down database connection...');
+  try {
+    await prisma.$disconnect();
+    console.log('✅ Database disconnected successfully');
+  } catch (error) {
+    console.error('❌ Error during database shutdown:', error);
+  }
+};
+
+// Shutdown handlers are now managed by index.js to prevent race conditions
+// process.on('SIGTERM', gracefulShutdown);
+// process.on('SIGINT', gracefulShutdown);
+// process.on('exit', gracefulShutdown);
 
 // Database service wrapper
 class DatabaseService {

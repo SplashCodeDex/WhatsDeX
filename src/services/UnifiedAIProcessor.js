@@ -16,16 +16,22 @@ export class UnifiedAIProcessor {
     this.context = context;
     
     // CONSOLIDATED: Single Gemini AI instance as default
-    this.geminiAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
-    this.geminiModel = this.geminiAI.getGenerativeModel({ 
-      model: 'gemini-pro',
-      generationConfig: {
-        temperature: 0.7,
-        topP: 0.8,
-        topK: 40,
-        maxOutputTokens: 2048,
-      }
-    });
+    if (!process.env.GOOGLE_GEMINI_API_KEY) {
+      console.warn('⚠️ GOOGLE_GEMINI_API_KEY not set - AI features will be disabled');
+      this.geminiAI = null;
+      this.geminiModel = null;
+    } else {
+      this.geminiAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
+      this.geminiModel = this.geminiAI.getGenerativeModel({ 
+        model: 'gemini-pro',
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.8,
+          topK: 40,
+          maxOutputTokens: 2048,
+        }
+      });
+    }
     
     // CONSOLIDATED: Unified memory management
     this.conversationMemory = new MemoryManager({
@@ -170,6 +176,15 @@ export class UnifiedAIProcessor {
    */
   async generateGeminiResponse(context, classification) {
     try {
+      // Check if Gemini is available
+      if (!this.geminiModel) {
+        console.warn('⚠️ Gemini AI not available - returning fallback response');
+        return {
+          text: 'AI features are currently unavailable. Please check the configuration.',
+          source: 'fallback'
+        };
+      }
+
       // Build enhanced prompt with context
       const prompt = this.buildEnhancedPrompt(context, classification);
       

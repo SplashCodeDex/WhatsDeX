@@ -114,6 +114,13 @@ global.config = {
     },
   },
 
+  // Redis configuration
+  redis: {
+    host: 'localhost', // Redis host
+    port: 6379, // Redis port
+    password: '', // Redis password (leave empty if no password)
+  },
+
   // Bot system
   system: {
     alwaysOnline: true, // Bot always has "online" status

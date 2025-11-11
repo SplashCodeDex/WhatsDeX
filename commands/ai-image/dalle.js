@@ -1,3 +1,5 @@
+import { imageGenerationQueue } from '../../lib/queues.js';
+
 export default {
   name: 'dalle',
   category: 'ai-image',
@@ -19,27 +21,18 @@ export default {
       );
 
     try {
-      const result = tools.api.createUrl('davidcyril', '/ai/dalle', {
-        text: input,
+      // Add a job to the image generation queue
+      await imageGenerationQueue.add({
+        input: input,
+        userJid: ctx.sender.jid,
+        used: ctx.used, // Pass the 'used' context for the reply button
       });
 
-      await ctx.reply({
-        image: {
-          url: result,
-        },
-        mimetype: tools.mime.lookup('png'),
-        caption: formatter.quote(`Prompt: ${input}`),
-        footer: config.msg.footer,
-        buttons: [
-          {
-            buttonId: `${ctx.used.prefix + ctx.used.command} ${input}`,
-            buttonText: {
-              displayText: 'Ambil Lagi',
-            },
-          },
-        ],
-      });
+      // Inform the user that their request is being processed
+      await ctx.reply(config.msg.wait);
+
     } catch (error) {
+      // Handle potential errors from adding the job to the queue
       await tools.cmd.handleError(ctx, error, true);
     }
   },

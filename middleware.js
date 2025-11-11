@@ -1,7 +1,7 @@
-const WhatsDeXBrain = require('./src/services/WhatsDeXBrain');
+import WhatsDeXBrain from './src/services/WhatsDeXBrain.js';
 
 // Main bot middleware
-module.exports = (bot, context) => {
+export default (bot, context) => {
   const {
     database,
     tools: { cmd },

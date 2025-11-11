@@ -50,7 +50,7 @@ function createUrl(apiNameOrURL, endpoint, params = {}, apiKeyParamName) {
 
     return apiUrl.toString();
   } catch (error) {
-    consolefy.error(`Error: ${util.format(error)}`);
+    console.error(`Error: ${util.format(error)}`);
     return null;
   }
 }

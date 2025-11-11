@@ -7,10 +7,11 @@
   "scripts": {
     "start": "node index.js",
     "start:smart": "node smart-start.js",
-    "start:complete": "node start-whatsdx.js",
+    "start:complete": "node smart-start.js",
     "start:dev": "node index.js",
     "start:web": "cd web && npm run dev",
     "start:saas": "PERSIST_SESSIONS=true WEB_QR_ENABLED=true PRINT_QR_IN_TERMINAL=false node index.js",
+    "worker": "node worker.js",
     "dev": "nodemon .",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -83,8 +84,7 @@
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "qrcode.react": "^4.2.0",
-    "rate-limiter-flexible": "^5.0.5",
-    "redis": "^4.7.1",
+
     "sharp": "^0.33.5",
     "socket.io": "^4.8.1",
     "stripe": "^19.3.0",

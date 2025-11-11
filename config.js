@@ -6,6 +6,30 @@ const Formatter = {
   monospace: text => `\`\`${text}\`\``,
 };
 
+// Environment validation function
+function validateEnvironment() {
+  const required = ['DATABASE_URL'];
+  const missing = required.filter(env => !process.env[env]);
+  
+  if (missing.length > 0) {
+    console.error('❌ Missing required environment variables:', missing);
+    console.error('Please set these variables before starting the application.');
+    process.exit(1);
+  }
+  
+  // Validate DATABASE_URL format
+  if (process.env.DATABASE_URL) {
+    const dbUrlPattern = /^(postgresql|mysql|sqlite|mongodb):\/\//;
+    if (!dbUrlPattern.test(process.env.DATABASE_URL)) {
+      console.error('❌ DATABASE_URL format invalid. Must start with postgresql://, mysql://, sqlite://, or mongodb://');
+      process.exit(1);
+    }
+  }
+}
+
+// Run validation
+validateEnvironment();
+
 // Configuration
 export default {
   // Basic bot information
@@ -107,6 +131,13 @@ export default {
       MESSAGES_TO_SUMMARIZE: 10,
       HISTORY_PRUNE_LENGTH: 6,
     },
+  },
+
+  // Redis configuration
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+    password: process.env.REDIS_PASSWORD || '',
   },
 
   // Bot system

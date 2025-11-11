@@ -5,23 +5,23 @@ import { fileURLToPath } from 'node:url';
 import { existsSync, rmSync } from 'node:fs';
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
-import messageQueue from './src/worker.js';
-import IntelligentMessageProcessor from './src/IntelligentMessageProcessor.js';
+// import messageQueue from './src/worker.js'; // Disabled - not used and can cause Redis connection failures
+// import IntelligentMessageProcessor from './src/IntelligentMessageProcessor.js'; // Disabled - not used
 // Robust reconnection manager with circuit breaker
 class ConnectionManager {
-  constructor() {
+  constructor(config = {}) {
     this.state = {
       isReconnecting: false,
       attemptCount: 0,
       consecutiveFailures: 0,
       lastError: null,
       lastSuccessTime: Date.now(),
-      maxRetries: 10,
-      baseDelay: 2000,
-      maxDelay: 300000,
-      backoffMultiplier: 1.5,
-      circuitBreakerThreshold: 5,
-      circuitBreakerTimeout: 600000 // 10 minutes
+      maxRetries: config.maxRetries || 10,
+      baseDelay: config.baseDelay || 2000,
+      maxDelay: config.maxDelay || 300000,
+      backoffMultiplier: config.backoffMultiplier || 1.5,
+      circuitBreakerThreshold: config.circuitBreakerThreshold || 5,
+      circuitBreakerTimeout: config.circuitBreakerTimeout || 600000 // 10 minutes
     };
     this.reconnectionTimeout = null;
   }
@@ -86,20 +86,84 @@ class ConnectionManager {
   }
 
   async attemptReconnection(context) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Reconnection timeout'));
       }, 30000); // 30 second timeout
 
-      main(context)
-        .then(() => {
-          clearTimeout(timeout);
-          resolve();
-        })
-        .catch(error => {
-          clearTimeout(timeout);
-          reject(error);
-        });
+      try {
+        // Clean up previous bot instance if exists
+        if (global.bot) {
+          try {
+            global.bot.ev.removeAllListeners();
+            if (global.bot.ws) {
+              global.bot.ws.close();
+            }
+            global.bot = null;
+          } catch (cleanupError) {
+            console.warn('⚠️  Cleanup warning:', cleanupError.message);
+          }
+        }
+
+        // Create new bot instance directly instead of calling main recursively
+        const newBot = await this.createBotInstance(context);
+        global.bot = newBot;
+        
+        clearTimeout(timeout);
+        resolve(newBot);
+      } catch (error) {
+        clearTimeout(timeout);
+        reject(error);
+      }
+    });
+  }
+
+  async createBotInstance(context) {
+    const { config } = context;
+    const path = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const { useMultiFileAuthState, makeWASocket, DisconnectReason } = await import('@whiskeysockets/baileys');
+    const pino = (await import('pino')).default;
+
+    const authDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), config.bot.authAdapter.default.authDir);
+    const { state, saveCreds } = await useMultiFileAuthState(authDir);
+
+    const logger = pino({ level: 'silent' });
+
+    const bot = makeWASocket({
+      auth: state,
+      logger,
+      browser: ['WhatsDeX', 'Chrome', '1.0.0'],
+      defaultQueryTimeoutMs: 60000,
+      retryRequestDelayMs: 250,
+      maxMsgRetryCount: 5,
+      keepAliveIntervalMs: 30000
+    });
+
+    bot.ev.on('creds.update', saveCreds);
+    
+    // Set up basic event handlers for the new instance
+    this.setupBotEventHandlers(bot, context);
+    
+    return bot;
+  }
+
+  setupBotEventHandlers(bot, context) {
+    // Set up connection monitoring
+    bot.ev.on('connection.update', async (update) => {
+      const { connection, lastDisconnect } = update;
+      
+      if (connection === 'close') {
+        this.state.lastDisconnected = Date.now();
+        const error = lastDisconnect?.error;
+        console.log(`❌ Bot connection closed: ${error?.message || 'Unknown error'}`);
+        
+        // Let the main connection handler in main() deal with reconnection
+        // This is just for tracking
+      } else if (connection === 'open') {
+        console.log('✅ Bot reconnected successfully!');
+        global.bot = bot;
+      }
     });
   }
 
@@ -128,10 +192,13 @@ class ConnectionManager {
 
   onReconnectionSuccess() {
     const totalAttempts = this.state.attemptCount;
-    const reconnectionTime = Date.now() - this.state.lastDisconnected;
+    const reconnectionTime = this.state.lastDisconnected ? 
+      Date.now() - this.state.lastDisconnected : 0;
     
     console.log(`✅ Reconnection successful after ${totalAttempts} attempts`);
-    console.log(`⏱️  Total reconnection time: ${Math.round(reconnectionTime/1000)}s`);
+    if (reconnectionTime > 0) {
+      console.log(`⏱️  Total reconnection time: ${Math.round(reconnectionTime/1000)}s`);
+    }
     
     // Track statistics before resetting
     this.state.totalSuccessfulReconnections = (this.state.totalSuccessfulReconnections || 0) + 1;
@@ -173,10 +240,22 @@ class ConnectionManager {
   }
 }
 
-const connectionManager = new ConnectionManager();
+const connectionManager = new ConnectionManager({
+  maxRetries: 15,
+  baseDelay: 3000,
+  circuitBreakerThreshold: 5,
+  circuitBreakerTimeout: 600000
+});
+
+import { jobResultsQueue } from './lib/queues.js';
 
 const main = async context => {
   const { config } = context;
+  
+  // Validate critical configuration
+  if (!config?.bot?.authAdapter?.default?.authDir) {
+    throw new Error('Missing critical configuration: config.bot.authAdapter.default.authDir');
+  }
 
   // Add comprehensive error handling wrapper
   try {
@@ -187,6 +266,19 @@ const main = async context => {
   }
 
   const authDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), config.bot.authAdapter.default.authDir);
+  
+  // Ensure auth directory exists
+  if (!existsSync(authDir)) {
+    console.log(`📁 Creating auth directory: ${authDir}`);
+    try {
+      const fs = await import('node:fs/promises');
+      await fs.mkdir(authDir, { recursive: true });
+    } catch (dirError) {
+      console.error(`❌ Failed to create auth directory: ${dirError.message}`);
+      throw new Error(`Auth directory setup failed: ${dirError.message}`);
+    }
+  }
+  
   const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
   const logger = pino({
@@ -202,6 +294,42 @@ const main = async context => {
     maxMsgRetryCount: 5,
     keepAliveIntervalMs: 30000 // 30 seconds keep-alive
   });
+
+  // Listen for job results from the worker
+  jobResultsQueue.process(async (job) => {
+    const { userJid, imageUrl, input, used, success, error } = job.data;
+    const { formatter } = context;
+
+    try {
+      if (success) {
+        console.log(`✅ Sending completed job result to ${userJid}`);
+        await bot.sendMessage(userJid, {
+          image: {
+            url: imageUrl,
+          },
+          mimetype: 'image/png',
+          caption: formatter.quote(`Prompt: ${input}`),
+          footer: config.msg.footer,
+          buttons: [
+            {
+              buttonId: `${used.prefix}${used.command} ${input}`,
+              buttonText: {
+                displayText: 'Ambil Lagi',
+              },
+            },
+          ],
+        });
+      } else {
+        console.error(`❌ Job failed for ${userJid}. Reason: ${error}`);
+        await bot.sendMessage(userJid, {
+          text: `Maaf, terjadi kesalahan saat membuat gambar: ${error}`,
+        });
+      }
+    } catch (e) {
+      console.error(`❌ Failed to send job result message to ${userJid}:`, e);
+    }
+  });
+
 
   bot.ev.on('creds.update', saveCreds);
 
@@ -243,20 +371,24 @@ const main = async context => {
         
         // Web dashboard integration (async)
         new Promise((resolve) => {
-          if (global.io) {
-            global.io.emit('qr-code-update', {
-              qr: qr,
+          try {
+            if (global.io) {
+              global.io.emit('qr-code-update', {
+                qr: qr,
+                timestamp: Date.now(),
+                status: 'qr_ready'
+              });
+            }
+            
+            // Store QR for web API access
+            global.currentQR = {
+              code: qr,
               timestamp: Date.now(),
-              status: 'qr_ready'
-            });
+              status: 'ready'
+            };
+          } catch (error) {
+            console.warn('⚠️ Failed to emit QR to web interface:', error.message);
           }
-          
-          // Store QR for web API access
-          global.currentQR = {
-            code: qr,
-            timestamp: Date.now(),
-            status: 'ready'
-          };
           
           resolve();
         })
@@ -366,24 +498,40 @@ const main = async context => {
   // CONSOLIDATED: Initialize Unified Command System (replaces all command loaders)
   const { UnifiedCommandSystem } = await import('./src/services/UnifiedCommandSystem.js');
   const commandSystem = new UnifiedCommandSystem(bot, context);
-  await commandSystem.loadCommands();
   
-  console.log(`✅ Unified Command System loaded: ${commandSystem.getStats().totalCommands} commands`);
-  console.log(`📂 Categories: ${commandSystem.getAllCategories().join(', ')}`);
+  try {
+    await commandSystem.loadCommands();
+    console.log(`✅ Unified Command System loaded: ${commandSystem.getStats().totalCommands} commands`);
+    console.log(`📂 Categories: ${commandSystem.getAllCategories().join(', ')}`);
+  } catch (commandLoadError) {
+    console.error(`❌ Failed to load commands: ${commandLoadError.message}`);
+    console.warn('⚠️ Continuing without command system...');
+  }
   
   // Maintain compatibility
   bot.cmd = commandSystem.commands;
 
   // CONSOLIDATED: Initialize Unified AI Processor (replaces multiple AI systems)
-  const { UnifiedAIProcessor } = await import('./src/services/UnifiedAIProcessor.js');
-  const unifiedAI = new UnifiedAIProcessor(bot, context);
+  let unifiedAI = null;
+  try {
+    const { UnifiedAIProcessor } = await import('./src/services/UnifiedAIProcessor.js');
+    unifiedAI = new UnifiedAIProcessor(bot, context);
+    console.log('✅ Unified AI Processor initialized');
+  } catch (aiLoadError) {
+    console.error(`❌ Failed to load AI processor: ${aiLoadError.message}`);
+    console.warn('⚠️ Continuing without AI processing...');
+  }
   
   bot.ev.on('messages.upsert', async m => {
+    // Safety check for messages array
+    if (!m?.messages || m.messages.length === 0) return;
+    
     const msg = m.messages[0];
-    if (!msg.message) return;
+    if (!msg?.message || !msg?.key) return;
     if (msg.key.fromMe) return; // Ignore own messages
 
     // Enhanced serialization for intelligent processing
+    const messageKeys = Object.keys(msg.message || {});
     const intelligentMsg = {
       key: {
         remoteJid: msg.key.remoteJid,
@@ -391,7 +539,7 @@ const main = async context => {
         id: msg.key.id,
       },
       message: msg.message,
-      type: Object.keys(msg.message)[0],
+      type: messageKeys.length > 0 ? messageKeys[0] : 'unknown',
       pushName: msg.pushName,
       messageTimestamp: msg.messageTimestamp,
       // Add additional context for AI processing
@@ -403,12 +551,22 @@ const main = async context => {
     };
 
     // CONSOLIDATED: Smart routing between commands and AI
-    const isCommand = await commandSystem.processMessage(intelligentMsg);
+    let isCommand = false;
+    
+    try {
+      if (commandSystem?.processMessage) {
+        isCommand = await commandSystem.processMessage(intelligentMsg);
+      }
+    } catch (commandError) {
+      console.error('Command processing error:', commandError.message);
+    }
     
     if (!isCommand) {
       // Only process with AI if it's not a command (smart filtering)
       try {
-        await unifiedAI.processMessage(intelligentMsg);
+        if (unifiedAI?.processMessage) {
+          await unifiedAI.processMessage(intelligentMsg);
+        }
       } catch (error) {
         console.error('Unified AI processing error:', error.message);
       }
