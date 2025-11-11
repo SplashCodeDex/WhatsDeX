@@ -46,12 +46,12 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
+    env_file:
+      - ./.env
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex}@db:5432/${DB_NAME:-whatsdex}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
-      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
-      - PORT=3001
     ports:
       - "3001:3001"
     depends_on:
@@ -97,11 +97,12 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
+    env_file:
+      - ./.env
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex}@db:5432/${DB_NAME:-whatsdex}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
-      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
     command: node src/jobs/index.js
     depends_on:
       db:
@@ -156,8 +157,9 @@ services:
   grafana:
     image: grafana/grafana:latest
     restart: always
+    env_file:
+      - ./.env
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
     ports:
       - "3002:3000"

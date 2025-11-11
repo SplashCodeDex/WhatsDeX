@@ -4,6 +4,7 @@
  * Ensures all services start in correct order with health checks
  */
 
+import 'dotenv/config';
 import { StartupOrchestrator } from './src/services/StartupOrchestrator.js';
 import CFonts from 'cfonts';
 import { pathToFileURL } from 'url';

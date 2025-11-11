@@ -10,17 +10,17 @@ const Formatter = {
 export default {
   // Basic bot information
   bot: {
-    name: 'whatsdex', // Bot name
-    prefix: /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i, // Prefix characters to trigger commands
-    phoneNumber: '', // REPLACE WITH YOUR BOT'S PHONE NUMBER
+    name: process.env.BOT_NAME || 'whatsdex', // Bot name
+    prefix: new RegExp(process.env.BOT_PREFIX || '^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]'), // Prefix characters to trigger commands
+    phoneNumber: process.env.BOT_PHONE_NUMBER || '', // REPLACE WITH YOUR BOT'S PHONE NUMBER
     thumbnail:
       'https://repository-images.githubusercontent.com/753096396/84e76ef0-ba19-4c87-8ec2-ea803b097479', // Bot's thumbnail image
-    groupJid: '', // REPLACE WITH YOUR BOT'S GROUP JID
-    newsletterJid: '120363416372653441@newsletter', // JID for the bot's channel
+    groupJid: process.env.GROUP_JID || '', // REPLACE WITH YOUR BOT'S GROUP JID
+    newsletterJid: process.env.NEWSLETTER_JID || '120363416372653441@newsletter', // JID for the bot's channel
 
     // Bot session authentication configuration
     authAdapter: {
-      adapter: 'default', // Adapter for storing the session (Adapter options: default, mysql, mongo, firebase)
+      adapter: process.env.AUTH_ADAPTER || 'default', // Adapter for storing the session (Adapter options: default, mysql, mongo, firebase)
 
       // Default configuration
       default: {
@@ -29,28 +29,23 @@ export default {
 
       // MySQL configuration
       mysql: {
-        host: 'localhost:3306', // Hostname
-        user: 'root', // Username
-        password: 'admin123', // Password
-        database: 'whatsdex', // Database name
+        host: process.env.MYSQL_HOST || 'localhost:3306', // Hostname
+        user: process.env.MYSQL_USER || 'root', // Username
+        password: process.env.MYSQL_PASSWORD || 'admin123', // Password
+        database: process.env.MYSQL_DATABASE || 'whatsdex', // Database name
       },
 
       // MongoDB configuration
       mongodb: {
-        url: 'mongodb://localhost:27017/whatsdex', // URL
+        url: process.env.MONGODB_URL || 'mongodb://localhost:27017/whatsdex', // URL
       },
 
       // Firebase configuration
       firebase: {
-        tableName: 'whatsdex', // Table name
-        session: 'state', // Session name
+        tableName: process.env.FIREBASE_TABLE_NAME || 'whatsdex', // Table name
+        session: process.env.FIREBASE_SESSION || 'state', // Session name
       },
     },
-  },
-
-  // Database configuration
-  database: {
-    mongoUri: 'mongodb://localhost:27017/whatsdex_app', // REPLACE WITH YOUR MONGODB CONNECTION URI
   },
 
   // Custom bot messages for specific situations
@@ -88,21 +83,21 @@ export default {
 
   // Bot owner information
   owner: {
-    name: 'Your Name', // REPLACE WITH YOUR NAME
-    organization: 'Your Organization', // REPLACE WITH YOUR ORGANIZATION
-    id: '1234567890', // REPLACE WITH YOUR PHONE NUMBER
-    co: [''], // Co-owner's phone number
+    name: process.env.OWNER_NAME || 'Your Name', // REPLACE WITH YOUR NAME
+    organization: process.env.OWNER_ORGANIZATION || 'Your Organization', // REPLACE WITH YOUR ORGANIZATION
+    id: process.env.OWNER_NUMBER || '1234567890', // REPLACE WITH YOUR PHONE NUMBER
+    co: process.env.CO_OWNER_NUMBERS ? process.env.CO_OWNER_NUMBERS.split(',') : [], // Co-owner's phone number
   },
 
   // Bot sticker
   sticker: {
-    packname: 'WhatsDeX Sticker Pack', // Sticker pack name
-    author: 'CodeDeX', // Sticker author
+    packname: process.env.STICKER_PACKNAME || 'WhatsDeX Sticker Pack', // Sticker pack name
+    author: process.env.STICKER_AUTHOR || 'CodeDeX', // Sticker author
   },
 
   // API keys for various services
   api: {
-    openai: '', // REPLACE WITH YOUR OPENAI API KEY
+    openai: process.env.OPENAI_API_KEY || '', // REPLACE WITH YOUR OPENAI API KEY
   },
 
   // AI configuration
@@ -116,28 +111,28 @@ export default {
 
   // Bot system
   system: {
-    alwaysOnline: true, // Bot always has "online" status
-    antiCall: true, // Bot automatically bans people who call
-    autoRead: true, // Bot automatically reads messages
-    autoMention: true, // Bot automatically mentions someone in sent messages
-    autoAiLabel: true, // Bot automatically adds an AI label in sent messages
-    autoTypingOnCmd: true, // Show "typing..." status when processing commands
-    cooldown: 10 * 1000, // Cooldown between commands (ms)
-    maxListeners: 50, // Max listeners for events
-    port: 3000, // Port (if using a server)
-    privatePremiumOnly: false, // Non-Premium users are not allowed to use the bot in private conversations
-    restrict: false, // Restrict command access
-    requireBotGroupMembership: false, // Must join the bot's group
-    requireGroupSewa: false, // Must rent the bot to be used in a group
-    reportErrorToOwner: true, // Report errors to the bot owner
-    selfOwner: false, // Bot becomes its own owner
-    selfReply: true, // Bot can reply to its own messages
-    timeZone: 'Africa/Accra', // Bot's time zone
-    unavailableAtNight: false, // Bot is unavailable at night, from 12 AM to 6 AM (Time will be adjusted according to timeZone)
-    useCoin: true, // Use coins
-    usePairingCode: false, // Use pairing code for connection
-    customPairingCode: 'UMBR4L15', // Custom pairing code for connection (Optional, if using QR code, if empty the pairing code will be random)
-    useStore: false, // Store for saving incoming messages
-    useServer: false, // Run the bot with a server
+    alwaysOnline: process.env.ALWAYS_ONLINE === 'true' || true, // Bot always has "online" status
+    antiCall: process.env.ANTI_CALL === 'true' || true, // Bot automatically bans people who call
+    autoRead: process.env.AUTO_READ === 'true' || true, // Bot automatically reads messages
+    autoMention: process.env.AUTO_MENTION === 'true' || true, // Bot automatically mentions someone in sent messages
+    autoAiLabel: process.env.AUTO_AI_LABEL === 'true' || true, // Bot automatically adds an AI label in sent messages
+    autoTypingOnCmd: process.env.AUTO_TYPING__CMD === 'true' || true, // Show "typing..." status when processing commands
+    cooldown: parseInt(process.env.BOT_COOLDOWN_MS, 10) || 10 * 1000, // Cooldown between commands (ms)
+    maxListeners: parseInt(process.env.MAX_LISTENERS, 10) || 50, // Max listeners for events
+    port: parseInt(process.env.PORT, 10) || 3001, // Port (if using a server)
+    privatePremiumOnly: process.env.PRIVATE_PREMIUM_ONLY === 'true' || false, // Non-Premium users are not allowed to use the bot in private conversations
+    restrict: process.env.RESTRICT_COMMANDS === 'true' || false, // Restrict command access
+    requireBotGroupMembership: process.env.REQUIRE_BOT_GROUP_MEMBERSHIP === 'true' || false, // Must join the bot's group
+    requireGroupSewa: process.env.REQUIRE_GROUP_SEWA === 'true' || false, // Must rent the bot to be used in a group
+    reportErrorToOwner: process.env.REPORT_ERROR_TO_OWNER === 'true' || true, // Report errors to the bot owner
+    selfOwner: process.env.SELF_OWNER === 'true' || false, // Bot becomes its own owner
+    selfReply: process.env.SELF_REPLY === 'true' || true, // Bot can reply to its own messages
+    timeZone: process.env.TIME_ZONE || 'Africa/Accra', // Bot's time zone
+    unavailableAtNight: process.env.UNAVAILABLE_AT_NIGHT === 'true' || false, // Bot is unavailable at night, from 12 AM to 6 AM (Time will be adjusted according to timeZone)
+    useCoin: process.env.USE_COIN === 'true' || true, // Use coins
+    usePairingCode: process.env.USE_PAIRING_CODE === 'true' || false, // Use pairing code for connection
+    customPairingCode: process.env.CUSTOM_PAIRING_CODE || 'UMBR4L15', // Custom pairing code for connection (Optional, if using QR code, if empty the pairing code will be random)
+    useStore: process.env.USE_STORE === 'true' || false, // Store for saving incoming messages
+    useServer: process.env.USE_SERVER === 'true' || false, // Run the bot with a server
   },
 };
