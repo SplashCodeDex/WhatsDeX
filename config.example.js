@@ -17,6 +17,7 @@ global.config = {
       'https://repository-images.githubusercontent.com/753096396/84e76ef0-ba19-4c87-8ec2-ea803b097479', // Bot's thumbnail image
     groupJid: '', // REPLACE WITH YOUR BOT'S GROUP JID
     newsletterJid: '120363416372653441@newsletter', // JID for the bot's channel
+    browser: ['WhatsDeX', 'Chrome', '1.0.0'], // Browser info
 
     // Bot session authentication configuration
     authAdapter: {
@@ -103,6 +104,7 @@ global.config = {
   // API keys for various services
   api: {
     openai: '', // REPLACE WITH YOUR OPENAI API KEY
+    gemini: '', // REPLACE WITH YOUR GOOGLE GEMINI API KEY
   },
 
   // AI configuration
@@ -112,6 +114,15 @@ global.config = {
       MESSAGES_TO_SUMMARIZE: 10,
       HISTORY_PRUNE_LENGTH: 6,
     },
+    gemini: {
+      model: 'gemini-pro',
+      generationConfig: {
+        temperature: 0.7,
+        topP: 0.8,
+        topK: 40,
+        maxOutputTokens: 2048,
+      }
+    }
   },
 
   // Redis configuration
@@ -119,6 +130,16 @@ global.config = {
     host: 'localhost', // Redis host
     port: 6379, // Redis port
     password: '', // Redis password (leave empty if no password)
+  },
+
+  // Rate limit configuration
+  rateLimits: {
+    global: { requests: 100, window: 60 }, // 100 requests per minute globally
+    user: { requests: 30, window: 60 },    // 30 requests per minute per user
+    command: { requests: 10, window: 60 }, // 10 command executions per minute
+    ai: { requests: 5, window: 300 },      // 5 AI requests per 5 minutes
+    download: { requests: 3, window: 60 }, // 3 downloads per minute
+    premium: { requests: 100, window: 60 } // Higher limits for premium users
   },
 
   // Bot system

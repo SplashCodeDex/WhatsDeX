@@ -16,20 +16,15 @@ export class UnifiedAIProcessor {
     this.context = context;
     
     // CONSOLIDATED: Single Gemini AI instance as default
-    if (!process.env.GOOGLE_GEMINI_API_KEY) {
-      console.warn('⚠️ GOOGLE_GEMINI_API_KEY not set - AI features will be disabled');
+    if (!this.context.config.api.gemini) {
+      console.warn('⚠️ Gemini API key not set in config.api.gemini - AI features will be disabled');
       this.geminiAI = null;
       this.geminiModel = null;
     } else {
-      this.geminiAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
+      this.geminiAI = new GoogleGenerativeAI(this.context.config.api.gemini);
       this.geminiModel = this.geminiAI.getGenerativeModel({ 
-        model: 'gemini-pro',
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.8,
-          topK: 40,
-          maxOutputTokens: 2048,
-        }
+        model: this.context.config.ai.gemini.model,
+        generationConfig: this.context.config.ai.gemini.generationConfig,
       });
     }
     
@@ -382,12 +377,28 @@ export class UnifiedAIProcessor {
   }
 
   async getUserProfile(userId) {
-    // Placeholder for user profile retrieval
-    return {
-      id: userId,
-      preferences: {},
-      conversationStyle: 'default'
-    };
+    try {
+      const user = await this.context.databaseService.getUser(userId);
+      if (user) {
+        return user;
+      }
+      // Return a default structure if user not found, to prevent errors
+      return {
+        id: userId,
+        name: 'Unknown User',
+        preferences: {},
+        conversationStyle: 'default'
+      };
+    } catch (error) {
+      logger.error(`Failed to get user profile for ${userId}:`, error);
+      // Return a default structure on error
+      return {
+        id: userId,
+        name: 'Unknown User',
+        preferences: {},
+        conversationStyle: 'default'
+      };
+    }
   }
 
   /**
@@ -403,24 +414,6 @@ export class UnifiedAIProcessor {
   }
 }
 
-/**
- * MESSAGE CLASSIFIER - Smart filtering component
- */
-class MessageClassifier {
-  constructor() {
-    this.spamThreshold = 3;
-    this.recentMessages = new Map();
-  }
 
-  async classify(message) {
-    // Implementation for message classification
-    return {
-      type: 'text',
-      intent: 'conversation',
-      confidence: 0.8,
-      shouldProcess: true
-    };
-  }
-}
 
 export default UnifiedAIProcessor;

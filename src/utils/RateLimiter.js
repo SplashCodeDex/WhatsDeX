@@ -3,32 +3,21 @@
  * Fixes primitive rate limiting that resets on restart
  */
 
-import Redis from 'ioredis';
-
 export class RateLimiter {
-  constructor(redisUrl = process.env.REDIS_URL) {
-    this.redis = new Redis(redisUrl, {
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
-      lazyConnect: true
-    });
+  constructor(redisClient, options = {}) {
+    if (!redisClient) {
+      throw new Error('RateLimiter requires a valid redisClient instance.');
+    }
+    this.redis = redisClient;
 
-    this.redis.on('connect', () => {
-      console.log('✅ Rate limiter connected to Redis');
-    });
-
-    this.redis.on('error', (error) => {
-      console.error('❌ Redis connection error:', error);
-    });
-
-    // Default rate limit configurations
-    this.defaultLimits = {
-      global: { requests: 100, window: 60 }, // 100 requests per minute globally
-      user: { requests: 30, window: 60 },    // 30 requests per minute per user
-      command: { requests: 10, window: 60 }, // 10 command executions per minute
-      ai: { requests: 5, window: 300 },      // 5 AI requests per 5 minutes
-      download: { requests: 3, window: 60 }, // 3 downloads per minute
-      premium: { requests: 100, window: 60 } // Higher limits for premium users
+    // Default rate limit configurations from options or fallback
+    this.defaultLimits = options.limits || {
+      global: { requests: 100, window: 60 },
+      user: { requests: 30, window: 60 },
+      command: { requests: 10, window: 60 },
+      ai: { requests: 5, window: 300 },
+      download: { requests: 3, window: 60 },
+      premium: { requests: 100, window: 60 }
     };
   }
 
@@ -42,7 +31,6 @@ export class RateLimiter {
       const redisKey = `ratelimit:${type}:${key}`;
       const multi = this.redis.multi();
       
-      // Get current count and increment
       multi.incr(redisKey);
       multi.expire(redisKey, limit.window);
       
@@ -50,7 +38,6 @@ export class RateLimiter {
       const currentCount = results[0][1];
       
       if (currentCount > limit.requests) {
-        // Get remaining time
         const ttl = await this.redis.ttl(redisKey);
         return {
           allowed: false,
@@ -89,7 +76,6 @@ export class RateLimiter {
       const result = await this.isAllowed(check.key, check.type, check.limit);
       results.push({ ...check, result });
       
-      // If any check fails, return immediately
       if (!result.allowed) {
         return { allowed: false, failedCheck: check, results };
       }
@@ -98,34 +84,11 @@ export class RateLimiter {
     return { allowed: true, results };
   }
 
-  async getUserTier(userId) {
-    // Check if user is premium (implement your logic here)
-    // This is a placeholder
-    try {
-      const userKey = `user:${userId}:tier`;
-      const tier = await this.redis.get(userKey);
-      return tier || 'basic';
-    } catch (error) {
-      return 'basic';
-    }
-  }
-
-  async setUserTier(userId, tier, ttl = 86400) {
-    try {
-      const userKey = `user:${userId}:tier`;
-      await this.redis.setex(userKey, ttl, tier);
-    } catch (error) {
-      console.error('Error setting user tier:', error);
-    }
-  }
-
-  // Complex rate limiting for different scenarios
-  async checkCommandRateLimit(userId, command) {
-    const userTier = await this.getUserTier(userId);
-    
+  // Refactored to accept userTier directly, removing the need for the placeholder getUserTier
+  async checkCommandRateLimit(userId, command, userTier = 'user') {
     const checks = [
       { key: 'global', type: 'global' },
-      { key: userId, type: userTier === 'premium' ? 'premium' : 'user' },
+      { key: userId, type: userTier }, // Use the passed userTier
       { key: `${userId}:${command}`, type: 'command' }
     ];
 
@@ -188,9 +151,8 @@ export class RateLimiter {
   }
 
   // Get rate limit status for user
-  async getStatus(userId) {
+  async getStatus(userId, userTier = 'user') {
     try {
-      const userTier = await this.getUserTier(userId);
       const keys = [
         `ratelimit:${userTier}:${userId}`,
         `ratelimit:command:${userId}`,

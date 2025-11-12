@@ -95,9 +95,10 @@ export class MemoryManager {
   }
 
   startCleanupTimer() {
-    setInterval(() => {
+    const timer = setInterval(() => {
       this.cleanup();
     }, this.cleanupInterval);
+    timer.unref(); // Allow the process to exit even if the timer is active
   }
 
   // Get stats

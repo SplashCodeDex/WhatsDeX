@@ -41,6 +41,7 @@ export default {
       'https://repository-images.githubusercontent.com/753096396/84e76ef0-ba19-4c87-8ec2-ea803b097479', // Bot's thumbnail image
     groupJid: process.env.GROUP_JID || '', // REPLACE WITH YOUR BOT'S GROUP JID
     newsletterJid: process.env.NEWSLETTER_JID || '120363416372653441@newsletter', // JID for the bot's channel
+    browser: process.env.BOT_BROWSER ? JSON.parse(process.env.BOT_BROWSER) : ['WhatsDeX', 'Chrome', '1.0.0'], // Browser info
 
     // Bot session authentication configuration
     authAdapter: {
@@ -122,6 +123,7 @@ export default {
   // API keys for various services
   api: {
     openai: process.env.OPENAI_API_KEY || '', // REPLACE WITH YOUR OPENAI API KEY
+    gemini: process.env.GOOGLE_GEMINI_API_KEY || '', // REPLACE WITH YOUR GOOGLE GEMINI API KEY
   },
 
   // AI configuration
@@ -131,6 +133,15 @@ export default {
       MESSAGES_TO_SUMMARIZE: 10,
       HISTORY_PRUNE_LENGTH: 6,
     },
+    gemini: {
+      model: process.env.GEMINI_MODEL || 'gemini-pro',
+      generationConfig: {
+        temperature: parseFloat(process.env.GEMINI_TEMP) || 0.7,
+        topP: parseFloat(process.env.GEMINI_TOP_P) || 0.8,
+        topK: parseInt(process.env.GEMINI_TOP_K, 10) || 40,
+        maxOutputTokens: parseInt(process.env.GEMINI_MAX_TOKENS, 10) || 2048,
+      }
+    }
   },
 
   // Redis configuration
@@ -138,6 +149,16 @@ export default {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT, 10) || 6379,
     password: process.env.REDIS_PASSWORD || '',
+  },
+
+  // Rate limit configuration
+  rateLimits: {
+    global: { requests: parseInt(process.env.RATE_LIMIT_GLOBAL_REQ) || 100, window: 60 },
+    user: { requests: parseInt(process.env.RATE_LIMIT_USER_REQ) || 30, window: 60 },
+    command: { requests: parseInt(process.env.RATE_LIMIT_CMD_REQ) || 10, window: 60 },
+    ai: { requests: parseInt(process.env.RATE_LIMIT_AI_REQ) || 5, window: 300 },
+    download: { requests: parseInt(process.env.RATE_LIMIT_DOWNLOAD_REQ) || 3, window: 60 },
+    premium: { requests: parseInt(process.env.RATE_LIMIT_PREMIUM_REQ) || 100, window: 60 }
   },
 
   // Bot system

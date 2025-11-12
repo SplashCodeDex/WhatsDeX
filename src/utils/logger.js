@@ -30,12 +30,6 @@ const format = winston.format.combine(
   winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`)
 );
 
-// Define which logs to show based on environment
-const showLogs =
-  process.env.NODE_ENV === 'production'
-    ? ['error', 'warn', 'info']
-    : ['error', 'warn', 'info', 'http', 'debug'];
-
 // Create the logger
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -79,11 +73,16 @@ const logger = winston.createLogger({
   ],
 });
 
-// Create logs directory if it doesn't exist
-const logsDir = path.join(process.cwd(), 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
+// Asynchronously create logs directory if it doesn't exist
+(async () => {
+  try {
+    const logsDir = path.join(process.cwd(), 'logs');
+    await fs.promises.mkdir(logsDir, { recursive: true });
+  } catch (error) {
+    // This error is not critical, but should be logged to the console.
+    console.error('❌ Warning: Failed to create logs directory:', error);
+  }
+})();
 
 // Enhanced logger with additional methods
 const enhancedLogger = {

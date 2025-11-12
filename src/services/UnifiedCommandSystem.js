@@ -12,6 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
 import trackCommandUsage from '../../middleware/analytics.js';
+import redisClient from '../../lib/redis.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,7 +24,7 @@ export class UnifiedCommandSystem {
     this.commands = new Map();
     this.aliases = new Map();
     this.categories = new Map();
-    this.rateLimiter = new RateLimiter();
+    this.rateLimiter = new RateLimiter(redisClient, { limits: this.context.config.rateLimits });
     this.middleware = [];
     
     // Command prefixes
@@ -298,9 +299,11 @@ export class UnifiedCommandSystem {
       }
       
       // Rate limiting
+      const userTier = ctx.user?.premium ? 'premium' : 'user';
       const rateLimitResult = await this.rateLimiter.checkCommandRateLimit(
         ctx.sender, 
-        command.name
+        command.name,
+        userTier
       );
       
       if (!rateLimitResult.allowed) {
@@ -344,6 +347,7 @@ export class UnifiedCommandSystem {
    */
   async createContext(messageData, commandInfo, command) {
     const text = this.extractText(messageData);
+    const user = await this.context.databaseService.getUser(messageData.key.remoteJid);
     
     return {
       // Message data
@@ -354,6 +358,7 @@ export class UnifiedCommandSystem {
       prefix: commandInfo.prefix,
       
       // User data
+      user: user, // Attach the full user object
       sender: messageData.key.remoteJid,
       pushName: messageData.pushName,
       

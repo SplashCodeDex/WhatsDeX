@@ -5,8 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { existsSync, rmSync } from 'node:fs';
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
-// import messageQueue from './src/worker.js'; // Disabled - not used and can cause Redis connection failures
-// import IntelligentMessageProcessor from './src/IntelligentMessageProcessor.js'; // Disabled - not used
 // Robust reconnection manager with circuit breaker
 class ConnectionManager {
   constructor(config = {}) {
@@ -133,7 +131,7 @@ class ConnectionManager {
     const bot = makeWASocket({
       auth: state,
       logger,
-      browser: ['WhatsDeX', 'Chrome', '1.0.0'],
+      browser: config.bot.browser,
       defaultQueryTimeoutMs: 60000,
       retryRequestDelayMs: 250,
       maxMsgRetryCount: 5,
@@ -288,7 +286,7 @@ const main = async context => {
   const bot = makeWASocket({
     auth: state,
     logger,
-    browser: ['WhatsDeX', 'Chrome', '1.0.0'],
+    browser: config.bot.browser,
     defaultQueryTimeoutMs: 60000, // 60 seconds timeout
     retryRequestDelayMs: 250,
     maxMsgRetryCount: 5,
@@ -359,44 +357,32 @@ const main = async context => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      // OPTIMIZED: Async QR generation to prevent blocking
-      Promise.all([
-        // Terminal QR generation (async)
-        new Promise((resolve) => {
-          setImmediate(() => {
-            qrcode.generate(qr, { small: true });
-            resolve();
+      console.log('📱 Generating QR Code...');
+      try {
+        // Generate QR for terminal
+        qrcode.generate(qr, { small: true });
+        console.log('✅ QR Code generated in terminal.');
+
+        // Emit QR to web dashboard
+        if (global.io) {
+          global.io.emit('qr-code-update', {
+            qr: qr,
+            timestamp: Date.now(),
+            status: 'qr_ready'
           });
-        }),
+          console.log('✅ QR Code emitted to web interface.');
+        }
         
-        // Web dashboard integration (async)
-        new Promise((resolve) => {
-          try {
-            if (global.io) {
-              global.io.emit('qr-code-update', {
-                qr: qr,
-                timestamp: Date.now(),
-                status: 'qr_ready'
-              });
-            }
-            
-            // Store QR for web API access
-            global.currentQR = {
-              code: qr,
-              timestamp: Date.now(),
-              status: 'ready'
-            };
-          } catch (error) {
-            console.warn('⚠️ Failed to emit QR to web interface:', error.message);
-          }
-          
-          resolve();
-        })
-      ]).then(() => {
-        console.log('📱 QR Code generated for all interfaces (async)');
-      }).catch(error => {
-        console.error('QR generation error:', error.message);
-      });
+        // Store QR for web API access
+        global.currentQR = {
+          code: qr,
+          timestamp: Date.now(),
+          status: 'ready'
+        };
+
+      } catch (e) {
+        console.error('❌ Failed to generate or broadcast QR code:', e.message);
+      }
     }
 
     if (connection === 'close') {

@@ -7,384 +7,342 @@ import * as formatter from './utils/formatter.js';
 import logger from './src/utils/logger.js';
 import state from './state.js';
 
-// Initialize Prisma database service with proper connection management
-const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL
-    }
-  },
-  // Add connection pool configuration
-  __internal: {
-    engine: {
-      binary: {
-        queryEngineTimeout: 60000, // 60 seconds
-        queryEngineLibrary: undefined
+// This function will initialize and return the fully prepared context
+async function initializeContext() {
+  // Initialize Prisma database service with proper connection management
+  const prisma = new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    },
+    __internal: {
+      engine: {
+        binary: {
+          queryEngineTimeout: 60000,
+          queryEngineLibrary: undefined
+        }
       }
     }
-  }
-});
+  });
 
-// Test database connection immediately
-async function testDatabaseConnection() {
+  // Test database connection
   try {
     await prisma.$connect();
-    await prisma.$queryRaw`SELECT 1`;
     console.log('✅ Database connection verified');
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
     console.error('Please check your DATABASE_URL and ensure the database is running.');
     process.exit(1);
   }
-}
 
-// Test connection on startup - wrap in IIFE to handle async
-(async () => {
-  try {
-    await testDatabaseConnection();
-  } catch (error) {
-    // Error already handled in testDatabaseConnection
-  }
-})();
+  // Add connection error handling
+  prisma.$on('error', (error) => {
+    console.error('🔴 Database error:', error);
+  });
 
-// Add connection error handling and graceful shutdown
-prisma.$on('error', (error) => {
-  console.error('🔴 Database error:', error);
-});
-
-// Graceful shutdown handler
-const gracefulShutdown = async () => {
-  console.log('🔄 Gracefully shutting down database connection...');
-  try {
-    await prisma.$disconnect();
-    console.log('✅ Database disconnected successfully');
-  } catch (error) {
-    console.error('❌ Error during database shutdown:', error);
-  }
-};
-
-// Shutdown handlers are now managed by index.js to prevent race conditions
-// process.on('SIGTERM', gracefulShutdown);
-// process.on('SIGINT', gracefulShutdown);
-// process.on('exit', gracefulShutdown);
-
-// Database service wrapper
-class DatabaseService {
-  constructor() {
-    this.prisma = prisma;
-  }
-
-  // User operations
-  async getUser(jid) {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: { jid },
-        include: {
-          groups: {
-            include: { group: true },
-          },
-          subscriptions: {
-            include: { plan: true },
-            where: { status: 'active' },
-          },
-        },
-      });
-
-      if (user) {
-        return {
-          ...user,
-          premium: user.premium || user.subscriptions.length > 0,
-          groups: user.groups.map(ug => ug.groupId),
-        };
+  // Database service wrapper
+  class DatabaseService {
+    constructor() {
+      this.prisma = prisma;
+    }
+    
+    // User operations
+    async getUser(jid) {
+        try {
+          const user = await this.prisma.user.findUnique({
+            where: { jid },
+            include: {
+              groups: {
+                include: { group: true },
+              },
+              subscriptions: {
+                include: { plan: true },
+                where: { status: 'active' },
+              },
+            },
+          });
+    
+          if (user) {
+            return {
+              ...user,
+              premium: user.premium || user.subscriptions.length > 0,
+              groups: user.groups.map(ug => ug.groupId),
+            };
+          }
+          return null;
+        } catch (error) {
+          logger.error('Database error in getUser:', error);
+          throw error;
+        }
       }
-      return null;
-    } catch (error) {
-      logger.error('Database error in getUser:', error);
-      throw error;
-    }
-  }
-
-  async createUser(userData) {
-    try {
-      return await this.prisma.user.create({
-        data: {
-          jid: userData.jid,
-          name: userData.name,
-          phone: userData.phone,
-          avatar: userData.avatar,
-          xp: userData.xp || 0,
-          level: userData.level || 1,
-          coin: userData.coin || 0,
-          premium: userData.premium || false,
-          banned: userData.banned || false,
-        },
-      });
-    } catch (error) {
-      logger.error('Database error in createUser:', error);
-      throw error;
-    }
-  }
-
-  async updateUser(jid, updateData) {
-    try {
-      return await this.prisma.user.update({
-        where: { jid },
-        data: updateData,
-      });
-    } catch (error) {
-      logger.error('Database error in updateUser:', error);
-      throw error;
-    }
-  }
-
-  async upsertUser(userData) {
-    try {
-      return await this.prisma.user.upsert({
-        where: { jid: userData.jid },
-        update: userData,
-        create: {
-          jid: userData.jid,
-          name: userData.name,
-          phone: userData.phone,
-          avatar: userData.avatar,
-          xp: userData.xp || 0,
-          level: userData.level || 1,
-          coin: userData.coin || 0,
-          premium: userData.premium || false,
-          banned: userData.banned || false,
-        },
-      });
-    } catch (error) {
-      logger.error('Database error in upsertUser:', error);
-      throw error;
-    }
-  }
-
-  // Group operations
-  async getGroup(jid) {
-    try {
-      const group = await this.prisma.group.findUnique({
-        where: { jid },
-        include: {
-          users: { include: { user: true } },
-          settings: true,
-        },
-      });
-
-      if (group) {
-        return {
-          ...group,
-          members: group.users.map(ug => ({
-            jid: ug.user.jid,
-            role: ug.role,
-          })),
-          settings: group.settings.reduce((acc, setting) => {
-            acc[setting.settingKey] = setting.settingValue;
-            return acc;
-          }, {}),
-        };
+    
+      async createUser(userData) {
+        try {
+          return await this.prisma.user.create({
+            data: {
+              jid: userData.jid,
+              name: userData.name,
+              phone: userData.phone,
+              avatar: userData.avatar,
+              xp: userData.xp || 0,
+              level: userData.level || 1,
+              coin: userData.coin || 0,
+              premium: userData.premium || false,
+              banned: userData.banned || false,
+            },
+          });
+        } catch (error) {
+          logger.error('Database error in createUser:', error);
+          throw error;
+        }
       }
-      return null;
-    } catch (error) {
-      logger.error('Database error in getGroup:', error);
-      throw error;
-    }
+    
+      async updateUser(jid, updateData) {
+        try {
+          return await this.prisma.user.update({
+            where: { jid },
+            data: updateData,
+          });
+        } catch (error) {
+          logger.error('Database error in updateUser:', error);
+          throw error;
+        }
+      }
+    
+      async upsertUser(userData) {
+        try {
+          return await this.prisma.user.upsert({
+            where: { jid: userData.jid },
+            update: userData,
+            create: {
+              jid: userData.jid,
+              name: userData.name,
+              phone: userData.phone,
+              avatar: userData.avatar,
+              xp: userData.xp || 0,
+              level: userData.level || 1,
+              coin: userData.coin || 0,
+              premium: userData.premium || false,
+              banned: userData.banned || false,
+            },
+          });
+        } catch (error) {
+          logger.error('Database error in upsertUser:', error);
+          throw error;
+        }
+      }
+    
+      // Group operations
+      async getGroup(jid) {
+        try {
+          const group = await this.prisma.group.findUnique({
+            where: { jid },
+            include: {
+              users: { include: { user: true } },
+              settings: true,
+            },
+          });
+    
+          if (group) {
+            return {
+              ...group,
+              members: group.users.map(ug => ({
+                jid: ug.user.jid,
+                role: ug.role,
+              })),
+              settings: group.settings.reduce((acc, setting) => {
+                acc[setting.settingKey] = setting.settingValue;
+                return acc;
+              }, {}),
+            };
+          }
+          return null;
+        } catch (error) {
+          logger.error('Database error in getGroup:', error);
+          throw error;
+        }
+      }
+    
+      async createGroup(groupData) {
+        try {
+          return await this.prisma.group.create({
+            data: {
+              jid: groupData.jid,
+              name: groupData.name,
+              description: groupData.description,
+              avatar: groupData.avatar,
+              ownerJid: groupData.ownerJid,
+              memberCount: groupData.memberCount || 0,
+            },
+          });
+        } catch (error) {
+          logger.error('Database error in createGroup:', error);
+          throw error;
+        }
+      }
+    
+      async updateGroup(jid, updateData) {
+        try {
+          return await this.prisma.group.update({
+            where: { jid },
+            data: updateData,
+          });
+        } catch (error) {
+          logger.error('Database error in updateGroup:', error);
+          throw error;
+        }
+      }
+    
+      // BotSetting operations
+      async getBotSetting(key) {
+        try {
+          return await this.prisma.botSetting.findUnique({
+            where: { key },
+          });
+        } catch (error) {
+          logger.error('Database error in getBotSetting:', error);
+          throw error;
+        }
+      }
+    
+      async setBotSetting(key, value, category = 'general', description = null, updatedBy = 'system') {
+        try {
+          return await this.prisma.botSetting.upsert({
+            where: { key },
+            update: { value, category, description, updatedBy },
+            create: { key, value, category, description, updatedBy },
+          });
+        } catch (error) {
+          logger.error('Database error in setBotSetting:', error);
+          throw error;
+        }
+      }
+    
+      async updateBotSetting(key, updateData) {
+        try {
+          return await this.prisma.botSetting.update({
+            where: { key },
+            data: updateData,
+          });
+        } catch (error) {
+          logger.error('Database error in updateBotSetting:', error);
+          throw error;
+        }
+      }
+    
+      // Menfess operations
+      async getMenfess(id) {
+        try {
+          return await this.prisma.menfess.findUnique({
+            where: { id },
+          });
+        } catch (error) {
+          logger.error('Database error in getMenfess:', error);
+          throw error;
+        }
+      }
+    
+      async createMenfess(menfessData) {
+        try {
+          return await this.prisma.menfess.create({
+            data: menfessData,
+          });
+        } catch (error) {
+          logger.error('Database error in createMenfess:', error);
+          throw error;
+        }
+      }
+    
+      async deleteMenfess(id) {
+        try {
+          return await this.prisma.menfess.delete({
+            where: { id },
+          });
+        } catch (error) {
+          logger.error('Database error in deleteMenfess:', error);
+          throw error;
+        }
+      }
+    
+      // Health check
+      async healthCheck() {
+        try {
+          await this.prisma.$queryRaw`SELECT 1`;
+          return { status: 'healthy', database: 'connected' };
+        } catch (error) {
+          return { status: 'unhealthy', database: 'disconnected', error: error.message };
+        }
+      }
+    
+      // Connection management
+      async connect() {
+        try {
+          await this.prisma.$connect();
+          logger.info('Database connected successfully');
+        } catch (error) {
+          logger.error('Failed to connect to database:', error);
+          throw error;
+        }
+      }
+    
+      async disconnect() {
+        try {
+          await this.prisma.$disconnect();
+          logger.info('Database disconnected successfully');
+        } catch (error) {
+          logger.error('Failed to disconnect from database:', error);
+          throw error;
+        }
+      }
   }
 
-  async createGroup(groupData) {
-    try {
-      return await this.prisma.group.create({
-        data: {
-          jid: groupData.jid,
-          name: groupData.name,
-          description: groupData.description,
-          avatar: groupData.avatar,
-          ownerJid: groupData.ownerJid,
-          memberCount: groupData.memberCount || 0,
-        },
-      });
-    } catch (error) {
-      logger.error('Database error in createGroup:', error);
-      throw error;
-    }
-  }
+  const databaseService = new DatabaseService();
 
-  async updateGroup(jid, updateData) {
-    try {
-      return await this.prisma.group.update({
-        where: { jid },
-        data: updateData,
-      });
-    } catch (error) {
-      logger.error('Database error in updateGroup:', error);
-      throw error;
-    }
-  }
+  // Legacy database interface for backward compatibility
+  const database = {
+    user: {
+      get: jid => databaseService.getUser(jid),
+      create: userData => databaseService.createUser(userData),
+      update: (jid, data) => databaseService.updateUser(jid, data),
+      upsert: userData => databaseService.upsertUser(userData),
+    },
+    group: {
+      get: jid => databaseService.getGroup(jid),
+      create: groupData => databaseService.createGroup(groupData),
+      update: (jid, data) => databaseService.updateGroup(jid, data),
+    },
+    bot: {
+      get: key => databaseService.getBotSetting(key),
+      set: (key, value, category, description, updatedBy) =>
+        databaseService.setBotSetting(key, value, category, description, updatedBy),
+      update: (key, data) => databaseService.updateBotSetting(key, data),
+    },
+    menfess: {
+      get: id => databaseService.getMenfess(id),
+      create: menfessData => databaseService.createMenfess(menfessData),
+      delete: id => databaseService.deleteMenfess(id),
+    },
+  };
 
-  // BotSetting operations
-  async getBotSetting(key) {
-    try {
-      return await this.prisma.botSetting.findUnique({
-        where: { key },
-      });
-    } catch (error) {
-      logger.error('Database error in getBotSetting:', error);
-      throw error;
-    }
-  }
-
-  async setBotSetting(key, value, category = 'general', description = null, updatedBy = 'system') {
-    try {
-      return await this.prisma.botSetting.upsert({
-        where: { key },
-        update: { value, category, description, updatedBy },
-        create: { key, value, category, description, updatedBy },
-      });
-    } catch (error) {
-      logger.error('Database error in setBotSetting:', error);
-      throw error;
-    }
-  }
-
-  async updateBotSetting(key, updateData) {
-    try {
-      return await this.prisma.botSetting.update({
-        where: { key },
-        data: updateData,
-      });
-    } catch (error) {
-      logger.error('Database error in updateBotSetting:', error);
-      throw error;
-    }
-  }
-
-  // Menfess operations
-  async getMenfess(id) {
-    try {
-      return await this.prisma.menfess.findUnique({
-        where: { id },
-      });
-    } catch (error) {
-      logger.error('Database error in getMenfess:', error);
-      throw error;
-    }
-  }
-
-  async createMenfess(menfessData) {
-    try {
-      return await this.prisma.menfess.create({
-        data: menfessData,
-      });
-    } catch (error) {
-      logger.error('Database error in createMenfess:', error);
-      throw error;
-    }
-  }
-
-  async deleteMenfess(id) {
-    try {
-      return await this.prisma.menfess.delete({
-        where: { id },
-      });
-    } catch (error) {
-      logger.error('Database error in deleteMenfess:', error);
-      throw error;
-    }
-  }
-
-  // Health check
-  async healthCheck() {
-    try {
-      await this.prisma.$queryRaw`SELECT 1`;
-      return { status: 'healthy', database: 'connected' };
-    } catch (error) {
-      return { status: 'unhealthy', database: 'disconnected', error: error.message };
-    }
-  }
-
-  // Connection management
-  async connect() {
-    try {
-      await this.prisma.$connect();
-      logger.info('Database connected successfully');
-    } catch (error) {
-      logger.error('Failed to connect to database:', error);
-      throw error;
-    }
-  }
-
-  async disconnect() {
-    try {
-      await this.prisma.$disconnect();
-      logger.info('Database disconnected successfully');
-    } catch (error) {
-      logger.error('Failed to disconnect from database:', error);
-      throw error;
-    }
-  }
-}
-
-// Initialize database service
-const databaseService = new DatabaseService();
-
-// Legacy database interface for backward compatibility
-const database = {
-  user: {
-    get: jid => databaseService.getUser(jid),
-    create: userData => databaseService.createUser(userData),
-    update: (jid, data) => databaseService.updateUser(jid, data),
-    upsert: userData => databaseService.upsertUser(userData),
-  },
-  group: {
-    get: jid => databaseService.getGroup(jid),
-    create: groupData => databaseService.createGroup(groupData),
-    update: (jid, data) => databaseService.updateGroup(jid, data),
-  },
-  bot: {
-    get: key => databaseService.getBotSetting(key),
-    set: (key, value, category, description, updatedBy) =>
-      databaseService.setBotSetting(key, value, category, description, updatedBy),
-    update: (key, data) => databaseService.updateBotSetting(key, data),
-  },
-  menfess: {
-    get: id => databaseService.getMenfess(id),
-    create: menfessData => databaseService.createMenfess(menfessData),
-    delete: id => databaseService.deleteMenfess(id),
-  },
-};
-
-const context = {
-  config,
-  database,
-  databaseService,
-
-  formatter,
-  state,
-  tools,
-  prisma, // Direct Prisma access for advanced queries
-
-  // Initialize services
-  async initialize() {
-    try {
-      await databaseService.connect();
-      logger.info('All services initialized successfully');
-    } catch (error) {
-      logger.error('Failed to initialize services:', error);
-      throw error;
-    }
-  },
-
-  // Graceful shutdown
-  async shutdown() {
-    try {
+  // The fully initialized context object
+  const context = {
+    config,
+    database,
+    databaseService,
+    formatter,
+    state,
+    tools,
+    prisma,
+    logger,
+    // Graceful shutdown for this context
+    async shutdown() {
       await databaseService.disconnect();
-      logger.info('All services shut down successfully');
-    } catch (error) {
-      logger.error('Error during services shutdown:', error);
-      throw error;
-    }
-  },
-};
+    },
+  };
 
-export default context;
+  return context;
+}
+
+export default initializeContext;
