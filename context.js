@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import config from './config.js';
 import pkg from './package.json' with { type: 'json' };
 import tools from './tools/exports.js';
-import * as formatter from './utils/formatter.js';
+import * as formatter from './utils/formatter.js'; // keep legacy formatter interface
 import logger from './src/utils/logger.js';
 import state from './state.js';
 
@@ -30,17 +30,19 @@ async function initializeContext() {
   // Test database connection
   try {
     await prisma.$connect();
-    console.log('✅ Database connection verified');
+    logger.info('✅ Database connection verified');
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    console.error('Please check your DATABASE_URL and ensure the database is running.');
+    logger.error('❌ Database connection failed:', { error: error.message });
+    logger.error('Please check your DATABASE_URL and ensure the database is running.');
     process.exit(1);
   }
 
   // Add connection error handling
-  prisma.$on('error', (error) => {
-    console.error('🔴 Database error:', error);
-  });
+  if (typeof prisma.$on === 'function') {
+    prisma.$on('error', (error) => {
+      logger.error('🔴 Database error:', { error });
+    });
+  }
 
   // Database service wrapper
   class DatabaseService {
@@ -326,7 +328,10 @@ async function initializeContext() {
     },
   };
 
-  // The fully initialized context object
+import { UnifiedCommandSystem } from './src/services/UnifiedCommandSystem.js';
+import { UnifiedAIProcessor } from './src/services/UnifiedAIProcessor.js';
+
+  // Build the context object now that services are set up
   const context = {
     config,
     database,
@@ -336,10 +341,17 @@ async function initializeContext() {
     tools,
     prisma,
     logger,
-    // Graceful shutdown for this context
-    async shutdown() {
-      await databaseService.disconnect();
-    },
+  };
+
+  // Instantiate systems that depend on context
+  const commandSystem = new UnifiedCommandSystem(null, context);
+  const unifiedAI = new UnifiedAIProcessor(null, context);
+  context.commandSystem = commandSystem;
+  context.unifiedAI = unifiedAI;
+
+  // Attach graceful shutdown
+  context.shutdown = async function shutdown() {
+    await databaseService.disconnect();
   };
 
   return context;

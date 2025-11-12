@@ -1,6 +1,6 @@
-const axios = require('axios');
-const googlesearchCommand = require('../../../commands/search/googlesearch.js');
-const apiTools = require('../../../tools/api');
+import googlesearchCommand from '../../../commands/search/googlesearch.js';
+import * as apiTools from '../../../tools/api.js';
+import axios from 'axios';
 
 // Mock dependencies
 jest.mock('axios');

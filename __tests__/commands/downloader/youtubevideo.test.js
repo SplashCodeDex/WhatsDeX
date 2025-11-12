@@ -1,6 +1,40 @@
-const axios = require('axios');
-const youtubevideoCommand = require('../../../commands/downloader/youtubevideo.js');
-const apiTools = require('../../../tools/api');
+import youtubevideoCommand from '../../../commands/downloader/youtubevideo.js';
+import * as apiTools from '../../../tools/api.js';
+import axios from 'axios';
+
+jest.mock('../../../tools/cmd.js', () => ({
+  parseFlag: jest.fn((argsString, customRules) => {
+    const options = {};
+    const input = [];
+    const args = argsString.trim().split(/\s+/);
+
+    for (let i = 0; i < args.length; i++) {
+      const arg = args[i];
+
+      if (customRules[arg]) {
+        const rule = customRules[arg];
+
+        if (rule.type === 'value') {
+          const value = args[i + 1];
+
+          if (value && rule.validator(value)) {
+            options[rule.key] = rule.parser(value);
+            i++;
+          } else {
+            options[rule.key] = rule.default || null;
+          }
+        } else if (rule.type === 'boolean') {
+          options[rule.key] = true;
+        }
+      } else {
+        input.push(arg);
+      }
+    }
+
+    options.input = input.join(' ');
+    return options;
+  }),
+}));
 
 // Mock dependencies
 jest.mock('axios');

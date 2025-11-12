@@ -1,4 +1,4 @@
-const validateCommand = require('../../middleware/inputValidation');
+import validateCommand from '../../middleware/inputValidation.js';
 
 describe('inputValidation middleware', () => {
   const mockContext = {

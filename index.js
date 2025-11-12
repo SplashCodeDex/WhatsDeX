@@ -5,15 +5,16 @@ import main from './main.js';
 import pkg from './package.json' with { type: 'json' };
 import { startServer } from './src/server.js';
 
+import { withRetry } from './lib/retry.js';
+
 // --- Main Application IIFE ---
 (async () => {
-  console.log('🚀 Starting WhatsDeX...');
-
   // --- Initialize Context ---
-  console.log('⏳ Initializing application context and connecting to database...');
   const context = await initializeContext();
-  const { config } = context;
-  console.log('✅ Context initialized successfully.');
+  const { config, logger } = context;
+  logger.info('🚀 Starting WhatsDeX...');
+  logger.info('⏳ Initializing application context and connecting to database...');
+  logger.info('✅ Context initialized successfully.');
 
   // --- Display Banner ---
   CFonts.say(pkg.name, {
@@ -27,20 +28,21 @@ import { startServer } from './src/server.js';
   });
 
   // --- Start Web Server ---
+  let server;
   try {
     if (config?.system?.useServer) {
       const serverResult = await startServer(config);
       if (serverResult?.io) {
-        global.io = serverResult.io;
-        global.server = serverResult.server;
-        console.log('✅ Socket.IO assigned to global scope');
+        context.io = serverResult.io;
+        server = serverResult.server;
+        logger.info('✅ Socket.IO assigned to context');
       }
     } else {
-      console.log('🔕 Server disabled in configuration');
+      logger.info('🔕 Server disabled in configuration');
     }
   } catch (error) {
-    console.error('❌ Server startup failed:', error);
-    console.warn('⚠️ Continuing without web server...');
+    logger.error('❌ Server startup failed:', error);
+    logger.warn('⚠️ Continuing without web server...');
   }
 
   // --- Graceful Shutdown Handler ---
@@ -49,9 +51,9 @@ import { startServer } from './src/server.js';
     if (isShuttingDown) return;
     isShuttingDown = true;
 
-    console.log(`🔄 Starting graceful shutdown (${signal})...`);
+    logger.info(`🔄 Starting graceful shutdown (${signal})...`);
     if (error) {
-      console.error('🚨 Error triggered shutdown:', error);
+      logger.error('🚨 Error triggered shutdown:', error);
     }
 
     // Use the shutdown method from the initialized context
@@ -60,22 +62,22 @@ import { startServer } from './src/server.js';
     }
 
     // Close server if running
-    if (global.server) {
-      console.log('🔄 Closing server...');
-      await new Promise(resolve => global.server.close(() => resolve()));
+    if (server) {
+      logger.info('🔄 Closing server...');
+      await new Promise(resolve => server.close(() => resolve()));
     }
 
-    console.log('✅ Graceful shutdown completed');
+    logger.info('✅ Graceful shutdown completed');
     process.exit(error ? 1 : 0);
   };
 
   // --- Process-wide Error Handlers ---
   process.on('unhandledRejection', (reason, promise) => {
-    console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+    logger.error('🚨 Unhandled Rejection at:', { promise, reason });
     gracefulShutdown('unhandledRejection', reason);
   });
   process.on('uncaughtException', (error) => {
-    console.error('🚨 Uncaught Exception:', error);
+    logger.error('🚨 Uncaught Exception:', error);
     gracefulShutdown('uncaughtException', error);
   });
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
@@ -83,34 +85,16 @@ import { startServer } from './src/server.js';
 
 
   // --- Main Application Logic with Retry ---
-  let retryCount = 0;
-  const maxRetries = 3;
-  
-  while (retryCount < maxRetries) {
-    try {
-      console.log(retryCount > 0 ? `🔄 Retry attempt ${retryCount}/${maxRetries - 1}` : '🚀 Starting main application...');
-      await main(context); // Pass the fully initialized context
-      break; // Success, exit retry loop
-    } catch (error) {
-      retryCount++;
-      console.error(`❌ Main application error (attempt ${retryCount}): ${error.message}`);
-      
-      if (context?.logger) {
-        context.logger.error('Main Application Error', {
-          error: error.message,
-          stack: error.stack,
-          attempt: retryCount
-        });
-      }
-      
-      if (retryCount >= maxRetries) {
-        console.error('💀 Max retry attempts reached. Shutting down...');
-        await gracefulShutdown('mainError', error);
-      } else {
-        const delay = retryCount * 5000;
-        console.log(`⏰ Waiting ${delay/1000}s before retry...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
+  try {
+    await withRetry(() => main(context));
+  } catch (error) {
+    console.error('💀 Main application failed after multiple retries. Shutting down...');
+    if (context?.logger) {
+      context.logger.error('Main Application Failed', {
+        error: error.message,
+        stack: error.stack,
+      });
     }
+    await gracefulShutdown('mainError', error);
   }
 })();

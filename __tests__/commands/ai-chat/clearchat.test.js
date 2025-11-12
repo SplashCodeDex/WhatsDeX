@@ -1,4 +1,4 @@
-const clearchatCommand = require('../../../commands/ai-chat/clearchat.js');
+import clearchatCommand from '../../../commands/ai-chat/clearchat.js';
 
 describe('clearchat command', () => {
   let ctx;

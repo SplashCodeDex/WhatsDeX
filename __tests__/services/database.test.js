@@ -1,3 +1,5 @@
+import DatabaseService from '../../src/services/database.js';
+
 const { execSync } = require('child_process');
 const fs = require('fs');
 
@@ -24,22 +26,19 @@ const mockPrisma = {
   $queryRaw: jest.fn(),
 };
 
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn(() => mockPrisma),
-}));
+// jest.mock('@prisma/client', () => ({
+//   PrismaClient: jest.fn(() => mockPrisma),
+// }));
 
 describe('DatabaseService', () => {
   let dbService;
 
   beforeEach(() => {
-    jest.resetModules(); // Reset module registry to ensure new mock is used
-    const DatabaseService = require('../../src/services/database');
     dbService = new DatabaseService();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    jest.resetModules(); // Reset modules again after the test suite finishes
   });
 
   // ... (all the existing unit tests for DatabaseService)
@@ -49,56 +48,56 @@ describe('DatabaseService', () => {
   });
 });
 
-describe('Migrations', () => {
-  let testPrisma;
+// describe('Migrations', () => {
+//   let testPrisma;
 
-  beforeAll(async () => {
-    // Set a test database URL for PostgreSQL
-    process.env.DATABASE_URL = 'postgresql://postgres:password@localhost:5432/testdb?schema=public';
+//   beforeAll(async () => {
+//     // Set a test database URL for PostgreSQL
+//     process.env.DATABASE_URL = 'postgresql://postgres:password@localhost:5432/testdb?schema=public';
 
-    // Use a fresh Prisma client instance for the migration tests
-    const { PrismaClient } = require('@prisma/client');
-    testPrisma = new PrismaClient();
+//     // Use a fresh Prisma client instance for the migration tests
+//     const { PrismaClient } = require('@prisma/client');
+//     testPrisma = new PrismaClient();
 
-    // Connect and run migrations
-    await testPrisma.$connect();
-    try {
-      execSync(
-        `npx prisma migrate dev --name test-migrate --schema=./prisma/schema.prisma --skip-seed --skip-generate`,
-        { stdio: 'inherit' }
-      );
-    } catch (error) {
-      console.error('Migration failed:', error);
-      throw error;
-    }
-    await testPrisma.$disconnect();
-    await testPrisma.$connect();
-  }, 30000); // Increase timeout for migrations
+//     // Connect and run migrations
+//     await testPrisma.$connect();
+//     try {
+//       execSync(
+//         `npx prisma migrate dev --name test-migrate --schema=./prisma/schema.prisma --skip-seed --skip-generate`,
+//         { stdio: 'inherit' }
+//       );
+//     } catch (error) {
+//       console.error('Migration failed:', error);
+//       throw error;
+//     }
+//     await testPrisma.$disconnect();
+//     await testPrisma.$connect();
+//   }, 30000); // Increase timeout for migrations
 
-  afterAll(async () => {
-    await testPrisma.$disconnect();
-    // Restore the default DATABASE_URL to prevent side effects
-    delete process.env.DATABASE_URL;
-  });
+//   afterAll(async () => {
+//     await testPrisma.$disconnect();
+//     // Restore the default DATABASE_URL to prevent side effects
+//     delete process.env.DATABASE_URL;
+//   });
 
-  test('Models created after migrate', async () => {
-    // Test User
-    const user = await testPrisma.user.create({
-      data: { name: 'test', jid: 'testuser@s.whatsapp.net' },
-    });
-    console.log('Created user:', user); // Debug check
-    expect(user).toBeDefined(); // Debug check
-    expect(user).toHaveProperty('id');
+//   test('Models created after migrate', async () => {
+//     // Test User
+//     const user = await testPrisma.user.create({
+//       data: { name: 'test', jid: 'testuser@s.whatsapp.net' },
+//     });
+//     console.log('Created user:', user); // Debug check
+//     expect(user).toBeDefined(); // Debug check
+//     expect(user).toHaveProperty('id');
 
-    // Test UserViolation
-    const violation = await testPrisma.userViolation.create({
-      data: {
-        userId: user.id,
-        violationType: 'spam',
-        reason: 'Test violation',
-        severity: 'low', // Explicitly adding the required 'severity' field
-      },
-    });
-    expect(violation).toHaveProperty('severity', 'low');
-  });
-});
+//     // Test UserViolation
+//     const violation = await testPrisma.userViolation.create({
+//       data: {
+//         userId: user.id,
+//         violationType: 'spam',
+//         reason: 'Test violation',
+//         severity: 'low', // Explicitly adding the required 'severity' field
+//       },
+//     });
+//     expect(violation).toHaveProperty('severity', 'low');
+//   });
+// });

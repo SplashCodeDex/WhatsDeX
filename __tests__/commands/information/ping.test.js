@@ -1,5 +1,5 @@
-const { performance } = require('perf_hooks');
-const pingCommand = require('../../../commands/information/ping.js');
+import { performance } from 'perf_hooks';
+import pingCommand from '../../../commands/information/ping.js';
 
 jest.mock('../../../utils/formatters', () => ({
   convertMsToDuration: jest.fn(ms => `${ms.toFixed(2)} ms`),

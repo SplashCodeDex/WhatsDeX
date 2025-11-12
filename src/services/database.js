@@ -12,22 +12,24 @@ class DatabaseService {
       ],
     });
 
-    // Log database events
-    this.prisma.$on('query', e => {
-      logger.debug(`Query: ${e.query}`, { duration: e.duration, params: e.params });
-    });
-
-    this.prisma.$on('info', e => {
-      logger.info(`Database Info: ${e.message}`);
-    });
-
-    this.prisma.$on('warn', e => {
-      logger.warn(`Database Warning: ${e.message}`);
-    });
-
-    this.prisma.$on('error', e => {
-      logger.error(`Database Error: ${e.message}`);
-    });
+    // Log database events (guard for test environments where $on may be mocked/missing)
+    if (typeof this.prisma.$on === 'function') {
+      this.prisma.$on('query', e => {
+        logger.debug(`Query: ${e.query}`, { duration: e.duration, params: e.params });
+      });
+  
+      this.prisma.$on('info', e => {
+        logger.info(`Database Info: ${e.message}`);
+      });
+  
+      this.prisma.$on('warn', e => {
+        logger.warn(`Database Warning: ${e.message}`);
+      });
+  
+      this.prisma.$on('error', e => {
+        logger.error(`Database Error: ${e.message}`);
+      });
+    }
 
     this.isConnected = false;
   }

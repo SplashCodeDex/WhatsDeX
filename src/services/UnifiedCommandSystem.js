@@ -13,6 +13,7 @@ import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
 import trackCommandUsage from '../../middleware/analytics.js';
 import redisClient from '../../lib/redis.js';
+import { levenshteinDistance } from '../utils/levenshtein.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +31,7 @@ export class UnifiedCommandSystem {
     // Command prefixes
     this.prefixes = ['.', '!', '/', '#'];
     
-    console.log('🔧 Unified Command System initialized');
+    this.context.logger.info('🔧 Unified Command System initialized');
   }
 
   /**
@@ -40,7 +41,7 @@ export class UnifiedCommandSystem {
     const commandsDir = path.join(__dirname, '..', '..', 'commands');
     let totalCommands = 0;
     
-    console.log('🔄 Loading unified command system...');
+    this.context.logger.info('🔄 Loading unified command system...');
     
     try {
       const categories = await fs.readdir(commandsDir, { withFileTypes: true });
@@ -50,7 +51,7 @@ export class UnifiedCommandSystem {
           const categoryPath = path.join(commandsDir, category.name);
           const commandFiles = await fs.readdir(categoryPath);
           
-          console.log(`📂 Loading category: ${category.name}`);
+          this.context.logger.info(`📂 Loading category: ${category.name}`);
           this.categories.set(category.name, []);
           
           for (const file of commandFiles) {
@@ -62,24 +63,24 @@ export class UnifiedCommandSystem {
                 if (command) {
                   this.registerCommand(command, category.name);
                   totalCommands++;
-                  console.log(`  ✅ ${command.name} ${command.aliases ? `(${command.aliases.join(', ')})` : ''}`);
+                  this.context.logger.info(`  ✅ ${command.name} ${command.aliases ? `(${command.aliases.join(', ')})` : ''}`);
                 }
               } catch (error) {
-                console.error(`  ❌ Error loading ${file}:`, error.message);
+                this.context.logger.error(`  ❌ Error loading ${file}:`, { error: error.message });
               }
             }
           }
         }
       }
       
-      console.log(`🎉 Loaded ${totalCommands} commands across ${this.categories.size} categories`);
-      console.log(`📊 Command registry size: ${this.commands.size} (including aliases)`);
+      this.context.logger.info(`🎉 Loaded ${totalCommands} commands across ${this.categories.size} categories`);
+      this.context.logger.info(`📊 Command registry size: ${this.commands.size} (including aliases)`);
       
       // Update bot.cmd for compatibility
       this.bot.cmd = this.commands;
       
     } catch (error) {
-      console.error('❌ Command loading failed:', error.message);
+      this.context.logger.error('❌ Command loading failed:', { error: error.message });
       throw error;
     }
   }
@@ -96,7 +97,7 @@ export class UnifiedCommandSystem {
       try {
         await fs.access(absolutePath);
       } catch (accessError) {
-        console.error(`Command file not found: ${absolutePath}`);
+        this.context.logger.error(`Command file not found: ${absolutePath}`);
         return null;
       }
 
@@ -111,7 +112,7 @@ export class UnifiedCommandSystem {
         command = commandModule.default || commandModule;
         
       } catch (esModuleError) {
-        console.warn(`ES module import failed for ${absolutePath}, trying CommonJS compatibility:`, esModuleError.message);
+        this.context.logger.warn(`ES module import failed for ${absolutePath}, trying CommonJS compatibility:`, { error: esModuleError.message });
         
         try {
           // Fallback: Try to handle CommonJS modules through dynamic import
@@ -125,7 +126,7 @@ export class UnifiedCommandSystem {
           }
           
         } catch (fallbackError) {
-          console.error(`Both ES module and CommonJS import failed for ${absolutePath}:`, {
+          this.context.logger.error(`Both ES module and CommonJS import failed for ${absolutePath}:`, {
             esError: esModuleError.message,
             cjsError: fallbackError.message
           });
@@ -134,7 +135,7 @@ export class UnifiedCommandSystem {
       }
       
       if (!this.validateCommand(command)) {
-        console.warn(`Command validation failed for ${absolutePath}:`, {
+        this.context.logger.warn(`Command validation failed for ${absolutePath}:`, {
           hasCommand: !!command,
           commandType: typeof command,
           hasName: !!(command && command.name),
@@ -160,11 +161,11 @@ export class UnifiedCommandSystem {
         isEnabled: command.isEnabled !== false
       };
 
-      console.log(`✅ Successfully loaded command: ${command.name} from ${absolutePath}`);
+      this.context.logger.info(`✅ Successfully loaded command: ${command.name} from ${absolutePath}`);
       return enhancedCommand;
       
     } catch (error) {
-      console.error(`Failed to load command: ${commandPath}`, {
+      this.context.logger.error(`Failed to load command: ${commandPath}`, {
         error: error.message,
         stack: error.stack,
         commandPath,
@@ -180,7 +181,7 @@ export class UnifiedCommandSystem {
   registerCommand(command, categoryName) {
     // Register main command
     if (this.commands.has(command.name)) {
-      console.warn(`Command name conflict: ${command.name} already exists`);
+      this.context.logger.warn(`Command name conflict: ${command.name} already exists`);
     }
     
     this.commands.set(command.name, command);
@@ -189,7 +190,7 @@ export class UnifiedCommandSystem {
     if (command.aliases && Array.isArray(command.aliases)) {
       command.aliases.forEach(alias => {
         if (this.commands.has(alias)) {
-          console.warn(`Alias conflict: ${alias} already exists`);
+          this.context.logger.warn(`Alias conflict: ${alias} already exists`);
         }
         
         this.aliases.set(alias, command.name);
@@ -213,17 +214,17 @@ export class UnifiedCommandSystem {
    */
   validateCommand(command) {
     if (!command || typeof command !== 'object') {
-      console.warn('Invalid command: not an object');
+      this.context.logger.warn('Invalid command: not an object');
       return false;
     }
     
     if (!command.name || typeof command.name !== 'string') {
-      console.warn('Invalid command: missing or invalid name');
+      this.context.logger.warn('Invalid command: missing or invalid name');
       return false;
     }
     
     if (!command.code || typeof command.code !== 'function') {
-      console.warn(`Invalid command ${command.name}: missing or invalid code function`);
+      this.context.logger.warn(`Invalid command ${command.name}: missing or invalid code function`);
       return false;
     }
     
@@ -320,7 +321,7 @@ export class UnifiedCommandSystem {
       await command.code(ctx);
       
       const duration = timer.end();
-      console.log(`✅ Command executed: ${command.name} (${duration}ms)`, {
+      this.context.logger.info(`✅ Command executed: ${command.name} (${duration}ms)`, {
         category: command.category,
         argsCount: commandInfo.args.length
       });
@@ -329,7 +330,7 @@ export class UnifiedCommandSystem {
       
     } catch (error) {
       const duration = timer.end();
-      console.error(`Command execution failed: ${command.name}`, {
+      this.context.logger.error(`Command execution failed: ${command.name}`, {
         error: error.message,
         userId: messageData.key.remoteJid
       });
@@ -379,12 +380,12 @@ export class UnifiedCommandSystem {
         try {
           return await this.bot.sendMessage(jid, content, options);
         } catch (error) {
-          console.error('Failed to send message via ctx.sendMessage:', error.message);
+          this.context.logger.error('Failed to send message via ctx.sendMessage:', { error: error.message });
           throw error;
         }
       },
       editMessage: async (key, text) => {
-        console.warn('⚠️ editMessage not implemented - using reply instead');
+        this.context.logger.warn('⚠️ editMessage not implemented - using reply instead');
         return await this.sendMessage(messageData, text);
       },
       
@@ -404,18 +405,6 @@ export class UnifiedCommandSystem {
         // Extract phone number from JID
         return jid.split('@')[0];
       },
-      MessageCollector: (options = {}) => {
-        console.warn('⚠️ MessageCollector not fully implemented - returning mock object');
-        // Return a mock collector that doesn't actually collect
-        return {
-          on: (event, handler) => {
-            console.warn(`⚠️ MessageCollector.on('${event}') called but not implemented`);
-          },
-          stop: () => {
-            console.warn('⚠️ MessageCollector.stop() called but not implemented');
-          }
-        };
-      }
     };
   }
 
@@ -470,39 +459,11 @@ export class UnifiedCommandSystem {
     return commandNames
       .map(name => ({
         name,
-        distance: this.levenshteinDistance(input, name)
+        distance: levenshteinDistance(input, name)
       }))
       .filter(item => item.distance <= 2)
       .sort((a, b) => a.distance - b.distance)
       .map(item => item.name);
-  }
-
-  levenshteinDistance(str1, str2) {
-    const matrix = [];
-    
-    for (let i = 0; i <= str2.length; i++) {
-      matrix[i] = [i];
-    }
-    
-    for (let j = 0; j <= str1.length; j++) {
-      matrix[0][j] = j;
-    }
-    
-    for (let i = 1; i <= str2.length; i++) {
-      for (let j = 1; j <= str1.length; j++) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1,
-            matrix[i][j - 1] + 1,
-            matrix[i - 1][j] + 1
-          );
-        }
-      }
-    }
-    
-    return matrix[str2.length][str1.length];
   }
 
   /**
@@ -522,7 +483,7 @@ export class UnifiedCommandSystem {
     try {
       await this.bot.sendMessage(messageData.key.remoteJid, { text });
     } catch (error) {
-      console.error('Failed to send message', error.message);
+      this.context.logger.error('Failed to send message', { error: error.message });
     }
   }
 
@@ -535,14 +496,17 @@ export class UnifiedCommandSystem {
         }
       });
     } catch (error) {
-      console.error('Failed to react to message', error.message);
+      this.context.logger.error('Failed to react to message', { error: error.message });
     }
   }
 
   isOwner(jid) {
-    const ownerNumbers = (process.env.OWNER_NUMBER || '').split(',').map(n => n.trim()).filter(n => n.length > 0);
+    const configOwner = (this.context?.config?.owner?.id || '').split(',').map(n => n.trim()).filter(Boolean);
+    const envOwner = (process.env.OWNER_NUMBER || '').split(',').map(n => n.trim()).filter(Boolean);
+    const ownerNumbers = configOwner.length > 0 ? configOwner : envOwner;
+
     if (ownerNumbers.length === 0) {
-      console.warn('⚠️ OWNER_NUMBER environment variable not set');
+      this.context.logger.warn('⚠️ Owner not configured. Set config.owner.id or OWNER_NUMBER env var.');
       return false;
     }
     return ownerNumbers.some(owner => jid.includes(owner));

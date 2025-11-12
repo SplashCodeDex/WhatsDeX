@@ -141,7 +141,19 @@ export default {
         topK: parseInt(process.env.GEMINI_TOP_K, 10) || 40,
         maxOutputTokens: parseInt(process.env.GEMINI_MAX_TOKENS, 10) || 2048,
       }
-    }
+    },
+    memory: {
+      maxSize: parseInt(process.env.AI_MEMORY_MAX_SIZE, 10) || 1000,
+      ttl: parseInt(process.env.AI_MEMORY_TTL, 10) || 3600000,
+      cleanupInterval: parseInt(process.env.AI_MEMORY_CLEANUP_INTERVAL, 10) || 300000,
+    },
+    intent: {
+      aiKeywords: [
+        'what', 'how', 'why', 'when', 'where', 'who',
+        'explain', 'tell me', 'help', '?',
+        'create', 'generate', 'write', 'make'
+      ],
+    },
   },
 
   // Redis configuration
@@ -186,5 +198,15 @@ export default {
     customPairingCode: process.env.CUSTOM_PAIRING_CODE || 'UMBR4L15', // Custom pairing code for connection (Optional, if using QR code, if empty the pairing code will be random)
     useStore: process.env.USE_STORE === 'true' || false, // Store for saving incoming messages
     useServer: process.env.USE_SERVER === 'true' || false, // Run the bot with a server
+  },
+
+  // Connection configuration
+  connection: {
+    maxRetries: parseInt(process.env.CONN_MAX_RETRIES, 10) || 15,
+    baseDelay: parseInt(process.env.CONN_BASE_DELAY, 10) || 3000,
+    maxDelay: parseInt(process.env.CONN_MAX_DELAY, 10) || 300000,
+    backoffMultiplier: parseFloat(process.env.CONN_BACKOFF_MULTIPLIER) || 1.5,
+    circuitBreakerThreshold: parseInt(process.env.CONN_CB_THRESHOLD, 10) || 5,
+    circuitBreakerTimeout: parseInt(process.env.CONN_CB_TIMEOUT, 10) || 600000,
   },
 };

@@ -25,6 +25,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      OWNER_NUMBER: ${{ secrets.OWNER_NUMBER }}
     steps:
       - uses: actions/checkout@v3
 

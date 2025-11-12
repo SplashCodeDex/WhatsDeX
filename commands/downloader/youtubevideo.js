@@ -15,7 +15,7 @@ export default {
     const { formatter, config } = ctx.bot.context;
 
     try {
-      const flag = parseFlag(ctx.args.join(' ') || null, {
+      const flag = parseFlag((ctx.args.join(' ') || '').trim(), {
         '-d': { type: 'boolean', key: 'document' },
         '-q': {
           type: 'value',

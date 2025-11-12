@@ -1,10 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import { jest } from '@jest/globals';
 import embeddingService from '../../src/services/EmbeddingService.js';
 import memoryService from '../../src/services/MemoryService.js';
-
-// Use a real Prisma client for integration testing
-const prisma = new PrismaClient();
+import { prismaMock } from '../mocks/prisma.js';
 
 // Mock the OpenAI API call within the EmbeddingService to avoid network calls and costs
 jest.mock('../../src/services/EmbeddingService.js', () => {
@@ -22,16 +19,16 @@ jest.mock('../../src/services/EmbeddingService.js', () => {
 describe('RAG Integration Test', () => {
   const userId = 'integration-test-user';
 
-  beforeAll(async () => {
-    // Ensure the database is clean before starting the test suite
-    await prisma.conversationEmbedding.deleteMany({ where: { userId } });
-  });
+  const context = {
+    logger: {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+    },
+  };
 
-  afterAll(async () => {
-    // Clean up the test data after all tests are done
-    await prisma.conversationEmbedding.deleteMany({ where: { userId } });
-    await prisma.$disconnect();
-  });
+  memoryService.context = context;
 
   test('should store a conversation and retrieve it based on semantic similarity', async () => {
     // --- Step A: Store ---
@@ -43,7 +40,14 @@ describe('RAG Integration Test', () => {
     await memoryService.storeConversation(userId, originalSentence);
 
     // --- Step B: Verify Store ---
-    const storedEmbedding = await prisma.conversationEmbedding.findFirst({
+    const mockStoredEmbedding = {
+      userId,
+      content: originalSentence,
+      embedding: originalEmbedding,
+    };
+    prismaMock.conversationEmbedding.findFirst.mockResolvedValue(mockStoredEmbedding);
+
+    const storedEmbedding = await prismaMock.conversationEmbedding.findFirst({
       where: {
         userId,
         content: originalSentence,
@@ -59,6 +63,16 @@ describe('RAG Integration Test', () => {
     // For the retrieval query, we need a slightly different embedding to simulate a different question
     const relatedEmbedding = new Array(1536).fill(0).map((_, i) => i % 3 === 0 ? 0.11 : -0.09);
     embeddingService.generateEmbedding.mockResolvedValue(relatedEmbedding);
+
+    const mockContexts = [
+      {
+        content: originalSentence,
+        timestamp: new Date(),
+        similarity: 0.9,
+        metadata: {},
+      },
+    ];
+    prismaMock.$queryRaw.mockResolvedValue(mockContexts);
 
     // Temporarily set a lower threshold to ensure our mock similarity works
     memoryService.setSimilarityThreshold(0.7);

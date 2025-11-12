@@ -10,6 +10,8 @@ import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
 import { MemoryManager } from '../utils/MemoryManager.js';
 
+import { MessageClassifier } from '../utils/MessageClassifier.js';
+
 export class UnifiedAIProcessor {
   constructor(bot, context) {
     this.bot = bot;
@@ -17,7 +19,7 @@ export class UnifiedAIProcessor {
     
     // CONSOLIDATED: Single Gemini AI instance as default
     if (!this.context.config.api.gemini) {
-      console.warn('⚠️ Gemini API key not set in config.api.gemini - AI features will be disabled');
+      this.context.logger.warn('⚠️ Gemini API key not set in config.api.gemini - AI features will be disabled');
       this.geminiAI = null;
       this.geminiModel = null;
     } else {
@@ -29,11 +31,7 @@ export class UnifiedAIProcessor {
     }
     
     // CONSOLIDATED: Unified memory management
-    this.conversationMemory = new MemoryManager({
-      maxSize: 1000,
-      ttl: 3600000, // 1 hour
-      cleanupInterval: 300000 // 5 minutes
-    });
+    this.conversationMemory = new MemoryManager(this.context.config.ai.memory);
     
     // CONSOLIDATED: Single rate limiter instance
     this.rateLimiter = new RateLimiter();
@@ -173,7 +171,7 @@ export class UnifiedAIProcessor {
     try {
       // Check if Gemini is available
       if (!this.geminiModel) {
-        console.warn('⚠️ Gemini AI not available - returning fallback response');
+        this.context.logger.warn('⚠️ Gemini AI not available - returning fallback response');
         return {
           text: 'AI features are currently unavailable. Please check the configuration.',
           source: 'fallback'
@@ -249,14 +247,8 @@ export class UnifiedAIProcessor {
   }
 
   detectAIIntent(text) {
-    const aiKeywords = [
-      'what', 'how', 'why', 'when', 'where', 'who',
-      'explain', 'tell me', 'help', '?',
-      'create', 'generate', 'write', 'make'
-    ];
-    
     const lowerText = text.toLowerCase();
-    return aiKeywords.some(keyword => lowerText.includes(keyword));
+    return this.context.config.ai.intent.aiKeywords.some(keyword => lowerText.includes(keyword));
   }
 
   async isSpam(text, userId) {

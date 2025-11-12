@@ -1,4 +1,4 @@
-const botMode = require('../middleware/botMode.js');
+import botMode from '../middleware/botMode.js';
 
 describe('botMode middleware', () => {
   let ctx;

@@ -63,6 +63,8 @@ jobs:
       run: |
         npm ci
         cd web && npm ci
+    - name: 🔐 Export OWNER_NUMBER to env
+      run: echo "OWNER_NUMBER=${{ secrets.OWNER_NUMBER }}" >> $GITHUB_ENV
     
     - name: 🔍 ESLint Check
       run: |

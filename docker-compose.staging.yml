@@ -46,6 +46,7 @@ services:
       NODE_ENV: staging
       DATABASE_URL: postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex_staging}@db:5432/${DB_NAME:-whatsdex_staging}
       REDIS_URL: redis://:${REDIS_PASSWORD:-whatsdex_staging}@redis:6379
+      OWNER_NUMBER: ${OWNER_NUMBER}
       GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
       WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-staging_verify_token}
       WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET}

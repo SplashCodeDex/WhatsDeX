@@ -43,7 +43,7 @@ export default {
     '/node_modules/',
     '/tests/e2e/', // Exclude e2e tests
   ],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js', '<rootDir>/__tests__/mocks/prisma.js'],
   testTimeout: 10000,
   verbose: true,
   maxWorkers: '50%',

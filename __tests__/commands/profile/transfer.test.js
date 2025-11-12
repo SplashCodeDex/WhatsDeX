@@ -1,13 +1,16 @@
-jest.mock('../../../src/utils', () => ({
+jest.mock('../../../src/utils/index.js', () => ({
   db: {
     get: jest.fn(),
     add: jest.fn(),
     subtract: jest.fn(),
+    prisma: {
+      $on: jest.fn(),
+    },
   },
 }));
 
-const transferCommand = require('../../../commands/profile/transfer.js');
-const { db } = require('../../../src/utils');
+import transferCommand from '../../../commands/profile/transfer.js';
+import { db } from '../../../src/utils/index.js';
 
 describe('transfer command', () => {
   let ctx;

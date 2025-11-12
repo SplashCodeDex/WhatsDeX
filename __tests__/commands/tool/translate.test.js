@@ -1,6 +1,6 @@
-const axios = require('axios');
-const translateCommand = require('../../../commands/tool/translate.js');
-const apiTools = require('../../../tools/api');
+import translateCommand from '../../../commands/tool/translate.js';
+import * as apiTools from '../../../tools/api.js';
+import axios from 'axios';
 
 // Mock dependencies
 jest.mock('axios');

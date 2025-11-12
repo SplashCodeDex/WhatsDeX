@@ -1,9 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma.js';
 import embeddingService from './EmbeddingService.js';
 
 export class MemoryService {
-  constructor() {
-    this.prisma = new PrismaClient();
+  constructor(context) {
+    this.context = context;
+    this.prisma = prisma;
     this.similarityThreshold = 0.75; // Configurable relevance threshold
     this.maxContexts = 5; // Maximum historical contexts to retrieve
   }
@@ -26,9 +27,9 @@ export class MemoryService {
         VALUES (gen_random_uuid(), ${userId}, ${conversationText}, ${vectorString}::vector, ${JSON.stringify(metadata)}::jsonb)
       `;
       
-      console.log(`Stored conversation embedding for user ${userId}`);
+      this.context.logger.info(`Stored conversation embedding for user ${userId}`);
     } catch (error) {
-      console.error('Error storing conversation embedding:', error);
+      this.context.logger.error('Error storing conversation embedding:', error);
       // Don't throw - background operation should not break main flow
     }
   }
@@ -67,7 +68,7 @@ export class MemoryService {
       }));
 
     } catch (error) {
-      console.error('Error retrieving context:', error);
+      this.context.logger.error('Error retrieving context:', error);
       return []; // Return empty array on error - don't break the conversation
     }
   }
@@ -88,7 +89,7 @@ export class MemoryService {
 
       return stats[0];
     } catch (error) {
-      console.error('Error getting conversation stats:', error);
+      this.context.logger.error('Error getting conversation stats:', error);
       return null;
     }
   }
@@ -106,10 +107,10 @@ export class MemoryService {
         WHERE timestamp < ${cutoffDate}
       `;
 
-      console.log(`Cleaned up old conversations, deleted ${result} records`);
+      this.context.logger.info(`Cleaned up old conversations, deleted ${result} records`);
       return result;
     } catch (error) {
-      console.error('Error cleaning up conversations:', error);
+      this.context.logger.error('Error cleaning up conversations:', error);
       return 0;
     }
   }
@@ -120,7 +121,7 @@ export class MemoryService {
   setSimilarityThreshold(threshold) {
     if (threshold >= 0 && threshold <= 1) {
       this.similarityThreshold = threshold;
-      console.log(`Updated similarity threshold to ${threshold}`);
+      this.context.logger.info(`Updated similarity threshold to ${threshold}`);
     } else {
       throw new Error('Similarity threshold must be between 0 and 1');
     }
@@ -132,7 +133,7 @@ export class MemoryService {
   setMaxContexts(maxContexts) {
     if (maxContexts > 0) {
       this.maxContexts = maxContexts;
-      console.log(`Updated max contexts to ${maxContexts}`);
+      this.context.logger.info(`Updated max contexts to ${maxContexts}`);
     } else {
       throw new Error('Max contexts must be greater than 0');
     }

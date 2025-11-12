@@ -52,6 +52,7 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex}@db:5432/${DB_NAME:-whatsdex}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - OWNER_NUMBER=${OWNER_NUMBER}
     ports:
       - "3001:3001"
     depends_on:
@@ -103,6 +104,7 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex}@db:5432/${DB_NAME:-whatsdex}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - OWNER_NUMBER=${OWNER_NUMBER}
     command: node src/jobs/index.js
     depends_on:
       db:

@@ -15,7 +15,7 @@ module.exports = {
           '@babel/preset-env',
           {
             targets: { node: 'current' },
-            modules: 'commonjs', // Explicitly convert ESM → CommonJS for tests
+            modules: false, // Preserve ESM for tests
           },
         ],
       ],

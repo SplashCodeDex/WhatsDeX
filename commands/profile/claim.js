@@ -59,7 +59,7 @@ export default {
       const claimCheck = claimSchema.safeParse(input);
 
       if (!claimCheck.success) {
-        return ctx.reply(formatter.quote(`❎ ${claimCheck.error.issues[0].message}`));
+        return ctx.reply(formatter.quote('❎ Invalid claim type. Use ".claim list" to see available claims.'));
       }
       const claimType = claimCheck.data;
       const claim = claimRewards[claimType];

@@ -25,10 +25,13 @@ export default {
         );
       }
 
-      const amountSchema = z.coerce
-        .number({ invalid_type_error: 'The amount must be a number.' })
-        .int()
-        .positive('The amount must be a positive whole number.');
+      const amountSchema = z
+        .string()
+        .refine(val => /^-?\d+$/.test(val), { message: 'The amount must be a number.' })
+        .transform(val => parseInt(val, 10))
+        .refine(n => Number.isInteger(n) && n > 0, {
+          message: 'The amount must be a positive whole number.',
+        });
       const validationResult = amountSchema.safeParse(amountStr);
 
       if (!validationResult.success) {

@@ -1,13 +1,16 @@
-const claimCommand = require('../../../commands/profile/claim.js');
-const formatters = require('../../../utils/formatters');
-const { db } = require('../../../src/utils');
-
-jest.mock('../../../src/utils', () => ({
+jest.mock('../../../src/utils/index.js', () => ({
   db: {
     get: jest.fn(),
     set: jest.fn(),
+    prisma: {
+      $on: jest.fn(),
+    },
   },
 }));
+
+import claimCommand from '../../../commands/profile/claim.js';
+import * as formatters from '../../../utils/formatters.js';
+import { db } from '../../../src/utils/index.js';
 
 jest.mock('../../../utils/formatters', () => ({
   convertMsToDuration: jest.fn(ms => `${ms / 1000} seconds`),

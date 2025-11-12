@@ -1,7 +1,8 @@
 import OpenAI from 'openai';
 
 export class EmbeddingService {
-  constructor() {
+  constructor(context) {
+    this.context = context;
     this.client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
@@ -44,7 +45,7 @@ export class EmbeddingService {
         if (attempt === this.maxRetries) throw error;
         
         const delay = this.baseDelay * Math.pow(2, attempt - 1); // 2s→4s→8s
-        console.warn(`Embedding API attempt ${attempt} failed, retrying in ${delay}ms:`, error.message);
+        this.context.logger.warn(`Embedding API attempt ${attempt} failed, retrying in ${delay}ms:`, error.message);
         await this.sleep(delay);
       }
     }
