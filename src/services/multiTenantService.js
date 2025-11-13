@@ -26,6 +26,16 @@ export class MultiTenantService {
         throw new Error('Subdomain already taken');
       }
 
+      // Check if email already used by a tenant (friendly error before Prisma unique constraint)
+      const existingByEmail = await this.prisma.tenant.findUnique({ where: { email } });
+      if (existingByEmail) {
+        const err = new Error('Email already registered');
+        // mimic prisma error shape optionally
+        err.code = 'P2002';
+        err.meta = { target: ['email'] };
+        throw err;
+      }
+
       // Create tenant and admin user in transaction
       const result = await this.prisma.$transaction(async (tx) => {
         // Create tenant

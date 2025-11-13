@@ -3,12 +3,13 @@
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '../../hooks/use-toast';
 import { Check, ArrowRight, Bot, MessageSquare, Users, Zap } from 'lucide-react';
 
 const plans = [
@@ -74,7 +75,16 @@ export default function Register() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [availability, setAvailability] = useState({ email: null, subdomain: null });
+  const prevAvailRef = useRef({ email: null, subdomain: null });
+  const [checking, setChecking] = useState({ email: false, subdomain: false });
+  const scrollToTop = () => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
+  let debounceTimer;
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -88,6 +98,55 @@ export default function Register() {
         ...prev,
         [name]: ''
       }));
+    }
+
+    // Debounced availability check for email and subdomain
+    if (name === 'email' || name === 'subdomain') {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        try {
+          setChecking(prev => ({ ...prev, [name]: true }));
+          const params = new URLSearchParams({ [name]: value });
+          const resp = await fetch(`/api/auth/availability?${params.toString()}`);
+          const data = await resp.json();
+          if (name === 'email' && value === formData.email) {
+            const newEmailAvail = data.email || { available: true };
+            setAvailability(prev => ({ ...prev, email: newEmailAvail }));
+            const isAvailable = !!newEmailAvail.available;
+            if (prevAvailRef.current.email !== isAvailable) {
+              if (isAvailable) {
+                toast({ title: 'Email available', description: 'You can use this email', variant: 'success' });
+              } else {
+                toast({ title: 'Email in use', description: newEmailAvail.reason || 'Email already registered', variant: 'destructive' });
+              }
+              prevAvailRef.current.email = isAvailable;
+            }
+            if (!isAvailable) {
+              setErrors(prev => ({ ...prev, email: newEmailAvail.reason || 'Email not available' }));
+            }
+          }
+          if (name === 'subdomain' && value === formData.subdomain) {
+            const newSubAvail = data.subdomain || { available: true };
+            setAvailability(prev => ({ ...prev, subdomain: newSubAvail }));
+            const isAvailable = !!newSubAvail.available;
+            if (prevAvailRef.current.subdomain !== isAvailable) {
+              if (isAvailable) {
+                toast({ title: 'Subdomain available', description: 'Nice choice — it’s available', variant: 'success' });
+              } else {
+                toast({ title: 'Subdomain taken', description: newSubAvail.reason || 'Please try another subdomain', variant: 'destructive' });
+              }
+              prevAvailRef.current.subdomain = isAvailable;
+            }
+            if (!isAvailable) {
+              setErrors(prev => ({ ...prev, subdomain: newSubAvail.reason || 'Subdomain not available' }));
+            }
+          }
+        } catch (err) {
+          console.error('Availability check failed', err);
+        } finally {
+          setChecking(prev => ({ ...prev, [name]: false }));
+        }
+      }, 500);
     }
   };
 
@@ -116,14 +175,43 @@ export default function Register() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
-    if (validateStep1()) {
+  const handleNext = async () => {
+    if (!validateStep1()) {
+      scrollToTop();
+      return;
+    }
+
+    // Ensure availability before proceeding
+    try {
+      setChecking(prev => ({ ...prev, email: true, subdomain: true }));
+      const params = new URLSearchParams({ email: formData.email, subdomain: formData.subdomain });
+      const resp = await fetch(`/api/auth/availability?${params.toString()}`);
+      const data = await resp.json();
+      const newErrors = {};
+      if (data.email && data.email.available === false) newErrors.email = data.email.reason || 'Email not available';
+      if (data.subdomain && data.subdomain.available === false) newErrors.subdomain = data.subdomain.reason || 'Subdomain not available';
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        toast({ title: 'Please fix the highlighted fields', description: 'Some details are not available yet', variant: 'destructive' });
+        scrollToTop();
+        return;
+      } else {
+        toast({ title: 'Looks good!', description: 'Email and subdomain are available. Choose your plan.', variant: 'success' });
+      }
       setStep(2);
+      scrollToTop();
+    } catch (e) {
+      // fallback: allow step but warn
+      setStep(2);
+      scrollToTop();
+    } finally {
+      setChecking(prev => ({ ...prev, email: false, subdomain: false }));
     }
   };
 
   const handleRegister = async () => {
     setLoading(true);
+    setErrors({});
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -138,16 +226,29 @@ export default function Register() {
 
       const data = await response.json();
 
-      if (data.success) {
-        // Token may be set by server via httpOnly cookie after registration/login; no localStorage used
-        
-        // Redirect to dashboard
+      if (response.ok && data.success) {
         window.location.href = '/dashboard';
       } else {
-        setErrors({ general: data.error });
+        // Map server error to field-specific errors when provided
+        const field = data.field;
+        const newErrors = {};
+        if (field && data.error) {
+          newErrors[field] = data.error;
+        } else if (data.error) {
+          newErrors.general = data.error;
+        } else {
+          newErrors.general = 'Registration failed. Please try again.';
+        }
+        setErrors(newErrors);
+        // Jump user back to step 1 if error concerns inputs
+        setStep(1);
+        scrollToTop();
+        toast({ title: 'Could not create account', description: newErrors.general || data.error || 'Please review your information', variant: 'destructive' });
       }
     } catch (error) {
       setErrors({ general: 'Registration failed. Please try again.' });
+      setStep(1);
+      scrollToTop();
     } finally {
       setLoading(false);
     }
@@ -193,7 +294,7 @@ export default function Register() {
 
                 <div className="space-y-2">
                   <Label htmlFor="subdomain">Subdomain</Label>
-                  <div className="flex">
+                  <div className="flex items-center">
                     <Input
                       id="subdomain"
                       name="subdomain"
@@ -205,6 +306,12 @@ export default function Register() {
                     <div className="bg-gray-100 border border-l-0 px-3 py-2 rounded-r-md text-sm text-gray-600">
                       .whatsdx.com
                     </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1 text-sm">
+                    {checking.subdomain && <span className="text-gray-500">Checking availability…</span>}
+                    {availability.subdomain && availability.subdomain.available && !checking.subdomain && !errors.subdomain && (
+                      <span className="text-green-600">Subdomain is available</span>
+                    )}
                   </div>
                   {errors.subdomain && (
                     <p className="text-red-500 text-sm">{errors.subdomain}</p>
@@ -222,6 +329,12 @@ export default function Register() {
                     placeholder="you@company.com"
                     className={errors.email ? 'border-red-500' : ''}
                   />
+                  <div className="flex items-center gap-2 mt-1 text-sm">
+                    {checking.email && <span className="text-gray-500">Checking availability…</span>}
+                    {availability.email && availability.email.available && !checking.email && !errors.email && (
+                      <span className="text-green-600">Email is available</span>
+                    )}
+                  </div>
                   {errors.email && (
                     <p className="text-red-500 text-sm">{errors.email}</p>
                   )}
@@ -285,7 +398,7 @@ export default function Register() {
                   )}
                 </div>
 
-                <Button onClick={handleNext} className="w-full">
+                <Button onClick={handleNext} className="w-full" disabled={checking.email || checking.subdomain}>
                   Next Step
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>

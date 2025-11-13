@@ -670,9 +670,10 @@ router.post('/logout', async (req, res) => {
 // POST /api/auth/register
 // Creates tenant + admin user + default bot, then authenticates and returns token
 (() => {
-  const ipHits = new Map(); // basic in-memory rate limiter
-  const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
-  const MAX_HITS = 5; // 5 registrations per IP per window
+  const ipHits = new Map(); // basic in-memory rate limiter (consider Redis for prod)
+  const WINDOW_MS = parseInt(process.env.REG_LIMIT_WINDOW_MS || '', 10) || 5 * 60 * 1000; // default 5 minutes
+  const MAX_HITS = parseInt(process.env.REG_LIMIT_MAX || '', 10) || 10; // default 10 attempts per key per window
+  const WHITELIST_IPS = (process.env.REG_LIMIT_WHITELIST_IPS || '127.0.0.1,::1,localhost').split(',').map(s => s.trim());
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const subdomainRegex = /^[a-z0-9-]{3,20}$/;
@@ -682,17 +683,68 @@ router.post('/logout', async (req, res) => {
     return mod.default || mod;
   };
 
+  // Availability check endpoint for registration (email + subdomain)
+  router.get('/register/availability', async (req, res) => {
+    try {
+      const { email = '', subdomain = '' } = req.query || {};
+      const mt = await getMultiTenantService();
+
+      const payload = { email: { available: true }, subdomain: { available: true } };
+      if (!email && !subdomain) {
+        return res.status(400).json({ error: 'Provide email or subdomain to check' });
+      }
+      if (email) {
+        const existingByEmail = await mt.prisma.tenant.findUnique({ where: { email: String(email).toLowerCase() } });
+        if (existingByEmail) {
+          payload.email = { available: false, reason: 'Email already registered' };
+        }
+      }
+      if (subdomain) {
+        const existingBySub = await mt.prisma.tenant.findUnique({ where: { subdomain: String(subdomain).toLowerCase() } });
+        if (existingBySub) {
+          payload.subdomain = { available: false, reason: 'Subdomain already taken' };
+        }
+      }
+      return res.json({ success: true, ...payload });
+    } catch (error) {
+      console.error('Availability check error:', error);
+      return res.status(500).json({ error: 'Failed to check availability' });
+    }
+  });
+
   router.post('/register', async (req, res) => {
     try {
-      // Basic rate limiting per IP
+      // Basic rate limiting per key (IP + email to avoid penalizing shared IPs)
       const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection?.remoteAddress || 'unknown';
-      const now = Date.now();
-      const hits = (ipHits.get(ip) || []).filter(ts => now - ts < WINDOW_MS);
-      if (hits.length >= MAX_HITS) {
-        return res.status(429).json({ error: 'Too many registration attempts. Please try again later.' });
+      // Whitelist certain IPs (local/dev/CDN health checks)
+      if (WHITELIST_IPS.includes(ip)) {
+        // skip rate limiting
+      } else {
+        const previewBody = req.body || {};
+        const keySuffix = (previewBody?.email || '').toLowerCase();
+        const key = `${ip}:${keySuffix || 'anonymous'}`;
+        const now = Date.now();
+        const recentHits = (ipHits.get(key) || []).filter(ts => now - ts < WINDOW_MS);
+        const remaining = Math.max(0, MAX_HITS - recentHits.length);
+        if (recentHits.length >= MAX_HITS) {
+          const retryAfterMs = WINDOW_MS - (now - recentHits[0]);
+          res.set('Retry-After', Math.ceil(retryAfterMs / 1000));
+          res.set('X-RateLimit-Limit', String(MAX_HITS));
+          res.set('X-RateLimit-Remaining', '0');
+          res.set('X-RateLimit-Reset', String(Math.ceil((now + retryAfterMs) / 1000)));
+          return res.status(429).json({ 
+            error: 'We’re receiving too many sign‑up attempts from your network right now.',
+            code: 'RATE_LIMITED',
+            remainingAttempts: 0,
+            retryAfterSeconds: Math.ceil(retryAfterMs / 1000),
+            hint: 'Wait a couple of minutes or try with a different email. Contact support if this persists.'
+          });
+        }
+        recentHits.push(now);
+        ipHits.set(key, recentHits);
+        res.set('X-RateLimit-Limit', String(MAX_HITS));
+        res.set('X-RateLimit-Remaining', String(Math.max(0, remaining - 1)));
       }
-      hits.push(now);
-      ipHits.set(ip, hits);
 
       const {
         companyName,
@@ -704,7 +756,7 @@ router.post('/logout', async (req, res) => {
         plan = 'free',
       } = req.body || {};
 
-      // Validate input
+      // Validate input (do not count validation failures harshly; rate limit primarily creation attempts)
       if (!companyName || typeof companyName !== 'string' || companyName.trim().length < 2) {
         return res.status(400).json({ error: 'Invalid companyName' });
       }
@@ -742,6 +794,17 @@ router.post('/logout', async (req, res) => {
       // Immediately authenticate admin user
       const auth = await multiTenantService.authenticateUser(result.tenant.id, email.trim(), password);
 
+      // Success: adjust rate limiter window so next attempt is not unfairly blocked
+      try {
+        const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection?.remoteAddress || 'unknown';
+        const keySuffix = (email || '').toLowerCase();
+        const key = `${ip}:${keySuffix || 'anonymous'}`;
+        const now = Date.now();
+        const recentHits = (ipHits.get(key) || []).filter(ts => now - ts < WINDOW_MS);
+        // Keep only the most recent successful attempt
+        ipHits.set(key, recentHits.slice(-1));
+      } catch {}
+
       // Record analytics and audit (best-effort)
       try {
         await multiTenantService.recordAnalytic(result.tenant.id, 'tenant_registered', 1, { plan });
@@ -772,9 +835,39 @@ router.post('/logout', async (req, res) => {
       });
     } catch (error) {
       console.error('Public register error:', error);
-      const msg = error?.message || 'Registration failed';
-      const status = /already|exists|taken/i.test(msg) ? 409 : 500;
-      return res.status(status).json({ error: msg });
+      let status = 500;
+      let message = 'Registration failed';
+      let code = 'REGISTRATION_FAILED';
+      let field = undefined;
+
+      if (error && error.code === 'P2002') {
+        status = 409;
+        code = 'CONFLICT';
+        const target = (error.meta && error.meta.target) || [];
+        if (Array.isArray(target) && target.includes('email')) {
+          message = 'Email already registered';
+          field = 'email';
+        } else if (Array.isArray(target) && target.includes('subdomain')) {
+          message = 'Subdomain already taken';
+          field = 'subdomain';
+        } else {
+          message = 'Resource already exists';
+        }
+      } else if (typeof error?.message === 'string') {
+        if (/subdomain.*taken/i.test(error.message)) {
+          status = 409; code = 'CONFLICT'; message = 'Subdomain already taken'; field = 'subdomain';
+        } else if (/email.*(exists|taken|registered)/i.test(error.message)) {
+          status = 409; code = 'CONFLICT'; message = 'Email already registered'; field = 'email';
+        } else if (/already|exists|taken/i.test(error.message)) {
+          status = 409; code = 'CONFLICT'; message = 'Resource already exists';
+        } else {
+          message = error.message;
+        }
+      }
+
+      const body = { error: message, code };
+      if (field) body.field = field;
+      return res.status(status).json(body);
     }
   });
 })();

@@ -17,8 +17,6 @@ import { CreditCardIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { ThemeContext } from '@/contexts/ThemeContext';
 
-import { CommandPalette } from './CommandPalette';
-
 const getNavigationItemClass = (item, darkMode) => {
   if (item.current) {
     return darkMode
@@ -34,16 +32,6 @@ function Layout({ children, title = 'WhatsDeX Dashboard' }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { darkMode, toggleDarkMode, mounted } = useContext(ThemeContext);
 
-  // Don't render theme-dependent content until mounted to prevent hydration issues
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-900">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-white">Loading...</div>
-        </div>
-      </div>
-    );
-  }
   const [notifications, setNotifications] = useState([]);
 
   // Simulate new notifications
@@ -74,14 +62,16 @@ function Layout({ children, title = 'WhatsDeX Dashboard' }) {
     <div
       className={cn(
         'min-h-screen bg-gradient-to-br transition-all duration-500',
-        darkMode
-          ? 'from-slate-900 via-slate-800 to-slate-900'
-          : 'from-blue-50 via-indigo-50 to-purple-50'
+        mounted
+          ? (darkMode
+              ? 'from-slate-900 via-slate-800 to-slate-900'
+              : 'from-blue-50 via-indigo-50 to-purple-50')
+          : 'bg-gray-900'
       )}
     >
-      <CommandPalette />
       {/* Background Effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {mounted && (
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div
           className={cn(
             'absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl opacity-20 animate-float',
@@ -102,6 +92,7 @@ function Layout({ children, title = 'WhatsDeX Dashboard' }) {
           )}
         />
       </div>
+      )
 
       {/* Sidebar */}
       <AnimatePresence>
