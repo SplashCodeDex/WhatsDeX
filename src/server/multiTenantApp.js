@@ -102,14 +102,24 @@ export class MultiTenantApp {
   }
 
   setupRoutes() {
-    // Health check
-    this.app.get('/health', (req, res) => {
-      res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        version: process.env.npm_package_version || '1.0.0'
-      });
+    // Health check (deep)
+    this.app.get('/health', async (req, res) => {
+      try {
+        const { runHealthChecks } = await import('../../scripts/health-check.js');
+        const result = await runHealthChecks({ disconnectPrisma: true });
+        const status = result.ok ? 'healthy' : 'degraded';
+        res.status(result.ok ? 200 : 503).json({
+          status,
+          ...result,
+          uptime: process.uptime(),
+          version: process.env.npm_package_version || '1.0.0'
+        });
+      } catch (err) {
+        res.status(500).json({
+          status: 'error',
+          error: err?.message || String(err)
+        });
+      }
     });
 
     // Internal API routes for web frontend

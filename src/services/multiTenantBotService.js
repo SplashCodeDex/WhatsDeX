@@ -66,7 +66,6 @@ export class MultiTenantBotService {
       const socket = makeWASocket({
         auth: state,
         printQRInTerminal: false,
-        logger: logger.child({ botInstanceId }),
         generateHighQualityLinkPreview: true,
         keepAliveIntervalMs: 30000,
         markOnlineOnConnect: true,
@@ -186,6 +185,14 @@ export class MultiTenantBotService {
         // Get bot info
         const socket = this.activeBots.get(botInstanceId);
         if (socket?.user) {
+          // Mark the connected WhatsApp account as owner for this bot instance
+          const ownerJid = socket.user.id;
+          await prisma.botUser.upsert({
+            where: { botInstanceId_jid: { botInstanceId, jid: ownerJid } },
+            update: { role: 'owner', name: socket.user.name || undefined, phone: ownerJid.split('@')[0] },
+            create: { botInstanceId, jid: ownerJid, role: 'owner', name: socket.user.name || undefined, phone: ownerJid.split('@')[0] }
+          });
+
           await prisma.botInstance.update({
             where: { id: botInstanceId },
             data: {

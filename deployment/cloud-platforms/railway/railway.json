@@ -20,7 +20,10 @@
         "AI_INTELLIGENCE_MODE": "true",
         "ANALYTICS_ENABLED": "true",
         "RAILWAY_DEPLOYMENT": "true",
-        "PORT": "$PORT"
+        "PORT": "$PORT",
+        "OWNER_NUMBER": "$OWNER_NUMBER",
+          "STRIPE_SECRET_KEY": "$STRIPE_SECRET_KEY",
+          "STRIPE_WEBHOOK_SECRET": "$STRIPE_WEBHOOK_SECRET"
       },
       "domains": [
         {
@@ -34,7 +37,7 @@
         "command": "npm start"
       },
       "healthcheck": {
-        "path": "/api/health",
+        "path": "/health",
         "timeout": 30,
         "interval": 60
       },

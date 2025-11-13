@@ -167,6 +167,9 @@ const enhancedLogger = {
       enhancedLogger.command(command, userId, success, executionTime, error),
   }),
 
+  // Compatibility shim for libraries expecting pino-like child()
+  child: (meta = {}) => enhancedLogger.withContext(meta),
+
   // Stream for Morgan HTTP logging
   stream: {
     write: message => {

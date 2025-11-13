@@ -6,6 +6,7 @@ import pkg from './package.json' with { type: 'json' };
 import { startServer } from './src/server.js';
 
 import { withRetry } from './lib/retry.js';
+import multiTenantStripeService from './src/services/multiTenantStripeService.js';
 
 // --- Main Application IIFE ---
 (async () => {
@@ -26,6 +27,20 @@ import { withRetry } from './lib/retry.js';
     colors: ['#E0F7FF'],
     align: 'center',
   });
+
+  // --- Initialize Stripe (if configured) ---
+  try {
+    const sk = process.env.STRIPE_SECRET_KEY;
+    const wh = process.env.STRIPE_WEBHOOK_SECRET;
+    if (sk && wh) {
+      await multiTenantStripeService.initialize(sk, wh);
+      logger.info('✅ Stripe initialized with webhook verification');
+    } else {
+      logger.warn('⚠️ Stripe not initialized: STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET missing');
+    }
+  } catch (e) {
+    logger.error('❌ Stripe initialization failed', { error: e?.message || String(e) });
+  }
 
   // --- Start Web Server ---
   let server;

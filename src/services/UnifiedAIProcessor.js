@@ -8,6 +8,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import logger from '../utils/logger.js';
 import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
+import redisClient from '../../lib/redis.js';
 import { MemoryManager } from '../utils/MemoryManager.js';
 
 import { MessageClassifier } from '../utils/MessageClassifier.js';
@@ -33,8 +34,8 @@ export class UnifiedAIProcessor {
     // CONSOLIDATED: Unified memory management
     this.conversationMemory = new MemoryManager(this.context.config.ai.memory);
     
-    // CONSOLIDATED: Single rate limiter instance
-    this.rateLimiter = new RateLimiter();
+    // CONSOLIDATED: Single rate limiter instance (requires redis client)
+    this.rateLimiter = new RateLimiter(redisClient);
     
     // CONSOLIDATED: Smart message classification
     this.messageClassifier = new MessageClassifier();

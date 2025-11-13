@@ -150,19 +150,59 @@ function isCmd(config, content, bot) {
     : false;
 }
 
-function isOwner(config, id, messageId) {
-  if (!id) return false;
+import prisma from '../src/lib/prisma.js';
 
-  if (
-    config.system.selfOwner ||
-    config.bot.id === config.owner.id ||
-    config.owner.co.includes(config.bot.id)
-  ) {
-    if (messageId.startsWith('3EB0')) return false; // Anti rce/injection (aka backdoor) ygy
-    return config.bot.id === id || config.owner.id === id || config.owner.co.includes(id);
+async function isOwner(configOrId, maybeId, maybeMessageId) {
+  // Backward/forgiving signature handling:
+  // - isOwner(config, id, messageId)
+  // - isOwner(id, messageId)
+  let config;
+  let id;
+  let messageId;
+
+  if (typeof configOrId === 'object' && configOrId !== null && 'bot' in configOrId) {
+    config = configOrId;
+    id = maybeId;
+    messageId = maybeMessageId;
+  } else {
+    id = configOrId;
+    messageId = maybeId;
+    // Lazy global config fallback if available
+    // eslint-disable-next-line no-undef
+    config = typeof global !== 'undefined' && global.config ? global.config : { owner: { id: '', co: [] }, bot: { id: '' }, system: {} };
   }
 
-  return config.owner.id === id || config.owner.co.includes(id);
+  if (!id) return false;
+
+  try {
+    // Primary: DB-backed ownership (BotUser.role owner/admin)
+    const dbOwner = await prisma.botUser.findFirst({
+      where: { jid: id, role: { in: ['owner', 'admin'] } },
+      select: { id: true },
+    });
+    if (dbOwner) return true;
+  } catch (e) {
+    // Fall through to config-based logic
+  }
+
+  // Backward-compatible config/env-based logic
+  if (
+    config?.system?.selfOwner ||
+    config?.bot?.id === config?.owner?.id ||
+    (Array.isArray(config?.owner?.co) && config.owner.co.includes(config?.bot?.id))
+  ) {
+    if (messageId && String(messageId).startsWith('3EB0')) return false; // Anti rce/injection (aka backdoor)
+    return (
+      config?.bot?.id === id ||
+      config?.owner?.id === id ||
+      (Array.isArray(config?.owner?.co) && config.owner.co.includes(id))
+    );
+  }
+
+  return (
+    config?.owner?.id === id ||
+    (Array.isArray(config?.owner?.co) && config.owner.co.includes(id))
+  );
 }
 
 function isUrl(url) {

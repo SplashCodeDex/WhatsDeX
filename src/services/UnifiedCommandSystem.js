@@ -14,6 +14,7 @@ import { RateLimiter } from '../utils/RateLimiter.js';
 import trackCommandUsage from '../../middleware/analytics.js';
 import redisClient from '../../lib/redis.js';
 import { levenshteinDistance } from '../utils/levenshtein.js';
+import prisma from '../lib/prisma.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -500,16 +501,31 @@ export class UnifiedCommandSystem {
     }
   }
 
-  isOwner(jid) {
-    const configOwner = (this.context?.config?.owner?.id || '').split(',').map(n => n.trim()).filter(Boolean);
-    const envOwner = (process.env.OWNER_NUMBER || '').split(',').map(n => n.trim()).filter(Boolean);
-    const ownerNumbers = configOwner.length > 0 ? configOwner : envOwner;
+  async isOwner(jid) {
+    try {
+      // DB-backed ownership: a user is owner/admin if any BotUser record marks them so
+      const owner = await prisma.botUser.findFirst({
+        where: { jid, role: { in: ['owner', 'admin'] } },
+        select: { id: true }
+      });
+      if (owner) return true;
 
-    if (ownerNumbers.length === 0) {
-      this.context.logger.warn('⚠️ Owner not configured. Set config.owner.id or OWNER_NUMBER env var.');
+      // Backward-compatible fallback (non-prod only)
+      const configOwner = (this.context?.config?.owner?.id || '').split(',').map(n => n.trim()).filter(Boolean);
+      const envOwner = (process.env.OWNER_NUMBER || '').split(',').map(n => n.trim()).filter(Boolean);
+      const ownerNumbers = configOwner.length > 0 ? configOwner : envOwner;
+      if (ownerNumbers.length > 0 && process.env.NODE_ENV !== 'production') {
+        return ownerNumbers.some(owner => jid.includes(owner));
+      }
+
+      if (ownerNumbers.length === 0) {
+        this.context.logger.warn('⚠️ No owner configured in DB. Assign an owner by completing WhatsApp pairing.');
+      }
+      return false;
+    } catch (e) {
+      this.context.logger.error('Owner check failed', { error: e?.message || String(e) });
       return false;
     }
-    return ownerNumbers.some(owner => jid.includes(owner));
   }
 
   /**

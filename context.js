@@ -6,6 +6,8 @@ import tools from './tools/exports.js';
 import * as formatter from './utils/formatter.js'; // keep legacy formatter interface
 import logger from './src/utils/logger.js';
 import state from './state.js';
+import { UnifiedCommandSystem } from './src/services/UnifiedCommandSystem.js';
+import { UnifiedAIProcessor } from './src/services/UnifiedAIProcessor.js';
 
 // This function will initialize and return the fully prepared context
 async function initializeContext() {
@@ -327,9 +329,6 @@ async function initializeContext() {
       delete: id => databaseService.deleteMenfess(id),
     },
   };
-
-import { UnifiedCommandSystem } from './src/services/UnifiedCommandSystem.js';
-import { UnifiedAIProcessor } from './src/services/UnifiedAIProcessor.js';
 
   // Build the context object now that services are set up
   const context = {

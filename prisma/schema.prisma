@@ -122,6 +122,7 @@ model BotUser {
   name          String?
   phone         String?
   avatar        String?
+  role          String      @default("member") // member, admin, owner
   isBlocked     Boolean     @default(false)
   lastActivity  DateTime    @default(now())
   createdAt     DateTime    @default(now())

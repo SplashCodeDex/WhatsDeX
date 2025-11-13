@@ -10,7 +10,7 @@ services:
     region: oregon
     buildCommand: npm install && npm run build && npm run generate
     startCommand: npm start
-    healthCheckPath: /api/health
+    healthCheckPath: /health
     env: node
     envVars:
       - key: NODE_ENV
@@ -37,6 +37,12 @@ services:
       - key: META_AI_KEY
         sync: false  # Set manually in Render dashboard
       - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: OWNER_NUMBER
+        sync: false  # Set manually in Render dashboard
+      - key: STRIPE_SECRET_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false  # Set manually in Render dashboard
       - key: JWT_SECRET
         generateValue: true

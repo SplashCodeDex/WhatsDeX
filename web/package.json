@@ -53,6 +53,7 @@
     "react-hot-toast": "^2.6.0",
     "react-loading-skeleton": "^3.5.0",
     "recharts": "^2.15.4",
+    "redis": "^5.9.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.1",
