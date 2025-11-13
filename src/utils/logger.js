@@ -163,9 +163,14 @@ const enhancedLogger = {
     warn: (message, meta = {}) => enhancedLogger.warn(message, { ...context, ...meta }),
     info: (message, meta = {}) => enhancedLogger.info(message, { ...context, ...meta }),
     debug: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
+    // pino/baileys compatibility: trace maps to debug
+    trace: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
     command: (command, userId, success, executionTime, error) =>
       enhancedLogger.command(command, userId, success, executionTime, error),
   }),
+
+  // pino compatibility at root level
+  trace: (message, meta = {}) => enhancedLogger.debug(message, meta),
 
   // Compatibility shim for libraries expecting pino-like child()
   child: (meta = {}) => enhancedLogger.withContext(meta),

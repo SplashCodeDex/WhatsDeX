@@ -8,11 +8,18 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-i
 // Middleware to authenticate requests
 async function authenticateRequest(request) {
   const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  if (!token) {
+    try {
+      const cookieHeader = request.headers.get('cookie') || '';
+      const match = cookieHeader.match(/(?:^|; )auth_token=([^;]+)/);
+      token = match ? decodeURIComponent(match[1]) : null;
+    } catch {}
+  }
+  if (!token) {
     throw new Error('Authentication token required');
   }
 
-  const token = authHeader.substring(7);
   const decoded = jwt.verify(token, JWT_SECRET);
   
   return decoded;

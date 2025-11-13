@@ -50,8 +50,7 @@ export default function Login() {
       const data = await response.json();
 
       if (data.success) {
-        // Store auth token
-        localStorage.setItem('auth_token', data.data.token);
+        // Token is now set via httpOnly cookie by the server; no localStorage needed
         
         // Redirect to dashboard
         window.location.href = '/dashboard';

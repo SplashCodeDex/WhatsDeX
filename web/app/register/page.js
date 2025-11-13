@@ -139,8 +139,7 @@ export default function Register() {
       const data = await response.json();
 
       if (data.success) {
-        // Store auth token
-        localStorage.setItem('auth_token', data.data.token);
+        // Token may be set by server via httpOnly cookie after registration/login; no localStorage used
         
         // Redirect to dashboard
         window.location.href = '/dashboard';

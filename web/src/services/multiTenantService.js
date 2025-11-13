@@ -9,7 +9,7 @@ export class MultiTenantService {
   async createTenant(data) {
     try {
       const response = await this.apiClient.createTenant(data);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -18,7 +18,7 @@ export class MultiTenantService {
   async getTenant(identifier) {
     try {
       const response = await this.apiClient.getTenant(identifier);
-      return response.data;
+      return response;
     } catch (error) {
       if (error.status === 404) {
         return null;
@@ -30,7 +30,7 @@ export class MultiTenantService {
   async updateTenant(tenantId, data) {
     try {
       const response = await this.apiClient.updateTenant(tenantId, data);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -40,7 +40,7 @@ export class MultiTenantService {
   async createTenantUser(tenantId, userData) {
     try {
       const response = await this.apiClient.createTenantUser(tenantId, userData);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -49,7 +49,7 @@ export class MultiTenantService {
   async authenticateUser(tenantId, email, password) {
     try {
       const response = await this.apiClient.authenticateUser(tenantId, email, password);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -59,7 +59,7 @@ export class MultiTenantService {
   async createBotInstance(tenantId, botData) {
     try {
       const response = await this.apiClient.createBotInstance(tenantId, botData);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -68,7 +68,7 @@ export class MultiTenantService {
   async updateBotStatus(botInstanceId, status, sessionData = null) {
     try {
       const response = await this.apiClient.updateBotStatus(botInstanceId, status, sessionData);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -78,7 +78,7 @@ export class MultiTenantService {
   async createApiKey(tenantId, name) {
     try {
       const response = await this.apiClient.createApiKey(tenantId, name);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -87,7 +87,7 @@ export class MultiTenantService {
   async validateApiKey(apiKey) {
     try {
       const response = await this.apiClient.validateApiKey(apiKey);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -107,7 +107,7 @@ export class MultiTenantService {
   async getAnalytics(tenantId, metrics, startDate, endDate) {
     try {
       const response = await this.apiClient.getAnalytics(tenantId, metrics, startDate, endDate);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -117,7 +117,7 @@ export class MultiTenantService {
   async logAction(tenantId, userId, action, resource, resourceId, details, ipAddress, userAgent) {
     try {
       const response = await this.apiClient.logAction(tenantId, userId, action, resource, resourceId, details, ipAddress, userAgent);
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Failed to log action', error);
       // Don't throw for audit log failures
@@ -128,7 +128,7 @@ export class MultiTenantService {
   async checkPlanLimits(tenantId, resource) {
     try {
       const response = await this.apiClient.checkPlanLimits(tenantId, resource);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }
@@ -137,7 +137,7 @@ export class MultiTenantService {
   async getCurrentUsage(tenantId, resource) {
     try {
       const response = await this.apiClient.getCurrentUsage(tenantId, resource);
-      return response.data.usage;
+      return response.usage;
     } catch (error) {
       console.error('Failed to get current usage', error);
       return 0;
@@ -148,7 +148,7 @@ export class MultiTenantService {
   async getBots(tenantId) {
     try {
       const response = await this.apiClient.getTenantBots(tenantId);
-      return response.data;
+      return response;
     } catch (error) {
       throw error;
     }

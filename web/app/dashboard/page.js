@@ -37,18 +37,12 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
+      // Load bots (cookie-based auth)
+      const botsResponse = await fetch('/api/bots');
+      if (botsResponse.status === 401) {
         window.location.href = '/login';
         return;
       }
-
-      // Load bots
-      const botsResponse = await fetch('/api/bots', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
       const botsData = await botsResponse.json();
 
       // Load subscription

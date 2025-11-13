@@ -9,10 +9,11 @@ export async function POST() {
   });
   
   // Clear auth cookie
-  response.cookies.set('auth-token', '', {
+  response.cookies.set('auth_token', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
+    path: '/',
     maxAge: 0
   });
   

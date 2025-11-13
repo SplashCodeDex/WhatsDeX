@@ -666,4 +666,117 @@ router.post('/logout', async (req, res) => {
   }
 });
 
+// Public Registration Endpoint (SaaS best-practice)
+// POST /api/auth/register
+// Creates tenant + admin user + default bot, then authenticates and returns token
+(() => {
+  const ipHits = new Map(); // basic in-memory rate limiter
+  const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+  const MAX_HITS = 5; // 5 registrations per IP per window
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const subdomainRegex = /^[a-z0-9-]{3,20}$/;
+
+  const getMultiTenantService = async () => {
+    const mod = await import('../src/services/multiTenantService.js');
+    return mod.default || mod;
+  };
+
+  router.post('/register', async (req, res) => {
+    try {
+      // Basic rate limiting per IP
+      const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection?.remoteAddress || 'unknown';
+      const now = Date.now();
+      const hits = (ipHits.get(ip) || []).filter(ts => now - ts < WINDOW_MS);
+      if (hits.length >= MAX_HITS) {
+        return res.status(429).json({ error: 'Too many registration attempts. Please try again later.' });
+      }
+      hits.push(now);
+      ipHits.set(ip, hits);
+
+      const {
+        companyName,
+        subdomain,
+        email,
+        name,
+        password,
+        phone,
+        plan = 'free',
+      } = req.body || {};
+
+      // Validate input
+      if (!companyName || typeof companyName !== 'string' || companyName.trim().length < 2) {
+        return res.status(400).json({ error: 'Invalid companyName' });
+      }
+      if (!subdomain || !subdomainRegex.test(subdomain)) {
+        return res.status(400).json({ error: 'Invalid subdomain. Use 3-20 lowercase letters, numbers, and hyphens.' });
+      }
+      if (!email || !emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email' });
+      }
+      if (!name || typeof name !== 'string' || name.trim().length < 2) {
+        return res.status(400).json({ error: 'Invalid name' });
+      }
+      if (!password || typeof password !== 'string' || password.length < 8) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+      }
+
+      // Optional CAPTCHA verification hook (Turnstile/Recaptcha)
+      // if (process.env.TURNSTILE_SECRET) { /* verify token from req.body.captchaToken */ }
+
+      const multiTenantService = await getMultiTenantService();
+
+      // Create tenant + admin user + default bot
+      const result = await multiTenantService.createTenant({
+        name: companyName.trim(),
+        subdomain: subdomain.trim(),
+        email: email.trim(),
+        phone: phone?.trim() || null,
+        adminUser: {
+          email: email.trim(),
+          name: name.trim(),
+          password,
+        },
+      });
+
+      // Immediately authenticate admin user
+      const auth = await multiTenantService.authenticateUser(result.tenant.id, email.trim(), password);
+
+      // Record analytics and audit (best-effort)
+      try {
+        await multiTenantService.recordAnalytic(result.tenant.id, 'tenant_registered', 1, { plan });
+      } catch {}
+      try {
+        await multiTenantService.logAction(
+          result.tenant.id,
+          result.user.id,
+          'tenant_created',
+          'tenant',
+          result.tenant.id,
+          { plan, subdomain },
+          ip,
+          req.headers['user-agent'] || ''
+        );
+      } catch {}
+
+      return res.status(201).json({
+        success: true,
+        token: auth.token,
+        user: auth.user,
+        tenant: auth.tenant,
+        botInstance: {
+          id: result.botInstance.id,
+          name: result.botInstance.name,
+          status: result.botInstance.status,
+        },
+      });
+    } catch (error) {
+      console.error('Public register error:', error);
+      const msg = error?.message || 'Registration failed';
+      const status = /already|exists|taken/i.test(msg) ? 409 : 500;
+      return res.status(status).json({ error: msg });
+    }
+  });
+})();
+
 module.exports = router;

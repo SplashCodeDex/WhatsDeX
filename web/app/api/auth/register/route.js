@@ -59,7 +59,7 @@ export async function POST(request) {
     }
 
     // Proxy registration to API server
-    const resp = await fetch(`${API_BASE}/auth/register`, {
+    const resp = await fetch(`${API_BASE}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

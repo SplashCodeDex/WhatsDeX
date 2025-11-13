@@ -15,12 +15,29 @@ export async function POST(request) {
       );
     }
 
-    // Extract tenant identifier
-    let tenantIdentifier = subdomain;
+    // Extract tenant identifier (support localhost with port and subdomains)
+    let tenantIdentifier = (subdomain || '').trim().toLowerCase();
+
+    // Normalize tenant identifier if provided via body
+    if (tenantIdentifier) {
+      tenantIdentifier = tenantIdentifier.replace(/^https?:\/\//, '');
+      tenantIdentifier = tenantIdentifier.split('/')[0];
+      tenantIdentifier = tenantIdentifier.split('#')[0];
+      tenantIdentifier = tenantIdentifier.split('?')[0];
+      const [hostPart] = tenantIdentifier.split(':'); // strip port
+      const firstLabel = hostPart.split('.')[0];
+      tenantIdentifier = firstLabel;
+    }
+
     if (!tenantIdentifier) {
-      // Try to extract from host header
       const host = request.headers.get('host') || '';
-      tenantIdentifier = host.split('.')[0];
+      const [hostname] = host.split(':'); // strip port if present
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        tenantIdentifier = 'localhost';
+      } else if (hostname) {
+        const parts = hostname.split('.');
+        tenantIdentifier = parts[0];
+      }
     }
 
     if (!tenantIdentifier) {
@@ -79,9 +96,8 @@ export async function POST(request) {
       { expiresIn: '7d' }
     );
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
-      token,
       user: {
         id: authResult.user.id,
         email: authResult.user.email,
@@ -89,6 +105,17 @@ export async function POST(request) {
         tenantId: tenant.id
       }
     });
+
+    // Set httpOnly auth cookie
+    response.cookies.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Login error:', error);
