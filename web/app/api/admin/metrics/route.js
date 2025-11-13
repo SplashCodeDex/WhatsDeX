@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import prisma from '../../../../../src/lib/prisma.js';
+import jwt from 'jsonwebtoken';
+import multiTenantService from '../../../../../src/services/multiTenantService.js';
 
 // Check if user is admin (simple check - you can enhance this)
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+
+async function authenticateRequest(request) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('Authentication token required');
+  }
+  const token = authHeader.substring(7);
+  return jwt.verify(token, JWT_SECRET);
+}
+
 async function isAdmin(userId) {
   const user = await prisma.user.findUnique({
     where: { id: userId }
@@ -13,13 +25,13 @@ async function isAdmin(userId) {
 
 export async function GET(request) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.id) {
+    const user = await authenticateRequest(request);
+    if (!user?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check admin permissions
-    if (!await isAdmin(session.user.id)) {
+    if (!await isAdmin(user.userId)) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

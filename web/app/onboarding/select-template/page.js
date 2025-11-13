@@ -1,7 +1,13 @@
 'use client';
 
+function getToken() {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('authToken');
+}
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -96,10 +102,17 @@ export default function SelectTemplatePage() {
     setError('');
 
     try {
+      const token = getToken();
+      if (!token) {
+        setError('Please login first.');
+        router.push('/login');
+        return;
+      }
       const response = await fetch('/api/bots/apply-template', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           botInstanceId,

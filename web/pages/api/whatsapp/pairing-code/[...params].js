@@ -1,4 +1,5 @@
-import sessionManager from '../../../../../src/services/sessionManager.js';
+import UltraSmartSessionManager from '../../../../../src/services/sessionManager.js';
+const sessionManager = new UltraSmartSessionManager();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import jwt from 'jsonwebtoken';
 import prisma from '../../../../../src/lib/prisma.js';
 import templateService from '../../../../../src/services/TemplateService.js';
 
 export async function POST(request) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.id) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const token = authHeader.substring(7);
+    const user = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
+    if (!user?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -17,12 +22,12 @@ export async function POST(request) {
     }
 
     // Get user's tenant
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const userRecord = await prisma.user.findUnique({
+      where: { id: user.userId },
       include: { tenant: true }
     });
 
-    if (!user?.tenant) {
+    if (!userRecord?.tenant) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 400 });
     }
 
@@ -30,7 +35,7 @@ export async function POST(request) {
     const botInstance = await prisma.botInstance.findFirst({
       where: {
         id: botInstanceId,
-        tenantId: user.tenant.id
+        tenantId: userRecord.tenant.id
       }
     });
 
@@ -43,7 +48,7 @@ export async function POST(request) {
       where: {
         id: templateId,
         OR: [
-          { tenantId: user.tenant.id }, // Tenant-specific
+          { tenantId: userRecord.tenant.id }, // Tenant-specific
           { tenantId: null } // Global template
         ],
         isActive: true

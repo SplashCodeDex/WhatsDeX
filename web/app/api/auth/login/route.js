@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import multiTenantService from '../../../../src/services/multiTenantService';
+import jwt from 'jsonwebtoken';
 
 export async function POST(request) {
   try {
@@ -72,9 +73,21 @@ export async function POST(request) {
       request.headers.get('user-agent')
     );
 
+    const token = jwt.sign(
+      { userId: authResult.user.id, tenantId: tenant.id, email: authResult.user.email },
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+      { expiresIn: '7d' }
+    );
+
     return NextResponse.json({
       success: true,
-      data: authResult
+      token,
+      user: {
+        id: authResult.user.id,
+        email: authResult.user.email,
+        name: authResult.user.name,
+        tenantId: tenant.id
+      }
     });
 
   } catch (error) {
