@@ -249,8 +249,8 @@ export class MultiTenantApp {
       });
     });
 
-    // 404 handler
-    this.app.use('*', (req, res) => {
+    // 404 handler (safe catch-all)
+    this.app.use((req, res) => {
       res.status(404).json({
         error: 'Endpoint not found',
         path: req.path
@@ -313,6 +313,15 @@ export class MultiTenantApp {
   }
 
   async start() {
+    // Startup guard: catch route mount errors explicitly
+    try {
+      if (!this.app || typeof this.app.use !== 'function') {
+        throw new Error('Express app not initialized properly');
+      }
+    } catch (e) {
+      logger.error('Startup guard failed before listen', { error: e.message, stack: e.stack });
+      throw e;
+    }
     try {
       if (!this.isInitialized) {
         await this.initialize();
