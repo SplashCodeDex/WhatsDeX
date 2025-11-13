@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
+import UnifiedSmartAuth from '../src/services/auth/UnifiedSmartAuth.js';
+import AutoReconnectionEngine from '../src/services/autoReconnectionEngine.js';
+import context from '../context.js';
 
 const router = express.Router();
-const UnifiedSmartAuth = require('../src/services/auth/UnifiedSmartAuth');
-const AutoReconnectionEngine = require('../src/services/autoReconnectionEngine');
-const context = require('../context');
 
 // Initialize services
 const unifiedAuth = new UnifiedSmartAuth({
@@ -387,7 +387,7 @@ router.post('/disconnect', async (req, res) => {
  * Guarded with defensive check for router.ws availability
  */
 if (typeof router.ws === 'function') {
-  router.ws('/ws', (ws, req) => {
+  router.ws?.('/ws', (ws, req) => {
     webSocketClients.add(ws);
 
     // Send initial status
@@ -779,4 +779,4 @@ router.post('/logout', async (req, res) => {
   });
 })();
 
-module.exports = router;
+export default router;

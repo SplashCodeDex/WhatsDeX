@@ -1,5 +1,12 @@
-const { EventEmitter } = require('events');
-const logger = require('../utils/logger');
+import { EventEmitter } from 'events';
+import logger from '../utils/logger.js';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { randomUUID } from 'crypto';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Automated Reconnection Engine
@@ -49,9 +56,6 @@ class AutoReconnectionEngine extends EventEmitter {
    */
   async loadLearningData() {
     try {
-      const fs = require('fs').promises;
-      const path = require('path');
-
       const learningFile = path.join(__dirname, '../../.whatsdex-reconnection-learning.json');
       const data = await fs.readFile(learningFile, 'utf8');
       this.learningData = { ...this.learningData, ...JSON.parse(data) };
@@ -66,9 +70,6 @@ class AutoReconnectionEngine extends EventEmitter {
    */
   async saveLearningData() {
     try {
-      const fs = require('fs').promises;
-      const path = require('path');
-
       const learningFile = path.join(__dirname, '../../.whatsdex-reconnection-learning.json');
       await fs.writeFile(learningFile, JSON.stringify(this.learningData, null, 2));
     } catch (error) {
@@ -80,7 +81,7 @@ class AutoReconnectionEngine extends EventEmitter {
    * Handle disconnection and initiate reconnection
    */
   async handleDisconnection(reason, context = {}) {
-    const disconnectionId = require('crypto').randomUUID();
+    const disconnectionId = randomUUID();
     const timestamp = Date.now();
 
     logger.warn('Disconnection detected', {
@@ -935,4 +936,4 @@ class AutoReconnectionEngine extends EventEmitter {
   }
 }
 
-module.exports = AutoReconnectionEngine;
+export default AutoReconnectionEngine;

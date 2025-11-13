@@ -2,14 +2,26 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import prisma from '../../../../../src/lib/prisma.js';
 import templateService from '../../../../../src/services/TemplateService.js';
+import { verifyCsrf } from '../../_utils/csrf';
 
 export async function POST(request) {
   try {
+    // CSRF check (enabled when ENABLE_CSRF=true)
+    const csrfError = verifyCsrf(request);
+    if (csrfError) return csrfError;
+    // Read token from Authorization header or httpOnly cookie
     const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    if (!token) {
+      try {
+        const cookieHeader = request.headers.get('cookie') || '';
+        const match = cookieHeader.match(/(?:^|; )auth_token=([^;]+)/);
+        token = match ? decodeURIComponent(match[1]) : null;
+      } catch {}
+    }
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const token = authHeader.substring(7);
     const user = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
     if (!user?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

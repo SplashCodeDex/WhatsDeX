@@ -38,7 +38,8 @@ export default function CreateBotPage() {
       const response = await fetch('/api/bots', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-csrf-token': (document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)?.[1] ? decodeURIComponent(document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)[1]) : '')
         },
         body: JSON.stringify({
           name: botName,

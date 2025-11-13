@@ -30,20 +30,31 @@ frontendProcess.stderr.on('data', (data) => {
   console.log(`[Frontend Error] ${data.toString().trim()}`);
 });
 
-// Start the backend API server
+// Start the backend API server (nodemon for auto-reload, quiet output)
 console.log('🔧 Starting Backend API...');
-const backendProcess = spawn('node', ['server.js'], {
+const backendProcess = spawn('npm', ['run', 'start:dev'], {
   cwd: __dirname + '/..',
   stdio: ['pipe', 'pipe', 'pipe'],
   shell: true
 });
 
 backendProcess.stdout.on('data', (data) => {
-  console.log(`[Backend] ${data.toString().trim()}`);
+  const lines = data.toString().split(/\r?\n/);
+  for (const line of lines) {
+    if (!line) continue;
+    // Filter nodemon chatter
+    if (line.startsWith('[nodemon]')) continue;
+    console.log(`[Backend] ${line}`);
+  }
 });
 
 backendProcess.stderr.on('data', (data) => {
-  console.log(`[Backend Error] ${data.toString().trim()}`);
+  const lines = data.toString().split(/\r?\n/);
+  for (const line of lines) {
+    if (!line) continue;
+    if (line.startsWith('[nodemon]')) continue;
+    console.log(`[Backend Error] ${line}`);
+  }
 });
 
 // Graceful shutdown

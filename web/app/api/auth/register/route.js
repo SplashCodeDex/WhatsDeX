@@ -73,7 +73,21 @@ export async function POST(request) {
       })
     });
 
-    const data = await resp.json();
+    const contentType = resp.headers.get('content-type') || '';
+    let data;
+    if (contentType.includes('application/json')) {
+      data = await resp.json();
+    } else {
+      const text = await resp.text();
+      // Return helpful diagnostics when upstream returns non-JSON
+      return NextResponse.json({
+        error: 'Upstream registration endpoint returned non-JSON response',
+        upstreamStatus: resp.status,
+        upstreamContentType: contentType,
+        upstreamBodyPreview: text.slice(0, 200)
+      }, { status: 502 });
+    }
+
     return NextResponse.json(data, { status: resp.status });
 
   } catch (error) {

@@ -9,6 +9,7 @@ import multiTenantService from '../services/multiTenantService.js';
 import multiTenantStripeService from '../services/multiTenantStripeService.js';
 import multiTenantBotService from '../services/multiTenantBotService.js';
 import multiTenantRoutes from '../../routes/multiTenant.js';
+import authRoutes from '../../routes/auth.js';
 
 const prisma = new PrismaClient();
 
@@ -124,6 +125,9 @@ export class MultiTenantApp {
 
     // Internal API routes for web frontend
     this.app.use('/api/internal', multiTenantRoutes);
+
+    // Public auth routes (register, auth onboarding)
+    this.app.use('/api/auth', authRoutes);
 
     // Tenant management endpoints
     this.app.get('/api/tenants', async (req, res) => {

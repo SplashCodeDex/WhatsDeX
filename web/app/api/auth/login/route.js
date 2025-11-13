@@ -115,6 +115,19 @@ export async function POST(request) {
       maxAge: 60 * 60 * 24 * 7 // 7 days
     });
 
+    // Set CSRF token (readable cookie for double-submit pattern)
+    try {
+      const { randomBytes } = await import('crypto');
+      const csrf = randomBytes(32).toString('hex');
+      response.cookies.set('csrf_token', csrf, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7
+      });
+    } catch {}
+
     return response;
 
   } catch (error) {

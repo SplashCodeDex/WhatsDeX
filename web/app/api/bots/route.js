@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import multiTenantService from '../../../src/services/multiTenantService';
 import multiTenantBotService from '../../../src/services/multiTenantBotService';
 import jwt from 'jsonwebtoken';
+import { verifyCsrf } from '../_utils/csrf';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
@@ -72,6 +73,9 @@ export async function GET(request) {
 // POST /api/bots - Create new bot instance
 export async function POST(request) {
   try {
+    // CSRF check (enabled when ENABLE_CSRF=true)
+    const csrfError = verifyCsrf(request);
+    if (csrfError) return csrfError;
     const user = await authenticateRequest(request);
     const body = await request.json();
     const { name, config } = body;

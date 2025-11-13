@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import multiTenantService from '../../../src/services/multiTenantService';
 import multiTenantStripeService from '../../../src/services/multiTenantStripeService';
 import jwt from 'jsonwebtoken';
+import { verifyCsrf } from '../_utils/csrf';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
@@ -83,6 +84,9 @@ export async function GET(request) {
 // POST /api/subscription - Create or update subscription
 export async function POST(request) {
   try {
+    // CSRF check (enabled when ENABLE_CSRF=true)
+    const csrfError = verifyCsrf(request);
+    if (csrfError) return csrfError;
     const user = await authenticateRequest(request);
     const body = await request.json();
     const { plan, paymentMethodId } = body;
@@ -151,6 +155,9 @@ export async function POST(request) {
 // DELETE /api/subscription - Cancel subscription
 export async function DELETE(request) {
   try {
+    // CSRF check (enabled when ENABLE_CSRF=true)
+    const csrfError = verifyCsrf(request);
+    if (csrfError) return csrfError;
     const user = await authenticateRequest(request);
     const { searchParams } = new URL(request.url);
     const immediate = searchParams.get('immediate') === 'true';

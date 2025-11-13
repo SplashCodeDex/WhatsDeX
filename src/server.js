@@ -1,4 +1,5 @@
-import { createApp } from './app.js';
+// import { createApp } from './app.js';
+import MultiTenantApp from './server/multiTenantApp.js';
 import context from '../context.js';
 
 /**
@@ -13,20 +14,10 @@ async function startServer(config = context.config) {
   }
 
   try {
-    const { server, io } = createApp(config);
-    const port = config.system.port;
-
-    return new Promise((resolve, reject) => {
-      server.listen(port, (err) => {
-        if (err) {
-          console.error(`❌ Failed to start server on port ${port}:`, err);
-          reject(err);
-        } else {
-          console.log(`✅ ${config?.bot?.name || 'WhatsDeX'} server running on port ${port}`);
-          resolve({ server, io });
-        }
-      });
-    });
+    const app = new MultiTenantApp();
+    await app.initialize();
+    await app.start();
+    return { server: app.server, io: null };
   } catch (error) {
     console.error('❌ Error creating server:', error);
     throw error;

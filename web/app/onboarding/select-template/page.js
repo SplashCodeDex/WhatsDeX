@@ -1,10 +1,5 @@
 'use client';
 
-function getToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('authToken');
-}
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -102,16 +97,11 @@ export default function SelectTemplatePage() {
     setError('');
 
     try {
-      const token = getToken();
-      if (!token) {
-        setError('Please login first.');
-        router.push('/login');
-        return;
-      }
       const response = await fetch('/api/bots/apply-template', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-csrf-token': (document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)?.[1] ? decodeURIComponent(document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)[1]) : ''),
           
         },
         body: JSON.stringify({

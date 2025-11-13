@@ -1,10 +1,16 @@
-const { EventEmitter } = require('events');
-const makeWASocket = require('@whiskeysockets/baileys').default;
-const { useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
-const pino = require('pino');
-const path = require('node:path');
-const { Boom } = require('@hapi/boom');
-const logger = require('../../utils/logger');
+import { EventEmitter } from 'events';
+import pino from 'pino';
+import path from 'node:path';
+import { Boom } from '@hapi/boom';
+import logger from '../../utils/logger.js';
+import { fileURLToPath } from 'url';
+
+// ESM-compatible import for baileys (CJS under the hood)
+import baileys from '@whiskeysockets/baileys';
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = baileys;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class UnifiedSmartAuth extends EventEmitter {
   constructor(config) {
@@ -43,11 +49,11 @@ class UnifiedSmartAuth extends EventEmitter {
       if (connection === 'close') {
         this.authState = 'disconnected';
         const shouldReconnect =
-          lastDisconnect.error instanceof Boom
+          lastDisconnect?.error instanceof Boom
             ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
             : true;
 
-        this.emit('disconnected', lastDisconnect.error);
+        this.emit('disconnected', lastDisconnect?.error);
 
         if (shouldReconnect) {
           this.connect();
@@ -92,4 +98,4 @@ class UnifiedSmartAuth extends EventEmitter {
   }
 }
 
-module.exports = UnifiedSmartAuth;
+export default UnifiedSmartAuth;

@@ -46,11 +46,7 @@ export default function Dashboard() {
       const botsData = await botsResponse.json();
 
       // Load subscription
-      const subResponse = await fetch('/api/subscription', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const subResponse = await fetch('/api/subscription');
       const subData = await subResponse.json();
 
       if (botsData.success) {
@@ -66,9 +62,9 @@ export default function Dashboard() {
         setSubscription(subData.data);
       }
 
-      // Decode user from token
-      const tokenData = JSON.parse(atob(token.split('.')[1]));
-      setUser(tokenData);
+      // Derive a display name from tenant or fallback
+      const displayName = subData?.data?.tenant?.name || 'User';
+      setUser({ name: displayName });
 
       setLoading(false);
     } catch (error) {
@@ -79,12 +75,11 @@ export default function Dashboard() {
 
   const createBot = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/bots', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-csrf-token': (document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)?.[1] ? decodeURIComponent(document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)[1]) : '')
         },
         body: JSON.stringify({
           name: `Bot ${bots.length + 1}`,
