@@ -1,7 +1,7 @@
-import UltraSmartSessionManager from '../../../../../src/services/sessionManager.js';
-const sessionManager = new UltraSmartSessionManager();
-
 export default async function handler(req, res) {
+  const mod = await import('../../../../../src/services/sessionManager.js');
+  const UltraSmartSessionManager = mod.default || mod;
+  const sessionManager = new UltraSmartSessionManager();
   const { params } = req.query;
   const [userId, sessionId = 'default'] = params;
 

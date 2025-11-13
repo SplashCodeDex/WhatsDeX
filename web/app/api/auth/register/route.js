@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import multiTenantService from '../../../../src/services/multiTenantService';
-import multiTenantStripeService from '../../../../src/services/multiTenantStripeService';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function POST(request) {
   try {
@@ -58,77 +58,23 @@ export async function POST(request) {
       );
     }
 
-    // Create tenant and admin user
-    const result = await multiTenantService.createTenant({
-      name: companyName,
-      subdomain,
-      email,
-      phone,
-      adminUser: {
+    // Proxy registration to API server
+    const resp = await fetch(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyName,
+        subdomain,
         email,
         name,
-        password
-      }
+        password,
+        phone,
+        plan
+      })
     });
 
-    // If not free plan, we'll need to set up payment later
-    // For now, everyone starts with free trial
-    let stripeCustomer = null;
-    if (plan !== 'free') {
-      try {
-        stripeCustomer = await multiTenantStripeService.createCustomer(
-          result.tenant.id,
-          { email, name: companyName, phone }
-        );
-      } catch (stripeError) {
-        console.error('Failed to create Stripe customer:', stripeError);
-        // Continue with registration, customer can be created later
-      }
-    }
-
-    // Generate authentication token
-    const authResult = await multiTenantService.authenticateUser(
-      result.tenant.id,
-      email,
-      password
-    );
-
-    // Record analytics
-    await multiTenantService.recordAnalytic(
-      result.tenant.id,
-      'tenant_registered',
-      1,
-      { plan, hasStripeCustomer: !!stripeCustomer }
-    );
-
-    // Log action
-    await multiTenantService.logAction(
-      result.tenant.id,
-      result.user.id,
-      'tenant_created',
-      'tenant',
-      result.tenant.id,
-      { plan, subdomain },
-      request.headers.get('x-forwarded-for') || 'unknown',
-      request.headers.get('user-agent')
-    );
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        token: authResult.token,
-        user: authResult.user,
-        tenant: {
-          ...authResult.tenant,
-          stripeCustomerId: stripeCustomer?.id
-        },
-        botInstance: {
-          id: result.botInstance.id,
-          name: result.botInstance.name,
-          status: result.botInstance.status
-        }
-      }
-    });
+    const data = await resp.json();
+    return NextResponse.json(data, { status: resp.status });
 
   } catch (error) {
     console.error('Registration error:', error);

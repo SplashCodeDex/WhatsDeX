@@ -1,7 +1,7 @@
-import UltraSmartSessionManager from '../../../../../src/services/sessionManager.js';
-const sessionManager = new UltraSmartSessionManager();
-
 export default async function handler(req, res) {
+  const mod = await import('../../../../../src/services/sessionManager.js');
+  const UltraSmartSessionManager = mod.default || mod;
+  const sessionManager = new UltraSmartSessionManager();
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).json({ error: `Method ${req.method} not allowed` });

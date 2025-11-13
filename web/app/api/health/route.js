@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import redis from 'redis';
-
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
@@ -11,10 +8,15 @@ export async function GET() {
       services: {},
     };
 
-    // Database health check
+    // Database health check (proxy API health since web may not have DB access)
     try {
-      await prisma.$queryRaw`SELECT 1`;
-      health.services.database = 'healthy';
+      const apiHealth = await fetch('http://localhost:3001/health', { timeout: 5000 });
+      if (apiHealth.ok) {
+        health.services.database = 'healthy';
+      } else {
+        health.services.database = 'unhealthy';
+        health.services.database_error = `API health returned ${apiHealth.status}`;
+      }
     } catch (error) {
       health.services.database = 'unhealthy';
       health.services.database_error = error.message;
