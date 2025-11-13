@@ -36,16 +36,16 @@ const logger = winston.createLogger({
   levels,
   format,
   transports: [
-    // Console transport for development
+    // Console transport (keep production look: info/warn/error)
     new winston.transports.Console({
-      level: 'debug',
+      level: process.env.CONSOLE_LOG_LEVEL || 'info',
       format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
 
-    // File transport for all logs
+    // File transport for all logs (capture debug and above)
     new winston.transports.File({
       filename: path.join(process.cwd(), 'logs', 'app.log'),
-      level: 'info',
+      level: 'debug',
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),

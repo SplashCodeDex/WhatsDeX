@@ -39,6 +39,9 @@ export class UnifiedCommandSystem {
    * LOAD ALL COMMANDS - Consolidates multiple loading approaches
    */
   async loadCommands() {
+    const startTime = Date.now();
+    this.loadedCount = 0;
+    this.failedCount = 0;
     const commandsDir = path.join(__dirname, '..', '..', 'commands');
     let totalCommands = 0;
     
@@ -48,6 +51,7 @@ export class UnifiedCommandSystem {
       const categories = await fs.readdir(commandsDir, { withFileTypes: true });
       
       for (const category of categories) {
+        if (!category.isDirectory()) continue;
         if (category.isDirectory()) {
           const categoryPath = path.join(commandsDir, category.name);
           const commandFiles = await fs.readdir(categoryPath);
@@ -56,6 +60,7 @@ export class UnifiedCommandSystem {
           this.categories.set(category.name, []);
           
           for (const file of commandFiles) {
+            totalCommands += 1;
             if (file.endsWith('.js') || file.endsWith('.cjs')) {
               try {
                 const commandPath = path.join(categoryPath, file);
@@ -63,8 +68,7 @@ export class UnifiedCommandSystem {
                 
                 if (command) {
                   this.registerCommand(command, category.name);
-                  totalCommands++;
-                  this.context.logger.info(`  ✅ ${command.name} ${command.aliases ? `(${command.aliases.join(', ')})` : ''}`);
+                  this.context.logger.debug(`  ✅ ${command.name} ${command.aliases ? `(${command.aliases.join(', ')})` : ''}`);
                 }
               } catch (error) {
                 this.context.logger.error(`  ❌ Error loading ${file}:`, { error: error.message });
@@ -74,7 +78,10 @@ export class UnifiedCommandSystem {
         }
       }
       
-      this.context.logger.info(`🎉 Loaded ${totalCommands} commands across ${this.categories.size} categories`);
+      const duration = Date.now() - startTime;
+      this.context.logger.info(`🎉 Loaded ${this.loadedCount + this.failedCount} commands (${this.loadedCount} OK, ${this.failedCount} failed) in ${duration}ms`);
+      // Legacy summary for compatibility
+      // this.context.logger.info(`🎉 Loaded ${totalCommands} commands across ${this.categories.size} categories`);
       this.context.logger.info(`📊 Command registry size: ${this.commands.size} (including aliases)`);
       
       // Update bot.cmd for compatibility
@@ -162,10 +169,12 @@ export class UnifiedCommandSystem {
         isEnabled: command.isEnabled !== false
       };
 
-      this.context.logger.info(`✅ Successfully loaded command: ${command.name} from ${absolutePath}`);
+      this.loadedCount += 1;
+      this.context.logger.debug(`✅ Successfully loaded command: ${command.name} from ${absolutePath}`);
       return enhancedCommand;
       
     } catch (error) {
+      this.failedCount += 1;
       this.context.logger.error(`Failed to load command: ${commandPath}`, {
         error: error.message,
         stack: error.stack,
