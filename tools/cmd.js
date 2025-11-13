@@ -152,7 +152,7 @@ function isCmd(config, content, bot) {
 
 import prisma from '../src/lib/prisma.js';
 
-async function isOwner(configOrId, maybeId, maybeMessageId) {
+async function isOwner(configOrId, maybeId, maybeMessageId, maybeBotInstanceId) {
   // Backward/forgiving signature handling:
   // - isOwner(config, id, messageId)
   // - isOwner(id, messageId)
@@ -175,6 +175,15 @@ async function isOwner(configOrId, maybeId, maybeMessageId) {
   if (!id) return false;
 
   try {
+    // Scoped DB-backed ownership if botInstanceId provided
+    if (maybeBotInstanceId) {
+      const scoped = await prisma.botUser.findUnique({
+        where: { botInstanceId_jid: { botInstanceId: maybeBotInstanceId, jid: id } },
+        select: { role: true }
+      });
+      if (scoped && (scoped.role === 'owner' || scoped.role === 'admin')) return true;
+    }
+
     // Primary: DB-backed ownership (BotUser.role owner/admin)
     const dbOwner = await prisma.botUser.findFirst({
       where: { jid: id, role: { in: ['owner', 'admin'] } },

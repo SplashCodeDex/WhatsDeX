@@ -4,7 +4,8 @@
 services:
   # PostgreSQL Database with enhanced configuration
   db:
-    image: postgres:16-alpine
+    # pgvector-enabled Postgres image
+    image: ankane/pgvector:pg16
     restart: always
     environment:
       POSTGRES_DB: ${DB_NAME:-whatsdex}

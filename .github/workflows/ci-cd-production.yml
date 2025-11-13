@@ -63,6 +63,14 @@ jobs:
       run: |
         npm ci
         cd web && npm ci
+
+    - name: 🗄️ Prisma Migrate Deploy (Production)
+      env:
+        PRISMA_MIGRATION_SHADOW_DATABASE_URL: ${{ secrets.PRISMA_MIGRATION_SHADOW_DATABASE_URL }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      run: |
+        npx prisma generate
+        npx prisma migrate deploy
     - name: 🔐 Export OWNER_NUMBER to env
       run: echo "OWNER_NUMBER=${{ secrets.OWNER_NUMBER }}" >> $GITHUB_ENV
     

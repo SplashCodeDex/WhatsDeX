@@ -5,6 +5,8 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
 CREATE EXTENSION IF NOT EXISTS "pg_buffercache";
+-- Vector extension for AI features (pgvector)
+CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Create indexes for better performance
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_last_activity ON users(lastActivity);

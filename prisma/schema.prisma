@@ -4,70 +4,72 @@
 // RiskLevel values: "LOW", "MEDIUM", "HIGH", "CRITICAL"
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters", "postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
-  extensions = [vector(version: "0.7.0")] // Or your installed version
+  extensions        = [vector(version: "0.7.0")] // Or your installed version
 }
 
 // Multi-tenancy: Customer Organizations
 model Tenant {
-  id                String    @id @default(cuid())
-  name              String
-  subdomain         String    @unique
-  email             String    @unique
-  phone             String?
-  description       String?
-  logo              String?
-  website           String?
-  status            String    @default("active") // active, suspended, cancelled
-  plan              String    @default("free") // free, basic, pro, enterprise
-  planLimits        String?   // JSON of plan limits
-  customSettings    String?   // JSON of custom settings
-  stripeCustomerId  String?   @unique
-  trialEndsAt       DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  name             String
+  subdomain        String    @unique
+  email            String    @unique
+  phone            String?
+  description      String?
+  logo             String?
+  website          String?
+  status           String    @default("active") // active, suspended, cancelled
+  plan             String    @default("free") // free, basic, pro, enterprise
+  planLimits       String? // JSON of plan limits
+  customSettings   String? // JSON of custom settings
+  stripeCustomerId String?   @unique
+  trialEndsAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
-  tenantUsers       TenantUser[]
-  botInstances      BotInstance[]
-  subscriptions     TenantSubscription[]
-  payments          TenantPayment[]
-  apiKeys           TenantApiKey[]
-  analytics         TenantAnalytics[]
-  auditLogs         TenantAuditLog[]
+  tenantUsers   TenantUser[]
+  botInstances  BotInstance[]
+  subscriptions TenantSubscription[]
+  payments      TenantPayment[]
+  apiKeys       TenantApiKey[]
+  analytics     TenantAnalytics[]
+  auditLogs     TenantAuditLog[]
+  usageCounters UsageCounter[]
+  botTemplates  BotTemplate[]
 
   @@map("tenants")
 }
 
 // Tenant Users (Customer's team members)
 model TenantUser {
-  id              String    @id @default(cuid())
-  tenantId        String
-  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  email           String
-  name            String
-  passwordHash    String
-  role            String    @default("user") // admin, user, viewer
-  avatar          String?
-  permissions     String?   // JSON of specific permissions
-  isActive        Boolean   @default(true)
-  lastLoginAt     DateTime?
-  emailVerified   Boolean   @default(false)
-  invitedBy       String?
-  invitedAt       DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email         String
+  name          String
+  passwordHash  String
+  role          String    @default("user") // admin, user, viewer
+  avatar        String?
+  permissions   String? // JSON of specific permissions
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  emailVerified Boolean   @default(false)
+  invitedBy     String?
+  invitedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relations
-  sessions        TenantUserSession[]
-  auditLogs       TenantAuditLog[]
+  sessions  TenantUserSession[]
+  auditLogs TenantAuditLog[]
 
   @@unique([tenantId, email])
   @@map("tenant_users")
@@ -75,39 +77,40 @@ model TenantUser {
 
 // Tenant User Sessions
 model TenantUserSession {
-  id          String      @id @default(cuid())
-  userId      String
-  user        TenantUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId   String      @unique
-  ipAddress   String?
-  userAgent   String?
-  expiresAt   DateTime
-  createdAt   DateTime    @default(now())
+  id        String     @id @default(cuid())
+  userId    String
+  user      TenantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String     @unique
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
 
   @@map("tenant_user_sessions")
 }
 
 // WhatsApp Bot Instances per Tenant
 model BotInstance {
-  id              String    @id @default(cuid())
-  tenantId        String
-  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name            String
-  phoneNumber     String?
-  qrCode          String?
-  status          String    @default("disconnected") // connected, disconnected, scanning, error
-  sessionData     String?   // Encrypted session data
-  config          String?   // JSON bot configuration
-  lastActivity    DateTime?
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  phoneNumber  String?
+  qrCode       String?
+  status       String    @default("disconnected") // connected, disconnected, scanning, error
+  sessionData  String? // Encrypted session data
+  config       String? // JSON bot configuration
+  lastActivity DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  users           BotUser[]
-  groups          BotGroup[]
-  messages        BotMessage[]
-  analytics       BotAnalytics[]
+  users     BotUser[]
+  groups    BotGroup[]
+  messages  BotMessage[]
+  analytics BotAnalytics[]
+  settings  BotSettings?
 
   @@unique([tenantId, phoneNumber])
   @@map("bot_instances")
@@ -115,21 +118,21 @@ model BotInstance {
 
 // Bot Users (WhatsApp users interacting with the bot)
 model BotUser {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   botInstanceId String
-  botInstance   BotInstance @relation(fields: [botInstanceId], references: [id], onDelete: Cascade)
-  jid           String
+  jid           String // WhatsApp JID
   name          String?
   phone         String?
   avatar        String?
-  role          String      @default("member") // member, admin, owner
-  isBlocked     Boolean     @default(false)
-  lastActivity  DateTime    @default(now())
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  role          String   @default("member") // member, admin, owner
+  isBlocked     Boolean  @default(false)
+  lastActivity  DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
-  messages      BotMessage[]
+  botInstance BotInstance  @relation(fields: [botInstanceId], references: [id], onDelete: Cascade)
+  messages    BotMessage[]
 
   @@unique([botInstanceId, jid])
   @@map("bot_users")
@@ -162,7 +165,7 @@ model BotMessage {
   messageId     String
   fromJid       String
   toJid         String
-  type          String      // text, image, audio, video, document
+  type          String // text, image, audio, video, document
   content       String?
   mediaUrl      String?
   command       String?
@@ -175,36 +178,38 @@ model BotMessage {
 
 // Tenant Subscriptions
 model TenantSubscription {
-  id                    String    @id @default(cuid())
-  tenantId              String
-  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  stripeSubscriptionId  String    @unique
-  stripePriceId         String
-  status                String    // active, canceled, past_due, etc.
-  currentPeriodStart    DateTime
-  currentPeriodEnd      DateTime
-  cancelAtPeriodEnd     Boolean   @default(false)
-  trialStart            DateTime?
-  trialEnd              DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  tenantId             String
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String    @unique
+  stripePriceId        String
+  status               String // active, canceled, past_due, etc.
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean   @default(false)
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  plan                 Plan?     @relation(fields: [planId], references: [id])
+  planId               String?
 
   @@map("tenant_subscriptions")
 }
 
 // Tenant Payments
 model TenantPayment {
-  id                  String    @id @default(cuid())
-  tenantId            String
-  tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  stripePaymentId     String    @unique
-  amount              Int       // Amount in cents
-  currency            String    @default("usd")
-  status              String    // succeeded, pending, failed
-  description         String?
-  invoiceUrl          String?
-  receiptUrl          String?
-  createdAt           DateTime  @default(now())
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stripePaymentId String   @unique
+  amount          Int // Amount in cents
+  currency        String   @default("usd")
+  status          String // succeeded, pending, failed
+  description     String?
+  invoiceUrl      String?
+  receiptUrl      String?
+  createdAt       DateTime @default(now())
 
   @@map("tenant_payments")
 }
@@ -227,13 +232,13 @@ model TenantApiKey {
 
 // Tenant Analytics
 model TenantAnalytics {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  metric    String
-  value     Float
-  metadata  String?  // JSON metadata
-  date      DateTime @default(now())
+  id       String   @id @default(cuid())
+  tenantId String
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  metric   String
+  value    Float
+  metadata String? // JSON metadata
+  date     DateTime @default(now())
 
   @@map("tenant_analytics")
 }
@@ -245,7 +250,7 @@ model BotAnalytics {
   botInstance   BotInstance @relation(fields: [botInstanceId], references: [id], onDelete: Cascade)
   metric        String
   value         Float
-  metadata      String?     // JSON metadata
+  metadata      String? // JSON metadata
   date          DateTime    @default(now())
 
   @@map("bot_analytics")
@@ -261,7 +266,7 @@ model TenantAuditLog {
   action     String
   resource   String
   resourceId String?
-  details    String?     // JSON details
+  details    String? // JSON details
   ipAddress  String?
   userAgent  String?
   createdAt  DateTime    @default(now())
@@ -289,19 +294,19 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  sessions           UserSession[]
-  commands           CommandUsage[]
-  groups             UserGroup[]
-  menfessFrom        Menfess[]            @relation("menfessFromUser")
-  menfessTo          Menfess[]            @relation("menfessToUser")
-  feedback           Feedback[]
-  subscriptions      Subscription[]
-  violations         UserViolation[]
-  moderationQueues   ModerationQueue[]
-  payments           Payment[]
-  adminSessions      AdminSession[]
-  ConversationMemory ConversationMemory[]
-  AIGeneratedContent AIGeneratedContent[]
+  sessions               UserSession[]
+  commands               CommandUsage[]
+  groups                 UserGroup[]
+  menfessFrom            Menfess[]               @relation("menfessFromUser")
+  menfessTo              Menfess[]               @relation("menfessToUser")
+  feedback               Feedback[]
+  subscriptions          Subscription[]
+  violations             UserViolation[]
+  moderationQueues       ModerationQueue[]
+  payments               Payment[]
+  adminSessions          AdminSession[]
+  ConversationMemory     ConversationMemory[]
+  AIGeneratedContent     AIGeneratedContent[]
   ConversationEmbeddings ConversationEmbedding[] // New relation
 
   @@index([lastActivity])
@@ -402,7 +407,7 @@ model Menfess {
 }
 
 model BotSetting {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("id") @db.Uuid
   key         String   @unique
   value       String
   category    String
@@ -410,7 +415,7 @@ model BotSetting {
   updatedBy   String
   updatedAt   DateTime @updatedAt
 
-  @@map("bot_settings")
+  @@map("bot_settings_kv")
 }
 
 model Feedback {
@@ -668,14 +673,126 @@ model AIGeneratedContent {
 }
 
 model ConversationEmbedding {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  content     String   // Original conversation snippet
-  embedding   Unsupported("vector(1536)") // For text-embedding-3-small
-  timestamp   DateTime @default(now())
-  metadata    Json?    // Topic, sentiment, intent classification
+  id        String                      @id @default(uuid())
+  userId    String
+  user      User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String // Original conversation snippet
+  embedding Unsupported("vector(1536)") // For text-embedding-3-small
+  timestamp DateTime                    @default(now())
+  metadata  Json? // Topic, sentiment, intent classification
 
   @@index([userId])
   @@map("conversation_embeddings")
+}
+
+// Plans and Subscription Models
+model Plan {
+  id          String  @id @default(cuid())
+  code        String  @unique // FREE, PRO, BUSINESS
+  name        String
+  description String?
+  price       Int // cents
+  currency    String  @default("USD")
+
+  // Limits
+  aiRequestsPerMonth Int @default(0)
+  messagesPerDay     Int @default(100)
+  mediaGensPerDay    Int @default(0)
+  maxBots            Int @default(1)
+
+  // Feature flags
+  enableRAG           Boolean @default(false)
+  enableVideo         Boolean @default(false)
+  enableAIChat        Boolean @default(false)
+  enableImageGen      Boolean @default(false)
+  enableAdvancedTools Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  subscriptions TenantSubscription[]
+
+  @@map("plans")
+}
+
+model UsageCounter {
+  id         String   @id @default(cuid())
+  tenantId   String
+  period     String // YYYY-MM format
+  aiRequests Int      @default(0)
+  messages   Int      @default(0)
+  mediaGens  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, period])
+  @@map("usage_counters")
+}
+
+// Bot Templates and Settings Models
+model BotTemplate {
+  id             String   @id @default(cuid())
+  tenantId       String? // null for global templates
+  name           String
+  description    String?
+  category       String // welcome, faq, leads, support, etc.
+  welcomeMessage String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  tenant    Tenant?               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  menuItems BotTemplateMenuItem[]
+
+  @@map("bot_templates")
+}
+
+model BotTemplateMenuItem {
+  id         String   @id @default(cuid())
+  templateId String
+  label      String
+  actionType String // reply, link, command
+  payload    String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  // Relations
+  template BotTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@map("bot_template_menu_items")
+}
+
+model BotSettings {
+  id             String   @id @default(cuid())
+  botInstanceId  String   @unique
+  welcomeMessage String?
+  menuEnabled    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  botInstance BotInstance           @relation(fields: [botInstanceId], references: [id], onDelete: Cascade)
+  menuItems   BotSettingsMenuItem[]
+
+  @@map("bot_settings")
+}
+
+model BotSettingsMenuItem {
+  id         String   @id @default(cuid())
+  settingsId String
+  label      String
+  actionType String // reply, link, command
+  payload    String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  // Relations
+  settings BotSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+
+  @@map("bot_settings_menu_items")
 }

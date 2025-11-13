@@ -501,6 +501,28 @@ export class UnifiedCommandSystem {
     }
   }
 
+  async isOwnerForInstance(botInstanceId, jid) {
+    try {
+      if (!botInstanceId || !jid) return false;
+      const owner = await prisma.botUser.findUnique({
+        where: { botInstanceId_jid: { botInstanceId, jid } },
+        select: { role: true }
+      });
+      if (owner && (owner.role === 'owner' || owner.role === 'admin')) return true;
+      // Non-prod fallback
+      const configOwner = (this.context?.config?.owner?.id || '').split(',').map(n => n.trim()).filter(Boolean);
+      const envOwner = (process.env.OWNER_NUMBER || '').split(',').map(n => n.trim()).filter(Boolean);
+      const ownerNumbers = configOwner.length > 0 ? configOwner : envOwner;
+      if (ownerNumbers.length > 0 && process.env.NODE_ENV !== 'production') {
+        return ownerNumbers.some(ownerNum => jid.includes(ownerNum));
+      }
+      return false;
+    } catch (e) {
+      this.context.logger.error('Owner check (scoped) failed', { error: e?.message || String(e) });
+      return false;
+    }
+  }
+
   async isOwner(jid) {
     try {
       // DB-backed ownership: a user is owner/admin if any BotUser record marks them so

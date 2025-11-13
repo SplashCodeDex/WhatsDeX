@@ -9,6 +9,7 @@ import logger from '../utils/logger.js';
 import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { RateLimiter } from '../utils/RateLimiter.js';
 import redisClient from '../../lib/redis.js';
+import planService from './PlanService.js';
 import { MemoryManager } from '../utils/MemoryManager.js';
 
 import { MessageClassifier } from '../utils/MessageClassifier.js';
@@ -57,6 +58,54 @@ export class UnifiedAIProcessor {
    * MAIN PROCESSING METHOD - Consolidates all AI processing logic
    */
   async processMessage(messageData) {
+    try {
+      // Extract tenantId from messageData context
+      const tenantId = messageData.tenantId || messageData.context?.tenantId;
+      
+      if (tenantId) {
+        // Check AI chat entitlement
+        const hasAIAccess = await planService.checkEntitlement(tenantId, 'aiChat');
+        if (!hasAIAccess) {
+          return {
+            success: false,
+            response: '🔒 AI chat is not available on your current plan. Upgrade to unlock AI features!\n\nUse `.upgrade` to see available plans.',
+            needsUpgrade: true
+          };
+        }
+
+        // Check AI request limits
+        const usageCheck = await planService.checkUsageLimit(tenantId, 'aiRequests');
+        if (!usageCheck.allowed) {
+          return {
+            success: false,
+            response: `🚫 You've reached your AI request limit (${usageCheck.current}/${usageCheck.limit} this month).\n\nUpgrade your plan for more AI requests!`,
+            limitExceeded: true
+          };
+        }
+      }
+
+      const result = await this._processMessageInternal(messageData);
+      
+      // Increment usage counter on successful AI processing
+      if (result.success && tenantId) {
+        try {
+          await planService.incrementUsage(tenantId, 'aiRequests', 1);
+        } catch (error) {
+          this.context.logger.error('Failed to increment AI usage:', error);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      this.context.logger.error('AI processing failed:', error);
+      return {
+        success: false,
+        response: 'Sorry, I encountered an error processing your message.'
+      };
+    }
+  }
+
+  async _processMessageInternal(messageData) {
     const startTime = performance.now();
     const timer = performanceMonitor.startTimer('ai_message_processing', {
       userId: messageData.key.remoteJid,

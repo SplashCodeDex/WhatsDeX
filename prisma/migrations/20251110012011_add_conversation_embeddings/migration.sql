@@ -178,4 +178,3 @@ CREATE INDEX "conversation_embeddings_embedding_idx" ON "conversation_embeddings
 
 -- AddForeignKey
 ALTER TABLE "conversation_embeddings" ADD CONSTRAINT "conversation_embeddings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
