@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,6 +13,7 @@ import {
   CpuChipIcon,
   SignalIcon,
 } from '@heroicons/react/24/outline';
+import { CreditCardIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { ThemeContext } from '@/contexts/ThemeContext';
 
@@ -58,38 +60,15 @@ function Layout({ children, title = 'WhatsDeX Dashboard' }) {
     return () => clearInterval(interval);
   }, []);
 
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
   const navigation = [
-    {
-      name: 'Dashboard',
-      href: '/',
-      icon: ChartBarIcon,
-      current: true,
-    },
-    {
-      name: 'Users',
-      href: '/users',
-      icon: UserGroupIcon,
-      current: false,
-    },
-    {
-      name: 'AI Analytics',
-      href: '/ai-analytics',
-      icon: CpuChipIcon,
-      current: false,
-    },
-    {
-      name: 'System',
-      href: '/system',
-      icon: SignalIcon,
-      current: false,
-    },
-    {
-      name: 'Settings',
-      href: '/settings',
-      icon: Cog6ToothIcon,
-      current: false,
-    },
-  ];
+    { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
+    { name: 'Users', href: '/users', icon: UserGroupIcon },
+    { name: 'AI Analytics', href: '/ai-analytics', icon: CpuChipIcon },
+    { name: 'System', href: '/system', icon: SignalIcon },
+    { name: 'Billing', href: '/billing', icon: CreditCardIcon },
+    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  ].map(item => ({ ...item, current: pathname.startsWith(item.href) }));
 
   return (
     <div
