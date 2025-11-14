@@ -85,7 +85,7 @@ export default {
           json = null;
         }
 
-        const responseText = json ? walkJSON(json) : text;
+        const responseText = json ? walkJSON(json, 0, [], formatter) : text;
         await ctx.reply(responseText);
       }
     } catch (error) {
@@ -94,7 +94,7 @@ export default {
   },
 };
 
-function walkJSON(json, depth = 0, array = []) {
+function walkJSON(json, depth = 0, array = [], formatter) {
   for (const key in json) {
     array.push(`${'┊'.repeat(depth)}${depth > 0 ? ' ' : ''}${formatter.bold(key)}:`);
     if (typeof json[key] === 'object' && json[key] !== null) {

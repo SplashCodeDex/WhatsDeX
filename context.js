@@ -1,7 +1,7 @@
 // Simplified context with single Prisma database system
 import { PrismaClient } from '@prisma/client';
 import config from './config.js';
-import pkg from './package.json' with { type: 'json' };
+// import pkg from './package.json' assert { type: 'json' };
 import tools from './tools/exports.js';
 import * as formatter from './utils/formatter.js'; // keep legacy formatter interface
 import logger from './src/utils/logger.js';

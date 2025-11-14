@@ -4,8 +4,6 @@
  */
 
 import path from 'path';
-
-import path from 'path';
 import axios from 'axios';
 import { promises as fs } from 'fs';
 import context from '../../context.js';

@@ -20,6 +20,7 @@ export default {
     if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
 
     try {
+      const { URL } = await import('node:url');
       const id = new URL(url).searchParams.get('id');
       const result = `https://cdn.videy.co/${id}.mp4`;
 

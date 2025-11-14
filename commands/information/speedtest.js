@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { performance } from 'node:perf_hooks';
 
 export default {
   name: 'speedtest',

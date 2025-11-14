@@ -15,6 +15,7 @@ export default [
       'web/.next/**/*',
       'web/out/**/*',
       'web/build/**/*',
+      'web/**',
       '**/webpack.*.js',
       '**/next.config.js',
 
@@ -39,7 +40,7 @@ export default [
 
   // Base config for all JS files
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '!web/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

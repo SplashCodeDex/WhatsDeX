@@ -34,8 +34,8 @@ export default {
         document: {
           url: result.download.url,
         },
-        fileName: data.fileName,
-        mimetype: data.mimetype || 'application/octet-stream',
+        fileName: result.fileName,
+        mimetype: result.mimetype || 'application/octet-stream',
         caption: formatter.quote(`URL: ${url}`),
         footer: config.msg.footer,
       });

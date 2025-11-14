@@ -1,4 +1,5 @@
 import formatters from '../../utils/formatters.js';
+import { performance } from 'node:perf_hooks';
 const { convertMsToDuration, ucwords } = formatters;
 
 export default {

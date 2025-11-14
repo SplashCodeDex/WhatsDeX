@@ -23,6 +23,8 @@ export default {
       const apiUrl = tools.api.createUrl('neko', '/ai-vid/videogpt', {
         text: input,
       });
+      const axios = (await import('axios')).default;
+      const { result } = (await axios.get(apiUrl)).data;
 
       await ctx.reply({
         video: {

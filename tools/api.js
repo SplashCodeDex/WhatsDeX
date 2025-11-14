@@ -1,6 +1,7 @@
 import util from 'node:util';
 import axios from 'axios';
 import FormData from 'form-data';
+import { URL, URLSearchParams } from 'node:url';
 
 // Daftar API gratis
 const APIs = {

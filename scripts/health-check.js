@@ -33,6 +33,7 @@ async function checkPostgres({ disconnectPrisma = false } = {}) {
   } catch (err) {
     result.error = err?.message || String(err);
     try {
+      const { URL } = await import('node:url');
       const url = new URL(process.env.DATABASE_URL);
       const host = url.hostname || 'localhost';
       const port = parseInt(url.port || '5432', 10);

@@ -336,6 +336,7 @@ class WhatsDeXBrain {
    * RAG: Store conversation in vector database asynchronously
    */
   storeConversationAsync(userId, userMessage, aiResponse, nlpResult) {
+    const setImmediate = globalThis.setImmediate || ((fn) => setTimeout(fn, 0));
     // Use setImmediate for non-blocking async operation
     setImmediate(async () => {
       try {

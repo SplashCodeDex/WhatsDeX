@@ -3,6 +3,9 @@
  * Adds user choice prompts and session detection to UnifiedSmartAuth
  */
 
+import path from 'node:path';
+import { promises as fs } from 'node:fs';
+
 class InteractiveAuthEnhancement {
   constructor(unifiedAuth) {
     this.unifiedAuth = unifiedAuth;
@@ -43,10 +46,7 @@ class InteractiveAuthEnhancement {
     try {
       console.log('🔍 Detecting existing authenticated session...');
 
-      const fs = require('fs').promises;
-      import path from 'path';
-
-      const statePath = path.join(__dirname, '../../state');
+      const statePath = path.join(process.cwd(), 'state');
       const credsPath = path.join(statePath, 'creds.json');
 
       // Check if state directory and creds file exist
@@ -319,7 +319,6 @@ class InteractiveAuthEnhancement {
    */
   async analyzeCredsFile(credsPath) {
     try {
-      const fs = require('fs').promises;
       const credsContent = await fs.readFile(credsPath, 'utf8');
       const credsData = JSON.parse(credsContent);
 
@@ -340,4 +339,4 @@ class InteractiveAuthEnhancement {
   }
 }
 
-module.exports = InteractiveAuthEnhancement;
+export default InteractiveAuthEnhancement;

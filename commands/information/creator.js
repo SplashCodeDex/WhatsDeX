@@ -1,6 +1,5 @@
 import VCard from 'vcard-creator';
 
-.default;
 
 export default {
   name: 'owner',

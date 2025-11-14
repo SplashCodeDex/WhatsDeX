@@ -27,6 +27,8 @@ export default {
       const apiUrl = tools.api.createUrl('davidcyril', '/remini', {
         url: uploadUrl,
       });
+      const axios = (await import('axios')).default;
+      const { result } = (await axios.get(apiUrl)).data;
 
       await ctx.reply({
         image: {

@@ -2,8 +2,14 @@
 import CFonts from 'cfonts';
 import initializeContext from './context.js'; // Changed import
 import main from './main.js';
-import pkg from './package.json' with { type: 'json' };
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { startServer } from './src/server.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkg = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf-8'));
 
 import { withRetry } from './lib/retry.js';
 import multiTenantStripeService from './src/services/multiTenantStripeService.js';

@@ -1,3 +1,5 @@
+import { URL } from 'node:url';
+
 export default {
   name: 'join',
   aliases: ['j'],

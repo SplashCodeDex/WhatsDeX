@@ -3,7 +3,8 @@
  * Provides comprehensive performance tracking and optimization insights
  */
 
-import { performance, PerformanceObserver } from 'perf_hooks';
+import { performance, PerformanceObserver } from 'node:perf_hooks';
+const setImmediate = globalThis.setImmediate || ((fn) => setTimeout(fn, 0));
 import { EventEmitter } from 'events';
 import logger from './logger.js';
 

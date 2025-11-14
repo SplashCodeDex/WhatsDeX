@@ -7,6 +7,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import logger from '../utils/logger.js';
 import performanceMonitor from '../utils/PerformanceMonitor.js';
+import { performance } from 'node:perf_hooks';
 import { RateLimiter } from '../utils/RateLimiter.js';
 import redisClient from '../../lib/redis.js';
 import planService from './PlanService.js';
