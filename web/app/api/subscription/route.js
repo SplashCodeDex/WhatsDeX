@@ -4,6 +4,9 @@ import multiTenantStripeService from '../../../src/services/multiTenantStripeSer
 import jwt from 'jsonwebtoken';
 import { verifyCsrf } from '../_utils/csrf';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
 // Middleware to authenticate requests
@@ -74,8 +77,11 @@ export async function GET(request) {
 
   } catch (error) {
     console.error('Get subscription error:', error);
+    const payload = process.env.NODE_ENV === 'production'
+      ? { error: 'Failed to get subscription info' }
+      : { error: 'Failed to get subscription info', details: error?.message, stack: error?.stack };
     return NextResponse.json(
-      { error: 'Failed to get subscription info' },
+      payload,
       { status: 500 }
     );
   }

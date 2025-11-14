@@ -4,6 +4,10 @@ import multiTenantBotService from '../../../src/services/multiTenantBotService';
 import jwt from 'jsonwebtoken';
 import { verifyCsrf } from '../_utils/csrf';
 
+// Ensure Node.js runtime (needed for fs, sockets) and disable static optimization
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
 // Middleware to authenticate requests
@@ -29,7 +33,12 @@ async function authenticateRequest(request) {
 // GET /api/bots - Get all bot instances for tenant
 export async function GET(request) {
   try {
-    const user = await authenticateRequest(request);
+    let user;
+    try {
+      user = await authenticateRequest(request);
+    } catch (err) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     
     const tenant = await multiTenantService.getTenant(user.tenantId);
     if (!tenant) {
@@ -63,8 +72,11 @@ export async function GET(request) {
 
   } catch (error) {
     console.error('Get bots error:', error);
+    const payload = process.env.NODE_ENV === 'production'
+      ? { error: 'Failed to get bot instances' }
+      : { error: 'Failed to get bot instances', details: error?.message, stack: error?.stack };
     return NextResponse.json(
-      { error: 'Failed to get bot instances' },
+      payload,
       { status: 500 }
     );
   }
@@ -76,7 +88,12 @@ export async function POST(request) {
     // CSRF check (enabled when ENABLE_CSRF=true)
     const csrfError = verifyCsrf(request);
     if (csrfError) return csrfError;
-    const user = await authenticateRequest(request);
+    let user;
+    try {
+      user = await authenticateRequest(request);
+    } catch (err) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const body = await request.json();
     const { name, config } = body;
 
@@ -128,15 +145,19 @@ export async function POST(request) {
   } catch (error) {
     console.error('Create bot error:', error);
     
-    if (error.message.includes('limit exceeded')) {
+    if (error?.message?.includes('limit exceeded')) {
       return NextResponse.json(
         { error: error.message },
         { status: 403 }
       );
     }
 
+    const payload = process.env.NODE_ENV === 'production'
+      ? { error: 'Failed to create bot instance' }
+      : { error: 'Failed to create bot instance', details: error?.message, stack: error?.stack };
+
     return NextResponse.json(
-      { error: 'Failed to create bot instance' },
+      payload,
       { status: 500 }
     );
   }

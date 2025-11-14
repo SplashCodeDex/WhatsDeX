@@ -4,6 +4,7 @@ import logger from '../utils/logger.js';
 import multiTenantService from './multiTenantService.js';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import QRCode from 'qrcode';
 
 const prisma = new PrismaClient();
@@ -26,8 +27,14 @@ export class MultiTenantBotService {
       // Create bot instance in database
       const botInstance = await multiTenantService.createBotInstance(tenantId, botData);
       
-      // Start bot
-      await this.startBot(botInstance.id);
+      // Attempt to start bot, but don't fail the creation if startup fails
+      try {
+        await this.startBot(botInstance.id);
+      } catch (startErr) {
+        logger.error('Bot created but failed to start socket', { error: startErr.message, tenantId, botId: botInstance.id });
+        // Mark status as error to surface in UI and allow retry
+        try { await multiTenantService.updateBotStatus(botInstance.id, 'error'); } catch {}
+      }
       
       return botInstance;
     } catch (error) {
@@ -54,7 +61,8 @@ export class MultiTenantBotService {
       }
 
       // Create session directory
-      const sessionDir = path.join(process.cwd(), 'sessions', botInstanceId);
+      const baseSessionRoot = process.env.SESSIONS_DIR || path.join(os.tmpdir(), 'whatsdex-sessions');
+      const sessionDir = path.join(baseSessionRoot, botInstanceId);
       if (!fs.existsSync(sessionDir)) {
         fs.mkdirSync(sessionDir, { recursive: true });
       }
