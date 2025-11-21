@@ -1,5 +1,6 @@
 import makeWASocket, { useMultiFileAuthState, DisconnectReason, Browsers } from '@whiskeysockets/baileys';
 import pino from 'pino';
+import NodeCache from 'node-cache';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync, rmSync } from 'node:fs';
@@ -44,6 +45,7 @@ const main = async context => {
       }
 
       const { state, saveCreds } = await useMultiFileAuthState(authDir);
+      const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false });
 
       // console.log('🤖 Initializing bot with browser config:', config.bot.browser);
 
@@ -54,7 +56,9 @@ const main = async context => {
         defaultQueryTimeoutMs: 60000, // 60 seconds timeout
         retryRequestDelayMs: 250,
         maxMsgRetryCount: 5,
-        keepAliveIntervalMs: 30000 // 30 seconds keep-alive
+        keepAliveIntervalMs: 30000, // 30 seconds keep-alive
+        cachedGroupMetadata: async (jid) => groupCache.get(jid),
+        markOnlineOnConnect: false, // Recommended to keep notifications working on phone
       });
 
       context.bot = bot;

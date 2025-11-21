@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'whatsdex-bot',
-      script: './dist/index.js',
+      script: './index.js',
       instances: 'max', // Use all CPU cores
       exec_mode: 'cluster',
       env: {
@@ -31,7 +31,9 @@ module.exports = {
     },
     {
       name: 'whatsdex-dashboard',
-      script: 'cd web && npm start',
+      cwd: '../frontend',
+      script: 'npm',
+      args: 'start',
       instances: 2,
       exec_mode: 'cluster',
       env: {
@@ -40,13 +42,13 @@ module.exports = {
       max_memory_restart: '150M',
       min_uptime: '10s',
       max_restarts: 5,
-      error_file: './logs/dashboard-err.log',
-      out_file: './logs/dashboard-out.log',
+      error_file: '../backend/logs/dashboard-err.log',
+      out_file: '../backend/logs/dashboard-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     },
     {
       name: 'whatsdex-worker',
-      script: './src/worker.js',
+      script: './worker.js',
       instances: 1,
       exec_mode: 'fork',
       env: {

@@ -8,6 +8,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
+auth/
 
 # Dependency directories
 node_modules/

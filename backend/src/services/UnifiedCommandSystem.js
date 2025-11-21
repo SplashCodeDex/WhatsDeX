@@ -28,10 +28,10 @@ export class UnifiedCommandSystem {
     this.categories = new Map();
     this.rateLimiter = new RateLimiter(redisClient, { limits: this.context.config.rateLimits });
     this.middleware = [];
-    
+
     // Command prefixes
     this.prefixes = ['.', '!', '/', '#'];
-    
+
     this.context.logger.info('🔧 Unified Command System initialized');
   }
 
@@ -44,28 +44,28 @@ export class UnifiedCommandSystem {
     this.failedCount = 0;
     const commandsDir = path.join(__dirname, '..', '..', 'commands');
     let totalCommands = 0;
-    
+
     this.context.logger.info('🔄 Loading unified command system...');
-    
+
     try {
       const categories = await fs.readdir(commandsDir, { withFileTypes: true });
-      
+
       for (const category of categories) {
         if (!category.isDirectory()) continue;
         if (category.isDirectory()) {
           const categoryPath = path.join(commandsDir, category.name);
           const commandFiles = await fs.readdir(categoryPath);
-          
+
           this.context.logger.info(`📂 Loading category: ${category.name}`);
           this.categories.set(category.name, []);
-          
+
           for (const file of commandFiles) {
             totalCommands += 1;
             if (file.endsWith('.js') || file.endsWith('.cjs')) {
               try {
                 const commandPath = path.join(categoryPath, file);
                 const command = await this.loadSingleCommand(commandPath, category.name);
-                
+
                 if (command) {
                   this.registerCommand(command, category.name);
                   this.context.logger.debug(`  ✅ ${command.name} ${command.aliases ? `(${command.aliases.join(', ')})` : ''}`);
@@ -77,16 +77,16 @@ export class UnifiedCommandSystem {
           }
         }
       }
-      
+
       const duration = Date.now() - startTime;
       this.context.logger.info(`🎉 Loaded ${this.loadedCount + this.failedCount} commands (${this.loadedCount} OK, ${this.failedCount} failed) in ${duration}ms`);
       // Legacy summary for compatibility
       // this.context.logger.info(`🎉 Loaded ${totalCommands} commands across ${this.categories.size} categories`);
       this.context.logger.info(`📊 Command registry size: ${this.commands.size} (including aliases)`);
-      
+
       // Update bot.cmd for compatibility
       this.bot.cmd = this.commands;
-      
+
     } catch (error) {
       this.context.logger.error('❌ Command loading failed:', { error: error.message });
       throw error;
@@ -100,7 +100,7 @@ export class UnifiedCommandSystem {
     try {
       // Normalize path and ensure it exists
       const absolutePath = path.resolve(commandPath);
-      
+
       // Check if file exists before attempting import
       try {
         await fs.access(absolutePath);
@@ -118,21 +118,21 @@ export class UnifiedCommandSystem {
         const commandUrl = pathToFileURL(absolutePath).href;
         commandModule = await import(commandUrl + `?v=${Date.now()}`); // Cache busting
         command = commandModule.default || commandModule;
-        
+
       } catch (esModuleError) {
         this.context.logger.warn(`ES module import failed for ${absolutePath}, trying CommonJS compatibility:`, { error: esModuleError.message });
-        
+
         try {
           // Fallback: Try to handle CommonJS modules through dynamic import
           const commandUrl = pathToFileURL(absolutePath).href;
           commandModule = await import(commandUrl);
           command = commandModule.default || commandModule;
-          
+
           // If still no command, try accessing as CommonJS export pattern
           if (!command && commandModule.module && commandModule.module.exports) {
             command = commandModule.module.exports;
           }
-          
+
         } catch (fallbackError) {
           this.context.logger.error(`Both ES module and CommonJS import failed for ${absolutePath}:`, {
             esError: esModuleError.message,
@@ -141,7 +141,14 @@ export class UnifiedCommandSystem {
           return null;
         }
       }
-      
+
+      // Normalize command structure (support 'execute', 'run', 'handler' as aliases for 'code')
+      if (command) {
+        if (command.execute && !command.code) command.code = command.execute;
+        else if (command.run && !command.code) command.code = command.run;
+        else if (command.handler && !command.code) command.code = command.handler;
+      }
+
       if (!this.validateCommand(command)) {
         this.context.logger.warn(`Command validation failed for ${absolutePath}:`, {
           hasCommand: !!command,
@@ -152,7 +159,7 @@ export class UnifiedCommandSystem {
         });
         return null;
       }
-      
+
       // Enhance command with metadata
       const enhancedCommand = {
         ...command,
@@ -172,7 +179,7 @@ export class UnifiedCommandSystem {
       this.loadedCount += 1;
       this.context.logger.debug(`✅ Successfully loaded command: ${command.name} from ${absolutePath}`);
       return enhancedCommand;
-      
+
     } catch (error) {
       this.failedCount += 1;
       this.context.logger.error(`Failed to load command: ${commandPath}`, {
@@ -193,16 +200,16 @@ export class UnifiedCommandSystem {
     if (this.commands.has(command.name)) {
       this.context.logger.warn(`Command name conflict: ${command.name} already exists`);
     }
-    
+
     this.commands.set(command.name, command);
-    
+
     // Register aliases
     if (command.aliases && Array.isArray(command.aliases)) {
       command.aliases.forEach(alias => {
         if (this.commands.has(alias)) {
           this.context.logger.warn(`Alias conflict: ${alias} already exists`);
         }
-        
+
         this.aliases.set(alias, command.name);
         this.commands.set(alias, {
           ...command,
@@ -211,7 +218,7 @@ export class UnifiedCommandSystem {
         });
       });
     }
-    
+
     // Add to category
     if (!this.categories.has(categoryName)) {
       this.categories.set(categoryName, []);
@@ -227,17 +234,17 @@ export class UnifiedCommandSystem {
       this.context.logger.warn('Invalid command: not an object');
       return false;
     }
-    
+
     if (!command.name || typeof command.name !== 'string') {
       this.context.logger.warn('Invalid command: missing or invalid name');
       return false;
     }
-    
+
     if (!command.code || typeof command.code !== 'function') {
       this.context.logger.warn(`Invalid command ${command.name}: missing or invalid code function`);
       return false;
     }
-    
+
     return true;
   }
 
@@ -247,11 +254,11 @@ export class UnifiedCommandSystem {
   async processMessage(messageData) {
     const text = this.extractText(messageData);
     if (!text) return false;
-    
+
     // Check if message is a command
     const commandInfo = this.parseCommand(text);
     if (!commandInfo) return false;
-    
+
     // Get command
     const command = this.commands.get(commandInfo.name);
     if (!command) {
@@ -259,7 +266,7 @@ export class UnifiedCommandSystem {
       await this.suggestCommands(messageData, commandInfo.name);
       return true;
     }
-    
+
     // Execute command with full validation
     return await this.executeCommand(command, messageData, commandInfo);
   }
@@ -269,17 +276,17 @@ export class UnifiedCommandSystem {
    */
   parseCommand(text) {
     const trimmed = text.trim();
-    
+
     // Check for command prefix
     const hasPrefix = this.prefixes.some(prefix => trimmed.startsWith(prefix));
     if (!hasPrefix) return null;
-    
+
     // Extract command and arguments
     const withoutPrefix = trimmed.substring(1);
     const parts = withoutPrefix.split(/\s+/);
     const name = parts[0].toLowerCase();
     const args = parts.slice(1);
-    
+
     return {
       name,
       args,
@@ -301,54 +308,54 @@ export class UnifiedCommandSystem {
     try {
       // Create enhanced context
       const ctx = await this.createContext(messageData, commandInfo, command);
-      
+
       // Apply middleware
       const middlewareResult = await this.applyMiddleware(ctx, command);
       if (!middlewareResult.success) {
         await this.sendMessage(messageData, middlewareResult.message);
         return true;
       }
-      
+
       // Rate limiting
       const userTier = ctx.user?.premium ? 'premium' : 'user';
       const rateLimitResult = await this.rateLimiter.checkCommandRateLimit(
-        ctx.sender, 
+        ctx.sender,
         command.name,
         userTier
       );
-      
+
       if (!rateLimitResult.allowed) {
-        await this.sendMessage(messageData, 
+        await this.sendMessage(messageData,
           `⏰ Rate limit exceeded. Try again in ${Math.ceil(rateLimitResult.result.resetTime / 1000)}s`
         );
         return true;
       }
-      
+
       // Track command usage for analytics
       await trackCommandUsage(command.name);
 
       // Execute command
       await command.code(ctx);
-      
+
       const duration = timer.end();
       this.context.logger.info(`✅ Command executed: ${command.name} (${duration}ms)`, {
         category: command.category,
         argsCount: commandInfo.args.length
       });
-      
+
       return true;
-      
+
     } catch (error) {
       const duration = timer.end();
       this.context.logger.error(`Command execution failed: ${command.name}`, {
         error: error.message,
         userId: messageData.key.remoteJid
       });
-      
-      await this.sendMessage(messageData, 
+
+      await this.sendMessage(messageData,
         '❌ An error occurred while executing the command. Please try again later.'
       );
-      
+
       return true;
     }
   }
@@ -359,7 +366,7 @@ export class UnifiedCommandSystem {
   async createContext(messageData, commandInfo, command) {
     const text = this.extractText(messageData);
     const user = await this.context.databaseService.getUser(messageData.key.remoteJid);
-    
+
     return {
       // Message data
       ...messageData,
@@ -367,15 +374,15 @@ export class UnifiedCommandSystem {
       args: commandInfo.args,
       command: command,
       prefix: commandInfo.prefix,
-      
+
       // User data
       user: user, // Attach the full user object
       sender: messageData.key.remoteJid,
       pushName: messageData.pushName,
-      
+
       // Bot instance
       bot: this.bot,
-      
+
       // Utility functions
       reply: async (message) => {
         if (typeof message === 'string') {
@@ -398,12 +405,12 @@ export class UnifiedCommandSystem {
         this.context.logger.warn('⚠️ editMessage not implemented - using reply instead');
         return await this.sendMessage(messageData, text);
       },
-      
+
       // Enhanced features
       isOwner: () => this.isOwner(messageData.key.remoteJid),
       isGroup: () => messageData.key.remoteJid.endsWith('@g.us'),
       timestamp: Date.now(),
-      
+
       // Legacy compatibility properties
       self: this.context || {},
       id: messageData.key.remoteJid,
@@ -429,7 +436,7 @@ export class UnifiedCommandSystem {
         return result;
       }
     }
-    
+
     // Command-specific middleware
     if (command.middleware) {
       for (const middleware of command.middleware) {
@@ -439,7 +446,7 @@ export class UnifiedCommandSystem {
         }
       }
     }
-    
+
     return { success: true };
   }
 
@@ -448,11 +455,11 @@ export class UnifiedCommandSystem {
    */
   async suggestCommands(messageData, attemptedCommand) {
     const suggestions = this.findSimilarCommands(attemptedCommand);
-    
+
     if (suggestions.length > 0) {
       const suggestionText = `Command "${attemptedCommand}" not found. Did you mean:\n` +
         suggestions.slice(0, 3).map(cmd => `• ${cmd}`).join('\n');
-      
+
       await this.sendMessage(messageData, suggestionText);
     } else {
       await this.sendMessage(messageData, `Command "${attemptedCommand}" not found. Type .help for available commands.`);
@@ -465,7 +472,7 @@ export class UnifiedCommandSystem {
   findSimilarCommands(input) {
     const commandNames = Array.from(this.commands.keys())
       .filter(name => !this.commands.get(name).isAlias);
-    
+
     return commandNames
       .map(name => ({
         name,

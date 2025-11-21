@@ -4,7 +4,12 @@
  */
 
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { promises as fs } from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 import { spawn } from 'child_process';
 import context from '../../context.js';
 
@@ -133,7 +138,7 @@ class WritingService {
           if (code === 0) {
             try {
               const resultBuffer = await fs.readFile(outputPath);
-              await fs.unlink(outputPath).catch(() => {});
+              await fs.unlink(outputPath).catch(() => { });
 
               resolve({
                 success: true,
@@ -322,7 +327,7 @@ class WritingService {
           const stats = await fs.stat(filePath);
 
           if (now - stats.mtime.getTime() > maxAge) {
-            await fs.unlink(filePath).catch(() => {});
+            await fs.unlink(filePath).catch(() => { });
           }
         }
       }
