@@ -44,11 +44,11 @@ services:
   # WhatsDeX Bot Service with monitoring
   bot-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     restart: always
     env_file:
-      - ./.env
+      - ./backend/.env
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex}@db:5432/${DB_NAME:-whatsdex}
@@ -67,17 +67,17 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./auth:/app/auth
-      - ./logs:/app/logs
+      - ./backend/auth:/app/auth
+      - ./backend/logs:/app/logs
 
   # Next.js Web Application
-  web:
+  frontend:
     build:
-      context: ./web
+      context: ./frontend
       dockerfile: Dockerfile
     restart: always
     env_file:
-      - ./web/.env.local
+      - ./frontend/.env.local
     ports:
       - "3000:3000"
     depends_on:
@@ -96,11 +96,11 @@ services:
   # Background Worker for heavy tasks
   worker:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     restart: always
     env_file:
-      - ./.env
+      - ./backend/.env
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex}@db:5432/${DB_NAME:-whatsdex}
