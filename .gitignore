@@ -129,3 +129,7 @@ deployment/ssl/*.crt
 deployment/ssl/*.key
 deployment/ssl/*.pem
 deployment/ssl/certbot/
+
+
+#Backup folders
+_legacy_archive
