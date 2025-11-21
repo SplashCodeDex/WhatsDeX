@@ -93,7 +93,7 @@ export class UnifiedAIProcessor {
       const result = await this._processMessageInternal(messageData);
 
       // Increment usage counter on successful AI processing
-      if (result.success && tenantId) {
+      if (result && result.success && tenantId) {
         try {
           await planService.incrementUsage(tenantId, 'aiRequests', 1);
         } catch (error) {

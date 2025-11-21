@@ -313,6 +313,18 @@ const main = async context => {
           }
         };
 
+        // DEBUG: Log incoming message details
+        logger.info('📨 Incoming message:', {
+          jid: msg.key.remoteJid,
+          fromMe: msg.key.fromMe,
+          type: intelligentMsg.type,
+          messageKeys: Object.keys(msg.message || {}),
+          text: msg.message?.conversation || msg.message?.extendedTextMessage?.text || '[No Text]'
+        });
+
+        // ALLOW OWNER TO TEST: Commented out fromMe check
+        // if (msg.key.fromMe) return; // Ignore own messages
+
         // CONSOLIDATED: Smart routing between commands and AI
         let isCommand = false;
 

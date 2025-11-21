@@ -1,8 +1,8 @@
 import util from 'node:util';
 
 export default {
-  name: /^==> |^=> /,
-  type: 'hears',
+  name: 'eval',
+  aliases: ['ev'],
   code: async ctx => {
     const { formatter, tools } = ctx.bot.context;
     const isOwner = await tools.cmd.isOwner(ctx.bot.context.config, ctx.getId(ctx.sender.jid), ctx.msg.key.id, ctx.botInstanceId);

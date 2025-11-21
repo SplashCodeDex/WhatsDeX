@@ -2,8 +2,8 @@ import { exec } from 'node:child_process';
 import util from 'node:util';
 
 export default {
-  name: /^\$ /,
-  type: 'hears',
+  name: 'exec',
+  aliases: ['ex'],
   code: async ctx => {
     const { formatter, tools } = ctx.bot.context;
     const isOwner = await tools.cmd.isOwner(ctx.bot.context.config, ctx.getId(ctx.sender.jid), ctx.msg.key.id, ctx.botInstanceId);

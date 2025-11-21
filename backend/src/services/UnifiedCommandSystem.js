@@ -42,6 +42,12 @@ export class UnifiedCommandSystem {
     const startTime = Date.now();
     this.loadedCount = 0;
     this.failedCount = 0;
+
+    // Clear existing commands to prevent duplicates on reload
+    this.commands.clear();
+    this.aliases.clear();
+    this.categories.clear();
+
     const commandsDir = path.join(__dirname, '..', '..', 'commands');
     let totalCommands = 0;
 
