@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import logger from '../src/utils/logger.js';
-import auditLogger from '../src/services/auditLogger.js';
+// import auditLogger from '../src/services/auditLogger.js'; // Removed broken import
 
 // Rate limiter for auth endpoints
 const authRateLimiter = new RateLimiterMemory({
@@ -23,7 +23,7 @@ export const authenticateToken = async (req, res, next) => {
       isDevIP ||
       (process.env.WHITELIST_IPS && process.env.WHITELIST_IPS.split(',').includes(req.ip));
     if (!isWhitelisted) {
-      auditLogger.warn('IP not whitelisted', {
+      logger.warn('IP not whitelisted', {
         ip: req.ip,
         endpoint: req.path,
       });
@@ -94,66 +94,66 @@ export const authenticateToken = async (req, res, next) => {
  */
 export const authorize =
   (requiredRole, requiredPermissions = []) =>
-  (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        error: 'Authentication required',
-        code: 'AUTH_REQUIRED',
-      });
-    }
+    (req, res, next) => {
+      if (!req.user) {
+        return res.status(401).json({
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+        });
+      }
 
-    const userRole = req.user.role;
-    const userPermissions = req.user.permissions || [];
+      const userRole = req.user.role;
+      const userPermissions = req.user.permissions || [];
 
-    // Check role hierarchy (admin > moderator > viewer)
-    const roleHierarchy = {
-      viewer: 1,
-      moderator: 2,
-      admin: 3,
-      superadmin: 4,
-    };
+      // Check role hierarchy (admin > moderator > viewer)
+      const roleHierarchy = {
+        viewer: 1,
+        moderator: 2,
+        admin: 3,
+        superadmin: 4,
+      };
 
-    const userRoleLevel = roleHierarchy[userRole] || 0;
-    const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
+      const userRoleLevel = roleHierarchy[userRole] || 0;
+      const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
 
-    // Check if user has sufficient role level
-    if (userRoleLevel < requiredRoleLevel) {
-      logger.warn('Insufficient role permissions', {
-        userId: req.user.id,
-        userRole,
-        requiredRole,
-        endpoint: req.path,
-      });
-
-      return res.status(403).json({
-        error: 'Insufficient permissions',
-        code: 'AUTH_INSUFFICIENT_ROLE',
-      });
-    }
-
-    // Check specific permissions if required
-    if (requiredPermissions.length > 0) {
-      const hasAllPermissions = requiredPermissions.every(permission =>
-        userPermissions.includes(permission)
-      );
-
-      if (!hasAllPermissions) {
-        logger.warn('Missing required permissions', {
+      // Check if user has sufficient role level
+      if (userRoleLevel < requiredRoleLevel) {
+        logger.warn('Insufficient role permissions', {
           userId: req.user.id,
-          userPermissions,
-          requiredPermissions,
+          userRole,
+          requiredRole,
           endpoint: req.path,
         });
 
         return res.status(403).json({
-          error: 'Missing required permissions',
-          code: 'AUTH_MISSING_PERMISSIONS',
+          error: 'Insufficient permissions',
+          code: 'AUTH_INSUFFICIENT_ROLE',
         });
       }
-    }
 
-    next();
-  };
+      // Check specific permissions if required
+      if (requiredPermissions.length > 0) {
+        const hasAllPermissions = requiredPermissions.every(permission =>
+          userPermissions.includes(permission)
+        );
+
+        if (!hasAllPermissions) {
+          logger.warn('Missing required permissions', {
+            userId: req.user.id,
+            userPermissions,
+            requiredPermissions,
+            endpoint: req.path,
+          });
+
+          return res.status(403).json({
+            error: 'Missing required permissions',
+            code: 'AUTH_MISSING_PERMISSIONS',
+          });
+        }
+      }
+
+      next();
+    };
 
 /**
  * Admin-only middleware

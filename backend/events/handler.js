@@ -1,7 +1,11 @@
 // Impor modul dan dependensi yang diperlukan
-import { VCardBuilder } from '@whiskeysockets/baileys';
+import VCard from 'vcard-creator';
 import axios from 'axios';
-import { analyzeMessage } from 'guaranteed_security';
+import {
+  jidDecode,
+  getContentType,
+  downloadContentFromMessage,
+} from '@whiskeysockets/baileys'; // Removed missing dependency
 import moment from 'moment-timezone';
 import fs from 'node:fs';
 import { createRequire } from 'module';
@@ -17,11 +21,11 @@ import antiTagswMiddleware from '../middleware/antiTagsw.js';
 import antiToxicMiddleware from '../middleware/antiToxic.js';
 import auditFixedMiddleware from '../middleware/audit-fixed.js';
 import auditMiddleware from '../middleware/audit.js';
-import authMiddleware from '../middleware/auth.js';
+// import authMiddleware from '../middleware/auth.js'; // Removed incompatible middleware
 import botModeMiddleware from '../middleware/botMode.js';
 import cooldownMiddleware from '../middleware/cooldown.js';
 import didYouMeanMiddleware from '../middleware/didYouMean.js';
-import errorHandlerMiddleware from '../middleware/errorHandler.js';
+// import errorHandlerMiddleware from '../middleware/errorHandler.js'; // Removed incompatible middleware
 import groupMuteMiddleware from '../middleware/groupMute.js';
 import inputValidationMiddleware from '../middleware/inputValidation.js';
 import maliciousMessageMiddleware from '../middleware/maliciousMessage.js';
@@ -53,22 +57,22 @@ export async function handleWelcome(bot, m, type, isSimulate = false) {
 
   for (const jid of m.participants) {
     const isWelcome = type === 'add';
-    const userTag = `@${bot.getId(jid)}`;
+    const userTag = '@' + jid.split('@')[0] + ' ';
     const customText = isWelcome ? groupDb?.text?.welcome : groupDb?.text?.goodbye;
-    const metadata = await bot.core.groupMetadata(groupJid);
+    const metadata = await bot.groupMetadata(groupJid);
     const text = customText
       ? customText
         .replace(/%tag%/g, userTag)
         .replace(/%subject%/g, metadata.subject)
         .replace(/%description%/g, metadata.description)
       : isWelcome
-        ? formatter.quote(` Welcome ${userTag} to the group ${metadata.subject}!`)
-        : formatter.quote(` Goodbye, ${userTag}!`);
+        ? formatter.quote(` Welcome ${userTag} to the group ${metadata.subject} !`)
+        : formatter.quote(` Goodbye, ${userTag} !`);
     const profilePictureUrl = await bot.core
       .profilePictureUrl(jid, 'image')
       .catch(() => 'https://i.pinimg.com/736x/70/dd/61/70dd612c65034b88ebf474a52ccc70c4.jpg');
 
-    await bot.core.sendMessage(
+    await bot.sendMessage(
       groupJid,
       {
         text,
@@ -81,7 +85,7 @@ export async function handleWelcome(bot, m, type, isSimulate = false) {
           },
           externalAdReply: {
             title: config.bot.name,
-            body: `v${require('../package.json').version}`,
+            body: `v${require('../package.json').version} `,
             mediaType: 1,
             thumbnailUrl: profilePictureUrl,
             sourceUrl: config.bot.groupLink,
@@ -94,7 +98,7 @@ export async function handleWelcome(bot, m, type, isSimulate = false) {
     );
 
     if (isWelcome && groupDb?.text?.intro)
-      await bot.core.sendMessage(
+      await bot.sendMessage(
         groupJid,
         {
           text: groupDb.text.intro,
@@ -117,33 +121,39 @@ export default (bot, context) => {
     tools: { cmd, msg },
   } = context;
 
-  bot.ev.setMaxListeners(config.system.maxListeners); // Tetapkan max listeners untuk events
+  // bot.ev.setMaxListeners(config.system.maxListeners); // Removed as not supported in Baileys v7
 
   // Event saat bot siap
-  bot.ev.once('connection.update', async m => {
+  bot.ev.on('connection.update', async m => {
     if (m.connection === 'open') {
       const { database } = context;
-      consolefy.success(`${config.bot.name} by ${config.owner.name}, ready at ${bot.user.id}`);
+      consolefy.success(`${config.bot.name} by ${config.owner.name}, ready at ${bot.user.id} `);
 
       // Mulai ulang bot
-      const botRestart = await database.bot.get('restart');
-      if (botRestart?.jid && botRestart?.timestamp) {
-        const timeago = msg.convertMsToDuration(Date.now() - botRestart.timestamp);
-        await bot.core.sendMessage(botRestart.jid, {
-          text: formatter.quote(`[OK] Successfully restarted! It took ${timeago}.`),
-          edit: botRestart.key,
-        });
-        await database.bot.update({ restart: null });
+      const botRestart = await database.get('restart');
+      if (botRestart) {
+        const { key } = botRestart;
+        await bot.sendMessage(key.remoteJid, { text: '✅ Bot successfully restarted!' }, { quoted: key });
+        await database.delete('restart');
       }
+
+      const decodeJid = (jid) => {
+        if (!jid) return jid;
+        if (/:\d+@/gi.test(jid)) {
+          const decode = jidDecode(jid) || {};
+          return (decode.user && decode.server && decode.user + '@' + decode.server) || jid;
+        }
+        return jid;
+      };
 
       // Tetapkan config pada bot
       config.bot = {
         ...config.bot,
         jid: bot.user.id,
-        decodedJid: bot.decodeJid(bot.user.id),
-        id: bot.getId(bot.user.id),
+        decodedJid: decodeJid(bot.user.id),
+        id: decodeJid(bot.user.id).split('@')[0],
         readyAt: bot.readyAt,
-        groupLink: await bot.core
+        groupLink: await bot
           .groupInviteCode(config.bot.groupJid)
           .then(code => `https://chat.whatsapp.com/${code}`)
           .catch(() => 'https://chat.whatsapp.com/FxEYZl2UyzAEI2yhaH34Ye'),
@@ -168,9 +178,9 @@ export default (bot, context) => {
 
       // Jalankan middleware
       const messageMiddleware = [
-        errorHandlerMiddleware, // Should be first to catch errors
+        // errorHandlerMiddleware, // Should be first to catch errors
         botModeMiddleware,
-        authMiddleware,
+        // authMiddleware, // Removed incompatible middleware
         antiLinkMiddleware,
         antiMediaMiddleware,
         antiNsfwMiddleware,
@@ -215,7 +225,7 @@ export default (bot, context) => {
 
       // Grup atau Pribadi
       if (isGroup || isPrivate) {
-        if (m.key.fromMe) return;
+        if (m.key.fromMe && !config.bot.selfMode) return;
 
         const { state } = context;
         state.uptime = msg.convertMsToDuration(Date.now() - config.bot.readyAt);
@@ -241,7 +251,7 @@ export default (bot, context) => {
 
       // Penanganan obrolan grup
       if (isGroup) {
-        if (m.key.fromMe) return;
+        if (m.key.fromMe && !config.bot.selfMode) return;
 
         if (!isCmd || isCmd?.didyoumean)
           consolefy.info(`Incoming message from group: ${groupId}, by: ${senderId}`); // Log pesan masuk
@@ -255,7 +265,7 @@ export default (bot, context) => {
 
       // Penanganan obrolan pribadi
       if (isPrivate) {
-        if (m.key.fromMe) return;
+        if (m.key.fromMe && !config.bot.selfMode) return;
 
         if (!isCmd || isCmd?.didyoumean) consolefy.info(`Incoming message from: ${senderId}`); // Log pesan masuk
       }
@@ -281,20 +291,20 @@ export default (bot, context) => {
 
       if (call.status !== 'offer') continue;
 
-      await bot.core.rejectCall(call.id, call.from);
+      await bot.rejectCall(call.id, call.from);
       await database.user.update(bot.getId(call.from), { banned: true });
 
-      await bot.core.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
+      await bot.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
         text: ` Account @${bot.getId(call.from)} has been automatically blocked for the reason ${formatter.inlineCode('Anti Call')}.`,
         mentions: [call.from],
       });
 
-      const vcard = new VCardBuilder()
-        .setFullName(config.owner.name)
-        .setOrg(config.owner.organization)
-        .setNumber(config.owner.id)
-        .build();
-      await bot.core.sendMessage(
+      const vcard = new VCard()
+        .addName(config.owner.name)
+        .addOrganization(config.owner.organization)
+        .addPhoneNumber(config.owner.id)
+        .toString();
+      await bot.sendMessage(
         call.from,
         {
           contacts: {

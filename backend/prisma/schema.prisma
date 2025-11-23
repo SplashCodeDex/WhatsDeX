@@ -12,7 +12,7 @@ datasource db {
   provider          = "postgresql"
   url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
-  extensions        = [vector(version: "0.7.0")] // Or your installed version
+  extensions        = [vector()] // Or your installed version
 }
 
 // Multi-tenancy: Customer Organizations
@@ -795,4 +795,12 @@ model BotSettingsMenuItem {
   settings BotSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
 
   @@map("bot_settings_menu_items")
+}
+
+// Simple Key-Value Store
+model KeyValue {
+  key   String @id
+  value String
+
+  @@map("key_value_store")
 }

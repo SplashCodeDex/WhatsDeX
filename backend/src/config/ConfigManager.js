@@ -19,6 +19,20 @@ export class ConfigManager {
   loadConfiguration() {
     // Load base configuration
     this.config = {
+      system: {
+        useServer: true,
+        port: process.env.PORT || 3000,
+        timeZone: 'Asia/Jakarta',
+        maxListeners: 20,
+        cooldown: 5000,
+        antiCall: true,
+        selfMode: false,
+      },
+      owner: {
+        name: this.getEnvString('OWNER_NAME', 'Owner'),
+        id: this.getEnvString('OWNER_NUMBER', '6281234567890'),
+        organization: this.getEnvString('OWNER_ORGANIZATION', 'CodeDeX'),
+      },
       // Server Configuration
       server: {
         port: this.getEnvNumber('PORT', 3001),
@@ -77,6 +91,7 @@ export class ConfigManager {
         browser: ['WhatsDeX', 'Chrome', '1.0.0'],
         prefix: this.getEnvArray('BOT_PREFIX', ['.', '!', '/']),
         mode: this.getEnvString('BOT_MODE', 'public'), // public, private
+        selfMode: this.getEnvBoolean('BOT_SELF_MODE', false),
         maxCommandsPerMinute: this.getEnvNumber('BOT_MAX_COMMANDS_PER_MINUTE', 60),
         cooldownMs: this.getEnvNumber('BOT_COOLDOWN_MS', 10000),
         maintenance: this.getEnvBoolean('BOT_MAINTENANCE', false),

@@ -1,4 +1,5 @@
 import makeWASocket, { useMultiFileAuthState, DisconnectReason, Browsers } from '@whiskeysockets/baileys';
+import handler from './events/handler.js';
 import pino from 'pino';
 import NodeCache from 'node-cache';
 import path from 'node:path';
@@ -62,6 +63,9 @@ const main = async context => {
       });
 
       context.bot = bot;
+
+      // Initialize Event Handler
+      handler(bot, context);
 
       // Listen for job results from the worker
       if (!isQueueHandlerSet) {
