@@ -3,7 +3,7 @@ export default async (ctx, context) => {
   const { isGroup, sender, userDb } = ctx;
 
   // Handle user coming back from AFK
-  const userAfk = userDb?.afk || {};
+  const userAfk = await database.get(`afk.${sender.id}`) || {};
   if (userAfk.reason || userAfk.timestamp) {
     const timeElapsed = Date.now() - userAfk.timestamp;
     if (timeElapsed > 3000) {
@@ -13,8 +13,7 @@ export default async (ctx, context) => {
           `📴 Kamu telah keluar dari AFK ${userAfk.reason ? `dengan alasan ${formatter.inlineCode(userAfk.reason)}` : 'tanpa alasan'} selama ${timeago}.`
         )
       );
-      const { afk, ...rest } = userDb;
-      await database.user.set(sender.id, rest);
+      await database.delete(`afk.${sender.id}`);
     }
   }
 
@@ -25,8 +24,7 @@ export default async (ctx, context) => {
       : (await ctx.getMentioned()).map(jid => ctx.getId(jid));
     if (userAfkMentions.length > 0) {
       for (const userAfkMention of userAfkMentions) {
-        const mentionedUser = await database.user.get(userAfkMention);
-        const mentionedUserAfk = mentionedUser?.afk || {};
+        const mentionedUserAfk = await database.get(`afk.${userAfkMention}`) || {};
         if (mentionedUserAfk.reason || mentionedUserAfk.timestamp) {
           const timeago = tools.msg.convertMsToDuration(Date.now() - mentionedUserAfk.timestamp);
           await ctx.reply(

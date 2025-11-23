@@ -304,7 +304,8 @@ export class UnifiedAIProcessor {
 
   detectAIIntent(text) {
     const lowerText = text.toLowerCase();
-    return this.context.config.ai.intent.aiKeywords.some(keyword => lowerText.includes(keyword));
+    const keywords = this.context.config.ai.aiKeywords || [];
+    return Array.isArray(keywords) && keywords.some(keyword => lowerText.includes(keyword));
   }
 
   async isSpam(text, userId) {

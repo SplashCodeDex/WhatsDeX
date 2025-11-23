@@ -17,15 +17,15 @@ class DatabaseService {
       this.prisma.$on('query', e => {
         logger.debug(`Query: ${e.query}`, { duration: e.duration, params: e.params });
       });
-  
+
       this.prisma.$on('info', e => {
         logger.info(`Database Info: ${e.message}`);
       });
-  
+
       this.prisma.$on('warn', e => {
         logger.warn(`Database Warning: ${e.message}`);
       });
-  
+
       this.prisma.$on('error', e => {
         logger.error(`Database Error: ${e.message}`);
       });
@@ -201,6 +201,10 @@ class DatabaseService {
     }
   }
 
+  async getBot() {
+    return this.get('bot_settings') || {};
+  }
+
   async createGroup(groupData) {
     try {
       const group = await this.prisma.group.create({
@@ -274,6 +278,25 @@ class DatabaseService {
     } catch (error) {
       logger.error('Error removing user from group', { userJid, groupJid, error: error.message });
       throw error;
+    }
+  }
+
+  // Menfess management methods
+  async getAllMenfess() {
+    try {
+      return await this.prisma.menfess.findMany({
+        include: {
+          fromUser: true,
+          toUser: true,
+          toGroup: true,
+        },
+        orderBy: {
+          sentAt: 'desc',
+        },
+      });
+    } catch (error) {
+      logger.error('Error getting all menfess', { error: error.message });
+      return [];
     }
   }
 
@@ -375,7 +398,7 @@ class DatabaseService {
         const jid = parts[1];
         const user = await this.getUser(jid);
         if (!user) return null;
-        
+
         // Return nested property if specified
         if (parts.length > 2) {
           const property = parts.slice(2).join('.');
@@ -383,12 +406,12 @@ class DatabaseService {
         }
         return user;
       }
-      
+
       // For other keys, use a simple key-value storage table
       const result = await this.prisma.keyValue.findUnique({
         where: { key }
       });
-      
+
       return result ? JSON.parse(result.value) : null;
     } catch (error) {
       logger.error('Error getting key-value data', { key, error: error.message });
@@ -401,7 +424,7 @@ class DatabaseService {
       const parts = key.split('.');
       if (parts[0] === 'user' && parts.length >= 2) {
         const jid = parts[1];
-        
+
         if (parts.length > 2) {
           const property = parts.slice(2).join('.');
           const updateData = this.buildNestedUpdate(property, value);
@@ -410,14 +433,14 @@ class DatabaseService {
           return await this.upsertUser({ jid, ...value });
         }
       }
-      
+
       // For other keys, use key-value storage
       await this.prisma.keyValue.upsert({
         where: { key },
         update: { value: JSON.stringify(value) },
         create: { key, value: JSON.stringify(value) }
       });
-      
+
       return true;
     } catch (error) {
       logger.error('Error setting key-value data', { key, value, error: error.message });
@@ -430,7 +453,7 @@ class DatabaseService {
       const parts = key.split('.');
       if (parts[0] === 'user' && parts.length >= 2) {
         const jid = parts[1];
-        
+
         if (parts.length > 2) {
           // Delete specific property
           const property = parts.slice(2).join('.');
@@ -443,12 +466,12 @@ class DatabaseService {
           });
         }
       }
-      
+
       // For other keys
       await this.prisma.keyValue.delete({
         where: { key }
       });
-      
+
       return true;
     } catch (error) {
       logger.error('Error deleting key-value data', { key, error: error.message });

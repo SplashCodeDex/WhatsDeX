@@ -331,20 +331,6 @@ export class MultiTenantApp {
 
       this.server = this.app.listen(this.port, () => {
         logger.info(`Multi-tenant WhatsDeX server running on port ${this.port}`);
-        console.log(`
-🚀 Multi-tenant WhatsDeX SaaS Platform is ready!
-
-📊 Server: http://localhost:${this.port}
-🌐 Frontend: http://localhost:3000
-📋 Health: http://localhost:${this.port}/health
-
-📱 Active tenants: ${this.activeTenants.size}
-🤖 Active bots: ${Array.from(this.activeTenants.values())
-            .reduce((total, tenant) => total + (tenant.botInstances?.length || 0), 0)}
-
-💡 Demo tenant: demo.whatsdx.com (or localhost with subdomain: demo)
-📧 Demo login: admin@demo.com / password123
-        `);
       });
 
       // Graceful shutdown

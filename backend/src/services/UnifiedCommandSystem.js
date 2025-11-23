@@ -371,7 +371,7 @@ export class UnifiedCommandSystem {
    */
   async createContext(messageData, commandInfo, command) {
     const text = this.extractText(messageData);
-    const user = await this.context.databaseService.getUser(messageData.key.remoteJid);
+    const user = await this.context.database.getUser(messageData.key.remoteJid);
 
     return {
       // Message data

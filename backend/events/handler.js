@@ -9,6 +9,7 @@ import {
 import moment from 'moment-timezone';
 import fs from 'node:fs';
 import { createRequire } from 'module';
+import { serialize, decodeJid } from '../lib/simple.js';
 
 // Import middleware
 import afkMiddleware from '../middleware/afk.js';
@@ -45,8 +46,8 @@ export async function handleWelcome(bot, m, type, isSimulate = false) {
   } = bot.context;
   const groupJid = m.id;
   const groupId = bot.getId(m.id);
-  const groupDb = await database.group.get(groupId);
-  const botDb = await database.bot.get();
+  const groupDb = await database.getGroup(groupId);
+  const botDb = await database.getBot();
 
   if (!isSimulate && groupDb?.mutebot) return;
   if (!isSimulate && !groupDb?.option?.welcome) return;
@@ -113,6 +114,7 @@ export async function handleWelcome(bot, m, type, isSimulate = false) {
 
 // Events utama bot
 export default (bot, context) => {
+  bot.context = context; // Assign context to bot for access in other functions
   const {
     config,
     consolefy,
@@ -162,7 +164,7 @@ export default (bot, context) => {
   });
 
   // Event saat bot menerima pesan
-  bot.ev.on('messages.upsert', async (m, ctx) => {
+  bot.ev.on('messages.upsert', async (upsert) => {
     const {
       config,
       database,
@@ -171,10 +173,58 @@ export default (bot, context) => {
       tools: { cmd, msg },
     } = context;
 
+    if (!upsert.messages || !upsert.messages[0]) return;
+    const upsertMsg = upsert.messages[0];
+    if (upsertMsg.key.fromMe && !config.bot.selfMode) return;
+
+    const m = serialize(bot, upsertMsg);
+    const ctx = {
+      id: m.chat,
+      isGroup: () => m.isGroup,
+      sender: {
+        jid: m.sender,
+        id: decodeJid(m.sender).split('@')[0]
+      },
+      getId: (jid) => jid ? decodeJid(jid).split('@')[0] : jid,
+      bot: bot,
+      msg: m,
+      reply: async (text, options = {}) => {
+        return await bot.sendMessage(m.chat, { text, ...options }, { quoted: m });
+      },
+      deleteMessage: async (key) => {
+        return await bot.sendMessage(m.chat, { delete: key });
+      },
+      getMentioned: async () => {
+        const type = m.type;
+        const msg = m.message[type];
+        return msg?.contextInfo?.mentionedJid || [];
+      }
+    };
+
     try {
       // Tambahkan data db ke ctx
-      ctx.userDb = await database.user.get(ctx.sender.id);
-      ctx.groupDb = ctx.isGroup() ? await database.group.get(ctx.id) : {};
+      ctx.userDb = await database.getUser(ctx.sender.id);
+      ctx.groupDb = ctx.isGroup() ? await database.getGroup(ctx.id) : {};
+
+      // Variabel umum
+      const isGroup = ctx.isGroup();
+      const isPrivate = !isGroup;
+      const senderJid = ctx.sender.jid;
+      const senderId = ctx.getId(senderJid);
+      const groupJid = isGroup ? ctx.id : null;
+      const groupId = isGroup ? ctx.getId(groupJid) : null;
+
+      // Calculate command and owner status BEFORE middleware
+      const isOwner = cmd.isOwner(config, senderId, m.key.id);
+      const isCmd = cmd.isCmd(config, m.content, ctx.bot);
+
+      // Populate ctx with command info for middleware
+      ctx.isOwner = isOwner;
+      ctx.args = isCmd ? isCmd.args : [];
+      ctx.used = isCmd ? {
+        ...isCmd,
+        command: isCmd.name // Alias name to command for compatibility
+      } : {};
 
       // Jalankan middleware
       const messageMiddleware = [
@@ -207,19 +257,8 @@ export default (bot, context) => {
         }
       }
 
-      // Variabel umum
-      const isGroup = ctx.isGroup();
-      const isPrivate = !isGroup;
-      const senderJid = ctx.sender.jid;
-      const senderId = ctx.getId(senderJid);
-      const groupJid = isGroup ? ctx.id : null;
-      const groupId = isGroup ? ctx.getId(groupJid) : null;
-      const isOwner = cmd.isOwner(config, senderId, m.key.id);
-      const isCmd = cmd.isCmd(config, m.content, ctx.bot);
-      // const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false; // Optimization: Only fetch if needed by command
-
       // Mengambil database
-      const botDb = await database.bot.get();
+      const botDb = await database.getBot();
       const { userDb } = ctx;
       const { groupDb } = ctx;
 
@@ -235,18 +274,18 @@ export default (bot, context) => {
 
         // Penanganan database pengguna
         if (!userDb?.username)
-          await database.user.update(senderId, {
+          await database.updateUser(senderId, {
             username: `@user_${cmd.generateUID(config, senderId, false)}`,
           });
         if (!userDb?.uid || userDb?.uid !== cmd.generateUID(config, senderId))
-          await database.user.update(senderId, { uid: cmd.generateUID(config, senderId) });
+          await database.updateUser(senderId, { uid: cmd.generateUID(config, senderId) });
         if (userDb?.premium && Date.now() > userDb.premiumExpiration) {
           const { premium, premiumExpiration, ...rest } = userDb;
-          await database.user.set(senderId, rest);
+          await database.set('user.' + senderId, rest);
         }
-        if (isOwner || userDb?.premium) await database.user.update(senderId, { coin: 0 });
+        if (isOwner || userDb?.premium) await database.updateUser(senderId, { coin: 0 });
         if (!userDb?.coin || !Number.isFinite(userDb.coin))
-          await database.user.update(senderId, { coin: 500 });
+          await database.updateUser(senderId, { coin: 500 });
       }
 
       // Penanganan obrolan grup
@@ -258,8 +297,8 @@ export default (bot, context) => {
 
         // Penanganan database grup
         if (groupDb?.sewa && Date.now() > userDb?.sewaExpiration) {
-          await db.delete(`group.${groupId}.sewa`);
-          await db.delete(`group.${groupId}.sewaExpiration`);
+          await database.delete(`group.${groupId}.sewa`);
+          await database.delete(`group.${groupId}.sewaExpiration`);
         }
       }
 
@@ -292,7 +331,7 @@ export default (bot, context) => {
       if (call.status !== 'offer') continue;
 
       await bot.rejectCall(call.id, call.from);
-      await database.user.update(bot.getId(call.from), { banned: true });
+      await database.updateUser(bot.getId(call.from), { banned: true });
 
       await bot.sendMessage(`${config.owner.id}@s.whatsapp.net`, {
         text: ` Account @${bot.getId(call.from)} has been automatically blocked for the reason ${formatter.inlineCode('Anti Call')}.`,

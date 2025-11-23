@@ -5,7 +5,7 @@ export default async (ctx, context) => {
   const { isPrivate, sender, isCmd, msg, m } = ctx;
 
   if (isPrivate) {
-    const allMenfessDb = await database.menfess.getAll();
+    const allMenfessDb = await database.getAllMenfess();
     if (!isCmd || isCmd?.didyoumean) {
       for (const [menfessId, { from, to }] of Object.entries(allMenfessDb)) {
         if (sender.id === from || sender.id === to) {

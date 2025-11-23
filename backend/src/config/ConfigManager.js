@@ -117,7 +117,13 @@ export class ConfigManager {
           model: this.getEnvString('OPENAI_MODEL', 'gpt-3.5-turbo'),
           maxTokens: this.getEnvNumber('OPENAI_MAX_TOKENS', 1000),
           temperature: this.getEnvNumber('OPENAI_TEMPERATURE', 0.7)
-        }
+        },
+        summarization: {
+          SUMMARIZE_THRESHOLD: 16,
+          MESSAGES_TO_SUMMARIZE: 10,
+          HISTORY_PRUNE_LENGTH: 6
+        },
+        aiKeywords: []
       },
 
       // Payment Configuration
