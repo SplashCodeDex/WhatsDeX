@@ -4,7 +4,7 @@ import aiTools from '../../tools/ai-tools.js';
 import aiChatDB from '../../database/ai_chat_database.js';
 // import dbManager from '../../src/utils/DatabaseManager.js';
 import performanceMonitor from '../../src/utils/PerformanceMonitor.js';
-import RateLimiter from '../../src/utils/RateLimiter.js';
+import { RateLimiter } from '../../src/utils/RateLimiter.js';
 import cache from '../../lib/cache.js';
 
 // Initialize rate limiter
@@ -64,12 +64,12 @@ export default {
         if (messagesToSummarize.length > 0) {
           try {
             const newSummary = await geminiService.getSummary(messagesToSummarize);
-            
+
             // Limit summary length to prevent unbounded growth
             const maxSummaryLength = 1000;
             if (currentSummary) {
               const combinedSummary = `${currentSummary}\\n\\n${newSummary}`;
-              currentSummary = combinedSummary.length > maxSummaryLength 
+              currentSummary = combinedSummary.length > maxSummaryLength
                 ? combinedSummary.substring(combinedSummary.length - maxSummaryLength)
                 : combinedSummary;
             } else {
@@ -77,10 +77,10 @@ export default {
                 ? newSummary.substring(0, maxSummaryLength)
                 : newSummary;
             }
-            
+
             // Keep only recent messages
             currentHistory = currentHistory.slice(-HISTORY_PRUNE_LENGTH);
-            
+
             console.log(`Memory optimized: History=${currentHistory.length}, Summary=${currentSummary.length} chars`);
           } catch (summaryError) {
             console.warn('Summary generation failed, using fallback truncation:', summaryError.message);
@@ -174,7 +174,7 @@ export default {
       const result = responseMessage.content;
       messages.push(responseMessage);
       await aiChatDB.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
-      
+
       // --- Caching Implementation Start ---
       await cache.set(cacheKey, result);
       console.log(`✅ Result stored in cache for key: ${cacheKey}`);
@@ -185,7 +185,7 @@ export default {
     } catch (error) {
       timer.end();
       console.error('Gemini command error:', error);
-      
+
       // Log error with context
       const input = ctx.args.join(' ') || ctx.quoted?.content || '';
       console.error('Error details:', {
@@ -194,7 +194,7 @@ export default {
         error: error.message,
         stack: error.stack?.split('\n').slice(0, 5)
       });
-      
+
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
   },

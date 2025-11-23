@@ -1,18 +1,44 @@
 // Impor modul dan dependensi yang diperlukan
-const { VCardBuilder } = require('@whiskeysockets/baileys');
-const axios = require('axios');
-const { analyzeMessage } = require('guaranteed_security');
-const moment = require('moment-timezone');
-const fs = require('node:fs');
+import { VCardBuilder } from '@whiskeysockets/baileys';
+import axios from 'axios';
+import { analyzeMessage } from 'guaranteed_security';
+import moment from 'moment-timezone';
+import fs from 'node:fs';
+import { createRequire } from 'module';
+
+// Import middleware
+import afkMiddleware from '../middleware/afk.js';
+import analyticsMiddleware from '../middleware/analytics.js';
+import antiLinkMiddleware from '../middleware/antiLink.js';
+import antiMediaMiddleware from '../middleware/antiMedia.js';
+import antiNsfwMiddleware from '../middleware/antiNsfw.js';
+import antiSpamMiddleware from '../middleware/antiSpam.js';
+import antiTagswMiddleware from '../middleware/antiTagsw.js';
+import antiToxicMiddleware from '../middleware/antiToxic.js';
+import auditFixedMiddleware from '../middleware/audit-fixed.js';
+import auditMiddleware from '../middleware/audit.js';
+import authMiddleware from '../middleware/auth.js';
+import botModeMiddleware from '../middleware/botMode.js';
+import cooldownMiddleware from '../middleware/cooldown.js';
+import didYouMeanMiddleware from '../middleware/didYouMean.js';
+import errorHandlerMiddleware from '../middleware/errorHandler.js';
+import groupMuteMiddleware from '../middleware/groupMute.js';
+import inputValidationMiddleware from '../middleware/inputValidation.js';
+import maliciousMessageMiddleware from '../middleware/maliciousMessage.js';
+import menfessMiddleware from '../middleware/menfess.js';
+import nightModeMiddleware from '../middleware/nightMode.js';
+import rateLimiterMiddleware from '../middleware/rateLimiter.js';
+
+const require = createRequire(import.meta.url);
 
 // Fungsi untuk menangani event pengguna bergabung/keluar grup
-async function handleWelcome(bot, m, type, isSimulate = false) {
+export async function handleWelcome(bot, m, type, isSimulate = false) {
   const {
     config,
     database,
     formatter,
     tools: { cmd },
-  } = context;
+  } = bot.context;
   const groupJid = m.id;
   const groupId = bot.getId(m.id);
   const groupDb = await database.group.get(groupId);
@@ -32,9 +58,9 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
     const metadata = await bot.core.groupMetadata(groupJid);
     const text = customText
       ? customText
-          .replace(/%tag%/g, userTag)
-          .replace(/%subject%/g, metadata.subject)
-          .replace(/%description%/g, metadata.description)
+        .replace(/%tag%/g, userTag)
+        .replace(/%subject%/g, metadata.subject)
+        .replace(/%description%/g, metadata.description)
       : isWelcome
         ? formatter.quote(` Welcome ${userTag} to the group ${metadata.subject}!`)
         : formatter.quote(` Goodbye, ${userTag}!`);
@@ -63,7 +89,7 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
         },
       },
       {
-        quoted: tools.cmd.fakeMetaAiQuotedText(config.msg.footer),
+        quoted: cmd.fakeMetaAiQuotedText(config.msg.footer),
       }
     );
 
@@ -75,14 +101,14 @@ async function handleWelcome(bot, m, type, isSimulate = false) {
           mentions: [jid],
         },
         {
-          quoted: tools.cmd.fakeMetaAiQuotedText("Don't forget to fill out your intro!"),
+          quoted: cmd.fakeMetaAiQuotedText("Don't forget to fill out your intro!"),
         }
       );
   }
 }
 
 // Events utama bot
-module.exports = (bot, context) => {
+export default (bot, context) => {
   const {
     config,
     consolefy,
@@ -135,96 +161,107 @@ module.exports = (bot, context) => {
       tools: { cmd, msg },
     } = context;
 
-    // Tambahkan data db ke ctx
-    ctx.userDb = await database.user.get(ctx.sender.id);
-    ctx.groupDb = ctx.isGroup() ? await database.group.get(ctx.id) : {};
+    try {
+      // Tambahkan data db ke ctx
+      ctx.userDb = await database.user.get(ctx.sender.id);
+      ctx.groupDb = ctx.isGroup() ? await database.group.get(ctx.id) : {};
 
-    // Jalankan middleware
-    const messageMiddleware = [
-      require('../middleware/botMode.js'),
-      require('../middleware/groupMute.js'),
-      require('../middleware/nightMode.js'),
-      require('../middleware/maliciousMessage.js'),
-      require('../middleware/didYouMean.js'),
-      require('../middleware/afk.js'),
-      require('../middleware/antiMedia.js'),
-      require('../middleware/antiLink.js'),
-      require('../middleware/antiNsfw.js'),
-      require('../middleware/antiSpam.js'),
-      require('../middleware/antiTagsw.js'),
-      require('../middleware/antiToxic.js'),
-      require('../middleware/menfess.js'),
-    ];
+      // Jalankan middleware
+      const messageMiddleware = [
+        errorHandlerMiddleware, // Should be first to catch errors
+        botModeMiddleware,
+        authMiddleware,
+        antiLinkMiddleware,
+        antiMediaMiddleware,
+        antiNsfwMiddleware,
+        antiSpamMiddleware,
+        antiTagswMiddleware,
+        antiToxicMiddleware,
+        auditMiddleware,
+        auditFixedMiddleware,
+        cooldownMiddleware,
+        groupMuteMiddleware,
+        inputValidationMiddleware,
+        maliciousMessageMiddleware,
+        menfessMiddleware,
+        nightModeMiddleware,
+        rateLimiterMiddleware,
+        analyticsMiddleware,
+        didYouMeanMiddleware // Should be last or near last
+      ];
 
-    for (const middleware of messageMiddleware) {
-      const result = await middleware(ctx, context);
-      if (!result) return;
-    }
-
-    // Variabel umum
-    const isGroup = ctx.isGroup();
-    const isPrivate = !isGroup;
-    const senderJid = ctx.sender.jid;
-    const senderId = ctx.getId(senderJid);
-    const groupJid = isGroup ? ctx.id : null;
-    const groupId = isGroup ? ctx.getId(groupJid) : null;
-    const isOwner = cmd.isOwner(config, senderId, m.key.id);
-    const isCmd = cmd.isCmd(config, m.content, ctx.bot);
-    const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
-
-    // Mengambil database
-    const botDb = await database.bot.get();
-    const { userDb } = ctx;
-    const { groupDb } = ctx;
-
-    // Grup atau Pribadi
-    if (isGroup || isPrivate) {
-      if (m.key.fromMe) return;
-
-      const { state } = context;
-      state.uptime = msg.convertMsToDuration(Date.now() - config.bot.readyAt);
-      state.dbSize = fs.existsSync('database.json')
-        ? msg.formatSize(fs.statSync('database.json').size / 1024)
-        : 'N/A';
-
-      // Penanganan database pengguna
-      if (!userDb?.username)
-        await database.user.update(senderId, {
-          username: `@user_${cmd.generateUID(config, senderId, false)}`,
-        });
-      if (!userDb?.uid || userDb?.uid !== cmd.generateUID(config, senderId))
-        await database.user.update(senderId, { uid: cmd.generateUID(config, senderId) });
-      if (userDb?.premium && Date.now() > userDb.premiumExpiration) {
-        const { premium, premiumExpiration, ...rest } = userDb;
-        await database.user.set(senderId, rest);
+      for (const middleware of messageMiddleware) {
+        if (typeof middleware === 'function') {
+          const result = await middleware(ctx, context);
+          if (result === false) return; // Stop processing if middleware returns false
+        }
       }
-      if (isOwner || userDb?.premium) await database.user.update(senderId, { coin: 0 });
-      if (!userDb?.coin || !Number.isFinite(userDb.coin))
-        await database.user.update(senderId, { coin: 500 });
-    }
-
-    // Penanganan obrolan grup
-    if (isGroup) {
-      if (m.key.fromMe) return;
-
-      if (!isCmd || isCmd?.didyoumean)
-        consolefy.info(`Incoming message from group: ${groupId}, by: ${senderId}`); // Log pesan masuk
 
       // Variabel umum
-      const groupAutokick = groupDb?.option?.autokick;
+      const isGroup = ctx.isGroup();
+      const isPrivate = !isGroup;
+      const senderJid = ctx.sender.jid;
+      const senderId = ctx.getId(senderJid);
+      const groupJid = isGroup ? ctx.id : null;
+      const groupId = isGroup ? ctx.getId(groupJid) : null;
+      const isOwner = cmd.isOwner(config, senderId, m.key.id);
+      const isCmd = cmd.isCmd(config, m.content, ctx.bot);
+      // const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false; // Optimization: Only fetch if needed by command
 
-      // Penanganan database grup
-      if (groupDb?.sewa && Date.now() > userDb?.sewaExpiration) {
-        await db.delete(`group.${groupId}.sewa`);
-        await db.delete(`group.${groupId}.sewaExpiration`);
+      // Mengambil database
+      const botDb = await database.bot.get();
+      const { userDb } = ctx;
+      const { groupDb } = ctx;
+
+      // Grup atau Pribadi
+      if (isGroup || isPrivate) {
+        if (m.key.fromMe) return;
+
+        const { state } = context;
+        state.uptime = msg.convertMsToDuration(Date.now() - config.bot.readyAt);
+        state.dbSize = fs.existsSync('database.json')
+          ? msg.formatSize(fs.statSync('database.json').size / 1024)
+          : 'N/A';
+
+        // Penanganan database pengguna
+        if (!userDb?.username)
+          await database.user.update(senderId, {
+            username: `@user_${cmd.generateUID(config, senderId, false)}`,
+          });
+        if (!userDb?.uid || userDb?.uid !== cmd.generateUID(config, senderId))
+          await database.user.update(senderId, { uid: cmd.generateUID(config, senderId) });
+        if (userDb?.premium && Date.now() > userDb.premiumExpiration) {
+          const { premium, premiumExpiration, ...rest } = userDb;
+          await database.user.set(senderId, rest);
+        }
+        if (isOwner || userDb?.premium) await database.user.update(senderId, { coin: 0 });
+        if (!userDb?.coin || !Number.isFinite(userDb.coin))
+          await database.user.update(senderId, { coin: 500 });
       }
-    }
 
-    // Penanganan obrolan pribadi
-    if (isPrivate) {
-      if (m.key.fromMe) return;
+      // Penanganan obrolan grup
+      if (isGroup) {
+        if (m.key.fromMe) return;
 
-      if (!isCmd || isCmd?.didyoumean) consolefy.info(`Incoming message from: ${senderId}`); // Log pesan masuk
+        if (!isCmd || isCmd?.didyoumean)
+          consolefy.info(`Incoming message from group: ${groupId}, by: ${senderId}`); // Log pesan masuk
+
+        // Penanganan database grup
+        if (groupDb?.sewa && Date.now() > userDb?.sewaExpiration) {
+          await db.delete(`group.${groupId}.sewa`);
+          await db.delete(`group.${groupId}.sewaExpiration`);
+        }
+      }
+
+      // Penanganan obrolan pribadi
+      if (isPrivate) {
+        if (m.key.fromMe) return;
+
+        if (!isCmd || isCmd?.didyoumean) consolefy.info(`Incoming message from: ${senderId}`); // Log pesan masuk
+      }
+
+    } catch (e) {
+      console.error(`Error in message handler:`, e);
     }
   });
 
@@ -287,4 +324,3 @@ module.exports = (bot, context) => {
     }
   });
 };
-module.exports.handleWelcome = handleWelcome; // Penanganan event pengguna bergabung/keluar grup

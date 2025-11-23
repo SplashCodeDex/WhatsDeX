@@ -1,5 +1,5 @@
 import CommandSuggestionsService from '../../src/services/commandSuggestions.js';
-import { formatter } from '../../src/utils/logger.js';
+import * as formatter from '../../utils/formatter.js';
 
 export default {
   name: 'suggest',

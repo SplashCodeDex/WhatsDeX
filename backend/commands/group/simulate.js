@@ -1,6 +1,4 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { handleWelcome } = require('../../events/handler.js');
+import { handleWelcome } from '../../events/handler.js';
 
 export default {
   name: 'simulate',
