@@ -11,6 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '../../hooks/use-toast';
 import { Check, ArrowRight, Bot, MessageSquare, Users, Zap } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import apiClient from '../../lib/apiClient';
+import { useRouter } from 'next/navigation';
 
 const plans = [
   {
@@ -78,6 +81,9 @@ export default function Register() {
   const [availability, setAvailability] = useState({ email: null, subdomain: null });
   const prevAvailRef = useRef({ email: null, subdomain: null });
   const [checking, setChecking] = useState({ email: false, subdomain: false });
+  const { register } = useAuth();
+  const router = useRouter();
+
   const scrollToTop = () => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -91,7 +97,7 @@ export default function Register() {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -106,9 +112,9 @@ export default function Register() {
       debounceTimer = setTimeout(async () => {
         try {
           setChecking(prev => ({ ...prev, [name]: true }));
-          const params = new URLSearchParams({ [name]: value });
-          const resp = await fetch(`/api/auth/availability?${params.toString()}`);
-          const data = await resp.json();
+          const params = { [name]: value };
+          const data = await apiClient.checkAvailability(params);
+
           if (name === 'email' && value === formData.email) {
             const newEmailAvail = data.email || { available: true };
             setAvailability(prev => ({ ...prev, email: newEmailAvail }));
@@ -152,7 +158,7 @@ export default function Register() {
 
   const validateStep1 = () => {
     const newErrors = {};
-    
+
     if (!formData.companyName) newErrors.companyName = 'Company name is required';
     if (!formData.subdomain) newErrors.subdomain = 'Subdomain is required';
     if (formData.subdomain && !/^[a-z0-9-]+$/.test(formData.subdomain)) {
@@ -184,9 +190,9 @@ export default function Register() {
     // Ensure availability before proceeding
     try {
       setChecking(prev => ({ ...prev, email: true, subdomain: true }));
-      const params = new URLSearchParams({ email: formData.email, subdomain: formData.subdomain });
-      const resp = await fetch(`/api/auth/availability?${params.toString()}`);
-      const data = await resp.json();
+      const params = { email: formData.email, subdomain: formData.subdomain };
+      const data = await apiClient.checkAvailability(params);
+
       const newErrors = {};
       if (data.email && data.email.available === false) newErrors.email = data.email.reason || 'Email not available';
       if (data.subdomain && data.subdomain.available === false) newErrors.subdomain = data.subdomain.reason || 'Subdomain not available';
@@ -212,46 +218,25 @@ export default function Register() {
   const handleRegister = async () => {
     setLoading(true);
     setErrors({});
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...formData,
-          plan: selectedPlan
-        })
-      });
 
-      const data = await response.json();
+    const result = await register({
+      ...formData,
+      plan: selectedPlan
+    });
 
-      if (response.ok && data.success) {
-        window.location.href = '/dashboard';
-      } else {
-        // Map server error to field-specific errors when provided
-        const field = data.field;
-        const newErrors = {};
-        if (field && data.error) {
-          newErrors[field] = data.error;
-        } else if (data.error) {
-          newErrors.general = data.error;
-        } else {
-          newErrors.general = 'Registration failed. Please try again.';
-        }
-        setErrors(newErrors);
-        // Jump user back to step 1 if error concerns inputs
-        setStep(1);
-        scrollToTop();
-        toast({ title: 'Could not create account', description: newErrors.general || data.error || 'Please review your information', variant: 'destructive' });
-      }
-    } catch (error) {
-      setErrors({ general: 'Registration failed. Please try again.' });
+    if (result.success) {
+      router.push('/dashboard');
+    } else {
+      // Map server error to field-specific errors when provided
+      // Note: The backend might return different error structures, so we handle generic ones here
+      const newErrors = { general: result.error };
+      setErrors(newErrors);
+      // Jump user back to step 1 if error concerns inputs
       setStep(1);
       scrollToTop();
-    } finally {
-      setLoading(false);
+      toast({ title: 'Could not create account', description: result.error || 'Please review your information', variant: 'destructive' });
     }
+    setLoading(false);
   };
 
   return (
@@ -425,13 +410,12 @@ export default function Register() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {plans.map((plan) => (
-                <Card 
-                  key={plan.id} 
-                  className={`cursor-pointer transition-all duration-200 ${
-                    selectedPlan === plan.id 
-                      ? 'ring-2 ring-blue-500 shadow-lg' 
+                <Card
+                  key={plan.id}
+                  className={`cursor-pointer transition-all duration-200 ${selectedPlan === plan.id
+                      ? 'ring-2 ring-blue-500 shadow-lg'
                       : 'hover:shadow-md'
-                  } ${plan.popular ? 'border-blue-500' : ''}`}
+                    } ${plan.popular ? 'border-blue-500' : ''}`}
                   onClick={() => setSelectedPlan(plan.id)}
                 >
                   <CardHeader>

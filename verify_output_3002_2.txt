@@ -1,0 +1,73 @@
+≡ƒÜÇ Starting SaaS Flow Verification...
+
+1. Registering user: test-68f5db74@example.com...
+Γ£à Registration successful: {
+  success: true,
+  message: 'Signup successful',
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWljNnBnaHEwMDA3dDZ6Y21lYXd1NHgxIiwidGVuYW50SWQiOiJjbWljNnBnaG8wMDA1dDZ6Y2lxaXAxZnNyIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzYzOTMwNTUxLCJleHAiOjE3NjQ1MzUzNTF9.fACAc2p6yKC2SHYjF9qVSC320liVf4Tsp-b46APOdL8',
+  user: {
+    id: 'cmic6pghq0007t6zcmeawu4x1',
+    name: 'Test User',
+    email: 'test-68f5db74@example.com'
+  },
+  tenant: {
+    id: 'cmic6pgho0005t6zciqip1fsr',
+    name: 'Test Tenant',
+    subdomain: 'test-a22ffb56'
+  }
+}
+
+2. Verifying Login...
+Γ£à Login successful
+
+3. Fetching User Profile...
+Γ£à User Profile: {
+  user: {
+    id: 'cmic6pghq0007t6zcmeawu4x1',
+    name: 'Test User',
+    email: 'test-68f5db74@example.com',
+    role: 'admin'
+  },
+  tenant: {
+    id: 'cmic6pgho0005t6zciqip1fsr',
+    name: 'Test Tenant',
+    subdomain: 'test-a22ffb56'
+  }
+}
+Γä╣∩╕Å Tenant ID: cmic6pgho0005t6zciqip1fsr
+
+4. Creating Bot Instance...
+Γ£à Bot Instance Created: {
+  success: true,
+  data: {
+    id: 'cmic6pglv0009t6zcl0xjnsog',
+    tenantId: 'cmic6pgho0005t6zciqip1fsr',
+    name: 'My First Bot',
+    phoneNumber: '1234567890',
+    qrCode: null,
+    status: 'disconnected',
+    sessionData: null,
+    config: null,
+    lastActivity: null,
+    isActive: true,
+    createdAt: '2025-11-23T20:42:31.890Z',
+    updatedAt: '2025-11-23T20:42:31.890Z'
+  }
+}
+Γä╣∩╕Å Bot ID: cmic6pglv0009t6zcl0xjnsog
+
+5. Checking Bot Status...
+Γ£à Bot Status: {
+  success: true,
+  data: [
+    {
+      id: 'cmic6pglv0009t6zcl0xjnsog',
+      name: 'My First Bot',
+      phoneNumber: '1234567890',
+      status: 'disconnected',
+      lastActivity: null
+    }
+  ]
+}
+
+≡ƒÄë SaaS Flow Verification Completed Successfully!

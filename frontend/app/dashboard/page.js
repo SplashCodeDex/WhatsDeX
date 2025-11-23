@@ -10,96 +10,96 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Bot, 
-  Users, 
-  MessageSquare, 
-  TrendingUp, 
-  Settings, 
+import { toast } from '../../hooks/use-toast';
+import {
+  Bot,
+  Users,
+  MessageSquare,
+  TrendingUp,
+  Settings,
   CreditCard,
   Plus,
   QrCode,
   Play,
   Square,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import apiClient from '../../lib/apiClient';
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
-  const [tenant, setTenant] = useState(null);
+  const { user, tenant, loading: authLoading } = useAuth();
   const [bots, setBots] = useState([]);
   const [subscription, setSubscription] = useState(null);
-  const [analytics, setAnalytics] = useState({});
   const [loading, setLoading] = useState(true);
+  const [creatingBot, setCreatingBot] = useState(false);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (!authLoading && tenant) {
+      loadDashboardData();
+    }
+  }, [authLoading, tenant]);
 
   const loadDashboardData = async () => {
     try {
-      // Load bots (cookie-based auth)
-      const botsResponse = await fetch('/api/bots');
-      if (botsResponse.status === 401) {
-        window.location.href = '/login';
-        return;
-      }
-      const botsData = await botsResponse.json();
+      setLoading(true);
+      // Load bots
+      const botsResponse = await apiClient.getBots(tenant.id);
+      setBots(botsResponse.data || []);
 
-      // Load subscription
-      const subResponse = await fetch('/api/subscription');
-      const subData = await subResponse.json();
-
-      if (botsData.success) {
-        setBots(botsData.data.bots);
-        setTenant({
-          ...subData.data.tenant,
-          limits: botsData.data.limits,
-          plan: botsData.data.plan
-        });
-      }
-
-      if (subData.success) {
-        setSubscription(subData.data);
-      }
-
-      // Derive a display name from tenant or fallback
-      const displayName = subData?.data?.tenant?.name || 'User';
-      setUser({ name: displayName });
+      // Load subscription (mocked for now or implement endpoint)
+      // const subResponse = await apiClient.getSubscriptionInfo(tenant.id);
+      // setSubscription(subResponse.data);
 
       setLoading(false);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load dashboard data',
+        variant: 'destructive'
+      });
       setLoading(false);
     }
   };
 
   const createBot = async () => {
+    setCreatingBot(true);
     try {
-      const response = await fetch('/api/bots', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': (document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)?.[1] ? decodeURIComponent(document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)[1]) : '')
-        },
-        body: JSON.stringify({
-          name: `Bot ${bots.length + 1}`,
-          config: {
-            welcomeMessage: 'Hello! How can I help you today?',
-            aiEnabled: true
-          }
-        })
-      });
+      const botData = {
+        name: `Bot ${bots.length + 1}`,
+        config: {
+          welcomeMessage: 'Hello! How can I help you today?',
+          aiEnabled: true
+        }
+      };
 
-      const data = await response.json();
-      if (data.success) {
+      const response = await apiClient.createBot(tenant.id, botData);
+
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: 'Bot created successfully',
+          variant: 'success'
+        });
         await loadDashboardData();
       } else {
-        alert(data.error);
+        toast({
+          title: 'Error',
+          description: response.error || 'Failed to create bot',
+          variant: 'destructive'
+        });
       }
     } catch (error) {
       console.error('Failed to create bot:', error);
-      alert('Failed to create bot');
+      toast({
+        title: 'Error',
+        description: 'Failed to create bot',
+        variant: 'destructive'
+      });
+    } finally {
+      setCreatingBot(false);
     }
   };
 
@@ -125,15 +125,54 @@ export default function Dashboard() {
     }
   };
 
-  const showBotQRCode = (botId) => {
-    const bot = bots.find(b => b.id === botId);
-    if (bot && bot.qrCode) {
-      // Open QR code in modal or new window
-      window.open(`data:image/png;base64,${bot.qrCode}`, '_blank');
-    } else {
-      // Request new QR code generation
-      alert('Generating QR code for bot connection...');
-      // TODO: Implement QR code generation API call
+  const showBotQRCode = async (botId) => {
+    try {
+      const response = await apiClient.getBotQRCode(botId);
+      if (response.success && response.qrCode) {
+        // Open QR code in modal or new window
+        // For now, simple alert or window open
+        const win = window.open("", "QR Code", "width=400,height=400");
+        if (win) {
+          win.document.write(`<img src="${response.qrCode}" alt="QR Code" style="width:100%"/>`);
+        }
+      } else {
+        toast({
+          title: 'Info',
+          description: response.message || 'QR Code not available yet. Please try starting the bot first.',
+          variant: 'default'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to get QR code:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to get QR code',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleStartBot = async (botId) => {
+    try {
+      const response = await apiClient.startBot(botId);
+      if (response.success) {
+        toast({ title: 'Success', description: 'Bot starting...', variant: 'success' });
+        loadDashboardData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to start bot', variant: 'destructive' });
+    }
+  };
+
+  const handleStopBot = async (botId) => {
+    try {
+      const response = await apiClient.stopBot(botId);
+      if (response.success) {
+        toast({ title: 'Success', description: 'Bot stopped', variant: 'success' });
+        loadDashboardData();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to stop bot', variant: 'destructive' });
     }
   };
 
@@ -147,7 +186,7 @@ export default function Dashboard() {
     window.location.href = '/dashboard/billing';
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -155,8 +194,9 @@ export default function Dashboard() {
     );
   }
 
-  const usage = subscription?.usage || {};
-  const limits = tenant?.limits || {};
+  // Mock usage/limits if not available yet
+  const usage = subscription?.usage || { bots: bots.length, messages: 0, users: 1 };
+  const limits = tenant?.limits || { maxBots: 3, maxMessages: 1000, maxUsers: 5 };
 
   return (
     <Layout title="Dashboard">
@@ -166,12 +206,12 @@ export default function Dashboard() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-600">
-              Welcome back, {user?.name}! Manage your WhatsApp bots and analytics.
+              Welcome back, {user?.name || 'User'}! Manage your WhatsApp bots and analytics.
             </p>
           </div>
           <div className="flex items-center space-x-4">
             <Badge variant="outline" className="px-3 py-1">
-              {tenant?.plan?.toUpperCase()} Plan
+              {tenant?.plan?.toUpperCase() || 'FREE'} Plan
             </Badge>
             <Button onClick={() => window.location.href = '/settings'}>
               <Settings className="h-4 w-4 mr-2" />
@@ -252,7 +292,7 @@ export default function Dashboard() {
                 </div>
                 <Progress value={((usage.bots || 0) / limits.maxBots) * 100} />
               </div>
-              
+
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span>Messages ({usage.messages || 0}/{limits.maxMessages})</span>
@@ -283,8 +323,8 @@ export default function Dashboard() {
           <TabsContent value="bots" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">WhatsApp Bots</h2>
-              <Button onClick={createBot} disabled={usage.bots >= limits.maxBots && limits.maxBots !== -1}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button onClick={createBot} disabled={(usage.bots >= limits.maxBots && limits.maxBots !== -1) || creatingBot}>
+                {creatingBot ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
                 Create Bot
               </Button>
             </div>
@@ -320,18 +360,40 @@ export default function Dashboard() {
                     )}
 
                     <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      {bot.status === 'disconnected' || bot.status === 'error' ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleStartBot(bot.id)}
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          Start
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleStopBot(bot.id)}
+                        >
+                          <Square className="h-4 w-4 mr-2" />
+                          Stop
+                        </Button>
+                      )}
+
+                      <Button
+                        size="sm"
+                        variant="outline"
                         className="flex-1"
                         onClick={() => showBotQRCode(bot.id)}
                       >
                         <QrCode className="h-4 w-4 mr-2" />
-                        QR Code
+                        QR
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        size="sm"
+                        variant="outline"
                         className="flex-1"
                         onClick={() => openBotSettings(bot.id)}
                       >
@@ -351,8 +413,8 @@ export default function Dashboard() {
                     <p className="text-gray-600 mb-4">
                       Create your first WhatsApp bot to get started
                     </p>
-                    <Button onClick={createBot}>
-                      <Plus className="h-4 w-4 mr-2" />
+                    <Button onClick={createBot} disabled={creatingBot}>
+                      {creatingBot ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
                       Create Your First Bot
                     </Button>
                   </CardContent>
@@ -395,7 +457,7 @@ export default function Dashboard() {
                         ${(subscription?.currentPlan?.price || 0) / 100}/month
                       </p>
                     </div>
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => openBillingManagement()}
                     >
@@ -403,7 +465,7 @@ export default function Dashboard() {
                       Manage
                     </Button>
                   </div>
-                  
+
                   {subscription?.subscription && (
                     <div className="text-sm text-gray-600">
                       <p>Status: {subscription.subscription.status}</p>

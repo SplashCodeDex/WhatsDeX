@@ -278,6 +278,7 @@ model TenantAuditLog {
 model User {
   id            String    @id @default(cuid())
   jid           String    @unique
+  uid           String?   @unique // Short unique ID for user reference
   name          String?
   phone         String?
   email         String?

@@ -1,5 +1,6 @@
 import '../styles/globals.css'
 import { Providers } from './providers'
+import { AuthProvider } from '../contexts/AuthContext'
 
 export const metadata = {
   title: 'WhatsDeX Dashboard',
@@ -13,11 +14,13 @@ export default function RootLayout({ children }) {
         <div className="relative min-h-screen">
           {/* Background gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-gray-900/20 pointer-events-none"></div>
-          
+
           {/* Main content */}
           <div className="relative z-10">
             <Providers>
-              {children}
+              <AuthProvider>
+                {children}
+              </AuthProvider>
             </Providers>
           </div>
         </div>

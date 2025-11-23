@@ -1,5 +1,6 @@
 import moment from 'moment-timezone';
 import crypto from 'crypto';
+import { levenshteinDistance } from '../src/utils/levenshtein.js';
 
 export const parseFlag = (args, options) => {
   const result = { input: args };
@@ -20,12 +21,55 @@ export const isCmd = (config, content, bot) => {
   if (!prefix) return false;
 
   const [commandName, ...args] = content.slice(prefix.length).trim().split(/\s+/);
+  const name = commandName.toLowerCase();
+
+  // Check for exact match
+  // bot.cmd is the Map of commands
+  const commands = bot?.cmd;
+  const command = commands?.get(name);
+
+  if (command) {
+    return {
+      prefix,
+      name: name,
+      args,
+      input: args.join(' '),
+      didyoumean: false
+    };
+  }
+
+  // If no exact match, check for suggestions
+  let didyoumean = false;
+  if (commands) {
+    const commandNames = Array.from(commands.keys());
+    let closestDistance = Infinity;
+    let closestMatch = null;
+
+    for (const cmdName of commandNames) {
+      // Skip aliases for suggestions to avoid clutter, or include them?
+      // UnifiedCommandSystem filters aliases. Let's check if we can distinguish.
+      // The Map values have 'isAlias' property.
+      const cmdObj = commands.get(cmdName);
+      if (cmdObj.isAlias) continue;
+
+      const distance = levenshteinDistance(name, cmdName);
+      if (distance < closestDistance && distance <= 2) {
+        closestDistance = distance;
+        closestMatch = cmdName;
+      }
+    }
+
+    if (closestMatch) {
+      didyoumean = closestMatch;
+    }
+  }
+
   return {
     prefix,
-    name: commandName.toLowerCase(),
+    name: name,
     args,
     input: args.join(' '),
-    didyoumean: false // Placeholder for didyoumean logic
+    didyoumean
   };
 };
 
@@ -56,10 +100,16 @@ export const fakeMetaAiQuotedText = (text) => {
   };
 };
 
+export const handleError = async (ctx, error) => {
+  console.error('Command Error:', error);
+  await ctx.reply(`❌ An error occurred: ${error.message}`);
+};
+
 export default {
   parseFlag,
   isCmd,
   isOwner,
   generateUID,
-  fakeMetaAiQuotedText
+  fakeMetaAiQuotedText,
+  handleError
 };

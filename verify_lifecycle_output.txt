@@ -1,0 +1,19 @@
+≡ƒÜÇ Starting Bot Lifecycle Verification...
+
+1. Registering user: test-lifecycle-d06cb381@example.com...
+Γ£à Registration successful. Tenant ID: cmic7dx390000t66slpzzfn3m
+
+2. Creating Bot Instance...
+Γ£à Bot Created. ID: cmic7dx3u0004t66skkna7d5d
+
+3. Starting Bot...
+Γ£à Bot Start Response: { success: true, message: 'Bot started successfully' }
+
+4. Fetching QR Code...
+Γ£à QR Code Retrieved: Success
+Γä╣∩╕Å QR Data Length: 6486
+
+5. Stopping Bot...
+Γ£à Bot Stop Response: { success: true, message: 'Bot stopped successfully' }
+
+≡ƒÄë Bot Lifecycle Verification Completed Successfully!

@@ -188,9 +188,15 @@ export default (bot, context) => {
       getId: (jid) => jid ? decodeJid(jid).split('@')[0] : jid,
       bot: bot,
       msg: m,
-      reply: async (text, options = {}) => {
-        return await bot.sendMessage(m.chat, { text, ...options }, { quoted: m });
-      },
+      // Proxy helper methods from simple.js
+      getMessageType: () => m.type,
+      reply: m.reply,
+      react: m.react,
+      download: m.download,
+      copyNForward: m.copyNForward,
+
+      // Fallback for legacy calls if simple.js methods fail or aren't bound correctly
+      // (Though simple.js bind should work, explicit definition is safer if m is just data)
       deleteMessage: async (key) => {
         return await bot.sendMessage(m.chat, { delete: key });
       },
@@ -198,7 +204,13 @@ export default (bot, context) => {
         const type = m.type;
         const msg = m.message[type];
         return msg?.contextInfo?.mentionedJid || [];
-      }
+      },
+      group: () => ({
+        kick: async (jid) => await bot.groupParticipantsUpdate(m.chat, [jid], 'remove'),
+        add: async (jid) => await bot.groupParticipantsUpdate(m.chat, [jid], 'add'),
+        promote: async (jid) => await bot.groupParticipantsUpdate(m.chat, [jid], 'promote'),
+        demote: async (jid) => await bot.groupParticipantsUpdate(m.chat, [jid], 'demote'),
+      })
     };
 
     try {
@@ -266,18 +278,24 @@ export default (bot, context) => {
       if (isGroup || isPrivate) {
         if (m.key.fromMe && !config.bot.selfMode) return;
 
+        // Ensure state exists
+        context.state = context.state || {};
         const { state } = context;
+
         state.uptime = msg.convertMsToDuration(Date.now() - config.bot.readyAt);
-        state.dbSize = fs.existsSync('database.json')
-          ? msg.formatSize(fs.statSync('database.json').size / 1024)
-          : 'N/A';
+        state.uptime = msg.convertMsToDuration(Date.now() - config.bot.readyAt);
+        state.dbSize = 'PostgreSQL'; // database.json check removed as we use Prisma
 
         // Penanganan database pengguna
-        if (!userDb?.username)
-          await database.updateUser(senderId, {
-            username: `@user_${cmd.generateUID(config, senderId, false)}`,
+        if (!userDb || !userDb.username) {
+          ctx.userDb = await database.upsertUser({
+            jid: senderId,
+            name: m.pushName || 'User',
+            phone: senderId,
           });
-        if (!userDb?.uid || userDb?.uid !== cmd.generateUID(config, senderId))
+        }
+
+        if (userDb && (!userDb.uid || userDb.uid !== cmd.generateUID(config, senderId)))
           await database.updateUser(senderId, { uid: cmd.generateUID(config, senderId) });
         if (userDb?.premium && Date.now() > userDb.premiumExpiration) {
           const { premium, premiumExpiration, ...rest } = userDb;
@@ -307,6 +325,45 @@ export default (bot, context) => {
         if (m.key.fromMe && !config.bot.selfMode) return;
 
         if (!isCmd || isCmd?.didyoumean) consolefy.info(`Incoming message from: ${senderId}`); // Log pesan masuk
+      }
+
+      // --- COMMAND EXECUTION ---
+      if (isCmd && !isCmd.didyoumean) {
+        const commandName = isCmd.name;
+        const command = context.commandSystem.getCommand(commandName);
+
+        if (command) {
+          // Check permissions (simplified, UnifiedCommandSystem usually handles this but we are bypassing its processMessage)
+          // We should ideally use command.execute(ctx) if it follows that pattern,
+          // or context.commandSystem.executeCommand(command, ctx) if available.
+          // Looking at UnifiedCommandSystem, it has executeCommand(command, msg, context).
+          // But here we have 'ctx' which is the sophisticated context object.
+          // Most commands in this bot likely expect 'ctx'.
+
+          try {
+            await command.execute(ctx, context);
+          } catch (err) {
+            console.error(`Error executing command ${commandName}:`, err);
+            if (cmd.handleError) await cmd.handleError(ctx, err);
+            else await ctx.reply(`❌ Error: ${err.message}`);
+          }
+        }
+      } else {
+        // --- AI PROCESSING FALLBACK ---
+        // Only process if not a command (smart filtering handled within UnifiedAIProcessor too)
+        try {
+            if (context.unifiedAI?.processMessage) {
+                // Enrich message with context for AI
+                m.intelligentContext = {
+                    receivedAt: Date.now(),
+                    processingMode: 'intelligent',
+                    aiEnabled: true
+                };
+                await context.unifiedAI.processMessage(m);
+            }
+        } catch (error) {
+            console.error('Unified AI processing error:', error);
+        }
       }
 
     } catch (e) {

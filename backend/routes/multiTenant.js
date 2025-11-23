@@ -1,23 +1,12 @@
 import express from 'express';
 import multiTenantService from '../src/services/multiTenantService.js';
 import multiTenantStripeService from '../src/services/multiTenantStripeService.js';
+import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Authentication middleware for internal API
-const authenticateInternalAPI = (req, res, next) => {
-  const apiKey = req.headers['x-internal-api-key'];
-  const expectedKey = process.env.INTERNAL_API_KEY || 'internal-api-key-change-in-production';
-  
-  if (!apiKey || apiKey !== expectedKey) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  
-  next();
-};
-
-// Apply authentication to all routes
-router.use(authenticateInternalAPI);
+// Apply JWT authentication to all routes
+router.use(authenticateToken);
 
 // Tenant Management Routes
 router.post('/tenants', async (req, res) => {
@@ -87,13 +76,13 @@ router.get('/tenants/:tenantId/bots', async (req, res) => {
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant not found' });
     }
-    
+
     const result = {
       bots: tenant.botInstances || [],
       limits: JSON.parse(tenant.planLimits || '{}'),
       plan: tenant.plan
     };
-    
+
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ error: error.message });

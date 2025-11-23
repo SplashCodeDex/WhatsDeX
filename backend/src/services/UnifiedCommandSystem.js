@@ -391,11 +391,11 @@ export class UnifiedCommandSystem {
 
       // Utility functions
       reply: async (message) => {
+        const jid = messageData.key.remoteJid;
         if (typeof message === 'string') {
-          return await this.sendMessage(messageData, message);
+          return await this.bot.sendMessage(jid, { text: message }, { quoted: messageData });
         } else {
-          // Handle object-based messages (media, etc.)
-          return await this.bot.sendMessage(messageData.key.remoteJid, message);
+          return await this.bot.sendMessage(jid, message, { quoted: messageData });
         }
       },
       react: async (emoji) => this.reactToMessage(messageData, emoji),

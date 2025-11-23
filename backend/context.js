@@ -34,7 +34,8 @@ export default async function initializeContext() {
             await prisma.$disconnect();
             await dbService.disconnect();
             logger.info('🛑 Context shutdown complete');
-        }
+        },
+        state: {}
     };
 
     // Initialize services with null bot initially

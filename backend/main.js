@@ -289,68 +289,8 @@ const main = async context => {
       // Maintain compatibility
       bot.cmd = context.commandSystem.commands;
 
-      bot.ev.on('messages.upsert', async m => {
-        // Safety check for messages array
-        if (!m?.messages || m.messages.length === 0) return;
-
-        const msg = m.messages[0];
-        if (!msg?.message || !msg?.key) return;
-        if (msg.key.fromMe) return; // Ignore own messages
-
-        // Enhanced serialization for intelligent processing
-        const messageKeys = Object.keys(msg.message || {});
-        const intelligentMsg = {
-          key: {
-            remoteJid: msg.key.remoteJid,
-            fromMe: msg.key.fromMe,
-            id: msg.key.id,
-          },
-          message: msg.message,
-          type: messageKeys.length > 0 ? messageKeys[0] : 'unknown',
-          pushName: msg.pushName,
-          messageTimestamp: msg.messageTimestamp,
-          // Add additional context for AI processing
-          intelligentContext: {
-            receivedAt: Date.now(),
-            processingMode: 'intelligent',
-            aiEnabled: true
-          }
-        };
-
-        // DEBUG: Log incoming message details
-        logger.info('📨 Incoming message:', {
-          jid: msg.key.remoteJid,
-          fromMe: msg.key.fromMe,
-          type: intelligentMsg.type,
-          messageKeys: Object.keys(msg.message || {}),
-          text: msg.message?.conversation || msg.message?.extendedTextMessage?.text || '[No Text]'
-        });
-
-        // ALLOW OWNER TO TEST: Commented out fromMe check
-        // if (msg.key.fromMe) return; // Ignore own messages
-
-        // CONSOLIDATED: Smart routing between commands and AI
-        let isCommand = false;
-
-        try {
-          if (context.commandSystem?.processMessage) {
-            isCommand = await context.commandSystem.processMessage(intelligentMsg);
-          }
-        } catch (commandError) {
-          logger.error('Command processing error:', { error: commandError.message, stack: commandError.stack });
-        }
-
-        if (!isCommand) {
-          // Only process with AI if it's not a command (smart filtering)
-          try {
-            if (context.unifiedAI?.processMessage) {
-              await context.unifiedAI.processMessage(intelligentMsg);
-            }
-          } catch (error) {
-            logger.error('Unified AI processing error:', { error: error.message, stack: error.stack });
-          }
-        }
-      });
+      // Listener removed to prevent conflict with handler.js
+      // Command execution is now centralized in backend/events/handler.js
 
       return bot;
     };

@@ -25,9 +25,16 @@ export default function CreateBotPage() {
     setSelectedPlan(plan);
   }, [router]);
 
+  const { tenant } = useAuth();
+
   const handleCreateBot = async () => {
     if (!botName.trim()) {
       setError('Please enter a bot name');
+      return;
+    }
+
+    if (!tenant?.id) {
+      setError('Tenant information missing. Please try logging in again.');
       return;
     }
 
@@ -35,30 +42,17 @@ export default function CreateBotPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/bots', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': (document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)?.[1] ? decodeURIComponent(document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)[1]) : '')
-        },
-        body: JSON.stringify({
-          name: botName,
-          phoneNumber: phoneNumber || undefined
-        }),
+      const bot = await apiClient.createBot(tenant.id, {
+        name: botName,
+        phoneNumber: phoneNumber || undefined
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create bot');
-      }
-
-      const bot = await response.json();
-      
       // Store bot ID and proceed to template selection
       localStorage.setItem('botInstanceId', bot.id);
       router.push('/onboarding/select-template');
     } catch (error) {
       console.error('Error creating bot:', error);
-      setError('Failed to create bot. Please try again.');
+      setError(error.message || 'Failed to create bot. Please try again.');
       setLoading(false);
     }
   };
@@ -143,7 +137,7 @@ export default function CreateBotPage() {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Plans
               </Button>
-              
+
               <Button
                 onClick={handleCreateBot}
                 disabled={loading || !botName.trim()}
