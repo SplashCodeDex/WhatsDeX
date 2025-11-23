@@ -95,6 +95,36 @@ class APIClient {
     return this.client.get(`/bots/${botId}/qr`);
   }
 
+  async getBot(botId) {
+    return this.client.get(`/bots/${botId}`);
+  }
+
+  async applyTemplate(botId, templateId) {
+    return this.client.post(`/bots/${botId}/template`, { templateId });
+  }
+
+  async getBotStatus(botId) {
+    return this.client.get(`/bots/${botId}/status`);
+  }
+
+  // Subscription
+  async getSubscription() {
+    return this.client.get('/subscription');
+  }
+
+  async createSubscription(data) {
+    return this.client.post('/subscription', data);
+  }
+
+  async cancelSubscription() {
+    return this.client.delete('/subscription');
+  }
+
+  // Admin
+  async getAdminMetrics(period) {
+    return this.client.get(`/admin/metrics?period=${period}`);
+  }
+
   // Analytics
   async getAnalytics(tenantId) {
     return this.client.get(`/analytics/overview?tenantId=${tenantId}`);

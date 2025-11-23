@@ -198,6 +198,43 @@ export class MultiTenantApp {
       }
     });
 
+    this.app.get('/api/bots/:botId', async (req, res) => {
+      try {
+        const { botId } = req.params;
+        const bot = await multiTenantBotService.getBot(botId);
+        if (!bot) {
+          return res.status(404).json({ error: 'Bot not found' });
+        }
+        res.json({ success: true, ...bot });
+      } catch (error) {
+        logger.error('Failed to get bot', { error: error.message, botId });
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    this.app.post('/api/bots/:botId/template', async (req, res) => {
+      try {
+        const { botId } = req.params;
+        const { templateId } = req.body;
+        const result = await multiTenantBotService.applyTemplate(botId, templateId);
+        res.json(result);
+      } catch (error) {
+        logger.error('Failed to apply template', { error: error.message, botId });
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    this.app.get('/api/bots/:botId/status', async (req, res) => {
+      try {
+        const { botId } = req.params;
+        const status = await multiTenantBotService.getBotStatus(botId);
+        res.json(status);
+      } catch (error) {
+        logger.error('Failed to get bot status', { error: error.message, botId });
+        res.status(500).json({ error: error.message });
+      }
+    });
+
     // Analytics endpoints
     this.app.get('/api/analytics/overview', async (req, res) => {
       try {

@@ -48,9 +48,13 @@ export default function Dashboard() {
       const botsResponse = await apiClient.getBots(tenant.id);
       setBots(botsResponse.data || []);
 
-      // Load subscription (mocked for now or implement endpoint)
-      // const subResponse = await apiClient.getSubscriptionInfo(tenant.id);
-      // setSubscription(subResponse.data);
+      // Load subscription
+      try {
+        const subResponse = await apiClient.getSubscription();
+        setSubscription(subResponse);
+      } catch (e) {
+        console.error('Failed to load subscription:', e);
+      }
 
       setLoading(false);
     } catch (error) {

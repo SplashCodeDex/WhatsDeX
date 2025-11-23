@@ -28,11 +28,8 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-table": "^8.21.3",
-    "@upstash/redis": "^1.35.6",
     "axios": "^1.13.1",
-
     "beasties": "^0.3.5",
-
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -40,25 +37,21 @@
     "critters": "^0.0.23",
     "framer-motion": "^12.23.24",
     "globals": "^16.4.0",
-
-
     "lucide-react": "^0.548.0",
     "motion": "^12.23.24",
     "next": "^14.2.3",
-
+    "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.65.0",
     "react-hot-toast": "^2.6.0",
     "react-loading-skeleton": "^3.5.0",
     "recharts": "^2.15.4",
-
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^3.4.4",
     "tailwindcss-animate": "^1.0.7",
-
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -66,6 +59,7 @@
     "@types/node": "^24.9.2",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@types/yargs": "^17.0.35",
     "autoprefixer": "^10.4.19",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.1",

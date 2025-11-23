@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '../../hooks/use-toast';
-import { Bot, ArrowRight, Loader2 } from 'lucide-react';
+import { Bot, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -18,6 +18,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
@@ -82,70 +83,83 @@ export default function Login() {
                   id="email"
                   type="email"
                   placeholder="you@company.com"
-                  onChange={handleInputChange}
-                  placeholder="••••••••"
-                  className="pr-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" />
-                <span className="text-sm text-gray-600">Remember me</span>
-              </label>
-              <a href="#" className="text-sm text-blue-600 hover:underline">
-                Forgot password?
-              </a>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Signing in...
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-              ) : (
-                'Sign In'
-              )}
-            </Button>
+              </div>
 
-            <div className="text-center text-sm text-gray-600">
-              Don't have an account?{' '}
-              <a href="/register" className="text-blue-600 hover:underline">
-                Start free trial
-              </a>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center">
+                  <input type="checkbox" className="mr-2" />
+                  <span className="text-sm text-gray-600">Remember me</span>
+                </label>
+                <a href="#" className="text-sm text-blue-600 hover:underline">
+                  Forgot password?
+                </a>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <div className="flex items-center">
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    Signing in...
+                  </div>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+
+              <div className="text-center text-sm text-gray-600">
+                Don't have an account?{' '}
+                <a href="/register" className="text-blue-600 hover:underline">
+                  Start free trial
+                </a>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Demo credentials */}
+        <Card className="mt-4 bg-blue-50 border-blue-200">
+          <CardContent className="pt-4">
+            <div className="text-center">
+              <p className="text-sm font-medium text-blue-800 mb-2">Demo Account</p>
+              <p className="text-xs text-blue-600">
+                Subdomain: <span className="font-mono">demo</span><br />
+                Email: <span className="font-mono">admin@demo.com</span><br />
+                Password: <span className="font-mono">password123</span>
+              </p>
             </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Demo credentials */}
-      <Card className="mt-4 bg-blue-50 border-blue-200">
-        <CardContent className="pt-4">
-          <div className="text-center">
-            <p className="text-sm font-medium text-blue-800 mb-2">Demo Account</p>
-            <p className="text-xs text-blue-600">
-              Subdomain: <span className="font-mono">demo</span><br />
-              Email: <span className="font-mono">admin@demo.com</span><br />
-              Password: <span className="font-mono">password123</span>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
-    </div >
   );
 }

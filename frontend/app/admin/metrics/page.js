@@ -4,16 +4,17 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Users, 
-  Bot, 
-  MessageSquare, 
-  Crown, 
-  TrendingUp, 
+import {
+  Users,
+  Bot,
+  MessageSquare,
+  Crown,
+  TrendingUp,
   Activity,
   Calendar,
   RefreshCw
 } from 'lucide-react';
+import apiClient from '@/lib/apiClient';
 
 export default function AdminMetricsPage() {
   const [metrics, setMetrics] = useState(null);
@@ -28,14 +29,9 @@ export default function AdminMetricsPage() {
   const fetchMetrics = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
-      const response = await fetch(`/api/admin/metrics?period=${period}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch metrics');
-      }
-      
-      const data = await response.json();
+      const data = await apiClient.getAdminMetrics(period);
       setMetrics(data);
     } catch (error) {
       console.error('Error fetching metrics:', error);

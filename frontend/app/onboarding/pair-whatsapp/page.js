@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { QrCode, Smartphone, CheckCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 import WhatsAppQRCode from '@/components/WhatsAppQRCode';
+import apiClient from '@/lib/apiClient';
 
 export default function PairWhatsAppPage() {
   const [qrData, setQrData] = useState('');
@@ -23,38 +24,40 @@ export default function PairWhatsAppPage() {
       return;
     }
     setBotInstanceId(botId);
-    
+
     // Generate QR code for pairing
     generateQRCode();
   }, [router]);
 
   const generateQRCode = async () => {
     if (!botInstanceId) return;
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
-      const response = await fetch('/api/qr-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          botInstanceId
-        }),
-      });
+      // Start the bot to trigger QR generation
+      await apiClient.startBot(botInstanceId);
 
-      if (!response.ok) {
-        throw new Error('Failed to generate QR code');
-      }
+      // Poll for QR code
+      const pollQR = setInterval(async () => {
+        try {
+          const response = await apiClient.getBotQRCode(botInstanceId);
+          if (response.success && response.qrCode) {
+            setQrData(response.qrCode);
+            setConnectionStatus('scanning');
+            clearInterval(pollQR);
+            // Start polling for connection status
+            pollConnectionStatus();
+          }
+        } catch (e) {
+          console.error('Error polling QR:', e);
+        }
+      }, 2000);
 
-      const data = await response.json();
-      setQrData(data.qr);
-      setConnectionStatus('scanning');
-      
-      // Start polling for connection status
-      pollConnectionStatus();
+      // Stop polling QR after 30 seconds
+      setTimeout(() => clearInterval(pollQR), 30000);
+
     } catch (error) {
       console.error('Error generating QR code:', error);
       setError('Failed to generate QR code. Please try again.');
@@ -66,18 +69,15 @@ export default function PairWhatsAppPage() {
   const pollConnectionStatus = () => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/bots/${botInstanceId}/status`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.status === 'connected') {
-            setConnectionStatus('connected');
-            clearInterval(interval);
-            
-            // Wait a bit then redirect to completion
-            setTimeout(() => {
-              router.push('/onboarding/complete');
-            }, 2000);
-          }
+        const data = await apiClient.getBotStatus(botInstanceId);
+        if (data.status === 'connected') {
+          setConnectionStatus('connected');
+          clearInterval(interval);
+
+          // Wait a bit then redirect to completion
+          setTimeout(() => {
+            router.push('/onboarding/complete');
+          }, 2000);
         }
       } catch (error) {
         console.error('Error polling status:', error);
@@ -164,13 +164,12 @@ export default function PairWhatsAppPage() {
                 <ol className="space-y-3">
                   {getInstructions().map((instruction, index) => (
                     <li key={index} className="flex items-start space-x-3">
-                      <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${
-                        connectionStatus === 'connected' && index === 0 
-                          ? 'bg-green-100 text-green-600' 
-                          : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        {connectionStatus === 'connected' && index === 0 ? 
-                          <CheckCircle className="h-4 w-4" /> : 
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold ${connectionStatus === 'connected' && index === 0
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-blue-100 text-blue-600'
+                        }`}>
+                        {connectionStatus === 'connected' && index === 0 ?
+                          <CheckCircle className="h-4 w-4" /> :
                           index + 1
                         }
                       </div>
@@ -255,7 +254,7 @@ export default function PairWhatsAppPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Templates
           </Button>
-          
+
           {connectionStatus === 'connected' && (
             <Button
               onClick={() => router.push('/onboarding/complete')}

@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import * as React from 'react';
 
@@ -17,7 +17,7 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
       button: 'bg-gradient-to-r from-blue-200 via-blue-100 to-blue-200 dark:from-blue-800 dark:via-blue-700 dark:to-blue-800 rounded-xl'
     };
 
-    const shimmerVariants = {
+    const shimmerVariants: Variants = {
       initial: { x: '-100%' },
       animate: {
         x: '100%',

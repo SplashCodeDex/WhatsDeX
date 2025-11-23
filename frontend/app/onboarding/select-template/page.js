@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Users, Headphones, Store, ArrowLeft, ArrowRight } from 'lucide-react';
+import apiClient from '@/lib/apiClient';
 
 const templates = [
   {
@@ -97,22 +98,7 @@ export default function SelectTemplatePage() {
     setError('');
 
     try {
-      const response = await fetch('/api/bots/apply-template', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': (document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)?.[1] ? decodeURIComponent(document.cookie.match(/(?:^|; )csrf_token=([^;]+)/)[1]) : ''),
-          
-        },
-        body: JSON.stringify({
-          botInstanceId,
-          templateId: selectedTemplate
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to apply template');
-      }
+      await apiClient.applyTemplate(botInstanceId, selectedTemplate);
 
       // Proceed to QR pairing
       router.push('/onboarding/pair-whatsapp');
@@ -148,13 +134,12 @@ export default function SelectTemplatePage() {
             {templates.map((template) => {
               const Icon = template.icon;
               const isSelected = selectedTemplate === template.id;
-              
+
               return (
-                <Card 
+                <Card
                   key={template.id}
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                    isSelected ? 'ring-2 ring-blue-500 shadow-lg' : ''
-                  }`}
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-md ${isSelected ? 'ring-2 ring-blue-500 shadow-lg' : ''
+                    }`}
                   onClick={() => setSelectedTemplate(template.id)}
                 >
                   <CardHeader className="pb-4">
@@ -207,7 +192,7 @@ export default function SelectTemplatePage() {
                         <div key={index} className="bg-gray-50 p-2 rounded text-sm">
                           <span className="font-medium">{item.label}</span>
                           <span className="text-gray-500 ml-2">
-                            ({item.actionType === 'reply' ? 'Auto Reply' : 
+                            ({item.actionType === 'reply' ? 'Auto Reply' :
                               item.actionType === 'link' ? 'Link' : 'Command'})
                           </span>
                         </div>
@@ -235,7 +220,7 @@ export default function SelectTemplatePage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Bot Setup
           </Button>
-          
+
           <Button
             onClick={handleTemplateSelect}
             disabled={loading || !selectedTemplate}

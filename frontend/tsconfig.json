@@ -12,6 +12,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "baseUrl": ".",
+    "paths": {
       "@/*": ["./*"],
       "@/shared/*": ["./src/shared/*"]
     },

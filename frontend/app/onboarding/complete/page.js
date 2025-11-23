@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Bot, MessageSquare, Crown, ArrowRight } from 'lucide-react';
+import apiClient from '@/lib/apiClient';
 
 export default function OnboardingCompletePage() {
   const [botInfo, setBotInfo] = useState(null);
@@ -16,18 +17,15 @@ export default function OnboardingCompletePage() {
     const loadBotInfo = async () => {
       const botInstanceId = localStorage.getItem('botInstanceId');
       const selectedPlan = localStorage.getItem('selectedPlan');
-      
+
       if (!botInstanceId) {
         router.push('/onboarding');
         return;
       }
 
       try {
-        const response = await fetch(`/api/bots/${botInstanceId}`);
-        if (response.ok) {
-          const bot = await response.json();
-          setBotInfo({ ...bot, plan: selectedPlan });
-        }
+        const bot = await apiClient.getBot(botInstanceId);
+        setBotInfo({ ...bot, plan: selectedPlan });
       } catch (error) {
         console.error('Error loading bot info:', error);
       } finally {
@@ -42,7 +40,7 @@ export default function OnboardingCompletePage() {
     // Clear onboarding data
     localStorage.removeItem('selectedPlan');
     localStorage.removeItem('botInstanceId');
-    
+
     // Redirect to dashboard
     router.push('/dashboard');
   };
@@ -195,7 +193,7 @@ export default function OnboardingCompletePage() {
             <div>
               <h3 className="font-semibold text-blue-900 mb-2">Pro Tip!</h3>
               <p className="text-blue-800 mb-3">
-                Send the command "menu" to your bot to see all available features. You can also type "help" 
+                Send the command "menu" to your bot to see all available features. You can also type "help"
                 to get assistance at any time.
               </p>
               <p className="text-sm text-blue-700">

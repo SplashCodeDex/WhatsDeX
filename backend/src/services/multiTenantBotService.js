@@ -26,16 +26,16 @@ export class MultiTenantBotService {
 
       // Create bot instance in database
       const botInstance = await multiTenantService.createBotInstance(tenantId, botData);
-      
+
       // Attempt to start bot, but don't fail the creation if startup fails
       try {
         await this.startBot(botInstance.id);
       } catch (startErr) {
         logger.error('Bot created but failed to start socket', { error: startErr.message, tenantId, botId: botInstance.id });
         // Mark status as error to surface in UI and allow retry
-        try { await multiTenantService.updateBotStatus(botInstance.id, 'error'); } catch {}
+        try { await multiTenantService.updateBotStatus(botInstance.id, 'error'); } catch { }
       }
-      
+
       return botInstance;
     } catch (error) {
       logger.error('Failed to create bot instance', { error: error.message, tenantId });
@@ -106,13 +106,13 @@ export class MultiTenantBotService {
       });
 
       logger.info(`Bot ${botInstanceId} started successfully`);
-      
+
       // Update status
       await multiTenantService.updateBotStatus(botInstanceId, 'connecting');
 
     } catch (error) {
       logger.error('Failed to start bot', { error: error.message, botInstanceId });
-      
+
       // Update status to error
       await multiTenantService.updateBotStatus(botInstanceId, 'error');
       throw error;
@@ -151,11 +151,11 @@ export class MultiTenantBotService {
         // Generate QR code
         const qrCodeUrl = await QRCode.toDataURL(qr);
         this.qrCodes.set(botInstanceId, qrCodeUrl);
-        
+
         // Update database with QR code
         await prisma.botInstance.update({
           where: { id: botInstanceId },
-          data: { 
+          data: {
             qrCode: qrCodeUrl,
             status: 'scanning'
           }
@@ -166,7 +166,7 @@ export class MultiTenantBotService {
 
       if (connection === 'close') {
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-        
+
         if (shouldReconnect) {
           logger.info(`Bot ${botInstanceId} disconnected, attempting to reconnect...`);
           setTimeout(() => this.startBot(botInstanceId), 5000);
@@ -178,7 +178,7 @@ export class MultiTenantBotService {
         }
       } else if (connection === 'open') {
         logger.info(`Bot ${botInstanceId} connected successfully`);
-        
+
         // Clear QR code and update status
         this.qrCodes.delete(botInstanceId);
         await prisma.botInstance.update({
@@ -228,10 +228,10 @@ export class MultiTenantBotService {
 
       // Check message limits
       const limitCheck = await multiTenantService.checkPlanLimits(
-        botInstance.tenantId, 
+        botInstance.tenantId,
         'maxMessages'
       );
-      
+
       if (!limitCheck.canProceed) {
         logger.warn(`Message limit exceeded for tenant ${botInstance.tenantId}`);
         return;
@@ -303,15 +303,15 @@ export class MultiTenantBotService {
         await this.processCommand(botInstanceId, message, content);
       }
 
-      logger.info(`Message processed for bot ${botInstanceId}`, { 
-        from: userJid, 
-        type: messageType 
+      logger.info(`Message processed for bot ${botInstanceId}`, {
+        from: userJid,
+        type: messageType
       });
 
     } catch (error) {
-      logger.error('Failed to handle incoming message', { 
-        error: error.message, 
-        botInstanceId 
+      logger.error('Failed to handle incoming message', {
+        error: error.message,
+        botInstanceId
       });
     }
   }
@@ -380,8 +380,8 @@ export class MultiTenantBotService {
       for (const contact of contacts) {
         await prisma.botUser.upsert({
           where: { botInstanceId_jid: { botInstanceId, jid: contact.id } },
-          update: { 
-            name: contact.name || contact.verifiedName || contact.notify 
+          update: {
+            name: contact.name || contact.verifiedName || contact.notify
           },
           create: {
             botInstanceId,
@@ -559,6 +559,95 @@ export class MultiTenantBotService {
       };
     } catch (error) {
       logger.error('Failed to get bot analytics', { error: error.message, botInstanceId });
+      throw error;
+    }
+  }
+  // Get a single bot instance
+  async getBot(botInstanceId) {
+    try {
+      const botInstance = await prisma.botInstance.findUnique({
+        where: { id: botInstanceId },
+        include: { tenant: true }
+      });
+      return botInstance;
+    } catch (error) {
+      logger.error('Failed to get bot', { error: error.message, botInstanceId });
+      throw error;
+    }
+  }
+
+  // Apply a template to a bot
+  async applyTemplate(botInstanceId, templateId) {
+    try {
+      const templates = {
+        welcome: {
+          welcomeMessage: 'Hi! 👋 Welcome to our WhatsApp assistant. How can I help you today?',
+          aiEnabled: false,
+          menuItems: [
+            { label: '📋 Services', actionType: 'reply', payload: 'Tell me about our services' },
+            { label: '📞 Contact', actionType: 'reply', payload: 'Here are our contact details' },
+            { label: '⏰ Hours', actionType: 'reply', payload: 'We are open Monday-Friday 9AM-5PM' }
+          ]
+        },
+        support: {
+          welcomeMessage: 'Hello! I\'m here to help with your questions. What do you need assistance with?',
+          aiEnabled: true,
+          systemPrompt: 'You are a helpful customer support assistant.',
+          menuItems: [
+            { label: '❓ FAQ', actionType: 'reply', payload: 'Here are our frequently asked questions' },
+            { label: '🛠️ Troubleshooting', actionType: 'reply', payload: 'Let me help you troubleshoot' }
+          ]
+        },
+        sales: {
+          welcomeMessage: 'Hi there! 🛍️ Welcome. Let me help you find what you\'re looking for!',
+          aiEnabled: true,
+          systemPrompt: 'You are a sales assistant helping customers find products.',
+          menuItems: [
+            { label: '💰 Pricing', actionType: 'reply', payload: 'Here are our current prices' },
+            { label: '🎁 Special Offers', actionType: 'reply', payload: 'Check out our latest deals!' }
+          ]
+        },
+        community: {
+          welcomeMessage: 'Welcome to our community! 🌟 Connect with others and stay updated.',
+          aiEnabled: false,
+          menuItems: [
+            { label: '📢 Announcements', actionType: 'reply', payload: 'Latest community news' },
+            { label: '🎪 Events', actionType: 'reply', payload: 'Upcoming community events' }
+          ]
+        }
+      };
+
+      const template = templates[templateId];
+      if (!template) {
+        throw new Error('Invalid template ID');
+      }
+
+      // Update bot config with template settings
+      const botInstance = await prisma.botInstance.findUnique({
+        where: { id: botInstanceId }
+      });
+
+      if (!botInstance) {
+        throw new Error('Bot instance not found');
+      }
+
+      const currentConfig = JSON.parse(botInstance.config || '{}');
+      const newConfig = {
+        ...currentConfig,
+        ...template,
+        templateId
+      };
+
+      await prisma.botInstance.update({
+        where: { id: botInstanceId },
+        data: {
+          config: JSON.stringify(newConfig)
+        }
+      });
+
+      return { success: true, config: newConfig };
+    } catch (error) {
+      logger.error('Failed to apply template', { error: error.message, botInstanceId, templateId });
       throw error;
     }
   }
