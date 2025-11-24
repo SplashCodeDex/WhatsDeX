@@ -127,12 +127,15 @@ class DatabaseService {
 
   async updateUser(jid, updateData) {
     try {
+      // Sanitize updateData to remove 'uid' if present, as it causes Prisma errors
+      const { uid, ...sanitizedData } = updateData;
+
       const user = await this.prisma.user.update({
         where: { jid },
-        data: updateData,
+        data: sanitizedData,
       });
 
-      logger.info('User updated', { jid, updates: Object.keys(updateData) });
+      logger.info('User updated', { jid, updates: Object.keys(sanitizedData) });
       return user;
     } catch (error) {
       logger.error('Error updating user', { jid, updateData, error: error.message });

@@ -5,15 +5,14 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import logger from '../utils/logger.js';
-import performanceMonitor from '../utils/PerformanceMonitor.js';
-import { performance } from 'node:perf_hooks';
 import { RateLimiter } from '../utils/RateLimiter.js';
 import redisClient from '../../lib/redis.js';
-import planService from './PlanService.js';
 import { MemoryManager } from '../utils/MemoryManager.js';
-
 import { MessageClassifier } from '../utils/MessageClassifier.js';
+import logger from '../utils/logger.js';
+import planService from './PlanService.js';
+import performanceMonitor from '../utils/PerformanceMonitor.js';
+import { performance } from 'node:perf_hooks';
 
 export class UnifiedAIProcessor {
   constructor(bot, context) {

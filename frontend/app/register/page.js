@@ -221,6 +221,7 @@ export default function Register() {
 
     const result = await register({
       ...formData,
+      tenantName: formData.companyName,
       plan: selectedPlan
     });
 
@@ -413,8 +414,8 @@ export default function Register() {
                 <Card
                   key={plan.id}
                   className={`cursor-pointer transition-all duration-200 ${selectedPlan === plan.id
-                      ? 'ring-2 ring-blue-500 shadow-lg'
-                      : 'hover:shadow-md'
+                    ? 'ring-2 ring-blue-500 shadow-lg'
+                    : 'hover:shadow-md'
                     } ${plan.popular ? 'border-blue-500' : ''}`}
                   onClick={() => setSelectedPlan(plan.id)}
                 >

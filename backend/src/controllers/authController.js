@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import fs from 'fs';
 
 const prisma = new PrismaClient();
 
@@ -82,19 +83,28 @@ export const signup = async (req, res) => {
 
             // Handle Plan Subscription
             if (plan) {
-                // Logic to create subscription based on plan
-                // For now, we'll just log it or create a placeholder subscription
-                // In a real app, you'd integrate Stripe here or set limits based on plan
-                await tx.tenantSubscription.create({
-                    data: {
-                        tenantId: tenant.id,
-                        planId: plan,
-                        status: 'active',
-                        startDate: new Date(),
-                        // Set end date based on plan duration (e.g., 30 days)
-                        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                    }
-                });
+                // Find plan by code (case-insensitive)
+                const planCode = plan.toUpperCase();
+                let planRecord = await tx.plan.findUnique({ where: { code: planCode } });
+
+                // Fallback to FREE if not found (or handle 'BASIC' mapping if needed)
+                if (!planRecord) {
+                    planRecord = await tx.plan.findUnique({ where: { code: 'FREE' } });
+                }
+
+                if (planRecord) {
+                    await tx.tenantSubscription.create({
+                        data: {
+                            tenantId: tenant.id,
+                            planId: planRecord.id,
+                            status: 'active',
+                            currentPeriodStart: new Date(),
+                            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+                            stripeSubscriptionId: `sub_placeholder_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                            stripePriceId: 'price_placeholder',
+                        }
+                    });
+                }
             }
 
             return { tenant, user };

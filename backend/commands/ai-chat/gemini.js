@@ -7,8 +7,10 @@ import performanceMonitor from '../../src/utils/PerformanceMonitor.js';
 import { RateLimiter } from '../../src/utils/RateLimiter.js';
 import cache from '../../lib/cache.js';
 
+import redisClient from '../../lib/redis.js';
+
 // Initialize rate limiter
-const rateLimiter = new RateLimiter();
+const rateLimiter = new RateLimiter(redisClient);
 
 // Constants for summarization logic
 export default {

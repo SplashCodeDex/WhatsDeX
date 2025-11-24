@@ -62,7 +62,7 @@ import multiTenantStripeService from './src/services/multiTenantStripeService.js
       logger.info('🔕 Server disabled in configuration');
     }
   } catch (error) {
-    logger.error('❌ Server startup failed:', error);
+    logger.error('❌// Force restart Server startup failed:', error);
     logger.warn('⚠️ Continuing without web server...');
   }
 
