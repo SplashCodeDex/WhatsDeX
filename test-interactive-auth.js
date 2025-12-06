@@ -5,8 +5,8 @@
  * Demonstrates the new interactive authentication choice system
  */
 
-const InteractiveAuthEnhancement = require('./src/services/interactiveAuth');
-const UnifiedSmartAuth = require('./src/services/unifiedSmartAuth');
+const InteractiveAuthEnhancement = require('./backend/src/services/interactiveAuth.js');
+const UnifiedSmartAuth = require('./backend/src/services/unifiedSmartAuth.js');
 
 async function testInteractiveAuth() {
   console.log('🧪 Testing Interactive Authentication System');

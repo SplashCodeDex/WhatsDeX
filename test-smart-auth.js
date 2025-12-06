@@ -1,4 +1,4 @@
-const SmartAuthManager = require('./src/services/smartAuthManager');
+const SmartAuthManager = require('./backend/src/services/smartAuthManager.js');
 const config = require('./config');
 
 async function testSmartAuth() {

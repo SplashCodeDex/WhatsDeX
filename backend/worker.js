@@ -3,6 +3,15 @@ import { createUrl } from './tools/api.js';
 import redis from 'ioredis';
 import config from '../config.js';
 
+// Load environment variables from root .env explicitly
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import dotenv from 'dotenv';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+// Resolve root .env (one level up from backend/)
+dotenv.config({ path: join(__dirname, '..', '.env') });
+
 // Connect to Redis for logging and potential other uses
 const redisClient = new redis({
   host: config.redis.host,

@@ -14,6 +14,9 @@ const pkg = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf-8'));
 import { withRetry } from './lib/retry.js';
 import multiTenantStripeService from './src/services/multiTenantStripeService.js';
 
+// Ensure root .env is loaded for all backend imports
+import 'dotenv/config';
+
 // --- Main Application IIFE ---
 (async () => {
   // --- Initialize Context ---

@@ -1,5 +1,5 @@
-const { EventEmitter } = require('events');
-const UnifiedSmartAuth = require('./unifiedSmartAuth');
+import { EventEmitter } from 'node:events';
+import UnifiedSmartAuth from './unifiedSmartAuth.js';
 
 class AuthenticationService extends EventEmitter {
   constructor(context, client) {
@@ -52,4 +52,4 @@ class AuthenticationService extends EventEmitter {
   }
 }
 
-module.exports = AuthenticationService;
+export default AuthenticationService;

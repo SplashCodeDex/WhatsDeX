@@ -17,9 +17,9 @@ export default {
   ],
   
   collectCoverageFrom: [
-    'commands/**/*.js',
-    'middleware/**/*.js',
-    'src/**/*.js',
+    'backend/commands/**/*.js',
+    'backend/middleware/**/*.js',
+    'backend/src/**/*.js',
     'context.js',
     'index.js',
     '!src/**/*.test.js',
@@ -38,7 +38,7 @@ export default {
       statements: 80,
     },
   },
-  testMatch: ['**/__tests__/**/*.test.js', '**/?(*.)+(spec|test).js'],
+  testMatch: ['**/__tests__/**/*.test.js', '**/?(*.)+(spec|test).js', '!frontend/**'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/tests/e2e/',

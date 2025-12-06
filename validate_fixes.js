@@ -17,7 +17,7 @@ try {
 
 // Test 2: Database Connection
 console.log('📋 Test 2: Database Connection Pooling');
-import('./src/utils/DatabaseManager.js')
+import('./backend/src/utils/DatabaseManager.js')
   .then(async ({ default: dbManager }) => {
     const health = await dbManager.healthCheck();
     console.log(`✅ Database health: ${health.status}`);
