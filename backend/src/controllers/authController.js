@@ -93,15 +93,34 @@ export const signup = async (req, res) => {
                 }
 
                 if (planRecord) {
+                    // Create Stripe customer + subscription if not FREE
+                    let stripeSubscriptionId = `free_${Date.now()}`;
+                    let stripePriceId = 'FREE';
+                    if (planRecord.code !== 'FREE') {
+                        const StripeService = (await import('../services/stripe.js')).default || (await import('../services/stripe.js')).default;
+                        const stripeSvcModule = await import('../services/stripe.js');
+                        const StripeSvcClass = stripeSvcModule.default || stripeSvcModule;
+                        const stripeSvc = new StripeSvcClass();
+                        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+                        await stripeSvc.initialize(process.env.STRIPE_SECRET_KEY, webhookSecret);
+                        // Create customer for tenant
+                        const customer = await stripeSvc.createCustomer({ userId: user.id, email, name, phone: null });
+                        // Map plan to stripe planKey (lowercase code)
+                        const planKey = planRecord.code.toLowerCase();
+                        const subscription = await stripeSvc.createSubscription(customer.id, planKey, { userId: user.id });
+                        stripeSubscriptionId = subscription.id;
+                        const priceId = stripeSvc.getPlans?.()[planKey]?.priceId;
+                        stripePriceId = priceId || subscription.items?.data?.[0]?.price?.id || 'unknown';
+                    }
                     await tx.tenantSubscription.create({
                         data: {
                             tenantId: tenant.id,
                             planId: planRecord.id,
-                            status: 'active',
+                            status: planRecord.code === 'FREE' ? 'active' : 'trialing',
                             currentPeriodStart: new Date(),
                             currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-                            stripeSubscriptionId: `sub_placeholder_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-                            stripePriceId: 'price_placeholder',
+                            stripeSubscriptionId: stripeSubscriptionId,
+                            stripePriceId: stripePriceId,
                         }
                     });
                 }

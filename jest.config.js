@@ -42,6 +42,8 @@ export default {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/tests/e2e/', // Exclude e2e tests
+    '/_legacy_archive/', // Exclude legacy tests
+    '/frontend/', // Exclude frontend from backend/unit tests
   ],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js', '<rootDir>/__tests__/mocks/prisma.js'],
   testTimeout: 10000,

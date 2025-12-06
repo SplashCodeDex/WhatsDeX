@@ -16,7 +16,67 @@ const unifiedAuth = new UnifiedSmartAuth({
     },
   },
 });
-const reconnectionEngine = new AutoReconnectionEngine();
+const reconnectionEngine = new AutoReconnectionEngine({
+  reconnectHandler: async (ctx = {}) => {
+    try {
+      await unifiedAuth.connect();
+      // If connect resolves and client exists, consider success
+      return !!unifiedAuth.client;
+    } catch (e) {
+      return false;
+    }
+  },
+  qrRefreshHandler: async (ctx = {}) => {
+    try {
+      // Ensure client exists; reconnect to refresh QR
+      await unifiedAuth.connect();
+      // Wait briefly for a QR event if needed
+      const qr = await new Promise(resolve => {
+        let timeout;
+        const onQr = code => {
+          clearTimeout(timeout);
+          unifiedAuth.off?.('qr', onQr);
+          resolve(code);
+        };
+        unifiedAuth.on?.('qr', onQr);
+        timeout = setTimeout(() => {
+          unifiedAuth.off?.('qr', onQr);
+          resolve(unifiedAuth.currentQrCode || null);
+        }, 5000);
+      });
+      return !!qr;
+    } catch (e) {
+      return false;
+    }
+  },
+  pairingCodeHandler: async (ctx = {}) => {
+    try {
+      const phone = process.env.BOT_PHONE_NUMBER || ctx.phoneNumber;
+      if (!phone) return false;
+      await unifiedAuth.connect();
+      const code = await unifiedAuth.getPairingCode(phone);
+      return !!code;
+    } catch (e) {
+      return false;
+    }
+  },
+  deviceCheckHandler: async () => {
+    try {
+      return unifiedAuth.authState === 'connected';
+    } catch {
+      return false;
+    }
+  },
+  networkCheckHandler: async () => {
+    try {
+      const dns = require('dns').promises;
+      await dns.lookup('www.google.com');
+      return true;
+    } catch {
+      return false;
+    }
+  },
+});
 
 // Persistent session storage via Prisma
 let connectionStatus = {

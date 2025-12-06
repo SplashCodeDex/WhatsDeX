@@ -125,6 +125,24 @@ class APIClient {
     return this.client.get(`/admin/metrics?period=${period}`);
   }
 
+  // Users
+  async getUsers(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    return this.client.get(`/users?${qs}`);
+  }
+  async getUser(id) {
+    return this.client.get(`/users/${id}`);
+  }
+  async updateUser(id, data) {
+    return this.client.put(`/users/${id}`, data);
+  }
+  async createUser(data) {
+    return this.client.post(`/users`, data);
+  }
+  async deleteUser(id) {
+    return this.client.delete(`/users/${id}`);
+  }
+
   // Analytics
   async getAnalytics(tenantId) {
     return this.client.get(`/analytics/overview?tenantId=${tenantId}`);

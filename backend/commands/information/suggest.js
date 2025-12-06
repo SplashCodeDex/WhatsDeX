@@ -25,10 +25,13 @@ export default {
       // Initialize suggestions service
       const suggestionsService = new CommandSuggestionsService();
 
-      // Get user's recent command history (mock for now)
-      const recentCommands = await suggestionsService.getUserCommandHistory(ctx.author.id);
+      // Determine user id for history lookup
+      const userId = ctx.user?.id || ctx.sender || ctx.author?.id;
 
-      // Generate suggestions
+      // Get user's recent command history
+      const recentCommands = await suggestionsService.getUserCommandHistory(userId);
+
+      // Generate suggestions from input and recent history
       const suggestions = await suggestionsService.suggestCommands(userInput, recentCommands);
 
       if (suggestions.length === 0) {

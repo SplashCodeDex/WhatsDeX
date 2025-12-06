@@ -133,9 +133,20 @@ export class ChatHistoryManager {
 
   async loadFromDatabase(userId) {
     try {
-      // Implementation depends on your database
-      // This is a placeholder
-      return null;
+      const { default: prisma } = await import('../lib/prisma.js');
+      // Load latest conversation memory for this user
+      const record = await prisma.conversationMemory.findFirst({
+        where: { userId },
+        orderBy: { lastUpdated: 'desc' },
+      });
+      if (!record) return null;
+      let history = [];
+      try {
+        history = JSON.parse(record.messages);
+      } catch (_) {
+        history = [];
+      }
+      return { history, summary: '', lastActivity: Date.now() };
     } catch (error) {
       console.error('Error loading chat from database:', error);
       return null;
@@ -144,9 +155,14 @@ export class ChatHistoryManager {
 
   async saveToDatabase(userId, chat) {
     try {
-      // Implementation depends on your database
-      // This is a placeholder for async save
-      console.log(`Saved chat for user ${userId}`);
+      const { default: prisma } = await import('../lib/prisma.js');
+      const messagesJson = JSON.stringify(chat.history.slice(-this.maxHistoryLength));
+      const existing = await prisma.conversationMemory.findFirst({ where: { userId }, orderBy: { lastUpdated: 'desc' } });
+      if (existing) {
+        await prisma.conversationMemory.update({ where: { id: existing.id }, data: { messages: messagesJson } });
+      } else {
+        await prisma.conversationMemory.create({ data: { userId, messages: messagesJson } });
+      }
     } catch (error) {
       console.error('Error saving chat to database:', error);
     }

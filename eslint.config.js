@@ -8,6 +8,13 @@ export default [
       '.next/**',
       'out/**',
 
+      // Frontend app handled by its own ESLint config
+      'frontend/**',
+      'frontend/.next/**',
+
+      // Legacy archive not linted by default
+      '_legacy_archive/**',
+
       // Dependencies
       'node_modules/**',
 

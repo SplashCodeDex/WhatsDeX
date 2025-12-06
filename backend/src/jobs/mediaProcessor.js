@@ -99,6 +99,14 @@ class MediaProcessor {
         outputPath,
       });
 
+      const processingTime = Date.now() - job.processedOn;
+
+      try {
+        const { default: prisma } = await import('../lib/prisma.js');
+        await prisma.analytics.create({ data: { metric: 'media_processed', value: processingTime, category: 'media', metadata: JSON.stringify({ type: 'image_optimize', outputPath }) } });
+        await prisma.analytics.create({ data: { metric: 'media_success', value: 1, category: 'media', metadata: JSON.stringify({ type: 'image_optimize' }) } });
+      } catch (_) {}
+
       return {
         success: true,
         originalPath: inputPath,
@@ -111,9 +119,10 @@ class MediaProcessor {
           height: metadata.height,
           format: metadata.format,
         },
-        processingTime: Date.now() - job.processedOn,
+        processingTime,
       };
     } catch (error) {
+      try { const { default: prisma } = await import('../lib/prisma.js'); await prisma.analytics.create({ data: { metric: 'media_failed', value: 1, category: 'media', metadata: JSON.stringify({ type: 'image_optimize' }) } }); } catch (_) {}
       logger.error('Image optimization failed', {
         jobId: job.id,
         userId,
@@ -219,28 +228,49 @@ class MediaProcessor {
         size,
       });
 
-      // For now, create a placeholder thumbnail
-      // In a real implementation, you would use ffmpeg or similar
       const thumbnailPath = path.join(
         this.outputDir,
         `${path.basename(videoPath, path.extname(videoPath))}_thumbnail.jpg`
       );
 
-      // Create a simple colored rectangle as placeholder
-      await sharp({
-        create: {
-          width: size?.width || 320,
-          height: size?.height || 180,
-          channels: 3,
-          background: { r: 100, g: 100, b: 100 },
-        },
-      })
-        .jpeg()
-        .toFile(thumbnailPath);
+      // Try to use ffmpeg to grab a frame, fallback to placeholder if not available
+      const { spawn } = require('child_process');
+      const ts = typeof timestamp === 'number' ? Math.max(0, timestamp) : 0;
+      const ffArgs = ['-y', '-ss', String(ts), '-i', videoPath, '-frames:v', '1', '-vf', `scale=${size?.width || 320}:${size?.height || -1}:force_original_aspect_ratio=decrease`, thumbnailPath];
+      const runFfmpeg = () => new Promise((resolve, reject) => {
+        try {
+          const ff = spawn('ffmpeg', ffArgs);
+          ff.on('error', reject);
+          ff.on('close', code => (code === 0 ? resolve(true) : reject(new Error(`ffmpeg exited ${code}`))));
+        } catch (e) { reject(e); }
+      });
+
+      let usedFfmpeg = false;
+      try {
+        await runFfmpeg();
+        usedFfmpeg = true;
+      } catch (_) {
+        // Fallback: generate a simple placeholder thumbnail
+        await sharp({
+          create: {
+            width: size?.width || 320,
+            height: size?.height || 180,
+            channels: 3,
+            background: { r: 100, g: 100, b: 100 },
+          },
+        }).jpeg().toFile(thumbnailPath);
+      }
 
       // Get file sizes
       const videoStats = await fs.stat(videoPath);
       const thumbnailStats = await fs.stat(thumbnailPath);
+
+      const processingTime = Date.now() - job.processedOn;
+      try {
+        const { default: prisma } = await import('../lib/prisma.js');
+        await prisma.analytics.create({ data: { metric: 'media_processed', value: processingTime, category: 'media', metadata: JSON.stringify({ type: 'video_thumbnail', thumbnailPath, usedFfmpeg }) } });
+        await prisma.analytics.create({ data: { metric: 'media_success', value: 1, category: 'media', metadata: JSON.stringify({ type: 'video_thumbnail' }) } });
+      } catch (_) {}
 
       return {
         success: true,
@@ -248,14 +278,16 @@ class MediaProcessor {
         thumbnailPath,
         videoSize: videoStats.size,
         thumbnailSize: thumbnailStats.size,
-        timestamp: timestamp || 0,
+        timestamp: ts,
+        usedFfmpeg,
         size: {
           width: size?.width || 320,
           height: size?.height || 180,
         },
-        processingTime: Date.now() - job.processedOn,
+        processingTime,
       };
     } catch (error) {
+      try { const { default: prisma } = await import('../lib/prisma.js'); await prisma.analytics.create({ data: { metric: 'media_failed', value: 1, category: 'media', metadata: JSON.stringify({ type: 'video_thumbnail' }) } }); } catch (_) {}
       logger.error('Video thumbnail generation failed', {
         jobId: job.id,
         userId,
@@ -327,6 +359,13 @@ class MediaProcessor {
       const inputStats = await fs.stat(inputPath);
       const outputStats = await fs.stat(outputPath);
 
+      const processingTime = Date.now() - job.processedOn;
+      try {
+        const { default: prisma } = await import('../lib/prisma.js');
+        await prisma.analytics.create({ data: { metric: 'media_processed', value: processingTime, category: 'media', metadata: JSON.stringify({ type: 'file_convert', outputPath, outputFormat }) } });
+        await prisma.analytics.create({ data: { metric: 'media_success', value: 1, category: 'media', metadata: JSON.stringify({ type: 'file_convert' }) } });
+      } catch (_) {}
+
       return {
         success: true,
         inputPath,
@@ -335,9 +374,10 @@ class MediaProcessor {
         outputFormat,
         inputSize: inputStats.size,
         outputSize: outputStats.size,
-        processingTime: Date.now() - job.processedOn,
+        processingTime,
       };
     } catch (error) {
+      try { const { default: prisma } = await import('../lib/prisma.js'); await prisma.analytics.create({ data: { metric: 'media_failed', value: 1, category: 'media', metadata: JSON.stringify({ type: 'file_convert' }) } }); } catch (_) {}
       logger.error('File conversion failed', {
         jobId: job.id,
         userId,
@@ -419,13 +459,19 @@ class MediaProcessor {
         }
       }
 
+      const processingTime = Date.now() - job.processedOn;
+      try {
+        const { default: prisma } = await import('../lib/prisma.js');
+        await prisma.analytics.create({ data: { metric: 'media_cleanup', value: deletedCount, category: 'media', metadata: JSON.stringify({ freedSpace }) } });
+      } catch (_) {}
+
       return {
         success: true,
         deletedFiles: deletedCount,
         freedSpace,
         tempDir: this.tempDir,
         outputDir: this.outputDir,
-        processingTime: Date.now() - job.processedOn,
+        processingTime,
       };
     } catch (error) {
       logger.error('Media cleanup failed', {
@@ -454,16 +500,57 @@ class MediaProcessor {
         timeRange,
       });
 
-      // This would analyze media processing metrics
-      // For now, return mock analytics data
+      // Compute analytics from actual processed directory
+      const walk = async dir => {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        let files = [];
+        for (const e of entries) {
+          const p = path.join(dir, e.name);
+          if (e.isDirectory()) files = files.concat(await walk(p));
+          else files.push(p);
+        }
+        return files;
+      };
+
+      const files = await walk(this.outputDir);
+      const images = files.filter(f => ['.jpg','.jpeg','.png','.webp','.gif','.bmp','.tiff'].includes(path.extname(f).toLowerCase()));
+      const videos = files.filter(f => ['.mp4','.avi','.mov','.wmv','.flv','.webm'].includes(path.extname(f).toLowerCase()));
+      let totalSize = 0;
+      for (const f of files) {
+        const s = await fs.stat(f);
+        totalSize += s.size;
+      }
+      const toGB = bytes => `${(bytes / (1024*1024*1024)).toFixed(2)}GB`;
+
+      // Additionally compute average processing time and success rate from analytics table (last 30d or provided)
+      let avgProcessing = null;
+      let successRate = null;
+      try {
+        const { default: prisma } = await import('../lib/prisma.js');
+        const now = new Date();
+        const start = timeRange?.start ? new Date(timeRange.start) : new Date(now.getTime() - 30*24*60*60*1000);
+        const end = timeRange?.end ? new Date(timeRange.end) : now;
+        const processed = await prisma.analytics.findMany({ where: { category: 'media', metric: 'media_processed', recordedAt: { gte: start, lte: end } }, select: { value: true } });
+        const successes = await prisma.analytics.findMany({ where: { category: 'media', metric: 'media_success', recordedAt: { gte: start, lte: end } }, select: { value: true } });
+        const failures = await prisma.analytics.findMany({ where: { category: 'media', metric: 'media_failed', recordedAt: { gte: start, lte: end } }, select: { value: true } });
+        if (processed.length) {
+          const sum = processed.reduce((a, b) => a + b.value, 0);
+          avgProcessing = sum / processed.length;
+        }
+        const successCount = successes.reduce((a, b) => a + b.value, 0);
+        const failCount = failures.reduce((a, b) => a + b.value, 0);
+        const totalOps = successCount + failCount;
+        if (totalOps > 0) successRate = (successCount / totalOps) * 100;
+      } catch (_) {}
+
       const analytics = {
-        totalProcessed: 1250,
-        imagesOptimized: 890,
-        videosProcessed: 120,
-        storageUsed: '2.5GB',
-        averageProcessingTime: 3.2,
-        successRate: 97.8,
-        popularFormats: ['jpg', 'png', 'mp4'],
+        totalProcessed: files.length,
+        imagesOptimized: images.length,
+        videosProcessed: videos.length,
+        storageUsed: toGB(totalSize),
+        averageProcessingTime: avgProcessing,
+        successRate,
+        popularFormats: Array.from(new Set(files.map(f => path.extname(f).slice(1).toLowerCase()))).slice(0, 5),
         timeRange,
         generatedAt: new Date().toISOString(),
       };

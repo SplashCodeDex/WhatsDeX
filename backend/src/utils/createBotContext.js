@@ -19,10 +19,14 @@ const createBotContext = async (
   // Instantiate Cooldown
   const cooldown = new Cooldown(); // New: Instantiate Cooldown
 
-  // Simulate ctx.reply
+  const useDirectBaileys = process.env.USE_BAILEYS_DIRECT === 'true' || process.env.NODE_ENV === 'production';
+
+  // Reply via Baileys in production; fallback to HTTP simulation
   const reply = async content => {
     const messageContent = typeof content === 'string' ? { text: content } : content;
-    // This will call the Next.js API route to send the message
+    if (useDirectBaileys && botInstance?.sendMessage) {
+      return await botInstance.sendMessage(rawBaileysMessage.key.remoteJid, messageContent, { quoted: rawBaileysMessage });
+    }
     await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -30,22 +34,26 @@ const createBotContext = async (
     });
   };
 
-  // Simulate ctx.replyReact
   const replyReact = async emoji => {
-    // This will call the Next.js API route to send a reaction
+    if (useDirectBaileys && botInstance?.sendMessage) {
+      return await botInstance.sendMessage(rawBaileysMessage.key.remoteJid, { react: { text: emoji, key: rawBaileysMessage.key } });
+    }
     await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: rawBaileysMessage.key.remoteJid,
-        message: { react: { text: emoji, key: rawBaileysMessage.key } },
-      }),
+      body: JSON.stringify({ to: rawBaileysMessage.key.remoteJid, message: { react: { text: emoji, key: rawBaileysMessage.key } } }),
     });
   };
 
-  // Simulate ctx.simulateTyping
   const simulateTyping = async () => {
-    // This will call the Next.js API route to send a typing status
+    if (useDirectBaileys && botInstance?.presenceSubscribe && botInstance?.sendPresenceUpdate) {
+      try {
+        await botInstance.presenceSubscribe(rawBaileysMessage.key.remoteJid);
+        await botInstance.sendPresenceUpdate('composing', rawBaileysMessage.key.remoteJid);
+        setTimeout(() => botInstance.sendPresenceUpdate('paused', rawBaileysMessage.key.remoteJid).catch(() => {}), 1500);
+        return;
+      } catch (_) { /* fall back to HTTP */ }
+    }
     await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

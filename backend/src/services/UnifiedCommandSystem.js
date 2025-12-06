@@ -337,7 +337,7 @@ export class UnifiedCommandSystem {
         return true;
       }
 
-      // Track command usage for analytics
+      // Track command usage for analytics (Redis)
       await trackCommandUsage(command.name);
 
       // Execute command
@@ -349,6 +349,22 @@ export class UnifiedCommandSystem {
         argsCount: commandInfo.args.length
       });
 
+      // Persist command usage (DB)
+      try {
+        await prisma.commandUsage.create({
+          data: {
+            userId: ctx.user?.id || ctx.sender,
+            command: command.name,
+            category: command.category || 'general',
+            success: true,
+            executionTime: typeof duration === 'number' ? duration : null,
+            usedAt: new Date()
+          }
+        });
+      } catch (e) {
+        this.context.logger.warn('Failed to persist command usage', { error: e.message });
+      }
+
       return true;
 
     } catch (error) {
@@ -357,6 +373,23 @@ export class UnifiedCommandSystem {
         error: error.message,
         userId: messageData.key.remoteJid
       });
+
+      // Persist failed command usage (DB)
+      try {
+        await prisma.commandUsage.create({
+          data: {
+            userId: messageData.key.remoteJid,
+            command: command.name,
+            category: command.category || 'general',
+            success: false,
+            executionTime: typeof duration === 'number' ? duration : null,
+            errorMessage: error.message?.slice(0, 500) || 'error',
+            usedAt: new Date()
+          }
+        });
+      } catch (e) {
+        this.context.logger.warn('Failed to persist failed command usage', { error: e.message });
+      }
 
       await this.sendMessage(messageData,
         '❌ An error occurred while executing the command. Please try again later.'

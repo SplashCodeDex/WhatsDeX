@@ -1,5 +1,6 @@
-// Mock Settings Service for testing
-// This will be replaced with actual database implementation in Phase 7.2
+"use strict";
+
+const prisma = require('../lib/prisma.js').default;
 
 class SettingsService {
   constructor() {
@@ -9,135 +10,25 @@ class SettingsService {
 
   initializeDefaultSettings() {
     const defaultSettings = {
-      // General settings
-      'general.botName': {
-        category: 'general',
-        key: 'botName',
-        value: 'WhatsDeX',
-        valueType: 'string',
-        description: 'Bot display name',
-        isEncrypted: false,
-      },
-      'general.botDescription': {
-        category: 'general',
-        key: 'botDescription',
-        value: 'Advanced WhatsApp Bot with AI Features',
-        valueType: 'string',
-        description: 'Bot description',
-        isEncrypted: false,
-      },
-      'general.ownerName': {
-        category: 'general',
-        key: 'ownerName',
-        value: 'CodeDeX',
-        valueType: 'string',
-        description: 'Bot owner name',
-        isEncrypted: false,
-      },
-      'general.timezone': {
-        category: 'general',
-        key: 'timezone',
-        value: 'Africa/Accra',
-        valueType: 'string',
-        description: 'System timezone',
-        isEncrypted: false,
-      },
+      'general.botName': { category: 'general', key: 'botName', value: 'WhatsDeX', valueType: 'string', description: 'Bot display name', isEncrypted: false },
+      'general.botDescription': { category: 'general', key: 'botDescription', value: 'Advanced WhatsApp Bot with AI Features', valueType: 'string', description: 'Bot description', isEncrypted: false },
+      'general.ownerName': { category: 'general', key: 'ownerName', value: 'CodeDeX', valueType: 'string', description: 'Bot owner name', isEncrypted: false },
+      'general.timezone': { category: 'general', key: 'timezone', value: 'Africa/Accra', valueType: 'string', description: 'System timezone', isEncrypted: false },
 
-      // Security settings
-      'security.jwtSecret': {
-        category: 'security',
-        key: 'jwtSecret',
-        value: 'your-jwt-secret-key',
-        valueType: 'string',
-        description: 'JWT signing secret',
-        isEncrypted: true,
-      },
-      'security.bcryptRounds': {
-        category: 'security',
-        key: 'bcryptRounds',
-        value: 12,
-        valueType: 'number',
-        description: 'BCrypt hashing rounds',
-        isEncrypted: false,
-      },
-      'security.maxLoginAttempts': {
-        category: 'security',
-        key: 'maxLoginAttempts',
-        value: 5,
-        valueType: 'number',
-        description: 'Maximum login attempts before lockout',
-        isEncrypted: false,
-      },
+      // Security
+      'security.jwtSecret': { category: 'security', key: 'jwtSecret', value: process.env.JWT_SECRET || 'change-me', valueType: 'string', description: 'JWT signing secret', isEncrypted: true },
+      'security.bcryptRounds': { category: 'security', key: 'bcryptRounds', value: 12, valueType: 'number', description: 'BCrypt hashing rounds', isEncrypted: false },
+      'security.maxLoginAttempts': { category: 'security', key: 'maxLoginAttempts', value: 5, valueType: 'number', description: 'Maximum login attempts before lockout', isEncrypted: false },
 
-      // API settings
-      'api.openaiApiKey': {
-        category: 'api',
-        key: 'openaiApiKey',
-        value: 'sk-your-openai-key',
-        valueType: 'string',
-        description: 'OpenAI API key',
-        isEncrypted: true,
-      },
-      'api.stripeSecretKey': {
-        category: 'api',
-        key: 'stripeSecretKey',
-        value: 'sk_test_your-stripe-key',
-        valueType: 'string',
-        description: 'Stripe secret key',
-        isEncrypted: true,
-      },
+      // API
+      'api.openaiApiKey': { category: 'api', key: 'openaiApiKey', value: process.env.OPENAI_API_KEY || '', valueType: 'string', description: 'OpenAI API key', isEncrypted: true },
+      'api.stripeSecretKey': { category: 'api', key: 'stripeSecretKey', value: process.env.STRIPE_SECRET_KEY || '', valueType: 'string', description: 'Stripe secret key', isEncrypted: true },
+      'api.stripeWebhookSecret': { category: 'api', key: 'stripeWebhookSecret', value: process.env.STRIPE_WEBHOOK_SECRET || '', valueType: 'string', description: 'Stripe webhook secret', isEncrypted: true },
 
-      // Database settings
-      'database.host': {
-        category: 'database',
-        key: 'host',
-        value: 'localhost',
-        valueType: 'string',
-        description: 'Database host',
-        isEncrypted: false,
-      },
-      'database.port': {
-        category: 'database',
-        key: 'port',
-        value: 5432,
-        valueType: 'number',
-        description: 'Database port',
-        isEncrypted: false,
-      },
-      'database.database': {
-        category: 'database',
-        key: 'database',
-        value: 'whatsdex',
-        valueType: 'string',
-        description: 'Database name',
-        isEncrypted: false,
-      },
-
-      // Moderation settings
-      'moderation.contentModerationEnabled': {
-        category: 'moderation',
-        key: 'contentModerationEnabled',
-        value: true,
-        valueType: 'boolean',
-        description: 'Enable content moderation',
-        isEncrypted: false,
-      },
-      'moderation.autoModeration': {
-        category: 'moderation',
-        key: 'autoModeration',
-        value: true,
-        valueType: 'boolean',
-        description: 'Enable automatic moderation',
-        isEncrypted: false,
-      },
-      'moderation.moderationThreshold': {
-        category: 'moderation',
-        key: 'moderationThreshold',
-        value: 0.8,
-        valueType: 'number',
-        description: 'Moderation confidence threshold',
-        isEncrypted: false,
-      },
+      // Database
+      'database.host': { category: 'database', key: 'host', value: process.env.DB_HOST || 'localhost', valueType: 'string', description: 'Database host', isEncrypted: false },
+      'database.port': { category: 'database', key: 'port', value: Number(process.env.DB_PORT || 5432), valueType: 'number', description: 'Database port', isEncrypted: false },
+      'database.database': { category: 'database', key: 'database', value: process.env.DB_NAME || 'whatsdex', valueType: 'string', description: 'Database name', isEncrypted: false },
     };
 
     Object.entries(defaultSettings).forEach(([key, setting]) => {
@@ -145,22 +36,40 @@ class SettingsService {
     });
   }
 
+  parseValue(value, type) {
+    if (type === 'number') return Number(value);
+    if (type === 'boolean') return value === true || value === 'true';
+    if (type === 'json') {
+      try { return typeof value === 'string' ? JSON.parse(value) : value; } catch { return value; }
+    }
+    return value;
+  }
+
+  stringifyValue(value, type) {
+    if (type === 'json') return JSON.stringify(value);
+    return String(value);
+  }
+
   async getAllSettings() {
+    const dbSettings = await prisma.systemSetting.findMany();
     const settings = {};
-    for (const [key, setting] of this.settings.entries()) {
-      if (!settings[setting.category]) {
-        settings[setting.category] = {};
-      }
-      settings[setting.category][setting.key] = setting.value;
+    for (const [, setting] of this.settings.entries()) {
+      const dbOverride = dbSettings.find(s => s.category === setting.category && s.key === setting.key);
+      const value = dbOverride ? this.parseValue(dbOverride.value, setting.valueType) : setting.value;
+      if (!settings[setting.category]) settings[setting.category] = {};
+      settings[setting.category][setting.key] = value;
     }
     return settings;
   }
 
   async getSettingsByCategory(category) {
+    const dbSettings = await prisma.systemSetting.findMany({ where: { category } });
     const categorySettings = [];
-    for (const [key, setting] of this.settings.entries()) {
+    for (const [, setting] of this.settings.entries()) {
       if (setting.category === category) {
-        categorySettings.push(setting);
+        const dbOverride = dbSettings.find(s => s.key === setting.key);
+        const value = dbOverride ? this.parseValue(dbOverride.value, setting.valueType) : setting.value;
+        categorySettings.push({ ...setting, value });
       }
     }
     return categorySettings;
@@ -168,7 +77,11 @@ class SettingsService {
 
   async getSetting(category, key) {
     const settingKey = `${category}.${key}`;
-    return this.settings.get(settingKey) || null;
+    const base = this.settings.get(settingKey) || null;
+    if (!base) return null;
+    const db = await prisma.systemSetting.findUnique({ where: { category_key: { category, key } } });
+    const value = db ? this.parseValue(db.value, base.valueType) : base.value;
+    return { ...base, value };
   }
 
   async updateSetting(category, key, value, description, updatedBy) {
@@ -179,13 +92,26 @@ class SettingsService {
       throw new Error(`Setting ${settingKey} not found`);
     }
 
-    const updatedSetting = {
-      ...existingSetting,
-      value,
-      description: description || existingSetting.description,
-      updatedAt: new Date(),
-    };
+    const valueStr = this.stringifyValue(value, existingSetting.valueType);
+    await prisma.systemSetting.upsert({
+      where: { category_key: { category, key } },
+      create: {
+        category,
+        key,
+        value: valueStr,
+        valueType: existingSetting.valueType,
+        description: description || existingSetting.description,
+        isEncrypted: existingSetting.isEncrypted || false,
+        updatedBy: updatedBy || 'system',
+      },
+      update: {
+        value: valueStr,
+        description: description || existingSetting.description,
+        updatedBy: updatedBy || 'system',
+      },
+    });
 
+    const updatedSetting = { ...existingSetting, value, description: description || existingSetting.description, updatedAt: new Date() };
     this.settings.set(settingKey, updatedSetting);
     return updatedSetting;
   }
@@ -198,7 +124,6 @@ class SettingsService {
       return { valid: false, message: `Setting ${settingKey} not found` };
     }
 
-    // Type validation
     const expectedType = setting.valueType;
     let isValidType = false;
 
@@ -213,12 +138,7 @@ class SettingsService {
         isValidType = typeof value === 'boolean';
         break;
       case 'json':
-        try {
-          JSON.parse(value);
-          isValidType = true;
-        } catch {
-          isValidType = false;
-        }
+        try { JSON.parse(typeof value === 'string' ? value : JSON.stringify(value)); isValidType = true; } catch { isValidType = false; }
         break;
       default:
         isValidType = true;
@@ -228,7 +148,6 @@ class SettingsService {
       return { valid: false, message: `Value must be of type ${expectedType}` };
     }
 
-    // Specific validations
     if (category === 'database' && key === 'port') {
       if (value < 1 || value > 65535) {
         return { valid: false, message: 'Port must be between 1 and 65535' };
@@ -250,9 +169,7 @@ class SettingsService {
     return { valid: true, message: 'Valid' };
   }
 
-  async resetCategoryToDefaults(category, updatedBy) {
-    // This would reset all settings in a category to their defaults
-    // For now, return the current settings
+  async resetCategoryToDefaults(category) {
     return await this.getSettingsByCategory(category);
   }
 
@@ -266,7 +183,6 @@ class SettingsService {
       return JSON.stringify(allSettings, null, 2);
     }
 
-    // CSV format
     const headers = ['Category', 'Key', 'Value', 'Type', 'Description', 'Encrypted', 'Updated At'];
     const rows = Array.from(this.settings.values()).map(setting => [
       setting.category,
@@ -285,11 +201,7 @@ class SettingsService {
     let parsedSettings;
 
     if (format === 'json') {
-      if (typeof settings === 'string') {
-        parsedSettings = JSON.parse(settings);
-      } else {
-        parsedSettings = settings;
-      }
+      parsedSettings = typeof settings === 'string' ? JSON.parse(settings) : settings;
     } else {
       throw new Error('CSV import not implemented yet');
     }
@@ -303,13 +215,7 @@ class SettingsService {
         const validation = await this.validateSetting(category, settingKey, settingData.value);
 
         if (validation.valid) {
-          await this.updateSetting(
-            category,
-            settingKey,
-            settingData.value,
-            settingData.description,
-            updatedBy
-          );
+          await this.updateSetting(category, settingKey, settingData.value, settingData.description, updatedBy);
           imported.push({ category, key: settingKey, value: settingData.value });
         } else {
           errors.push({ key, error: validation.message });

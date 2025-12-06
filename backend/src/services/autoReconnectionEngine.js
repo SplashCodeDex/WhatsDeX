@@ -43,6 +43,13 @@ class AutoReconnectionEngine extends EventEmitter {
       devicePatterns: new Map(),
     };
 
+    // Handlers to integrate real reconnection flows
+    this.reconnectHandler = options.reconnectHandler;
+    this.qrRefreshHandler = options.qrRefreshHandler;
+    this.pairingCodeHandler = options.pairingCodeHandler;
+    this.deviceCheckHandler = options.deviceCheckHandler;
+    this.networkCheckHandler = options.networkCheckHandler;
+
     // Active reconnection attempts
     this.activeAttempts = new Map();
     this.reconnectionTimers = new Map();
@@ -526,8 +533,15 @@ class AutoReconnectionEngine extends EventEmitter {
   async executeQRRefresh(attempt, context) {
     logger.info('Executing QR refresh strategy', { attemptId: attempt.id });
 
-    // This would integrate with the QR manager to refresh QR codes
-    // For now, we'll simulate the process
+    if (this.qrRefreshHandler) {
+      try {
+        const success = await this.qrRefreshHandler(context);
+        if (success) return await this.handleReconnectionSuccess(attempt);
+      } catch (e) {
+        logger.warn('QR refresh handler failed, falling back', { error: e.message });
+      }
+    }
+
     const success = await this.attemptReconnection(attempt, { ...context, qrRefresh: true });
 
     if (success) {
@@ -543,8 +557,15 @@ class AutoReconnectionEngine extends EventEmitter {
   async executePairingCode(attempt, context) {
     logger.info('Executing pairing code strategy', { attemptId: attempt.id });
 
-    // This would integrate with the pairing code manager
-    // For now, we'll simulate the process
+    if (this.pairingCodeHandler) {
+      try {
+        const success = await this.pairingCodeHandler(context);
+        if (success) return await this.handleReconnectionSuccess(attempt);
+      } catch (e) {
+        logger.warn('Pairing code handler failed, falling back', { error: e.message });
+      }
+    }
+
     const success = await this.attemptReconnection(attempt, { ...context, pairingCode: true });
 
     if (success) {
@@ -599,13 +620,17 @@ class AutoReconnectionEngine extends EventEmitter {
    */
   async attemptReconnection(attempt, context) {
     try {
-      // This would contain the actual reconnection logic
-      // For now, we'll simulate based on attempt number and context
+      if (this.reconnectHandler) {
+        const ok = await this.reconnectHandler(context);
+        logger.info('Reconnect handler executed', { attemptId: attempt.id, ok });
+        return ok;
+      }
 
+      // Fallback: simulate
       const successProbability = this.calculateSuccessProbability(attempt, context);
       const success = Math.random() < successProbability;
 
-      logger.info('Reconnection attempt result', {
+      logger.info('Reconnection attempt result (simulated)', {
         attemptId: attempt.id,
         success,
         successProbability,
@@ -857,17 +882,14 @@ class AutoReconnectionEngine extends EventEmitter {
     const maxWait = 5 * 60 * 1000; // 5 minutes
     const checkInterval = 10000; // 10 seconds
 
-    for (let waited = 0; waited < maxWait; waited += checkInterval) {
-      // In real implementation, this would check device connectivity
-      const deviceAvailable = Math.random() > 0.7; // Simulate 30% chance
-
-      if (deviceAvailable) {
-        return true;
-      }
-
-      await this.delay(checkInterval);
+    if (this.deviceCheckHandler) {
+      try { return await this.deviceCheckHandler(); } catch (_) {}
     }
-
+    for (let waited = 0; waited < maxWait; waited += checkInterval) {
+      await this.delay(checkInterval);
+      const deviceAvailable = Math.random() > 0.7;
+      if (deviceAvailable) return true;
+    }
     return false;
   }
 
@@ -879,17 +901,14 @@ class AutoReconnectionEngine extends EventEmitter {
     const maxWait = 2 * 60 * 1000; // 2 minutes
     const checkInterval = 5000; // 5 seconds
 
-    for (let waited = 0; waited < maxWait; waited += checkInterval) {
-      // In real implementation, this would check network connectivity
-      const networkStable = Math.random() > 0.5; // Simulate 50% chance
-
-      if (networkStable) {
-        return true;
-      }
-
-      await this.delay(checkInterval);
+    if (this.networkCheckHandler) {
+      try { return await this.networkCheckHandler(); } catch (_) {}
     }
-
+    for (let waited = 0; waited < maxWait; waited += checkInterval) {
+      await this.delay(checkInterval);
+      const networkStable = Math.random() > 0.5;
+      if (networkStable) return true;
+    }
     return false;
   }
 
