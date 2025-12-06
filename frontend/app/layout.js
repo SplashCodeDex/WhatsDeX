@@ -2,6 +2,8 @@ import '../styles/globals.css'
 import { Providers } from './providers'
 import { AuthProvider } from '../contexts/AuthContext'
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'WhatsDeX Dashboard',
   description: 'Professional WhatsApp Bot Management Platform',

@@ -262,9 +262,11 @@ export class MultiTenantApp {
     });
 
     // Webhook endpoints
-    this.app.post('/api/webhooks/stripe', async (req, res) => {
+    // Use raw body to allow Stripe signature verification
+    this.app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
       try {
         const signature = req.headers['stripe-signature'];
+        // Pass the raw buffer to the service for verification
         await multiTenantStripeService.handleWebhook(req.body, signature);
         res.json({ received: true });
       } catch (error) {

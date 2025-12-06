@@ -6,11 +6,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "start:smart": "node smart-start.js",
+    "start:smart": "node backend/smart-start.js",
     "start:dev": "nodemon --quiet --signal SIGTERM --delay 300ms --watch src --watch routes --ext js,mjs,cjs index.js",
-    "start:web": "cd web && npm run dev",
+    "start:web": "cd frontend && npm run dev",
     "dev:all": "node scripts/start-multitenant.js",
-    "worker": "node worker.js",
+    "worker": "node backend/worker.js",
     "dev": "nodemon .",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -30,7 +30,7 @@
     "deploy:saas": "./deployment/deploy.sh",
     "logs": "tail -f logs/*.log 2>/dev/null || echo 'No logs yet'",
     "backup": "node scripts/backup.js",
-    "health": "curl -f http://localhost:3000/health || echo 'Service not ready'"
+    "health": "curl -f http://localhost:3001/health || echo 'Service not ready'"
   },
   "keywords": [
     "whatsapp",

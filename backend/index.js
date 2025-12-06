@@ -17,6 +17,15 @@ import multiTenantStripeService from './src/services/multiTenantStripeService.js
 // --- Main Application IIFE ---
 (async () => {
   // --- Initialize Context ---
+  // Wait for dependencies to be ready before initializing context
+  try {
+    const { waitForDependencies } = await import('./src/utils/readiness.js');
+    await waitForDependencies({ logger });
+  } catch (e) {
+    console.error('❌ Dependency readiness check failed:', e?.message || e);
+    process.exit(1);
+  }
+
   const context = await initializeContext();
   const { config, logger } = context;
   logger.info('🚀 Starting WhatsDeX...');

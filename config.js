@@ -157,11 +157,24 @@ export default {
   },
 
   // Redis configuration
-  redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
-    password: process.env.REDIS_PASSWORD || '',
-  },
+  redis: (() => {
+    // Prefer REDIS_URL if present
+    try {
+      if (process.env.REDIS_URL) {
+        const u = new globalThis.URL(process.env.REDIS_URL);
+        return {
+          host: u.hostname || 'localhost',
+          port: parseInt(u.port || '6379', 10),
+          password: u.password || '',
+        };
+      }
+    } catch {}
+    return {
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+      password: process.env.REDIS_PASSWORD || '',
+    };
+  })(),
 
   // Rate limit configuration
   rateLimits: {

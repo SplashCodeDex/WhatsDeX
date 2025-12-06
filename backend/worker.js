@@ -1,7 +1,7 @@
 import { imageGenerationQueue, jobResultsQueue } from './lib/queues.js';
 import { createUrl } from './tools/api.js';
 import redis from 'ioredis';
-import config from './config.js';
+import config from '../config.js';
 
 // Connect to Redis for logging and potential other uses
 const redisClient = new redis({
@@ -11,6 +11,22 @@ const redisClient = new redis({
 });
 
 console.log('✅ Worker process started. Waiting for image generation jobs...');
+
+(async () => {
+  try {
+    const { waitForRedis } = await import('./src/utils/readiness.js');
+    await waitForRedis({
+      host: config.redis.host,
+      port: config.redis.port,
+      password: config.redis.password || undefined,
+      logger: console,
+    });
+    console.log('✅ Redis readiness confirmed for worker');
+  } catch (e) {
+    console.error('❌ Redis readiness check failed for worker:', e?.message || e);
+    process.exit(1);
+  }
+})();
 
 // Define the processor for the image generation queue
 imageGenerationQueue.process(async (job) => {

@@ -45,14 +45,18 @@ services:
   bot-service:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: ../deployment/dockerfiles/Dockerfile.api
     restart: always
     env_file:
       - ./backend/.env
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex}@db:5432/${DB_NAME:-whatsdex}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - USE_SERVER=true
+      - PORT=3001
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - OWNER_NUMBER=${OWNER_NUMBER}
     ports:
       - "3001:3001"
@@ -74,10 +78,12 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: ../deployment/dockerfiles/Dockerfile.web
     restart: always
     env_file:
       - ./frontend/.env.local
+    environment:
+      - NEXT_PUBLIC_API_URL=http://bot-service:3001
     ports:
       - "3000:3000"
     depends_on:
@@ -97,14 +103,16 @@ services:
   worker:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: ../deployment/dockerfiles/Dockerfile.api
     restart: always
     env_file:
       - ./backend/.env
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-whatsdex}:${DB_PASSWORD:-whatsdex}@db:5432/${DB_NAME:-whatsdex}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - OWNER_NUMBER=${OWNER_NUMBER}
     command: node src/jobs/index.js
     depends_on:
@@ -126,11 +134,11 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./deployment/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./deployment/nginx/ssl:/etc/nginx/ssl:ro
       - nginx_logs:/var/log/nginx
     depends_on:
-      - web
+      - frontend
       - bot-service
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
