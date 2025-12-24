@@ -327,10 +327,24 @@ export default function Dashboard() {
           <TabsContent value="bots" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">WhatsApp Bots</h2>
-              <Button onClick={createBot} disabled={(usage.bots >= limits.maxBots && limits.maxBots !== -1) || creatingBot}>
-                {creatingBot ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-                Create Bot
-              </Button>
+              <div>
+                <Button
+                  onClick={createBot}
+                  disabled={(usage.bots >= limits.maxBots && limits.maxBots !== -1) || creatingBot}
+                >
+                  {creatingBot ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4 mr-2" />
+                  )}
+                  {creatingBot ? 'Creating Bot...' : 'Create Bot'}
+                </Button>
+                {creatingBot && (
+                  <span role="status" className="sr-only">
+                    Creating Bot...
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
