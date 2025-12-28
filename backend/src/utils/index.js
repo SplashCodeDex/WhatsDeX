@@ -1,42 +1,41 @@
-import DatabaseService from '../services/database.js';
+/**
+ * @fileoverview Utils Barrel Export
+ * Centralized exports for all utilities in backend/src/utils
+ *
+ * Usage: import { logger, formatters, RateLimiter } from './utils/index.js';
+ */
 
-// Initialize singleton database instance
-const db = new DatabaseService();
+// Logging
+export { default as logger } from './logger.js';
+export { default as securityLogger } from './securityLogger.js';
 
-// Collector utility for message collection
-const collector = {
-  stop: () => {
-    // Stop collection process
-    console.log('Message collector stopped');
-  },
-  createCollector: (conn, opts) => {
-    // Implementation for message collection
-    return {
-      on: (event, handler) => {
-        // Event handler setup
-      },
-      stop: () => {
-        console.log('Collector stopped');
-      }
-    };
-  },
-};
+// Formatters
+export * from './formatters.js';
+export { default as formatters } from './formatters.js';
 
-// Group mentions handler
-const groupMentions = async (conn, groupId) => {
-  // Implementation
-};
+// Managers
+export { default as ChatHistoryManager } from './ChatHistoryManager.js';
+export { default as DatabaseManager } from './DatabaseManager.js';
+export { default as MemoryManager } from './MemoryManager.js';
+export { default as ProcessManager } from './ProcessManager.js';
 
-export {
-  db,
-  collector,
-  groupMentions,
-  DatabaseService,
-};
+// Utilities
+export { default as RateLimiter } from './RateLimiter.js';
+export { default as PerformanceMonitor } from './PerformanceMonitor.js';
+export { default as ConnectionDebugger } from './ConnectionDebugger.js';
+export { default as MessageClassifier } from './MessageClassifier.js';
+export { default as ModuleSystemFixer } from './ModuleSystemFixer.js';
 
-export default {
-  db,
-  collector,
-  groupMentions,
-  DatabaseService,
-};
+// Helpers
+export { default as baileysUtils } from './baileysUtils.js';
+export { default as createBotContext } from './createBotContext.js';
+export { default as levenshtein } from './levenshtein.js';
+export { default as security } from './security.js';
+
+// Console utilities
+export { default as consoleSuppressor } from './consoleSuppressor.js';
+export { default as consolefy } from './consolefy.js';
+
+// Database/Migration
+export { default as migration } from './migration.js';
+export { default as readiness } from './readiness.js';

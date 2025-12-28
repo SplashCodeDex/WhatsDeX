@@ -1,3 +1,15 @@
+/**
+ * @fileoverview Analytics Service (Legacy CommonJS version)
+ * @deprecated Use analytics.js instead - this file is maintained for backward compatibility
+ *
+ * This service is kept for routes that still use CommonJS require().
+ * The modern ESM version in analytics.js has:
+ * - WebSocket real-time updates
+ * - Dependency injection
+ * - Better architecture
+ *
+ * Migration: Update routes to ESM and use analytics.js directly.
+ */
 const context = require('../../context');
 
 class AnalyticsService {
@@ -11,11 +23,11 @@ class AnalyticsService {
       const dateFilter =
         startDate && endDate
           ? {
-              createdAt: {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
-              },
-            }
+            createdAt: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          }
           : {};
 
       // Get user statistics
@@ -59,7 +71,7 @@ class AnalyticsService {
 
       const previousStart = new Date(
         (startDate ? new Date(startDate) : new Date(Date.now() - periodLength)).getTime() -
-          periodLength
+        periodLength
       );
       const previousEnd = startDate ? new Date(startDate) : new Date();
 
@@ -131,11 +143,11 @@ class AnalyticsService {
       const dateFilter =
         startDate && endDate
           ? {
-              createdAt: {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
-              },
-            }
+            createdAt: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          }
           : {};
 
       // Get user statistics
@@ -252,11 +264,11 @@ class AnalyticsService {
       const dateFilter =
         startDate && endDate
           ? {
-              createdAt: {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
-              },
-            }
+            createdAt: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          }
           : {};
 
       // Get command statistics
@@ -339,11 +351,11 @@ class AnalyticsService {
       const dateFilter =
         startDate && endDate
           ? {
-              createdAt: {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
-              },
-            }
+            createdAt: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          }
           : {};
 
       // Get AI request statistics
@@ -446,11 +458,11 @@ class AnalyticsService {
       const dateFilter =
         startDate && endDate
           ? {
-              createdAt: {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
-              },
-            }
+            createdAt: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          }
           : {};
 
       // Get revenue statistics
@@ -548,11 +560,11 @@ class AnalyticsService {
       const dateFilter =
         startDate && endDate
           ? {
-              createdAt: {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
-              },
-            }
+            createdAt: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          }
           : {};
 
       // Get moderation statistics
