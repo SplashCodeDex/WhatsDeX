@@ -1,15 +1,16 @@
-const express = require('express');
-const { body, param, query, validationResult } = require('express-validator');
-const { asyncHandler, AppError } = require('../middleware/errorHandler');
-const { requireAdmin, requireModerator } = require('../middleware/auth');
-const logger = require('../src/utils/logger');
+/**
+ * @fileoverview Users API Routes (ESM)
+ * Provides endpoints for user management
+ */
+import express from 'express';
+import { body, param, query, validationResult } from 'express-validator';
+import { asyncHandler, AppError } from '../middleware/errorHandler.js';
+import { requireAdmin, requireModerator } from '../middleware/auth.js';
+import logger from '../src/utils/logger.js';
+import userService from '../src/services/userService.js';
+import auditLogger from '../src/services/auditLogger.js';
 
 const router = express.Router();
-
-// Import services (will be created)
-const userService = require('../src/services/userService');
-const auditLogger = require('../src/services/auditLogger');
-
 /**
  * GET /api/users
  * Get users with pagination, filtering, and search
@@ -407,4 +408,4 @@ router.get(
   })
 );
 
-module.exports = router;
+export default router;

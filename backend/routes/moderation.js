@@ -1,15 +1,16 @@
-const express = require('express');
-const { body, param, query, validationResult } = require('express-validator');
-const { asyncHandler, AppError } = require('../middleware/errorHandler');
-const { requireModerator, requireAdmin } = require('../middleware/auth');
-const logger = require('../src/utils/logger');
+/**
+ * @fileoverview Moderation API Routes (ESM)
+ * Provides endpoints for content moderation
+ */
+import express from 'express';
+import { body, param, query, validationResult } from 'express-validator';
+import { asyncHandler, AppError } from '../middleware/errorHandler.js';
+import { requireModerator, requireAdmin } from '../middleware/auth.js';
+import logger from '../src/utils/logger.js';
+import moderationService from '../src/services/moderationService.js';
+import auditLogger from '../src/services/auditLogger.js';
 
 const router = express.Router();
-
-// Import services (will be created)
-const moderationService = require('../src/services/moderationService');
-const auditLogger = require('../src/services/auditLogger');
-
 /**
  * GET /api/moderation/queue
  * Get moderation queue with filtering
@@ -462,4 +463,4 @@ router.put(
   })
 );
 
-module.exports = router;
+export default router;

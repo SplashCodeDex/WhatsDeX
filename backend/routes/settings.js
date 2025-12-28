@@ -1,14 +1,16 @@
-const express = require('express');
-const { body, validationResult } = require('express-validator');
-const { asyncHandler, AppError } = require('../middleware/errorHandler');
-const { requireAdmin } = require('../middleware/auth');
-const logger = require('../src/utils/logger');
+/**
+ * @fileoverview Settings API Routes (ESM)
+ * Provides endpoints for system settings management
+ */
+import express from 'express';
+import { body, validationResult } from 'express-validator';
+import { asyncHandler, AppError } from '../middleware/errorHandler.js';
+import { requireAdmin } from '../middleware/auth.js';
+import logger from '../src/utils/logger.js';
+import settingsService from '../src/services/settingsService.js';
+import auditLogger from '../src/services/auditLogger.js';
 
 const router = express.Router();
-
-// Import services (will be created)
-const settingsService = require('../src/services/settingsService');
-const auditLogger = require('../src/services/auditLogger');
 
 /**
  * GET /api/settings
@@ -19,11 +21,7 @@ router.get(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const settings = await settingsService.getAllSettings();
-
-    res.json({
-      success: true,
-      data: settings,
-    });
+    res.json({ success: true, data: settings });
   })
 );
 
@@ -42,10 +40,7 @@ router.get(
       throw new AppError('Settings category not found', 404, 'NOT_FOUND');
     }
 
-    res.json({
-      success: true,
-      data: settings,
-    });
+    res.json({ success: true, data: settings });
   })
 );
 
@@ -69,7 +64,6 @@ router.put(
     const { category, key } = req.params;
     const { value, description } = req.body;
 
-    // Validate the setting before updating
     const validation = await settingsService.validateSetting(category, key, value);
     if (!validation.valid) {
       throw new AppError(validation.message, 400, 'VALIDATION_ERROR');
@@ -84,7 +78,6 @@ router.put(
       req.user.id
     );
 
-    // Log admin action
     await auditLogger.logEvent({
       eventType: auditLogger.EVENT_TYPES.ADMIN_SYSTEM_CONFIG,
       actor: req.user.id,
@@ -92,23 +85,13 @@ router.put(
       action: 'Updated system setting',
       resource: 'setting',
       resourceId: `${category}.${key}`,
-      details: {
-        category,
-        key,
-        oldValue: oldSetting?.value,
-        newValue: value,
-        description,
-      },
+      details: { category, key, oldValue: oldSetting?.value, newValue: value, description },
       riskLevel: auditLogger.RISK_LEVELS.MEDIUM,
       ipAddress: req.ip,
       userAgent: req.get('User-Agent'),
     });
 
-    res.json({
-      success: true,
-      data: updatedSetting,
-      message: 'Setting updated successfully',
-    });
+    res.json({ success: true, data: updatedSetting, message: 'Setting updated successfully' });
   })
 );
 
@@ -142,7 +125,6 @@ router.put(
         setting.key,
         setting.value
       );
-
       if (!validation.valid) {
         settingErrors.push({
           category: setting.category,
@@ -161,7 +143,6 @@ router.put(
     // Update all settings
     for (const setting of settings) {
       try {
-        const oldSetting = await settingsService.getSetting(setting.category, setting.key);
         const updatedSetting = await settingsService.updateSetting(
           setting.category,
           setting.key,
@@ -169,29 +150,19 @@ router.put(
           setting.description,
           req.user.id
         );
-
         results.push(updatedSetting);
       } catch (error) {
-        settingErrors.push({
-          category: setting.category,
-          key: setting.key,
-          error: error.message,
-        });
+        settingErrors.push({ category: setting.category, key: setting.key, error: error.message });
       }
     }
 
-    // Log admin action
     await auditLogger.logEvent({
       eventType: auditLogger.EVENT_TYPES.ADMIN_SYSTEM_CONFIG,
       actor: req.user.id,
       actorId: req.user.id,
       action: 'Bulk updated system settings',
       resource: 'settings',
-      details: {
-        updatedCount: results.length,
-        errorCount: settingErrors.length,
-        settings: settings.map(s => `${s.category}.${s.key}`),
-      },
+      details: { updatedCount: results.length, errorCount: settingErrors.length },
       riskLevel: auditLogger.RISK_LEVELS.HIGH,
       ipAddress: req.ip,
       userAgent: req.get('User-Agent'),
@@ -199,13 +170,10 @@ router.put(
 
     res.json({
       success: true,
-      data: {
-        updated: results,
-        errors: settingErrors,
-      },
+      data: { updated: results, errors: settingErrors },
       message: `Updated ${results.length} settings${settingErrors.length > 0 ? `, ${settingErrors.length} failed` : ''}`,
     });
   })
 );
 
-module.exports = router;
+export default router;

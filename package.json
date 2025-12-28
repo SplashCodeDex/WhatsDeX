@@ -30,7 +30,8 @@
     "deploy:saas": "./deployment/deploy.sh",
     "logs": "tail -f logs/*.log 2>/dev/null || echo 'No logs yet'",
     "backup": "node scripts/backup.js",
-    "health": "curl -f http://localhost:3001/health || echo 'Service not ready'"
+    "health": "curl -f http://localhost:3001/health || echo 'Service not ready'",
+    "prepare": "husky"
   },
   "keywords": [
     "whatsapp",
@@ -99,8 +100,10 @@
     "@playwright/test": "^1.48.2",
     "babel-jest": "^29.7.0",
     "eslint": "^9.14.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-mock-extended": "^4.0.0",
+    "lint-staged": "^16.2.7",
     "nodemon": "^3.1.11",
     "prettier": "^3.3.3",
     "supertest": "^7.0.0",

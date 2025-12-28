@@ -1,14 +1,15 @@
-const express = require('express');
-const { query, validationResult } = require('express-validator');
-const { asyncHandler, AppError } = require('../middleware/errorHandler');
-const { requireModerator } = require('../middleware/auth');
-const logger = require('../src/utils/logger');
+/**
+ * @fileoverview Analytics API Routes (ESM)
+ * Provides endpoints for analytics and metrics
+ */
+import express from 'express';
+import { query, validationResult } from 'express-validator';
+import { asyncHandler, AppError } from '../middleware/errorHandler.js';
+import { requireModerator } from '../middleware/auth.js';
+import logger from '../src/utils/logger.js';
+import analyticsService from '../src/services/analyticsService.js';
 
 const router = express.Router();
-
-// Import services (will be created)
-const analyticsService = require('../src/services/analyticsService');
-
 /**
  * GET /api/analytics/overview
  * Get system overview analytics
@@ -360,4 +361,4 @@ router.get(
   })
 );
 
-module.exports = router;
+export default router;

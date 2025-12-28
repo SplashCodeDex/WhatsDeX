@@ -1,13 +1,15 @@
-const express = require('express');
-const { query, param, validationResult } = require('express-validator');
-const { asyncHandler, AppError } = require('../middleware/errorHandler');
-const { requireModerator, requireAdmin } = require('../middleware/auth');
-const logger = require('../src/utils/logger');
+/**
+ * @fileoverview Audit API Routes (ESM)
+ * Provides endpoints for viewing audit logs
+ */
+import express from 'express';
+import { query, validationResult } from 'express-validator';
+import { asyncHandler, AppError } from '../middleware/errorHandler.js';
+import { requireModerator } from '../middleware/auth.js';
+import logger from '../src/utils/logger.js';
+import auditService from '../src/services/auditService.js';
 
 const router = express.Router();
-
-// Import services (will be created)
-const auditService = require('../src/services/auditService');
 
 /**
  * GET /api/audit
@@ -80,4 +82,4 @@ router.get(
   })
 );
 
-module.exports = router;
+export default router;
