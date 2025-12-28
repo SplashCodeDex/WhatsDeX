@@ -18,7 +18,7 @@ class WhatsDeXBrain {
     this.conversationMemory = this.initializeManagedMemory();
 
     logger.info('WhatsDeX Brain initialized with Meta AI');
-    
+
     // Start memory cleanup timer
     this.startMemoryCleanup();
   }
@@ -72,19 +72,19 @@ class WhatsDeXBrain {
     try {
       // Get recent memory (sliding window)
       const recentMemory = this.getConversationMemory(userId);
-      
+
       // RAG: Retrieve relevant historical context
       const historicalContext = await this.retrieveHistoricalContext(userId, currentMessage);
-      
+
       // Build enhanced prompt with both recent and historical context
       const enhancedPrompt = this.buildContextualPrompt(currentMessage, recentMemory, historicalContext, nlpResult);
-      
+
       // Generate AI response with enhanced context
       const aiResponse = await this.metaAI.generateReply(enhancedPrompt);
 
       // Update recent memory
       this.updateConversationMemory(userId, currentMessage, aiResponse);
-      
+
       // Store conversation in RAG vector database (async, non-blocking)
       this.storeConversationAsync(userId, currentMessage, aiResponse, nlpResult);
 
@@ -110,13 +110,13 @@ class WhatsDeXBrain {
     const maxUsers = 1000;
     const userTTL = 3600000; // 1 hour
     const accessTimes = new Map();
-    
+
     // Enhanced memory management wrapper
     return {
       get: (userId) => {
         const user = memory.get(userId);
         if (!user) return [];
-        
+
         // Check TTL
         const accessTime = accessTimes.get(userId);
         if (accessTime && Date.now() - accessTime > userTTL) {
@@ -124,29 +124,29 @@ class WhatsDeXBrain {
           accessTimes.delete(userId);
           return [];
         }
-        
+
         // Update access time
         accessTimes.set(userId, Date.now());
         return user;
       },
-      
+
       set: (userId, data) => {
         // Evict oldest if at capacity
         if (memory.size >= maxUsers) {
           this.evictOldestMemory(memory, accessTimes);
         }
-        
+
         memory.set(userId, data);
         accessTimes.set(userId, Date.now());
       },
-      
+
       delete: (userId) => {
         memory.delete(userId);
         accessTimes.delete(userId);
       },
-      
+
       size: () => memory.size,
-      
+
       cleanup: () => {
         const now = Date.now();
         for (const [userId, accessTime] of accessTimes) {
@@ -165,14 +165,14 @@ class WhatsDeXBrain {
   evictOldestMemory(memory, accessTimes) {
     let oldestUser = null;
     let oldestTime = Date.now();
-    
+
     for (const [userId, time] of accessTimes) {
       if (time < oldestTime) {
         oldestTime = time;
         oldestUser = userId;
       }
     }
-    
+
     if (oldestUser) {
       memory.delete(oldestUser);
       accessTimes.delete(oldestUser);
@@ -189,13 +189,13 @@ class WhatsDeXBrain {
     memory.push(`AI: ${aiResponse}`);
 
     // CORRECTED: Keep only last 10 exchanges (20 items = 10 user+AI pairs)
-    if (memory.length > 20) { 
+    if (memory.length > 20) {
       memory.splice(0, memory.length - 20); // Keep last 20 items = 10 exchanges
     }
 
     // Use managed memory instead of direct Map
     this.conversationMemory.set(userId, memory);
-    
+
     // Log memory usage for monitoring
     if (this.conversationMemory.size() % 100 === 0) {
       logger.info(`Memory usage: ${this.conversationMemory.size()} active conversations`);
@@ -207,20 +207,12 @@ class WhatsDeXBrain {
    */
   async getConversationMemoryDB(userId) {
     try {
-      const context = await import('../../context.js');
-      const memory = await context.default.database.ConversationMemory.findMany({
-        where: { userId },
-        orderBy: { lastUpdated: 'desc' },
-        take: 1,
-      });
-
-      if (memory.length > 0) {
-        return JSON.parse(memory[0].messages);
-      }
-      return [];
+      // Transitioning to Firebase/Firestore
+      // For now, fall back to in-memory managed system
+      return this.getConversationMemory(userId);
     } catch (error) {
-      console.error('Error retrieving conversation memory:', error);
-      return this.getConversationMemory(userId); // Fallback to in-memory
+      logger.error('Error retrieving conversation memory:', error);
+      return this.getConversationMemory(userId);
     }
   }
 
@@ -229,32 +221,11 @@ class WhatsDeXBrain {
    */
   async updateConversationMemoryDB(userId, userMessage, aiResponse) {
     try {
-      const context = await import('../../context.js');
-      const memory = await this.getConversationMemoryDB(userId);
-      memory.push(`User: ${userMessage}`);
-      memory.push(`AI: ${aiResponse}`);
-
-      // Keep only last 20 exchanges
-      const trimmedMemory = memory.length > 40 ? memory.slice(-40) : memory;
-
-      await context.database.ConversationMemory.upsert({
-        where: {
-          id: `${userId}-memory`, // Simple composite key
-        },
-        update: {
-          messages: JSON.stringify(trimmedMemory),
-          lastUpdated: new Date(),
-        },
-        create: {
-          id: `${userId}-memory`,
-          userId,
-          messages: JSON.stringify(trimmedMemory),
-          lastUpdated: new Date(),
-        },
-      });
+      // Transitioning to Firebase/Firestore
+      // For now, update in-memory managed system
+      this.updateConversationMemory(userId, userMessage, aiResponse);
     } catch (error) {
-      console.error('Error updating conversation memory:', error);
-      // Fallback to in-memory update
+      logger.error('Error updating conversation memory:', error);
       this.updateConversationMemory(userId, userMessage, aiResponse);
     }
   }
@@ -326,7 +297,7 @@ class WhatsDeXBrain {
     prompt += '- Maintain conversation continuity by referencing relevant past discussions\n';
     prompt += '- Be helpful, contextual, and personalized based on the conversation history\n';
     prompt += '- If historical context is relevant, acknowledge it naturally in your response\n\n';
-    
+
     prompt += 'Respond helpfully and contextually:';
 
     return prompt;
@@ -363,7 +334,7 @@ class WhatsDeXBrain {
    */
   async getEnhancedMemoryStats(userId = null) {
     const baseStats = this.getMemoryStats();
-    
+
     try {
       if (userId) {
         const userStats = await memoryService.getConversationStats(userId);
@@ -372,7 +343,7 @@ class WhatsDeXBrain {
           userConversationHistory: userStats
         };
       }
-      
+
       return baseStats;
     } catch (error) {
       logger.error('Error getting enhanced memory stats:', error);

@@ -1,6 +1,5 @@
-// import { createApp } from './app.js';
 import MultiTenantApp from './server/multiTenantApp.js';
-import context from '../context.js';
+import context from './lib/context.js';
 
 /**
  * Start the server application

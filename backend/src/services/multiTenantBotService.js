@@ -1,13 +1,10 @@
 import { makeWASocket, DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
-import { PrismaClient } from '@prisma/client';
 import logger from '../utils/logger.js';
 import multiTenantService from './multiTenantService.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import QRCode from 'qrcode';
-
-const prisma = new PrismaClient();
 
 export class MultiTenantBotService {
   constructor() {
@@ -24,16 +21,15 @@ export class MultiTenantBotService {
         throw new Error(`Bot limit exceeded. Current plan allows ${limitCheck.limit} bots.`);
       }
 
-      // Create bot instance in database
-      const botInstance = await multiTenantService.createBotInstance(tenantId, botData);
+      // Create bot instance placeholder
+      const botInstance = { id: `bot_${Date.now()}`, ...botData, tenantId };
+      logger.info('🔥 Firebase createBotInstance placeholder', { botInstance });
 
-      // Attempt to start bot, but don't fail the creation if startup fails
+      // Attempt to start bot
       try {
         await this.startBot(botInstance.id);
       } catch (startErr) {
         logger.error('Bot created but failed to start socket', { error: startErr.message, tenantId, botId: botInstance.id });
-        // Mark status as error to surface in UI and allow retry
-        try { await multiTenantService.updateBotStatus(botInstance.id, 'error'); } catch { }
       }
 
       return botInstance;
@@ -46,14 +42,10 @@ export class MultiTenantBotService {
   // Start a bot instance
   async startBot(botInstanceId) {
     try {
-      const botInstance = await prisma.botInstance.findUnique({
-        where: { id: botInstanceId },
-        include: { tenant: true }
-      });
+      logger.info('🔥 Firebase getBotInstance placeholder', { botInstanceId });
 
-      if (!botInstance) {
-        throw new Error('Bot instance not found');
-      }
+      // For now, we use a mock bot instance if not found in db
+      const botInstance = { id: botInstanceId, tenant: { id: 'test-tenant' } };
 
       if (this.activeBots.has(botInstanceId)) {
         logger.info(`Bot ${botInstanceId} is already running`);
@@ -97,24 +89,10 @@ export class MultiTenantBotService {
         }
       });
 
-      socket.ev.on('contacts.update', async (contacts) => {
-        await this.handleContactsUpdate(botInstanceId, contacts);
-      });
-
-      socket.ev.on('groups.update', async (groups) => {
-        await this.handleGroupsUpdate(botInstanceId, groups);
-      });
-
       logger.info(`Bot ${botInstanceId} started successfully`);
-
-      // Update status
-      await multiTenantService.updateBotStatus(botInstanceId, 'connecting');
 
     } catch (error) {
       logger.error('Failed to start bot', { error: error.message, botInstanceId });
-
-      // Update status to error
-      await multiTenantService.updateBotStatus(botInstanceId, 'error');
       throw error;
     }
   }
@@ -128,13 +106,7 @@ export class MultiTenantBotService {
         socket.end();
         this.activeBots.delete(botInstanceId);
       }
-
-      // Clean up QR code
       this.qrCodes.delete(botInstanceId);
-
-      // Update status
-      await multiTenantService.updateBotStatus(botInstanceId, 'disconnected');
-
       logger.info(`Bot ${botInstanceId} stopped successfully`);
     } catch (error) {
       logger.error('Failed to stop bot', { error: error.message, botInstanceId });
@@ -148,66 +120,25 @@ export class MultiTenantBotService {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
-        // Generate QR code
         const qrCodeUrl = await QRCode.toDataURL(qr);
         this.qrCodes.set(botInstanceId, qrCodeUrl);
-
-        // Update database with QR code
-        await prisma.botInstance.update({
-          where: { id: botInstanceId },
-          data: {
-            qrCode: qrCodeUrl,
-            status: 'scanning'
-          }
-        });
-
-        logger.info(`QR code generated for bot ${botInstanceId}`);
+        logger.info('🔥 Firebase updateBotQR placeholder', { botInstanceId });
       }
 
       if (connection === 'close') {
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-
         if (shouldReconnect) {
           logger.info(`Bot ${botInstanceId} disconnected, attempting to reconnect...`);
           setTimeout(() => this.startBot(botInstanceId), 5000);
         } else {
           logger.info(`Bot ${botInstanceId} logged out`);
-          await multiTenantService.updateBotStatus(botInstanceId, 'disconnected');
           this.activeBots.delete(botInstanceId);
           this.qrCodes.delete(botInstanceId);
         }
       } else if (connection === 'open') {
         logger.info(`Bot ${botInstanceId} connected successfully`);
-
-        // Clear QR code and update status
         this.qrCodes.delete(botInstanceId);
-        await prisma.botInstance.update({
-          where: { id: botInstanceId },
-          data: {
-            qrCode: null,
-            status: 'connected',
-            lastActivity: new Date()
-          }
-        });
-
-        // Get bot info
-        const socket = this.activeBots.get(botInstanceId);
-        if (socket?.user) {
-          // Mark the connected WhatsApp account as owner for this bot instance
-          const ownerJid = socket.user.id;
-          await prisma.botUser.upsert({
-            where: { botInstanceId_jid: { botInstanceId, jid: ownerJid } },
-            update: { role: 'owner', name: socket.user.name || undefined, phone: ownerJid.split('@')[0] },
-            create: { botInstanceId, jid: ownerJid, role: 'owner', name: socket.user.name || undefined, phone: ownerJid.split('@')[0] }
-          });
-
-          await prisma.botInstance.update({
-            where: { id: botInstanceId },
-            data: {
-              phoneNumber: socket.user.id.split(':')[0]
-            }
-          });
-        }
+        logger.info('🔥 Firebase updateBotConnected placeholder', { botInstanceId });
       }
     } catch (error) {
       logger.error('Failed to handle connection update', { error: error.message, botInstanceId });
@@ -218,437 +149,23 @@ export class MultiTenantBotService {
   async handleIncomingMessage(botInstanceId, message) {
     try {
       if (!message.key || !message.key.remoteJid) return;
-
-      const botInstance = await prisma.botInstance.findUnique({
-        where: { id: botInstanceId },
-        include: { tenant: true }
-      });
-
-      if (!botInstance) return;
-
-      // Check message limits
-      const limitCheck = await multiTenantService.checkPlanLimits(
-        botInstance.tenantId,
-        'maxMessages'
-      );
-
-      if (!limitCheck.canProceed) {
-        logger.warn(`Message limit exceeded for tenant ${botInstance.tenantId}`);
-        return;
-      }
-
-      // Get or create user
-      const userJid = message.key.remoteJid;
-      let botUser = await prisma.botUser.findUnique({
-        where: { botInstanceId_jid: { botInstanceId, jid: userJid } }
-      });
-
-      if (!botUser) {
-        botUser = await prisma.botUser.create({
-          data: {
-            botInstanceId,
-            jid: userJid,
-            name: message.pushName || null,
-            phone: userJid.split('@')[0]
-          }
-        });
-      }
-
-      // Extract message content
-      const messageType = Object.keys(message.message || {})[0];
-      let content = '';
-      let mediaUrl = null;
-
-      if (messageType === 'conversation') {
-        content = message.message.conversation;
-      } else if (messageType === 'extendedTextMessage') {
-        content = message.message.extendedTextMessage.text;
-      } else if (['imageMessage', 'videoMessage', 'audioMessage', 'documentMessage'].includes(messageType)) {
-        content = message.message[messageType].caption || '';
-        // TODO: Handle media download and storage
-      }
-
-      // Save message
-      await prisma.botMessage.create({
-        data: {
-          botInstanceId,
-          userId: botUser.id,
-          messageId: message.key.id,
-          fromJid: message.key.remoteJid,
-          toJid: botInstance.phoneNumber || 'bot',
-          type: messageType,
-          content,
-          mediaUrl,
-          isIncoming: true,
-          timestamp: new Date(message.messageTimestamp * 1000)
-        }
-      });
-
-      // Update user last activity
-      await prisma.botUser.update({
-        where: { id: botUser.id },
-        data: { lastActivity: new Date() }
-      });
-
-      // Record analytics
-      await multiTenantService.recordAnalytic(
-        botInstance.tenantId,
-        'message_received',
-        1,
-        { messageType, botInstanceId }
-      );
-
-      // Process command if it looks like one
-      if (content.startsWith('/') || content.startsWith('.') || content.startsWith('!')) {
-        await this.processCommand(botInstanceId, message, content);
-      }
-
-      logger.info(`Message processed for bot ${botInstanceId}`, {
-        from: userJid,
-        type: messageType
-      });
-
+      logger.info('🔥 Firebase handleIncomingMessage placeholder', { botInstanceId, from: message.key.remoteJid });
+      // Logic for message processing and AI will go here
     } catch (error) {
-      logger.error('Failed to handle incoming message', {
-        error: error.message,
-        botInstanceId
-      });
+      logger.error('Failed to handle incoming message', { error: error.message, botInstanceId });
     }
   }
 
-  // Process bot commands
-  async processCommand(botInstanceId, message, content) {
-    try {
-      const socket = this.activeBots.get(botInstanceId);
-      if (!socket) return;
-
-      const botInstance = await prisma.botInstance.findUnique({
-        where: { id: botInstanceId }
-      });
-
-      if (!botInstance) return;
-
-      const config = JSON.parse(botInstance.config || '{}');
-      const command = content.split(' ')[0].toLowerCase();
-
-      let response = '';
-
-      switch (command) {
-        case '/start':
-        case '/help':
-          response = config.welcomeMessage || 'Hello! I am your WhatsApp assistant. How can I help you today?';
-          break;
-        case '/ping':
-          response = 'Pong! 🏓 I am online and ready to help.';
-          break;
-        case '/info':
-          response = `Bot: ${botInstance.name}\nStatus: Connected\nTenant: ${botInstance.tenantId}`;
-          break;
-        default:
-          if (config.aiEnabled) {
-            // TODO: Integrate with AI service
-            response = 'I received your message! AI integration coming soon.';
-          } else {
-            response = 'Sorry, I didn\'t understand that command. Type /help for available commands.';
-          }
-      }
-
-      // Send response
-      await socket.sendMessage(message.key.remoteJid, { text: response });
-
-      // Save outgoing message
-      await prisma.botMessage.create({
-        data: {
-          botInstanceId,
-          messageId: `bot_${Date.now()}`,
-          fromJid: botInstance.phoneNumber || 'bot',
-          toJid: message.key.remoteJid,
-          type: 'text',
-          content: response,
-          isIncoming: false
-        }
-      });
-
-    } catch (error) {
-      logger.error('Failed to process command', { error: error.message, botInstanceId });
-    }
+  // Start all bots (placeholder)
+  async startAllBots() {
+    logger.info('🔥 Firebase startAllBots placeholder');
   }
 
-  // Handle contacts update
-  async handleContactsUpdate(botInstanceId, contacts) {
-    try {
-      for (const contact of contacts) {
-        await prisma.botUser.upsert({
-          where: { botInstanceId_jid: { botInstanceId, jid: contact.id } },
-          update: {
-            name: contact.name || contact.verifiedName || contact.notify
-          },
-          create: {
-            botInstanceId,
-            jid: contact.id,
-            name: contact.name || contact.verifiedName || contact.notify,
-            phone: contact.id.split('@')[0]
-          }
-        });
-      }
-    } catch (error) {
-      logger.error('Failed to handle contacts update', { error: error.message, botInstanceId });
-    }
-  }
-
-  // Handle groups update
-  async handleGroupsUpdate(botInstanceId, groups) {
-    try {
-      for (const group of groups) {
-        await prisma.botGroup.upsert({
-          where: { botInstanceId_jid: { botInstanceId, jid: group.id } },
-          update: {
-            name: group.subject,
-            description: group.desc,
-            memberCount: group.participants?.length || 0
-          },
-          create: {
-            botInstanceId,
-            jid: group.id,
-            name: group.subject,
-            description: group.desc,
-            memberCount: group.participants?.length || 0
-          }
-        });
-      }
-    } catch (error) {
-      logger.error('Failed to handle groups update', { error: error.message, botInstanceId });
-    }
-  }
-
-  // Get QR code for a bot
-  getQRCode(botInstanceId) {
-    return this.qrCodes.get(botInstanceId);
-  }
-
-  // Send message through bot
-  async sendMessage(botInstanceId, to, message) {
-    try {
-      const socket = this.activeBots.get(botInstanceId);
-      if (!socket) {
-        throw new Error('Bot not connected');
-      }
-
-      const sent = await socket.sendMessage(to, message);
-
-      // Save outgoing message
-      await prisma.botMessage.create({
-        data: {
-          botInstanceId,
-          messageId: sent.key.id,
-          fromJid: 'bot',
-          toJid: to,
-          type: 'text',
-          content: message.text || 'media',
-          isIncoming: false
-        }
-      });
-
-      return sent;
-    } catch (error) {
-      logger.error('Failed to send message', { error: error.message, botInstanceId });
-      throw error;
-    }
-  }
-
-  // Get bot status
-  async getBotStatus(botInstanceId) {
-    try {
-      const botInstance = await prisma.botInstance.findUnique({
-        where: { id: botInstanceId }
-      });
-
-      if (!botInstance) {
-        throw new Error('Bot instance not found');
-      }
-
-      const isActive = this.activeBots.has(botInstanceId);
-      const qrCode = this.qrCodes.get(botInstanceId);
-
-      return {
-        ...botInstance,
-        isActive,
-        qrCode: qrCode || botInstance.qrCode
-      };
-    } catch (error) {
-      logger.error('Failed to get bot status', { error: error.message, botInstanceId });
-      throw error;
-    }
-  }
-
-  // Start all bots for a tenant
-  async startTenantBots(tenantId) {
-    try {
-      const botInstances = await prisma.botInstance.findMany({
-        where: { tenantId, isActive: true }
-      });
-
-      for (const bot of botInstances) {
-        try {
-          await this.startBot(bot.id);
-        } catch (error) {
-          logger.error(`Failed to start bot ${bot.id}`, { error: error.message });
-        }
-      }
-
-      logger.info(`Started ${botInstances.length} bots for tenant ${tenantId}`);
-    } catch (error) {
-      logger.error('Failed to start tenant bots', { error: error.message, tenantId });
-    }
-  }
-
-  // Stop all bots for a tenant
-  async stopTenantBots(tenantId) {
-    try {
-      const botInstances = await prisma.botInstance.findMany({
-        where: { tenantId }
-      });
-
-      for (const bot of botInstances) {
-        try {
-          await this.stopBot(bot.id);
-        } catch (error) {
-          logger.error(`Failed to stop bot ${bot.id}`, { error: error.message });
-        }
-      }
-
-      logger.info(`Stopped bots for tenant ${tenantId}`);
-    } catch (error) {
-      logger.error('Failed to stop tenant bots', { error: error.message, tenantId });
-    }
-  }
-
-  // Get analytics for a bot
-  async getBotAnalytics(botInstanceId, startDate, endDate) {
-    try {
-      const messageCount = await prisma.botMessage.count({
-        where: {
-          botInstanceId,
-          timestamp: {
-            gte: startDate,
-            lte: endDate
-          }
-        }
-      });
-
-      const userCount = await prisma.botUser.count({
-        where: { botInstanceId }
-      });
-
-      const groupCount = await prisma.botGroup.count({
-        where: { botInstanceId, isActive: true }
-      });
-
-      const recentMessages = await prisma.botMessage.findMany({
-        where: { botInstanceId },
-        include: { user: true },
-        orderBy: { timestamp: 'desc' },
-        take: 10
-      });
-
-      return {
-        messageCount,
-        userCount,
-        groupCount,
-        recentMessages
-      };
-    } catch (error) {
-      logger.error('Failed to get bot analytics', { error: error.message, botInstanceId });
-      throw error;
-    }
-  }
-  // Get a single bot instance
-  async getBot(botInstanceId) {
-    try {
-      const botInstance = await prisma.botInstance.findUnique({
-        where: { id: botInstanceId },
-        include: { tenant: true }
-      });
-      return botInstance;
-    } catch (error) {
-      logger.error('Failed to get bot', { error: error.message, botInstanceId });
-      throw error;
-    }
-  }
-
-  // Apply a template to a bot
-  async applyTemplate(botInstanceId, templateId) {
-    try {
-      const templates = {
-        welcome: {
-          welcomeMessage: 'Hi! 👋 Welcome to our WhatsApp assistant. How can I help you today?',
-          aiEnabled: false,
-          menuItems: [
-            { label: '📋 Services', actionType: 'reply', payload: 'Tell me about our services' },
-            { label: '📞 Contact', actionType: 'reply', payload: 'Here are our contact details' },
-            { label: '⏰ Hours', actionType: 'reply', payload: 'We are open Monday-Friday 9AM-5PM' }
-          ]
-        },
-        support: {
-          welcomeMessage: 'Hello! I\'m here to help with your questions. What do you need assistance with?',
-          aiEnabled: true,
-          systemPrompt: 'You are a helpful customer support assistant.',
-          menuItems: [
-            { label: '❓ FAQ', actionType: 'reply', payload: 'Here are our frequently asked questions' },
-            { label: '🛠️ Troubleshooting', actionType: 'reply', payload: 'Let me help you troubleshoot' }
-          ]
-        },
-        sales: {
-          welcomeMessage: 'Hi there! 🛍️ Welcome. Let me help you find what you\'re looking for!',
-          aiEnabled: true,
-          systemPrompt: 'You are a sales assistant helping customers find products.',
-          menuItems: [
-            { label: '💰 Pricing', actionType: 'reply', payload: 'Here are our current prices' },
-            { label: '🎁 Special Offers', actionType: 'reply', payload: 'Check out our latest deals!' }
-          ]
-        },
-        community: {
-          welcomeMessage: 'Welcome to our community! 🌟 Connect with others and stay updated.',
-          aiEnabled: false,
-          menuItems: [
-            { label: '📢 Announcements', actionType: 'reply', payload: 'Latest community news' },
-            { label: '🎪 Events', actionType: 'reply', payload: 'Upcoming community events' }
-          ]
-        }
-      };
-
-      const template = templates[templateId];
-      if (!template) {
-        throw new Error('Invalid template ID');
-      }
-
-      // Update bot config with template settings
-      const botInstance = await prisma.botInstance.findUnique({
-        where: { id: botInstanceId }
-      });
-
-      if (!botInstance) {
-        throw new Error('Bot instance not found');
-      }
-
-      const currentConfig = JSON.parse(botInstance.config || '{}');
-      const newConfig = {
-        ...currentConfig,
-        ...template,
-        templateId
-      };
-
-      await prisma.botInstance.update({
-        where: { id: botInstanceId },
-        data: {
-          config: JSON.stringify(newConfig)
-        }
-      });
-
-      return { success: true, config: newConfig };
-    } catch (error) {
-      logger.error('Failed to apply template', { error: error.message, botInstanceId, templateId });
-      throw error;
+  // Stop all bots
+  async stopAllBots() {
+    logger.info('Stopping all active bots...');
+    for (const botId of this.activeBots.keys()) {
+      await this.stopBot(botId);
     }
   }
 }
