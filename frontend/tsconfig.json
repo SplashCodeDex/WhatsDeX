@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
     "noEmit": true,
     "module": "esnext",
     "esModuleInterop": true,
@@ -13,8 +17,18 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@/shared/*": ["./src/shared/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@/shared/*": [
+        "./src/shared/*"
+      ],
+      "@/types": [
+        "./types"
+      ],
+      "@/types/*": [
+        "./types/*"
+      ]
     },
     "incremental": true,
     "target": "ES2017",
@@ -33,5 +47,7 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -1,9 +1,0 @@
-{
-  "ignore": ["state/*", "logs/*", "**/*.test.js"],
-  "watch": ["index.js", "src", "routes"],
-  "ext": "js,mjs,cjs,json",
-  "delay": "300",
-  "restartable": "rs",
-  "verbose": false,
-  "legacyWatch": true
-}
