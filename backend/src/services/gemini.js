@@ -219,9 +219,9 @@ class GeminiService {
     // Create cache key for tool-based conversations
     const toolKey = tools
       ? tools
-        .map(t => t.function?.name)
-        .sort()
-        .join(',')
+          .map(t => t.function?.name)
+          .sort()
+          .join(',')
       : 'no-tools';
     const conversationKey = `${messages.map(m => `${m.role}:${m.content}`).join('|')}|tools:${toolKey}`;
     const cacheKey = this.generateCacheKey(conversationKey, 'tools');
