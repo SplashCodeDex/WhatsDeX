@@ -1,0 +1,3 @@
+## 2024-05-23 - Keep PRs Focused
+**Learning:** Adding a dependency or running `pnpm install` can create side-effect file changes (like `pnpm-lock.yaml` or modifications to `next-env.d.ts`). These changes, while important for the project, should not be bundled with small, focused UX improvements. They create noise in the code review and can be blocking changes.
+**Action:** Always review the changed files before submitting a PR. If there are unintended changes, revert them and submit them in a separate, dedicated PR if necessary. For my work as Palette, I should avoid any changes that introduce lockfiles or modify configuration files.
