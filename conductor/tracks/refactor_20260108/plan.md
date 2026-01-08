@@ -1,32 +1,40 @@
-# Implementation Plan - Refactor Codebase to Strict TypeScript and Service-Oriented Architecture
+# Implementation Plan - Full Firebase Migration and Backend Refactoring
 
-## Phase 1: Environment & Configuration Hardening
+## Phase 1: Technical Debt Removal & Firebase Core
 
-- [x] Task: Install Validation Dependencies [commit: d108714]
-  - [ ] Sub-task: Install `zod` and `dotenv` in backend.
-- [x] Task: Create ConfigService [commit: 16ff979]
-  - [ ] Sub-task: Write Tests: Create `backend/src/services/__tests__/ConfigService.test.ts` to test Zod validation logic (success/failure cases).
-  - [ ] Sub-task: Implement Feature: Create `backend/src/config/env.schema.ts` to define the Zod schema for all env variables.
-  - [ ] Sub-task: Implement Feature: Create `backend/src/services/ConfigService.ts` as a singleton that validates env vars on instantiation and exposes typed getters.
-- [x] Task: Refactor Main Entry Point [commit: ab5649d]
-- [x] Task: Conductor - User Manual Verification 'Environment & Configuration Hardening' (Protocol in workflow.md) [checkpoint: ab5649d]
+- [x] Task: Remove Prisma Technical Debt [commit: 9cc6b09]
+  - [ ] Sub-task: Uninstall `@prisma/client` and `prisma` dependencies from backend.
+  - [ ] Sub-task: Delete `backend/src/lib/prisma.ts` and any remaining `.prisma` files or migrations.
+- [ ] Task: Harden Firebase Initialization
+  - [ ] Sub-task: Write Tests: Create `backend/src/lib/__tests__/firebase.test.ts` to verify initialization success/failure with service accounts.
+  - [ ] Sub-task: Implement Feature: Update `backend/src/lib/firebase.ts` to strictly use `ConfigService` and handle missing credentials gracefully (throwing error at startup).
+- [ ] Task: Conductor - User Manual Verification 'Technical Debt Removal & Firebase Core' (Protocol in workflow.md)
 
-## Phase 2: Service Layer Migration
+## Phase 2: Multi-Tenant Data Layer
 
-- [ ] Task: Refactor Database Service
-  - [ ] Sub-task: Write Tests: Create `backend/src/services/__tests__/DatabaseService.test.ts`.
-  - [ ] Sub-task: Implement Feature: Create `backend/src/services/DatabaseService.ts` to encapsulate Firebase/Firestore logic, using `ConfigService` for credentials.
-- [ ] Task: Refactor Core Bot Logic (Baileys)
-  - [ ] Sub-task: Write Tests: Create tests for Bot connection logic (mocking the socket).
-  - [ ] Sub-task: Implement Feature: Create `backend/src/services/WhatsAppService.ts` to manage the Baileys socket connection, delegating events to handlers.
-- [ ] Task: Conductor - User Manual Verification 'Service Layer Migration' (Protocol in workflow.md)
+- [ ] Task: Define Firestore Schema Types
+  - [ ] Sub-task: Create `backend/src/types/firestore.ts` with strict interfaces for `Tenant`, `User`, and `Bot` documents.
+- [ ] Task: Implement Centralized Firebase Service
+  - [ ] Sub-task: Write Tests: Create tests for subcollection path generation and generic Firestore CRUD operations.
+  - [ ] Sub-task: Implement Feature: Create `backend/src/services/FirebaseService.ts` to handle subcollection logic: `tenants/{tenantId}/{collection}`.
+- [ ] Task: Conductor - User Manual Verification 'Multi-Tenant Data Layer' (Protocol in workflow.md)
 
-## Phase 3: Cleanup & Strict Mode Enforcement
+## Phase 3: Service Layer Migration (Firestore Native)
 
-- [ ] Task: Enforce Strict TypeScript
-  - [ ] Sub-task: Update `backend/tsconfig.json` to set `strict: true`, `noImplicitAny: true`, etc.
-  - [ ] Sub-task: Run `tsc` and fix all resulting type errors across the backend codebase.
-- [ ] Task: Final Polish
-  - [ ] Sub-task: Remove old configuration files (e.g., `backend/src/config/config.js`).
-  - [ ] Sub-task: Run `npm run lint:fix` to ensure code style compliance.
-- [ ] Task: Conductor - User Manual Verification 'Cleanup & Strict Mode Enforcement' (Protocol in workflow.md)
+- [ ] Task: Migrate User & Tenant Services
+  - [ ] Sub-task: Write Tests: Mock Firestore to test `userService.ts` and `multiTenantService.ts`.
+  - [ ] Sub-task: Implement Feature: Refactor `userService.ts` and `multiTenantService.ts` to use `tenants/{tenantId}/users` and `tenants/{tenantId}/metadata`.
+- [ ] Task: Migrate Bot Instance Management
+  - [ ] Sub-task: Write Tests: Test `botService.ts` lifecycle logic with Firestore mocks.
+  - [ ] Sub-task: Implement Feature: Refactor `multiTenantBotService.ts` to store bot status and connection info in `tenants/{tenantId}/bots`.
+- [ ] Task: Conductor - User Manual Verification 'Service Layer Migration (Firestore Native)' (Protocol in workflow.md)
+
+## Phase 4: Authentication & Validation
+
+- [ ] Task: Integrate Firebase Auth Middleware
+  - [ ] Sub-task: Write Tests: Test `authMiddleware.ts` with valid/invalid Firebase tokens.
+  - [ ] Sub-task: Implement Feature: Refactor `authMiddleware.ts` to use `admin.auth().verifyIdToken()` instead of custom JWT.
+- [ ] Task: Global Type Safety & Final Polish
+  - [ ] Sub-task: Resolve remaining `tsc` errors in `backend/src/services` and `backend/src/controllers`.
+  - [ ] Sub-task: Run `npm run lint:fix` and verify sanity tests.
+- [ ] Task: Conductor - User Manual Verification 'Authentication & Validation' (Protocol in workflow.md)
