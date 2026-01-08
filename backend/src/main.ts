@@ -1,7 +1,7 @@
-import 'dotenv/config';
-import initializeContext from './lib/context';
-import { startServer } from './server';
-import logger from './utils/logger';
+import { ConfigService } from './services/ConfigService.js';
+import initializeContext from './lib/context.js';
+import { startServer } from './server.js';
+import logger from './utils/logger.js';
 
 /**
  * Main entry point for WhatsDeX
@@ -9,6 +9,9 @@ import logger from './utils/logger';
 async function main() {
     try {
         logger.info('🚀 Starting WhatsDeX...');
+
+        // Initialize ConfigService first
+        ConfigService.getInstance();
 
         // 1. Initialize Context (without Prisma)
         const context = await initializeContext();

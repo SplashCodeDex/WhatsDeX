@@ -4,19 +4,28 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
-import logger from '../utils/logger';
-import multiTenantService from '../services/multiTenantService';
-import multiTenantStripeService from '../services/multiTenantStripeService';
-import multiTenantBotService from '../services/multiTenantBotService';
-import multiTenantRoutes from '../routes/multiTenant';
-import authRoutes from '../routes/auth';
-import templateRoutes from '../routes/templateRoutes';
-import { errorHandler, notFoundHandler } from '../middleware/errorHandler';
+import logger from '../utils/logger.js';
+import { ConfigService } from '../services/ConfigService.js';
+import multiTenantService from '../services/multiTenantService.js';
+import multiTenantStripeService from '../services/multiTenantStripeService.js';
+import multiTenantBotService from '../services/multiTenantBotService.js';
+import multiTenantRoutes from '../routes/multiTenant.js';
+import authRoutes from '../routes/authRoutes.js';
+import templateRoutes from '../routes/templateRoutes.js';
+import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 
 export class MultiTenantApp {
+  private app: express.Application;
+  private port: number;
+  private server: any;
+  private activeTenants: Map<string, any>;
+  private isInitialized: boolean;
+  private config: ConfigService;
+
   constructor() {
+    this.config = ConfigService.getInstance();
     this.app = express();
-    this.port = process.env.PORT || 3001;
+    this.port = this.config.get('PORT');
     this.activeTenants = new Map();
     this.isInitialized = false;
   }
@@ -64,7 +73,7 @@ export class MultiTenantApp {
         if (!origin ||
           origin.includes('localhost') ||
           origin.endsWith('.whatsdx.com') ||
-          origin === process.env.NEXT_PUBLIC_APP_URL) {
+          origin === this.config.get('NEXT_PUBLIC_APP_URL')) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));
@@ -84,7 +93,7 @@ export class MultiTenantApp {
     // Rate limiting
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000,
-      max: process.env.RATE_LIMIT_MAX || 100,
+      max: this.config.get('RATE_LIMIT_MAX'),
       message: {
         error: 'Too many requests, please try again later.'
       }
@@ -165,11 +174,11 @@ export class MultiTenantApp {
 
   async initializeServices() {
     try {
-      const stripeKey = process.env.STRIPE_SECRET_KEY;
-      const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      const stripeKey = this.config.get('STRIPE_SECRET_KEY');
+      const stripeWebhookSecret = this.config.get('STRIPE_WEBHOOK_SECRET');
 
       if (stripeKey) {
-        await multiTenantStripeService.initialize(stripeKey, stripeWebhookSecret);
+        await multiTenantStripeService.initialize(stripeKey, stripeWebhookSecret || '');
         logger.info('Stripe service initialized');
       }
     } catch (error) {

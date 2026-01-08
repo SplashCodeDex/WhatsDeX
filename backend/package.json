@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/main.js",
-    "dev": "ts-node src/main.ts",
+    "dev": "tsx src/main.ts",
     "lint": "eslint src",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
@@ -42,6 +42,7 @@
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "socket.io": "^4.8.1",
+    "stripe": "^20.1.2",
     "vcard-creator": "^0.7.2",
     "wa-sticker-formatter": "^4.4.4",
     "winston": "^3.17.0",
@@ -71,6 +72,7 @@
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"
   }

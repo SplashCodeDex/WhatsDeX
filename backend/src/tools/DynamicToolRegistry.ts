@@ -6,7 +6,12 @@ import logger from '../utils/logger';
  * Dynamic Tool Registry - Converts all bot commands into AI-accessible tools
  * Enables the AI to use any command through natural language
  */
-class DynamicToolRegistry {
+export class DynamicToolRegistry {
+  private bot: any;
+  private tools: Map<string, any>;
+  private categories: Map<string, any>;
+  private toolSchemas: any[];
+
   constructor(bot) {
     this.bot = bot;
     this.tools = new Map();

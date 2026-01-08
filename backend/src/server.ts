@@ -1,13 +1,14 @@
-import MultiTenantApp from './server/multiTenantApp';
-import context from './lib/context';
+import MultiTenantApp from './server/multiTenantApp.js';
+import { ConfigService } from './services/ConfigService.js';
 
 /**
  * Start the server application
- * @param {Object} config - Configuration object (optional, defaults to context.config)
  * @returns {Promise<Object>} - { server, io } - Started server instances
  */
-async function startServer(config = context.config) {
-  if (!config.system.useServer) {
+async function startServer() {
+  const config = ConfigService.getInstance();
+  
+  if (!config.get('USE_SERVER')) {
     console.log('🔕 Server disabled in configuration');
     return null;
   }
