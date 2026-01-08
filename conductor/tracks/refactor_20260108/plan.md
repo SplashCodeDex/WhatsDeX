@@ -5,14 +5,12 @@
 - [x] Task: Remove Prisma Technical Debt [commit: 9cc6b09]
   - [ ] Sub-task: Uninstall `@prisma/client` and `prisma` dependencies from backend.
   - [ ] Sub-task: Delete `backend/src/lib/prisma.ts` and any remaining `.prisma` files or migrations.
-- [ ] Task: Harden Firebase Initialization
-  - [ ] Sub-task: Write Tests: Create `backend/src/lib/__tests__/firebase.test.ts` to verify initialization success/failure with service accounts.
-  - [ ] Sub-task: Implement Feature: Update `backend/src/lib/firebase.ts` to strictly use `ConfigService` and handle missing credentials gracefully (throwing error at startup).
-- [ ] Task: Conductor - User Manual Verification 'Technical Debt Removal & Firebase Core' (Protocol in workflow.md)
+- [x] Task: Harden Firebase Initialization [commit: 8b69ed5]
+- [x] Task: Conductor - User Manual Verification 'Technical Debt Removal & Firebase Core' (Protocol in workflow.md) [checkpoint: 8b69ed5]
 
 ## Phase 2: Multi-Tenant Data Layer
 
-- [ ] Task: Define Firestore Schema Types
+- [x] Task: Define Firestore Schema Types [commit: cd11b87]
   - [ ] Sub-task: Create `backend/src/types/firestore.ts` with strict interfaces for `Tenant`, `User`, and `Bot` documents.
 - [ ] Task: Implement Centralized Firebase Service
   - [ ] Sub-task: Write Tests: Create tests for subcollection path generation and generic Firestore CRUD operations.
