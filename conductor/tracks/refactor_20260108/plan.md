@@ -4,7 +4,7 @@
 
 - [x] Task: Install Validation Dependencies [commit: d108714]
   - [ ] Sub-task: Install `zod` and `dotenv` in backend.
-- [ ] Task: Create ConfigService
+- [x] Task: Create ConfigService [commit: 16ff979]
   - [ ] Sub-task: Write Tests: Create `backend/src/services/__tests__/ConfigService.test.ts` to test Zod validation logic (success/failure cases).
   - [ ] Sub-task: Implement Feature: Create `backend/src/config/env.schema.ts` to define the Zod schema for all env variables.
   - [ ] Sub-task: Implement Feature: Create `backend/src/services/ConfigService.ts` as a singleton that validates env vars on instantiation and exposes typed getters.
