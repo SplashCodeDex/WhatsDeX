@@ -30,8 +30,7 @@ try {
     db.settings({ ignoreUndefinedProperties: true });
 } catch (error) {
     logger.error('Failed to initialize Firebase:', error);
-    // Fallback or re-throw depending on strictness.
-    // For now, allow starting without DB but log error.
+    throw error;
 }
 
 export { admin, db };
