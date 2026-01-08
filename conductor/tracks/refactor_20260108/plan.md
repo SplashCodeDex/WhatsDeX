@@ -8,9 +8,8 @@
   - [ ] Sub-task: Write Tests: Create `backend/src/services/__tests__/ConfigService.test.ts` to test Zod validation logic (success/failure cases).
   - [ ] Sub-task: Implement Feature: Create `backend/src/config/env.schema.ts` to define the Zod schema for all env variables.
   - [ ] Sub-task: Implement Feature: Create `backend/src/services/ConfigService.ts` as a singleton that validates env vars on instantiation and exposes typed getters.
-- [ ] Task: Refactor Main Entry Point
-  - [ ] Sub-task: Update `backend/src/main.ts` (or `index.ts`) to initialize `ConfigService` before any other logic.
-- [ ] Task: Conductor - User Manual Verification 'Environment & Configuration Hardening' (Protocol in workflow.md)
+- [x] Task: Refactor Main Entry Point [commit: ab5649d]
+- [x] Task: Conductor - User Manual Verification 'Environment & Configuration Hardening' (Protocol in workflow.md) [checkpoint: ab5649d]
 
 ## Phase 2: Service Layer Migration
 
