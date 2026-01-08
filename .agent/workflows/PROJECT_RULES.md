@@ -128,8 +128,11 @@ backend/
 
 ### Naming
 
-- **Components**: PascalCase (`UserProfile.tsx`)
+- **Components (Features/Layouts)**: PascalCase (`UserProfile.tsx`)
+- **Components (UI/Primitives)**: kebab-case (`button.tsx`)
 - **Hooks**: camelCase with `use` prefix (`useAuth.ts`)
+- **Services (Files)**: camelCase (`userService.ts`)
+- **Services (Classes)**: PascalCase (`UserService`)
 - **Utils**: camelCase (`formatDate.ts`)
 - **Types**: PascalCase with suffix (`UserProps`, `AuthState`)
 - **Constants**: SCREAMING_SNAKE_CASE (`MAX_RETRIES`)

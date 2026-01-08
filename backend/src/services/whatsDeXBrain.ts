@@ -4,8 +4,8 @@ import ContentModerationService from './contentModeration';
 import MetaAIService from './metaAI';
 import logger from '../utils/logger';
 // RAG Architecture Services
-import memoryService from './MemoryService';
-import embeddingService from './EmbeddingService';
+import memoryService from './memoryService';
+import embeddingService from './embeddingService';
 
 class WhatsDeXBrain {
   constructor(bot, context) {

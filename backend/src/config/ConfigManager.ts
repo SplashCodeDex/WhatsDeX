@@ -6,9 +6,151 @@
 import fs from 'fs';
 import path from 'path';
 
+export interface Config {
+  system: {
+    useServer: boolean;
+    port: number;
+    timeZone: string;
+    maxListeners: number;
+    cooldown: number;
+    antiCall: boolean;
+    selfMode: boolean;
+    [key: string]: any;
+  };
+  owner: {
+    name: string;
+    id: string;
+    organization: string;
+    [key: string]: any;
+  };
+  server: {
+    port: number;
+    host: string;
+    environment: string;
+    maxRequestSize: string;
+    cors: {
+      origins: string[];
+      credentials: boolean;
+    };
+    [key: string]: any;
+  };
+  database: {
+    url: string | undefined;
+    maxConnections: number;
+    connectionTimeout: number;
+    idleTimeout: number;
+    ssl: boolean;
+  };
+  redis: {
+    url: string | undefined;
+    maxRetriesPerRequest: number;
+    retryDelayOnFailover: number;
+    family: number;
+    password: string | undefined;
+    keyPrefix: string;
+  };
+  auth: {
+    jwtSecret: string | undefined;
+    jwtExpires: string;
+    refreshSecret: string | undefined;
+    refreshExpires: string;
+    sessionSecret: string | undefined;
+    sessionMaxAge: number;
+    bcryptRounds: number;
+    ownerNumber: string | undefined;
+    adminNumbers: string[];
+  };
+  rateLimit: {
+    windowMs: number;
+    maxRequests: number;
+    skipSuccessfulRequests: boolean;
+    skipFailedRequests: boolean;
+  };
+  bot: {
+    name: string;
+    browser: [string, string, string];
+    prefix: string[];
+    mode: string;
+    selfMode: boolean;
+    maxCommandsPerMinute: number;
+    cooldownMs: number;
+    maintenance: boolean;
+    autoReconnect: boolean;
+    sessionPath: string;
+    authAdapter: {
+      default: {
+        authDir: string;
+      };
+      [key: string]: any;
+    };
+  };
+  ai: {
+    google: {
+      apiKey: string | undefined;
+      model: string;
+      maxTokens: number;
+      temperature: number;
+    };
+    openai: {
+      apiKey: string | undefined;
+      model: string;
+      maxTokens: number;
+      temperature: number;
+    };
+    summarization: {
+      SUMMARIZE_THRESHOLD: number;
+      MESSAGES_TO_SUMMARIZE: number;
+      HISTORY_PRUNE_LENGTH: number;
+    };
+    aiKeywords: string[];
+  };
+  payment: {
+    stripe: {
+      secretKey: string | undefined;
+      publishableKey: string | undefined;
+      webhookSecret: string | undefined;
+      currency: string;
+    };
+    premium: {
+      enabled: boolean;
+      monthlyPrice: number;
+      yearlyPrice: number;
+      trialDays: number;
+    };
+  };
+  monitoring: {
+    enabled: boolean;
+    metricsPort: number;
+    healthCheckEnabled: boolean;
+    logLevel: string;
+    sentryDsn: string | undefined;
+    enablePrometheus: boolean;
+  };
+  features: {
+    aiCommands: boolean;
+    downloadCommands: boolean;
+    gameCommands: boolean;
+    moderationCommands: boolean;
+    analyticsTracking: boolean;
+    websocketEnabled: boolean;
+  };
+  memory: {
+    maxChatHistory: number;
+    chatHistoryTTL: number;
+    cacheMaxSize: number;
+    cleanupInterval: number;
+    maxMemoryUsage: number;
+  };
+  [key: string]: any;
+}
+
 export class ConfigManager {
+  public config: Config;
+  private configPath: string;
+  private environment: string;
+
   constructor() {
-    this.config = {};
+    this.config = {} as Config; // Initial empty state, populated dynamically
     this.configPath = process.env.CONFIG_PATH || './config';
     this.environment = process.env.NODE_ENV || 'development';
 
@@ -21,7 +163,7 @@ export class ConfigManager {
     this.config = {
       system: {
         useServer: true,
-        port: process.env.PORT || 3000,
+        port: Number(process.env.PORT) || 3000,
         timeZone: 'Asia/Jakarta',
         maxListeners: 20,
         cooldown: 5000,
@@ -29,16 +171,16 @@ export class ConfigManager {
         selfMode: false,
       },
       owner: {
-        name: this.getEnvString('OWNER_NAME', 'Owner'),
-        id: this.getEnvString('OWNER_NUMBER', '6281234567890'),
-        organization: this.getEnvString('OWNER_ORGANIZATION', 'CodeDeX'),
+        name: this.getEnvString('OWNER_NAME', 'Owner')!,
+        id: this.getEnvString('OWNER_NUMBER', '6281234567890')!,
+        organization: this.getEnvString('OWNER_ORGANIZATION', 'CodeDeX')!,
       },
       // Server Configuration
       server: {
         port: this.getEnvNumber('PORT', 3001),
-        host: this.getEnvString('HOST', 'localhost'),
+        host: this.getEnvString('HOST', 'localhost')!,
         environment: this.environment,
-        maxRequestSize: this.getEnvString('MAX_REQUEST_SIZE', '50mb'),
+        maxRequestSize: this.getEnvString('MAX_REQUEST_SIZE', '50mb')!,
         cors: {
           origins: this.getEnvArray('CORS_ORIGINS', ['http://localhost:3000']),
           credentials: this.getEnvBoolean('CORS_CREDENTIALS', true)
@@ -61,15 +203,15 @@ export class ConfigManager {
         retryDelayOnFailover: this.getEnvNumber('REDIS_RETRY_DELAY', 100),
         family: this.getEnvNumber('REDIS_FAMILY', 4),
         password: this.getEnvString('REDIS_PASSWORD'),
-        keyPrefix: this.getEnvString('REDIS_KEY_PREFIX', 'whatsdx:')
+        keyPrefix: this.getEnvString('REDIS_KEY_PREFIX', 'whatsdx:')!
       },
 
       // Authentication & Security
       auth: {
         jwtSecret: this.getEnvString('JWT_SECRET'),
-        jwtExpires: this.getEnvString('JWT_EXPIRES_IN', '24h'),
+        jwtExpires: this.getEnvString('JWT_EXPIRES_IN', '24h')!,
         refreshSecret: this.getEnvString('JWT_REFRESH_SECRET'),
-        refreshExpires: this.getEnvString('JWT_REFRESH_EXPIRES_IN', '7d'),
+        refreshExpires: this.getEnvString('JWT_REFRESH_EXPIRES_IN', '7d')!,
         sessionSecret: this.getEnvString('SESSION_SECRET'),
         sessionMaxAge: this.getEnvNumber('SESSION_MAX_AGE', 86400000),
         bcryptRounds: this.getEnvNumber('BCRYPT_ROUNDS', 12),
@@ -87,19 +229,19 @@ export class ConfigManager {
 
       // Bot Configuration
       bot: {
-        name: this.getEnvString('BOT_NAME', 'WhatsDeX'),
+        name: this.getEnvString('BOT_NAME', 'WhatsDeX')!,
         browser: ['WhatsDeX', 'Chrome', '1.0.0'],
         prefix: this.getEnvArray('BOT_PREFIX', ['.', '!', '/']),
-        mode: this.getEnvString('BOT_MODE', 'public'), // public, private
+        mode: this.getEnvString('BOT_MODE', 'public')!, // public, private
         selfMode: this.getEnvBoolean('BOT_SELF_MODE', false),
         maxCommandsPerMinute: this.getEnvNumber('BOT_MAX_COMMANDS_PER_MINUTE', 60),
         cooldownMs: this.getEnvNumber('BOT_COOLDOWN_MS', 10000),
         maintenance: this.getEnvBoolean('BOT_MAINTENANCE', false),
         autoReconnect: this.getEnvBoolean('BOT_AUTO_RECONNECT', true),
-        sessionPath: this.getEnvString('BOT_SESSION_PATH', './sessions'),
+        sessionPath: this.getEnvString('BOT_SESSION_PATH', './sessions')!,
         authAdapter: {
           default: {
-            authDir: this.getEnvString('BOT_AUTH_DIR', './auth')
+            authDir: this.getEnvString('BOT_AUTH_DIR', './auth')!
           }
         }
       },
@@ -108,13 +250,13 @@ export class ConfigManager {
       ai: {
         google: {
           apiKey: this.getEnvString('GOOGLE_GEMINI_API_KEY'),
-          model: this.getEnvString('GOOGLE_GEMINI_MODEL', 'gemini-pro'),
+          model: this.getEnvString('GOOGLE_GEMINI_MODEL', 'gemini-pro')!,
           maxTokens: this.getEnvNumber('GOOGLE_GEMINI_MAX_TOKENS', 2048),
           temperature: this.getEnvNumber('GOOGLE_GEMINI_TEMPERATURE', 0.7)
         },
         openai: {
           apiKey: this.getEnvString('OPENAI_API_KEY'),
-          model: this.getEnvString('OPENAI_MODEL', 'gpt-3.5-turbo'),
+          model: this.getEnvString('OPENAI_MODEL', 'gpt-3.5-turbo')!,
           maxTokens: this.getEnvNumber('OPENAI_MAX_TOKENS', 1000),
           temperature: this.getEnvNumber('OPENAI_TEMPERATURE', 0.7)
         },
@@ -132,7 +274,7 @@ export class ConfigManager {
           secretKey: this.getEnvString('STRIPE_SECRET_KEY'),
           publishableKey: this.getEnvString('STRIPE_PUBLISHABLE_KEY'),
           webhookSecret: this.getEnvString('STRIPE_WEBHOOK_SECRET'),
-          currency: this.getEnvString('STRIPE_CURRENCY', 'USD')
+          currency: this.getEnvString('STRIPE_CURRENCY', 'USD')!
         },
         premium: {
           enabled: this.getEnvBoolean('PREMIUM_ENABLED', true),
@@ -147,7 +289,7 @@ export class ConfigManager {
         enabled: this.getEnvBoolean('ANALYTICS_ENABLED', true),
         metricsPort: this.getEnvNumber('METRICS_PORT', 9090),
         healthCheckEnabled: this.getEnvBoolean('HEALTH_CHECK_ENABLED', true),
-        logLevel: this.getEnvString('LOG_LEVEL', 'info'),
+        logLevel: this.getEnvString('LOG_LEVEL', 'info')!,
         sentryDsn: this.getEnvString('SENTRY_DSN'),
         enablePrometheus: this.getEnvBoolean('ENABLE_PROMETHEUS', false)
       },
@@ -184,7 +326,7 @@ export class ConfigManager {
         const envConfig = JSON.parse(fs.readFileSync(envConfigPath, 'utf8'));
         this.config = this.mergeDeep(this.config, envConfig);
         console.log(`✅ Loaded ${this.environment} configuration`);
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`⚠️ Failed to load ${this.environment} config:`, error.message);
       }
     }
@@ -206,62 +348,63 @@ export class ConfigManager {
     }
 
     // Validate JWT secret strength
-    if (this.config.auth.jwtSecret.length < 32) {
+    if (this.config.auth.jwtSecret && this.config.auth.jwtSecret.length < 32) {
       console.warn('⚠️ JWT secret is too short. Use at least 32 characters.');
     }
 
     // Validate database URL format
-    if (!this.config.database.url.startsWith('postgresql://')) {
+    if (this.config.database.url && !this.config.database.url.startsWith('postgresql://')) {
       console.warn('⚠️ Database URL should use postgresql:// protocol');
     }
 
     console.log('✅ Configuration validation passed');
   }
 
-  getEnvString(key, defaultValue = null) {
+  getEnvString(key: string, defaultValue: string | null = null): string | undefined {
     const value = process.env[key];
     if (!value && defaultValue === null) {
       return undefined;
     }
-    return value || defaultValue;
+    return value || defaultValue!;
   }
 
-  getEnvNumber(key, defaultValue = null) {
+  getEnvNumber(key: string, defaultValue: number): number {
     const value = process.env[key];
     if (!value) return defaultValue;
     const parsed = parseInt(value, 10);
     return isNaN(parsed) ? defaultValue : parsed;
   }
 
-  getEnvBoolean(key, defaultValue = false) {
+  getEnvBoolean(key: string, defaultValue: boolean = false): boolean {
     const value = process.env[key];
     if (!value) return defaultValue;
     return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
   }
 
-  getEnvArray(key, defaultValue = []) {
+  getEnvArray(key: string, defaultValue: string[] = []): string[] {
     const value = process.env[key];
     if (!value) return defaultValue;
     return value.split(',').map(item => item.trim());
   }
 
-  get(path) {
+  get(path: string): any {
     return this.getNestedValue(this.config, path);
   }
 
-  set(path, value) {
+  set(path: string, value: any) {
     this.setNestedValue(this.config, path, value);
   }
 
-  getNestedValue(obj, path) {
+  getNestedValue(obj: any, path: string): any {
     return path.split('.').reduce((current, key) => {
       return current && current[key] !== undefined ? current[key] : undefined;
     }, obj);
   }
 
-  setNestedValue(obj, path, value) {
+  setNestedValue(obj: any, path: string, value: any) {
     const keys = path.split('.');
     const lastKey = keys.pop();
+    if (!lastKey) return;
     const target = keys.reduce((current, key) => {
       if (!current[key]) current[key] = {};
       return current[key];
@@ -269,7 +412,7 @@ export class ConfigManager {
     target[lastKey] = value;
   }
 
-  mergeDeep(target, source) {
+  mergeDeep(target: any, source: any): any {
     const result = { ...target };
 
     for (const key in source) {
@@ -284,29 +427,37 @@ export class ConfigManager {
   }
 
   // Dynamic configuration updates
-  updateConfig(path, value) {
+  updateConfig(path: string, value: any) {
     this.set(path, value);
     console.log(`Configuration updated: ${path} = ${value}`);
   }
 
   // Export configuration for external use
-  export() {
+  export(): Config {
     return JSON.parse(JSON.stringify(this.config));
   }
 
   // Get safe configuration (without sensitive data)
-  getSafeConfig() {
+  getSafeConfig(): Partial<Config> {
     const safe = JSON.parse(JSON.stringify(this.config));
 
     // Remove sensitive data
-    delete safe.auth.jwtSecret;
-    delete safe.auth.refreshSecret;
-    delete safe.auth.sessionSecret;
-    delete safe.ai.google.apiKey;
-    delete safe.ai.openai.apiKey;
-    delete safe.payment.stripe.secretKey;
-    delete safe.payment.stripe.webhookSecret;
-    delete safe.monitoring.sentryDsn;
+    if (safe.auth) {
+      delete safe.auth.jwtSecret;
+      delete safe.auth.refreshSecret;
+      delete safe.auth.sessionSecret;
+    }
+    if (safe.ai) {
+      delete safe.ai.google?.apiKey;
+      delete safe.ai.openai?.apiKey;
+    }
+    if (safe.payment) {
+      delete safe.payment.stripe?.secretKey;
+      delete safe.payment.stripe?.webhookSecret;
+    }
+    if (safe.monitoring) {
+      delete safe.monitoring.sentryDsn;
+    }
 
     return safe;
   }

@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma';
-import embeddingService from './EmbeddingService';
+import embeddingService from './embeddingService';
 
 export class MemoryService {
   constructor(context) {
@@ -17,16 +17,16 @@ export class MemoryService {
     try {
       // Generate embedding for the conversation
       const embedding = await embeddingService.generateEmbedding(conversationText);
-      
+
       // Convert embedding array to pgvector format
       const vectorString = `[${embedding.join(',')}]`;
-      
+
       // Store using Prisma raw query for vector operations
       await this.prisma.$executeRaw`
         INSERT INTO "ConversationEmbedding" (id, "userId", content, embedding, metadata)
         VALUES (gen_random_uuid(), ${userId}, ${conversationText}, ${vectorString}::vector, ${JSON.stringify(metadata)}::jsonb)
       `;
-      
+
       this.context.logger.info(`Stored conversation embedding for user ${userId}`);
     } catch (error) {
       this.context.logger.error('Error storing conversation embedding:', error);
@@ -46,7 +46,7 @@ export class MemoryService {
 
       // Perform cosine similarity search
       const results = await this.prisma.$queryRaw`
-        SELECT 
+        SELECT
           id,
           content,
           timestamp,
@@ -79,7 +79,7 @@ export class MemoryService {
   async getConversationStats(userId) {
     try {
       const stats = await this.prisma.$queryRaw`
-        SELECT 
+        SELECT
           COUNT(*) as total_conversations,
           MIN(timestamp) as first_conversation,
           MAX(timestamp) as last_conversation

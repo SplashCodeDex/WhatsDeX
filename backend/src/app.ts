@@ -7,14 +7,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 
-let io;
+let io: Server | undefined;
 
 /**
  * Create and configure the HTTP server
- * @param {Object} config - Configuration object
- * @returns {Object} - { server, io } - Configured server and Socket.IO instances
+ * @param {any} config - Configuration object
+ * @returns {{ server: http.Server, io: Server }} - Configured server and Socket.IO instances
  */
-function createApp(config) {
+function createApp(config: any): { server: http.Server; io: Server } {
   // Create HTTP server
   const server = http.createServer((_, res) => {
     res.end(`${pkg.name} is running on port ${config.system.port}`);
@@ -44,7 +44,7 @@ function createApp(config) {
  * Get Socket.IO instance
  * @returns {Server} - Socket.IO server instance
  */
-function getIO() {
+function getIO(): Server {
   if (!io) {
     throw new Error('Socket.io not initialized! Call createApp() first.');
   }

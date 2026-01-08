@@ -12,8 +12,8 @@ export { default as CacheService } from './cache';
 
 // AI Services
 export { default as AIProcessor } from './aiProcessor';
-export { default as EnhancedAIBrain } from './EnhancedAIBrain';
-export { default as WhatsDeXBrain } from './WhatsDeXBrain';
+export { default as EnhancedAIBrain } from './enhancedAIBrain';
+export { default as WhatsDeXBrain } from './whatsDeXBrain';
 
 // Bot Services
 export { default as CommandSystem } from './commandSystem';
@@ -32,7 +32,7 @@ export { default as MessageQueue } from './messageQueue';
 export { default as ErrorHandler } from './errorHandler';
 
 // Monitoring
-export { default as HealthCheckService } from './HealthCheckService';
+export { default as HealthCheckService } from './healthCheckService';
 export { default as MonitoringService } from './monitoring';
 export { default as AuditLogger } from './auditLogger';
 export { default as AuditService } from './auditService';

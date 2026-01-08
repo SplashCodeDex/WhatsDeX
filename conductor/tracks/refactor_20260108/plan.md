@@ -2,7 +2,7 @@
 
 ## Phase 1: Environment & Configuration Hardening
 
-- [ ] Task: Install Validation Dependencies
+- [x] Task: Install Validation Dependencies [commit: d108714]
   - [ ] Sub-task: Install `zod` and `dotenv` in backend.
 - [ ] Task: Create ConfigService
   - [ ] Sub-task: Write Tests: Create `backend/src/services/__tests__/ConfigService.test.ts` to test Zod validation logic (success/failure cases).
