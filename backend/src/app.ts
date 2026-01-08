@@ -1,43 +1,39 @@
-import http from 'node:http';
 import { Server } from 'socket.io';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
+import http from 'node:http';
 
-let io;
+let io: Server | null = null;
 
 /**
- * Create and configure the HTTP server
- * @param {Object} config - Configuration object
- * @returns {Object} - { server, io } - Configured server and Socket.IO instances
+ * Initialize and configure the Socket.IO server
+ * @param {http.Server} server - The HTTP server instance
+ * @returns {Server} - The configured Socket.IO instance
  */
-function createApp(config) {
-  // Create HTTP server
-  const server = http.createServer((_, res) => {
-    res.end(`${pkg.name} is running on port ${config.system.port}`);
-  });
-
-  // Initialize Socket.IO
+function initializeSocketIO(server: http.Server): Server {
   io = new Server(server, {
     cors: {
-      origin: "*",
+      origin: "*", // Consider restricting this in production
       methods: ["GET", "POST"]
     }
   });
 
   // Socket.IO connection handling
   io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log(`A user connected with socket ID: ${socket.id}`);
+
+    // Room joining for tenant-specific events
+    socket.on('join-tenant-room', (tenantId: string) => {
+      if (tenantId) {
+        socket.join(tenantId);
+        console.log(`Socket ${socket.id} joined room for tenant ${tenantId}`);
+      }
+    });
 
     socket.on('disconnect', () => {
-      console.log('A user disconnected');
+      console.log(`A user disconnected with socket ID: ${socket.id}`);
     });
   });
 
-  return { server, io };
+  return io;
 }
 
 /**

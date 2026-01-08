@@ -16,7 +16,7 @@ async function startServer(config = context.config) {
     const app = new MultiTenantApp();
     await app.initialize();
     await app.start();
-    return { server: app.server, io: null };
+    return { server: app.server, io: app.io };
   } catch (error) {
     console.error('❌ Error creating server:', error);
     throw error;

@@ -25,8 +25,8 @@ const WhatsAppQRCode: FC<WhatsAppQRCodeProps> = ({ userId, sessionId = 'default'
 
         setSocket(socketConnection);
 
-        // Join user room for real-time updates
-        socketConnection.emit('join-user-room', userId);
+        // Join tenant room for real-time updates
+        socketConnection.emit('join-tenant-room', userId);
 
         // Listen for WhatsApp status updates
         socketConnection.on('whatsapp-status', (data: { event: string; data: string }) => {

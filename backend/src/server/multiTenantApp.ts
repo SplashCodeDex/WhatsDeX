@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
+import http from 'node:http';
+import { Server as SocketIOServer } from 'socket.io';
 import logger from '../utils/logger';
 import multiTenantService from '../services/multiTenantService';
 import multiTenantStripeService from '../services/multiTenantStripeService';
@@ -12,11 +14,20 @@ import multiTenantRoutes from '../routes/multiTenant';
 import authRoutes from '../routes/auth';
 import templateRoutes from '../routes/templateRoutes';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler';
+import { initializeSocketIO } from '../app';
 
 export class MultiTenantApp {
+  public app: express.Application;
+  public port: number | string;
+  public server: http.Server;
+  public io: SocketIOServer;
+  private activeTenants: Map<string, any>;
+  private isInitialized: boolean;
+
   constructor() {
     this.app = express();
     this.port = process.env.PORT || 3001;
+    this.server = http.createServer(this.app);
     this.activeTenants = new Map();
     this.isInitialized = false;
   }
@@ -31,8 +42,13 @@ export class MultiTenantApp {
       // Setup routes
       this.setupRoutes();
 
+      // Initialize Socket.IO
+      this.io = initializeSocketIO(this.server);
+      logger.info('Socket.IO initialized');
+
       // Initialize services
       await this.initializeServices();
+      multiTenantBotService.initialize(this.io);
 
       // Start active tenant bots
       await this.startActiveTenantBots();
@@ -193,7 +209,7 @@ export class MultiTenantApp {
         await this.initialize();
       }
 
-      this.server = this.app.listen(this.port, () => {
+      this.server.listen(this.port, () => {
         logger.info(`Multi-tenant WhatsDeX server running on port ${this.port}`);
       });
 
