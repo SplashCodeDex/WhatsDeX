@@ -1,4 +1,5 @@
 import { makeWASocket, DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
+import { Server as SocketIOServer } from 'socket.io';
 import logger from '../utils/logger';
 import multiTenantService from './multiTenantService';
 import fs from 'fs';
@@ -7,9 +8,17 @@ import os from 'os';
 import QRCode from 'qrcode';
 
 export class MultiTenantBotService {
+  private io: SocketIOServer;
+  private activeBots: Map<string, any>;
+  private qrCodes: Map<string, string>;
+
   constructor() {
     this.activeBots = new Map(); // botInstanceId -> socket
     this.qrCodes = new Map(); // botInstanceId -> qr code
+  }
+
+  initialize(io: SocketIOServer) {
+    this.io = io;
   }
 
   // Create and start a new bot instance
@@ -118,14 +127,17 @@ export class MultiTenantBotService {
   async handleConnectionUpdate(botInstanceId, update) {
     try {
       const { connection, lastDisconnect, qr } = update;
+      const tenantId = botInstanceId.split('_')[0]; // Assuming botInstanceId is tenantId_botId
 
       if (qr) {
         const qrCodeUrl = await QRCode.toDataURL(qr);
         this.qrCodes.set(botInstanceId, qrCodeUrl);
+        this.io.to(tenantId).emit('whatsapp-status', { event: 'qr-code', data: qrCodeUrl });
         logger.info('🔥 Firebase updateBotQR placeholder', { botInstanceId });
       }
 
       if (connection === 'close') {
+        this.io.to(tenantId).emit('whatsapp-status', { event: 'disconnected', data: null });
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
         if (shouldReconnect) {
           logger.info(`Bot ${botInstanceId} disconnected, attempting to reconnect...`);
@@ -138,6 +150,7 @@ export class MultiTenantBotService {
       } else if (connection === 'open') {
         logger.info(`Bot ${botInstanceId} connected successfully`);
         this.qrCodes.delete(botInstanceId);
+        this.io.to(tenantId).emit('whatsapp-status', { event: 'connected', data: null });
         logger.info('🔥 Firebase updateBotConnected placeholder', { botInstanceId });
       }
     } catch (error) {
