@@ -1,97 +1,52 @@
-import { defineConfig } from 'eslint/config';
-import globals from 'globals';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import nextPlugin from '@next/eslint-plugin-next';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
-
-export default defineConfig([
-  {
-    extends: compat.extends('next/core-web-vitals'),
-
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
-
-      ecmaVersion: 2020,
-      sourceType: 'module',
-
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
+export default tseslint.config(
+    {
+        ignores: ['.next/**', 'node_modules/**', 'build_output.txt'],
     },
-
-    settings: {
-      react: {
-        version: 'detect',
-      },
-
-      'import/resolver': {
-        typescript: {
-          alwaysTryTypes: true,
-          project: './tsconfig.json',
+    js.configs.recommended,
+    ...tseslint.configs.recommended,
+    {
+        files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
+        languageOptions: {
+            ecmaVersion: 2020,
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+            },
+            parserOptions: {
+                ecmaFeatures: {
+                    jsx: true,
+                },
+            },
         },
-      },
-    },
-
-    rules: {
-      'import/extensions': 'off',
-      'import/no-unresolved': 'error',
-
-      'import/no-extraneous-dependencies': [
-        'error',
-        {
-          devDependencies: true,
-          optionalDependencies: false,
-          peerDependencies: false,
+        plugins: {
+            react,
+            'react-hooks': reactHooks,
+            '@next/next': nextPlugin,
         },
-      ],
+        rules: {
+            ...react.configs.recommended.rules,
+            ...reactHooks.configs.recommended.rules,
+            ...nextPlugin.configs.recommended.rules,
+            ...nextPlugin.configs['core-web-vitals'].rules,
 
-      'import/no-relative-packages': 'off',
-      'no-use-before-define': 'error',
-      'no-unsafe-optional-chaining': 'off',
-      'max-len': 'off',
-      'no-unused-vars': 'error',
-      'react-hooks/exhaustive-deps': 'error',
-      'no-promise-executor-return': 'off',
-      'no-alert': 'error',
-      'no-nested-ternary': 'error',
-      '@next/next/no-img-element': 'off',
-      'no-shadow': 'error',
-      'react/display-name': 'off',
-      'import/prefer-default-export': 'off',
-      'no-console': 'warn',
-      'prefer-template': 'error',
-      'no-plusplus': 'off',
-      'no-return-assign': 'off',
-      'no-undef': 'error',
-      'no-bitwise': 'off',
-      'no-restricted-properties': 'off',
-      'operator-linebreak': 'off',
-      'comma-dangle': 'off',
-      'arrow-parens': 'off',
-      'consistent-return': 'off',
-      'no-restricted-syntax': 'off',
-      'no-prototype-builtins': 'off',
-      'eol-last': 'off',
-      'linebreak-style': 'off',
-      quotes: 'off',
-      indent: 'off',
-      'object-curly-newline': 'off',
-      'arrow-body-style': 'off',
-      'react/jsx-no-undef': 'error',
-    },
-  },
-]);
+            // Custom Project Rules
+            'react/react-in-jsx-scope': 'off', // Not needed in Next.js
+            'react/prop-types': 'off', // Using TS
+            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+            'no-unused-vars': 'off', // Handled by TS rule
+        },
+        settings: {
+            react: {
+                version: 'detect',
+            },
+        },
+    }
+);

@@ -5,6 +5,9 @@
 const nextConfig = {
   transpilePackages: ['@whatsdex/shared', '@whiskeysockets/baileys'],
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
 
   // Image optimization
   images: {

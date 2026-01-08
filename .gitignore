@@ -134,3 +134,7 @@ deployment/ssl/certbot/
 
 #Backup folders
 _legacy_archive
+frontend/build_output*.txt
+frontend/lint_final*.txt
+frontend/lint_results*.txt
+lint*.txt
