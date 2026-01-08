@@ -1,14 +1,16 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
+import { APP_CONFIG } from '@/config/constants';
+
 class ApiClientCore {
     public client: AxiosInstance;
     public baseURL: string;
 
     constructor() {
-        this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        this.baseURL = APP_CONFIG.API_BASE_URL;
         this.client = axios.create({
             baseURL: this.baseURL,
-            timeout: 30000,
+            timeout: APP_CONFIG.TIMEOUT,
             headers: {
                 'Content-Type': 'application/json'
             }

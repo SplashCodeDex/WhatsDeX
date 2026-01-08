@@ -32,5 +32,9 @@ export const botService = {
 
     async applyTemplate(botId: string, templateId: string): Promise<any> {
         return http.post(`/bots/${botId}/template`, { templateId });
+    },
+
+    async getTemplates(): Promise<any> {
+        return http.get('/templates');
     }
 };

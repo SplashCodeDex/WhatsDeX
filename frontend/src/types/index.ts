@@ -73,6 +73,23 @@ export interface AnalyticsData {
     aiRequests: number;
 }
 
+export interface MenuItem {
+    label: string;
+    actionType: 'reply' | 'link' | 'command';
+    payload: string;
+}
+
+export interface Template {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    icon: string;
+    welcomeMessage: string;
+    menuItems: MenuItem[];
+    popular: boolean;
+}
+
 // Component prop types
 export interface WithChildren {
     children: ReactNode;

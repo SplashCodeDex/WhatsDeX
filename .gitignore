@@ -138,3 +138,6 @@ frontend/build_output*.txt
 frontend/lint_final*.txt
 frontend/lint_results*.txt
 lint*.txt
+backend/backend_typecheck_log.txt
+*.log
+*.txt

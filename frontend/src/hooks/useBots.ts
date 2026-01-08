@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import { botService } from '@/services/botService';
 import { toast } from '@/hooks/use-toast';
-import { Bot, ApiResponse } from '@/types';
+import { Bot, Template } from '@/types';
 
 export function useBots(tenantId?: string) {
     const [bots, setBots] = useState<Bot[]>([]);
+    const [templates, setTemplates] = useState<Template[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -14,11 +15,11 @@ export function useBots(tenantId?: string) {
         setError(null);
         try {
             const response = await botService.getBots(tenantId);
-            // Handle both array direct return or { data: [] } format
             const botList = Array.isArray(response) ? response : (response.data || []);
             setBots(botList);
-        } catch (err: any) {
-            setError(err.message || 'Failed to fetch bots');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch bots';
+            setError(message);
             toast({
                 title: 'Error',
                 description: 'Failed to load bots',
@@ -28,6 +29,20 @@ export function useBots(tenantId?: string) {
             setLoading(false);
         }
     }, [tenantId]);
+
+    const fetchTemplates = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await botService.getTemplates();
+            const list = response.data || response;
+            setTemplates(list);
+        } catch (err: unknown) {
+            console.error(err);
+            toast({ title: 'Error', description: 'Failed to load templates', variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     const createBot = async (data: any) => {
         if (!tenantId) return;
@@ -40,8 +55,9 @@ export function useBots(tenantId?: string) {
             } else {
                 throw new Error(response.error || 'Failed to create bot');
             }
-        } catch (err: any) {
-            toast({ title: 'Error', description: err.message, variant: 'destructive' });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            toast({ title: 'Error', description: message, variant: 'destructive' });
             throw err;
         }
     };
@@ -54,7 +70,7 @@ export function useBots(tenantId?: string) {
                 fetchBots();
             }
             return response;
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast({ title: 'Error', description: 'Failed to start bot', variant: 'destructive' });
         }
     };
@@ -67,7 +83,7 @@ export function useBots(tenantId?: string) {
                 fetchBots();
             }
             return response;
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast({ title: 'Error', description: 'Failed to stop bot', variant: 'destructive' });
         }
     };
@@ -75,7 +91,7 @@ export function useBots(tenantId?: string) {
     const getQrCode = async (botId: string) => {
         try {
             return await botService.getBotQRCode(botId);
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast({ title: 'Error', description: 'Failed to get QR code', variant: 'destructive' });
             return null;
         }
@@ -84,9 +100,10 @@ export function useBots(tenantId?: string) {
     const getBotStatus = async (botId: string) => {
         try {
             return await botService.getBotStatus(botId);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            return { status: 'error', error: err.message };
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            return { status: 'error', error: message };
         }
     };
 
@@ -95,9 +112,10 @@ export function useBots(tenantId?: string) {
         try {
             await botService.applyTemplate(botId, templateId);
             toast({ title: 'Success', description: 'Template applied' });
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            toast({ title: 'Error', description: err.message || 'Failed to apply template', variant: 'destructive' });
+            const message = err instanceof Error ? err.message : 'Failed to apply template';
+            toast({ title: 'Error', description: message, variant: 'destructive' });
             throw err;
         } finally {
             setLoading(false);
@@ -114,6 +132,8 @@ export function useBots(tenantId?: string) {
         stopBot,
         getQrCode,
         getBotStatus,
-        applyTemplate
+        applyTemplate,
+        fetchTemplates,
+        templates
     };
 }

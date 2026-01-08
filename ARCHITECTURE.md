@@ -89,9 +89,17 @@ WhatsDeX/
 
 ---
 
+    -   **Backend**: `tsconfig.json` strict mode enabled.
+    -   **Frontend**: `tsconfig.json` strict mode enabled.
+
 ## 5. Coding Standards
 
 - **TypeScript**: Strict typing everywhere. No `any`.
+- **Testing**:
+  - All new features must include Unit Tests.
+  - Backend: Jest (`npm test`).
+  - Frontend: Jest + React Testing Library (`npm test`).
+  - Sanity checks must always pass.
 - **Configuration**: All secrets/config via Environment Variables.
 - **Error Handling**: Centralized error middleware (Backend) and Error Boundaries (Frontend).
 - **Linting**: ESLint and Prettier must pass before commit.
