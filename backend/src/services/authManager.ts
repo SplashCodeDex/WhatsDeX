@@ -2,7 +2,7 @@
  * AuthManager
  * Provides detectAuthStatus and executeSmartAuth on top of AuthSystem.
  */
-import AuthSystem from './authSystem';
+import AuthSystem from './authSystem.js';
 
 class AuthManager {
   unified: AuthSystem;

@@ -1,11 +1,13 @@
-import redisClient from '../../lib/redis';
+import { MessageContext } from '../../types/index.js';
+import redisClient from '../../lib/redis.js';
+import logger from '../../utils/logger.js';
 
 export default {
   name: 'stats',
   category: 'tool',
   description: 'Displays usage statistics for the bot.',
   isOwner: true, // Make this an owner-only command
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter } = ctx.bot.context;
 
     try {
@@ -35,8 +37,8 @@ export default {
       }
 
       await ctx.reply(formatter.quote(responseText));
-    } catch (error) {
-      console.error('Error fetching stats:', error);
+    } catch (error: any) {
+      logger.error('Error fetching stats:', error);
       await ctx.reply('❌ An error occurred while fetching statistics.');
     }
   },

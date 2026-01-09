@@ -54,7 +54,7 @@ export class ModuleSystemFixer {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn(`Warning: Cannot access ${dir}:`, error.message);
     }
     

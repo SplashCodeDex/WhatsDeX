@@ -2,11 +2,11 @@ import { EventEmitter } from 'events';
 import pino from 'pino';
 import path from 'node:path';
 import { Boom } from '@hapi/boom';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 import { fileURLToPath } from 'url';
 // ESM-compatible import for baileys (CJS under the hood)
-import baileys from '@whiskeysockets/baileys';
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = baileys;
+import { useFirestoreAuthState } from '../lib/baileysFirestoreAuth.js';
+const { default: makeWASocket, DisconnectReason } = baileys;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,13 +41,10 @@ class AuthSystem extends EventEmitter {
   async connect() {
     this._recordAttempt(this.config.bot?.phoneNumber ? 'pairing' : 'qr');
 
-    // Default to 'auth_info_baileys' if config missing, to prevent crash
-    const authPathRel = this.config.bot?.authAdapter?.default?.authDir || 'auth_info_baileys';
-    const authDir = path.isAbsolute(authPathRel)
-      ? authPathRel
-      : path.resolve(process.cwd(), authPathRel); // Use process.cwd() for reliability
+    // Use sessionId from config or default to 'default_session'
+    const sessionId = this.config.bot?.sessionId || 'default_session';
 
-    const { state, saveCreds } = await useMultiFileAuthState(authDir);
+    const { state, saveCreds } = await useFirestoreAuthState('waba_sessions', sessionId);
 
     const pinoLogger = pino({ level: 'silent' });
 

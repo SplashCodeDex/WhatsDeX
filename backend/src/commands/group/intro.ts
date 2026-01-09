@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'intro',
   category: 'group',
@@ -5,7 +6,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, database: db } = ctx.bot.context;
     try {
       const groupId = ctx.getId(ctx.id);
@@ -14,7 +15,7 @@ export default {
         formatter.quote('❎ Grup ini tidak memiliki intro.');
 
       await ctx.reply(introText);
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -1,12 +1,15 @@
 import axios from 'axios';
 
 class MetaAIService {
-  constructor(apiKey) {
+  private apiKey: string;
+  private baseURL: string;
+
+  constructor(apiKey: string) {
     this.apiKey = apiKey;
     this.baseURL = 'https://api.meta.ai/v1'; // Hypothetical endpoint; replace with actual Meta AI API
   }
 
-  async generateReply(prompt, options = {}) {
+  async generateReply(prompt: string, options: any = {}) {
     try {
       const response = await axios.post(
         `${this.baseURL}/chat/completions`,
@@ -25,13 +28,13 @@ class MetaAIService {
       );
 
       return response.data.choices[0].message.content;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Meta AI reply generation error:', error);
       throw new Error('Failed to generate AI reply');
     }
   }
 
-  async transcribeVoice(audioBuffer) {
+  async transcribeVoice(audioBuffer: Buffer) {
     try {
       const response = await axios.post(
         `${this.baseURL}/audio/transcriptions`,
@@ -48,13 +51,13 @@ class MetaAIService {
       );
 
       return response.data.text;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Meta AI voice transcription error:', error);
       throw new Error('Failed to transcribe voice');
     }
   }
 
-  async generateImage(prompt) {
+  async generateImage(prompt: string) {
     try {
       const response = await axios.post(
         `${this.baseURL}/images/generations`,
@@ -72,13 +75,13 @@ class MetaAIService {
       );
 
       return response.data.data[0].url;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Meta AI image generation error:', error);
       throw new Error('Failed to generate image');
     }
   }
 
-  async analyzeImage(imageUrl, prompt = 'Describe this image') {
+  async analyzeImage(imageUrl: string, prompt: string = 'Describe this image') {
     try {
       const response = await axios.post(
         `${this.baseURL}/chat/completions`,
@@ -103,7 +106,7 @@ class MetaAIService {
       );
 
       return response.data.choices[0].message.content;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Meta AI image analysis error:', error);
       throw new Error('Failed to analyze image');
     }

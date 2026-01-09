@@ -1,20 +1,23 @@
-import { RateLimiterRedis  } from 'rate-limiter-flexible';
-import logger from '../utils/logger';
+import { RateLimiterRedis } from 'rate-limiter-flexible';
+import logger from '../utils/logger.js';
+import redis from 'redis';
 
 class RateLimiterService {
+  private limiters: Map<string, RateLimiterRedis>;
+  private redisClient: any;
+
   constructor() {
     this.limiters = new Map();
     this.redisClient = null;
 
     // Initialize Redis client
     try {
-      import redis from 'redis';
       this.redisClient = redis.createClient({
         url: process.env.REDIS_URL || 'redis://localhost:6379',
         password: process.env.REDIS_PASSWORD,
       });
 
-      this.redisClient.on('error', err => {
+      this.redisClient.on('error', (err: any) => {
         logger.error('Rate limiter Redis connection error:', err);
       });
 
@@ -23,10 +26,10 @@ class RateLimiterService {
       });
 
       // Connect to Redis
-      this.redisClient.connect().catch(err => {
+      this.redisClient.connect().catch((err: any) => {
         logger.error('Failed to connect rate limiter to Redis:', err);
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to initialize Redis for rate limiter:', error);
     }
   }
@@ -109,7 +112,7 @@ class RateLimiterService {
         consumedPoints: res.consumedPoints,
         isBlocked: false,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         remainingPoints: 0,
         msBeforeNext: 0,
@@ -133,7 +136,7 @@ class RateLimiterService {
       await limiter.block(key, seconds);
       logger.info('Manually blocked key', { key, seconds });
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to block key', { key, error: error.message });
       return false;
     }
@@ -151,7 +154,7 @@ class RateLimiterService {
       await limiter.delete(key);
       logger.info('Unblocked key', { key });
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to unblock key', { key, error: error.message });
       return false;
     }
@@ -170,7 +173,7 @@ class RateLimiterService {
       await limiter.penalty(key, points);
       logger.info('Penalized key', { key, points });
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to penalize key', { key, error: error.message });
       return false;
     }
@@ -189,7 +192,7 @@ class RateLimiterService {
       await limiter.reward(key, points);
       logger.info('Rewarded key', { key, points });
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to reward key', { key, error: error.message });
       return false;
     }
@@ -260,7 +263,7 @@ class RateLimiterService {
         // Get Redis stats
         const redisInfo = await this.redisClient.info();
         stats.redis = this.parseRedisInfo(redisInfo);
-      } catch (error) {
+      } catch (error: any) {
         stats.redis = { error: error.message };
       }
     }
@@ -314,7 +317,7 @@ class RateLimiterService {
         service: 'rate-limiter',
         limiters: this.limiters.size,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         status: 'unhealthy',
         service: 'rate-limiter',

@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
 export default {
@@ -7,7 +8,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     try {
       const APIs = tools.api.listUrl();
@@ -28,7 +29,7 @@ export default {
           } else {
             resultText += formatter.quote(`${api.baseURL} 🔴 (${response.status})\n`);
           }
-        } catch (error) {
+        } catch (error: any) {
           if (error.response) {
             resultText += formatter.quote(`${api.baseURL} 🔴 (${error.response.status})\n`);
           } else if (error.request) {
@@ -43,7 +44,7 @@ export default {
         text: resultText.trim(),
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

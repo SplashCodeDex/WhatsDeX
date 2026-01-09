@@ -1,12 +1,9 @@
+import { MessageContext } from '../../types/index.js';
+
 export default {
   name: 'goodbye',
   category: 'main',
-  handler: async (
-    ctx,
-    {
-      // destructure context here
-    }
-  ) => {
-    ctx.reply('Goodbye! Have a great day!');
+  code: async (ctx: MessageContext) => {
+    await ctx.reply('Goodbye! Have a great day!');
   },
 };

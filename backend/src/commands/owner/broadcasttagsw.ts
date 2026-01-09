@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'broadcasttagsw',
   aliases: ['bctagsw'],
@@ -5,7 +6,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, database: db } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
@@ -73,7 +74,7 @@ export default {
             [mediaType]: buffer,
             caption: input,
           });
-        } catch (error) {
+        } catch (error: any) {
           failedGroupIds.push(groupId);
         }
       }
@@ -85,7 +86,7 @@ export default {
           `✅ Berhasil mengirim ke ${successCount} grup. Gagal mengirim ke ${failedGroupIds.length} grup, ${blacklist.length} grup dalam blacklist tidak dikirim.`
         )
       );
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -1,5 +1,6 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
-import tools from '../../tools/exports';
+import tools from '../../tools/exports.js';
 
 export default {
   name: 'image2prompt',
@@ -8,7 +9,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
       tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
@@ -29,7 +30,7 @@ export default {
       const { result } = (await axios.get(apiUrl)).data;
 
       await ctx.reply(result);
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

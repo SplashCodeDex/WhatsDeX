@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
@@ -8,7 +9,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const url = ctx.args[0] || null;
 
@@ -81,14 +82,14 @@ export default {
 
         try {
           json = JSON.parse(text);
-        } catch (error) {
+        } catch (error: any) {
           json = null;
         }
 
         const responseText = json ? walkJSON(json, 0, [], formatter) : text;
         await ctx.reply(responseText);
       }
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

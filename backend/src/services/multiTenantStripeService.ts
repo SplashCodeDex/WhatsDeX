@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
-import logger from '../utils/logger';
-import multiTenantService from './multiTenantService';
+import logger from '../utils/logger.js';
+import multiTenantService from './multiTenantService.js';
 
 /**
  * Service for Stripe integration in multi-tenant SaaS
@@ -27,7 +27,7 @@ export class MultiTenantStripeService {
       this.webhookSecret = webhookSecret;
       this.isInitialized = true;
       logger.info('Multi-tenant Stripe service initialized');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to initialize Stripe service', { error: error.message });
       throw error;
     }

@@ -11,7 +11,7 @@ import { promises as fs } from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { spawn } from 'child_process';
-import context from '../../context';
+import context from '../../context.js';
 
 class WritingService {
   constructor() {
@@ -67,7 +67,7 @@ class WritingService {
     try {
       await this.ensureTempDir();
       await this.ensureAssets();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error initializing writing service:', error);
     }
   }
@@ -148,7 +148,7 @@ class WritingService {
                 font,
                 message: `Berhasil membuat tulisan: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
               });
-            } catch (error) {
+            } catch (error: any) {
               reject(new Error('Failed to read output file'));
             }
           } else {
@@ -160,7 +160,7 @@ class WritingService {
           reject(error);
         });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating writing:', error);
       throw error;
     }
@@ -246,7 +246,7 @@ class WritingService {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking writing rate limit:', error);
       return false; // Fail safe
     }
@@ -258,7 +258,7 @@ class WritingService {
   async ensureTempDir() {
     try {
       await fs.access(this.tempDir);
-    } catch (error) {
+    } catch (error: any) {
       await fs.mkdir(this.tempDir, { recursive: true });
     }
     return this.tempDir;
@@ -285,7 +285,7 @@ class WritingService {
         try {
           await fs.access(sourcePath);
           await fs.copyFile(sourcePath, destPath);
-        } catch (error) {
+        } catch (error: any) {
           console.warn(`Font file ${fontFile} not found at ${sourcePath}`);
         }
       }
@@ -301,11 +301,11 @@ class WritingService {
           await fs.copyFile(sourcePath, destPath);
           // Update config to point to new location
           this.templates[templateId].image = destPath;
-        } catch (error) {
+        } catch (error: any) {
           console.warn(`Template image ${imageName} not found at ${sourcePath}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error ensuring assets:', error);
     }
   }
@@ -331,7 +331,7 @@ class WritingService {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cleaning up writing files:', error);
     }
   }

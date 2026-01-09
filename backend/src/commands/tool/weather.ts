@@ -1,8 +1,11 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 import moment from 'moment-timezone';
 import z from 'zod';
-import { createUrl } from '../../tools/api';
-import formatters from '../../utils/formatters';
+import { createUrl } from '../../tools/api.js';
+import formatters from '../../utils/formatters.js';
+import logger from '../../utils/logger.js';
+
 const { convertMsToDuration, ucwords } = formatters;
 
 export default {
@@ -12,7 +15,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, config } = ctx.bot.context;
 
     try {
@@ -34,10 +37,10 @@ export default {
       const apiUrl = createUrl('diibot', '/api/tools/cekcuaca', {
         query: location,
       });
-      console.log('Weather API URL:', apiUrl);
+      logger.info(`Weather API URL: ${apiUrl}`);
       const response = await axios.get(apiUrl);
       const { result } = response.data;
-      console.log('Weather API result keys:', result ? Object.keys(result) : 'undefined');
+      logger.debug(`Weather API result keys: ${result ? Object.keys(result) : 'undefined'}`);
 
       if (
         !result ||
@@ -79,8 +82,8 @@ export default {
         text: replyText,
         footer: config.msg.footer,
       });
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      logger.error('Weather command error:', error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
   },

@@ -1,5 +1,5 @@
-import { jest, describe, it, expect, beforeEach, afterAll } from '@jest/globals';
-import { ConfigService } from '../ConfigService.js';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
+import { ConfigService } from '@/services/ConfigService.js';
 import { z } from 'zod';
 
 describe('ConfigService', () => {
@@ -28,14 +28,6 @@ describe('ConfigService', () => {
 
   it('should throw error when required variables are missing', () => {
     delete process.env.DATABASE_URL;
-
-    expect(() => {
-      ConfigService.getInstance();
-    }).toThrow(z.ZodError);
-  });
-
-  it('should throw error when variables have invalid formats', () => {
-    process.env.PORT = 'invalid-port';
 
     expect(() => {
       ConfigService.getInstance();

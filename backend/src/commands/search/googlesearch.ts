@@ -1,6 +1,8 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 import z from 'zod';
-import { createUrl } from '../../tools/api';
+import { createUrl } from '../../tools/api.js';
+import logger from '../../utils/logger.js';
 
 export default {
   name: 'googlesearch',
@@ -9,7 +11,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, config } = ctx.bot.context;
 
     try {
@@ -50,8 +52,8 @@ export default {
         text: resultText,
         footer: config.msg.footer,
       });
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      logger.error('Google search command error:', error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
   },

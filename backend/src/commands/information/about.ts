@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'about',
   aliases: ['bot', 'infobot'],
   category: 'information',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
       const botDb = (await db.get('bot')) || {};
@@ -22,7 +23,7 @@ export default {
           )}`,
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx.bot.context, ctx, error);
     }
   },

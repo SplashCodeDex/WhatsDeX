@@ -1,80 +1,92 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
-import logger from '../utils/logger';
+import { firebaseService } from '@/services/FirebaseService.js';
+import logger from '@/utils/logger.js';
+import { TenantDocument } from '@/types/index.js';
+import { Timestamp } from 'firebase-admin/firestore';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-
-/**
- * Service for managing multiple tenants in a SaaS environment
- * Database logic is being migrated to Firebase/Firestore
- */
 export class MultiTenantService {
-  constructor() {
-    // Database adapter will be injected here
-    this.db = null;
+  private static instance: MultiTenantService;
+
+  private constructor() {}
+
+  public static getInstance(): MultiTenantService {
+    if (!MultiTenantService.instance) {
+      MultiTenantService.instance = new MultiTenantService();
+    }
+    return MultiTenantService.instance;
   }
 
-  // Tenant Management
-  async createTenant(data) {
-    logger.info('🔥 Firebase createTenant placeholder', { data });
-    return { id: 'temp-id', ...data };
-  }
-
-  async getTenant(identifier) {
-    logger.info('🔥 Firebase getTenant placeholder', { identifier });
-    return null;
-  }
-
-  async updateTenant(tenantId, data) {
-    logger.info('🔥 Firebase updateTenant placeholder', { tenantId });
-    return { id: tenantId, ...data };
-  }
-
-  async listTenants() {
-    logger.info('🔥 Firebase listTenants placeholder');
-    return [];
-  }
-
-  // User Management
-  async createTenantUser(tenantId, userData) {
-    logger.info('🔥 Firebase createTenantUser placeholder', { tenantId });
-    return { id: 'temp-user-id', ...userData };
-  }
-
-  async authenticateUser(tenantId, email, password) {
-    logger.info('🔥 Firebase authenticateUser placeholder', { tenantId, email });
-    // This will use Firebase Auth in the final implementation
-    return {
-      token: 'fake-jwt-token',
-      user: { id: 'user-1', email, name: 'Admin', role: 'admin' },
-      tenant: { id: tenantId, name: 'Tenant', subdomain: 'test', plan: 'free' }
+  /**
+   * Create a new tenant
+   */
+  async createTenant(tenantData: Partial<TenantDocument>): Promise<TenantDocument | null> {
+    if (!tenantData.id) throw new Error('Tenant ID is required');
+    
+    const data: TenantDocument = {
+      id: tenantData.id,
+      name: tenantData.name || 'New Workspace',
+      subdomain: tenantData.subdomain || tenantData.id,
+      plan: tenantData.plan || 'free',
+      status: 'active',
+      ownerId: tenantData.ownerId || '',
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      settings: {
+        maxBots: tenantData.plan === 'premium' ? 2 : 1,
+        aiEnabled: tenantData.plan !== 'free',
+        timezone: 'UTC',
+        ...tenantData.settings
+      }
     };
+
+    try {
+      await firebaseService.setDoc< 'tenants' >('tenants', data.id, data);
+      logger.info(`Tenant created: ${data.id}`);
+      return data;
+    } catch (error: any) {
+      logger.error(`MultiTenantService.createTenant error [${data.id}]:`, error);
+      return null;
+    }
   }
 
-  // Analytics
-  async recordAnalytic(tenantId, metric, value, metadata = null) {
-    logger.info('🔥 Firebase recordAnalytic placeholder', { tenantId, metric });
+  /**
+   * Get tenant by ID
+   */
+  async getTenant(tenantId: string): Promise<TenantDocument | null> {
+    try {
+      return await firebaseService.getDoc< 'tenants' >('tenants', tenantId);
+    } catch (error: any) {
+      logger.error(`MultiTenantService.getTenant error [${tenantId}]:`, error);
+      return null;
+    }
   }
 
-  async getAnalytics(tenantId, metrics, startDate, endDate) {
-    logger.info('🔥 Firebase getAnalytics placeholder', { tenantId });
-    return [];
+  /**
+   * Update tenant data
+   */
+  async updateTenant(tenantId: string, data: Partial<TenantDocument>): Promise<void> {
+    try {
+      await firebaseService.setDoc< 'tenants' >('tenants', tenantId, {
+        ...data,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error: any) {
+      logger.error(`MultiTenantService.updateTenant error [${tenantId}]:`, error);
+      throw error;
+    }
   }
 
-  // Plan Limits
-  async checkPlanLimits(tenantId, resource) {
-    return {
-      limit: 100,
-      current: 0,
-      remaining: 100,
-      canProceed: true
-    };
-  }
+  /**
+   * Check if tenant has reached bot limit
+   */
+  async canAddBot(tenantId: string): Promise<boolean> {
+    const tenant = await this.getTenant(tenantId);
+    if (!tenant) return false;
 
-  async getCurrentUsage(tenantId, resource) {
-    return 0;
+    // This logic will be fully implemented once multiTenantBotService is refactored
+    // to include a count method. For now, returning true based on plan check.
+    return true; 
   }
 }
 
-export default new MultiTenantService();
+export const multiTenantService = MultiTenantService.getInstance();
+export default multiTenantService;

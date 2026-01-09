@@ -22,7 +22,7 @@ class FunCommandsService {
     try {
       await this.loadKhodamData();
       await this.loadQuotesData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error initializing fun commands service:', error);
     }
   }
@@ -36,7 +36,7 @@ class FunCommandsService {
         'https://raw.githubusercontent.com/nazedev/database/refs/heads/master/random/cekkhodam.json'
       );
       this.khodamData = response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading khodam data:', error);
       // Fallback data
       this.khodamData = [
@@ -69,7 +69,7 @@ class FunCommandsService {
         bijak: bijakRes.data,
         bucin: bucinRes.data,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading quotes data:', error);
       // Fallback data
       this.quotesData = {
@@ -142,7 +142,7 @@ class FunCommandsService {
           `│• Akhlak Buruk : *${akhlakBuruk}%*\n` +
           `╰──────❍`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in cek sifat:', error);
       throw new Error('Failed to analyze personality');
     }
@@ -164,7 +164,7 @@ class FunCommandsService {
         success: true,
         result: `Khodam dari *${name}* adalah *${randomKhodam.nama}*\n_${randomKhodam.deskripsi}_`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in cek khodam:', error);
       throw new Error('Failed to check khodam');
     }
@@ -184,7 +184,7 @@ class FunCommandsService {
         success: true,
         result: `Nama : ${name}\n*Mati Pada Umur :* ${age} Tahun.\n\n_Cepet Cepet Tobat Bro_\n_Soalnya Mati ga ada yang tau_`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in cek mati:', error);
       // Fallback if API fails
       const age = Math.floor(Math.random() * 90) + 20;
@@ -219,7 +219,7 @@ class FunCommandsService {
             ? `_${randomQuote.quotes}_\n\n*- ${randomQuote.author}*`
             : randomQuote,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error getting ${category} quote:`, error);
       throw new Error(`Failed to get ${category} quote`);
     }
@@ -249,7 +249,7 @@ class FunCommandsService {
         success: true,
         result: `*Bisakah ${text}*\nJawab : ${randomResponse}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in bisakah:', error);
       throw new Error('Failed to process question');
     }
@@ -278,7 +278,7 @@ class FunCommandsService {
         success: true,
         result: `*Apakah ${text}*\nJawab : ${randomResponse}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in apakah:', error);
       throw new Error('Failed to process question');
     }
@@ -325,7 +325,7 @@ class FunCommandsService {
         success: true,
         result: `*Kapan ${text}*\nJawab : ${randomResponse}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in kapan:', error);
       throw new Error('Failed to process question');
     }

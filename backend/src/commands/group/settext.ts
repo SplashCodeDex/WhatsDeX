@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'settext',
   aliases: ['settxt'],
@@ -7,7 +8,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     const key = ctx.args[0] || null;
     const text = ctx.args.slice(1).join(' ') || ctx.quoted?.content || null;
@@ -59,7 +60,7 @@ export default {
       await ctx.reply(
         formatter.quote(`✅ Pesan untuk teks ${formatter.inlineCode(key)} berhasil disimpan!`)
       );
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

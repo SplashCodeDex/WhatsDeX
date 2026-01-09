@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import { exec } from 'node:child_process';
 import process from 'node:process';
 import util from 'node:util';
@@ -9,7 +10,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     if (!process.env.PM2_HOME)
       return await ctx.reply(
@@ -25,7 +26,7 @@ export default {
       });
 
       await util.promisify(exec)('pm2 restart $(basename $(pwd))'); // Hanya berfungsi saat menggunakan PM2
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 /**
  * Dynamic Tool Registry - Converts all bot commands into AI-accessible tools
@@ -44,7 +44,7 @@ export class DynamicToolRegistry {
           this.toolSchemas.push(toolSchema);
           registered++;
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.warn(`Failed to register command as tool: ${commandName}`, error.message);
       }
     }
@@ -353,7 +353,7 @@ export class DynamicToolRegistry {
         ...stats,
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         status: 'unhealthy',
         error: error.message,

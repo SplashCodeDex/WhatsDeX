@@ -1,31 +1,34 @@
-import IntelligentMessageProcessor from '../IntelligentMessageProcessor';
-import { createBotContext  } from '../utils/createBotContext';
-import logger from '../utils/logger';
+import { EnhancedAIBrain } from '../services/index.js';
+import { createBotContext } from '../utils/createBotContext.js';
+import logger from '../utils/logger.js';
+import { Bot, GlobalContext } from '../types/index.js';
 
 /**
  * Intelligent Worker - Processes messages with AI intelligence
  */
 class IntelligentWorker {
+  private processor: EnhancedAIBrain | null = null;
+  private bot: Bot | null = null;
+  private context: GlobalContext | null = null;
+
   constructor() {
-    this.processor = null;
-    this.processingQueue = [];
-    this.isProcessing = false;
-    
     logger.info('Intelligent Worker initialized');
   }
 
   /**
    * Initialize with bot context
    */
-  async initialize(bot, context) {
-    this.processor = new IntelligentMessageProcessor(bot, context);
+  async initialize(bot: Bot, context: GlobalContext) {
+    this.bot = bot;
+    this.context = context;
+    this.processor = new EnhancedAIBrain(bot, context);
     logger.info('Intelligent Worker ready for message processing');
   }
 
   /**
    * Process message with intelligent handling
    */
-  async processMessage(job) {
+  async processMessage(job: any) {
     if (!this.processor) {
       throw new Error('Intelligent processor not initialized');
     }
@@ -41,11 +44,10 @@ class IntelligentWorker {
       
       logger.debug('Message processed intelligently', {
         userId: ctx.sender?.jid,
-        messageType: ctx.metadata?.messageType,
         processed: true
       });
       
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Intelligent processing failed:', {
         error: error.message,
         messageData: JSON.stringify(messageData, null, 2).substring(0, 500)
@@ -57,13 +59,15 @@ class IntelligentWorker {
   /**
    * Create enhanced context from message data
    */
-  async createEnhancedContext(messageData, botContext) {
-    const ctx = createBotContext(messageData, botContext);
+  async createEnhancedContext(messageData: any, botContext: any) {
+    if (!this.context) throw new Error('Global context not initialized');
+    
+    const ctx = await createBotContext(this.bot, messageData, this.context);
     
     // Add intelligent enhancements
     ctx.intelligentMode = true;
     ctx.processingTimestamp = Date.now();
-    ctx.workerVersion = 'intelligent-v2';
+    ctx.workerVersion = 'intelligent-v3';
     
     return ctx;
   }
@@ -72,7 +76,8 @@ class IntelligentWorker {
    * Get processing statistics
    */
   getStats() {
-    return this.processor ? this.processor.getStats() : {
+    // EnhancedAIBrain doesn't have getStats yet, adding a basic placeholder
+    return this.processor ? { status: 'active' } : {
       status: 'not_initialized'
     };
   }
@@ -92,7 +97,7 @@ class IntelligentWorker {
         stats,
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         status: 'unhealthy',
         reason: error.message,

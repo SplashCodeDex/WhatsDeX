@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'setbotpp',
   aliases: ['setboticon', 'seticonbot', 'setppbot'],
@@ -5,7 +6,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
       tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
@@ -22,7 +23,7 @@ export default {
       await ctx.core.updateProfilePicture(ctx.core.user.id, buffer);
 
       await ctx.reply(formatter.quote('✅ Berhasil mengubah gambar profil bot!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

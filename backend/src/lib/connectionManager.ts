@@ -8,7 +8,11 @@ import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 
 class ConnectionManager {
-  constructor(config = {}) {
+  private state: any;
+  private reconnectionTimeout: NodeJS.Timeout | null;
+  private reconnectFn: (() => Promise<any>) | null = null;
+
+  constructor(config: any = {}) {
     this.state = {
       isReconnecting: false,
       attemptCount: 0,
@@ -25,7 +29,7 @@ class ConnectionManager {
     this.reconnectionTimeout = null;
   }
 
-  async handleReconnection(error, context) {
+  async handleReconnection(error: any, context: any) {
     // Circuit breaker check
     if (this.isCircuitOpen()) {
       console.log('⚡ Circuit breaker OPEN - waiting before retry');
@@ -92,11 +96,11 @@ class ConnectionManager {
     }
   }
 
-  setReconnector(reconnectFn) {
+  setReconnector(reconnectFn: () => Promise<any>) {
     this.reconnectFn = reconnectFn;
   }
 
-  async attemptReconnection(context) {
+  async attemptReconnection(context: any) {
     return new Promise(async (resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Reconnection timeout'));
@@ -122,7 +126,7 @@ class ConnectionManager {
 
         clearTimeout(timeout);
         resolve(newBot);
-      } catch (error) {
+      } catch (error: any) {
         clearTimeout(timeout);
         reject(error);
       }

@@ -1,4 +1,5 @@
-import { handleWelcome } from '../../events/handler';
+import { MessageContext } from '../../types/index.js';
+import { handleWelcome } from '../../events/handler.js';
 
 export default {
   name: 'simulate',
@@ -7,7 +8,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const input = ctx.args.join(' ') || null;
 
@@ -41,7 +42,7 @@ export default {
             formatter.quote(`❎ Simulasi ${formatter.inlineCode(input)} tidak valid!`)
           );
       }
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

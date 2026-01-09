@@ -1,168 +1,231 @@
-import { makeWASocket, DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
-import logger from '../utils/logger';
-import multiTenantService from './multiTenantService';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import baileys, { DisconnectReason, type WASocket } from '@whiskeysockets/baileys';
+const makeWASocket = (baileys as any).default || baileys;
+import logger from '@/utils/logger.js';
+import { firebaseService } from '@/services/FirebaseService.js';
+import { multiTenantService } from '@/services/multiTenantService.js';
+import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
+import { BotInstanceDocument } from '@/types/index.js';
+import { Timestamp } from 'firebase-admin/firestore';
 import QRCode from 'qrcode';
 
 export class MultiTenantBotService {
-  constructor() {
-    this.activeBots = new Map(); // botInstanceId -> socket
-    this.qrCodes = new Map(); // botInstanceId -> qr code
+  private static instance: MultiTenantBotService;
+  private activeBots: Map<string, any>;
+  private qrCodes: Map<string, string>;
+
+  private constructor() {
+    this.activeBots = new Map();
+    this.qrCodes = new Map();
   }
 
-  // Create and start a new bot instance
-  async createBotInstance(tenantId, botData) {
+  // Check if a bot is already active
+  public hasActiveBot(id: string): boolean {
+    return this.activeBots.has(id);
+  }
+
+  public static getInstance(): MultiTenantBotService {
+    if (!MultiTenantBotService.instance) {
+      MultiTenantBotService.instance = new MultiTenantBotService();
+    }
+    return MultiTenantBotService.instance;
+  }
+
+  /**
+   * Create and start a new bot instance
+   */
+  async createBotInstance(tenantId: string, botData: Partial<BotInstanceDocument>): Promise<BotInstanceDocument> {
     try {
-      // Check plan limits
-      const limitCheck = await multiTenantService.checkPlanLimits(tenantId, 'maxBots');
-      if (!limitCheck.canProceed) {
-        throw new Error(`Bot limit exceeded. Current plan allows ${limitCheck.limit} bots.`);
+      // 1. Check plan limits
+      const canAdd = await multiTenantService.canAddBot(tenantId);
+      if (!canAdd) {
+        throw new Error('Bot limit exceeded for your current plan.');
       }
 
-      // Create bot instance placeholder
-      const botInstance = { id: `bot_${Date.now()}`, ...botData, tenantId };
-      logger.info('🔥 Firebase createBotInstance placeholder', { botInstance });
+      // 2. Prepare bot document
+      const botId = `bot_${Date.now()}`;
+      const data: BotInstanceDocument = {
+        id: botId,
+        name: botData.name || 'My Bot',
+        status: 'offline',
+        connectionMetadata: {
+          browser: ['WhatsDeX', 'Chrome', '1.0.0'],
+          platform: 'web'
+        },
+        stats: {
+          messagesSent: 0,
+          messagesReceived: 0,
+          errorsCount: 0
+        },
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        ...botData
+      };
 
-      // Attempt to start bot
-      try {
-        await this.startBot(botInstance.id);
-      } catch (startErr) {
-        logger.error('Bot created but failed to start socket', { error: startErr.message, tenantId, botId: botInstance.id });
-      }
+      // 3. Save to Firestore
+      await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, data, tenantId);
 
-      return botInstance;
-    } catch (error) {
-      logger.error('Failed to create bot instance', { error: error.message, tenantId });
+      // 4. Start the bot
+      this.startBot(tenantId, botId).catch(err => {
+        logger.error(`Initial start failed for bot ${botId}:`, err);
+      });
+
+      return data;
+    } catch (error: any) {
+      logger.error(`MultiTenantBotService.createBotInstance error [${tenantId}]:`, error);
       throw error;
     }
   }
 
-  // Start a bot instance
-  async startBot(botInstanceId) {
+  // Helper bridge for jadibot/legacy commands
+  async createBot(client: any, ctx: any, tenantId: string) {
+    logger.info(`jadibot request for tenant: ${tenantId}`);
+    return this.createBotInstance(tenantId, { name: `Bot ${tenantId}`, userId: tenantId } as any);
+  }
+
+  /**
+   * Start a bot instance with Firestore-backed auth
+   */
+  async startBot(tenantId: string, botId: string): Promise<void> {
     try {
-      logger.info('🔥 Firebase getBotInstance placeholder', { botInstanceId });
-
-      // For now, we use a mock bot instance if not found in db
-      const botInstance = { id: botInstanceId, tenant: { id: 'test-tenant' } };
-
-      if (this.activeBots.has(botInstanceId)) {
-        logger.info(`Bot ${botInstanceId} is already running`);
+      if (this.activeBots.has(botId)) {
+        logger.info(`Bot ${botId} is already running`);
         return;
       }
 
-      // Create session directory
-      const baseSessionRoot = process.env.SESSIONS_DIR || path.join(os.tmpdir(), 'whatsdex-sessions');
-      const sessionDir = path.join(baseSessionRoot, botInstanceId);
-      if (!fs.existsSync(sessionDir)) {
-        fs.mkdirSync(sessionDir, { recursive: true });
-      }
+      // 1. Initialize Firestore Auth State
+      const { state, saveCreds } = await useFirestoreAuthState(tenantId, botId);
 
-      // Initialize auth state
-      const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
-
-      // Create socket
+      // 2. Create Socket
       const socket = makeWASocket({
         auth: state,
         printQRInTerminal: false,
-        generateHighQualityLinkPreview: true,
-        keepAliveIntervalMs: 30000,
         markOnlineOnConnect: true,
       });
 
-      // Store active bot
-      this.activeBots.set(botInstanceId, socket);
+      // 3. Store in memory
+      this.activeBots.set(botId, socket);
 
-      // Event handlers
-      socket.ev.on('connection.update', async (update) => {
-        await this.handleConnectionUpdate(botInstanceId, update);
+      // 4. Update status to connecting
+      await this.updateBotStatus(tenantId, botId, 'connecting');
+
+      // 5. Setup Event Listeners
+      socket.ev.on('connection.update', async (update: any) => {
+        await this.handleConnectionUpdate(tenantId, botId, update);
       });
 
       socket.ev.on('creds.update', saveCreds);
 
-      socket.ev.on('messages.upsert', async ({ messages, type }) => {
+      socket.ev.on('messages.upsert', async ({ messages, type }: any) => {
         if (type === 'notify') {
           for (const message of messages) {
-            await this.handleIncomingMessage(botInstanceId, message);
+            await this.handleIncomingMessage(tenantId, botId, message);
           }
         }
       });
 
-      logger.info(`Bot ${botInstanceId} started successfully`);
+      logger.info(`Bot ${botId} (Tenant: ${tenantId}) initialized`);
 
-    } catch (error) {
-      logger.error('Failed to start bot', { error: error.message, botInstanceId });
+    } catch (error: any) {
+      logger.error(`Failed to start bot ${botId}:`, error);
+      await this.updateBotStatus(tenantId, botId, 'error');
       throw error;
     }
   }
 
-  // Stop a bot instance
-  async stopBot(botInstanceId) {
-    try {
-      const socket = this.activeBots.get(botInstanceId);
-      if (socket) {
-        await socket.logout();
-        socket.end();
-        this.activeBots.delete(botInstanceId);
-      }
-      this.qrCodes.delete(botInstanceId);
-      logger.info(`Bot ${botInstanceId} stopped successfully`);
-    } catch (error) {
-      logger.error('Failed to stop bot', { error: error.message, botInstanceId });
-      throw error;
-    }
-  }
+  /**
+   * Handle connection updates and sync to Firestore
+   */
+  private async handleConnectionUpdate(tenantId: string, botId: string, update: any): Promise<void> {
+    const { connection, lastDisconnect, qr } = update;
 
-  // Handle connection updates
-  async handleConnectionUpdate(botInstanceId, update) {
     try {
-      const { connection, lastDisconnect, qr } = update;
-
       if (qr) {
         const qrCodeUrl = await QRCode.toDataURL(qr);
-        this.qrCodes.set(botInstanceId, qrCodeUrl);
-        logger.info('🔥 Firebase updateBotQR placeholder', { botInstanceId });
+        this.qrCodes.set(botId, qrCodeUrl);
       }
 
       if (connection === 'close') {
-        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
+        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+        await this.updateBotStatus(tenantId, botId, 'offline');
+
         if (shouldReconnect) {
-          logger.info(`Bot ${botInstanceId} disconnected, attempting to reconnect...`);
-          setTimeout(() => this.startBot(botInstanceId), 5000);
+          logger.info(`Bot ${botId} disconnected, reconnecting...`);
+          setTimeout(() => this.startBot(tenantId, botId), 5000);
         } else {
-          logger.info(`Bot ${botInstanceId} logged out`);
-          this.activeBots.delete(botInstanceId);
-          this.qrCodes.delete(botInstanceId);
+          logger.info(`Bot ${botId} logged out.`);
+          this.activeBots.delete(botId);
+          this.qrCodes.delete(botId);
         }
       } else if (connection === 'open') {
-        logger.info(`Bot ${botInstanceId} connected successfully`);
-        this.qrCodes.delete(botInstanceId);
-        logger.info('🔥 Firebase updateBotConnected placeholder', { botInstanceId });
+        logger.info(`Bot ${botId} is ONLINE`);
+        this.qrCodes.delete(botId);
+        await this.updateBotStatus(tenantId, botId, 'online');
       }
-    } catch (error) {
-      logger.error('Failed to handle connection update', { error: error.message, botInstanceId });
+    } catch (error: any) {
+      logger.error(`Error handling connection update for ${botId}:`, error);
     }
   }
 
-  // Handle incoming messages
-  async handleIncomingMessage(botInstanceId, message) {
-    try {
-      if (!message.key || !message.key.remoteJid) return;
-      logger.info('🔥 Firebase handleIncomingMessage placeholder', { botInstanceId, from: message.key.remoteJid });
-      // Logic for message processing and AI will go here
-    } catch (error) {
-      logger.error('Failed to handle incoming message', { error: error.message, botInstanceId });
+  /**
+   * Helper to update bot status in Firestore
+   */
+  private async updateBotStatus(tenantId: string, botId: string, status: BotInstanceDocument['status']): Promise<void> {
+    await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
+      'bots',
+      botId,
+      { status, updatedAt: Timestamp.now() },
+      tenantId,
+      true
+    );
+  }
+
+  /**
+   * Handle incoming messages (delegation placeholder)
+   */
+  private async handleIncomingMessage(tenantId: string, botId: string, message: any): Promise<void> {
+    logger.debug(`Incoming message for bot ${botId}:`, message.key.remoteJid);
+  }
+
+  /**
+   * Stop a bot instance
+   */
+  async stopBot(botId: string): Promise<void> {
+    const socket = this.activeBots.get(botId);
+    if (socket) {
+      socket.end(undefined);
+      this.activeBots.delete(botId);
     }
+    this.qrCodes.delete(botId);
   }
 
-  // Start all bots (placeholder)
-  async startAllBots() {
-    logger.info('🔥 Firebase startAllBots placeholder');
+  /**
+   * Get all active bot instances
+   */
+  public getActiveBots() {
+    return Array.from(this.activeBots.keys()).map(id => ({
+      id,
+      isActive: true, // If it's in the map, it's active
+      // Add more metadata if available
+    }));
   }
 
-  // Stop all bots
-  async stopAllBots() {
+  /**
+   * Get global bot service statistics
+   */
+  public getStats() {
+    return {
+      activeBots: this.activeBots.size,
+      totalQRsGenerated: this.qrCodes.size,
+      runningProcesses: process.env.NODE_ENV === 'production' ? 1 : 1 // Simplified
+    };
+  }
+
+  /**
+   * Stop all active bots
+   */
+  async stopAllBots(): Promise<void> {
     logger.info('Stopping all active bots...');
     for (const botId of this.activeBots.keys()) {
       await this.stopBot(botId);
@@ -170,4 +233,5 @@ export class MultiTenantBotService {
   }
 }
 
-export default new MultiTenantBotService();
+export const multiTenantBotService = MultiTenantBotService.getInstance();
+export default multiTenantBotService;

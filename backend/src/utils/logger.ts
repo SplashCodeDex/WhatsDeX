@@ -2,7 +2,7 @@ import path from 'path';
 import winston from 'winston';
 
 import fs from 'fs';
-import { SERVER_CONFIG } from '../config/constants';
+import { SERVER_CONFIG } from '../config/constants.js';
 
 
 // Define log levels
@@ -80,7 +80,7 @@ const logger = winston.createLogger({
   try {
     const logsDir = path.join(process.cwd(), SERVER_CONFIG.LOG_DIR);
     await fs.promises.mkdir(logsDir, { recursive: true });
-  } catch (error) {
+  } catch (error: any) {
     // This error is not critical, but should be logged to the console.
     console.error('❌ Warning: Failed to create logs directory:', error);
   }
@@ -185,4 +185,6 @@ const enhancedLogger = {
   },
 };
 
+// Export enhanced logger
+export { enhancedLogger as logger };
 export default enhancedLogger;

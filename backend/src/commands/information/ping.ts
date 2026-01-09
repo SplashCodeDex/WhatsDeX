@@ -1,11 +1,12 @@
-import formatters from '../../utils/formatters';
+import { MessageContext } from '../../types/index.js';
+import formatters from '../../utils/formatters.js';
 import { performance } from 'node:perf_hooks';
 const { convertMsToDuration, ucwords } = formatters;
 
 export default {
   name: 'ping',
   category: 'information',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter } = ctx.bot.context;
     try {
       const startTime = performance.now();
@@ -15,7 +16,7 @@ export default {
         pongMsg.key,
         formatter.quote(`🏓 Pong! Merespon dalam ${convertMsToDuration(responseTime)}.`)
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       await ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }

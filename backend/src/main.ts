@@ -1,6 +1,6 @@
 import { ConfigService } from './services/ConfigService.js';
 import initializeContext from './lib/context.js';
-import { startServer } from './server.js';
+import MultiTenantApp from './server/multiTenantApp.js';
 import logger from './utils/logger.js';
 
 /**
@@ -11,16 +11,22 @@ async function main() {
         logger.info('🚀 Starting WhatsDeX...');
 
         // Initialize ConfigService first
-        ConfigService.getInstance();
+        const configService = ConfigService.getInstance();
 
         // 1. Initialize Context (without Prisma)
         const context = await initializeContext();
 
         // 2. Start Multi-tenant Server
-        await startServer(context.config);
+        if (configService.get('USE_SERVER')) {
+            const app = new MultiTenantApp();
+            await app.initialize();
+            await app.start();
+        } else {
+            logger.info('🔕 Server disabled in configuration');
+        }
 
         logger.info('✨ WhatsDeX is ready!');
-    } catch (error) {
+    } catch (error: any) {
         logger.error('💥 Fatal error during startup:', error);
         process.exit(1);
     }

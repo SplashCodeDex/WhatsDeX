@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'listapis',
   aliases: ['listapi'],
   category: 'information',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     try {
       const APIs = tools.api.listUrl();
@@ -15,7 +16,7 @@ export default {
         text: `${formatter.quote('List of APIs used:')}\n${resultText.trim()}`,
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

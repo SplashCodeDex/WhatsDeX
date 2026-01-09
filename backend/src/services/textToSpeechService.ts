@@ -6,7 +6,7 @@
 import path from 'path';
 import axios from 'axios';
 import { promises as fs } from 'fs';
-import context from '../../context';
+import context from '../../context.js';
 
 class TextToSpeechService {
   constructor() {
@@ -20,7 +20,7 @@ class TextToSpeechService {
   async initialize() {
     try {
       await this.ensureTempDir();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error initializing TTS service:', error);
     }
   }
@@ -68,7 +68,7 @@ class TextToSpeechService {
         language,
         message: `Berhasil mengconvert teks ke suara: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in text-to-speech:', error);
 
       if (error.message.includes('Rate limit')) {
@@ -136,7 +136,7 @@ class TextToSpeechService {
         options,
         message: `Berhasil mengconvert dengan pengaturan advanced: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in advanced text-to-speech:', error);
 
       if (error.message.includes('Rate limit')) {
@@ -227,7 +227,7 @@ class TextToSpeechService {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking TTS rate limit:', error);
       return false; // Fail safe
     }
@@ -239,7 +239,7 @@ class TextToSpeechService {
   async ensureTempDir() {
     try {
       await fs.access(this.tempDir);
-    } catch (error) {
+    } catch (error: any) {
       await fs.mkdir(this.tempDir, { recursive: true });
     }
   }
@@ -265,7 +265,7 @@ class TextToSpeechService {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cleaning up TTS files:', error);
     }
   }
@@ -287,7 +287,7 @@ class TextToSpeechService {
         filePath,
         message: 'TTS audio saved successfully',
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving TTS file:', error);
       throw new Error('Failed to save TTS audio');
     }

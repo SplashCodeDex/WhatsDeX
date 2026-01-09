@@ -1,21 +1,25 @@
 import fs from 'fs';
 import { spawn } from 'child_process';
 
-export const imageToWebp = async buffer => {
+export const imageToWebp = async (buffer: Buffer) => {
   return buffer;
 };
 
-export const videoToWebp = async buffer => {
+
+export const videoToWebp = async (buffer: Buffer) => {
   return buffer;
 };
 
-export const writeExifImg = async (buffer, metadata) => {
+
+export const writeExifImg = async (buffer: Buffer, metadata: any) => {
   return buffer;
 };
 
-export const writeExifVid = async (buffer, metadata) => {
+
+export const writeExifVid = async (buffer: Buffer, metadata: any) => {
   return buffer;
 };
+
 
 export const writeExif = writeExifImg;
 

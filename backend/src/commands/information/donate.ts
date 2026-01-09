@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'donate',
   aliases: ['donasi', 'support'],
   category: 'information',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
       const qrisLink = (await db.get('bot.text.qris')) || null;
@@ -40,7 +41,7 @@ export default {
           footer: config.msg.footer,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(config, ctx, error);
     }
   },

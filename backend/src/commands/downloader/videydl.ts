@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'videydl',
   aliases: ['videy'],
@@ -5,7 +6,7 @@ export default {
   permissions: {
     premium: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const url = ctx.args[0] || null;
 
@@ -32,7 +33,7 @@ export default {
         caption: formatter.quote(`URL: ${url}`),
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

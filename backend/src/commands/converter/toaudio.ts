@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
 export default {
@@ -7,7 +8,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
       tools.cmd.checkMedia(ctx.msg.contentType, ['video']),
@@ -35,7 +36,7 @@ export default {
         },
         mimetype: tools.mime.lookup('mp3'),
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

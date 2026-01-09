@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'fixdb',
   aliases: ['fixdatabase'],
@@ -5,7 +6,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     const input = ctx.args[0] || null;
 
@@ -335,7 +336,7 @@ export default {
         waitMsg.key,
         formatter.quote(`✅ Berhasil membersihkan ${processedCount} data untuk ${input}!`)
       );
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

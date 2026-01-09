@@ -80,7 +80,7 @@ class ModerationService {
       try {
         const result = await this.reviewModerationItem(itemId, reviewData);
         results.successful.push(result);
-      } catch (error) {
+      } catch (error: any) {
         results.failed.push({ id: itemId, error: error.message });
       }
     }

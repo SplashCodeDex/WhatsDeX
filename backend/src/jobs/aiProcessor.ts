@@ -1,12 +1,57 @@
-import GeminiService from '../../services/gemini';
-import logger from '../utils/logger';
+import { Job } from 'bull';
+import GeminiService from '../services/gemini.js';
+import logger from '../utils/logger.js';
+
+interface Message {
+  role: string;
+  content: string;
+}
+
+interface Conversation {
+  messages: Message[];
+  context?: any;
+}
+
+interface ContentGenerationData {
+  prompt: string;
+  type: string;
+  userId: string;
+  context?: {
+    targetLanguage?: string;
+    cacheKey?: string;
+  };
+}
+
+interface BatchAnalysisData {
+  items: { id: string; content: string }[];
+  analysisType: string;
+  userId: string;
+}
+
+interface ContentModerationData {
+  content: string;
+  userId: string;
+  context?: any;
+}
+
+interface FineTuningData {
+  conversations: { id: string; messages: { role: string; content: string }[]; context?: any }[];
+  userId: string;
+  modelType: string;
+}
+
+interface PerformanceAnalyticsData {
+  timeRange: string;
+  userId: string;
+  metrics: string[];
+}
 
 /**
- * AI Processing Job Handlers
- * Handles background AI tasks like content generation, analysis, and processing
+ * AIProcessor handles various AI-related background jobs using Gemini.
  */
-
 class AIProcessor {
+  private gemini: GeminiService;
+
   constructor() {
     this.gemini = new GeminiService();
   }
@@ -17,7 +62,7 @@ class AIProcessor {
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processContentGeneration(jobData, job) {
+  async processContentGeneration(jobData: ContentGenerationData, job: Job): Promise<any> {
     const { prompt, type, userId, context } = jobData;
 
     try {
@@ -68,14 +113,14 @@ class AIProcessor {
         success: true,
         type,
         result,
-        processingTime: Date.now() - job.processedOn,
+        processingTime: Date.now() - (job.processedOn ?? Date.now()),
         metadata: {
           userId,
           promptLength: prompt.length,
           resultLength: result.length,
         },
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('AI content generation failed', {
         jobId: job.id,
         type,
@@ -93,7 +138,7 @@ class AIProcessor {
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processBatchAnalysis(jobData, job) {
+  async processBatchAnalysis(jobData: BatchAnalysisData, job: Job): Promise<any> {
     const { items, analysisType, userId } = jobData;
 
     try {
@@ -141,7 +186,7 @@ class AIProcessor {
             analysis,
             success: true,
           });
-        } catch (itemError) {
+        } catch (itemError: any) {
           logger.warn('Failed to analyze item in batch', {
             jobId: job.id,
             itemId: item.id,
@@ -157,7 +202,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        job.progress(((i + 1) / items.length) * 100);
+        await job.progress(((i + 1) / items.length) * 100);
       }
 
       return {
@@ -166,9 +211,9 @@ class AIProcessor {
         totalItems: items.length,
         successfulAnalyses: results.filter(r => r.success).length,
         results,
-        processingTime: Date.now() - job.processedOn,
+        processingTime: Date.now() - (job.processedOn ?? Date.now()),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Batch AI analysis failed', {
         jobId: job.id,
         analysisType,
@@ -186,7 +231,7 @@ class AIProcessor {
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processContentModeration(jobData, job) {
+  async processContentModeration(jobData: ContentModerationData, job: Job): Promise<any> {
     const { content, userId, context } = jobData;
 
     try {
@@ -196,7 +241,7 @@ class AIProcessor {
         contentLength: content.length,
       });
 
-      const moderationResult = await this.gemini.moderateContent(content, context);
+      const moderationResult = await this.gemini.moderateContent(content);
 
       // Log moderation actions
       if (!moderationResult.safe) {
@@ -212,14 +257,14 @@ class AIProcessor {
         success: true,
         contentLength: content.length,
         moderationResult,
-        processingTime: Date.now() - job.processedOn,
+        processingTime: Date.now() - (job.processedOn ?? Date.now()),
         metadata: {
           userId,
           categories: moderationResult.categories,
           score: moderationResult.score,
         },
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('AI content moderation failed', {
         jobId: job.id,
         userId,
@@ -236,7 +281,7 @@ class AIProcessor {
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processFineTuningData(jobData, job) {
+  async processFineTuningData(jobData: FineTuningData, job: Job): Promise<any> {
     const { conversations, userId, modelType } = jobData;
 
     try {
@@ -261,7 +306,7 @@ class AIProcessor {
             trainingExample,
             success: true,
           });
-        } catch (convError) {
+        } catch (convError: any) {
           logger.warn('Failed to process conversation for fine-tuning', {
             jobId: job.id,
             conversationId: conversation.id,
@@ -276,7 +321,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        job.progress(((i + 1) / conversations.length) * 100);
+        await job.progress(((i + 1) / conversations.length) * 100);
       }
 
       return {
@@ -284,9 +329,9 @@ class AIProcessor {
         modelType,
         totalConversations: conversations.length,
         processedData,
-        processingTime: Date.now() - job.processedOn,
+        processingTime: Date.now() - (job.processedOn ?? Date.now()),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('AI fine-tuning data processing failed', {
         jobId: job.id,
         userId,
@@ -300,17 +345,17 @@ class AIProcessor {
 
   /**
    * Generate training example from conversation
-   * @param {Object} conversation - Conversation data
+   * @param {Conversation} conversation - Conversation data
    * @param {string} modelType - Type of model being fine-tuned
-   * @returns {Promise<Object>} Training example
+   * @returns {Promise<any>} Training example
    */
-  async generateTrainingExample(conversation, modelType) {
+  async generateTrainingExample(conversation: Conversation, modelType: string): Promise<any> {
     const { messages, context } = conversation;
 
     // Create a prompt for the AI to generate a training example
     const prompt = `Create a training example for a ${modelType} model from this conversation:
 
-${messages.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+${messages.map((msg: Message) => `${msg.role}: ${msg.content}`).join('\n')}
 
 Context: ${JSON.stringify(context)}
 
@@ -325,16 +370,16 @@ Generate a JSON training example with the following format:
 
     try {
       return JSON.parse(trainingExampleStr);
-    } catch (parseError) {
+    } catch (parseError: any) {
       // If parsing fails, create a basic structure
       return {
         input: messages
-          .filter(m => m.role === 'user')
-          .map(m => m.content)
+          .filter((m: Message) => m.role === 'user')
+          .map((m: Message) => m.content)
           .join(' '),
         output: messages
-          .filter(m => m.role === 'assistant')
-          .map(m => m.content)
+          .filter((m: Message) => m.role === 'assistant')
+          .map((m: Message) => m.content)
           .join(' '),
         context: context || {},
       };
@@ -347,7 +392,7 @@ Generate a JSON training example with the following format:
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processPerformanceAnalytics(jobData, job) {
+  async processPerformanceAnalytics(jobData: PerformanceAnalyticsData, job: Job): Promise<any> {
     const { timeRange, userId, metrics } = jobData;
 
     try {
@@ -374,9 +419,9 @@ Generate a JSON training example with the following format:
       return {
         success: true,
         analytics,
-        processingTime: Date.now() - job.processedOn,
+        processingTime: Date.now() - (job.processedOn ?? Date.now()),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('AI performance analytics processing failed', {
         jobId: job.id,
         userId,

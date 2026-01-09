@@ -3,7 +3,7 @@
  * Provides consistent error handling across the application
  */
 
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 class AppError extends Error {
   constructor(message, statusCode = 500, isOperational = true) {
@@ -243,7 +243,7 @@ class ErrorHandler {
     return async ctx => {
       try {
         return await fn(ctx);
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Command error:', {
           command: ctx.used?.command,
           user: ctx.getId(ctx.sender.jid),
@@ -268,7 +268,7 @@ class ErrorHandler {
     return async (...args) => {
       try {
         return await fn(...args);
-      } catch (error) {
+      } catch (error: any) {
         return this.handleDatabaseError(error, fn.name);
       }
     };
@@ -281,7 +281,7 @@ class ErrorHandler {
     return async (...args) => {
       try {
         return await fn(...args);
-      } catch (error) {
+      } catch (error: any) {
         return this.handleApiError(error, serviceName);
       }
     };

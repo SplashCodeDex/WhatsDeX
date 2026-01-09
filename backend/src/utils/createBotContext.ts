@@ -1,14 +1,15 @@
 import moment from 'moment-timezone';
-import { getJid, getSender, getGroup } from './baileysUtils';
-import { Cooldown } from '../middleware/cooldown';
+import { getJid, getSender, getGroup } from './baileysUtils.js';
+import { Cooldown } from '../middleware/cooldown.js';
+import { db } from '../lib/firebase.js';
 
 const createBotContext = async (
-  botInstance,
-  rawBaileysMessage,
-  originalContext,
-  requestInfo = {}
+  botInstance: any,
+  rawBaileysMessage: any,
+  originalContext: any,
+  requestInfo: any = {}
 ) => {
-  const { database, tools, config, formatter } = originalContext;
+  const { tools, config, formatter } = originalContext;
 
   const senderJid = getSender(rawBaileysMessage);
   const senderId = getSender(rawBaileysMessage);
@@ -17,32 +18,37 @@ const createBotContext = async (
   const groupId = getGroup(rawBaileysMessage);
 
   // Instantiate Cooldown
-  const cooldown = new Cooldown(); // New: Instantiate Cooldown
+  const cooldown = new Cooldown();
 
   const useDirectBaileys = process.env.USE_BAILEYS_DIRECT === 'true' || process.env.NODE_ENV === 'production';
 
   // Reply via Baileys in production; fallback to HTTP simulation
-  const reply = async content => {
+  const reply = async (content: any) => {
     const messageContent = typeof content === 'string' ? { text: content } : content;
     if (useDirectBaileys && botInstance?.sendMessage) {
       return await botInstance.sendMessage(rawBaileysMessage.key.remoteJid, messageContent, { quoted: rawBaileysMessage });
     }
-    await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: rawBaileysMessage.key.remoteJid, message: messageContent }),
-    });
+    // Fallback or dev mode
+    try {
+      await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: rawBaileysMessage.key.remoteJid, message: messageContent }),
+      });
+    } catch (e) { }
   };
 
-  const replyReact = async emoji => {
+  const replyReact = async (emoji: string) => {
     if (useDirectBaileys && botInstance?.sendMessage) {
       return await botInstance.sendMessage(rawBaileysMessage.key.remoteJid, { react: { text: emoji, key: rawBaileysMessage.key } });
     }
-    await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: rawBaileysMessage.key.remoteJid, message: { react: { text: emoji, key: rawBaileysMessage.key } } }),
-    });
+    try {
+      await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: rawBaileysMessage.key.remoteJid, message: { react: { text: emoji, key: rawBaileysMessage.key } } }),
+      });
+    } catch (e) { }
   };
 
   const simulateTyping = async () => {
@@ -50,50 +56,132 @@ const createBotContext = async (
       try {
         await botInstance.presenceSubscribe(rawBaileysMessage.key.remoteJid);
         await botInstance.sendPresenceUpdate('composing', rawBaileysMessage.key.remoteJid);
-        setTimeout(() => botInstance.sendPresenceUpdate('paused', rawBaileysMessage.key.remoteJid).catch(() => {}), 1500);
+        setTimeout(() => botInstance.sendPresenceUpdate('paused', rawBaileysMessage.key.remoteJid).catch(() => { }), 1500);
         return;
       } catch (_) { /* fall back to HTTP */ }
     }
-    await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: rawBaileysMessage.key.remoteJid, message: { typing: true } }),
-    });
+    try {
+      await fetch(`${process.env.BOT_SERVICE_URL}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: rawBaileysMessage.key.remoteJid, message: { typing: true } }),
+      });
+    } catch (e) { }
   };
 
-  // Implement ctx.group() methods using Prisma
+  // Implement ctx.group() methods
   const group = (jid = groupId) => ({
-    isAdmin: async userJid => {
-      if (!jid) return false; // Not a group
-      const user = await database.prisma.user.findUnique({ where: { jid: userJid } });
-      if (!user) return false;
-      const userGroup = await database.prisma.userGroup.findUnique({
-        where: { userId_groupId: { userId: user.id, groupId: jid } },
-      });
-      return userGroup ? userGroup.role === 'admin' || userGroup.role === 'owner' : false;
+    isAdmin: async (userJid: string) => {
+      if (!jid) return false;
+      try {
+        const memberSnapshot = await db.collection('groups').doc(jid).collection('members').doc(userJid).get();
+        if (memberSnapshot.exists) {
+          const role = memberSnapshot.data()?.role;
+          return role === 'admin' || role === 'superadmin';
+        }
+      } catch (e) { }
+      return false;
     },
     isBotAdmin: async () => {
-      if (!jid) return false; // Not a group
-      const botJid = config.bot.jid; // Assuming bot JID is in config
-      const botUser = await database.prisma.user.findUnique({ where: { jid: botJid } });
-      if (!botUser) return false;
-      const botUserGroup = await database.prisma.userGroup.findUnique({
-        where: { userId_groupId: { userId: botUser.id, groupId: jid } },
-      });
-      return botUserGroup ? botUserGroup.role === 'admin' || botUserGroup.role === 'owner' : false;
+      if (!jid) return false;
+      const botJid = config.bot?.jid;
+      if (!botJid) return false;
+      try {
+        const memberSnapshot = await db.collection('groups').doc(jid).collection('members').doc(botJid).get();
+        if (memberSnapshot.exists) {
+          const role = memberSnapshot.data()?.role;
+          return role === 'admin' || role === 'superadmin';
+        }
+      } catch (e) { }
+      return false;
     },
     members: async () => {
-      if (!jid) return []; // Not a group
-      const groupMembers = await database.prisma.userGroup.findMany({
-        where: { groupId: jid },
-        include: { user: true },
-      });
-      return groupMembers.map(gm => ({
-        jid: gm.user.jid,
-        id: gm.user.id,
-        role: gm.role,
-      }));
+      if (!jid) return [];
+      try {
+        const membersSnapshot = await db.collection('groups').doc(jid).collection('members').get();
+        return membersSnapshot.docs.map(doc => ({
+          jid: doc.id,
+          id: doc.id,
+          role: doc.data().role
+        }));
+      } catch (e) { return []; }
     },
+    metadata: async () => {
+      if (!jid || !botInstance?.groupMetadata) return null;
+      return await botInstance.groupMetadata(jid);
+    },
+    owner: async () => {
+      if (!jid || !botInstance?.groupMetadata) return null;
+      const meta = await botInstance.groupMetadata(jid);
+      return meta.owner || null;
+    },
+    name: async () => {
+      if (!jid || !botInstance?.groupMetadata) return '';
+      const meta = await botInstance.groupMetadata(jid);
+      return meta.subject || '';
+    },
+    add: async (jids: string[]) => {
+      if (!jid || !botInstance?.groupParticipantsUpdate) return null;
+      return await botInstance.groupParticipantsUpdate(jid, jids, 'add');
+    },
+    kick: async (jids: string[]) => {
+      if (!jid || !botInstance?.groupParticipantsUpdate) return null;
+      return await botInstance.groupParticipantsUpdate(jid, jids, 'remove');
+    },
+    promote: async (jids: string[]) => {
+      if (!jid || !botInstance?.groupParticipantsUpdate) return null;
+      return await botInstance.groupParticipantsUpdate(jid, jids, 'promote');
+    },
+    demote: async (jids: string[]) => {
+      if (!jid || !botInstance?.groupParticipantsUpdate) return null;
+      return await botInstance.groupParticipantsUpdate(jid, jids, 'demote');
+    },
+    inviteCode: async () => {
+      if (!jid || !botInstance?.groupInviteCode) return '';
+      return await botInstance.groupInviteCode(jid);
+    },
+    pendingMembers: async () => {
+      return []; // Not implemented in Baileys easily without extra logic
+    },
+    approvePendingMembers: async (jids: string[]) => {
+      return null; 
+    },
+    rejectPendingMembers: async (jids: string[]) => {
+      return null;
+    },
+    updateDescription: async (desc: string) => {
+      if (!jid || !botInstance?.groupUpdateDescription) return null;
+      return await botInstance.groupUpdateDescription(jid, desc);
+    },
+    updateSubject: async (subject: string) => {
+      if (!jid || !botInstance?.groupUpdateSubject) return null;
+      return await botInstance.groupUpdateSubject(jid, subject);
+    },
+    joinApproval: async (mode: 'on' | 'off') => {
+      if (!jid || !botInstance?.groupJoinApprovalMode) return null;
+      return await botInstance.groupJoinApprovalMode(jid, mode);
+    },
+    membersCanAddMemberMode: async (mode: 'on' | 'off') => {
+      if (!jid || !botInstance?.groupMemberAddMode) return null;
+      return await botInstance.groupMemberAddMode(mode === 'on');
+    },
+    isOwner: async (userJid: string) => {
+      if (!jid || !botInstance?.groupMetadata) return false;
+      const meta = await botInstance.groupMetadata(jid);
+      return meta.owner === userJid;
+    },
+    matchAdmin: async (userJid: string) => {
+      // Logic same as isAdmin for now
+      if (!jid) return false;
+      try {
+        const memberSnapshot = await db.collection('groups').doc(jid).collection('members').doc(userJid).get();
+        if (memberSnapshot.exists) {
+          const role = memberSnapshot.data()?.role;
+          return role === 'admin' || role === 'superadmin';
+        }
+      } catch (e) { }
+      return false;
+    }
   });
 
   // Simulate ctx.used (command parsing)
@@ -108,47 +196,53 @@ const createBotContext = async (
     text: rawBaileysMessage.message?.conversation || '',
   };
 
-  // Simulate ctx.bot.cmd.get
-  const getCommand = commandName =>
-    // This assumes originalContext.bot.cmd is available and has a get method
+  const getCommand = (commandName: string) =>
     originalContext.bot.cmd.get(commandName);
-  const ctx = {
+
+  const ctx: any = {
     bot: {
       ...botInstance,
       cmd: {
         get: getCommand,
-        values: () => originalContext.bot.cmd.values(), // Assuming this is needed
+        values: () => originalContext.bot.cmd.values(),
       },
-      context: originalContext, // Provide access to original context
+      context: originalContext,
     },
     msg: rawBaileysMessage,
     isGroup: () => isGroup,
     isPrivate: () => !isGroup,
-    groupId, // Add groupId to ctx
-    sender: { jid: senderJid, id: senderId }, // Assuming senderId is also needed
-    getId: jid => getJid(jid),
+    groupId,
+    sender: { jid: senderJid, id: senderId },
+    getId: (jid: string) => getJid(jid),
     group,
     reply,
     replyReact,
     simulateTyping,
     used,
-    cooldown, // New: Add cooldown instance to ctx
-    // Add other properties as needed based on your middleware's usage
+    cooldown,
     ip: requestInfo.ip || 'unknown',
     userAgent: requestInfo.userAgent || 'WhatsApp',
     sessionId: requestInfo.sessionId || 'unknown',
     location: requestInfo.location || 'unknown',
+    sendMessage: async (jid: string, content: any, options: any = {}) => {
+      if (botInstance?.sendMessage) {
+        return await botInstance.sendMessage(jid, content, options);
+      }
+    },
+    download: async () => {
+      // Placeholder for download method
+      return Buffer.from([]);
+    }
   };
 
-  // Re-evaluate isOwner and isAdmin based on the new ctx structure
   const isOwner = tools.cmd.isOwner(config, senderId, rawBaileysMessage.key.id);
-  const isAdmin = isGroup ? await ctx.group().isAdmin(senderId) : false; // Use senderId for isAdmin check
+  const isAdmin = isGroup ? await ctx.group().isAdmin(senderId) : false;
 
-  // Add these to ctx if they are used directly by commands
   ctx.isOwner = isOwner;
   ctx.isAdmin = isAdmin;
 
   return ctx;
 };
 
+export { createBotContext };
 export default createBotContext;

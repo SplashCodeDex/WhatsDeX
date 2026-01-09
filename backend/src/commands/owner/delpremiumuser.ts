@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'delpremiumuser',
   aliases: ['delpremuser', 'delprem', 'dpu'],
@@ -5,7 +6,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, database: db } = ctx.bot.context;
     const userJid =
       ctx.quoted?.senderJid ||
@@ -49,7 +50,7 @@ export default {
         });
 
       await ctx.reply(formatter.quote('✅ Berhasil menghapuskan Premium kepada pengguna itu!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

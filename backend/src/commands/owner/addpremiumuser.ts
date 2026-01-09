@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'addpremiumuser',
   aliases: ['addpremuser', 'addprem', 'apu'],
@@ -5,7 +6,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, database: db } = ctx.bot.context;
     const userJid =
       ctx.quoted?.senderJid ||
@@ -78,7 +79,7 @@ export default {
           formatter.quote('✅ Berhasil menambahkan Premium selamanya kepada pengguna itu!')
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

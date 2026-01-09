@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'coin',
   aliases: ['koin'],
   category: 'profile',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, database: db } = ctx.bot.context;
     const senderId = ctx.getId(ctx.sender.jid);
     const userDb = (await db.get(`user.${senderId}`)) || {};
@@ -14,7 +15,7 @@ export default {
       const userCoin = userDb?.coin || 0;
 
       await ctx.reply(formatter.quote(`💰 Kamu memiliki ${userCoin} koin tersisa.`));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -1,9 +1,10 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'profile',
   aliases: ['me', 'prof', 'profil'],
   category: 'profile',
   permissions: {},
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
       const senderId = ctx.getId(ctx.sender.jid);
@@ -31,7 +32,7 @@ export default {
           )}`,
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

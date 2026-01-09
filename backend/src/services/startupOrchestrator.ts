@@ -72,7 +72,7 @@ export class StartupOrchestrator {
       console.log(`✅ Service started: ${serviceName}`);
       return service.instance;
       
-    } catch (error) {
+    } catch (error: any) {
       service.status = 'failed';
       console.error(`❌ Service startup failed: ${serviceName}`, error.message);
       throw error;
@@ -105,7 +105,7 @@ export class StartupOrchestrator {
           console.log(`✅ Health check passed: ${serviceName}`);
           return true;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`⚠️ Health check failed for ${serviceName}: ${error.message}`);
       }
 
@@ -174,7 +174,7 @@ export class StartupOrchestrator {
           await service.instance.stop();
           service.status = 'stopped';
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error stopping ${serviceName}:`, error.message);
       }
     }

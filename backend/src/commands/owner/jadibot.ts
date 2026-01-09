@@ -1,4 +1,5 @@
-import multiBotService from '../../src/services/multiBotService';
+import { MessageContext } from '../../types/index.js';
+import multiTenantBotService from '../../services/multiTenantBotService.js';
 
 /**
  * JadiBot Command
@@ -13,51 +14,50 @@ export default {
   aliases: ['createbot', 'multibot'],
   cooldown: 60,
 
-  execute: async (naze, m, { args, isPremium, isCreator }) => {
-    try {
-      const userId = m.sender;
+  execute: async (ctx: MessageContext) => {
+    const { multiTenantBotService, userService } = ctx.bot.context;
+    const userId = ctx.sender.jid;
 
+    try {
       // Check if user already has active bot
-      if (multiBotService.hasActiveBot(userId)) {
-        return m.reply(
+      if (multiTenantBotService.hasActiveBot(userId)) {
+        return await ctx.reply(
           'You already have an active bot instance!\nUse !stopjadibot to stop your current bot.'
         );
       }
 
-      // Check if user is premium (optional requirement)
+      // Check if user is premium
+      const user = await userService.getUser(userId);
+      const isPremium = user?.isPremium || false;
+      const isCreator = user?.isCreator || false;
+
       if (!isPremium && !isCreator) {
-        return m.reply(
+        return await ctx.reply(
           'This feature requires premium access.\nContact admin to get premium access.'
         );
       }
 
-      await m.reply('⏳ Creating your bot instance...\nThis may take a few moments.');
+      await ctx.reply('⏳ Creating your bot instance...\nThis may take a few moments.');
 
       // Create bot instance
-      const result = await multiBotService.createBot(userId, naze);
+      await multiTenantBotService.createBot(ctx.bot, ctx, userId);
 
-      if (result.success) {
-        await m.reply(`${result.message}\n\nUse !stopjadibot to stop your bot instance.`);
-        console.log(`JadiBot created for ${userId}`);
-      } else {
-        await m.reply('Failed to create bot instance. Please try again.');
-      }
-    } catch (error) {
+      await ctx.reply(`✅ Bot instance created successfully!\n\nUse !stopjadibot to stop your bot instance.`);
+      console.log(`JadiBot created for ${userId}`);
+    } catch (error: any) {
       console.error('Error in jadibot command:', error);
 
       if (error.message.includes('Rate limit')) {
-        await m.reply('Rate limit exceeded. Please wait before creating new bot.');
+        await ctx.reply('Rate limit exceeded. Please wait before creating new bot.');
       } else if (error.message.includes('already have an active bot')) {
-        await m.reply(
+        await ctx.reply(
           'You already have an active bot instance!\nUse !stopjadibot to stop your current bot.'
         );
       } else if (error.message.includes('requires premium')) {
-        await m.reply('This feature requires premium access.');
+        await ctx.reply('This feature requires premium access.');
       } else {
-        await m.reply('Terjadi kesalahan saat membuat bot instance. Silakan coba lagi.');
+        await ctx.reply(`Terjadi kesalahan saat membuat bot instance: ${error.message}`);
       }
-
-      console.error('Unexpected error in jadibot:', error);
     }
   },
 };

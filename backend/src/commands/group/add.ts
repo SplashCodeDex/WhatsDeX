@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'add',
   category: 'group',
@@ -7,7 +8,7 @@ export default {
     group: true,
     restrict: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const input = ctx.args.join(' ') || null;
 
@@ -25,10 +26,10 @@ export default {
       return await ctx.reply(formatter.quote('❎ Akun tidak ada di WhatsApp!'));
 
     try {
-      await ctx.group().add(accountJid);
+      await ctx.group().add([accountJid]);
 
       await ctx.reply(formatter.quote('✅ Successfully added!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
 export default {
@@ -7,7 +8,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const url = ctx.args[0] || null;
 
@@ -28,7 +29,7 @@ export default {
       const result = (await axios.get(apiUrl)).data.result.content;
 
       await ctx.reply(result);
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

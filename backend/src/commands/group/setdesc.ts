@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'setdesc',
   category: 'group',
@@ -6,7 +7,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
@@ -21,7 +22,7 @@ export default {
       await ctx.group().updateDescription(input);
 
       await ctx.reply(formatter.quote('✅ Berhasil mengubah deskripsi grup!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

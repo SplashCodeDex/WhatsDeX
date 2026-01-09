@@ -1,7 +1,12 @@
-// lib/retry.js
-import logger from '../src/utils/logger';
+// lib/retry.ts
+import logger from '../utils/logger.js';
 
-export async function withRetry(fn, maxRetries = 3, initialDelay = 5000) {
+
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 5000
+): Promise<T | undefined> {
   let retryCount = 0;
   while (retryCount < maxRetries) {
     try {
@@ -11,9 +16,9 @@ export async function withRetry(fn, maxRetries = 3, initialDelay = 5000) {
           : '🚀 Starting operation...'
       );
       return await fn();
-    } catch (error) {
+    } catch (error: any) {
       retryCount++;
-      logger.error(`❌ Operation error (attempt ${retryCount}): ${error.message}`);
+      logger.error(`❌ Operation error (attempt ${retryCount}): ${error?.message || error}`);
 
       if (retryCount >= maxRetries) {
         logger.error('💀 Max retry attempts reached. Failing...');

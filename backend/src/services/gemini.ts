@@ -1,9 +1,14 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import crypto from 'crypto';
-import logger from '../src/utils/logger';
-import cache from '../lib/cache';
+import logger from '../utils/logger.js';
+import cache from '../lib/cache.js';
 
 class GeminiService {
+  private apiKey: string | undefined;
+  private genAI: GoogleGenerativeAI;
+  private model: GenerativeModel;
+  private cache: any;
+
   constructor() {
     this.apiKey = process.env.GOOGLE_GEMINI_API_KEY;
     if (!this.apiKey) {
@@ -33,7 +38,7 @@ class GeminiService {
    * @param {string} type - Type of request (chat, summary, etc.)
    * @returns {string} Cache key
    */
-  generateCacheKey(prompt, type = 'chat') {
+  generateCacheKey(prompt: string, type: string = 'chat') {
     const hash = crypto.createHash('md5').update(prompt).digest('hex');
     return `gemini:${type}:${hash}`;
   }
@@ -43,7 +48,7 @@ class GeminiService {
    * @param {string} text - The user's input text
    * @returns {Promise<string>} The response text from Gemini
    */
-  async getChatCompletion(text, correlationId = null) {
+  async getChatCompletion(text: string, correlationId: string | null = null) {
     if (!text) {
       throw new Error('Input text is required.');
     }
@@ -90,7 +95,7 @@ class GeminiService {
           responseLength: message.length,
         });
         return message;
-      } catch (error) {
+      } catch (error: any) {
         logger.warn('Gemini chat completion attempt failed', {
           correlationId,
           attempt,
@@ -119,7 +124,7 @@ class GeminiService {
    * @param {Array} messages - Array of message objects with role and content
    * @returns {Promise<string>} The response text from Gemini
    */
-  async getChatCompletionWithHistory(messages, correlationId = null) {
+  async getChatCompletionWithHistory(messages: any[], correlationId: string | null = null) {
     if (!messages || messages.length === 0) {
       throw new Error('Messages array is required.');
     }
@@ -181,7 +186,7 @@ class GeminiService {
           responseLength: message.length,
         });
         return message;
-      } catch (error) {
+      } catch (error: any) {
         logger.warn('Gemini chat completion with history attempt failed', {
           correlationId,
           attempt,
@@ -211,7 +216,7 @@ class GeminiService {
    * @param {Array} tools - Array of tool definitions
    * @returns {Promise<Object>} The full response object with potential tool calls
    */
-  async getChatCompletionWithTools(messages, tools) {
+  async getChatCompletionWithTools(messages: any[], tools: any[]) {
     if (!messages || messages.length === 0) {
       throw new Error('Messages are required.');
     }
@@ -219,9 +224,9 @@ class GeminiService {
     // Create cache key for tool-based conversations
     const toolKey = tools
       ? tools
-          .map(t => t.function?.name)
-          .sort()
-          .join(',')
+        .map(t => t.function?.name)
+        .sort()
+        .join(',')
       : 'no-tools';
     const conversationKey = `${messages.map(m => `${m.role}:${m.content}`).join('|')}|tools:${toolKey}`;
     const cacheKey = this.generateCacheKey(conversationKey, 'tools');
@@ -305,7 +310,7 @@ class GeminiService {
       }
 
       return responseData;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error fetching Gemini completion with tools', {
         error: error.message,
         messageCount: messages.length,
@@ -319,7 +324,7 @@ class GeminiService {
    * @param {Array} messagesToSummarize - Array of message objects to summarize
    * @returns {Promise<string>} The summary text
    */
-  async getSummary(messagesToSummarize) {
+  async getSummary(messagesToSummarize: any[]) {
     if (!messagesToSummarize || messagesToSummarize.length === 0) {
       throw new Error('Messages to summarize are required.');
     }
@@ -360,7 +365,7 @@ Summary:`;
 
       logger.debug('Generated conversation summary', { summaryLength: summary.length });
       return summary;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error generating summary with Gemini', {
         error: error.message,
         messageCount: messagesToSummarize.length,
@@ -374,7 +379,7 @@ Summary:`;
    * @param {string} content - Content to moderate
    * @returns {Promise<Object>} Moderation result
    */
-  async moderateContent(content) {
+  async moderateContent(content: string) {
     if (!content) {
       throw new Error('Content to moderate is required.');
     }
@@ -413,11 +418,10 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
       const response = await result.response;
       const moderationResult = response.text();
 
-      // Parse JSON response
-      let parsed;
+      let parsed: any;
       try {
         parsed = JSON.parse(moderationResult);
-      } catch (parseError) {
+      } catch (parseError: any) {
         logger.warn('Failed to parse moderation response, assuming safe', { moderationResult });
         parsed = { safe: true, categories: [], reason: 'Unable to parse moderation result' };
       }
@@ -430,31 +434,11 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
 
       logger.debug('Content moderation completed', parsed);
       return parsed;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error moderating content with Gemini - ALERT: Manual review required', {
         error: error.message,
         content: `${content.substring(0, 100)}...`,
       });
-
-      // Broadcast alert to admin dashboard via WebSocket
-      // Note: Dynamic require for AdminServer to avoid circular dependencies if any,
-      // but since we are in ESM, we should use import().
-      // For now, we'll skip the broadcast if it's too complex to fix imports,
-      // or we can try to import it dynamically.
-      // Given the scope, I'll comment out the broadcast part or wrap it safely.
-      /*
-      try {
-        const AdminServer = await import('../server.js');
-        AdminServer.default.broadcast('moderation_alert', {
-          content: `${content.substring(0, 200)}...`,
-          reason: 'Moderation failure - manual review required',
-          timestamp: new Date().toISOString(),
-          severity: 'high',
-        });
-      } catch (broadcastError) {
-        logger.warn('Failed to broadcast moderation alert', { error: broadcastError.message });
-      }
-      */
 
       throw new Error(`Moderation failed: ${error.message} - Content flagged for manual review`);
     }
@@ -465,7 +449,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
    * @param {Array} tools - Tools in OpenAI format
    * @returns {Array} Tools in Gemini format
    */
-  convertToolsToGeminiFormat(tools) {
+  convertToolsToGeminiFormat(tools: any[]) {
     return tools.map(tool => ({
       name: tool.function.name,
       description: tool.function.description,
@@ -477,7 +461,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
    * Clear cache for specific patterns
    * @param {string} pattern - Cache key pattern to clear
    */
-  async clearCache(pattern = 'gemini:*') {
+  async clearCache(pattern: string = 'gemini:*') {
     if (this.cache) {
       const cleared = await this.cache.invalidatePattern(pattern);
       logger.info(`Cleared ${cleared} cached Gemini responses`);
@@ -505,7 +489,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
         testResponse: text ? 'OK' : 'No response',
         cache: this.cache ? 'enabled' : 'disabled',
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Gemini health check failed', { error: error.message });
       return {
         status: 'unhealthy',

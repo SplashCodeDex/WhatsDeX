@@ -2,53 +2,53 @@
  * @fileoverview Services Barrel Export
  * Centralized exports for all services in backend/src/services
  *
- * Usage: import { AnalyticsService, CacheService } from './services/index';
+ * Usage: import { AnalyticsService, CacheService } from './services/index.js';
  */
 
 // Core Services
-export { default as AnalyticsService } from './analytics';
-export { default as DatabaseService } from './database';
-export { default as CacheService } from './cache';
+export { default as AnalyticsService } from './analytics.js';
+export { default as DatabaseService } from './database.js';
+export { default as CacheService } from './cache.js';
 
 // AI Services
-export { default as AIProcessor } from './aiProcessor';
-export { default as EnhancedAIBrain } from './enhancedAIBrain';
-export { default as WhatsDeXBrain } from './whatsDeXBrain';
+export { default as AIProcessor } from './aiProcessor.js';
+export { default as EnhancedAIBrain } from './enhancedAIBrain.js';
+export { default as WhatsDeXBrain } from './whatsDeXBrain.js';
 
 // Bot Services
-export { default as CommandSystem } from './commandSystem';
-export { default as SessionManager } from './sessionManager';
-export { default as MultiTenantService } from './multiTenantService';
-export { default as MultiTenantBotService } from './multiTenantBotService';
+export { default as CommandSystem } from './commandSystem.js';
+export { default as SessionManager } from './sessionManager.js';
+export { default as MultiTenantService } from './multiTenantService.js';
+export { default as MultiTenantBotService } from './multiTenantBotService.js';
 
 // Payment/Subscription
-export { default as StripeService } from './stripe';
-export { default as SubscriptionService } from './subscription';
+export { default as StripeService } from './stripe.js';
+export { default as SubscriptionService } from './subscription.js';
 
 // Utility Services
-export { default as RateLimiter } from './rateLimiter';
-export { default as JobQueue } from './jobQueue';
-export { default as MessageQueue } from './messageQueue';
-export { default as ErrorHandler } from './errorHandler';
+export { default as RateLimiter } from './rateLimiter.js';
+export { default as JobQueue } from './jobQueue.js';
+export { default as MessageQueue } from './messageQueue.js';
+export { default as ErrorHandler } from './errorHandler.js';
 
 // Monitoring
-export { default as HealthCheckService } from './healthCheckService';
-export { default as MonitoringService } from './monitoring';
-export { default as AuditLogger } from './auditLogger';
-export { default as AuditService } from './auditService';
+export { default as HealthCheckService } from './healthCheckService.js';
+export { default as MonitoringService } from './monitoring.js';
+export { default as AuditLogger } from './auditLogger.js';
+export { default as AuditService } from './auditService.js';
 
 // Content Services
-export { default as StickerService } from './stickerService';
-export { default as TextToSpeechService } from './textToSpeechService';
-export { default as ContentModeration } from './contentModeration';
-export { default as ModerationService } from './moderationService';
+export { default as StickerService } from './stickerService.js';
+export { default as TextToSpeechService } from './textToSpeechService.js';
+export { default as ContentModeration } from './contentModeration.js';
+export { default as ModerationService } from './moderationService.js';
 
 // Auth
-export { default as InteractiveAuth } from './interactiveAuth';
-export { default as AuthSystem } from './authSystem';
-export { default as AuthManager } from './authManager';
-export { default as AuthenticationService } from './authenticationService';
+export { default as InteractiveAuth } from './interactiveAuth.js';
+export { default as AuthSystem } from './authSystem.js';
+export { default as AuthManager } from './authManager.js';
+export { default as AuthenticationService } from './authenticationService.js';
 
 // User/Settings
-export { default as UserService } from './userService';
-export { default as SettingsService } from './settingsService';
+export { default as UserService } from './userService.js';
+export { default as SettingsService } from './settingsService.js';

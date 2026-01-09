@@ -2,7 +2,7 @@ import path from 'path';
 
 import crypto from 'crypto';
 import { promises as fs } from 'fs';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 /**
  * Ultra-Smart Session Manager
@@ -46,7 +46,7 @@ class UltraSmartSessionManager {
       await fs.mkdir(this.backupDir, { recursive: true });
       await this.loadExistingSessions();
       logger.info('Session directories initialized');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to initialize session directories', { error: error.message });
     }
   }
@@ -71,13 +71,13 @@ class UltraSmartSessionManager {
             // Clean up invalid session
             await this.deleteSessionFile(sessionId);
           }
-        } catch (error) {
+        } catch (error: any) {
           logger.warn('Failed to load session file', { file, error: error.message });
         }
       }
 
       logger.info('Existing sessions loaded', { count: this.activeSessions.size });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to load existing sessions', { error: error.message });
     }
   }
@@ -328,7 +328,7 @@ class UltraSmartSessionManager {
 
         return backupData;
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to recover session', { sessionId, error: error.message });
     }
 
@@ -452,7 +452,7 @@ class UltraSmartSessionManager {
         file: backupFile,
         sessionsCount: backupData.sessions.length,
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to backup sessions', { error: error.message });
     }
   }
@@ -491,7 +491,7 @@ class UltraSmartSessionManager {
       });
 
       return restored;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to restore from backup', { backupFile, error: error.message });
       throw error;
     }
@@ -536,7 +536,7 @@ class UltraSmartSessionManager {
     try {
       const filePath = path.join(this.sessionDir, `${session.id}.session`);
       await fs.writeFile(filePath, JSON.stringify(session, null, 2));
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to save session to file', {
         sessionId: session.id,
         error: error.message,
@@ -552,7 +552,7 @@ class UltraSmartSessionManager {
       const filePath = path.join(this.sessionDir, `${sessionId}.session`);
       const data = await fs.readFile(filePath, 'utf8');
       return JSON.parse(data);
-    } catch (error) {
+    } catch (error: any) {
       return null;
     }
   }
@@ -564,7 +564,7 @@ class UltraSmartSessionManager {
     try {
       const filePath = path.join(this.sessionDir, `${sessionId}.session`);
       await fs.unlink(filePath);
-    } catch (error) {
+    } catch (error: any) {
       // File might not exist, ignore error
     }
   }
@@ -576,7 +576,7 @@ class UltraSmartSessionManager {
     try {
       const backupFile = path.join(this.backupDir, `${sessionId}_backup.json`);
       await fs.writeFile(backupFile, JSON.stringify(backupData, null, 2));
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to save backup', { sessionId, error: error.message });
     }
   }
@@ -589,7 +589,7 @@ class UltraSmartSessionManager {
       const backupFile = path.join(this.backupDir, `${sessionId}_backup.json`);
       const data = await fs.readFile(backupFile, 'utf8');
       return JSON.parse(data);
-    } catch (error) {
+    } catch (error: any) {
       return null;
     }
   }

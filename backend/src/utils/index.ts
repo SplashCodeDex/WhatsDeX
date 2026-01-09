@@ -2,40 +2,38 @@
  * @fileoverview Utils Barrel Export
  * Centralized exports for all utilities in backend/src/utils
  *
- * Usage: import { logger, formatters, RateLimiter } from './utils/index';
+ * Usage: import { logger, formatters, RateLimiter } from './utils/index.js';
  */
 
 // Logging
-export { default as logger } from './logger';
-export { default as securityLogger } from './securityLogger';
+export { default as logger } from './logger.js';
+export { default as securityLogger } from './securityLogger.js';
 
 // Formatters
-export * from './formatters';
-export { default as formatters } from './formatters';
+export * from './formatters.js';
+export { default as formatters } from './formatters.js';
 
 // Managers
-export { default as ChatHistoryManager } from './ChatHistoryManager';
-export { default as DatabaseManager } from './DatabaseManager';
-export { default as MemoryManager } from './MemoryManager';
-export { default as ProcessManager } from './ProcessManager';
+export { default as ChatHistoryManager } from './chatHistoryManager.js';
+export { default as MemoryManager } from './memoryManager.js';
+export { default as ProcessManager } from './processManager.js';
 
 // Utilities
-export { default as RateLimiter } from './RateLimiter';
-export { default as PerformanceMonitor } from './PerformanceMonitor';
-export { default as ConnectionDebugger } from './ConnectionDebugger';
-export { default as MessageClassifier } from './MessageClassifier';
-export { default as ModuleSystemFixer } from './ModuleSystemFixer';
+export { default as RateLimiter } from './rateLimiter.js';
+export { default as PerformanceMonitor } from './performanceMonitor.js';
+export { default as ConnectionDebugger } from './connectionDebugger.js';
+export { default as MessageClassifier } from './messageClassifier.js';
+export { default as ModuleSystemFixer } from './moduleSystemFixer.js';
 
 // Helpers
-export { default as baileysUtils } from './baileysUtils';
-export { default as createBotContext } from './createBotContext';
-export { default as levenshtein } from './levenshtein';
-export { default as security } from './security';
+export { default as baileysUtils } from './baileysUtils.js';
+export { default as createBotContext } from './createBotContext.js';
+export { default as levenshtein } from './levenshtein.js';
+export { default as security } from './security.js';
 
 // Console utilities
-export { default as consoleSuppressor } from './consoleSuppressor';
-export { default as consolefy } from './consolefy';
+export { default as consoleSuppressor } from './consoleSuppressor.js';
+export { default as consolefy } from './consolefy.js';
 
 // Database/Migration
-export { default as migration } from './migration';
-export { default as readiness } from './readiness';
+export { default as readiness } from './readiness.js';

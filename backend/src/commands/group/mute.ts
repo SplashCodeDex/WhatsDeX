@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'mute',
   category: 'group',
@@ -6,7 +7,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     const groupId = ctx.getId(ctx.id);
 
@@ -46,7 +47,7 @@ export default {
       await db.set(`group.${groupId}.mute`, muteList);
 
       await ctx.reply(formatter.quote('✅ Berhasil me-mute pengguna itu dari grup ini!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -1,11 +1,12 @@
+import { MessageContext } from '../../types/index.js';
 import z from 'zod';
-import { db } from '../../src/utils';
+import { db } from '@/utils.js';
 
 export default {
   name: 'transfer',
   aliases: ['tf'],
   category: 'profile',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter } = ctx.bot.context;
 
     try {
@@ -61,7 +62,7 @@ export default {
       await db.subtract(`user.${senderId}.coin`, coinAmount);
 
       return ctx.reply(formatter.quote(`✅ Successfully transferred ${coinAmount} coins!`));
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }

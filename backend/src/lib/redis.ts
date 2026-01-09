@@ -1,14 +1,15 @@
-import Redis from 'ioredis';
-import configManager from '../src/config/ConfigManager';
-import logger from '../src/utils/logger';
+import { Redis } from 'ioredis';
+import configManager from '../config/ConfigManager.js';
+import logger from '../utils/logger.js';
 
-const config = configManager.export();
+
+const config: any = configManager.export();
 
 const redisConfig = {
   host: config.redis?.host || 'localhost',
   port: config.redis?.port || 6379,
   password: config.redis?.password,
-  retryStrategy: times => {
+  retryStrategy: (times: number) => {
     const delay = Math.min(times * 50, 2000);
     return delay;
   },

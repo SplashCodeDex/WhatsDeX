@@ -1,7 +1,12 @@
-import Queue from 'bull';
-import logger from '../utils/logger';
+import Queue, { Job } from 'bull';
+import logger from '../utils/logger.js';
 
 class JobQueueService {
+  private queues: Map<string, Queue.Queue>;
+  private processors: Map<string, Function>;
+  private isInitialized: boolean;
+  private defaultJobOptions: Queue.JobOptions;
+  private queueConfigs: Record<string, { concurrency: number; priority: number }>;
   constructor() {
     this.queues = new Map();
     this.processors = new Map();
@@ -63,7 +68,7 @@ class JobQueueService {
 
       this.isInitialized = true;
       logger.info('All job queues initialized successfully');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to initialize job queues', { error: error.message });
       throw error;
     }
@@ -74,7 +79,7 @@ class JobQueueService {
    * @param {string} queueName - Name of the queue
    * @param {Object} config - Queue configuration
    */
-  async createQueue(queueName, config = {}) {
+  async createQueue(queueName: string, config: { priority?: number } = {}): Promise<Queue.Queue> {
     try {
       const queue = new Queue(queueName, {
         redis: {
@@ -96,7 +101,7 @@ class JobQueueService {
 
       logger.info(`Queue '${queueName}' created successfully`);
       return queue;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Failed to create queue '${queueName}'`, { error: error.message });
       throw error;
     }
@@ -107,7 +112,7 @@ class JobQueueService {
    * @param {Queue} queue - Bull queue instance
    * @param {string} queueName - Name of the queue
    */
-  setupQueueListeners(queue, queueName) {
+  setupQueueListeners(queue: Queue.Queue, queueName: string) {
     queue.on('ready', () => {
       logger.info(`Queue '${queueName}' is ready`);
     });
@@ -135,12 +140,12 @@ class JobQueueService {
       });
     });
 
-    queue.on('failed', (job, err) => {
+    queue.on('failed', (job: Job, err: Error) => {
       logger.error(`Job ${job.id} failed in queue '${queueName}'`, {
         jobName: job.name,
         error: err.message,
         attemptsMade: job.attemptsMade,
-        attemptsRemaining: job.opts.attempts - job.attemptsMade,
+        attemptsRemaining: (job.opts.attempts || 0) - job.attemptsMade,
       });
     });
 
@@ -174,7 +179,7 @@ class JobQueueService {
    * @param {Object} options - Job options
    * @returns {Promise<Job>} Job instance
    */
-  async addJob(queueName, jobName, data = {}, options = {}) {
+  async addJob(queueName: string, jobName: string, data: any = {}, options: Queue.JobOptions = {}): Promise<Job> {
     try {
       const queue = this.queues.get(queueName);
       if (!queue) {
@@ -182,10 +187,10 @@ class JobQueueService {
       }
 
       // Strip circular references to prevent JSON.stringify errors in Bull
-      let serializableData;
+      let serializableData: any;
       try {
         serializableData = JSON.parse(JSON.stringify(data));
-      } catch (serializeError) {
+      } catch (serializeError: any) {
         logger.warn('Data contains circular references, serializing with fallback', {
           error: serializeError.message,
         });
@@ -211,7 +216,7 @@ class JobQueueService {
       });
 
       return job;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Failed to add job to queue '${queueName}'`, {
         jobName,
         error: error.message,
@@ -226,7 +231,7 @@ class JobQueueService {
    * @param {string} jobName - Name of the job
    * @param {Function} processor - Job processor function
    */
-  registerProcessor(queueName, jobName, processor) {
+  registerProcessor(queueName: string, jobName: string, processor: Function) {
     try {
       const queue = this.queues.get(queueName);
       if (!queue) {
@@ -252,7 +257,7 @@ class JobQueueService {
           });
 
           return result;
-        } catch (error) {
+        } catch (error: any) {
           const duration = Date.now() - startTime;
           logger.error(`Job ${job.id} processing failed`, {
             jobName,
@@ -265,7 +270,7 @@ class JobQueueService {
       });
 
       logger.info(`Processor registered for job '${jobName}' in queue '${queueName}'`);
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Failed to register processor for job '${jobName}'`, {
         queueName,
         error: error.message,
@@ -279,7 +284,7 @@ class JobQueueService {
    * @param {string} queueName - Name of the queue
    * @returns {Promise<Object>} Queue statistics
    */
-  async getQueueStats(queueName) {
+  async getQueueStats(queueName: string): Promise<any> {
     try {
       const queue = this.queues.get(queueName);
       if (!queue) {
@@ -303,7 +308,7 @@ class JobQueueService {
         delayed: delayed.length,
         total: waiting.length + active.length + completed.length + failed.length + delayed.length,
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Failed to get stats for queue '${queueName}'`, { error: error.message });
       return null;
     }
@@ -313,7 +318,7 @@ class JobQueueService {
    * Get all queue statistics
    * @returns {Promise<Array>} Array of queue statistics
    */
-  async getAllQueueStats() {
+  async getAllQueueStats(): Promise<any[]> {
     const stats = [];
 
     for (const queueName of this.queues.keys()) {
@@ -331,7 +336,7 @@ class JobQueueService {
    * @param {string} queueName - Name of the queue
    * @param {string} state - State to clear (completed, failed, active, waiting)
    */
-  async clearQueue(queueName, state = 'completed') {
+  async clearQueue(queueName: string, state: string = 'completed') {
     try {
       const queue = this.queues.get(queueName);
       if (!queue) {
@@ -352,7 +357,7 @@ class JobQueueService {
           break;
         case 'waiting':
           await queue.empty();
-          count = 'all';
+          count = 'all' as any;
           break;
         default:
           throw new Error(`Invalid state: ${state}`);
@@ -360,7 +365,7 @@ class JobQueueService {
 
       logger.info(`Cleared ${count} ${state} jobs from queue '${queueName}'`);
       return count;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Failed to clear queue '${queueName}'`, {
         state,
         error: error.message,
@@ -379,7 +384,7 @@ class JobQueueService {
       try {
         await queue.close();
         logger.debug('Queue closed successfully');
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Error closing queue', { error: error.message });
       }
     });
@@ -392,7 +397,7 @@ class JobQueueService {
    * Health check for job queue service
    * @returns {Promise<Object>} Health status
    */
-  async healthCheck() {
+  async healthCheck(): Promise<any> {
     try {
       const stats = await this.getAllQueueStats();
       const totalJobs = stats.reduce((sum, queue) => sum + queue.total, 0);
@@ -407,7 +412,7 @@ class JobQueueService {
         queuesStatus: stats,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Job queue health check failed', { error: error.message });
       return {
         status: 'unhealthy',
@@ -423,8 +428,16 @@ class JobQueueService {
    * @param {string} queueName - Name of the queue
    * @returns {Queue} Queue instance
    */
-  getQueue(queueName) {
+  getQueue(queueName: string): Queue.Queue | undefined {
     return this.queues.get(queueName);
+  }
+
+  /**
+   * Get all queue instances
+   * @returns {Map<string, Queue.Queue>} All queue instances
+   */
+  getQueues(): Map<string, Queue.Queue> {
+    return this.queues;
   }
 
   /**

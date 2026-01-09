@@ -1,14 +1,16 @@
-/**
- * Job Processors Registration
- * This file registers all job processors with the job queue service
- */
-
-import JobQueueService from '../services/jobQueue';
-import AIProcessor from './aiProcessor';
-import MediaProcessor from './mediaProcessor';
-import logger from '../utils/logger';
+import JobQueueService from '../services/jobQueue.js';
+import AIProcessor from './aiProcessor.js';
+import MediaProcessor from './mediaProcessor.js';
+import logger from '../utils/logger.js';
+import { Job } from 'bull';
 
 class JobRegistry {
+  private jobQueue: JobQueueService | null;
+  private processors: {
+    ai: AIProcessor;
+    media: MediaProcessor;
+  };
+
   constructor() {
     this.jobQueue = null;
     this.processors = {
@@ -21,7 +23,7 @@ class JobRegistry {
    * Initialize job registry and register all processors
    * @param {JobQueueService} jobQueueService - The job queue service instance
    */
-  async initialize(jobQueueService) {
+  async initialize(jobQueueService: JobQueueService) {
     this.jobQueue = jobQueueService;
 
     try {
@@ -43,7 +45,7 @@ class JobRegistry {
       await this.registerCleanupProcessors();
 
       logger.info('All job processors registered successfully');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to register job processors', { error: error.message });
       throw error;
     }
@@ -54,38 +56,38 @@ class JobRegistry {
    */
   async registerAIProcessors() {
     // Content generation
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'ai-processing',
       'content-generation',
-      async (jobData, job) => await this.processors.ai.processContentGeneration(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.ai.processContentGeneration(jobData, job)
     );
 
     // Batch analysis
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'ai-processing',
       'batch-analysis',
-      async (jobData, job) => await this.processors.ai.processBatchAnalysis(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.ai.processBatchAnalysis(jobData, job)
     );
 
     // Content moderation
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'ai-processing',
       'content-moderation',
-      async (jobData, job) => await this.processors.ai.processContentModeration(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.ai.processContentModeration(jobData, job)
     );
 
     // Fine-tuning data preparation
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'ai-processing',
       'fine-tuning-data',
-      async (jobData, job) => await this.processors.ai.processFineTuningData(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.ai.processFineTuningData(jobData, job)
     );
 
     // Performance analytics
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'analytics',
       'ai-performance',
-      async (jobData, job) => await this.processors.ai.processPerformanceAnalytics(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.ai.processPerformanceAnalytics(jobData, job)
     );
 
     logger.info('AI processors registered');
@@ -96,38 +98,38 @@ class JobRegistry {
    */
   async registerMediaProcessors() {
     // Image optimization
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'media-processing',
       'image-optimization',
-      async (jobData, job) => await this.processors.media.processImageOptimization(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.media.processImageOptimization(jobData, job)
     );
 
     // Batch image processing
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'media-processing',
       'batch-image-processing',
-      async (jobData, job) => await this.processors.media.processBatchImageProcessing(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.media.processBatchImageProcessing(jobData, job)
     );
 
     // Video thumbnail generation
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'media-processing',
       'video-thumbnail',
-      async (jobData, job) => await this.processors.media.processVideoThumbnail(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.media.processVideoThumbnail(jobData, job)
     );
 
     // File conversion
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'media-processing',
       'file-conversion',
-      async (jobData, job) => await this.processors.media.processFileConversion(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.media.processFileConversion(jobData, job)
     );
 
     // Media analytics
-    this.jobQueue.registerProcessor(
+    this.jobQueue?.registerProcessor(
       'analytics',
       'media-analytics',
-      async (jobData, job) => await this.processors.media.processMediaAnalytics(jobData, job)
+      async (jobData: any, job: Job) => await this.processors.media.processMediaAnalytics(jobData, job)
     );
 
     logger.info('Media processors registered');
@@ -138,7 +140,7 @@ class JobRegistry {
    */
   async registerNotificationProcessors() {
     // Email notifications
-    this.jobQueue.registerProcessor('notification', 'email-notification', async (jobData, job) => {
+    this.jobQueue?.registerProcessor('notification', 'email-notification', async (jobData: any, job: Job) => {
       const { to, subject, content, userId } = jobData;
 
       try {
@@ -162,9 +164,9 @@ class JobRegistry {
           notificationType: 'email',
           recipient: to,
           subject,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Email notification failed', {
           jobId: job.id,
           to,
@@ -175,7 +177,7 @@ class JobRegistry {
     });
 
     // Push notifications
-    this.jobQueue.registerProcessor('notification', 'push-notification', async (jobData, job) => {
+    this.jobQueue?.registerProcessor('notification', 'push-notification', async (jobData: any, job: Job) => {
       const { userId, title, message, data } = jobData;
 
       try {
@@ -197,9 +199,9 @@ class JobRegistry {
           notificationType: 'push',
           userId,
           title,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Push notification failed', {
           jobId: job.id,
           userId,
@@ -210,7 +212,7 @@ class JobRegistry {
     });
 
     // SMS notifications
-    this.jobQueue.registerProcessor('notification', 'sms-notification', async (jobData, job) => {
+    this.jobQueue?.registerProcessor('notification', 'sms-notification', async (jobData: any, job: Job) => {
       const { phoneNumber, message, userId } = jobData;
 
       try {
@@ -230,9 +232,9 @@ class JobRegistry {
           success: true,
           notificationType: 'sms',
           phoneNumber,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
-      } catch (error) {
+      } catch (error: any) {
         logger.error('SMS notification failed', {
           jobId: job.id,
           phoneNumber,
@@ -250,7 +252,7 @@ class JobRegistry {
    */
   async registerAnalyticsProcessors() {
     // User behavior analytics
-    this.jobQueue.registerProcessor('analytics', 'user-behavior', async (jobData, job) => {
+    this.jobQueue?.registerProcessor('analytics', 'user-behavior', async (jobData: any, job: Job) => {
       const { userId, timeRange, metrics } = jobData;
 
       try {
@@ -274,9 +276,9 @@ class JobRegistry {
         return {
           success: true,
           analytics,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
-      } catch (error) {
+      } catch (error: any) {
         logger.error('User behavior analytics failed', {
           jobId: job.id,
           userId,
@@ -287,7 +289,7 @@ class JobRegistry {
     });
 
     // System performance analytics
-    this.jobQueue.registerProcessor('analytics', 'system-performance', async (jobData, job) => {
+    this.jobQueue?.registerProcessor('analytics', 'system-performance', async (jobData: any, job: Job) => {
       const { timeRange, metrics } = jobData;
 
       try {
@@ -311,9 +313,9 @@ class JobRegistry {
         return {
           success: true,
           analytics,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
-      } catch (error) {
+      } catch (error: any) {
         logger.error('System performance analytics failed', {
           jobId: job.id,
           error: error.message,
@@ -330,7 +332,7 @@ class JobRegistry {
    */
   async registerCleanupProcessors() {
     // Database cleanup
-    this.jobQueue.registerProcessor('cleanup', 'database-cleanup', async (jobData, job) => {
+    this.jobQueue?.registerProcessor('cleanup', 'database-cleanup', async (jobData: any, job: Job) => {
       const { olderThan, tables } = jobData;
 
       try {
@@ -345,15 +347,15 @@ class JobRegistry {
           tablesProcessed: tables.length,
           recordsDeleted: 1250,
           spaceFreed: '500MB',
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
 
         return {
           success: true,
           cleanupResults,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Database cleanup failed', {
           jobId: job.id,
           error: error.message,
@@ -363,7 +365,7 @@ class JobRegistry {
     });
 
     // Cache cleanup
-    this.jobQueue.registerProcessor('cleanup', 'cache-cleanup', async (jobData, job) => {
+    this.jobQueue?.registerProcessor('cleanup', 'cache-cleanup', async (jobData: any, job: Job) => {
       const { pattern, maxAge } = jobData;
 
       try {
@@ -378,15 +380,15 @@ class JobRegistry {
           pattern,
           entriesRemoved: 500,
           spaceFreed: '50MB',
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
 
         return {
           success: true,
           cleanupResults,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Cache cleanup failed', {
           jobId: job.id,
           error: error.message,
@@ -396,7 +398,7 @@ class JobRegistry {
     });
 
     // Log rotation
-    this.jobQueue.registerProcessor('cleanup', 'log-rotation', async (jobData, job) => {
+    this.jobQueue?.registerProcessor('cleanup', 'log-rotation', async (jobData: any, job: Job) => {
       const { retentionDays, compress } = jobData;
 
       try {
@@ -412,15 +414,15 @@ class JobRegistry {
           spaceFreed: '200MB',
           compressed: compress,
           retentionDays,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
 
         return {
           success: true,
           rotationResults,
-          processingTime: Date.now() - job.processedOn,
+          processingTime: Date.now() - (job.processedOn ?? Date.now()),
         };
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Log rotation failed', {
           jobId: job.id,
           error: error.message,
@@ -439,7 +441,7 @@ class JobRegistry {
   getStats() {
     return {
       processors: Object.keys(this.processors),
-      queues: this.jobQueue ? Array.from(this.jobQueue.queues.keys()) : [],
+      queues: this.jobQueue ? Array.from(this.jobQueue.getQueues().keys()) : [],
       initialized: !!this.jobQueue,
     };
   }
@@ -460,7 +462,7 @@ class JobRegistry {
         queueHealth,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Job registry health check failed', { error: error.message });
       return {
         status: 'unhealthy',

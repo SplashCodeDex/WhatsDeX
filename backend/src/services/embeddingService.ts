@@ -41,7 +41,7 @@ export class EmbeddingService {
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
         return await operation();
-      } catch (error) {
+      } catch (error: any) {
         if (attempt === this.maxRetries) throw error;
         
         const delay = this.baseDelay * Math.pow(2, attempt - 1); // 2s→4s→8s

@@ -1,4 +1,5 @@
-import { imageGenerationQueue } from '../../lib/queues';
+import { MessageContext } from '../../types/index.js';
+import { imageGenerationQueue } from '../../lib/queues.js';
 
 export default {
   name: 'dalle',
@@ -6,7 +7,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
@@ -31,7 +32,7 @@ export default {
       // Inform the user that their request is being processed
       await ctx.reply(config.msg.wait);
 
-    } catch (error) {
+    } catch (error: any) {
       // Handle potential errors from adding the job to the queue
       await tools.cmd.handleError(ctx, error, true);
     }

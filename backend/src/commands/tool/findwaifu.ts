@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
 /* Note: Removed deprecated @itsreimau/gktw import (migrated to @whiskeysockets/baileys)
@@ -10,7 +11,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
       tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
@@ -31,7 +32,7 @@ export default {
       const result = (await axios.get(apiUrl)).data.result.character.name;
 
       await ctx.reply(tools.msg.ucwords(result));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

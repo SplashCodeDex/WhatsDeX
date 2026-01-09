@@ -1,19 +1,35 @@
-import intentRouter from './brain/intentRouter';
-import NLPProcessorService from './nlpProcessor';
-import ContentModerationService from './contentModeration';
-import MetaAIService from './metaAI';
-import logger from '../utils/logger';
+import intentRouter from './brain/intentRouter.js';
+import NLPProcessorService from './nlpProcessor.js';
+import ContentModerationService from './contentModeration.js';
+import MetaAIService from './metaAI.js';
+import logger from '../utils/logger.js';
 // RAG Architecture Services
-import memoryService from './memoryService';
-import embeddingService from './embeddingService';
+import memoryService from './memoryService.js';
+import embeddingService from './embeddingService.js';
+import { Bot, GlobalContext, MessageContext } from '../types/index.js';
+
+interface ManagedMemory {
+  get: (userId: string) => string[];
+  set: (userId: string, data: string[]) => void;
+  delete: (userId: string) => void;
+  size: () => number;
+  cleanup: () => void;
+}
 
 class WhatsDeXBrain {
-  constructor(bot, context) {
+  private bot: Bot;
+  private context: GlobalContext;
+  private nlp: NLPProcessorService;
+  private moderation: ContentModerationService;
+  private metaAI: MetaAIService;
+  private conversationMemory: ManagedMemory;
+
+  constructor(bot: Bot, context: GlobalContext) {
     this.bot = bot;
     this.context = context;
     this.nlp = new NLPProcessorService();
     this.moderation = new ContentModerationService();
-    this.metaAI = new MetaAIService(process.env.META_AI_KEY);
+    this.metaAI = new MetaAIService(this.context.config.get('META_AI_KEY' as any));
     // Replace unbounded Map with managed memory system
     this.conversationMemory = this.initializeManagedMemory();
 
@@ -29,19 +45,25 @@ class WhatsDeXBrain {
    * @param {object} ctx The message context from the bot.
    * @returns {Promise<void>}
    */
-  async processMessage(ctx) {
-    const { message } = ctx;
+  async processMessage(ctx: MessageContext) {
+    const message = ctx.body || '';
     const userId = ctx.sender.jid;
 
     // 1. Moderate the message content
     const moderationResult = await this.moderation.moderateContent(message);
-    if (!moderationResult.safe) {
+    if (moderationResult && !(moderationResult as any).safe) {
       logger.warn('Message flagged by moderation', { moderationResult });
       return ctx.reply('Your message has been flagged for moderation.');
     }
 
     // 2. Process the message with NLP to understand the intent
-    const nlpResult = await this.nlp.processInput(message);
+    const nlpResult = await this.nlp.processInput(message, {
+      userId,
+      recentCommands: [], // Should fetch from DB if needed
+      isGroup: ctx.isGroup(),
+      isAdmin: ctx.isGroup() ? await ctx.group().isAdmin(ctx.sender.jid) : false,
+      isOwner: false, // Placeholder
+    });
     logger.info('NLP Result', { nlpResult });
 
     // 3. Check if this is a conversational query that needs AI
@@ -57,7 +79,8 @@ class WhatsDeXBrain {
   /**
    * Determine if a query should be handled by conversational AI
    */
-  isConversationalQuery(nlpResult) {
+  isConversationalQuery(nlpResult: any) {
+    if (!nlpResult) return true;
     const conversationalIntents = ['question', 'chat', 'help', 'general'];
     return conversationalIntents.includes(nlpResult.intent) || nlpResult.confidence < 0.8; // Low confidence = conversational
   }
@@ -65,9 +88,9 @@ class WhatsDeXBrain {
   /**
    * Handle conversational AI interactions with RAG-enhanced memory
    */
-  async handleConversationalAI(ctx, nlpResult) {
+  async handleConversationalAI(ctx: MessageContext, nlpResult: any) {
     const userId = ctx.sender.jid;
-    const currentMessage = ctx.message;
+    const currentMessage = ctx.body || '';
 
     try {
       // Get recent memory (sliding window)
@@ -89,7 +112,7 @@ class WhatsDeXBrain {
       this.storeConversationAsync(userId, currentMessage, aiResponse, nlpResult);
 
       await ctx.reply(aiResponse);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Conversational AI error:', error);
       await ctx.reply("Sorry, I'm having trouble processing your request right now.");
     }
@@ -98,22 +121,22 @@ class WhatsDeXBrain {
   /**
    * Get conversation memory for a user (with TTL check)
    */
-  getConversationMemory(userId) {
+  getConversationMemory(userId: string): string[] {
     return this.conversationMemory.get(userId) || [];
   }
 
   /**
    * Initialize managed memory system with TTL and size limits
    */
-  initializeManagedMemory() {
-    const memory = new Map();
+  initializeManagedMemory(): ManagedMemory {
+    const memory = new Map<string, string[]>();
     const maxUsers = 1000;
     const userTTL = 3600000; // 1 hour
-    const accessTimes = new Map();
+    const accessTimes = new Map<string, number>();
 
     // Enhanced memory management wrapper
     return {
-      get: (userId) => {
+      get: (userId: string) => {
         const user = memory.get(userId);
         if (!user) return [];
 
@@ -130,7 +153,7 @@ class WhatsDeXBrain {
         return user;
       },
 
-      set: (userId, data) => {
+      set: (userId: string, data: string[]) => {
         // Evict oldest if at capacity
         if (memory.size >= maxUsers) {
           this.evictOldestMemory(memory, accessTimes);
@@ -140,7 +163,7 @@ class WhatsDeXBrain {
         accessTimes.set(userId, Date.now());
       },
 
-      delete: (userId) => {
+      delete: (userId: string) => {
         memory.delete(userId);
         accessTimes.delete(userId);
       },
@@ -162,7 +185,7 @@ class WhatsDeXBrain {
   /**
    * Evict oldest memory entry (LRU eviction)
    */
-  evictOldestMemory(memory, accessTimes) {
+  evictOldestMemory(memory: Map<string, any>, accessTimes: Map<string, number>) {
     let oldestUser = null;
     let oldestTime = Date.now();
 
@@ -183,7 +206,7 @@ class WhatsDeXBrain {
   /**
    * Update conversation memory with size and TTL limits
    */
-  updateConversationMemory(userId, userMessage, aiResponse) {
+  updateConversationMemory(userId: string, userMessage: string, aiResponse: string) {
     const memory = this.getConversationMemory(userId);
     memory.push(`User: ${userMessage}`);
     memory.push(`AI: ${aiResponse}`);
@@ -205,12 +228,12 @@ class WhatsDeXBrain {
   /**
    * Get conversation memory for a user from database (async)
    */
-  async getConversationMemoryDB(userId) {
+  async getConversationMemoryDB(userId: string) {
     try {
       // Transitioning to Firebase/Firestore
       // For now, fall back to in-memory managed system
       return this.getConversationMemory(userId);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error retrieving conversation memory:', error);
       return this.getConversationMemory(userId);
     }
@@ -219,12 +242,12 @@ class WhatsDeXBrain {
   /**
    * Update conversation memory in database (async)
    */
-  async updateConversationMemoryDB(userId, userMessage, aiResponse) {
+  async updateConversationMemoryDB(userId: string, userMessage: string, aiResponse: string) {
     try {
       // Transitioning to Firebase/Firestore
       // For now, update in-memory managed system
       this.updateConversationMemory(userId, userMessage, aiResponse);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error updating conversation memory:', error);
       this.updateConversationMemory(userId, userMessage, aiResponse);
     }
@@ -255,11 +278,11 @@ class WhatsDeXBrain {
   /**
    * RAG: Retrieve relevant historical context using vector similarity search
    */
-  async retrieveHistoricalContext(userId, currentMessage) {
+  async retrieveHistoricalContext(userId: string, currentMessage: string) {
     try {
       const contexts = await memoryService.retrieveRelevantContext(userId, currentMessage);
       return contexts;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error retrieving historical context:', error);
       return []; // Graceful fallback - continue without historical context
     }
@@ -268,7 +291,7 @@ class WhatsDeXBrain {
   /**
    * RAG: Build enhanced prompt with recent memory and historical context
    */
-  buildContextualPrompt(currentMessage, recentMemory, historicalContext, nlpResult) {
+  buildContextualPrompt(currentMessage: string, recentMemory: string[], historicalContext: any[], nlpResult: any) {
     let prompt = '';
 
     // Add historical context if available
@@ -288,8 +311,8 @@ class WhatsDeXBrain {
 
     // Add current context
     prompt += `Current message: ${currentMessage}\n`;
-    prompt += `Intent: ${nlpResult.intent}\n`;
-    prompt += `Confidence: ${nlpResult.confidence}\n\n`;
+    prompt += `Intent: ${nlpResult?.intent || 'unknown'}\n`;
+    prompt += `Confidence: ${nlpResult?.confidence || 0}\n\n`;
 
     // Instructions for AI
     prompt += 'Instructions:\n';
@@ -306,15 +329,15 @@ class WhatsDeXBrain {
   /**
    * RAG: Store conversation in vector database asynchronously
    */
-  storeConversationAsync(userId, userMessage, aiResponse, nlpResult) {
-    const setImmediate = globalThis.setImmediate || ((fn) => setTimeout(fn, 0));
+  storeConversationAsync(userId: string, userMessage: string, aiResponse: string, nlpResult: any) {
+    const setImmediate = (globalThis as any).setImmediate || ((fn: any) => setTimeout(fn, 0));
     // Use setImmediate for non-blocking async operation
     setImmediate(async () => {
       try {
         const conversationText = `User: ${userMessage}\nAI: ${aiResponse}`;
         const metadata = {
-          intent: nlpResult.intent,
-          confidence: nlpResult.confidence,
+          intent: nlpResult?.intent || 'unknown',
+          confidence: nlpResult?.confidence || 0,
           timestamp: new Date().toISOString(),
           messageLength: userMessage.length,
           responseLength: aiResponse.length
@@ -322,7 +345,7 @@ class WhatsDeXBrain {
 
         await memoryService.storeConversation(userId, conversationText, metadata);
         logger.debug(`Stored conversation embedding for user ${userId}`);
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Error storing conversation embedding:', error);
         // Don't throw - this is background operation
       }
@@ -332,7 +355,7 @@ class WhatsDeXBrain {
   /**
    * RAG: Get conversation statistics including vector database
    */
-  async getEnhancedMemoryStats(userId = null) {
+  async getEnhancedMemoryStats(userId: string | null = null) {
     const baseStats = this.getMemoryStats();
 
     try {
@@ -345,7 +368,7 @@ class WhatsDeXBrain {
       }
 
       return baseStats;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error getting enhanced memory stats:', error);
       return baseStats;
     }

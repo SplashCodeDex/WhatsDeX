@@ -80,7 +80,7 @@ class MenfesService {
         sessionId,
         message: `_Memulai menfes..._\n*Silahkan Mulai kirim pesan/media*\n*Durasi menfes hanya selama 10 menit*\n*Note :* jika ingin mengakhiri ketik _*delmenfes*_`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting menfes session:', error);
       throw error;
     }
@@ -143,7 +143,7 @@ class MenfesService {
         message: 'Pesan berhasil dikirim melalui menfes',
         forwarded: true,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending menfes message:', error);
       throw error;
     }
@@ -198,7 +198,7 @@ class MenfesService {
         sessionId: session.id,
         messageCount: session.messageCount,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error ending menfes session:', error);
       throw new Error('Failed to end menfes session');
     }

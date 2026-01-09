@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 import { performance } from 'node:perf_hooks';
 
@@ -5,7 +6,7 @@ export default {
   name: 'speedtest',
   aliases: ['speed'],
   category: 'information',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     try {
       const latencyStart = performance.now();
@@ -41,7 +42,7 @@ export default {
           )}`,
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

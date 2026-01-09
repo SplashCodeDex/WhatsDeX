@@ -1,9 +1,21 @@
-import WhatsDeXBrain from '../services/WhatsDeXBrain';
-import Cooldown from './cooldown';
+import WhatsDeXBrain from '../services/whatsDeXBrain.js';
+import { Cooldown } from './cooldown.js';
 import moment from 'moment-timezone';
+import { Bot, GlobalContext, MessageContext } from '../types/index.js';
+
+/**
+ * Check if user has enough coins
+ * @returns {Promise<boolean>} true if BLOCKED (not enough coins), false if allowed
+ */
+const checkCoin = async (database: any, required: number | string, userDb: any, senderId: string, isOwner: boolean): Promise<boolean> => {
+    if (isOwner) return false;
+    const requiredCoins = Number(required);
+    const userCoins = userDb?.coin || 0;
+    return userCoins < requiredCoins;
+};
 
 // Main bot middleware
-export default (bot, context) => {
+const mainMiddleware = (bot: Bot, context: GlobalContext) => {
     const {
         database,
         tools: { cmd },
@@ -12,7 +24,7 @@ export default (bot, context) => {
     } = context;
     const brain = new WhatsDeXBrain(bot, context);
 
-    bot.use(async (ctx, next) => {
+    bot.use(async (ctx: MessageContext, next: () => Promise<void>) => {
         // Common variables
         const isGroup = ctx.isGroup();
         const isPrivate = !isGroup;
@@ -325,3 +337,4 @@ export default (bot, context) => {
         await next(); // Continue to the next process
     });
 };
+export default mainMiddleware;

@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'tovn',
   aliases: ['toptt'],
@@ -5,7 +6,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     if (!tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ['audio']))
       return await ctx.reply(formatter.quote(tools.msg.generateInstruction(['reply'], ['audio'])));
@@ -18,7 +19,7 @@ export default {
         mimetype: tools.mime.lookup('mp3'),
         ptt: true,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -1,7 +1,13 @@
 import crypto from 'crypto';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
+import auditLogger from '../services/auditService.js';
 
 class SecurityMiddleware {
+  private suspiciousPatterns: RegExp[];
+  private rateLimitCache: Map<string, any>;
+  private blockedIPs: Set<string>;
+  private suspiciousUsers: Set<string>;
+
   constructor() {
     this.suspiciousPatterns = [
       /\b(unban|hack|exploit|cheat|crack)\b/i,
@@ -21,7 +27,7 @@ class SecurityMiddleware {
    * @param {Object} context - Message context
    * @returns {Object} Security check result
    */
-  async checkSecurity(context) {
+  async checkSecurity(context: any): Promise<{ allowed: boolean; reason?: string }> {
     const { message, userId, userJid, remoteJid } = context;
 
     try {
@@ -95,7 +101,7 @@ class SecurityMiddleware {
       }
 
       return { allowed: true };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Security middleware error:', error);
       // Fail-safe: allow request but log the error
       await this.logSecurityEvent('middleware_error', {
@@ -113,7 +119,7 @@ class SecurityMiddleware {
    * @param {string} content - Message content
    * @returns {Object} Analysis result
    */
-  analyzeContent(content) {
+  analyzeContent(content: string): { blocked: boolean; reason?: string } {
     if (!content || typeof content !== 'string') {
       return { blocked: false };
     }
@@ -168,13 +174,13 @@ class SecurityMiddleware {
    * @param {string} remoteJid - Remote JID
    * @returns {Object} Rate limit check result
    */
-  checkRateLimit(userId, remoteJid) {
+  checkRateLimit(userId: string, remoteJid: string): { allowed: boolean; reason?: string } {
     const now = Date.now();
     const windowMs = 60000; // 1 minute
     const maxRequests = 30; // 30 requests per minute
 
     const key = `${userId}:${remoteJid}`;
-    const userRequests = this.rateLimitCache.get(key) || [];
+    const userRequests: number[] = this.rateLimitCache.get(key) || [];
 
     // Remove old requests outside the window
     const validRequests = userRequests.filter(time => now - time < windowMs);
@@ -205,12 +211,12 @@ class SecurityMiddleware {
    * @param {string} userId - User ID
    * @returns {Object} Spam detection result
    */
-  detectSpam(content, userId) {
+  detectSpam(content: string, userId: string): { blocked: boolean; reason?: string } {
     if (!content) return { blocked: false };
 
     // Track user message patterns
     const userKey = `spam:${userId}`;
-    const userMessages = this.rateLimitCache.get(userKey) || [];
+    const userMessages: string[] = this.rateLimitCache.get(userKey) || [];
 
     // Check for identical messages (possible spam bot)
     if (userMessages.includes(content)) {
@@ -227,12 +233,17 @@ class SecurityMiddleware {
     }
     this.rateLimitCache.set(userKey, userMessages);
 
-    // Check for message flooding
-    const recentMessages = userMessages.filter(
-      msg => Date.now() - (this.rateLimitCache.get(`${userKey}:time:${msg}`) || 0) < 10000 // 10 seconds
-    );
+    // Track message timing
+    const timeKey = `spam_time:${userId}`;
+    const messageTimes: number[] = this.rateLimitCache.get(timeKey) || [];
+    const now = Date.now();
 
-    if (recentMessages.length > 5) {
+    // Add current time and remove old ones (> 10 seconds)
+    messageTimes.push(now);
+    const recentTimes = messageTimes.filter(time => now - time < 10000);
+    this.rateLimitCache.set(timeKey, recentTimes);
+
+    if (recentTimes.length > 5) {
       return {
         blocked: true,
         reason: 'Message flooding detected',
@@ -247,7 +258,7 @@ class SecurityMiddleware {
    * @param {string} content - Message content
    * @returns {Object} Injection detection result
    */
-  detectCommandInjection(content) {
+  detectCommandInjection(content: string): { blocked: boolean; reason?: string } {
     if (!content) return { blocked: false };
 
     // Common command injection patterns
@@ -279,7 +290,7 @@ class SecurityMiddleware {
    * @param {string} ip - IP address
    * @returns {boolean} Whether blocked
    */
-  isBlocked(userId, ip) {
+  isBlocked(userId: string, ip: string): boolean {
     return this.blockedIPs.has(ip) || this.suspiciousUsers.has(userId);
   }
 
@@ -288,7 +299,7 @@ class SecurityMiddleware {
    * @param {string} url - URL to check
    * @returns {boolean} Whether suspicious
    */
-  isSuspiciousUrl(url) {
+  isSuspiciousUrl(url: string): boolean {
     const suspiciousDomains = [
       'bit.ly',
       'tinyurl.com',
@@ -310,7 +321,7 @@ class SecurityMiddleware {
         }
         return pattern.test(domain);
       });
-    } catch (error) {
+    } catch (error: any) {
       // Invalid URL
       return true;
     }
@@ -321,7 +332,7 @@ class SecurityMiddleware {
    * @param {Object} context - Message context
    * @returns {Object} Client information
    */
-  extractClientInfo(context) {
+  extractClientInfo(context: any): { userAgent: string; platform: string; ip: string; sessionId: string } {
     return {
       userAgent: context.userAgent || 'unknown',
       platform: context.platform || 'unknown',
@@ -335,7 +346,7 @@ class SecurityMiddleware {
    * @param {string} identifier - Identifier to hash
    * @returns {string} Hashed identifier
    */
-  hashIdentifier(identifier) {
+  hashIdentifier(identifier: string): string {
     return crypto.createHash('sha256').update(identifier).digest('hex').substring(0, 16);
   }
 
@@ -344,9 +355,8 @@ class SecurityMiddleware {
    * @param {string} eventType - Event type
    * @param {Object} details - Event details
    */
-  async logSecurityEvent(eventType, details) {
+  async logSecurityEvent(eventType: string, details: any): Promise<void> {
     try {
-      import auditLogger from '../services/auditLogger';
       await auditLogger.logEvent({
         eventType,
         actor: details.userId || 'unknown',
@@ -363,7 +373,7 @@ class SecurityMiddleware {
         userAgent: details.clientInfo?.userAgent,
         sessionId: details.clientInfo?.sessionId,
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to log security event:', error);
     }
   }
@@ -373,8 +383,8 @@ class SecurityMiddleware {
    * @param {string} eventType - Event type
    * @returns {string} Risk level
    */
-  getRiskLevel(eventType) {
-    const riskLevels = {
+  getRiskLevel(eventType: string): 'low' | 'medium' | 'high' | 'critical' {
+    const riskLevels: Record<string, 'low' | 'medium' | 'high' | 'critical'> = {
       content_blocked: 'medium',
       rate_limit_exceeded: 'low',
       spam_detected: 'medium',
@@ -391,7 +401,7 @@ class SecurityMiddleware {
    * @param {string} ip - IP address to block
    * @param {number} duration - Block duration in milliseconds
    */
-  blockIP(ip, duration = 3600000) {
+  blockIP(ip: string, duration: number = 3600000): void {
     // Default 1 hour
     this.blockedIPs.add(ip);
     setTimeout(() => {
@@ -404,7 +414,7 @@ class SecurityMiddleware {
    * @param {string} userId - User ID to mark as suspicious
    * @param {number} duration - Duration in milliseconds
    */
-  markUserSuspicious(userId, duration = 3600000) {
+  markUserSuspicious(userId: string, duration: number = 3600000): void {
     this.suspiciousUsers.add(userId);
     setTimeout(() => {
       this.suspiciousUsers.delete(userId);
@@ -432,7 +442,7 @@ class SecurityMiddleware {
    * Get security statistics
    * @returns {Object} Security statistics
    */
-  getStats() {
+  getStats(): any {
     return {
       blockedIPs: this.blockedIPs.size,
       suspiciousUsers: this.suspiciousUsers.size,

@@ -4,18 +4,20 @@
  */
 
 class Cooldown {
+  private cooldowns: Map<string, number>;
+
   constructor() {
-    this.cooldowns = new Map();
+    this.cooldowns = new Map<string, number>();
   }
 
   /**
    * Check if a user is on cooldown for a specific command
-   * @param {string} userId - User identifier
-   * @param {string} command - Command name
-   * @param {number} cooldownMs - Cooldown duration in milliseconds
-   * @returns {boolean} - True if user is on cooldown, false otherwise
+   * @param userId - User identifier
+   * @param command - Command name
+   * @param cooldownMs - Cooldown duration in milliseconds
+   * @returns - True if user is on cooldown, false otherwise
    */
-  isOnCooldown(userId, command, cooldownMs) {
+  isOnCooldown(userId: string, command: string, cooldownMs: number): boolean {
     const key = `${userId}:${command}`;
     const lastUsed = this.cooldowns.get(key);
 
@@ -29,22 +31,22 @@ class Cooldown {
 
   /**
    * Set cooldown for a user and command
-   * @param {string} userId - User identifier
-   * @param {string} command - Command name
+   * @param userId - User identifier
+   * @param command - Command name
    */
-  setCooldown(userId, command) {
+  setCooldown(userId: string, command: string): void {
     const key = `${userId}:${command}`;
     this.cooldowns.set(key, Date.now());
   }
 
   /**
    * Get remaining cooldown time for a user and command
-   * @param {string} userId - User identifier
-   * @param {string} command - Command name
-   * @param {number} cooldownMs - Cooldown duration in milliseconds
-   * @returns {number} - Remaining time in milliseconds, 0 if not on cooldown
+   * @param userId - User identifier
+   * @param command - Command name
+   * @param cooldownMs - Cooldown duration in milliseconds
+   * @returns - Remaining time in milliseconds, 0 if not on cooldown
    */
-  getRemainingTime(userId, command, cooldownMs) {
+  getRemainingTime(userId: string, command: string, cooldownMs: number): number {
     const key = `${userId}:${command}`;
     const lastUsed = this.cooldowns.get(key);
 
@@ -60,20 +62,20 @@ class Cooldown {
 
   /**
    * Clear cooldown for a user and command
-   * @param {string} userId - User identifier
-   * @param {string} command - Command name
+   * @param userId - User identifier
+   * @param command - Command name
    */
-  clearCooldown(userId, command) {
+  clearCooldown(userId: string, command: string): void {
     const key = `${userId}:${command}`;
     this.cooldowns.delete(key);
   }
 
   /**
    * Clear all cooldowns for a user
-   * @param {string} userId - User identifier
+   * @param userId - User identifier
    */
-  clearUserCooldowns(userId) {
-    for (const [key] of this.cooldowns) {
+  clearUserCooldowns(userId: string): void {
+    for (const key of this.cooldowns.keys()) {
       if (key.startsWith(`${userId}:`)) {
         this.cooldowns.delete(key);
       }
@@ -82,12 +84,12 @@ class Cooldown {
 
   /**
    * Clean up expired cooldowns
-   * @param {number} maxAge - Maximum age in milliseconds for cleanup
+   * @param maxAge - Maximum age in milliseconds for cleanup
    */
-  cleanup(maxAge = 3600000) {
+  cleanup(maxAge: number = 3600000): void {
     // Default 1 hour
     const now = Date.now();
-    for (const [key, timestamp] of this.cooldowns) {
+    for (const [key, timestamp] of this.cooldowns.entries()) {
       if (now - timestamp > maxAge) {
         this.cooldowns.delete(key);
       }
@@ -96,13 +98,14 @@ class Cooldown {
 
   /**
    * Get cooldown statistics
-   * @returns {object} - Statistics about current cooldowns
+   * @returns - Statistics about current cooldowns
    */
-  getStats() {
+  getStats(): { totalCooldowns: number; uniqueUsers: number; uniqueCommands: number } {
+    const keys = Array.from(this.cooldowns.keys());
     return {
       totalCooldowns: this.cooldowns.size,
-      uniqueUsers: new Set([...this.cooldowns.keys()].map(key => key.split(':')[0])).size,
-      uniqueCommands: new Set([...this.cooldowns.keys()].map(key => key.split(':')[1])).size,
+      uniqueUsers: new Set(keys.map(key => key.split(':')[0])).size,
+      uniqueCommands: new Set(keys.map(key => key.split(':')[1])).size,
     };
   }
 }

@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'clearchat',
   aliases: ['cchat', 'cleangpt'],
@@ -5,14 +6,14 @@ export default {
   permissions: {
     coin: 0,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { database, formatter } = ctx.bot.context;
     const userId = ctx.author.id;
 
     try {
       database.chat.clearHistory(userId);
       await ctx.reply(formatter.quote('✅ Your chat history has been cleared.'));
-    } catch (error) {
+    } catch (error: any) {
       const {
         config,
         tools: { cmd },

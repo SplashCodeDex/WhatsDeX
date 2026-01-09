@@ -1,41 +1,18 @@
-/**
- * Interactive Authentication Enhancement
- * Adds user choice prompts and session detection to AuthSystem
- */
-
-import path from 'node:path';
-import { promises as fs } from 'node:fs';
+import { db } from '../lib/firebase.js';
+import { BufferJSON } from '@whiskeysockets/baileys';
 
 class InteractiveAuthEnhancement {
+  unifiedAuth: any;
+  phoneticAlphabet: Record<string, string>;
+
   constructor(unifiedAuth) {
     this.unifiedAuth = unifiedAuth;
     this.phoneticAlphabet = {
-      A: 'Alpha',
-      B: 'Bravo',
-      C: 'Charlie',
-      D: 'Delta',
-      E: 'Echo',
-      F: 'Foxtrot',
-      G: 'Golf',
-      H: 'Hotel',
-      I: 'India',
-      J: 'Juliet',
-      K: 'Kilo',
-      L: 'Lima',
-      M: 'Mike',
-      N: 'November',
-      O: 'Oscar',
-      P: 'Papa',
-      Q: 'Quebec',
-      R: 'Romeo',
-      S: 'Sierra',
-      T: 'Tango',
-      U: 'Uniform',
-      V: 'Victor',
-      W: 'Whiskey',
-      X: 'X-ray',
-      Y: 'Yankee',
-      Z: 'Zulu',
+      A: 'Alpha', B: 'Bravo', C: 'Charlie', D: 'Delta', E: 'Echo',
+      F: 'Foxtrot', G: 'Golf', H: 'Hotel', I: 'India', J: 'Juliet',
+      K: 'Kilo', L: 'Lima', M: 'Mike', N: 'November', O: 'Oscar',
+      P: 'Papa', Q: 'Quebec', R: 'Romeo', S: 'Sierra', T: 'Tango',
+      U: 'Uniform', V: 'Victor', W: 'Whiskey', X: 'X-ray', Y: 'Yankee', Z: 'Zulu',
     };
   }
 
@@ -46,19 +23,24 @@ class InteractiveAuthEnhancement {
     try {
       console.log('🔍 Detecting existing authenticated session...');
 
-      const statePath = path.join(process.cwd(), 'state');
-      const credsPath = path.join(statePath, 'creds.json');
+      const sessionId = this.unifiedAuth.config.bot?.sessionId || 'default_session';
+      const sessionRef = db.collection('waba_sessions').doc(sessionId);
+      const doc = await sessionRef.get();
 
-      // Check if state directory and creds file exist
-      const stateExists = await this.checkPathExists(statePath);
-      const credsExists = await this.checkPathExists(credsPath);
-
-      if (!stateExists || !credsExists) {
-        return { hasSession: false, isValid: false, reason: 'No session files found' };
+      if (!doc.exists) {
+        return { hasSession: false, isValid: false, reason: 'No session found in Firestore' };
       }
 
-      // Analyze credentials file
-      const credsAnalysis = await this.analyzeCredsFile(credsPath);
+      const credsData = doc.data()?.creds;
+      if (!credsData) {
+        return { hasSession: false, isValid: false, reason: 'Session document exists but empty' };
+      }
+
+      // Parse with BufferJSON to handle buffer reviver if we stored it that way (we stored as JSON object mostly)
+      // But standard Baileys JSON replacer logic might be in effect.
+      // For analysis we just need specific fields so generic parsing is fine.
+
+      const credsAnalysis = await this.analyzeCredsData(credsData);
 
       // Check if session is valid and registered
       const isValid =
@@ -80,8 +62,8 @@ class InteractiveAuthEnhancement {
       }
 
       return { hasSession: false, isValid: false, reason: 'Session exists but not valid' };
-    } catch (error) {
-      console.error('Failed to detect existing session:', error.message);
+    } catch (error: any) {
+      console.error('Failed to detect existing session:', (error as any).message);
       return { hasSession: false, isValid: false, reason: 'Detection failed' };
     }
   }
@@ -258,7 +240,7 @@ class InteractiveAuthEnhancement {
       });
 
       return { method, result };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to execute chosen authentication method:', error.message);
       throw error;
     }
@@ -303,25 +285,10 @@ class InteractiveAuthEnhancement {
   }
 
   /**
-   * Check if file/directory exists
+   * Analyze credentials data object
    */
-  async checkPathExists(filePath) {
+  async analyzeCredsData(credsData: any) {
     try {
-      await require('fs').promises.access(filePath);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Analyze credentials file
-   */
-  async analyzeCredsFile(credsPath) {
-    try {
-      const credsContent = await fs.readFile(credsPath, 'utf8');
-      const credsData = JSON.parse(credsContent);
-
       return {
         hasKeys: !!(credsData.noiseKey && credsData.signedIdentityKey),
         hasRegistration: credsData.registered === true,
@@ -332,8 +299,8 @@ class InteractiveAuthEnhancement {
         accountSettings: credsData.accountSettings || {},
         processedHistoryMessages: credsData.processedHistoryMessages || [],
       };
-    } catch (error) {
-      console.error('Failed to analyze creds file:', error.message);
+    } catch (error: any) {
+      console.error('Failed to analyze creds data:', (error as any).message);
       throw error;
     }
   }

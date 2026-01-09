@@ -1,22 +1,29 @@
 // Import necessary modules and dependencies
-const Formatter = {
-  quote: text => `_${text}_`,
-  italic: text => `_${text}_`,
-  bold: text => `*${text}*`,
-  monospace: text => `\`\`${text}\`\``,
+interface FormatterType {
+  quote: (text: string) => string;
+  italic: (text: string) => string;
+  bold: (text: string) => string;
+  monospace: (text: string) => string;
+}
+
+const Formatter: FormatterType = {
+  quote: (text: string) => `_${text}_`,
+  italic: (text: string) => `_${text}_`,
+  bold: (text: string) => `*${text}*`,
+  monospace: (text: string) => `\`\`${text}\`\``,
 };
 
 // Environment validation function
 function validateEnvironment() {
   const required = ['DATABASE_URL'];
   const missing = required.filter(env => !process.env[env]);
-  
+
   if (missing.length > 0) {
     console.error('❌ Missing required environment variables:', missing);
     console.error('Please set these variables before starting the application.');
     process.exit(1);
   }
-  
+
   // Validate DATABASE_URL format
   if (process.env.DATABASE_URL) {
     const dbUrlPattern = /^(postgresql|mysql|sqlite|mongodb):\/\//;
@@ -41,7 +48,7 @@ export default {
       'https://repository-images.githubusercontent.com/753096396/84e76ef0-ba19-4c87-8ec2-ea803b097479', // Bot's thumbnail image
     groupJid: process.env.GROUP_JID || '', // REPLACE WITH YOUR BOT'S GROUP JID
     newsletterJid: process.env.NEWSLETTER_JID || '120363416372653441@newsletter', // JID for the bot's channel
-    browser: process.env.BOT_BROWSER ? JSON.parse(process.env.BOT_BROWSER) : ['WhatsDeX', 'Chrome', '1.0.0'], // Browser info
+    browser: process.env.BOT_BROWSER ? JSON.parse(process.env.BOT_BROWSER as string) : ['WhatsDeX', 'Chrome', '1.0.0'], // Browser info
 
     // Bot session authentication configuration
     authAdapter: {
@@ -136,16 +143,16 @@ export default {
     gemini: {
       model: process.env.GEMINI_MODEL || 'gemini-pro',
       generationConfig: {
-        temperature: parseFloat(process.env.GEMINI_TEMP) || 0.7,
-        topP: parseFloat(process.env.GEMINI_TOP_P) || 0.8,
-        topK: parseInt(process.env.GEMINI_TOP_K, 10) || 40,
-        maxOutputTokens: parseInt(process.env.GEMINI_MAX_TOKENS, 10) || 2048,
+        temperature: parseFloat(process.env.GEMINI_TEMP as string) || 0.7,
+        topP: parseFloat(process.env.GEMINI_TOP_P as string) || 0.8,
+        topK: parseInt(process.env.GEMINI_TOP_K as string, 10) || 40,
+        maxOutputTokens: parseInt(process.env.GEMINI_MAX_TOKENS as string, 10) || 2048,
       }
     },
     memory: {
-      maxSize: parseInt(process.env.AI_MEMORY_MAX_SIZE, 10) || 1000,
-      ttl: parseInt(process.env.AI_MEMORY_TTL, 10) || 3600000,
-      cleanupInterval: parseInt(process.env.AI_MEMORY_CLEANUP_INTERVAL, 10) || 300000,
+      maxSize: parseInt(process.env.AI_MEMORY_MAX_SIZE as string, 10) || 1000,
+      ttl: parseInt(process.env.AI_MEMORY_TTL as string, 10) || 3600000,
+      cleanupInterval: parseInt(process.env.AI_MEMORY_CLEANUP_INTERVAL as string, 10) || 300000,
     },
     intent: {
       aiKeywords: [
@@ -168,22 +175,22 @@ export default {
           password: u.password || '',
         };
       }
-    } catch {}
+    } catch { }
     return {
       host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+      port: parseInt(process.env.REDIS_PORT as string, 10) || 6379,
       password: process.env.REDIS_PASSWORD || '',
     };
   })(),
 
   // Rate limit configuration
   rateLimits: {
-    global: { requests: parseInt(process.env.RATE_LIMIT_GLOBAL_REQ) || 100, window: 60 },
-    user: { requests: parseInt(process.env.RATE_LIMIT_USER_REQ) || 30, window: 60 },
-    command: { requests: parseInt(process.env.RATE_LIMIT_CMD_REQ) || 10, window: 60 },
-    ai: { requests: parseInt(process.env.RATE_LIMIT_AI_REQ) || 5, window: 300 },
-    download: { requests: parseInt(process.env.RATE_LIMIT_DOWNLOAD_REQ) || 3, window: 60 },
-    premium: { requests: parseInt(process.env.RATE_LIMIT_PREMIUM_REQ) || 100, window: 60 }
+    global: { requests: parseInt(process.env.RATE_LIMIT_GLOBAL_REQ as string) || 100, window: 60 },
+    user: { requests: parseInt(process.env.RATE_LIMIT_USER_REQ as string) || 30, window: 60 },
+    command: { requests: parseInt(process.env.RATE_LIMIT_CMD_REQ as string) || 10, window: 60 },
+    ai: { requests: parseInt(process.env.RATE_LIMIT_AI_REQ as string) || 5, window: 300 },
+    download: { requests: parseInt(process.env.RATE_LIMIT_DOWNLOAD_REQ as string) || 3, window: 60 },
+    premium: { requests: parseInt(process.env.RATE_LIMIT_PREMIUM_REQ as string) || 100, window: 60 }
   },
 
   // Bot system
@@ -194,9 +201,9 @@ export default {
     autoMention: process.env.AUTO_MENTION === 'true' || true, // Bot automatically mentions someone in sent messages
     autoAiLabel: process.env.AUTO_AI_LABEL === 'true' || true, // Bot automatically adds an AI label in sent messages
     autoTypingOnCmd: process.env.AUTO_TYPING__CMD === 'true' || true, // Show "typing..." status when processing commands
-    cooldown: parseInt(process.env.BOT_COOLDOWN_MS, 10) || 10 * 1000, // Cooldown between commands (ms)
-    maxListeners: parseInt(process.env.MAX_LISTENERS, 10) || 50, // Max listeners for events
-    port: parseInt(process.env.PORT, 10) || 3001, // Port (if using a server)
+    cooldown: parseInt(process.env.BOT_COOLDOWN_MS as string, 10) || 10 * 1000, // Cooldown between commands (ms)
+    maxListeners: parseInt(process.env.MAX_LISTENERS as string, 10) || 50, // Max listeners for events
+    port: parseInt(process.env.PORT as string, 10) || 3001, // Port (if using a server)
     privatePremiumOnly: process.env.PRIVATE_PREMIUM_ONLY === 'true' || false, // Non-Premium users are not allowed to use the bot in private conversations
     restrict: process.env.RESTRICT_COMMANDS === 'true' || false, // Restrict command access
     requireBotGroupMembership: process.env.REQUIRE_BOT_GROUP_MEMBERSHIP === 'true' || false, // Must join the bot's group
@@ -215,11 +222,11 @@ export default {
 
   // Connection configuration
   connection: {
-    maxRetries: parseInt(process.env.CONN_MAX_RETRIES, 10) || 15,
-    baseDelay: parseInt(process.env.CONN_BASE_DELAY, 10) || 3000,
-    maxDelay: parseInt(process.env.CONN_MAX_DELAY, 10) || 300000,
-    backoffMultiplier: parseFloat(process.env.CONN_BACKOFF_MULTIPLIER) || 1.5,
-    circuitBreakerThreshold: parseInt(process.env.CONN_CB_THRESHOLD, 10) || 5,
-    circuitBreakerTimeout: parseInt(process.env.CONN_CB_TIMEOUT, 10) || 600000,
+    maxRetries: parseInt(process.env.CONN_MAX_RETRIES as string, 10) || 15,
+    baseDelay: parseInt(process.env.CONN_BASE_DELAY as string, 10) || 3000,
+    maxDelay: parseInt(process.env.CONN_MAX_DELAY as string, 10) || 300000,
+    backoffMultiplier: parseFloat(process.env.CONN_BACKOFF_MULTIPLIER as string) || 1.5,
+    circuitBreakerThreshold: parseInt(process.env.CONN_CB_THRESHOLD as string, 10) || 5,
+    circuitBreakerTimeout: parseInt(process.env.CONN_CB_TIMEOUT as string, 10) || 600000,
   },
 };

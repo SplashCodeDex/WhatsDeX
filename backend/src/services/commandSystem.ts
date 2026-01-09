@@ -6,14 +6,25 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
-import performanceMonitor from '../utils/PerformanceMonitor';
-import logger from '../utils/logger';
+import performanceMonitor from '../utils/performanceMonitor.js';
+import logger from '../utils/logger.js';
+import { Bot, GlobalContext, Command } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class CommandSystem {
-  constructor(bot, context) {
+  private bot: Bot;
+  private context: GlobalContext;
+  private commands: Map<string, Command>;
+  private aliases: Map<string, string>;
+  private categories: Map<string, string[]>;
+  private middleware: any[];
+  private prefixes: string[];
+  private loadedCount: number = 0;
+  private failedCount: number = 0;
+
+  constructor(bot: any, context: any) {
     this.bot = bot;
     this.context = context;
     this.commands = new Map();
@@ -63,7 +74,7 @@ export class CommandSystem {
               if (command) {
                 this.registerCommand(command, category.name);
               }
-            } catch (error) {
+            } catch (error: any) {
               this.context.logger.error(`  ❌ Error loading ${file}:`, { error: error.message });
             }
           }
@@ -76,7 +87,7 @@ export class CommandSystem {
       // Update bot.cmd for compatibility
       if (this.bot) this.bot.cmd = this.commands;
 
-    } catch (error) {
+    } catch (error: any) {
       this.context.logger.error('❌ Command loading failed:', { error: error.message });
       // throw error; // Don't crash if commands fail to load
     }
@@ -116,30 +127,30 @@ export class CommandSystem {
       this.loadedCount += 1;
       return enhancedCommand;
 
-    } catch (error) {
+    } catch (error: any) {
       this.failedCount += 1;
       this.context.logger.error(`Failed to load command: ${commandPath}`, { error: error.message });
       return null;
     }
   }
 
-  registerCommand(command, categoryName) {
+  registerCommand(command: any, categoryName: string) {
     this.commands.set(command.name, command);
     if (command.aliases) {
-      command.aliases.forEach(alias => {
+      command.aliases.forEach((alias: string) => {
         this.aliases.set(alias, command.name);
         this.commands.set(alias, { ...command, isAlias: true, originalName: command.name });
       });
     }
     if (!this.categories.has(categoryName)) this.categories.set(categoryName, []);
-    this.categories.get(categoryName).push(command.name);
+    this.categories.get(categoryName)?.push(command.name);
   }
 
-  validateCommand(command) {
+  validateCommand(command: any) {
     return command && typeof command === 'object' && command.name && typeof command.code === 'function';
   }
 
-  async processMessage(messageData) {
+  async processMessage(messageData: any) {
     const text = this.extractText(messageData);
     if (!text) return false;
 
@@ -155,7 +166,7 @@ export class CommandSystem {
     return await this.executeCommand(command, messageData, commandInfo);
   }
 
-  parseCommand(text) {
+  parseCommand(text: string) {
     const trimmed = text.trim();
     const prefix = this.prefixes.find(p => trimmed.startsWith(p));
     if (!prefix) return null;
@@ -168,7 +179,7 @@ export class CommandSystem {
     return { name, args, fullText: text, prefix };
   }
 
-  async executeCommand(command, messageData, commandInfo) {
+  async executeCommand(command: any, messageData: any, commandInfo: any) {
     const timer = performanceMonitor.startTimer('command_execution', {
       command: command.name,
       userId: messageData.key.remoteJid
@@ -188,7 +199,7 @@ export class CommandSystem {
       // 🔥 Firebase recordCommandUsage placeholder
       return true;
 
-    } catch (error) {
+    } catch (error: any) {
       timer.end();
       this.context.logger.error(`Command execution failed: ${command.name}`, { error: error.message });
       await this.sendMessage(messageData, '❌ An error occurred while executing the command.');
@@ -196,7 +207,7 @@ export class CommandSystem {
     }
   }
 
-  async createContext(messageData, commandInfo, command) {
+  async createContext(messageData: any, commandInfo: any, command: any) {
     const text = this.extractText(messageData);
     return {
       ...messageData,
@@ -204,29 +215,39 @@ export class CommandSystem {
       args: commandInfo.args,
       command: command,
       prefix: commandInfo.prefix,
-      sender: messageData.key.remoteJid,
+      sender: {
+        jid: messageData.key.remoteJid,
+        name: messageData.pushName || 'Unknown',
+        isOwner: false, // Todo: implement check
+        isAdmin: false, // Todo: implement check
+      },
       pushName: messageData.pushName,
       bot: this.bot,
-      reply: async (msg) => {
+      reply: async (msg: any) => {
         const content = typeof msg === 'string' ? { text: msg } : msg;
         return await this.bot.sendMessage(messageData.key.remoteJid, content, { quoted: messageData });
-      }
-    };
+      },
+      id: messageData.key.remoteJid,
+      isGroup: () => messageData.key.remoteJid.endsWith('@g.us'),
+      usage: {},
+      config: this.context.config,
+      // Add other missing properties as needed or allow loose typing for now via simple cast if complexity is too high
+    } as any;
   }
 
-  async suggestCommands(messageData, attemptedCommand) {
+  async suggestCommands(messageData: any, attemptedCommand: string) {
     // Simple suggestion placeholder
     await this.sendMessage(messageData, `Command "${attemptedCommand}" not found.`);
   }
 
-  extractText(messageData) {
+  extractText(messageData: any) {
     return messageData.message?.conversation || messageData.message?.extendedTextMessage?.text || '';
   }
 
-  async sendMessage(messageData, text) {
+  async sendMessage(messageData: any, text: string) {
     try {
       if (this.bot) await this.bot.sendMessage(messageData.key.remoteJid, { text });
-    } catch (error) {
+    } catch (error: any) {
       this.context.logger.error('Failed to send message', { error: error.message });
     }
   }

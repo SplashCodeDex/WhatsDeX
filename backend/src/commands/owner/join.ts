@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import { URL } from 'node:url';
 
 export default {
@@ -8,7 +9,7 @@ export default {
     owner: true,
     restrict: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const url = ctx.args[0] || null;
 
@@ -33,7 +34,7 @@ export default {
       });
 
       await ctx.reply(formatter.quote('✅ Berhasil bergabung dengan grup!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

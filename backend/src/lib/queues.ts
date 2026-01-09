@@ -1,7 +1,8 @@
 import Queue from 'bull';
-import configManager from '../src/config/ConfigManager';
+import configManager from '../config/ConfigManager.js';
 
-const config = configManager.export();
+
+const config: any = configManager.export();
 
 // Create a reusable connection object
 const redisConnection = {

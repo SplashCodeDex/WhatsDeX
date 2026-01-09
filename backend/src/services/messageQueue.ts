@@ -1,6 +1,6 @@
 import { Queue, Worker  } from 'bullmq';
 import { Redis  } from '@upstash/redis'; // Using Upstash Redis
-import messageProcessor from '../message-processor';
+import messageProcessor from '../message-processor.js';
 
 class MessageQueueService {
   constructor() {
@@ -62,7 +62,7 @@ class MessageQueueService {
       });
       console.log(`Added message to queue: ${job.id}`);
       return job;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add message to queue:', error);
       throw error;
     }

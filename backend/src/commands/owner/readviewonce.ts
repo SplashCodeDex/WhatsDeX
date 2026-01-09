@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 const MessageType = {
   audioMessage: 'audioMessage',
   imageMessage: 'imageMessage',
@@ -11,7 +12,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     if (!tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ['viewOnce']))
       return await ctx.reply(
@@ -46,7 +47,7 @@ export default {
           ...options,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

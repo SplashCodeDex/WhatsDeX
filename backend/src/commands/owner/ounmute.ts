@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'ounmute',
   category: 'owner',
@@ -5,7 +6,7 @@ export default {
     group: true,
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     const groupId = ctx.getId(ctx.id);
 
@@ -45,7 +46,7 @@ export default {
       await db.set(`group.${groupId}.mute`, muteList);
 
       await ctx.reply(formatter.quote('✅ Berhasil me-unmute pengguna itu dari grup ini!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

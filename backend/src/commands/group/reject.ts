@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'reject',
   category: 'group',
@@ -6,7 +7,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const input = ctx.args.join(' ') || null;
 
@@ -33,7 +34,7 @@ export default {
         return await ctx.reply(
           formatter.quote(`✅ Berhasil menolak semua anggota (${allJids.length}).`)
         );
-      } catch (error) {
+      } catch (error: any) {
         return await tools.cmd.handleError(ctx, error);
       }
     }
@@ -50,7 +51,7 @@ export default {
       await ctx.group().rejectPendingMembers([accountJid]);
 
       await ctx.reply(formatter.quote('✅ Berhasil ditolak!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

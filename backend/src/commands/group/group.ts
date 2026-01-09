@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'group',
   category: 'group',
@@ -6,7 +7,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const input = ctx.args.join(' ') || null;
 
@@ -53,7 +54,7 @@ export default {
       }
 
       await ctx.reply(formatter.quote('✅ Berhasil mengubah setelan grup!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

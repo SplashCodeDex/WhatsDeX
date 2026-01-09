@@ -1,9 +1,17 @@
-import StripeService from './stripe';
-import logger from '../utils/logger';
+
+import StripeService from './stripe.js';
+import logger from '../utils/logger.js';
+import { db } from '../lib/firebase.js';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
+import UserService from './userService.js';
 
 class SubscriptionService {
-  constructor(databaseService) {
-    this.database = databaseService;
+  private stripe: StripeService;
+  private isInitialized: boolean;
+  public usageLimits: Record<string, any>;
+
+  constructor(databaseService?: any) {
+    // databaseService ignored as we use Firestore directly now
     this.stripe = new StripeService();
     this.isInitialized = false;
 
@@ -57,13 +65,13 @@ class SubscriptionService {
    * Initialize subscription service
    * @param {Object} config - Configuration object
    */
-  async initialize(config) {
+  async initialize(config: any) {
     try {
       await this.stripe.initialize(config.stripeSecretKey, config.stripeWebhookSecret);
 
       this.isInitialized = true;
       logger.info('Subscription service initialized successfully');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to initialize subscription service', { error: error.message });
       throw error;
     }
@@ -76,7 +84,7 @@ class SubscriptionService {
    * @param {Object} paymentMethod - Payment method details
    * @returns {Promise<Object>} Subscription result
    */
-  async createSubscription(userId, planKey, paymentMethod) {
+  async createSubscription(userId: string, planKey: string, paymentMethod: any) {
     try {
       // Validate plan
       if (!this.usageLimits[planKey]) {
@@ -86,20 +94,23 @@ class SubscriptionService {
       // Get or create Stripe customer
       let customer = await this.getStripeCustomer(userId);
       if (!customer) {
-        const user = await this.database.getUser(userId);
+        // Fix: Use a placeholder or proper tenantId if available
+        // In the new architecture, everything is tenant-scoped. 
+        // For legacy compatibility, we'll use a 'default' tenant or skip if not found.
+        const user = await UserService.getUserById('default', userId); 
         if (!user) {
           throw new Error(`User not found: ${userId}`);
         }
 
         customer = await this.stripe.createCustomer({
           userId,
-          email: user.email,
-          name: user.name,
-          phone: user.phone,
+          email: (user as any).email,
+          name: (user as any).name,
+          phone: (user as any).phone,
         });
 
         // Save customer ID to database
-        await this.database.updateUser(userId, {
+        await db.collection('users').doc(userId).update({
           stripeCustomerId: customer.id,
         });
       }
@@ -113,15 +124,13 @@ class SubscriptionService {
         stripeSubscriptionId: subscription.id,
         planKey,
         status: subscription.status,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodStart: Timestamp.fromDate(new Date(subscription.current_period_start * 1000)),
+        currentPeriodEnd: Timestamp.fromDate(new Date(subscription.current_period_end * 1000)),
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        createdAt: new Date(),
+        createdAt: Timestamp.now(),
       };
 
-      await this.database.prisma.subscription.create({
-        data: subscriptionData,
-      });
+      await db.collection('subscriptions').add(subscriptionData);
 
       // Reset usage counters for new subscription
       await this.resetUsageCounters(userId);
@@ -136,7 +145,7 @@ class SubscriptionService {
         subscription,
         clientSecret: subscription.latest_invoice.payment_intent?.client_secret,
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to create subscription', {
         userId,
         planKey,
@@ -152,18 +161,19 @@ class SubscriptionService {
    * @param {boolean} cancelAtPeriodEnd - Cancel at period end or immediately
    * @returns {Promise<Object>} Cancellation result
    */
-  async cancelSubscription(userId, cancelAtPeriodEnd = true) {
+  async cancelSubscription(userId: string, cancelAtPeriodEnd = true) {
     try {
-      const subscription = await this.database.prisma.subscription.findFirst({
-        where: {
-          userId,
-          status: { in: ['active', 'trialing'] },
-        },
-      });
+      const snapshot = await db.collection('subscriptions')
+        .where('userId', '==', userId)
+        .where('status', 'in', ['active', 'trialing'])
+        .limit(1)
+        .get();
 
-      if (!subscription) {
+      if (snapshot.empty) {
         throw new Error('No active subscription found');
       }
+
+      const subscription: any = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
 
       const stripeSubscription = await this.stripe.cancelSubscription(
         subscription.stripeSubscriptionId,
@@ -171,13 +181,10 @@ class SubscriptionService {
       );
 
       // Update database
-      await this.database.prisma.subscription.update({
-        where: { id: subscription.id },
-        data: {
-          status: stripeSubscription.status,
-          cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-          cancelledAt: cancelAtPeriodEnd ? null : new Date(),
-        },
+      await db.collection('subscriptions').doc(subscription.id).update({
+        status: stripeSubscription.status,
+        cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+        cancelledAt: cancelAtPeriodEnd ? null : Timestamp.now(),
       });
 
       logger.info('Subscription cancelled', {
@@ -187,7 +194,7 @@ class SubscriptionService {
       });
 
       return stripeSubscription;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to cancel subscription', {
         userId,
         error: error.message,
@@ -202,22 +209,23 @@ class SubscriptionService {
    * @param {string} newPlanKey - New plan key
    * @returns {Promise<Object>} Update result
    */
-  async updateSubscriptionPlan(userId, newPlanKey) {
+  async updateSubscriptionPlan(userId: string, newPlanKey: string) {
     try {
       if (!this.usageLimits[newPlanKey]) {
         throw new Error(`Invalid plan key: ${newPlanKey}`);
       }
 
-      const subscription = await this.database.prisma.subscription.findFirst({
-        where: {
-          userId,
-          status: { in: ['active', 'trialing'] },
-        },
-      });
+      const snapshot = await db.collection('subscriptions')
+        .where('userId', '==', userId)
+        .where('status', 'in', ['active', 'trialing'])
+        .limit(1)
+        .get();
 
-      if (!subscription) {
+      if (snapshot.empty) {
         throw new Error('No active subscription found');
       }
+
+      const subscription: any = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
 
       const stripeSubscription = await this.stripe.updateSubscriptionPlan(
         subscription.stripeSubscriptionId,
@@ -225,14 +233,11 @@ class SubscriptionService {
       );
 
       // Update database
-      await this.database.prisma.subscription.update({
-        where: { id: subscription.id },
-        data: {
-          planKey: newPlanKey,
-          status: stripeSubscription.status,
-          currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-        },
+      await db.collection('subscriptions').doc(subscription.id).update({
+        planKey: newPlanKey,
+        status: stripeSubscription.status,
+        currentPeriodStart: Timestamp.fromDate(new Date(stripeSubscription.current_period_start * 1000)),
+        currentPeriodEnd: Timestamp.fromDate(new Date(stripeSubscription.current_period_end * 1000)),
       });
 
       logger.info('Subscription plan updated', {
@@ -242,7 +247,7 @@ class SubscriptionService {
       });
 
       return stripeSubscription;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to update subscription plan', {
         userId,
         newPlanKey,
@@ -258,7 +263,7 @@ class SubscriptionService {
    * @param {string} feature - Feature name
    * @returns {Promise<boolean>} Access status
    */
-  async checkFeatureAccess(userId, feature) {
+  async checkFeatureAccess(userId: string, feature: string) {
     try {
       const planKey = await this.getUserPlan(userId);
       const limits = this.usageLimits[planKey];
@@ -288,7 +293,7 @@ class SubscriptionService {
         default:
           return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to check feature access', {
         userId,
         feature,
@@ -305,7 +310,7 @@ class SubscriptionService {
    * @param {number} amount - Usage amount
    * @returns {Promise<Object>} Usage tracking result
    */
-  async trackUsage(userId, feature, amount = 1) {
+  async trackUsage(userId: string, feature: string, amount = 1) {
     try {
       const planKey = await this.getUserPlan(userId);
       const limits = this.usageLimits[planKey];
@@ -325,27 +330,19 @@ class SubscriptionService {
 
       // Update usage in database
       const usageKey = `${feature}_used`;
-      const existingUsage = await this.database.prisma.user.findUnique({
-        where: { id: userId },
-        select: { [usageKey]: true },
+      await db.collection('users').doc(userId).update({
+        [usageKey]: FieldValue.increment(amount)
       });
 
-      const newUsage = (existingUsage?.[usageKey] || 0) + amount;
-
-      await this.database.prisma.user.update({
-        where: { id: userId },
-        data: { [usageKey]: newUsage },
-      });
+      const newUsage = currentUsage + amount; // This is approx for return value
 
       // Log usage
-      await this.database.prisma.analytics.create({
-        data: {
-          metric: `usage_${feature}`,
-          value: amount,
-          category: 'usage',
-          metadata: JSON.stringify({ userId, planKey }),
-          recordedAt: new Date(),
-        },
+      await db.collection('analytics').add({
+        metric: `usage_${feature}`,
+        value: amount,
+        category: 'usage',
+        metadata: JSON.stringify({ userId, planKey }),
+        recordedAt: Timestamp.now(),
       });
 
       logger.debug('Usage tracked', {
@@ -361,7 +358,7 @@ class SubscriptionService {
         limit,
         remaining: limit === -1 ? -1 : limit - newUsage,
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to track usage', {
         userId,
         feature,
@@ -378,16 +375,14 @@ class SubscriptionService {
    * @param {string} feature - Feature name
    * @returns {Promise<number>} Current usage
    */
-  async getCurrentUsage(userId, feature) {
+  async getCurrentUsage(userId: string, feature: string) {
     try {
       const usageKey = `${feature}_used`;
-      const user = await this.database.prisma.user.findUnique({
-        where: { id: userId },
-        select: { [usageKey]: true },
-      });
+      const doc = await db.collection('users').doc(userId).get();
 
-      return user?.[usageKey] || 0;
-    } catch (error) {
+      if (!doc.exists) return 0;
+      return doc.data()?.[usageKey] || 0;
+    } catch (error: any) {
       logger.error('Failed to get current usage', {
         userId,
         feature,
@@ -403,7 +398,7 @@ class SubscriptionService {
    * @param {string} feature - Feature name
    * @returns {number} Feature limit
    */
-  getFeatureLimit(planKey, feature) {
+  getFeatureLimit(planKey: string, feature: string) {
     const limits = this.usageLimits[planKey];
     if (!limits) return 0;
 
@@ -426,20 +421,18 @@ class SubscriptionService {
    * @param {string} userId - User ID
    * @returns {Promise<string>} Plan key
    */
-  async getUserPlan(userId) {
+  async getUserPlan(userId: string) {
     try {
-      const subscription = await this.database.prisma.subscription.findFirst({
-        where: {
-          userId,
-          status: { in: ['active', 'trialing'] },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
+      const snapshot = await db.collection('subscriptions')
+        .where('userId', '==', userId)
+        .where('status', 'in', ['active', 'trialing'])
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
 
-      return subscription?.planKey || 'free';
-    } catch (error) {
+      if (snapshot.empty) return 'free';
+      return snapshot.docs[0].data().planKey || 'free';
+    } catch (error: any) {
       logger.error('Failed to get user plan', {
         userId,
         error: error.message,
@@ -453,19 +446,16 @@ class SubscriptionService {
    * @param {string} userId - User ID
    * @returns {Promise<Object>} Subscription details
    */
-  async getUserSubscription(userId) {
+  async getUserSubscription(userId: string) {
     try {
-      const subscription = await this.database.prisma.subscription.findFirst({
-        where: {
-          userId,
-          status: { in: ['active', 'trialing'] },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
+      const snapshot = await db.collection('subscriptions')
+        .where('userId', '==', userId)
+        .where('status', 'in', ['active', 'trialing'])
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
 
-      if (!subscription) {
+      if (snapshot.empty) {
         return {
           plan: 'free',
           status: 'none',
@@ -473,16 +463,18 @@ class SubscriptionService {
         };
       }
 
+      const sub = snapshot.docs[0].data();
+
       return {
-        id: subscription.id,
-        plan: subscription.planKey,
-        status: subscription.status,
-        currentPeriodStart: subscription.currentPeriodStart,
-        currentPeriodEnd: subscription.currentPeriodEnd,
-        cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-        limits: this.usageLimits[subscription.planKey] || this.usageLimits.free,
+        id: snapshot.docs[0].id,
+        plan: sub.planKey,
+        status: sub.status,
+        currentPeriodStart: sub.currentPeriodStart instanceof Timestamp ? sub.currentPeriodStart.toDate() : sub.currentPeriodStart,
+        currentPeriodEnd: sub.currentPeriodEnd instanceof Timestamp ? sub.currentPeriodEnd.toDate() : sub.currentPeriodEnd,
+        cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+        limits: this.usageLimits[sub.planKey] || this.usageLimits.free,
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to get user subscription', {
         userId,
         error: error.message,
@@ -500,20 +492,17 @@ class SubscriptionService {
    * @param {string} userId - User ID
    * @returns {Promise<void>}
    */
-  async resetUsageCounters(userId) {
+  async resetUsageCounters(userId: string) {
     try {
-      await this.database.prisma.user.update({
-        where: { id: userId },
-        data: {
-          ai_requests_used: 0,
-          image_generations_used: 0,
-          commands_used: 0,
-          storage_used: 0,
-        },
+      await db.collection('users').doc(userId).update({
+        ai_requests_used: 0,
+        image_generations_used: 0,
+        commands_used: 0,
+        storage_used: 0,
       });
 
       logger.info('Usage counters reset', { userId });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to reset usage counters', {
         userId,
         error: error.message,
@@ -527,19 +516,17 @@ class SubscriptionService {
    * @param {string} userId - User ID
    * @returns {Promise<Object>} Stripe customer
    */
-  async getStripeCustomer(userId) {
+  async getStripeCustomer(userId: string) {
     try {
-      const user = await this.database.prisma.user.findUnique({
-        where: { id: userId },
-        select: { stripeCustomerId: true },
-      });
+      const doc = await db.collection('users').doc(userId).get();
+      const user = doc.data();
 
       if (!user?.stripeCustomerId) {
         return null;
       }
 
       return await this.stripe.getCustomer(user.stripeCustomerId);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to get Stripe customer', {
         userId,
         error: error.message,
@@ -548,10 +535,6 @@ class SubscriptionService {
     }
   }
 
-  /**
-   * Get available plans
-   * @returns {Object} Plans configuration
-   */
   getPlans() {
     return this.usageLimits;
   }
@@ -561,7 +544,7 @@ class SubscriptionService {
    * @param {Object} event - Stripe webhook event
    * @returns {Promise<void>}
    */
-  async handleWebhook(event) {
+  async handleWebhook(event: any) {
     try {
       switch (event.type) {
         case 'customer.subscription.created':
@@ -584,7 +567,7 @@ class SubscriptionService {
         default:
           logger.debug('Unhandled webhook event', { type: event.type });
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to handle webhook', {
         eventType: event.type,
         error: error.message,
@@ -597,26 +580,27 @@ class SubscriptionService {
    * Handle subscription updates from webhooks
    * @param {Object} subscription - Stripe subscription object
    */
-  async handleSubscriptionUpdate(subscription) {
+  async handleSubscriptionUpdate(subscription: any) {
     try {
-      const localSubscription = await this.database.prisma.subscription.findFirst({
-        where: { stripeSubscriptionId: subscription.id },
-      });
+      const snapshot = await db.collection('subscriptions')
+        .where('stripeSubscriptionId', '==', subscription.id)
+        .limit(1)
+        .get();
 
-      if (localSubscription) {
-        await this.database.prisma.subscription.update({
-          where: { id: localSubscription.id },
-          data: {
-            status: subscription.status,
-            currentPeriodStart: new Date(subscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
-          },
+      if (!snapshot.empty) {
+        const docId = snapshot.docs[0].id;
+        const localSub = snapshot.docs[0].data();
+
+        await db.collection('subscriptions').doc(docId).update({
+          status: subscription.status,
+          currentPeriodStart: Timestamp.fromDate(new Date(subscription.current_period_start * 1000)),
+          currentPeriodEnd: Timestamp.fromDate(new Date(subscription.current_period_end * 1000)),
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
         });
 
         // Reset usage counters on renewal
         if (subscription.status === 'active') {
-          await this.resetUsageCounters(localSubscription.userId);
+          await this.resetUsageCounters(localSub.userId);
         }
 
         logger.info('Subscription updated from webhook', {
@@ -624,7 +608,7 @@ class SubscriptionService {
           status: subscription.status,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to handle subscription update', {
         subscriptionId: subscription.id,
         error: error.message,
@@ -636,20 +620,25 @@ class SubscriptionService {
    * Handle subscription cancellations from webhooks
    * @param {Object} subscription - Stripe subscription object
    */
-  async handleSubscriptionCancellation(subscription) {
+  async handleSubscriptionCancellation(subscription: any) {
     try {
-      await this.database.prisma.subscription.updateMany({
-        where: { stripeSubscriptionId: subscription.id },
-        data: {
+      const snapshot = await db.collection('subscriptions')
+        .where('stripeSubscriptionId', '==', subscription.id)
+        .get();
+
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => {
+        batch.update(doc.ref, {
           status: 'canceled',
-          cancelledAt: new Date(),
-        },
+          cancelledAt: Timestamp.now()
+        });
       });
+      await batch.commit();
 
       logger.info('Subscription cancelled from webhook', {
         subscriptionId: subscription.id,
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to handle subscription cancellation', {
         subscriptionId: subscription.id,
         error: error.message,
@@ -661,20 +650,18 @@ class SubscriptionService {
    * Handle successful payments from webhooks
    * @param {Object} invoice - Stripe invoice object
    */
-  async handlePaymentSuccess(invoice) {
+  async handlePaymentSuccess(invoice: any) {
     try {
       // Record payment in database
-      await this.database.prisma.payment.create({
-        data: {
-          userId: invoice.customer_metadata?.userId,
-          amount: invoice.amount_due,
-          currency: invoice.currency,
-          status: 'completed',
-          paymentMethod: 'stripe',
-          transactionId: invoice.id,
-          description: `Subscription payment - ${invoice.subscription}`,
-          createdAt: new Date(),
-        },
+      await db.collection('payments').add({
+        userId: invoice.customer_metadata?.userId,
+        amount: invoice.amount_due,
+        currency: invoice.currency,
+        status: 'completed',
+        paymentMethod: 'stripe',
+        transactionId: invoice.id,
+        description: `Subscription payment - ${invoice.subscription}`,
+        createdAt: Timestamp.now(),
       });
 
       logger.info('Payment recorded', {
@@ -682,7 +669,7 @@ class SubscriptionService {
         amount: invoice.amount_due,
         customerId: invoice.customer,
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to handle payment success', {
         invoiceId: invoice.id,
         error: error.message,
@@ -694,27 +681,25 @@ class SubscriptionService {
    * Handle failed payments from webhooks
    * @param {Object} invoice - Stripe invoice object
    */
-  async handlePaymentFailure(invoice) {
+  async handlePaymentFailure(invoice: any) {
     try {
       // Record failed payment
-      await this.database.prisma.payment.create({
-        data: {
-          userId: invoice.customer_metadata?.userId,
-          amount: invoice.amount_due,
-          currency: invoice.currency,
-          status: 'failed',
-          paymentMethod: 'stripe',
-          transactionId: invoice.id,
-          description: `Failed payment - ${invoice.subscription}`,
-          createdAt: new Date(),
-        },
+      await db.collection('payments').add({
+        userId: invoice.customer_metadata?.userId,
+        amount: invoice.amount_due,
+        currency: invoice.currency,
+        status: 'failed',
+        paymentMethod: 'stripe',
+        transactionId: invoice.id,
+        description: `Failed payment - ${invoice.subscription}`,
+        createdAt: Timestamp.now(),
       });
 
       logger.warn('Payment failed', {
         invoiceId: invoice.id,
         customerId: invoice.customer,
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to handle payment failure', {
         invoiceId: invoice.id,
         error: error.message,
@@ -722,18 +707,10 @@ class SubscriptionService {
     }
   }
 
-  /**
-   * Check if service is initialized
-   * @returns {boolean} Initialization status
-   */
   isReady() {
     return this.isInitialized;
   }
 
-  /**
-   * Health check for subscription service
-   * @returns {Promise<Object>} Health status
-   */
   async healthCheck() {
     try {
       const stripeHealth = await this.stripe.healthCheck();
@@ -746,7 +723,7 @@ class SubscriptionService {
         plansCount: Object.keys(this.usageLimits).length,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Subscription health check failed', { error: error.message });
       return {
         status: 'unhealthy',

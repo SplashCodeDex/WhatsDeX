@@ -13,6 +13,10 @@
     "resolveJsonModule": true,
     "noImplicitAny": true,
     "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "allowJs": false,
     "checkJs": false
   },

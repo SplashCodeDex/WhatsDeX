@@ -51,7 +51,7 @@ class GamesService {
         message: `*TEBAK BOM*\n\n${gameData.board.join('')}\n\nPilih angka tersebut! Jangan sampai terkena Bom!\nBomb: ${gameData.bomb}\nNyawa: ${gameData.nyawa.join('')}`,
         gameId,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting tebak bom:', error);
       throw new Error('Failed to start tebak bom game');
     }
@@ -110,7 +110,7 @@ class GamesService {
         message: `*PILIH ANGKA*\n\n${game.board.join('')}\n\nTerpilih: ${game.pick}\nSisa nyawa: ${game.nyawa.join('')}\nBomb: ${game.bomb}`,
         isSafe: true,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing tebak bom guess:', error);
       throw new Error('Failed to process guess');
     }
@@ -148,7 +148,7 @@ class GamesService {
         message: `🎮 Akinator Game:\n\n@${playerId.split('@')[0]}\n${akinator.question}\n\n- 0 - Ya\n- 1 - Tidak\n- 2 - Tidak Tau\n- 3 - Mungkin\n- 4 - Mungkin Tidak\n- 5 - Back`,
         gameId,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting akinator:', error);
       throw new Error('Failed to start akinator game');
     }
@@ -202,7 +202,7 @@ class GamesService {
         message: `🎮 Akinator Game:\n\n@${game.playerId.split('@')[0]} (${game.akinator.progress.toFixed(2)})%\n${game.akinator.question}\n\n- 0 - Ya\n- 1 - Tidak\n- 2 - Tidak Tau\n- 3 - Mungkin\n- 4 - Mungkin Tidak\n- 5 - Back`,
         progress: game.akinator.progress,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing akinator answer:', error);
       throw new Error('Failed to process akinator answer');
     }
@@ -243,7 +243,7 @@ class GamesService {
         message: `♟️CHESS GAME\n\n@${player1Id.split('@')[0]} vs @${player2Id.split('@')[0]}\n\n@${player1Id.split('@')[0]} mulai duluan!\nGiliran: @${player1Id.split('@')[0]}\n\nFormat: from to (e2 e4)`,
         gameId,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting chess game:', error);
       throw new Error('Failed to start chess game');
     }
@@ -277,7 +277,7 @@ class GamesService {
 
       try {
         game.game.move({ from, to });
-      } catch (error) {
+      } catch (error: any) {
         return { success: false, message: 'Langkah tidak valid!' };
       }
 
@@ -309,7 +309,7 @@ class GamesService {
         message: `♟️CHESS GAME\n\nLangkah: ${from} → ${to}\nGiliran: @${game.turn.split('@')[0]}\n\nReply pesan ini untuk lanjut bermain!\nExample: e2 e4`,
         fen: game.game.fen(),
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing chess move:', error);
       throw new Error('Failed to process chess move');
     }
@@ -344,7 +344,7 @@ class GamesService {
       this.activeGames.delete(gameId);
 
       console.log(`Game ${gameId} ended. Reason: ${reason}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error ending game:', error);
     }
   }

@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'promote',
   category: 'group',
@@ -6,7 +7,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const accountJid = (await ctx.getMentioned())[0] || ctx.quoted?.senderJid || null;
 
@@ -29,7 +30,7 @@ export default {
       await ctx.group().promote(accountJid);
 
       await ctx.reply(formatter.quote('✅ Berhasil ditingkatkan dari anggota menjadi admin!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

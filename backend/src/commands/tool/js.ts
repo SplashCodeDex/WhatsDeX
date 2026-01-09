@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import { spawn } from 'node:child_process';
 
 export default {
@@ -7,7 +8,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
@@ -60,7 +61,7 @@ export default {
       });
 
       await ctx.reply(formatter.monospace(output));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

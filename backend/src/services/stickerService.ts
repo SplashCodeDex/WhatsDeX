@@ -8,8 +8,8 @@ import path from 'path';
 import axios from 'axios';
 import { promises as fs, writeFileSync } from 'fs';
 import { spawn } from 'child_process';
-import { writeExif } from '../../lib/exif';
-import context from '../../context';
+import { writeExif } from '../../lib/exif.js';
+import context from '../../context.js';
 
 class StickerService {
   constructor() {
@@ -53,7 +53,7 @@ class StickerService {
         stickers,
         message: `Berhasil membuat ${stickers.length} emoji mix untuk ${emoji1}+${emoji2}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in emoji mix:', error);
 
       if (error.response?.status === 429) {
@@ -89,7 +89,7 @@ class StickerService {
         buffer: Buffer.from(response.data),
         message: `Berhasil membuat brat sticker: "${text}"`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating brat sticker:', error);
 
       if (error.response?.status === 429) {
@@ -131,7 +131,7 @@ class StickerService {
           const framePath = path.join(tempDir, `brat_${Date.now()}_${i}.png`);
           await fs.writeFile(framePath, Buffer.from(response.data));
           framePaths.push(framePath);
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error creating frame ${i}:`, error);
           continue;
         }
@@ -210,7 +210,7 @@ class StickerService {
             } else {
               reject(new Error(`FFmpeg error: ${stderr}`));
             }
-          } catch (error) {
+          } catch (error: any) {
             reject(error);
           }
         });
@@ -219,7 +219,7 @@ class StickerService {
           reject(error);
         });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating brat video:', error);
       throw new Error('Failed to create brat video');
     }
@@ -245,7 +245,7 @@ class StickerService {
         buffer: stickerBuffer,
         message: 'Sticker berhasil dibuat',
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating sticker:', error);
       throw new Error('Failed to create sticker');
     }
@@ -263,7 +263,7 @@ class StickerService {
       });
 
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading media for sticker:', error);
       throw new Error('Failed to download media');
     }
@@ -275,7 +275,7 @@ class StickerService {
   async ensureTempDir() {
     try {
       await fs.access(this.tempDir);
-    } catch (error) {
+    } catch (error: any) {
       await fs.mkdir(this.tempDir, { recursive: true });
     }
     return this.tempDir;
@@ -332,7 +332,7 @@ class StickerService {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking sticker rate limit:', error);
       return false; // Fail safe
     }
@@ -357,7 +357,7 @@ class StickerService {
           await fs.unlink(filePath).catch(() => {});
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cleaning up temp files:', error);
     }
   }

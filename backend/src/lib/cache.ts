@@ -1,7 +1,11 @@
 import crypto from 'crypto';
-import redisClient from './redis';
+import redisClient from './redis.js';
+
 
 class Cache {
+  private redis: any;
+  private defaultTTL: number;
+
   constructor() {
     this.redis = redisClient;
     this.defaultTTL = 3600; // 1 hour
@@ -15,7 +19,7 @@ class Cache {
     try {
       const data = await this.redis.get(key);
       return data ? JSON.parse(data) : null;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Cache get error:', error);
       return null;
     }
@@ -25,7 +29,7 @@ class Cache {
     try {
       await this.redis.set(key, JSON.stringify(value), 'EX', ttl);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Cache set error:', error);
       return false;
     }
@@ -35,7 +39,7 @@ class Cache {
     try {
       await this.redis.del(key);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Cache del error:', error);
       return false;
     }

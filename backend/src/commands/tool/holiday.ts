@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 import moment from 'moment-timezone';
 
@@ -8,7 +9,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const month = new Date().getMonth() + 1;
     const apiUrl = tools.api.createUrl('https://dayoffapi.vercel.app', '/api', {
@@ -32,7 +33,7 @@ export default {
         text: resultText || config.msg.notFound,
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

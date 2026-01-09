@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'price',
   aliases: ['belibot', 'harga', 'sewa', 'sewabot'],
   category: 'information',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
       const customText = (await db.get('bot.text.price')) || null;
@@ -21,7 +22,7 @@ export default {
         mentions: [ctx.sender.jid],
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -5,16 +5,17 @@
 
 import os from 'os';
 import { performance } from 'perf_hooks';
-import dbManager from '../utils/DatabaseManager';
-import { RateLimiter } from '../utils/RateLimiter';
-import logger from '../utils/Logger';
+import dbManager from '../utils/databaseManager.js';
+import { RateLimiter } from '../utils/rateLimiter.js';
+import logger from '../utils/logger.js';
+import { redis } from '../lib/redis.js';
 
 export class HealthCheckService {
   constructor() {
     this.startTime = Date.now();
     this.healthChecks = new Map();
     this.metrics = new Map();
-    this.rateLimiter = new RateLimiter();
+    this.rateLimiter = new RateLimiter(redis);
     
     this.registerDefaultChecks();
     this.startPeriodicChecks();
@@ -34,7 +35,7 @@ export class HealthCheckService {
           responseTime: Math.round(duration),
           critical: true
         };
-      } catch (error) {
+      } catch (error: any) {
         return {
           status: 'unhealthy',
           error: error.message,
@@ -55,7 +56,7 @@ export class HealthCheckService {
           responseTime: Math.round(duration),
           critical: true
         };
-      } catch (error) {
+      } catch (error: any) {
         return {
           status: 'unhealthy',
           error: error.message,
@@ -127,7 +128,7 @@ export class HealthCheckService {
           status: 'healthy',
           details: 'Disk accessible'
         };
-      } catch (error) {
+      } catch (error: any) {
         return {
           status: 'unhealthy',
           error: error.message
@@ -162,7 +163,7 @@ export class HealthCheckService {
         duration: Math.round(duration),
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
+    } catch (error: any) {
       const duration = performance.now() - start;
       return {
         status: 'unhealthy',
@@ -308,7 +309,7 @@ export class HealthCheckService {
         // Record memory usage metric
         logger.logMemoryUsage();
         
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Periodic health check failed', { error: error.message });
       }
     }, 30000);
@@ -331,7 +332,7 @@ export class HealthCheckService {
           timestamp: new Date().toISOString(),
           uptime: this.getUptime().human
         });
-      } catch (error) {
+      } catch (error: any) {
         res.status(500).json({
           status: 'error',
           error: error.message
@@ -347,7 +348,7 @@ export class HealthCheckService {
                           health.status === 'warning' ? 200 : 503;
         
         res.status(statusCode).json(health);
-      } catch (error) {
+      } catch (error: any) {
         res.status(500).json({
           status: 'error',
           error: error.message
@@ -360,7 +361,7 @@ export class HealthCheckService {
       try {
         const info = await this.getSystemInfo();
         res.json(info);
-      } catch (error) {
+      } catch (error: any) {
         res.status(500).json({
           status: 'error',
           error: error.message
@@ -373,7 +374,7 @@ export class HealthCheckService {
       try {
         const metrics = this.getMetrics();
         res.json(metrics);
-      } catch (error) {
+      } catch (error: any) {
         res.status(500).json({
           status: 'error',
           error: error.message
@@ -398,8 +399,10 @@ export class HealthCheckService {
       }
 
       logger.info('Graceful shutdown completed');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error during graceful shutdown', { error: error.message });
     }
   }
 }
+
+export default HealthCheckService;

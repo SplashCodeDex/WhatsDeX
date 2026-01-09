@@ -140,7 +140,7 @@ export class ConnectionDebugger {
 
       return { healthy: true };
 
-    } catch (error) {
+    } catch (error: any) {
       return {
         healthy: false,
         issue: `Session check failed: ${error.message}`,
@@ -222,7 +222,7 @@ export class ConnectionDebugger {
         await fs.promises.rm('./sessions', { recursive: true, force: true });
         fixes.push('Cleared corrupted session directory');
         this.logSessionClear();
-      } catch (error) {
+      } catch (error: any) {
         fixes.push(`Failed to clear session: ${error.message}`);
       }
     }

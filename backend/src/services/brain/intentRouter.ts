@@ -1,8 +1,8 @@
-import commandHandler from './commandHandler';
-import greetingHandler from './greetingHandler';
-import farewellHandler from './farewellHandler';
-import questionHandler from './questionHandler';
-import defaultHandler from './defaultHandler';
+import commandHandler from './commandHandler.js';
+import greetingHandler from './greetingHandler.js';
+import farewellHandler from './farewellHandler.js';
+import questionHandler from './questionHandler.js';
+import defaultHandler from './defaultHandler.js';
 
 export default async (nlpResult, ctx, bot, context) => {
   switch (nlpResult.intent) {

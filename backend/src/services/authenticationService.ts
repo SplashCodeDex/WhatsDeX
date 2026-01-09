@@ -1,8 +1,12 @@
 import { EventEmitter } from 'node:events';
-import AuthSystem from './authSystem';
+import AuthSystem from './authSystem.js';
 
 class AuthenticationService extends EventEmitter {
-  constructor(context, client) {
+  private unifiedAuth: AuthSystem;
+  private config: any;
+  private bot: any;
+
+  constructor(context: any, client: any) {
     super();
     this.unifiedAuth = new AuthSystem(context.config, client);
     this.config = context.config;
@@ -41,7 +45,7 @@ class AuthenticationService extends EventEmitter {
         throw new Error('Phone number not provided in the configuration.');
       }
       await this.bot.launch();
-    } catch (error) {
+    } catch (error: any) {
       this.emit('authentication-failure', error);
     }
   }

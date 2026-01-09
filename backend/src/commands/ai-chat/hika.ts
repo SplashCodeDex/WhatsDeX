@@ -1,5 +1,6 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
-import { createUrl } from '../../tools/api';
+import { createUrl } from '../../tools/api.js';
 
 export default {
   name: 'hika',
@@ -8,7 +9,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
@@ -24,7 +25,7 @@ export default {
       const result = response.data.data;
 
       return ctx.reply(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }

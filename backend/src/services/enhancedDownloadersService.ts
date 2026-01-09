@@ -5,8 +5,8 @@
 
 import axios from 'axios';
 import cheerio from 'cheerio';
-import { JSDOM  } from 'jsdom';
-import context from '../../context';
+import { JSDOM } from 'jsdom';
+import context from '@/lib/context.js';
 
 class EnhancedDownloadersService {
   constructor() {
@@ -61,7 +61,7 @@ class EnhancedDownloadersService {
             viewCount: artworkData.viewCount || 0,
             bookmarkCount: artworkData.bookmarkCount || 0,
           });
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Error getting artwork ${artwork.id} details:`, error);
           continue;
         }
@@ -77,7 +77,7 @@ class EnhancedDownloadersService {
         results,
         message: `Found ${results.length} artworks for "${query}"`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in pixiv downloader:', error);
 
       if (error.response?.status === 429) {
@@ -125,7 +125,7 @@ class EnhancedDownloadersService {
               });
             }
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error parsing Pinterest script:', error);
         }
       });
@@ -152,7 +152,7 @@ class EnhancedDownloadersService {
               });
             }
           });
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error with Pinterest API:', error);
         }
       }
@@ -170,7 +170,7 @@ class EnhancedDownloadersService {
         results: limitedResults,
         message: `Found ${limitedResults.length} pins for "${query}"`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in pinterest downloader:', error);
 
       if (error.response?.status === 429) {
@@ -221,7 +221,7 @@ class EnhancedDownloadersService {
         results: enhancedResults,
         message: `Found ${enhancedResults.length} videos for "${query}"`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in enhanced YouTube search:', error);
       throw new Error('Failed to search YouTube');
     }
@@ -292,7 +292,7 @@ class EnhancedDownloadersService {
         originalUrl: url,
         message: `File: ${fileName}\nSize: ${fileSize}\nUpload: ${uploadDate}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in MediaFire downloader:', error);
 
       if (error.response?.status === 429) {
@@ -355,7 +355,7 @@ class EnhancedDownloadersService {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking downloader rate limit:', error);
       return false; // Fail safe
     }

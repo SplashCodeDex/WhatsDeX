@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
 export default {
@@ -7,7 +8,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { tools, config } = ctx.bot.context;
     try {
       const apiUrl = tools.api.createUrl(
@@ -30,7 +31,7 @@ export default {
           },
         ],
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

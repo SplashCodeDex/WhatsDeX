@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'tagall',
   category: 'group',
@@ -5,7 +6,7 @@ export default {
     admin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || formatter.quote('👋 Halo, Dunia!');
 
@@ -24,7 +25,7 @@ export default {
         text: `${input}\n` + `${config.msg.readmore}· · ─ ·✶· ─ · ·\n${resultText}`,
         mentions: mentions.map(mention => mention.mention),
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

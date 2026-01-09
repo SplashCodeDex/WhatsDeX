@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'unwarning',
   category: 'group',
@@ -7,7 +8,7 @@ export default {
     group: true,
     restrict: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
     const accountId = ctx.getId(accountJid);
@@ -57,7 +58,7 @@ export default {
           `✅ Berhasil mengurangi warning pengguna itu menjadi ${newWarning}/${groupDb?.maxwarnings || 3}.`
         )
       );
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'kick',
   aliases: ['dor'],
@@ -8,7 +9,7 @@ export default {
     group: true,
     restrict: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
 
@@ -31,7 +32,7 @@ export default {
       await ctx.group().kick(accountJid);
 
       await ctx.reply(formatter.quote('✅ Berhasil dikeluarkan!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

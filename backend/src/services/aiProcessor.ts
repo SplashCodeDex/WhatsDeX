@@ -1,9 +1,16 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import logger from '../utils/logger';
-import performanceMonitor from '../utils/PerformanceMonitor';
+import logger from '../utils/logger.js';
+import performanceMonitor from '../utils/performanceMonitor.js';
+import { Bot, GlobalContext } from '../types/index.js';
 
 export class AIProcessor {
-  constructor(bot, context) {
+  private bot: Bot;
+  private context: GlobalContext;
+  private geminiAI: any;
+  private geminiModel: any;
+  private conversationMemory: Map<string, any>;
+
+  constructor(bot: any, context: any) {
     this.bot = bot;
     this.context = context;
 
@@ -23,7 +30,7 @@ export class AIProcessor {
     logger.info('🧠 Unified AI Processor initialized (Prisma/Redis removed)');
   }
 
-  async processMessage(messageData) {
+  async processMessage(messageData: any) {
     try {
       const text = this.extractText(messageData);
       if (!text || text.startsWith('.') || text.startsWith('!')) return null;
@@ -37,24 +44,24 @@ export class AIProcessor {
 
       timer.end();
       return { success: true, response };
-    } catch (error) {
+    } catch (error: any) {
       this.context.logger.error('AI processing failed:', error);
       return null;
     }
   }
 
-  async generateResponse(text) {
+  async generateResponse(text: string) {
     if (!this.geminiModel) return null;
     try {
       const result = await this.geminiModel.generateContent(text);
       return result.response.text();
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Gemini error:', err);
       return null;
     }
   }
 
-  extractText(messageData) {
+  extractText(messageData: any) {
     return messageData.message?.conversation || messageData.message?.extendedTextMessage?.text || '';
   }
 }

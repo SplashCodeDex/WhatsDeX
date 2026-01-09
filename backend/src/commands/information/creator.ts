@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import VCard from 'vcard-creator';
 
 
@@ -5,7 +6,7 @@ export default {
   name: 'owner',
   aliases: ['creator', 'developer'],
   category: 'information',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { tools, config } = ctx.bot.context;
     try {
       const vcard = new VCard()
@@ -24,7 +25,7 @@ export default {
           ],
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(config, ctx, error);
     }
   },

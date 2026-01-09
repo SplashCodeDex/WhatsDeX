@@ -1,5 +1,5 @@
 import { performance } from 'perf_hooks';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 
 class PerformanceMonitor {
   constructor() {

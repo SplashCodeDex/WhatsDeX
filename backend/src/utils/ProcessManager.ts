@@ -4,16 +4,21 @@
  */
 
 import { EventEmitter } from 'events';
-import logger from './Logger';
+import logger from './Logger.js';
 
 export class ProcessManager extends EventEmitter {
+  private isShuttingDown: boolean;
+  private shutdownTimeout: number;
+  private services: Map<string, any>;
+  private shutdownHandlers: Array<{ handler: Function; priority: number }>;
+
   constructor() {
     super();
     this.isShuttingDown = false;
     this.shutdownTimeout = 30000; // 30 seconds
     this.services = new Map();
     this.shutdownHandlers = [];
-    
+
     this.setupSignalHandlers();
   }
 
@@ -36,7 +41,7 @@ export class ProcessManager extends EventEmitter {
         stack: error.stack,
         type: 'uncaught_exception'
       });
-      
+
       // Give logger time to flush, then exit
       setTimeout(() => {
         process.exit(1);
@@ -80,7 +85,7 @@ export class ProcessManager extends EventEmitter {
       priority,
       shutdown: service.shutdown || service.close || service.disconnect
     });
-    
+
     logger.debug(`Service registered for shutdown: ${name}`, { priority });
   }
 
@@ -99,7 +104,7 @@ export class ProcessManager extends EventEmitter {
     this.isShuttingDown = true;
     const startTime = Date.now();
 
-    logger.info('Starting graceful shutdown sequence', { 
+    logger.info('Starting graceful shutdown sequence', {
       signal,
       registeredServices: Array.from(this.services.keys()),
       customHandlers: this.shutdownHandlers.length
@@ -128,9 +133,9 @@ export class ProcessManager extends EventEmitter {
       await this.finalCleanup();
 
       const duration = Date.now() - startTime;
-      logger.info('Graceful shutdown completed successfully', { 
+      logger.info('Graceful shutdown completed successfully', {
         duration: `${duration}ms`,
-        signal 
+        signal
       });
 
       clearTimeout(forceExitTimer);
@@ -139,9 +144,9 @@ export class ProcessManager extends EventEmitter {
       // Exit cleanly
       process.exit(0);
 
-    } catch (error) {
+    } catch (error: any) {
       const duration = Date.now() - startTime;
-      logger.error('Error during graceful shutdown', { 
+      logger.error('Error during graceful shutdown', {
         error: error.message,
         stack: error.stack,
         duration: `${duration}ms`,
@@ -158,7 +163,7 @@ export class ProcessManager extends EventEmitter {
 
   async stopAcceptingNewRequests() {
     logger.info('Stopping acceptance of new requests...');
-    
+
     // If Express server is registered
     const serverService = this.services.get('server');
     if (serverService?.service?.close) {
@@ -174,20 +179,20 @@ export class ProcessManager extends EventEmitter {
 
   async executeShutdownHandlers() {
     logger.info('Executing custom shutdown handlers...');
-    
+
     for (const { handler, priority } of this.shutdownHandlers) {
       try {
         logger.debug(`Executing shutdown handler (priority: ${priority})`);
         await Promise.race([
           handler(),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Handler timeout')), 10000)
           )
         ]);
-      } catch (error) {
-        logger.warn('Shutdown handler failed', { 
+      } catch (error: any) {
+        logger.warn('Shutdown handler failed', {
           error: error.message,
-          priority 
+          priority
         });
       }
     }
@@ -195,7 +200,7 @@ export class ProcessManager extends EventEmitter {
 
   async shutdownServices() {
     logger.info('Shutting down registered services...');
-    
+
     // Sort services by priority (highest first)
     const sortedServices = Array.from(this.services.entries())
       .sort((a, b) => b[1].priority - a[1].priority);
@@ -203,11 +208,11 @@ export class ProcessManager extends EventEmitter {
     for (const [name, { service, shutdown }] of sortedServices) {
       try {
         logger.debug(`Shutting down service: ${name}`);
-        
+
         if (typeof shutdown === 'function') {
           await Promise.race([
             shutdown.call(service),
-            new Promise((_, reject) => 
+            new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Service shutdown timeout')), 15000)
             )
           ]);
@@ -215,9 +220,9 @@ export class ProcessManager extends EventEmitter {
         } else {
           logger.warn(`Service ${name} has no shutdown method`);
         }
-      } catch (error) {
-        logger.error(`Failed to shutdown service ${name}`, { 
-          error: error.message 
+      } catch (error: any) {
+        logger.error(`Failed to shutdown service ${name}`, {
+          error: error.message
         });
       }
     }
@@ -225,28 +230,28 @@ export class ProcessManager extends EventEmitter {
 
   async finalCleanup() {
     logger.info('Performing final cleanup...');
-    
+
     try {
       // Clear timers and intervals
       this.clearAllTimers();
-      
+
       // Flush logs
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       logger.info('Final cleanup completed');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error in final cleanup', { error: error.message });
     }
   }
 
   clearAllTimers() {
     // This is a simple approach - in production, you'd want to track timers
-    const highestTimeoutId = setTimeout(() => {}, 0);
+    const highestTimeoutId = setTimeout(() => { }, 0);
     for (let i = 0; i <= highestTimeoutId; i++) {
       clearTimeout(i);
     }
 
-    const highestIntervalId = setInterval(() => {}, Number.MAX_SAFE_INTEGER);
+    const highestIntervalId = setInterval(() => { }, Number.MAX_SAFE_INTEGER);
     for (let i = 0; i <= highestIntervalId; i++) {
       clearInterval(i);
     }
@@ -275,7 +280,7 @@ export class ProcessManager extends EventEmitter {
   }
 
   // Force shutdown (emergency use only)
-  forceShutdown(exitCode = 1) {
+  forceShutdown(exitCode: number = 1) {
     logger.error('Force shutdown initiated');
     process.exit(exitCode);
   }

@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
 export default {
@@ -7,7 +8,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const {
       formatter,
       config,
@@ -56,7 +57,7 @@ export default {
           caption: formatter.quote(`URL: ${url}`),
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       await cmd.handleError(ctx, error, true);
     }
   },

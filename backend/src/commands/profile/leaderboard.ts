@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'leaderboard',
   aliases: ['lb', 'peringkat'],
   category: 'profile',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
       const senderId = ctx.getId(ctx.sender.jid);
@@ -42,7 +43,7 @@ export default {
         mentions: [`${senderId}@s.whatsapp.net`],
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

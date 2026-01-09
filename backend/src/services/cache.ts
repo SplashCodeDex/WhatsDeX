@@ -1,5 +1,5 @@
 import redis from 'redis';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 class CacheService {
   constructor() {
@@ -34,7 +34,7 @@ class CacheService {
       });
 
       await this.client.connect();
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to connect to Redis:', error);
       this.isConnected = false;
     }
@@ -53,7 +53,7 @@ class CacheService {
     try {
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache get error:', error);
       return null;
     }
@@ -79,7 +79,7 @@ class CacheService {
         await this.client.set(key, serializedValue);
       }
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache set error:', error);
       return false;
     }
@@ -98,7 +98,7 @@ class CacheService {
     try {
       await this.client.del(key);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache delete error:', error);
       return false;
     }
@@ -117,7 +117,7 @@ class CacheService {
     try {
       const result = await this.client.exists(key);
       return result === 1;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache exists error:', error);
       return false;
     }
@@ -146,7 +146,7 @@ class CacheService {
       });
       await pipeline.exec();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache mset error:', error);
       return false;
     }
@@ -178,7 +178,7 @@ class CacheService {
         }
       });
       return result;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache mget error:', error);
       return {};
     }
@@ -197,7 +197,7 @@ class CacheService {
 
     try {
       return await this.client.incrBy(key, amount);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache increment error:', error);
       return null;
     }
@@ -216,7 +216,7 @@ class CacheService {
 
     try {
       return await this.client.expire(key, ttlSeconds);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache expire error:', error);
       return false;
     }
@@ -234,7 +234,7 @@ class CacheService {
 
     try {
       return await this.client.ttl(key);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache ttl error:', error);
       return -2;
     }
@@ -256,7 +256,7 @@ class CacheService {
         return await this.client.del(keys);
       }
       return 0;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache invalidate pattern error:', error);
       return 0;
     }
@@ -280,7 +280,7 @@ class CacheService {
         dbSize,
         info: this.parseRedisInfo(info),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Cache stats error:', error);
       return { connected: false, error: error.message };
     }
@@ -322,7 +322,7 @@ class CacheService {
         status: 'healthy',
         ...stats,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         status: 'unhealthy',
         error: error.message,

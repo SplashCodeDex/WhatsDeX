@@ -41,6 +41,7 @@ export interface BotInstanceDocument {
   id: string;
   name: string;
   phoneNumber?: string;
+  userId?: string; // Legacy/Owner mapping
   status: 'online' | 'offline' | 'connecting' | 'error';
   lastSeen?: Timestamp | Date;
   connectionMetadata: {

@@ -1,6 +1,6 @@
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
-export const errorHandler = (error, req, res, next) => {
+export const errorHandler = (error: any, req: any, res: any, next: any) => {
     logger.error('Unhandled error', {
         error: error.message,
         stack: error.stack,
@@ -14,7 +14,7 @@ export const errorHandler = (error, req, res, next) => {
     });
 };
 
-export const notFoundHandler = (req, res) => { // Removed next parameter
+export const notFoundHandler = (req: any, res: any) => { // Removed next parameter
     res.status(404).json({
         error: 'Endpoint not found',
         path: req.path

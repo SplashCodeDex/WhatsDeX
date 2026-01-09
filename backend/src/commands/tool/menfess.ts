@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 // Note: Removed deprecated @itsreimau/gktw import (migrated to @whiskeysockets/baileys)
 
 /* Deprecated: gktw migrated to @whiskeysockets/baileys
@@ -12,7 +13,7 @@ export default {
     coin: 10,
     private: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     const [id, ...text] = ctx.args;
     const targetId = id ? id.replace(/[^\d]/g, '') : null;
@@ -90,7 +91,7 @@ export default {
         footer: config.msg.footer,
         buttons,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

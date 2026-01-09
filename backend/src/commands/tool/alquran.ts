@@ -1,10 +1,11 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
 export default {
   name: 'alquran',
   aliases: ['quran'],
   category: 'tool',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const [surat, ayat] = ctx.args;
 
@@ -100,7 +101,7 @@ export default {
           footer: config.msg.footer,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

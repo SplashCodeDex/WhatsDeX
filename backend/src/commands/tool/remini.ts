@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 // Note: Removed deprecated @itsreimau/gktw import (migrated to @whiskeysockets/baileys)
 
 /* Deprecated: gktw migrated to @whiskeysockets/baileys
@@ -9,7 +10,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
       tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
@@ -38,7 +39,7 @@ export default {
         caption: formatter.quote('Untukmu, tuan!'),
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

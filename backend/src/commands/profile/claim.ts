@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 // List of available claim rewards
 import z from 'zod';
-import formatters from '../../utils/formatters';
+import formatters from '../../utils/formatters.js';
 const { convertMsToDuration, ucwords } = formatters;
-import { db } from '../../src/utils';
+import { formatTime, getRandomInt } from '../../utils.js';
 
 const claimRewards = {
   daily: {
@@ -37,7 +38,7 @@ export default {
   name: 'claim',
   aliases: ['bonus', 'klaim'],
   category: 'profile',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, config } = ctx.bot.context;
 
     try {
@@ -99,7 +100,7 @@ export default {
           `✅ You successfully claimed the ${claimType} reward of ${claim.reward} coins! Your current balance is ${rewardCoin}.`
         )
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }

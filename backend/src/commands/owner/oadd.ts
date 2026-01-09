@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'oadd',
   category: 'owner',
@@ -7,7 +8,7 @@ export default {
     owner: true,
     restrict: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const input = ctx.args.join(' ') || null;
 
@@ -28,7 +29,7 @@ export default {
       await ctx.group().add(accountJid);
 
       await ctx.reply(formatter.quote('✅ Berhasil ditambahkan!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

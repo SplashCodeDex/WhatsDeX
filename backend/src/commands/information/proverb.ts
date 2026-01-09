@@ -1,10 +1,11 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'proverb',
   category: 'information',
   permissions: {
     coin: 0,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const proverbs = [
       'The early bird catches the worm.',
       'Actions speak louder than words.',

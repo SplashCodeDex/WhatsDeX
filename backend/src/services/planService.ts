@@ -1,31 +1,52 @@
-import prisma from '../lib/prisma';
-import logger from '../utils/logger';
+import { db, admin } from '../lib/firebase.js';
+import logger from '../utils/logger.js';
 
 class PlanService {
+  private planCache: Map<string, any>;
+
   constructor() {
     this.planCache = new Map();
   }
 
-  async getTenantPlan(tenantId) {
+  async getTenantPlan(tenantId: string) {
     try {
-      const subscription = await prisma.tenantSubscription.findUnique({
-        where: { tenantId },
-        include: { plan: true }
-      });
+      if (!tenantId) {
+        return await this.getDefaultFreePlan();
+      }
 
-      if (!subscription) {
+      const subscriptionDoc = await db.collection('tenant_subscriptions').doc(tenantId).get();
+
+      if (!subscriptionDoc.exists) {
         // Return default FREE plan
         return await this.getDefaultFreePlan();
       }
 
+      const subscription = subscriptionDoc.data();
+
       // Check if subscription is active
       const now = new Date();
-      if (subscription.status !== 'active' || subscription.currentPeriodEnd < now) {
+      // Ensure dates are parsed correctly if stored as strings or Timestamps
+      const currentPeriodEnd = subscription?.currentPeriodEnd?.toDate ? subscription.currentPeriodEnd.toDate() : new Date(subscription?.currentPeriodEnd);
+
+      if (subscription?.status !== 'active' || currentPeriodEnd < now) {
         return await this.getDefaultFreePlan();
       }
 
-      return subscription.plan;
-    } catch (error) {
+      // Fetch the actual plan details using planId or embedded plan data
+      // Assuming planId is stored, fetch plan. Or if we embed, use it directly.
+      // Let's assume we store planId or code and need to fetch it to be safe, or we could have embedded it.
+      // Given the previous prisma include: { plan: true }, let's try to fetch the plan details.
+      if (subscription?.planId) {
+        const planDoc = await db.collection('plans').doc(subscription.planId).get();
+        if (planDoc.exists) {
+          return { ...planDoc.data(), id: planDoc.id };
+        }
+      }
+
+      // Fallback if plan lookup fails
+      return await this.getDefaultFreePlan();
+
+    } catch (error: any) {
       logger.error('Failed to get tenant plan:', error);
       return await this.getDefaultFreePlan();
     }
@@ -37,46 +58,51 @@ class PlanService {
     }
 
     try {
-      const plan = await prisma.plan.findUnique({
-        where: { code: 'FREE' }
-      });
+      const plansSnapshot = await db.collection('plans').where('code', '==', 'FREE').limit(1).get();
 
-      if (plan) {
+      if (!plansSnapshot.empty) {
+        const planDoc = plansSnapshot.docs[0];
+        const plan = { ...planDoc.data(), id: planDoc.id };
         this.planCache.set('FREE', plan);
         return plan;
       }
 
       // Create default FREE plan if it doesn't exist
-      const defaultPlan = await prisma.plan.create({
-        data: {
-          code: 'FREE',
-          name: 'Free Plan',
-          description: 'Basic features with limited usage',
-          price: 0,
-          aiRequestsPerMonth: 10,
-          messagesPerDay: 100,
-          mediaGensPerDay: 0,
-          maxBots: 1,
-          enableRAG: false,
-          enableVideo: false,
-          enableAIChat: true,
-          enableImageGen: false,
-          enableAdvancedTools: false
-        }
-      });
+      const defaultPlanData = {
+        code: 'FREE',
+        name: 'Free Plan',
+        description: 'Basic features with limited usage',
+        price: 0,
+        aiRequestsPerMonth: 10,
+        messagesPerDay: 100,
+        mediaGensPerDay: 0,
+        maxBots: 1,
+        enableRAG: false,
+        enableVideo: false,
+        enableAIChat: true,
+        enableImageGen: false,
+        enableAdvancedTools: false
+      };
 
+      // Create a new doc reference for better ID generation or use 'FREE' as ID if unique
+      // Prisma used an ID. Let's let Firestore generate or use code as ID if we want.
+      // To strictly match "findUnique where code", let's use the code as ID for simplicity or query.
+      // Let's use auto-id but query by code as above.
+      const newPlanRef = await db.collection('plans').add(defaultPlanData);
+
+      const defaultPlan = { ...defaultPlanData, id: newPlanRef.id };
       this.planCache.set('FREE', defaultPlan);
       return defaultPlan;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to get default plan:', error);
       throw new Error('Failed to get plan information');
     }
   }
 
-  async checkEntitlement(tenantId, featureKey) {
+  async checkEntitlement(tenantId: string, featureKey: string) {
     try {
       const plan = await this.getTenantPlan(tenantId);
-      
+
       switch (featureKey) {
         case 'aiChat':
           return plan.enableAIChat;
@@ -91,133 +117,128 @@ class PlanService {
         default:
           return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to check entitlement:', error);
       return false;
     }
   }
 
-  async checkUsageLimit(tenantId, limitType) {
+  async checkUsageLimit(tenantId: string, limitType: string) {
     try {
       const plan = await this.getTenantPlan(tenantId);
       const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const usageDocId = `${tenantId}_${currentPeriod}`;
 
-      const usage = await prisma.usageCounter.findUnique({
-        where: { tenantId_period: { tenantId, period: currentPeriod } }
-      });
+      const usageDoc = await db.collection('usage_counters').doc(usageDocId).get();
+      const currentUsage = usageDoc.exists ? usageDoc.data() : { aiRequests: 0, messages: 0, mediaGens: 0 };
 
-      const currentUsage = usage || { aiRequests: 0, messages: 0, mediaGens: 0 };
+      // Default to 0 if undefined
+      const aiRequests = currentUsage?.aiRequests || 0;
+      const messages = currentUsage?.messages || 0;
+      const mediaGens = currentUsage?.mediaGens || 0;
 
       switch (limitType) {
         case 'aiRequests':
           return {
-            allowed: currentUsage.aiRequests < plan.aiRequestsPerMonth,
-            current: currentUsage.aiRequests,
+            allowed: aiRequests < plan.aiRequestsPerMonth,
+            current: aiRequests,
             limit: plan.aiRequestsPerMonth,
-            remaining: plan.aiRequestsPerMonth - currentUsage.aiRequests
+            remaining: Math.max(0, plan.aiRequestsPerMonth - aiRequests)
           };
         case 'messages':
-          const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-          // For daily limits, we'd need a more granular counter, for now use monthly
+          // For daily limits, we'd need a more granular counter, for now use monthly implication from original code
+          // Original code: allowed: currentUsage.messages < (plan.messagesPerDay * 30)
+          const messageLimit = plan.messagesPerDay * 30;
           return {
-            allowed: currentUsage.messages < (plan.messagesPerDay * 30),
-            current: currentUsage.messages,
-            limit: plan.messagesPerDay * 30,
-            remaining: (plan.messagesPerDay * 30) - currentUsage.messages
+            allowed: messages < messageLimit,
+            current: messages,
+            limit: messageLimit,
+            remaining: Math.max(0, messageLimit - messages)
           };
         case 'mediaGens':
           return {
-            allowed: currentUsage.mediaGens < plan.mediaGensPerDay,
-            current: currentUsage.mediaGens,
+            allowed: mediaGens < plan.mediaGensPerDay,
+            current: mediaGens,
             limit: plan.mediaGensPerDay,
-            remaining: plan.mediaGensPerDay - currentUsage.mediaGens
+            remaining: Math.max(0, plan.mediaGensPerDay - mediaGens)
           };
         default:
           return { allowed: false, current: 0, limit: 0, remaining: 0 };
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to check usage limit:', error);
       return { allowed: false, current: 0, limit: 0, remaining: 0 };
     }
   }
 
-  async incrementUsage(tenantId, counterKey, amount = 1) {
+  async incrementUsage(tenantId: string, counterKey: string, amount = 1) {
     try {
       const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const usageDocId = `${tenantId}_${currentPeriod}`;
+      const usageRef = db.collection('usage_counters').doc(usageDocId);
 
-      const updateData = {};
-      updateData[counterKey] = { increment: amount };
-
-      await prisma.usageCounter.upsert({
-        where: { tenantId_period: { tenantId, period: currentPeriod } },
-        create: {
-          tenantId,
-          period: currentPeriod,
-          [counterKey]: amount
-        },
-        update: updateData
-      });
+      await usageRef.set({
+        tenantId,
+        period: currentPeriod,
+        [counterKey]: admin.firestore.FieldValue.increment(amount)
+      }, { merge: true });
 
       logger.debug(`Incremented ${counterKey} by ${amount} for tenant ${tenantId}`);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to increment usage:', error);
       throw new Error('Failed to update usage counter');
     }
   }
 
-  async updateTenantSubscription(tenantId, planCode, stripeSubscriptionId, status, currentPeriodStart, currentPeriodEnd) {
+  async updateTenantSubscription(tenantId: string, planCode: string, stripeSubscriptionId: string, status: string, currentPeriodStart: Date, currentPeriodEnd: Date) {
     try {
-      const plan = await prisma.plan.findUnique({
-        where: { code: planCode }
-      });
+      const plansSnapshot = await db.collection('plans').where('code', '==', planCode).limit(1).get();
 
-      if (!plan) {
+      if (plansSnapshot.empty) {
         throw new Error(`Plan not found: ${planCode}`);
       }
 
-      const subscription = await prisma.tenantSubscription.upsert({
-        where: { tenantId },
-        create: {
-          tenantId,
-          planId: plan.id,
-          status,
-          stripeSubscriptionId,
-          currentPeriodStart,
-          currentPeriodEnd
-        },
-        update: {
-          planId: plan.id,
-          status,
-          stripeSubscriptionId,
-          currentPeriodStart,
-          currentPeriodEnd
-        },
-        include: { plan: true }
-      });
+      const planDoc = plansSnapshot.docs[0];
+      const planId = planDoc.id;
+
+      const subscriptionRef = db.collection('tenant_subscriptions').doc(tenantId);
+      const subscriptionData = {
+        tenantId,
+        planId,
+        status,
+        stripeSubscriptionId,
+        currentPeriodStart: admin.firestore.Timestamp.fromDate(new Date(currentPeriodStart)),
+        currentPeriodEnd: admin.firestore.Timestamp.fromDate(new Date(currentPeriodEnd))
+      };
+
+      await subscriptionRef.set(subscriptionData, { merge: true });
 
       // Clear cache for this tenant
       this.planCache.delete(tenantId);
 
       logger.info(`Updated subscription for tenant ${tenantId} to plan ${planCode}`);
-      return subscription;
-    } catch (error) {
+      return { ...subscriptionData, plan: planDoc.data() };
+    } catch (error: any) {
       logger.error('Failed to update tenant subscription:', error);
       throw error;
     }
   }
 
-  async getUsage(tenantId, period = null) {
+  async getUsage(tenantId: string, period: string | null = null) {
     try {
       const currentPeriod = period || new Date().toISOString().slice(0, 7);
-      
-      const usage = await prisma.usageCounter.findUnique({
-        where: { tenantId_period: { tenantId, period: currentPeriod } }
-      });
+      const usageDocId = `${tenantId}_${currentPeriod}`;
 
-      return usage || { tenantId, period: currentPeriod, aiRequests: 0, messages: 0, mediaGens: 0 };
-    } catch (error) {
+      const usageDoc = await db.collection('usage_counters').doc(usageDocId).get();
+
+      if (!usageDoc.exists) {
+        return { tenantId, period: currentPeriod, aiRequests: 0, messages: 0, mediaGens: 0 };
+      }
+
+      return usageDoc.data();
+    } catch (error: any) {
       logger.error('Failed to get usage:', error);
-      return { tenantId, period: currentPeriod, aiRequests: 0, messages: 0, mediaGens: 0 };
+      return { tenantId, period: period || new Date().toISOString().slice(0, 7), aiRequests: 0, messages: 0, mediaGens: 0 };
     }
   }
 
@@ -272,15 +293,19 @@ class PlanService {
       ];
 
       for (const planData of plans) {
-        await prisma.plan.upsert({
-          where: { code: planData.code },
-          create: planData,
-          update: planData
-        });
+        // Upsert logic: Check existence by code then update or add
+        const querySnapshot = await db.collection('plans').where('code', '==', planData.code).limit(1).get();
+
+        if (!querySnapshot.empty) {
+          const docId = querySnapshot.docs[0].id;
+          await db.collection('plans').doc(docId).set(planData, { merge: true });
+        } else {
+          await db.collection('plans').add(planData);
+        }
       }
 
       logger.info('Default plans seeded successfully');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to seed default plans:', error);
       throw error;
     }

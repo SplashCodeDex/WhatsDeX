@@ -1,4 +1,4 @@
-import { DynamicToolRegistry } from './DynamicToolRegistry';
+import { DynamicToolRegistry } from './DynamicToolRegistry.js';
 
 export const cmd = {
     isOwner: (config, senderId) => {

@@ -1,8 +1,8 @@
-import { jidDecode, downloadContentFromMessage, getContentType } from '@whiskeysockets/baileys';
-import fileType from 'file-type';
-const { fileTypeFromBuffer } = fileType;
 
-export const decodeJid = jid => {
+import { jidDecode, downloadContentFromMessage, getContentType, proto } from '@whiskeysockets/baileys';
+import { fileTypeFromBuffer } from 'file-type';
+
+export const decodeJid = (jid: string | null | undefined) => {
   if (!jid) return jid;
   if (/:\d+@/gi.test(jid)) {
     const decode = jidDecode(jid) || {};
@@ -11,9 +11,9 @@ export const decodeJid = jid => {
   return jid;
 };
 
-export const serialize = (bot, m) => {
+export const serialize = (bot: any, m: any) => {
   if (!m) return m;
-  const M = {};
+  const M: any = {};
   if (m.key) {
     M.key = m.key;
     M.id = m.key.id;
@@ -21,7 +21,7 @@ export const serialize = (bot, m) => {
     M.chat = m.key.remoteJid;
     M.fromMe = m.key.fromMe;
     M.isGroup = M.chat.endsWith('@g.us');
-    M.sender = M.fromMe ? bot.user.id : M.isGroup ? m.key.participant : M.chat;
+    M.sender = M.fromMe ? bot.user?.id : M.isGroup ? m.key.participant : M.chat;
     if (M.sender) M.sender = decodeJid(M.sender);
   }
 
@@ -35,7 +35,7 @@ export const serialize = (bot, m) => {
 
     // Handle ephemeral/view once messages
     if (['viewOnceMessage', 'viewOnceMessageV2'].includes(M.type)) {
-      M.msg = m.message[M.type].message[getContentType(m.message[M.type].message)];
+      M.msg = m.message[M.type].message[getContentType(m.message[M.type].message)!];
       M.type = getContentType(m.message[M.type].message);
       M.contentType = M.type;
     }
@@ -53,11 +53,11 @@ export const serialize = (bot, m) => {
     // Quoted message handling
     M.quoted = M.msg?.contextInfo?.quotedMessage ? {} : null;
     if (M.quoted) {
-      const type = getContentType(M.msg.contextInfo.quotedMessage);
+      const type = getContentType(M.msg.contextInfo.quotedMessage)!;
       M.quoted.message = M.msg.contextInfo.quotedMessage;
       M.quoted.key = {
         remoteJid: M.msg.contextInfo.remoteJid || M.chat,
-        fromMe: M.msg.contextInfo.participant === bot.user.id,
+        fromMe: M.msg.contextInfo.participant === (bot.user ? bot.user.id : bot.decodeJid(bot.user.id)), // Safeguard approach
         id: M.msg.contextInfo.stanzaId,
         participant: decodeJid(M.msg.contextInfo.participant),
       };
@@ -82,7 +82,7 @@ export const serialize = (bot, m) => {
       M.quoted.download = async () => {
         const stream = await downloadContentFromMessage(
           M.quoted.message[M.quoted.type],
-          M.quoted.type.replace('Message', '')
+          M.quoted.type.replace('Message', '') as any
         );
         let buffer = Buffer.from([]);
         for await (const chunk of stream) {
@@ -94,12 +94,12 @@ export const serialize = (bot, m) => {
   }
 
   // Helper: Reply
-  M.reply = async (text, options = {}) => {
+  M.reply = async (text: string, options: any = {}) => {
     return await bot.sendMessage(M.chat, { text, ...options }, { quoted: m });
   };
 
   // Helper: React
-  M.react = async emoji => {
+  M.react = async (emoji: string) => {
     return await bot.sendMessage(M.chat, {
       react: {
         text: emoji,
@@ -111,7 +111,7 @@ export const serialize = (bot, m) => {
   // Helper: Download Media
   M.download = async () => {
     if (!M.msg) throw new Error('No message content to download');
-    const stream = await downloadContentFromMessage(M.msg, M.type.replace('Message', ''));
+    const stream = await downloadContentFromMessage(M.msg, M.type.replace('Message', '') as any);
     let buffer = Buffer.from([]);
     for await (const chunk of stream) {
       buffer = Buffer.concat([buffer, chunk]);
@@ -120,31 +120,26 @@ export const serialize = (bot, m) => {
   };
 
   // Helper: Copy & Forward
-  M.copyNForward = async (jid, forceForward = false, options = {}) => {
+  M.copyNForward = async (jid: string, forceForward = false, options: any = {}) => {
     let vtype;
     if (options.readViewOnce) {
       M.message[M.type].viewOnce = false;
-      M.message[M.type].message[getContentType(M.message[M.type].message)].viewOnce = false;
-      vtype = Object.keys(M.message[M.type].message)[0];
-      delete M.message[M.type].message[vtype].viewOnce;
-      M.message[M.type].message[vtype].viewOnce = false;
+      if (M.message[M.type].message && getContentType(M.message[M.type].message)) {
+        M.message[M.type].message[getContentType(M.message[M.type].message)!].viewOnce = false;
+      }
+      vtype = Object.keys(M.message[M.type].message || {})[0];
+      if (vtype) {
+        delete M.message[M.type].message[vtype].viewOnce;
+        M.message[M.type].message[vtype].viewOnce = false;
+      }
     }
     const mtype = getContentType(M.message);
-    let content = M.message[mtype];
-    const forwardContent = {
-      [mtype]: content,
-      ...options,
-    };
-    // Ensure we are forwarding the actual content
-    if (M.quoted && !forceForward) {
-      // Logic to forward quoted if needed, but usually copyNForward forwards the current message
-    }
+    if (!mtype) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const content = M.message[mtype];
 
     // Basic forward implementation using Baileys built-in if available, or manual copy
-    // For now, we use a simple sendMessage with forward
-    // Note: Baileys v6+ has simplified forwarding.
-    // We'll use the copy logic.
-
     return await bot.sendMessage(jid, { forward: m, force: forceForward, ...options });
   };
 

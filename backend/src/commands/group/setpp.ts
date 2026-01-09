@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'setpp',
   aliases: ['seticon'],
@@ -7,7 +8,7 @@ export default {
     botAdmin: true,
     group: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
       tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
@@ -24,7 +25,7 @@ export default {
       await ctx.core.updateProfilePicture(ctx.id, buffer);
 
       await ctx.reply(formatter.quote('✅ Berhasil mengubah gambar profil grup!'));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

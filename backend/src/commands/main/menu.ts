@@ -1,14 +1,15 @@
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import moment from 'moment-timezone';
 
 export default {
   name: 'menu',
   aliases: ['allmenu', 'help', 'list', 'listmenu'],
   category: 'main',
-  code: async ctx => {
-    const { config, formatter, tools, state } = ctx.self.context;
+  code: async (ctx: MessageContext) => {
+    const { config, formatter, tools, state } = ctx.bot.context as GlobalContext;
     try {
       const { cmd } = ctx.bot;
-      const tag = {
+      const tag: Record<string, string> = {
         'ai-chat': 'AI (Chat)',
         'ai-image': 'AI (Image)',
         'ai-video': 'AI (Video)',
@@ -37,70 +38,28 @@ export default {
         `${formatter.quote(`Database: ${state.dbSize} (Simpl.DB - JSON)`)}\n` +
         `${formatter.quote('Library: @whiskeysockets/baileys')}\n` +
         '\n' +
-        `${formatter.italic("Don't forget to donate to keep the bot online.")}\n` +
-        `${config.msg.readmore}\n`;
-
-      for (const category of Object.keys(tag)) {
-        const cmds = Array.from(cmd.values())
-          .filter(cmd => cmd.category === category)
-          .map(cmd => ({
-            name: cmd.name,
-            aliases: cmd.aliases,
-            permissions: cmd.permissions || {},
-          }));
-
-        if (cmds.length > 0) {
-          text += ` ${formatter.bold(tag[category])}\n`;
-
-          cmds.forEach(cmd => {
-            let permissionsText = '';
-            if (cmd.permissions.coin) permissionsText += 'ⓒ';
-            if (cmd.permissions.group) permissionsText += 'Ⓖ';
-            if (cmd.permissions.owner) permissionsText += 'Ⓞ';
-            if (cmd.permissions.premium) permissionsText += 'Ⓟ';
-            if (cmd.permissions.private) permissionsText += 'ⓟ';
-
-            text += formatter.quote(
-              formatter.monospace(`${ctx.used.prefix + cmd.name} ${permissionsText}`)
+        `${formatter.italic(`Type ${formatter.monospace(`${cmd} <command>`)} to see command details.`)}\n` +
+        '\n' +
+        Object.keys(tag)
+          .map((c) => {
+            const commands = ctx.bot.command.filter(
+              (cmd) => cmd.category === c && !cmd.hide
             );
-            text += '\n';
-          });
-        }
+            if (commands.length === 0) return '';
+            return (
+              `*${tag[c]}* _(${commands.length})_\n` +
+              commands
+                .map((cmd) => formatter.monospace(cmd.name))
+                .sort()
+                .join(', ')
+            );
+          })
+          .filter(Boolean)
+          .join('\n\n');
 
-        text += '\n';
-      }
-
-      await ctx.sendMessage(
-        ctx.id,
-        {
-          image: {
-            url: config.bot.thumbnail,
-          },
-          mimetype: tools.mime.lookup('png'),
-          caption: text.trim(),
-          mentions: [ctx.sender.jid],
-          footer: config.msg.footer,
-          buttons: [
-            {
-              buttonId: `${ctx.used.prefix}owner`,
-              buttonText: {
-                displayText: 'Contact Owner',
-              },
-            },
-            {
-              buttonId: `${ctx.used.prefix}donate`,
-              buttonText: {
-                displayText: 'Donate',
-              },
-            },
-          ],
-        },
-        {
-          quoted: tools.cmd.fakeMetaAiQuotedText(config.msg.note),
-        }
-      );
-    } catch (error) {
-      await tools.cmd.handleError(ctx, error);
+      await ctx.reply(text);
+    } catch (error: any) {
+      await ctx.reply(`Error: ${error.message}`);
     }
   },
 };

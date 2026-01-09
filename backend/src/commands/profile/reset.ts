@@ -1,4 +1,4 @@
-import { db, collector } from '../../src/utils';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 
 export default {
   name: 'reset',
@@ -6,51 +6,34 @@ export default {
   permissions: {
     private: true,
   },
-  code: async ctx => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
-    await ctx.reply({
-      text: formatter.quote(
-        `🤖 Apakah kamu yakin ingin mereset datamu? Langkah ini akan menghapus seluruh data yang tersimpan dan tidak dapat dikembalikan.`
-      ),
-      footer: config.msg.footer,
-      buttons: [
-        {
-          buttonId: `y`,
-          buttonText: {
-            displayText: 'Ya',
-          },
-        },
-        {
-          buttonId: 'n',
-          buttonText: {
-            displayText: 'Tidak',
-          },
-        },
-      ],
-    });
+  code: async (ctx: MessageContext) => {
+    const { formatter, config, databaseService } = ctx.bot.context as GlobalContext;
 
     try {
-      ctx
-        .awaitMessages({
-          time: 60000,
-        })
-        .then(async m => {
-          const content = m.content.trim().toLowerCase();
-          const senderId = ctx.getId(ctx.sender.jid);
+      const confirmation = ctx.args[0]?.toLowerCase();
 
-          if (content === 'y') {
-            await db.delete(`user.${senderId}`);
-            await ctx.reply(
-              formatter.quote('✅ Data-mu berhasil direset, semua data telah dihapus!')
-            );
-            collector.stop();
-          } else if (content === 'n') {
-            await ctx.reply(formatter.quote('❌ Proses reset data telah dibatalkan.'));
-            collector.stop();
-          }
-        });
-    } catch (error) {
-      await tools.cmd.handleError(ctx, error);
+      if (confirmation !== 'confirm') {
+        return await ctx.reply(
+          formatter.quote(
+            `🤖 Warning: This will delete ALL your saved data.\n\nTo confirm, please type:\n${formatter.monospace(`${ctx.prefix}reset confirm`)}`
+          )
+        );
+      }
+
+      const senderId = ctx.sender.jid; // Use correct property
+
+      // Access deleteUser from the service directly or via the context adapter if available
+      // Based on context.ts, 'databaseService' is the instance with full methods
+      if (databaseService && databaseService.deleteUser) {
+        await databaseService.deleteUser(senderId);
+        await ctx.reply(formatter.quote('✅ User data has been successfully reset.'));
+      } else {
+        // Fallback if databaseService isn't typed or available as expected, though context.ts puts it there
+        await ctx.reply(formatter.quote('❌ Database service not available.'));
+      }
+
+    } catch (error: any) {
+      await ctx.reply(formatter.quote(`Error: ${error.message}`));
     }
   },
 };

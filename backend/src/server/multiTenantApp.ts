@@ -48,7 +48,7 @@ export class MultiTenantApp {
 
       this.isInitialized = true;
       logger.info('Multi-tenant app initialized successfully');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to initialize multi-tenant app', { error: error.message });
       throw error;
     }
@@ -136,7 +136,7 @@ export class MultiTenantApp {
       try {
         const tenants = await multiTenantService.listTenants();
         res.json({ success: true, data: tenants });
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Failed to get tenants', { error: error.message });
         res.status(500).json({ error: 'Failed to get tenants' });
       }
@@ -148,7 +148,7 @@ export class MultiTenantApp {
         const { botId } = req.params;
         await multiTenantBotService.startBot(botId);
         res.json({ success: true, message: 'Bot started successfully' });
-      } catch (error) {
+      } catch (error: any) {
         res.status(500).json({ error: error.message });
       }
     });
@@ -158,7 +158,7 @@ export class MultiTenantApp {
         const { botId } = req.params;
         await multiTenantBotService.stopBot(botId);
         res.json({ success: true, message: 'Bot stopped successfully' });
-      } catch (error) {
+      } catch (error: any) {
         res.status(500).json({ error: error.message });
       }
     });
@@ -181,7 +181,7 @@ export class MultiTenantApp {
         await multiTenantStripeService.initialize(stripeKey, stripeWebhookSecret || '');
         logger.info('Stripe service initialized');
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to initialize services', { error: error.message });
     }
   }
@@ -191,7 +191,7 @@ export class MultiTenantApp {
       logger.info('Starting active tenant bots...');
       // Logic moved to multiTenantBotService
       await multiTenantBotService.startAllBots();
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to start tenant bots', { error: error.message });
     }
   }
@@ -209,7 +209,7 @@ export class MultiTenantApp {
       process.on('SIGTERM', () => this.shutdown());
       process.on('SIGINT', () => this.shutdown());
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to start server', { error: error.message });
       throw error;
     }
@@ -225,7 +225,7 @@ export class MultiTenantApp {
           process.exit(0);
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error during shutdown', { error: error.message });
       process.exit(1);
     }

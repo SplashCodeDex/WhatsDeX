@@ -3,12 +3,35 @@
  * Provides comprehensive performance tracking and optimization insights
  */
 
-import { performance, PerformanceObserver } from 'node:perf_hooks';
-const setImmediate = globalThis.setImmediate || ((fn) => setTimeout(fn, 0));
+import { performance, PerformanceObserver, PerformanceEntry } from 'node:perf_hooks';
+const setImmediate = globalThis.setImmediate || ((fn: any) => setTimeout(fn, 0));
 import { EventEmitter } from 'events';
-import logger from './logger';
+import logger from './logger.js';
+
+interface Metric {
+  name: string;
+  value: number;
+  unit: string;
+  timestamp: number;
+  metadata: any;
+}
+
+interface Thresholds {
+  [key: string]: number;
+  slow_operation: number;
+  very_slow_operation: number;
+  memory_warning: number;
+  memory_critical: number;
+  cpu_warning: number;
+  cpu_critical: number;
+}
 
 export class PerformanceMonitor extends EventEmitter {
+  metrics: Map<string, Metric[]>;
+  thresholds: Thresholds;
+  observerActive: boolean;
+  baselineMemory?: number;
+
   constructor() {
     super();
     this.metrics = new Map();
@@ -20,7 +43,7 @@ export class PerformanceMonitor extends EventEmitter {
       cpu_warning: 80,         // 80%
       cpu_critical: 95         // 95%
     };
-    
+
     this.observerActive = false;
     this.startMonitoring();
   }
@@ -34,11 +57,11 @@ export class PerformanceMonitor extends EventEmitter {
             this.recordPerformanceEntry(entry);
           }
         });
-        
+
         obs.observe({ entryTypes: ['measure', 'mark'] });
         this.observerActive = true;
         logger.debug('Performance monitoring started');
-      } catch (error) {
+      } catch (error: any) {
         logger.warn('Failed to start performance observer', { error: error.message });
       }
     }
@@ -60,22 +83,22 @@ export class PerformanceMonitor extends EventEmitter {
   }
 
   // Timer for measuring function execution
-  startTimer(name, metadata = {}) {
+  startTimer(name: string, metadata: any = {}) {
     const markName = `${name}_start`;
     performance.mark(markName);
-    
+
     return {
       end: () => {
         const endMarkName = `${name}_end`;
         performance.mark(endMarkName);
         performance.measure(name, markName, endMarkName);
-        
+
         const entries = performance.getEntriesByName(name);
         const latestEntry = entries[entries.length - 1];
-        
+
         if (latestEntry) {
           this.recordMetric(name, latestEntry.duration, 'duration', metadata);
-          
+
           // Check for slow operations
           if (latestEntry.duration > this.thresholds.very_slow_operation) {
             logger.warn('Very slow operation detected', {
@@ -95,72 +118,78 @@ export class PerformanceMonitor extends EventEmitter {
             this.emit('slow_operation', { name, duration: latestEntry.duration, severity: 'warning' });
           }
         }
-        
+
         // Clean up marks
         performance.clearMarks(markName);
         performance.clearMarks(endMarkName);
+        // Clearing measures can prevent seeing historical data if we relied on P.getEntries() elsewhere
+        // But we store in this.metrics so it is fine.
         performance.clearMeasures(name);
-        
+
         return latestEntry ? latestEntry.duration : null;
       }
     };
   }
 
   // Decorator for automatic function timing
-  timed(name, metadata = {}) {
-    return (target, propertyKey, descriptor) => {
+  timed(name?: string, metadata: any = {}) {
+    return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
       const originalMethod = descriptor.value;
-      
-      descriptor.value = async function(...args) {
-        const timer = this.startTimer(name || `${target.constructor.name}.${propertyKey}`, metadata);
+
+      descriptor.value = async function (...args: any[]) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const timer = this.startTimer ? this.startTimer(name || `${target.constructor.name}.${propertyKey}`, metadata) : performanceMonitor.startTimer(name || `${target.constructor.name}.${propertyKey}`, metadata);
         try {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           const result = await originalMethod.apply(this, args);
           timer.end();
           return result;
-        } catch (error) {
+        } catch (error: any) {
           timer.end();
           throw error;
         }
       };
-      
+
       return descriptor;
     };
   }
 
   // High-level operation tracking
-  async measureAsync(name, operation, metadata = {}) {
+  async measureAsync<T>(name: string, operation: () => Promise<T>, metadata: any = {}): Promise<T> {
     const timer = this.startTimer(name, metadata);
     try {
       const result = await operation();
       timer.end();
       return result;
-    } catch (error) {
+    } catch (error: any) {
       timer.end();
       throw error;
     }
   }
 
-  measureSync(name, operation, metadata = {}) {
+  measureSync<T>(name: string, operation: () => T, metadata: any = {}): T {
     const timer = this.startTimer(name, metadata);
     try {
       const result = operation();
       timer.end();
       return result;
-    } catch (error) {
+    } catch (error: any) {
       timer.end();
       throw error;
     }
   }
 
-  recordPerformanceEntry(entry) {
+  recordPerformanceEntry(entry: PerformanceEntry) {
     this.recordMetric(entry.name, entry.duration, 'duration', {
       entryType: entry.entryType,
       startTime: entry.startTime
     });
   }
 
-  recordMetric(name, value, unit = 'count', metadata = {}) {
-    const metric = {
+  recordMetric(name: string, value: number, unit: string = 'count', metadata: any = {}) {
+    const metric: Metric = {
       name,
       value,
       unit,
@@ -172,7 +201,7 @@ export class PerformanceMonitor extends EventEmitter {
       this.metrics.set(name, []);
     }
 
-    const metrics = this.metrics.get(name);
+    const metrics = this.metrics.get(name)!;
     metrics.push(metric);
 
     // Keep only last 1000 metrics per name
@@ -189,7 +218,7 @@ export class PerformanceMonitor extends EventEmitter {
   collectSystemMetrics() {
     const memUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     // Memory metrics
     this.recordMetric('memory_heap_used', memUsage.heapUsed, 'bytes');
     this.recordMetric('memory_heap_total', memUsage.heapTotal, 'bytes');
@@ -212,7 +241,7 @@ export class PerformanceMonitor extends EventEmitter {
     setImmediate(() => {
       const lag = Number(process.hrtime.bigint() - start) / 1e6; // Convert to milliseconds
       this.recordMetric('event_loop_lag', lag, 'milliseconds');
-      
+
       if (lag > 100) { // More than 100ms lag
         logger.warn('High event loop lag detected', { lag: Math.round(lag) });
         this.emit('event_loop_lag', { lag, severity: lag > 1000 ? 'critical' : 'warning' });
@@ -226,14 +255,14 @@ export class PerformanceMonitor extends EventEmitter {
     const rssMB = usage.rss / 1024 / 1024;
 
     if (rssMB > this.thresholds.memory_critical) {
-      logger.error('Critical memory usage detected', { 
+      logger.error('Critical memory usage detected', {
         rss: Math.round(rssMB),
         heapUsed: Math.round(heapUsedMB),
         threshold: this.thresholds.memory_critical
       });
       this.emit('memory_pressure', { level: 'critical', rss: rssMB, heapUsed: heapUsedMB });
     } else if (rssMB > this.thresholds.memory_warning) {
-      logger.warn('High memory usage detected', { 
+      logger.warn('High memory usage detected', {
         rss: Math.round(rssMB),
         heapUsed: Math.round(heapUsedMB),
         threshold: this.thresholds.memory_warning
@@ -243,7 +272,7 @@ export class PerformanceMonitor extends EventEmitter {
   }
 
   // Get metric statistics
-  getMetricStats(name, timeWindow = 300000) { // Last 5 minutes by default
+  getMetricStats(name: string, timeWindow = 300000) { // Last 5 minutes by default
     const metrics = this.metrics.get(name);
     if (!metrics || metrics.length === 0) {
       return null;
@@ -251,7 +280,7 @@ export class PerformanceMonitor extends EventEmitter {
 
     const cutoff = Date.now() - timeWindow;
     const recentMetrics = metrics.filter(m => m.timestamp > cutoff);
-    
+
     if (recentMetrics.length === 0) {
       return null;
     }
@@ -261,7 +290,7 @@ export class PerformanceMonitor extends EventEmitter {
     const avg = sum / values.length;
     const min = Math.min(...values);
     const max = Math.max(...values);
-    
+
     // Calculate percentiles
     const sorted = [...values].sort((a, b) => a - b);
     const p50 = this.percentile(sorted, 0.5);
@@ -281,33 +310,33 @@ export class PerformanceMonitor extends EventEmitter {
     };
   }
 
-  percentile(sortedArray, p) {
+  percentile(sortedArray: number[], p: number) {
     const index = (p * (sortedArray.length - 1));
     const lower = Math.floor(index);
     const upper = Math.ceil(index);
     const weight = index % 1;
 
     if (upper >= sortedArray.length) return sortedArray[lower];
-    
+
     return sortedArray[lower] * (1 - weight) + sortedArray[upper] * weight;
   }
 
   // Get all metrics summary
   getMetricsSummary(timeWindow = 300000) {
-    const summary = {};
-    
+    const summary: any = {};
+
     for (const [name] of this.metrics) {
       const stats = this.getMetricStats(name, timeWindow);
       if (stats) {
         summary[name] = stats;
       }
     }
-    
+
     return summary;
   }
 
   // Database query performance tracking
-  trackDatabaseQuery(operation, table, duration, rowCount = null) {
+  trackDatabaseQuery(operation: string, table: string, duration: number, rowCount: number | null = null) {
     this.recordMetric('database_query_duration', duration, 'milliseconds', {
       operation,
       table,
@@ -330,7 +359,7 @@ export class PerformanceMonitor extends EventEmitter {
   }
 
   // API call performance tracking
-  trackApiCall(service, endpoint, duration, statusCode) {
+  trackApiCall(service: string, endpoint: string, duration: number, statusCode: number) {
     this.recordMetric('external_api_duration', duration, 'milliseconds', {
       service,
       endpoint,
@@ -348,7 +377,7 @@ export class PerformanceMonitor extends EventEmitter {
   detectMemoryLeaks() {
     const usage = process.memoryUsage();
     const currentHeapUsed = usage.heapUsed / 1024 / 1024;
-    
+
     if (!this.baselineMemory) {
       this.baselineMemory = currentHeapUsed;
       return;
@@ -364,7 +393,7 @@ export class PerformanceMonitor extends EventEmitter {
         growth: Math.round(growth),
         growthPercent: Math.round(growthPercent)
       });
-      
+
       this.emit('memory_leak_warning', {
         baseline: this.baselineMemory,
         current: currentHeapUsed,
@@ -378,7 +407,7 @@ export class PerformanceMonitor extends EventEmitter {
   generateReport(timeWindow = 3600000) { // Last hour
     const summary = this.getMetricsSummary(timeWindow);
     const memoryUsage = process.memoryUsage();
-    
+
     return {
       timestamp: new Date().toISOString(),
       timeWindow,
@@ -399,7 +428,7 @@ export class PerformanceMonitor extends EventEmitter {
   // Clear old metrics
   clearOldMetrics(olderThan = 3600000) { // 1 hour
     const cutoff = Date.now() - olderThan;
-    
+
     for (const [name, metrics] of this.metrics) {
       const filtered = metrics.filter(m => m.timestamp > cutoff);
       this.metrics.set(name, filtered);
@@ -407,7 +436,7 @@ export class PerformanceMonitor extends EventEmitter {
   }
 
   // Set custom thresholds
-  setThreshold(name, value) {
+  setThreshold(name: string, value: number) {
     this.thresholds[name] = value;
     logger.debug(`Performance threshold updated: ${name} = ${value}`);
   }

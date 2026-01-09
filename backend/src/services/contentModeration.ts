@@ -1,7 +1,21 @@
-import GeminiService from '../../services/gemini';
-import logger from '../utils/logger';
+import GeminiService from './gemini.js';
+import logger from '../utils/logger.js';
+
+interface ModerationResult {
+  safe: boolean;
+  score: number;
+  categories: string[];
+  reason?: string;
+  fallback?: boolean;
+}
 
 class ContentModerationService {
+  private gemini: GeminiService;
+  private moderationEnabled: boolean;
+  private strictMode: boolean;
+  private thresholds: Record<string, number>;
+  private categories: string[];
+
   constructor() {
     this.gemini = new GeminiService();
     this.moderationEnabled = process.env.CONTENT_MODERATION_ENABLED === 'true';
@@ -39,9 +53,9 @@ class ContentModerationService {
    * Moderate content using AI
    * @param {string} content - Content to moderate
    * @param {Object} context - Additional context (userId, groupId, etc.)
-   * @returns {Promise<Object>} Moderation result
+   * @returns {Promise<ModerationResult>} Moderation result
    */
-  async moderateContent(content, context = {}) {
+  async moderateContent(content: string, context: any = {}): Promise<ModerationResult> {
     if (!this.moderationEnabled || !content) {
       return { safe: true, score: 0, categories: [] };
     }
@@ -70,7 +84,7 @@ class ContentModerationService {
       }
 
       return enhancedResult;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Content moderation failed', {
         error: error.message,
         contentLength: content.length,
@@ -93,10 +107,14 @@ class ContentModerationService {
    * @param {string} content - Original content
    * @param {Object} aiResult - AI moderation result
    * @param {Object} context - Context information
-   * @returns {Promise<Object>} Enhanced moderation result
+   * @returns {Promise<ModerationResult>} Enhanced moderation result
    */
-  async enhanceModeration(content, aiResult, context) {
-    const enhanced = { ...aiResult };
+  async enhanceModeration(content: string, aiResult: any, context: any): Promise<ModerationResult> {
+    const enhanced: ModerationResult = {
+      safe: aiResult.safe ?? true,
+      score: aiResult.score ?? 0,
+      categories: aiResult.categories ?? []
+    };
 
     // Additional pattern-based checks
     const patternChecks = this.performPatternChecks(content);
@@ -128,9 +146,9 @@ class ContentModerationService {
    * @param {string} content - Content to check
    * @returns {Object} Pattern check results
    */
-  performPatternChecks(content) {
+  performPatternChecks(content: string) {
     const lowerContent = content.toLowerCase();
-    const categories = [];
+    const categories: string[] = [];
     let score = 0;
 
     // Hate speech patterns
@@ -181,10 +199,12 @@ class ContentModerationService {
     }
 
     // Check for excessive caps
-    const capsRatio = (content.match(/[A-Z]/g) || []).length / content.length;
-    if (capsRatio > 0.7 && content.length > 10) {
-      categories.push('spam');
-      score = Math.max(score, 0.4);
+    if (content.length > 10) {
+      const capsRatio = (content.match(/[A-Z]/g) || []).length / content.length;
+      if (capsRatio > 0.7) {
+        categories.push('spam');
+        score = Math.max(score, 0.4);
+      }
     }
 
     // Check for repeated characters
@@ -202,7 +222,7 @@ class ContentModerationService {
    * @param {Object} context - Group context
    * @returns {Promise<number>} Adjusted score
    */
-  async adjustForGroupContext(score, context) {
+  async adjustForGroupContext(score: number, context: any) {
     // This would check group settings for moderation strictness
     // For now, return the original score
     return score;
@@ -214,7 +234,7 @@ class ContentModerationService {
    * @param {string} userId - User ID
    * @returns {Promise<number>} Adjusted score
    */
-  async adjustForUserHistory(score, userId) {
+  async adjustForUserHistory(score: number, userId: string) {
     // This would check user's moderation history
     // For now, return the original score
     return score;
@@ -226,7 +246,7 @@ class ContentModerationService {
    * @param {Array} categories - Flagged categories
    * @returns {boolean} Whether content is safe
    */
-  determineSafety(score, categories) {
+  determineSafety(score: number, categories: string[]) {
     // Always block certain categories regardless of score
     const alwaysBlock = ['hate_speech', 'violence', 'self_harm', 'illegal_activities'];
 
@@ -249,11 +269,11 @@ class ContentModerationService {
       return {
         totalModerated: 0,
         blockedContent: 0,
-        categoriesBreakdown: {},
+        categoriesBreakdown: {} as Record<string, number>,
         averageScore: 0,
         lastUpdated: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to get moderation statistics', { error: error.message });
       return null;
     }
@@ -264,7 +284,7 @@ class ContentModerationService {
    * @param {Array} contentArray - Array of content objects
    * @returns {Promise<Array>} Array of moderation results
    */
-  async moderateBulk(contentArray) {
+  async moderateBulk(contentArray: any[]) {
     const results = [];
 
     for (const item of contentArray) {
@@ -285,7 +305,7 @@ class ContentModerationService {
    * @param {boolean} correctDecision - Whether the moderation was correct
    * @param {string} feedback - User feedback
    */
-  async reportFeedback(content, moderationResult, correctDecision, feedback) {
+  async reportFeedback(content: string, moderationResult: ModerationResult, correctDecision: boolean, feedback: string) {
     try {
       logger.info('Moderation feedback received', {
         contentLength: content.length,
@@ -297,7 +317,7 @@ class ContentModerationService {
 
       // This would store feedback for model improvement
       // Could be used to fine-tune moderation over time
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to process moderation feedback', { error: error.message });
     }
   }
@@ -306,7 +326,7 @@ class ContentModerationService {
    * Update moderation settings
    * @param {Object} settings - New settings
    */
-  updateSettings(settings) {
+  updateSettings(settings: any) {
     if (settings.enabled !== undefined) {
       this.moderationEnabled = settings.enabled;
     }
@@ -343,7 +363,7 @@ class ContentModerationService {
         testResult: result,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Content moderation health check failed', { error: error.message });
       return {
         status: 'unhealthy',

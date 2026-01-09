@@ -1,4 +1,6 @@
-import stickerService from '../../src/services/stickerService';
+import { MessageContext } from '../../types/index.js';
+import stickerService from '@/services/stickerService.js';
+import logger from '@/utils/logger.js';
 
 /**
  * Brat Sticker Command
@@ -13,26 +15,26 @@ export default {
   aliases: ['bratsticker'],
   cooldown: 15,
 
-  execute: async (naze, m, { args }) => {
+  execute: async (ctx: MessageContext) => {
     try {
-      const text = args.join(' ');
+      const text = ctx.args.join(' ');
 
       if (!text || text.length === 0) {
-        return m.reply('Please provide text for brat sticker');
+        return ctx.reply('Please provide text for brat sticker');
       }
 
       if (text.length > 50) {
-        return m.reply('Text too long. Maximum 50 characters.');
+        return ctx.reply('Text too long. Maximum 50 characters.');
       }
 
       // Check rate limit
-      if (!stickerService.checkRateLimit(m.sender, 'brat')) {
-        return m.reply(
+      if (!stickerService.checkRateLimit(ctx.sender.jid, 'brat')) {
+        return ctx.reply(
           'Rate limit exceeded. Please wait 15 seconds before using this command again.'
         );
       }
 
-      await m.reply('⏳ Creating brat sticker...');
+      await ctx.reply('⏳ Creating brat sticker...');
 
       // Create brat sticker
       const result = await stickerService.createBratSticker(text);
@@ -41,27 +43,27 @@ export default {
         // Create final sticker
         const finalSticker = await stickerService.createSticker(result.buffer);
 
-        await naze.sendAsSticker(m.chat, finalSticker.buffer, m, {
+        await ctx.reply({ sticker: finalSticker.buffer }, {
           packname: 'WhatsDeX Bot',
           author: 'CodeDeX',
         });
 
-        console.log(`Brat sticker created for ${m.sender}: "${text}"`);
+        logger.info(`Brat sticker created for ${ctx.sender.jid}: "${text}"`);
       } else {
-        await m.reply('Failed to create brat sticker. Please try again.');
+        await ctx.reply('Failed to create brat sticker. Please try again.');
       }
-    } catch (error) {
-      console.error('Error in brat command:', error);
+    } catch (error: any) {
+      logger.error('Error in brat command:', error);
 
       if (error.message.includes('Rate limit')) {
-        await m.reply('Rate limit exceeded. Please wait before using this command again.');
+        await ctx.reply('Rate limit exceeded. Please wait before using this command again.');
       } else if (error.message.includes('Text too long')) {
-        await m.reply('Text too long. Please use shorter text (max 50 characters).');
+        await ctx.reply('Text too long. Please use shorter text (max 50 characters).');
       } else {
-        await m.reply('Terjadi kesalahan saat membuat brat sticker. Silakan coba lagi.');
+        await ctx.reply('Terjadi kesalahan saat membuat brat sticker. Silakan coba lagi.');
       }
 
-      console.error('Unexpected error in brat:', error);
+      logger.error('Unexpected error in brat:', error);
     }
   },
 };

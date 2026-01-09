@@ -1,58 +1,40 @@
-# Specification: Refactor Codebase to Strict TypeScript and Service-Oriented Architecture
+# Specification: Full Firebase Migration and Backend Refactoring
 
 ## 1. Overview
 
-The goal of this track is to establish a robust, maintainable, and type-safe foundation for the WhatsDeX project. We will refactor the existing backend codebase to adhere to the strict architectural rules defined in `PROJECT_RULES.md` and `tech-stack.md`. This involves migrating from loose JavaScript/CommonJS to strict TypeScript, implementing Zod for runtime environment validation, and decoupling logic into a service-oriented architecture.
+Transition the WhatsDeX backend from its current hybrid/placeholder state to a 100% Firebase-native architecture. This track eliminates Prisma/PostgreSQL technical debt, enforces strict TypeScript, and implements a secure, subcollection-based multi-tenant data structure in Firestore.
 
-## 2. Objectives
+## 2. Functional Requirements
 
-- **Strict Typing:** Eliminate all `any` types and enforce strict TypeScript configuration.
-- **Environment Validation:** Replace manual `process.env` checks with a centralized, Zod-validated configuration service.
-- **Service Layer:** Refactor the current monolithic or scattered logic into dedicated, singleton-based services (e.g., `ConfigService`, `DatabaseService`).
-- **Clean Architecture:** Ensure clear separation between Controllers, Services, and Data Access layers.
-- **Testing:** Establish a testing harness to verify the refactoring.
+- **Data Isolation (Multi-Tenancy):** Implement a strict hierarchy where all tenant-specific data (bots, settings, analytics) is stored in subcollections: `tenants/{tenantId}/{collectionName}`.
+- **Unified Authentication:** Integrate Firebase Authentication as the primary identity provider, replacing the custom JWT placeholders.
+- **Persistent Bot Management:** Store bot connection metadata and session information in Firestore using the specialized Firebase adapter for Baileys.
+- **Service-Oriented Logic:** Complete the migration of all business logic into dedicated, singleton services that consume the `ConfigService` and the new `FirebaseService`.
 
-## 3. Scope
+## 3. Non-Functional Requirements
+
+- **No Simulation:** All service placeholders (marked with 🔥) must be replaced with real, production-ready implementation logic.
+- **Strict Type Safety:** Resolve the remaining TypeScript errors by providing explicit interfaces for all Firestore documents and service responses.
+- **Maintainability:** Standardize on `.ts` files and Rule 16 import extensions.
+
+## 4. Scope
 
 ### In Scope
 
-- Refactoring `backend/src/config/config.ts` to use Zod.
-- Creating a `ConfigService` singleton.
-- Refactoring `backend/src/services` to follow the Service Template pattern.
-- Updating `backend/tsconfig.json` to `strict: true`.
-- Removing hardcoded strings and magic numbers.
-- Adding unit tests for the new services.
+- Uninstalling Prisma dependencies and removing all Prisma artifacts (`schema.prisma`, `prisma.ts`, etc.).
+- Implementing the `FirebaseService` (Firestore + Auth interaction).
+- Refactoring `multiTenantService.ts`, `botService.ts`, and `userService.ts` to use Firestore subcollections.
+- Updating Authentication middleware to verify Firebase tokens.
+- Fixing all TypeScript errors in the refactored files.
 
 ### Out of Scope
 
-- Frontend refactoring (this will be a separate track).
-- Adding new product features (e.g., new bot commands).
-- Changing the underlying database (Firebase) or external APIs (Baileys).
-
-## 4. Requirements
-
-### 4.1. Configuration Management
-
-- **Requirement:** All environment variables must be validated at startup using `zod`.
-- **Requirement:** The application must fail to start if required variables are missing or invalid.
-- **Requirement:** Configuration must be accessed via a typed `ConfigService`, not direct `process.env` access.
-
-### 4.2. Service Architecture
-
-- **Requirement:** Business logic must be encapsulated in Service classes (e.g., `UserService`, `AuthService`).
-- **Requirement:** Services must use Dependency Injection or Singleton patterns for testability.
-- **Requirement:** Services must return typed responses and handle errors gracefully.
-
-### 4.3. Code Quality
-
-- **Requirement:** No `any` types allowed.
-- **Requirement:** ESLint and Prettier must pass without warnings.
-- **Requirement:** Unit tests must provide at least 80% coverage for the refactored modules.
+- Frontend UI changes (beyond fixing API connection points).
+- Third-party API integrations (Stripe, Gemini) beyond their configuration validation.
 
 ## 5. Acceptance Criteria
 
-- [ ] `npm run typecheck` passes with zero errors in the backend.
-- [ ] `npm run lint` passes with zero errors.
-- [ ] `npm test` passes for all new/refactored services.
-- [ ] The application starts successfully with valid `.env` variables.
-- [ ] The application crashes immediately with a descriptive error if `.env` is invalid.
+- [ ] `npm run typecheck` passes for all core backend services.
+- [ ] No Prisma-related files or dependencies remain in the backend.
+- [ ] Firestore data is correctly siloed using the `tenants/{tenantId}/...` pattern.
+- [ ] The application starts and initializes Firebase Admin successfully using the `ConfigService`.

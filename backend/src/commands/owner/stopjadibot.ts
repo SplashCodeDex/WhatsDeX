@@ -1,4 +1,5 @@
-import multiBotService from '../../src/services/multiBotService';
+import { MessageContext } from '../../types/index.js';
+import multiTenantBotService from '@/services/multiTenantBotService.js';
 
 /**
  * Stop JadiBot Command
@@ -13,36 +14,31 @@ export default {
   aliases: ['stopbot', 'deljadibot'],
   cooldown: 10,
 
-  execute: async (naze, m, { args }) => {
-    try {
-      const userId = m.sender;
+  execute: async (ctx: MessageContext) => {
+    const { multiTenantBotService } = ctx.bot.context;
+    const userId = ctx.sender.jid;
 
+    try {
       // Check if user has active bot
-      if (!multiBotService.hasActiveBot(userId)) {
-        return m.reply("You don't have an active bot instance!");
+      if (!multiTenantBotService.hasActiveBot(userId)) {
+        return await ctx.reply("You don't have an active bot instance!");
       }
 
-      await m.reply('⏳ Stopping your bot instance...');
+      await ctx.reply('⏳ Stopping your bot instance...');
 
       // Stop bot instance
-      const result = await multiBotService.stopBot(userId, 'manual');
+      await multiTenantBotService.stopBot(userId);
 
-      if (result.success) {
-        await m.reply('✅ Bot instance stopped successfully!');
-        console.log(`JadiBot stopped for ${userId}`);
-      } else {
-        await m.reply('Failed to stop bot instance. Please try again.');
-      }
-    } catch (error) {
+      await ctx.reply('✅ Bot instance stopped successfully!');
+      console.log(`JadiBot stopped for ${userId}`);
+    } catch (error: any) {
       console.error('Error in stopjadibot command:', error);
 
       if (error.message.includes("don't have an active bot")) {
-        await m.reply("You don't have an active bot instance!");
+        await ctx.reply("You don't have an active bot instance!");
       } else {
-        await m.reply('Terjadi kesalahan saat menghentikan bot instance. Silakan coba lagi.');
+        await ctx.reply(`Terjadi kesalahan saat menghentikan bot instance: ${error.message}`);
       }
-
-      console.error('Unexpected error in stopjadibot:', error);
     }
   },
 };

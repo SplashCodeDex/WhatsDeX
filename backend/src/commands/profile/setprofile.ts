@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'setprofile',
   aliases: ['set', 'setp', 'setprof'],
   category: 'profile',
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     const input = ctx.args.join(' ') || null;
 
@@ -76,7 +77,7 @@ export default {
             formatter.quote(`❎ Setting ${formatter.inlineCode(input)} is not valid.`)
           );
       }
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

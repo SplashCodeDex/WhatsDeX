@@ -1,5 +1,6 @@
-import NLPProcessorService from '../../src/services/nlpProcessor';
-import * as formatter from '../../utils/formatter';
+import { MessageContext } from '../../types/index.js';
+import NLPProcessorService from '../../services/nlpProcessor.js';
+import * as formatter from '../../utils/formatters.js';
 
 export default {
   name: 'nlp',
@@ -8,7 +9,7 @@ export default {
   permissions: {
     coin: 5,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { config } = ctx.bot.context;
 
     try {
@@ -73,7 +74,7 @@ export default {
         text: response,
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in NLP command:', error);
       return ctx.reply(
         formatter.quote(`❎ An error occurred while analyzing your input: ${error.message}`)

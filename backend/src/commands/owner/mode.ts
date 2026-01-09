@@ -1,3 +1,4 @@
+import { MessageContext } from '../../types/index.js';
 export default {
   name: 'mode',
   alises: ['m'],
@@ -5,7 +6,7 @@ export default {
   permissions: {
     owner: true,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     const input = ctx.args.join(' ') || null;
 
@@ -40,7 +41,7 @@ export default {
       }
 
       await ctx.reply(formatter.quote(`✅ Berhasil mengubah mode ke ${input}!`));
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }
   },

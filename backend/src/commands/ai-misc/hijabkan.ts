@@ -1,4 +1,5 @@
-import tools from '../../tools/exports';
+import { MessageContext } from '../../types/index.js';
+import tools from '../../tools/exports.js';
 
 export default {
   name: 'hijabkan',
@@ -7,7 +8,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
       tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
@@ -34,7 +35,7 @@ export default {
         caption: formatter.quote('Untukmu, tuan!'),
         footer: config.msg.footer,
       });
-    } catch (error) {
+    } catch (error: any) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

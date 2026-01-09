@@ -28,7 +28,7 @@ try {
     }
     db = admin.firestore();
     db.settings({ ignoreUndefinedProperties: true });
-} catch (error) {
+} catch (error: any) {
     logger.error('Failed to initialize Firebase:', error);
     throw error;
 }

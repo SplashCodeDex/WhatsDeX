@@ -1,5 +1,6 @@
-import CommandSuggestionsService from '../../src/services/commandSuggestions';
-import * as formatter from '../../utils/formatter';
+import { MessageContext } from '../../types/index.js';
+import CommandSuggestionsService from '../../services/commandSuggestions.js';
+import * as formatter from '../../utils/formatters.js';
 
 export default {
   name: 'suggest',
@@ -8,7 +9,7 @@ export default {
   permissions: {
     coin: 5,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { config } = ctx.bot.context;
 
     try {
@@ -60,7 +61,7 @@ export default {
       response += `📚 *Need more help? Try* ${ctx.used.prefix}menu *to see all commands*`;
 
       await ctx.reply(response);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in suggest command:', error);
       return ctx.reply(
         formatter.quote(`❎ An error occurred while generating suggestions: ${error.message}`)

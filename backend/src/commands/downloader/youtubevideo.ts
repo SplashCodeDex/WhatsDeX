@@ -1,8 +1,9 @@
+import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 import z from 'zod';
 import { lookup } from 'mime-types';
-import { createUrl } from '../../tools/api';
-import { parseFlag } from '../../tools/cmd';
+import { createUrl } from '../../tools/api.js';
+import { parseFlag } from '../../tools/cmd.js';
 
 export default {
   name: 'youtubevideo',
@@ -11,7 +12,7 @@ export default {
   permissions: {
     coin: 10,
   },
-  code: async ctx => {
+  code: async (ctx: MessageContext) => {
     const { formatter, config } = ctx.bot.context;
 
     try {
@@ -67,7 +68,7 @@ export default {
           footer: config.msg.footer,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       await ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }

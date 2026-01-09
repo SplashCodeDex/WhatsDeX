@@ -1,7 +1,7 @@
 import express from 'express';
 import crypto from 'crypto';
-import { logger } from '../utils/logger';
-import { validateWhatsAppSignature } from '../utils/security';
+import { logger } from '../utils/logger.js';
+import { validateWhatsAppSignature } from '../utils/security.js';
 
 const router = express.Router();
 
@@ -58,7 +58,7 @@ router.post('/webhook/whatsapp', express.json(), async (req, res) => {
     }
 
     res.sendStatus(200);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('WhatsApp webhook error', { error: error.message, stack: error.stack });
     res.sendStatus(500);
   }
