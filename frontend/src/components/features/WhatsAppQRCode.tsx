@@ -28,6 +28,18 @@ const WhatsAppQRCode: FC<WhatsAppQRCodeProps> = ({ userId, sessionId = 'default'
         // Join user room for real-time updates
         socketConnection.emit('join-user-room', userId);
 
+        // Listen for successful connection
+        socketConnection.on('connect', () => {
+            console.log('Socket.IO connected successfully');
+            socketConnection.emit('join-user-room', userId);
+        });
+
+        // Listen for disconnection
+        socketConnection.on('disconnect', () => {
+            console.log('Socket.IO disconnected');
+            setConnectionStatus('disconnected');
+        });
+
         // Listen for WhatsApp status updates
         socketConnection.on('whatsapp-status', (data: { event: string; data: string }) => {
             console.log('WhatsApp status update:', data);

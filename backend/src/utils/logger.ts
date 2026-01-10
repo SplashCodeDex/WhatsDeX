@@ -89,28 +89,28 @@ const logger = winston.createLogger({
 // Enhanced logger with additional methods
 const enhancedLogger = {
   // Standard logging methods
-  error: (message, meta = {}) => {
+  error: (message: string, meta: Record<string, any> = {}) => {
     logger.error(message, meta);
   },
 
-  warn: (message, meta = {}) => {
+  warn: (message: string, meta: Record<string, any> = {}) => {
     logger.warn(message, meta);
   },
 
-  info: (message, meta = {}) => {
+  info: (message: string, meta: Record<string, any> = {}) => {
     logger.info(message, meta);
   },
 
-  http: (message, meta = {}) => {
+  http: (message: string, meta: Record<string, any> = {}) => {
     logger.http(message, meta);
   },
 
-  debug: (message, meta = {}) => {
+  debug: (message: string, meta: Record<string, any> = {}) => {
     logger.debug(message, meta);
   },
 
   // Specialized methods for bot operations
-  command: (command, userId, success = true, executionTime = null, error = null) => {
+  command: (command: string, userId: string, success = true, executionTime: number | null = null, error: Error | null = null) => {
     const level = success ? 'info' : 'error';
     const message = `Command: ${command} | User: ${userId} | Success: ${success}`;
     const meta = {
@@ -125,17 +125,17 @@ const enhancedLogger = {
     logger.log(level, message, meta);
   },
 
-  userActivity: (userId, action, details = {}) => {
+  userActivity: (userId: string, action: string, details: Record<string, any> = {}) => {
     const message = `User Activity: ${action} | User: ${userId}`;
     logger.info(message, { userId, action, ...details });
   },
 
-  groupActivity: (groupId, action, userId, details = {}) => {
+  groupActivity: (groupId: string, action: string, userId: string, details: Record<string, any> = {}) => {
     const message = `Group Activity: ${action} | Group: ${groupId} | User: ${userId}`;
     logger.info(message, { groupId, userId, action, ...details });
   },
 
-  apiRequest: (method, url, statusCode, responseTime, userId = null) => {
+  apiRequest: (method: string, url: string, statusCode: number, responseTime: number, userId: string | null = null) => {
     const message = `${method} ${url} ${statusCode} ${responseTime}ms`;
     const meta = {
       method,
@@ -149,37 +149,37 @@ const enhancedLogger = {
     logger.log(level, message, meta);
   },
 
-  performance: (operation, duration, metadata = {}) => {
+  performance: (operation: string, duration: number, metadata: Record<string, any> = {}) => {
     const message = `Performance: ${operation} took ${duration}ms`;
     logger.info(message, { operation, duration, ...metadata });
   },
 
-  security: (event, userId = null, details = {}) => {
+  security: (event: string, userId: string | null = null, details: Record<string, any> = {}) => {
     const message = `Security Event: ${event}`;
     logger.warn(message, { userId, event, ...details });
   },
 
   // Method to log with context
-  withContext: context => ({
-    error: (message, meta = {}) => enhancedLogger.error(message, { ...context, ...meta }),
-    warn: (message, meta = {}) => enhancedLogger.warn(message, { ...context, ...meta }),
-    info: (message, meta = {}) => enhancedLogger.info(message, { ...context, ...meta }),
-    debug: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
+  withContext: (context: Record<string, any>) => ({
+    error: (message: string, meta: Record<string, any> = {}) => enhancedLogger.error(message, { ...context, ...meta }),
+    warn: (message: string, meta: Record<string, any> = {}) => enhancedLogger.warn(message, { ...context, ...meta }),
+    info: (message: string, meta: Record<string, any> = {}) => enhancedLogger.info(message, { ...context, ...meta }),
+    debug: (message: string, meta: Record<string, any> = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
     // pino/baileys compatibility: trace maps to debug
-    trace: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
-    command: (command, userId, success, executionTime, error) =>
+    trace: (message: string, meta: Record<string, any> = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
+    command: (command: string, userId: string, success: boolean, executionTime: number | null, error: Error | null) =>
       enhancedLogger.command(command, userId, success, executionTime, error),
   }),
 
   // pino compatibility at root level
-  trace: (message, meta = {}) => enhancedLogger.debug(message, meta),
+  trace: (message: string, meta: Record<string, any> = {}) => enhancedLogger.debug(message, meta),
 
   // Compatibility shim for libraries expecting pino-like child()
-  child: (meta = {}) => enhancedLogger.withContext(meta),
+  child: (meta: Record<string, any> = {}) => enhancedLogger.withContext(meta),
 
   // Stream for Morgan HTTP logging
   stream: {
-    write: message => {
+    write: (message: string) => {
       logger.http(message.trim());
     },
   },

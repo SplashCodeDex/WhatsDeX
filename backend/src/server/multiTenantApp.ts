@@ -1,4 +1,6 @@
 import express from 'express';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -12,13 +14,20 @@ import multiTenantRoutes from '../routes/multiTenant';
 import authRoutes from '../routes/auth';
 import templateRoutes from '../routes/templateRoutes';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler';
+import SocketManager from '../socket/socketManager';
 
 export class MultiTenantApp {
+  private app: express.Application;
+  private port: number | string;
+  private httpServer: http.Server;
+  private socketManager: SocketManager;
+  private isInitialized: boolean;
+
   constructor() {
     this.app = express();
     this.port = process.env.PORT || 3001;
-    this.activeTenants = new Map();
     this.isInitialized = false;
+    this.httpServer = http.createServer(this.app);
   }
 
   async initialize() {
@@ -30,6 +39,10 @@ export class MultiTenantApp {
 
       // Setup routes
       this.setupRoutes();
+
+      // Initialize Socket.IO
+      this.socketManager = new SocketManager(this.httpServer);
+      this.socketManager.initialize();
 
       // Initialize services
       await this.initializeServices();
@@ -193,7 +206,7 @@ export class MultiTenantApp {
         await this.initialize();
       }
 
-      this.server = this.app.listen(this.port, () => {
+      this.httpServer.listen(this.port, () => {
         logger.info(`Multi-tenant WhatsDeX server running on port ${this.port}`);
       });
 
@@ -210,8 +223,15 @@ export class MultiTenantApp {
     logger.info('Shutting down multi-tenant server...');
     try {
       await multiTenantBotService.stopAllBots();
-      if (this.server) {
-        this.server.close(() => {
+
+      // Close Socket.IO server
+      if (this.socketManager) {
+        this.socketManager.close();
+      }
+
+      // Close HTTP server
+      if (this.httpServer) {
+        this.httpServer.close(() => {
           logger.info('Server closed successfully');
           process.exit(0);
         });
