@@ -1,32 +1,45 @@
 
 import admin from 'firebase-admin';
-import config from '../config/config';
 import logger from '../utils/logger';
+import { promises as fs } from 'fs';
 
-let db;
+let db: admin.firestore.Firestore | undefined;
 
-try {
-    if (admin.apps.length === 0) {
-        // If we have service account in config/env, use it.
-        // Otherwise rely on ADC (Application Default Credentials)
-        const options = {
-            credential: admin.credential.applicationDefault()
-        };
+const initializeFirebase = async () => {
+    try {
+        if (admin.apps.length === 0) {
+            const options: admin.AppOptions = {};
 
-        // Check if we have explicit config path in env
-        if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
-            options.credential = admin.credential.cert(require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH));
+            // Check if we have explicit config path in env
+            if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
+                try {
+                    const serviceAccountContent = await fs.readFile(process.env.FIREBASE_SERVICE_ACCOUNT_PATH, 'utf-8');
+                    const serviceAccount = JSON.parse(serviceAccountContent);
+                    options.credential = admin.credential.cert(serviceAccount);
+                } catch (e: any) {
+                    logger.error('Failed to load Firebase service account from path:', { error: e.message });
+                    // Fallback to ADC
+                    options.credential = admin.credential.applicationDefault();
+                }
+            } else {
+                // Otherwise rely on ADC (Application Default Credentials)
+                options.credential = admin.credential.applicationDefault();
+            }
+
+            admin.initializeApp(options);
+            logger.info('🔥 Firebase Admin Initialized');
         }
 
-        admin.initializeApp(options);
-        logger.info('🔥 Firebase Admin Initialized');
+        db = admin.firestore();
+        db.settings({ ignoreUndefinedProperties: true });
+    } catch (error: any) {
+        logger.error('Failed to initialize Firebase:', { error: error.message });
+        // Fallback or re-throw depending on strictness.
+        // For now, allow starting without DB but log error.
     }
-    db = admin.firestore();
-    db.settings({ ignoreUndefinedProperties: true });
-} catch (error) {
-    logger.error('Failed to initialize Firebase:', error);
-    // Fallback or re-throw depending on strictness.
-    // For now, allow starting without DB but log error.
-}
+};
+
+// Initialize on load
+initializeFirebase();
 
 export { admin, db };

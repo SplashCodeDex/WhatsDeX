@@ -112,7 +112,8 @@ class AuthSystem extends EventEmitter {
     const formattedPhoneNumber = phoneNumber.replace(/\D/g, '');
     this._recordAttempt('pairing');
     const code = await this.client.requestPairingCode(formattedPhoneNumber);
-    logger.info(`Requested Pairing Code: ${code}`);
+    // Redact pairing code from logs
+    logger.info(`Requested Pairing Code`);
     return code;
   }
 
@@ -123,12 +124,28 @@ class AuthSystem extends EventEmitter {
     return this.currentQrCode || null;
   }
 
+  // Check for an existing, valid session
+  async detectExistingSession() {
+    // This is a simplified check. A real implementation would verify session validity.
+    const hasSession = this.authState === 'connected' && !!this.client;
+    return {
+      hasSession,
+      isValid: hasSession,
+    };
+  }
+
   // Compatibility / Orchestrator methods
   async getSmartAuthMethod(config: any = {}) {
     // Simple logic: if phone number provided, prefer pairing
     const method = config?.bot?.phoneNumber ? 'pairing' : 'qr';
     return { method, confidence: 0.9 };
   }
+
+  // Define authentication strategies
+  authStrategies = {
+    qr: async () => this.getQRCode(),
+    pairing: async (config: any) => this.getPairingCode(config.bot.phoneNumber),
+  };
 
   getAnalytics() {
     const successRate = this.stats.totalAttempts > 0
