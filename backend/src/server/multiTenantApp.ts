@@ -12,6 +12,7 @@ import multiTenantRoutes from '../routes/multiTenant';
 import authRoutes from '../routes/auth';
 import templateRoutes from '../routes/templateRoutes';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler';
+import { authenticateToken } from '../middleware/authMiddleware';
 
 export class MultiTenantApp {
   constructor() {
@@ -123,7 +124,7 @@ export class MultiTenantApp {
     this.app.use('/api/templates', templateRoutes);
 
     // Tenant management
-    this.app.get('/api/tenants', async (req, res) => {
+    this.app.get('/api/tenants', authenticateToken, async (req, res) => {
       try {
         const tenants = await multiTenantService.listTenants();
         res.json({ success: true, data: tenants });
@@ -134,7 +135,7 @@ export class MultiTenantApp {
     });
 
     // Bot management
-    this.app.post('/api/bots/:botId/start', async (req, res) => {
+    this.app.post('/api/bots/:botId/start', authenticateToken, async (req, res) => {
       try {
         const { botId } = req.params;
         await multiTenantBotService.startBot(botId);
@@ -144,7 +145,7 @@ export class MultiTenantApp {
       }
     });
 
-    this.app.post('/api/bots/:botId/stop', async (req, res) => {
+    this.app.post('/api/bots/:botId/stop', authenticateToken, async (req, res) => {
       try {
         const { botId } = req.params;
         await multiTenantBotService.stopBot(botId);
