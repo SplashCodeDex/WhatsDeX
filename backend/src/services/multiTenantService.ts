@@ -2,6 +2,7 @@ import { firebaseService } from '@/services/FirebaseService.js';
 import logger from '@/utils/logger.js';
 import { Tenant, TenantSchema, Result } from '@/types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
+import { getPlanLimits } from '@/utils/featureGating.js';
 
 export class MultiTenantService {
   private static instance: MultiTenantService;
@@ -24,18 +25,25 @@ export class MultiTenantService {
     }
 
     try {
+      const plan = tenantData.plan || 'starter';
+      const limits = getPlanLimits(plan);
+      const maxBots = limits.maxBots;
+      
       const rawData = {
         id: tenantData.id,
         name: tenantData.name || 'New Workspace',
         subdomain: (tenantData.subdomain || tenantData.id).toLowerCase(),
-        plan: tenantData.plan || 'free',
+        plan: plan,
+        planTier: plan,
+        subscriptionStatus: 'trialing',
         status: 'active',
         ownerId: tenantData.ownerId || '',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
+        trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)), // 7 days trial
         settings: {
-          maxBots: tenantData.plan === 'premium' ? 2 : 1,
-          aiEnabled: tenantData.plan !== 'free',
+          maxBots: maxBots,
+          aiEnabled: plan !== 'starter',
           timezone: 'UTC',
           ...tenantData.settings
         }
@@ -113,13 +121,19 @@ export class MultiTenantService {
       return tenantResult as Result<never>;
     }
 
-    const settings = tenantResult.data.settings;
-    const maxBots = settings?.maxBots || 1; // Default to 1 if not set
+    const tenant = tenantResult.data;
+    const plan = tenant.planTier || 'starter';
+    const limits = getPlanLimits(plan);
+    const maxBots = limits.maxBots;
 
     try {
       // Get all bots for this tenant
-      const bots = await firebaseService.getCollection('bots', tenantId);
-      const currentBotCount = bots.length;
+      const bots = await firebaseService.getCollection('tenants', tenantId); // FirebaseService handles subcollection
+      // Wait, let's check FirebaseService.getCollection implementation again.
+      // FirebaseService.getCollection('bots', tenantId) should work if 'bots' is a subcollection.
+      
+      const botDocs = await firebaseService.getCollection('tenants/{tenantId}/bots' as any, tenantId);
+      const currentBotCount = botDocs.length;
 
       if (currentBotCount >= maxBots) {
         return {

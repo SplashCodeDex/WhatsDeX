@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import logger from '@/utils/logger.js';
+import { hasFeatureAccess, Feature } from '@/utils/featureGating.js';
 
 /**
  * Middleware to check if user has reached their bot limit
@@ -37,7 +38,7 @@ export const checkBotLimit = async (req: Request, res: Response, next: NextFunct
 /**
  * Middleware to check access to premium features (AI, Backups)
  */
-export const checkFeatureAccess = (feature: 'ai' | 'backups' | 'broadcast') => {
+export const checkFeatureAccess = (feature: Feature) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const tenantId = req.user?.tenantId;
 
@@ -50,21 +51,7 @@ export const checkFeatureAccess = (feature: 'ai' | 'backups' | 'broadcast') => {
       if (!tenantResult.success) throw tenantResult.error;
 
       const tenant = tenantResult.data;
-      const plan = tenant.planTier || 'starter';
-
-      let hasAccess = false;
-
-      switch (feature) {
-        case 'ai':
-          hasAccess = plan !== 'starter';
-          break;
-        case 'backups':
-          hasAccess = true; // Included in all tiers per updated spec
-          break;
-        case 'broadcast':
-          hasAccess = true; // All tiers have it, but with different limits (enforced elsewhere)
-          break;
-      }
+      const hasAccess = hasFeatureAccess(tenant, feature);
 
       if (!hasAccess) {
         return res.status(403).json({ 
