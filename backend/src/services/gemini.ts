@@ -445,8 +445,8 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
   }
 
   /**
-   * Convert tools from OpenAI format to Gemini format
-   * @param {Array} tools - Tools in OpenAI format
+   * Convert tools to Gemini function declaration format
+   * @param {Array} tools - Tools array with function definitions
    * @returns {Array} Tools in Gemini format
    */
   convertToolsToGeminiFormat(tools: any[]) {

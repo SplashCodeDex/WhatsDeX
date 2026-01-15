@@ -1,6 +1,6 @@
 import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
-import { Sticker, StickerTypes } from 'wa-sticker-formatter';
+import { Sticker } from 'wa-sticker-formatter';
 
 export default {
   name: 'fetch',
@@ -56,17 +56,17 @@ ${formatter.quote(example)}`);
       } else if (/webp/.test(contentType)) {
         const pack = (config as any).sticker?.packname || 'WhatsDeX Bot';
         const author = (config as any).sticker?.author || 'CodeDeX';
-        
+
         const sticker = new Sticker(response?.data, {
           pack,
           author,
-          type: StickerTypes.FULL,
+          type: 'full', // StickerTypes.FULL
           categories: ['🤩'] as any, // Cast to any to bypass strict literal check for now
           id: ctx.id,
           quality: 50,
         });
 
-        await ctx.reply(await sticker.toMessage());
+        await ctx.reply({ sticker: await sticker.build() });
       } else if (!/utf-8|json|html|plain/.test(contentType)) {
         const disposition = response?.headers?.['content-disposition'];
         const fileName = /filename/i.test(disposition)

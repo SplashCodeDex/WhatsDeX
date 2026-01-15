@@ -1,4 +1,4 @@
-import { jidDecode, downloadContentFromMessage, getContentType, proto } from '@whiskeysockets/baileys';
+import { jidDecode, downloadContentFromMessage, getContentType, proto } from 'baileys';
 
 interface JidDecodeResult {
   user: string;

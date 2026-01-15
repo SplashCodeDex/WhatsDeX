@@ -42,6 +42,7 @@ state/
 sessions/
 auth_info/
 *.data.json
+backend/service-account.json
 
 # Coverage directory
 coverage

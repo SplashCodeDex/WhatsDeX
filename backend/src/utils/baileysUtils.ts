@@ -1,4 +1,4 @@
-import { proto } from '@whiskeysockets/baileys';
+import { proto } from 'baileys';
 
 /**
  * Ensures a string is a valid WhatsApp JID
@@ -14,6 +14,7 @@ const getJid = (input: string): string => {
  * Extracts the sender JID from a message
  */
 const getSender = (msg: proto.IWebMessageInfo): string => {
+  if (!msg.key) return '';
   if (msg.key.fromMe) return getJid(msg.key.remoteJid!);
   const participant = msg.key.participant || msg.key.remoteJid;
   return getJid(participant!);
@@ -23,6 +24,7 @@ const getSender = (msg: proto.IWebMessageInfo): string => {
  * Extracts the group JID if the message is from a group
  */
 const getGroup = (msg: proto.IWebMessageInfo): string | null => {
+  if (!msg.key) return null;
   const remoteJid = msg.key.remoteJid || '';
   return remoteJid.endsWith('@g.us') ? remoteJid : null;
 };

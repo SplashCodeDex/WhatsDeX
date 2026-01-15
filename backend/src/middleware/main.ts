@@ -42,9 +42,9 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
         await brain.processMessage(ctx);
 
         // Log incoming command
-        if (isGroup && !ctx.msg.key.fromMe) {
+        if (isGroup && !ctx.msg.key?.fromMe) {
             context.logger.info(`Incoming command: ${ctx.used.command} from group: ${groupId} by: ${senderId}`);
-        } else if (isPrivate && !ctx.msg.key.fromMe) {
+        } else if (isPrivate && !ctx.msg.key?.fromMe) {
             context.logger.info(`Incoming command: ${ctx.used.command} from: ${senderId}`);
         }
 
@@ -165,7 +165,7 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
         // Check permission conditions
         const command = ctx.bot.cmd.get(ctx.used.command);
         if (!command) return await next();
-        
+
         const permissions = command.permissions || {};
         const permissionChecks = [
             {

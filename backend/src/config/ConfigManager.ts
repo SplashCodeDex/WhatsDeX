@@ -92,12 +92,7 @@ export interface Config {
       maxTokens: number;
       temperature: number;
     };
-    openai: {
-      apiKey: string | undefined;
-      model: string;
-      maxTokens: number;
-      temperature: number;
-    };
+
     summarization: {
       SUMMARIZE_THRESHOLD: number;
       MESSAGES_TO_SUMMARIZE: number;
@@ -255,12 +250,7 @@ export class ConfigManager {
           maxTokens: this.getEnvNumber('GOOGLE_GEMINI_MAX_TOKENS', 2048),
           temperature: this.getEnvNumber('GOOGLE_GEMINI_TEMPERATURE', 0.7)
         },
-        openai: {
-          apiKey: this.getEnvString('OPENAI_API_KEY'),
-          model: this.getEnvString('OPENAI_MODEL', 'gpt-3.5-turbo')!,
-          maxTokens: this.getEnvNumber('OPENAI_MAX_TOKENS', 1000),
-          temperature: this.getEnvNumber('OPENAI_TEMPERATURE', 0.7)
-        },
+
         summarization: {
           SUMMARIZE_THRESHOLD: 16,
           MESSAGES_TO_SUMMARIZE: 10,
@@ -450,7 +440,7 @@ export class ConfigManager {
     }
     if (safe.ai) {
       delete safe.ai.google?.apiKey;
-      delete safe.ai.openai?.apiKey;
+
     }
     if (safe.payment) {
       delete safe.payment.stripe?.secretKey;

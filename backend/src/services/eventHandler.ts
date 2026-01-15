@@ -33,7 +33,11 @@ export class EventHandler {
 
             // Trigger Welcome/Goodbye
             if (update.action === 'add' || update.action === 'remove') {
-                await welcomeService.handleGroupParticipantsUpdate(bot, update);
+                const standardizedUpdate = {
+                    ...update,
+                    participants: update.participants.map((p: any) => typeof p === 'object' ? p.id || p.jid : p) as string[]
+                };
+                await welcomeService.handleGroupParticipantsUpdate(bot, standardizedUpdate);
             }
         });
 

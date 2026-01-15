@@ -37,7 +37,7 @@ export default {
         '\n' +
         `${formatter.quote(`Uptime: ${state?.uptime || 'unknown'}`)}\n` +
         `${formatter.quote(`Database: ${state?.dbSize || '0'} (Firebase)`)}\n` +
-        `${formatter.quote('Library: @whiskeysockets/baileys')}\n` +
+        `${formatter.quote('Library: baileys')}\n` +
         '\n' +
         `${formatter.italic(`Type ${formatter.monospace(`${ctx.used.prefix}menu <command>`)} to see command details.`)}\n` +
         '\n' +

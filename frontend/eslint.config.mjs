@@ -1,52 +1,65 @@
-import js from '@eslint/js';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
-import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
-import nextPlugin from '@next/eslint-plugin-next';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { FlatCompat } from '@eslint/eslintrc';
 
-export default tseslint.config(
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+    baseDirectory: __dirname,
+});
+
+const eslintConfig = [
+    ...compat.extends('next/core-web-vitals', 'next/typescript'),
     {
-        ignores: ['.next/**', 'node_modules/**', 'build_output.txt'],
-    },
-    js.configs.recommended,
-    ...tseslint.configs.recommended,
-    {
-        files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
-        languageOptions: {
-            ecmaVersion: 2020,
-            globals: {
-                ...globals.browser,
-                ...globals.node,
-            },
-            parserOptions: {
-                ecmaFeatures: {
-                    jsx: true,
-                },
-            },
-        },
-        plugins: {
-            react,
-            'react-hooks': reactHooks,
-            '@next/next': nextPlugin,
-        },
         rules: {
-            ...react.configs.recommended.rules,
-            ...reactHooks.configs.recommended.rules,
-            ...nextPlugin.configs.recommended.rules,
-            ...nextPlugin.configs['core-web-vitals'].rules,
+            // Enforce strict TypeScript
+            '@typescript-eslint/no-explicit-any': 'error',
+            '@typescript-eslint/explicit-function-return-type': [
+                'error',
+                {
+                    allowExpressions: true,
+                    allowTypedFunctionExpressions: true,
+                },
+            ],
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+            ],
 
-            // Custom Project Rules
-            'react/react-in-jsx-scope': 'off', // Not needed in Next.js
-            'react/prop-types': 'off', // Using TS
-            '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-            'no-unused-vars': 'off', // Handled by TS rule
+            // React best practices
+            'react/function-component-definition': [
+                'error',
+                {
+                    namedComponents: 'function-declaration',
+                    unnamedComponents: 'arrow-function',
+                },
+            ],
+            'react/jsx-no-leaked-render': 'error',
+            'react/hook-use-state': 'error',
+
+            // Import organization
+            'import/order': [
+                'error',
+                {
+                    groups: [
+                        'builtin',
+                        'external',
+                        'internal',
+                        ['parent', 'sibling'],
+                        'index',
+                    ],
+                    'newlines-between': 'always',
+                    alphabetize: { order: 'asc' },
+                },
+            ],
+
+            // Code quality
+            'no-console': ['warn', { allow: ['warn', 'error'] }],
+            eqeqeq: ['error', 'always'],
+            'prefer-const': 'error',
         },
-        settings: {
-            react: {
-                version: 'detect',
-            },
-        },
-    }
-);
+    },
+];
+
+export default eslintConfig;

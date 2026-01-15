@@ -1,4 +1,4 @@
-import baileys, { DisconnectReason, type WASocket, type BaileysEventMap, proto } from '@whiskeysockets/baileys';
+import baileys, { DisconnectReason, type WASocket, type BaileysEventMap, proto } from 'baileys';
 const makeWASocket = (baileys as any).default || baileys;
 import logger from '@/utils/logger.js';
 import { firebaseService } from '@/services/FirebaseService.js';

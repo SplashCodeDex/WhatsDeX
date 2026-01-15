@@ -54,7 +54,6 @@ export const checkAvailability = async (req: Request, res: Response) => {
 
         res.json(result);
     } catch (error: unknown) {
-        console.error('Availability check error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

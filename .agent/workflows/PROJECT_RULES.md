@@ -4,13 +4,17 @@ description: Project coding standards and architectural rules for WhatsDeX
 
 # WhatsDeX Project Rules (2026 Mastermind Edition)
 
-See [ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE.md) for detailed architectural documentation.
+See [ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/ARCHITECTURE.md) for system overview.
+See [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE.md) for detailed frontend documentation.
 
 ## Tech Stack
 
 - **Backend**: Node.js 24+, Express, Baileys (WhatsApp)
 - **Runtime**: `tsx` (TypeScript Execute) - **STRICT: DO NOT use ts-node**
-- **Frontend**: Next.js 15+, React 19, TypeScript 5.7+
+- **Frontend**: Next.js 16+ (App Router), React 19 (Compiler Enabled)
+- **Styling**: Tailwind CSS v4 (Zero Config), Framer Motion (Animations)
+- **State**: Server Actions (Mutations), URL State (Navigation), Zustand (Global)
+- **Architecture**: Hybrid Feature-Sliced Design (FSD)
 - **Database**: Firebase (Firestore) - **Subcollection Multi-Tenancy Pattern**
 - **Validation**: Zod (Mandatory for all IO)
 - **Observability**: OpenTelemetry (Tracing/Metrics)
@@ -22,7 +26,7 @@ See [ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE.md) for 
 **CRITICAL**: Every interaction with external data (Firestore, API, User Input) MUST be validated via Zod.
 
 - **Firestore Contracts**: Define a Zod schema for every collection. Use `schema.parse(doc.data())` on read.
-- **API Contracts**: Use Zod for `req.body` and `req.query`. 
+- **API Contracts**: Use Zod for `req.body` and `req.query`.
 - **Type Casting**: NEVER use `as Type`. Use `schema.parse()` to guarantee the type at runtime.
 
 ---
@@ -92,8 +96,68 @@ See [ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE.md) for 
 
 - **Co-location**: Unit tests (`*.test.ts`) MUST reside next to the source file they test. `__tests__/` is reserved for integration/E2E suites only.
 - **The "Confidence Gate"**: Type-checking (`npm run typecheck`) and unit tests (`npm run test:run`) MUST pass before code is considered "commit-ready".
-- **Mocking Policy**: 
-    - Mock external I/O (Firebase, Baileys, Stripe, Redis).
-    - NEVER mock internal logic or utility functions. Test with real data structures.
+- **Mocking Policy**:
+  - Mock external I/O (Firebase, Baileys, Stripe, Redis).
+  - NEVER mock internal logic or utility functions. Test with real data structures.
 - **Zero-Error Policy**: Tests must not only pass but must not emit console warnings (e.g., unhandled rejections).
 - **Critical Path Coverage**: Auth, Payments, and Multi-Tenant routing require mandatory coverage of all logical branches.
+
+---
+
+## 8. Frontend Architecture Standards (2026 "Pixel Perfect")
+
+**Mandate**: We follow a **Hybrid Feature-Sliced Design**. Code is organized by **Domain**, not by Technology.
+
+### Directory Structure
+
+```
+src/
+├── app/                  # Route Definitions (Thin Wrappers)
+│   └── (dashboard)/      # Route Group
+│       └── bots/
+│           └── page.tsx  # Exports <BotsPage /> from features/
+├── features/             # Business Domains (The Core)
+│   ├── auth/             # Login, Register, Forgot Password
+│   ├── bots/             # Bot Management, Connections
+│   └── billing/          # Subscriptions, Invoices
+│   │   ├── components/   # Domain-specific UI
+│   │   ├── hooks/        # Domain logic
+│   │   ├── actions.ts    # Server Actions
+│   │   └── types.ts      # Domain schemas
+├── components/           # Shared UI
+│   ├── ui/               # Atomic Design System (Buttons, Inputs) - Pure & Dumb
+│   └── layouts/          # Structural Components (Sidebar, Header)
+├── lib/                  # Infrastructure (API Clients, Utils)
+├── server/               # Shared Server Logic (DAL)
+├── stores/               # Client State (Zustand)
+└── types/                # Shared TypeScript Types
+```
+
+### Strict Rules
+
+1.  **"Thin Page" Pattern**: `app/**/page.tsx` should ONLY fetch initial data and render a Feature Component. No logic allowed in `page.tsx`.
+2.  **Server Components Default**: All components are RSC by default. Use `'use client'` ONLY for interactivity (leaves of the tree).
+3.  **Atomic Design System**:
+    - **Primitives**: `components/ui` must be pure, stateless, and style-agnostic.
+    - **Composition**: Build complex UIs by composing primitives, not by adding props.
+4.  **No `useEffect` for Data**: Use Server Components or Server Actions for data fetching. `useEffect` is strictly for synchronization (e.g., window events).
+5.  **Pixel Perfection**:
+    - Use strict Tailwind spacing tokens (e.g., `gap-4` not `gap-[15px]`).
+    - All interactive elements must have: Hover, Active, and Focus-Visible states.
+
+### State Management Hierarchy
+
+| State Type   | Solution          | Example             |
+| ------------ | ----------------- | ------------------- |
+| Server State | Server Components | User data, bot list |
+| Form State   | `useActionState`  | Form validation     |
+| URL State    | `searchParams`    | Filters, pagination |
+| UI State     | Zustand           | Modals, sidebar     |
+| Optimistic   | `useOptimistic`   | Pending mutations   |
+
+### Animation Guidelines (Framer Motion)
+
+- **GPU-Accelerated Only**: Animate `transform` and `opacity`, never `width`/`height`
+- **Duration Standards**: 150ms (micro), 250ms (normal), 400ms (page transitions)
+- **Accessibility**: Always respect `prefers-reduced-motion`
+- **Use `'use client'`**: Animation components must be Client Components

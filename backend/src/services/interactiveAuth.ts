@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase.js';
-import { BufferJSON } from '@whiskeysockets/baileys';
+import { BufferJSON } from 'baileys';
 
 class InteractiveAuthEnhancement {
   unifiedAuth: any;

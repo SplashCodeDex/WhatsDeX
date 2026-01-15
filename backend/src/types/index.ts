@@ -1,4 +1,4 @@
-import type { WASocket, proto } from '@whiskeysockets/baileys';
+import type { WASocket, proto } from 'baileys';
 import type { ConfigService } from '../services/ConfigService.js';
 import type { Firestore } from 'firebase-admin/firestore';
 
@@ -38,7 +38,7 @@ export interface Bot extends Partial<WASocket> {
     decodeJid: (jid: string) => string;
     cmd: Map<string, Command>;
 
-    onWhatsApp?: (jids: string | string[]) => Promise<{ exists: unknown; jid: string; lid: unknown }[]>;
+    // onWhatsApp inherited from Partial<WASocket>
     groupFetchAllParticipating?: () => Promise<{ [id: string]: any }>;
 
     // Middleware
@@ -48,7 +48,7 @@ export interface Bot extends Partial<WASocket> {
 
 export type Middleware = (ctx: MessageContext, next: () => Promise<void>) => Promise<void> | void;
 
-declare module '@whiskeysockets/baileys' {
+declare module 'baileys' {
     export interface proto {
         IWebMessageInfo: proto.IWebMessageInfo & {
             contentType?: string;

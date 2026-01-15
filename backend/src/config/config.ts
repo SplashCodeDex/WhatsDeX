@@ -131,7 +131,6 @@ export default {
 
   // API keys for various services
   api: {
-    openai: process.env.OPENAI_API_KEY || '', // REPLACE WITH YOUR OPENAI API KEY
     gemini: process.env.GOOGLE_GEMINI_API_KEY || '', // REPLACE WITH YOUR GOOGLE GEMINI API KEY
   },
 

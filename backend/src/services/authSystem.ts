@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
-import { makeWASocket, DisconnectReason, type WASocket } from '@whiskeysockets/baileys';
+import { makeWASocket, DisconnectReason, type WASocket } from 'baileys';
 import logger from '../utils/logger.js';
 import { useFirestoreAuthState } from '../lib/baileysFirestoreAuth.js';
 import { Result } from '../types/index.js';

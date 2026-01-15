@@ -10,14 +10,14 @@ export default {
   },
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context as GlobalContext;
-    const isOwner = await tools.cmd.isOwner(config, ctx.getId(ctx.sender.jid), ctx.msg.key.id, (ctx as any).botInstanceId);
+    const isOwner = await tools.cmd.isOwner(config, ctx.getId(ctx.sender.jid), ctx.msg.key?.id, (ctx as any).botInstanceId);
     if (!isOwner) return;
 
     try {
       const content = ctx.msg.content || '';
       const isAsync = content.startsWith('==> ');
       const code = content.slice(isAsync ? 4 : 3);
-      
+
       const result = await eval(
         isAsync ? `(async () => { ${code} })()` : code
       );

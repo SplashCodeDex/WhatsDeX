@@ -14,7 +14,7 @@ declare module 'canvacord';
 declare module 'parse-ms';
 declare module 'perf_hooks';
 declare module 'pino';
-declare module 'openai';
+
 declare module 'cheerio';
 declare module 'bullmq';
 declare module '@upstash/redis';

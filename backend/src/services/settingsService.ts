@@ -26,7 +26,7 @@ class SettingsService {
       'security.maxLoginAttempts': { category: 'security', key: 'maxLoginAttempts', value: 5, valueType: 'number', description: 'Maximum login attempts before lockout', isEncrypted: false },
 
       // API
-      'api.openaiApiKey': { category: 'api', key: 'openaiApiKey', value: process.env.OPENAI_API_KEY || '', valueType: 'string', description: 'OpenAI API key', isEncrypted: true },
+      'api.geminiApiKey': { category: 'api', key: 'geminiApiKey', value: process.env.GOOGLE_GEMINI_API_KEY || '', valueType: 'string', description: 'Google Gemini API key', isEncrypted: true },
       'api.stripeSecretKey': { category: 'api', key: 'stripeSecretKey', value: process.env.STRIPE_SECRET_KEY || '', valueType: 'string', description: 'Stripe secret key', isEncrypted: true },
       'api.stripeWebhookSecret': { category: 'api', key: 'stripeWebhookSecret', value: process.env.STRIPE_WEBHOOK_SECRET || '', valueType: 'string', description: 'Stripe webhook secret', isEncrypted: true },
 

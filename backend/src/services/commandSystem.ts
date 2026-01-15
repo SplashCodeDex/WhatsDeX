@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 import performanceMonitor from '../utils/performanceMonitor.js';
-import { proto } from '@whiskeysockets/baileys';
+import { proto } from 'baileys';
 import { type Bot, type Command, type MessageContext, type GlobalContext, type GroupFunctions } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -175,7 +175,7 @@ export class CommandSystem {
   async executeCommand(bot: Bot, command: Command, messageData: proto.IWebMessageInfo, commandInfo: { name: string; args: string[]; prefix: string }) {
     const timer = performanceMonitor.startTimer('command_execution', {
       command: command.name,
-      userId: messageData.key.remoteJid,
+      userId: messageData.key?.remoteJid || 'unknown',
       tenantId: bot.tenantId
     });
 
@@ -190,15 +190,15 @@ export class CommandSystem {
       });
 
       const duration = timer.end();
-      this.context.logger.command(command.name, messageData.key.remoteJid || 'unknown', true, duration);
+      this.context.logger.command(command.name, messageData.key?.remoteJid || 'unknown', true, duration);
       return true;
 
     } catch (error: unknown) {
       timer.end();
       const err = error instanceof Error ? error.message : String(error);
-      this.context.logger.command(command.name, messageData.key.remoteJid || 'unknown', false, null, err);
+      this.context.logger.command(command.name, messageData.key?.remoteJid || 'unknown', false, null, err);
 
-      if (messageData.key.remoteJid) {
+      if (messageData.key?.remoteJid) {
         await bot.sendMessage(messageData.key.remoteJid, { text: `❌ Error: ${err}` }, { quoted: messageData });
       }
       return true;
@@ -207,15 +207,15 @@ export class CommandSystem {
 
   async createContext(bot: Bot, messageData: proto.IWebMessageInfo, commandInfo: { args: string[]; prefix: string }, command: Command): Promise<MessageContext> {
     const text = this.extractText(messageData);
-    const jid = messageData.key.remoteJid || '';
+    const jid = messageData.key?.remoteJid || '';
 
     const getGroupFunctions = (targetJid?: string): GroupFunctions => {
       const effectiveJid = targetJid || (jid.endsWith('@g.us') ? jid : '');
 
       if (!effectiveJid) {
-        return this.context.groupService.createFunctions(bot, bot.tenantId, 'invalid@g.us', messageData.key.participant || jid);
+        return this.context.groupService.createFunctions(bot, bot.tenantId, 'invalid@g.us', messageData.key?.participant || jid);
       }
-      return this.context.groupService.createFunctions(bot, bot.tenantId, effectiveJid, messageData.key.participant || jid);
+      return this.context.groupService.createFunctions(bot, bot.tenantId, effectiveJid, messageData.key?.participant || jid);
     };
 
     // Extract quoted message if available

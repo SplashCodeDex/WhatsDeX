@@ -1,0 +1,57 @@
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+    // Enable Cache Components (includes Partial Prerendering)
+    cacheComponents: true,
+
+    // Turbopack configuration (default in Next.js 16)
+    turbopack: {
+        rules: {
+            // Custom Turbopack rules if needed
+        },
+    },
+
+    // Experimental features
+    experimental: {
+        // Server Actions configuration
+        serverActions: {
+            bodySizeLimit: '2mb',
+        },
+    },
+
+    // Image optimization
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'firebasestorage.googleapis.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'lh3.googleusercontent.com',
+            },
+        ],
+    },
+
+    // Environment variables exposed to browser
+    env: {
+        NEXT_PUBLIC_APP_NAME: 'WhatsDeX',
+    },
+
+    // Security headers
+    async headers() {
+        return [
+            {
+                source: '/:path*',
+                headers: [
+                    { key: 'X-DNS-Prefetch-Control', value: 'on' },
+                    { key: 'X-Frame-Options', value: 'DENY' },
+                    { key: 'X-Content-Type-Options', value: 'nosniff' },
+                    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+                ],
+            },
+        ];
+    },
+};
+
+export default nextConfig;

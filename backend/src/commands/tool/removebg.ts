@@ -1,8 +1,8 @@
 import { MessageContext } from '../../types/index.js';
-// Note: Removed deprecated @itsreimau/gktw import (migrated to @whiskeysockets/baileys)
+// Note: Removed deprecated @itsreimau/gktw import (migrated to baileys)
 import axios from 'axios';
 
-/* Deprecated: gktw migrated to @whiskeysockets/baileys
+/* Deprecated: gktw migrated to baileys
 
 */
 

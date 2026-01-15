@@ -1,45 +1,52 @@
-# Initial Concept
+# WhatsDeX Product Guide
 
-Enterprise fully functional software product built upon Baileys Web API bot. Multi-tenant SaaS platform where users can signup, initialize bots, and manage automation, marketing, and metrics.
+## Initial Concept
 
-# Product Guide
+WhatsDeX is an enterprise-grade, fully functional software product built upon the Baileys Web API to provide a comprehensive WhatsApp bot management and automation platform. The system is designed to enable users (customers) to sign up, manage a personal workspace, and deploy WhatsApp bots that automate messaging, customer support, and marketing campaigns.
 
-# WhatsDeX: Enterprise WhatsApp SaaS Platform
+The platform operates on a multi-tenant architecture where each customer's data and bots are isolated within their own workspace. It offers a tiered subscription model (Free vs. Premium), unlocking advanced features such as multiple bots, marketing campaign tools, Google Drive backups, and AI-powered interactions.
 
-## 1. Product Vision
+## Target Audience
 
-WhatsDeX is an enterprise-grade, multi-tenant SaaS platform built on the Baileys WhatsApp Web API. It enables users to deploy, manage, and automate professional WhatsApp bots for customer support, marketing, and business automation within a secure, isolated workspace environment.
+- **Small to Medium Businesses (SMBs):** Needing automated customer support and engagement tools.
+- **Marketing Agencies:** Managing multiple client WhatsApp accounts for campaigns.
+- **Individual Power Users:** Developers or entrepreneurs automating personal or business workflows.
+- **Enterprises:** Requiring a robust, scalable solution for high-volume messaging and team collaboration.
 
-## 2. Core Concept & Multi-Tenancy
+## Core Features
 
-The platform operates as a multi-tenant system where each customer signs up for a dedicated workspace.
+### 1. User & Workspace Management
 
-- **Onboarding:** Users signup and access a dashboard initialized specifically for them.
-- **Bot Initialization:** Customers connect their personal WhatsApp accounts via QR code scanning or pairing codes.
-- **Isolation:** Each bot and its associated data (messages, contacts, metrics) are strictly tied to the customer's workspace.
+- **Self-Service Onboarding:** Users can visit the site, sign up, and access a personalized dashboard.
+- **Multi-Tenancy:** Data isolation per customer using a subcollection pattern in Firestore.
+- **Dashboard:** Centralized hub for metrics, bot status, and account settings.
 
-## 3. Tiered Service Model
+### 2. Bot Management
 
-WhatsDeX follows a Freemium model with integrated payments (Stripe):
+- **Initialization:** Users can easily link their WhatsApp account by scanning a QR code or entering a pairing code.
+- **Multiple Bots:** Premium users can manage up to two (or more) bots per workspace.
+- **Lifecycle Management:** Ability to add, restart, or delete bots as needed.
 
-- **Free Tier:** Basic bot functionality with limited features and usage quotas.
-- **Premium Tier:**
-  - Support for multiple bots (up to two).
-  - Advanced marketing tools (Official WhatsApp API style strategy).
-  - Enhanced AI automation and response features.
-  - Increased limits for campaigns and contact imports.
-  - Advanced data backup options (e.g., Google Drive).
+### 3. Messaging & Automation
 
-## 4. Key Features
+- **Unified Inbox:** View and reply to messages directly from the dashboard.
+- **Broadcast/Marketing:** Create and send bulk messages, media, and document campaigns (similar to WANotifier).
+- **Templates:** Manage and use message templates for consistent communication.
+- **Auto-Replies:** Set up automated responses based on keywords or triggers.
 
-- **Bot Management:** Full control over bot status, initialization, and deletion.
-- **Marketing & Campaigns:** Preparation and execution of message/media/document campaigns and marketing templates (inspired by WANotifier).
-- **Automation & AI:** Intelligent bot replies and chat automation using specialized services (AI, workers, caching).
-- **Data Tools:** Contact importing, message history management, and automated backups.
-- **Analytics & Metrics:** Real-time tracking of bot actions, performance statistics, and engagement metrics.
+### 4. Advanced Features (Premium)
 
-## 5. Non-Functional Requirements
+- **AI Integration:** Leverage Google Gemini for intelligent conversations and content generation.
+- **Backups:** automated backups to Google Drive and other cloud storage providers.
+- **Contact Management:** Import and organize contacts for targeted campaigns.
+- **Analytics:** Detailed tracking of message delivery, response rates, and bot performance.
 
-- **Scalability:** Optimized for high throughput and concurrent users using a robust service architecture (AI, workers, Redis caching).
-- **Security:** Strict data isolation between tenants and secure session management.
-- **Reliability:** High availability for bot connections and automated error recovery.
+### 5. Infrastructure & Monetization
+
+- **Payments:** Integrated Stripe subscription management for tier upgrades.
+- **Scalability:** Built on a decoupled frontend/backend architecture with Redis caching and efficient worker queues.
+- **Security:** Zero-trust data layer with Zod validation and strict Firestore security rules.
+
+## Vision
+
+To build a "Pixel Perfect", scalable, and reliable SaaS platform that democratizes access to powerful WhatsApp automation tools, adhering to modern engineering standards (Next.js 16, FSD, Strict TypeScript) and providing a seamless user experience from onboarding to advanced automation.

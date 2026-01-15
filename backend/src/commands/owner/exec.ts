@@ -11,13 +11,13 @@ export default {
   },
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.bot.context as GlobalContext;
-    const isOwner = await tools.cmd.isOwner(config, ctx.getId(ctx.sender.jid), ctx.msg.key.id, (ctx as any).botInstanceId);
+    const isOwner = await tools.cmd.isOwner(config, ctx.getId(ctx.sender.jid), ctx.msg.key?.id, (ctx as any).botInstanceId);
     if (!isOwner) return;
 
     try {
       const content = ctx.msg.content || '';
       const command = content.slice(2);
-      
+
       const { stdout, stderr } = await util.promisify(exec)(command);
 
       await ctx.reply(formatter.monospace(stdout || stderr));

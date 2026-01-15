@@ -71,7 +71,7 @@ export class MultiTenantApp {
 
     // CORS
     this.app.use(cors({
-      origin: (origin, callback) => {
+      origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         if (!origin ||
           origin.includes('localhost') ||
           origin.endsWith('.whatsdx.com') ||
@@ -85,12 +85,12 @@ export class MultiTenantApp {
     }));
 
     // Compression
-    this.app.use(compression());
+    this.app.use(compression() as any);
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-    this.app.use(cookieParser());
+    this.app.use(cookieParser() as any);
 
     // Rate limiting
     const limiter = rateLimit({
@@ -100,7 +100,7 @@ export class MultiTenantApp {
         error: 'Too many requests, please try again later.'
       }
     });
-    this.app.use('/api/', limiter);
+    this.app.use('/api/', limiter as any);
 
     // Request logging
     this.app.use((req, res, next) => {
@@ -146,8 +146,8 @@ export class MultiTenantApp {
     // Bot management
     this.app.post('/api/bots/:botId/start', authenticateToken, async (req, res) => {
       try {
-        const { botId } = req.params;
-        const tenantId = req.user?.tenantId;
+        const botId = req.params.botId as string;
+        const tenantId = req.user?.tenantId as string;
         if (!tenantId) throw new Error('Tenant context missing');
 
         await multiTenantBotService.startBot(tenantId, botId);
@@ -159,7 +159,7 @@ export class MultiTenantApp {
 
     this.app.post('/api/bots/:botId/stop', authenticateToken, async (req, res) => {
       try {
-        const { botId } = req.params;
+        const botId = req.params.botId as string;
         await multiTenantBotService.stopBot(botId);
         res.json({ success: true, message: 'Bot stopped successfully' });
       } catch (error: any) {

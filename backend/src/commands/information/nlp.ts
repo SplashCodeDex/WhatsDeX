@@ -43,7 +43,7 @@ export default {
         isOwner: ctx.bot.context.tools.cmd.isOwner(
           config,
           ctx.getId(ctx.sender.jid),
-          ctx.msg.key.id
+          ctx.msg.key?.id
         ),
       });
 

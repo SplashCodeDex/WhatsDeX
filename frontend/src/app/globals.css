@@ -1,0 +1,352 @@
+@import "tailwindcss";
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * WhatsDeX Design System - Tailwind CSS v4 CSS-First Configuration
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * This file defines all design tokens using Tailwind v4's @theme directive.
+ * No tailwind.config.js needed - everything is configured in CSS.
+ */
+
+@theme {
+  /* ═══════════════════════════════════════════════════════════════════════
+   * COLOR SYSTEM
+   * Using OKLCH for perceptual uniformity and wide gamut support
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Primary Brand - WhatsApp-inspired greens */
+  --color-primary-50: oklch(97% 0.02 155);
+  --color-primary-100: oklch(94% 0.04 155);
+  --color-primary-200: oklch(88% 0.08 155);
+  --color-primary-300: oklch(78% 0.12 155);
+  --color-primary-400: oklch(68% 0.14 155);
+  --color-primary-500: oklch(58% 0.14 155);
+  --color-primary-600: oklch(50% 0.12 155);
+  --color-primary-700: oklch(42% 0.10 155);
+  --color-primary-800: oklch(34% 0.08 155);
+  --color-primary-900: oklch(26% 0.06 155);
+  --color-primary-950: oklch(16% 0.04 155);
+
+  /* Accent - Electric violet for highlights */
+  --color-accent-50: oklch(97% 0.02 285);
+  --color-accent-100: oklch(94% 0.04 285);
+  --color-accent-200: oklch(88% 0.08 285);
+  --color-accent-300: oklch(78% 0.14 285);
+  --color-accent-400: oklch(68% 0.18 285);
+  --color-accent-500: oklch(58% 0.20 285);
+  --color-accent-600: oklch(50% 0.18 285);
+  --color-accent-700: oklch(42% 0.16 285);
+  --color-accent-800: oklch(34% 0.12 285);
+  --color-accent-900: oklch(26% 0.08 285);
+  --color-accent-950: oklch(16% 0.04 285);
+
+  /* Semantic Colors */
+  --color-success: oklch(72% 0.19 145);
+  --color-success-foreground: oklch(98% 0.02 145);
+  --color-warning: oklch(80% 0.16 85);
+  --color-warning-foreground: oklch(25% 0.04 85);
+  --color-error: oklch(63% 0.24 27);
+  --color-error-foreground: oklch(98% 0.01 27);
+  --color-info: oklch(70% 0.14 240);
+  --color-info-foreground: oklch(98% 0.01 240);
+
+  /* Neutral Scale (Zinc-based) - Light Mode */
+  --color-background: oklch(100% 0 0);
+  --color-foreground: oklch(14% 0.004 286);
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(14% 0.004 286);
+  --color-popover: oklch(100% 0 0);
+  --color-popover-foreground: oklch(14% 0.004 286);
+  --color-muted: oklch(96% 0.001 286);
+  --color-muted-foreground: oklch(45% 0.014 286);
+  --color-border: oklch(91% 0.002 286);
+  --color-input: oklch(91% 0.002 286);
+  --color-ring: oklch(58% 0.14 155);
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * TYPOGRAPHY
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace,
+    SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* Font Sizes - Fluid typography */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * SPACING & SIZING
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * SHADOWS - Layered for realistic depth
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.2);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * ANIMATIONS
+   * ═══════════════════════════════════════════════════════════════════════ */
+
+  --animate-duration-instant: 50ms;
+  --animate-duration-fast: 150ms;
+  --animate-duration-normal: 250ms;
+  --animate-duration-slow: 400ms;
+  --animate-duration-slower: 600ms;
+
+  --animate-ease-linear: linear;
+  --animate-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --animate-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --animate-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Keyframe Animations */
+  --animate-fade-in: fade-in var(--animate-duration-normal) var(--animate-ease-out);
+  --animate-fade-out: fade-out var(--animate-duration-fast) var(--animate-ease-in);
+  --animate-slide-in-up: slide-in-up var(--animate-duration-normal) var(--animate-ease-out);
+  --animate-slide-in-down: slide-in-down var(--animate-duration-normal) var(--animate-ease-out);
+  --animate-scale-in: scale-in var(--animate-duration-normal) var(--animate-ease-spring);
+  --animate-spin: spin 1s linear infinite;
+  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DARK MODE OVERRIDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-background: oklch(12% 0.006 286);
+    --color-foreground: oklch(98% 0 0);
+    --color-card: oklch(16% 0.006 286);
+    --color-card-foreground: oklch(98% 0 0);
+    --color-popover: oklch(14% 0.006 286);
+    --color-popover-foreground: oklch(98% 0 0);
+    --color-muted: oklch(22% 0.006 286);
+    --color-muted-foreground: oklch(65% 0.014 286);
+    --color-border: oklch(27% 0.006 286);
+    --color-input: oklch(27% 0.006 286);
+
+    /* Adjusted shadows for dark mode */
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * KEYFRAME DEFINITIONS
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * BASE STYLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ACCESSIBILITY
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary-600);
+  color: white;
+  padding: 8px 16px;
+  z-index: 100;
+  transition: top var(--animate-duration-fast) var(--animate-ease-out);
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * REDUCED MOTION
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * UTILITY CLASSES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Skeleton loading animation */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-muted) 25%,
+    var(--color-muted-foreground) 50%,
+    var(--color-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom scrollbar styling */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted-foreground);
+}

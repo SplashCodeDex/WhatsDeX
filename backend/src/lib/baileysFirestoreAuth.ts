@@ -1,4 +1,4 @@
-import { AuthenticationState, AuthenticationCreds, BufferJSON, initAuthCreds, proto } from '@whiskeysockets/baileys';
+import { AuthenticationState, AuthenticationCreds, BufferJSON, initAuthCreds, proto } from 'baileys';
 import { firebaseService } from '@/services/FirebaseService.js';
 
 /**

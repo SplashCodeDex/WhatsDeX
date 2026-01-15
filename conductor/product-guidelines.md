@@ -2,24 +2,33 @@
 
 ## 1. Tone and Voice
 
-- **Professional & Trustworthy:** Use clear, concise, and business-oriented language. Avoid jargon where possible, but be precise about technical actions.
-- **Clarity:** Ensure all labels, tooltips, and messages are unambiguous.
-- **Supportive:** When errors occur, guide the user toward a solution rather than just stating a failure.
+- **Professional & Authoritative:** Instill confidence through technical precision and formal language. Communications should reflect the enterprise-grade nature of the platform.
+- **Clarity & Precision:** Use clear, concise, and business-oriented language. Labels, tooltips, and system messages must be unambiguous.
+- **Supportive Resilience:** When errors occur (e.g., bot disconnection), provide actionable solutions and clear guidance rather than just stating a failure.
+- **Transparancy:** Be honest about system status, especially regarding the limitations of the "Free" tier vs. "Premium" capabilities.
 
-## 2. Visual Identity & UI/UX
+## 2. Visual Identity & Aesthetic
 
-- **Modern Clean Aesthetic:** Prioritize a clean, minimalist layout with ample white space to reduce cognitive load in complex management tasks.
-- **Glassmorphism:** Incorporate subtle glassmorphism effects (transparency, blur, thin borders) for cards and modals to create a sense of depth and modern tech sophistication.
-- **Information Hierarchy:** Use consistent typography and spacing to highlight primary actions (e.g., "Initialize Bot") and critical data (e.g., "Bot Status").
-- **Dark/Light Mode:** Support harmonious transitions between themes while maintaining contrast and legibility of the glassmorphism elements.
+- **Sleek & Minimalist:** Prioritize high contrast, generous whitespace, and a sophisticated "Dark Mode" (or high-quality light theme) to reduce visual fatigue for power users.
+- **Pixel Perfection:** Every component must adhere to strict spacing tokens (Tailwind v4 tokens). Hover, active, and focus-visible states are mandatory for all interactive elements.
+- **Tactile Depth:** Apply multi-layered drop shadows and subtle background noise to create a premium, high-end feel.
+- **Branding:** Use the iconic WhatsApp green (`#25D366`) sparingly as an accent color for status indicators and primary calls to action, maintaining a clean enterprise look.
 
-## 3. Interaction & Feedback
+## 3. User Experience (UX) Principles
 
-- **Constructive Error Handling:** All errors must be actionable. Instead of "Auth Error", use "Authentication failed. Please check your credentials or scan the QR code again."
-- **Real-time Updates:** Use WebSockets/Socket.io to provide immediate feedback on bot connectivity and message status without page refreshes.
-- **Consistency:** Use standardized UI components (buttons, inputs, tables) across all dashboard pages to ensure a predictable user experience.
+- **Server-First Interaction:** Leverage Next.js 16 Server Components and Actions to ensure the UI is fast and reactive.
+- **Optimistic UI:** Use `useOptimistic` for state mutations to provide immediate feedback to the user while backend processes complete.
+- **Accessibility (A11Y):** Adhere to WCAG 2.1 AA standards. Ensure keyboard navigability and meaningful semantic labels (Radix UI primitives).
+- **Mobile Responsiveness:** The dashboard must be fully functional and aesthetically pleasing on all screen sizes, from desktop to mobile.
 
-## 4. Multi-Tenant UX
+## 4. Product Logic & Tiers
 
-- **Context Awareness:** Always clearly indicate which workspace/bot the user is currently managing.
-- **Onboarding Flow:** Guide new users through a step-by-step process to initialize their first bot immediately after signup.
+- **Workspace-Centric:** All UI and logic must reflect the tenant's workspace. Users should feel their environment is dedicated and secure.
+- **Tier-Aware UI:** Feature availability must be clearly communicated. Provide clear "Upgrade" paths for premium features (e.g., secondary bot slots, advanced AI features) without being intrusive.
+- **Initialization Clarity:** The process of linking a WhatsApp bot (QR Scan/Pairing Code) must be the most polished and guided experience in the app.
+
+## 5. Animation & Motion
+
+- **Purposeful Motion:** Use Framer Motion for GPU-accelerated animations that provide context or feedback (e.g., page transitions, modal entries).
+- **Standardized Durations:** 150ms (micro), 250ms (normal), 400ms (page transitions).
+- **Performance First:** Animate only `transform` and `opacity` to maintain 60fps performance.

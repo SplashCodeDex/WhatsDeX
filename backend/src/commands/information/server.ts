@@ -42,7 +42,7 @@ export default {
           `${formatter.quote('· · ─ ·✶· ─ · ·')}\n` +
           `${formatter.quote(`Bot Uptime: ${config.bot.uptime}`)}\n` +
           `${formatter.quote(`Database: ${config.bot.dbSize} (Simpl.DB - JSON)`)}\n${formatter.quote(
-            'Library: @whiskeysockets/baileys'
+            'Library: baileys'
           )}`,
         footer: config.msg.footer,
       });
