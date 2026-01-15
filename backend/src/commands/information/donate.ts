@@ -6,8 +6,8 @@ export default {
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
-      const qrisLink = (await db.get('bot.text.qris')) || null;
-      const customText = (await db.get('bot.text.donate')) || null;
+      const qrisLink = (await db.get<string>('bot.text.qris')) || null;
+      const customText = (await db.get<string>('bot.text.donate')) || null;
       const text = customText
         ? customText
           .replace(/%tag%/g, `@${ctx.getId(ctx.sender.jid)}`)
@@ -41,7 +41,7 @@ export default {
           footer: config.msg.footer,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

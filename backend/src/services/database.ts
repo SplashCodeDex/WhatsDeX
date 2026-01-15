@@ -4,6 +4,11 @@ import { firebaseService } from './FirebaseService.js';
 import { BotMember, Result, BotMemberSchema, BotGroupDocument } from '../types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
 
+/** Soft-deleted document marker */
+interface DeletedDocument {
+    deletedAt: Timestamp;
+}
+
 /**
  * DatabaseService (2026 Mastermind Edition)
  *
@@ -229,7 +234,7 @@ export class DatabaseService {
     /**
      * Generic bridge for commands using db.get/db.set
      */
-    async get(key: string): Promise<any> {
+    async get<T = any>(key: string): Promise<any> {
         return await firebaseService.getDoc('system' as 'members' | 'groups', key);
     }
 
@@ -238,7 +243,8 @@ export class DatabaseService {
     }
 
     async delete(key: string): Promise<void> {
-        await firebaseService.setDoc('system' as 'members' | 'groups', key, { deletedAt: Timestamp.now() } as any, undefined, true);
+        const deletedDoc: DeletedDocument = { deletedAt: Timestamp.now() };
+        await firebaseService.setDoc('system' as 'members' | 'groups', key, deletedDoc as unknown as Record<string, unknown>, undefined, true);
     }
 
     async add(key: string, value: number): Promise<void> {

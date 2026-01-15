@@ -1,5 +1,9 @@
 import { MessageContext, GlobalContext } from '../../types/index.js';
 
+interface BannedUser {
+  banned?: boolean;
+}
+
 export default {
   name: 'listbanneduser',
   aliases: ['listban', 'listbanned'],
@@ -10,7 +14,7 @@ export default {
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context as GlobalContext;
     try {
-      const users = (await db.get('user')) || {};
+      const users = await db.get<Record<string, BannedUser>>('user') || {};
       const bannedUsers: string[] = [];
 
       for (const userId in users) {

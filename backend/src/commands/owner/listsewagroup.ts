@@ -1,4 +1,10 @@
 import { MessageContext } from '../../types/index.js';
+
+interface SewaGroup {
+  sewa?: boolean;
+  sewaExpiration?: number;
+}
+
 export default {
   name: 'listsewagroup',
   aliases: ['listsewa'],
@@ -9,7 +15,7 @@ export default {
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
-      const groups = await db.get('group');
+      const groups = await db.get<Record<string, SewaGroup>>('group') || {};
       const sewaGroups = [];
 
       for (const groupId in groups) {
@@ -48,7 +54,7 @@ export default {
           groupMentions,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

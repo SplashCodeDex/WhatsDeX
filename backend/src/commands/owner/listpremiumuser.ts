@@ -1,4 +1,10 @@
 import { MessageContext } from '../../types/index.js';
+
+interface PremiumUser {
+  premium?: boolean;
+  premiumExpiration?: number;
+}
+
 export default {
   name: 'listpremiumuser',
   aliases: ['listprem', 'listpremium'],
@@ -9,7 +15,7 @@ export default {
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
-      const users = await db.get('user');
+      const users = await db.get<Record<string, PremiumUser>>('user') || {};
       const premiumUsers = [];
 
       for (const userId in users) {
@@ -42,7 +48,7 @@ export default {
         mentions: userMentions,
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

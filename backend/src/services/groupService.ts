@@ -5,7 +5,7 @@
  * Wraps Baileys socket methods and integrates with Tenant Database.
  */
 
-import { GroupMetadata, ParticipantAction } from '@whiskeysockets/baileys';
+import { GroupMetadata } from '@whiskeysockets/baileys';
 import { Bot, GroupFunctions } from '../types/index.js';
 import logger from '../utils/logger.js';
 

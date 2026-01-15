@@ -41,12 +41,12 @@ export default {
       return await ctx.reply(formatter.quote('❎ Dia adalah owner grup!'));
 
     try {
-      const muteList = (await db.get(`group.${groupId}.mute`)) || [];
+      const muteList = (await db.get<string[]>(`group.${groupId}.mute`)) || [];
       if (!muteList.includes(accountId)) muteList.push(accountId);
       await db.set(`group.${groupId}.mute`, muteList);
 
       await ctx.reply(formatter.quote('✅ Berhasil me-mute pengguna itu dari grup ini!'));
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

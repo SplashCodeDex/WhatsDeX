@@ -251,7 +251,7 @@ export class CommandSystem {
         jid,
         name: messageData.pushName || 'Unknown',
         pushName: messageData.pushName ?? undefined,
-        isOwner: (this.context.config.get('bot.owners' as any) as any)?.includes(jid) || false,
+        isOwner: ((this.context.config as unknown as { get: (key: string) => string[] | undefined }).get('bot.owners'))?.includes(jid) || false,
         isAdmin: false,
       },
       author: {
@@ -267,7 +267,7 @@ export class CommandSystem {
         const content = typeof msg === 'string' ? { text: msg } : msg;
         return await bot.sendMessage(jid, content, { quoted: messageData });
       },
-      sendMessage: async (targetJid: string, content: any, options?: any) => {
+      sendMessage: async (targetJid: string, content: Record<string, unknown>, options?: Record<string, unknown>) => {
         return await bot.sendMessage(targetJid, content, options);
       },
       replyReact: async (emoji: string) => {
