@@ -1,11 +1,7 @@
 import { DynamicToolRegistry } from './DynamicToolRegistry.js';
+import * as cmd from './cmd.js';
 
-export const cmd = {
-    isOwner: (config: any, senderId: string) => {
-        const owners = (config.owner?.id || '').split(',').map((n: string) => n.trim());
-        return owners.includes(senderId);
-    }
-};
+export { cmd };
 
 export default {
     cmd,

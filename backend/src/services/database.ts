@@ -234,8 +234,8 @@ export class DatabaseService {
     /**
      * Generic bridge for commands using db.get/db.set
      */
-    async get<T = any>(key: string): Promise<any> {
-        return await firebaseService.getDoc('system' as 'members' | 'groups', key);
+    async get<T = unknown>(key: string): Promise<T | null> {
+        return await firebaseService.getDoc('system' as 'members' | 'groups', key) as T | null;
     }
 
     async set(key: string, value: unknown): Promise<void> {

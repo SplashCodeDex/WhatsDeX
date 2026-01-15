@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { envSchema, EnvConfig } from '../config/env.schema.js';
 import dotenv from 'dotenv';
+import logger from '../utils/logger.js';
 
 // Load .env file
 dotenv.config();
@@ -14,7 +15,7 @@ export class ConfigService {
       this.config = envSchema.parse(process.env);
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
-        console.error('❌ Invalid environment configuration:', error.format());
+        logger.error('❌ Invalid environment configuration:', error.format());
         throw error;
       }
       throw error;

@@ -34,20 +34,16 @@ export { default as ErrorHandler } from './errorHandler.js';
 // Monitoring
 export { default as HealthCheckService } from './healthCheckService.js';
 export { default as MonitoringService } from './monitoring.js';
-export { default as AuditLogger } from './auditLogger.js';
 export { default as AuditService } from './auditService.js';
 
 // Content Services
 export { default as StickerService } from './stickerService.js';
 export { default as TextToSpeechService } from './textToSpeechService.js';
 export { default as ContentModeration } from './contentModeration.js';
-export { default as ModerationService } from './moderationService.js';
 
 // Auth
 export { default as InteractiveAuth } from './interactiveAuth.js';
 export { default as AuthSystem } from './authSystem.js';
-export { default as AuthManager } from './authManager.js';
-export { default as AuthenticationService } from './authenticationService.js';
 
 // User/Settings
 export { default as UserService } from './userService.js';

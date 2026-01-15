@@ -7,8 +7,8 @@ type FlagOptions = {
     [key: string]: {
         type: 'boolean' | 'value';
         key: string;
-        validator?: (val: any) => boolean;
-        parser?: (val: any) => any;
+        validator?: (val: string) => boolean;
+        parser?: (val: string) => unknown;
     };
 };
 
@@ -18,7 +18,7 @@ type FlagOptions = {
  * @param options - Flag configuration definition
  */
 export const parseFlag = (args: string, options: FlagOptions) => {
-    const result: any = { input: args };
+    const result: Record<string, unknown> & { input: string } = { input: args };
     const argsArray = args.split(' ');
 
     const keysToRemove: number[] = [];
@@ -53,10 +53,24 @@ export const parseFlag = (args: string, options: FlagOptions) => {
     return result;
 };
 
-export const handleError = async (ctx: any, error: any) => {
+import logger from '../utils/logger.js';
+import { MessageContext } from '../types/index.js';
+
+export const isOwner = (config: any, senderId: string) => {
+    const owners = (config.owner?.id || '').split(',').map((n: string) => n.trim());
+    return owners.includes(senderId);
+};
+
+export const handleError = async (ctx: MessageContext, error: unknown) => {
     const { formatter } = ctx.bot.context;
-    console.error(error);
-    await ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('Command Execution Error:', {
+        command: ctx.command,
+        user: ctx.sender.jid,
+        error: err.message,
+        stack: err.stack
+    });
+    await ctx.reply(formatter.quote(`An error occurred: ${err.message}`));
 };
 
 export const fakeMetaAiQuotedText = (text: string) => {

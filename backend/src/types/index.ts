@@ -205,7 +205,7 @@ export interface GlobalContext {
     database: import('../services/database.js').DatabaseService;
     databaseService: import('../services/database.js').DatabaseService;
     config: ConfigService;
-    tools: any;
+    tools: typeof import('../tools/exports.js').default;
     formatter: typeof import('../utils/formatters.js');
     logger: Logger;
     commandSystem: import('../services/commandSystem.js').CommandSystem;

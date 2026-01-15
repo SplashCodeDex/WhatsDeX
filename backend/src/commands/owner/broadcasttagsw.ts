@@ -28,8 +28,8 @@ export default {
     try {
       const groups = await (ctx as any).core.groupFetchAllParticipating();
       const groupIds = Object.values(groups).map((group: any) => group.id as string);
-      
-      const blacklist = (await db.get('bot.blacklistBroadcast')) || [];
+
+      const blacklist = (await db.get<string[]>('bot.blacklistBroadcast')) || [];
       const filteredGroupIds = groupIds.filter((groupId: string) => !blacklist.includes(groupId));
 
       const waitMsg = await ctx.reply(
@@ -40,7 +40,7 @@ export default {
 
       const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
       const failedGroupIds: string[] = [];
-      
+
       const mediaType = checkMedia || checkQuotedMedia;
       // Note: In real implementation, buffer logic should be robust
       const buffer = await (ctx.msg as any).media?.toBuffer() || await (ctx.quoted as any)?.media?.toBuffer();
@@ -56,7 +56,7 @@ export default {
           failedGroupIds.push(groupId);
         }
       }
-      
+
       const successCount = filteredGroupIds.length - failedGroupIds.length;
 
       await (ctx as any).editMessage(

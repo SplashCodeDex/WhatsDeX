@@ -1,14 +1,40 @@
 import Stripe from 'stripe';
-import { StripeService, CreateCustomerData, SubscriptionOptions } from './stripe.js';
+import { StripeService } from './stripe.js';
 import logger from '../utils/logger.js';
 import { db } from '../lib/firebase.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import UserService from './userService.js';
 
+interface UsageLimits {
+  aiRequests: number;
+  imageGenerations: number;
+  commands: number;
+  storage: number;
+  premiumCommands: boolean;
+  analytics: boolean;
+  apiAccess: boolean;
+  whiteLabel?: boolean;
+  customIntegrations?: boolean;
+  dedicatedSupport?: boolean;
+}
+
+interface SubscriptionDocument {
+  id: string;
+  stripeSubscriptionId: string;
+  userId: string;
+  planKey: string;
+  status: string;
+  currentPeriodStart: Timestamp | Date;
+  currentPeriodEnd: Timestamp | Date;
+  cancelAtPeriodEnd: boolean;
+  createdAt: Timestamp;
+  cancelledAt?: Timestamp | null;
+}
+
 class SubscriptionService {
   private stripe: StripeService;
   private isInitialized: boolean;
-  public usageLimits: Record<string, any>;
+  public usageLimits: Record<string, UsageLimits>;
 
   constructor() {
     // databaseService ignored as we use Firestore directly now
@@ -71,8 +97,9 @@ class SubscriptionService {
 
       this.isInitialized = true;
       logger.info('Subscription service initialized successfully');
-    } catch (error: any) {
-      logger.error('Failed to initialize subscription service', { error: error.message });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('Failed to initialize subscription service', { error: message });
       throw error;
     }
   }
@@ -81,10 +108,10 @@ class SubscriptionService {
    * Create a new subscription for a user
    * @param {string} userId - User ID
    * @param {string} planKey - Plan key (basic, pro, enterprise)
-   * @param {Object} paymentMethod - Payment method details
+   * @param {string} _paymentMethod - Payment method details (unused)
    * @returns {Promise<Object>} Subscription result
    */
-  async createSubscription(userId: string, planKey: string, paymentMethod: any) {
+  async createSubscription(userId: string, planKey: string, _paymentMethod: unknown) {
     try {
       // Validate plan
       if (!this.usageLimits[planKey]) {
@@ -102,12 +129,18 @@ class SubscriptionService {
           throw new Error(`User not found: ${userId}`);
         }
 
+        const userData = user as { email?: string; name?: string; phone?: string }; // Temporary cast until strict User type import
+
         customer = await this.stripe.createCustomer({
           userId,
-          email: (user as any).email,
-          name: (user as any).name,
-          phone: (user as any).phone,
+          email: userData.email || '',
+          name: userData.name,
+          phone: userData.phone,
         });
+
+        if (customer.deleted) {
+          throw new Error('Stripe customer is deleted');
+        }
 
         // Save customer ID to database
         await db.collection('users').doc(userId).update({
@@ -118,7 +151,7 @@ class SubscriptionService {
       // Create subscription
       const subscription = await this.stripe.createSubscription(customer.id, planKey, { userId });
 
-      const sub = subscription as any;
+      const sub = subscription as Stripe.Subscription;
 
       // Save subscription to database
       const subscriptionData = {
@@ -126,8 +159,8 @@ class SubscriptionService {
         stripeSubscriptionId: sub.id,
         planKey,
         status: sub.status,
-        currentPeriodStart: Timestamp.fromDate(new Date(sub.current_period_start * 1000)),
-        currentPeriodEnd: Timestamp.fromDate(new Date(sub.current_period_end * 1000)),
+        currentPeriodStart: Timestamp.fromDate(new Date((sub as unknown as { current_period_start: number }).current_period_start * 1000)),
+        currentPeriodEnd: Timestamp.fromDate(new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000)),
         cancelAtPeriodEnd: sub.cancel_at_period_end,
         createdAt: Timestamp.now(),
       };
@@ -143,15 +176,20 @@ class SubscriptionService {
         subscriptionId: sub.id,
       });
 
+      const latestInvoice = sub.latest_invoice as unknown as { payment_intent?: string | { client_secret?: string } };
+      const paymentIntent = latestInvoice?.payment_intent;
+      const clientSecret = typeof paymentIntent === 'object' ? paymentIntent.client_secret : undefined;
+
       return {
         subscription: sub,
-        clientSecret: (sub.latest_invoice as any)?.payment_intent?.client_secret,
+        clientSecret,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to create subscription', {
         userId,
         planKey,
-        error: error.message,
+        error: message,
       });
       throw error;
     }
@@ -175,7 +213,8 @@ class SubscriptionService {
         throw new Error('No active subscription found');
       }
 
-      const subscription: any = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+      const doc = snapshot.docs[0];
+      const subscription = { id: doc.id, ...doc.data() } as SubscriptionDocument;
 
       const stripeSubscription = await this.stripe.cancelSubscription(
         subscription.stripeSubscriptionId,
@@ -196,10 +235,11 @@ class SubscriptionService {
       });
 
       return stripeSubscription;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to cancel subscription', {
         userId,
-        error: error.message,
+        error: message,
       });
       throw error;
     }
@@ -227,20 +267,24 @@ class SubscriptionService {
         throw new Error('No active subscription found');
       }
 
-      const subscription: any = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+      const doc = snapshot.docs[0];
+      const subscription = { id: doc.id, ...doc.data() } as SubscriptionDocument;
 
       const stripeSubscription = await this.stripe.updateSubscriptionPlan(
         subscription.stripeSubscriptionId,
         newPlanKey
       );
 
-      const sub = stripeSubscription as any;
       // Update database
+      const sub = stripeSubscription;
+      const timestampStart = (sub as unknown as { current_period_start: number }).current_period_start;
+      const timestampEnd = (sub as unknown as { current_period_end: number }).current_period_end;
+
       await db.collection('subscriptions').doc(subscription.id).update({
         planKey: newPlanKey,
         status: sub.status,
-        currentPeriodStart: Timestamp.fromDate(new Date(sub.current_period_start * 1000)),
-        currentPeriodEnd: Timestamp.fromDate(new Date(sub.current_period_end * 1000)),
+        currentPeriodStart: Timestamp.fromDate(new Date(timestampStart * 1000)),
+        currentPeriodEnd: Timestamp.fromDate(new Date(timestampEnd * 1000)),
       });
 
       logger.info('Subscription plan updated', {
@@ -250,11 +294,12 @@ class SubscriptionService {
       });
 
       return stripeSubscription;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to update subscription plan', {
         userId,
         newPlanKey,
-        error: error.message,
+        error: message,
       });
       throw error;
     }
@@ -296,11 +341,12 @@ class SubscriptionService {
         default:
           return false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to check feature access', {
         userId,
         feature,
-        error: error.message,
+        error: message,
       });
       return false;
     }
@@ -361,12 +407,13 @@ class SubscriptionService {
         limit,
         remaining: limit === -1 ? -1 : limit - newUsage,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to track usage', {
         userId,
         feature,
         amount,
-        error: error.message,
+        error: message,
       });
       throw error;
     }
@@ -385,11 +432,12 @@ class SubscriptionService {
 
       if (!doc.exists) return 0;
       return doc.data()?.[usageKey] || 0;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to get current usage', {
         userId,
         feature,
-        error: error.message,
+        error: message,
       });
       return 0;
     }
@@ -435,10 +483,11 @@ class SubscriptionService {
 
       if (snapshot.empty) return 'free';
       return snapshot.docs[0].data().planKey || 'free';
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to get user plan', {
         userId,
-        error: error.message,
+        error: message,
       });
       return 'free';
     }
@@ -477,10 +526,11 @@ class SubscriptionService {
         cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
         limits: this.usageLimits[sub.planKey] || this.usageLimits.free,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to get user subscription', {
         userId,
-        error: error.message,
+        error: message,
       });
       return {
         plan: 'free',
@@ -505,10 +555,11 @@ class SubscriptionService {
       });
 
       logger.info('Usage counters reset', { userId });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to reset usage counters', {
         userId,
-        error: error.message,
+        error: message,
       });
       throw error;
     }
@@ -529,10 +580,11 @@ class SubscriptionService {
       }
 
       return await this.stripe.getCustomer(user.stripeCustomerId);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to get Stripe customer', {
         userId,
-        error: error.message,
+        error: message,
       });
       return null;
     }
@@ -570,10 +622,11 @@ class SubscriptionService {
         default:
           logger.debug('Unhandled webhook event', { type: event.type });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to handle webhook', {
         eventType: event.type,
-        error: error.message,
+        error: message,
       });
       throw error;
     }
@@ -594,10 +647,12 @@ class SubscriptionService {
         const docId = snapshot.docs[0].id;
         const localSub = snapshot.docs[0].data();
 
+        const sub = subscription as unknown as { current_period_start: number; current_period_end: number };
+
         await db.collection('subscriptions').doc(docId).update({
           status: subscription.status,
-          currentPeriodStart: Timestamp.fromDate(new Date((subscription as any).current_period_start * 1000)),
-          currentPeriodEnd: Timestamp.fromDate(new Date((subscription as any).current_period_end * 1000)),
+          currentPeriodStart: Timestamp.fromDate(new Date(sub.current_period_start * 1000)),
+          currentPeriodEnd: Timestamp.fromDate(new Date(sub.current_period_end * 1000)),
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
         });
 
@@ -611,10 +666,11 @@ class SubscriptionService {
           status: subscription.status,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to handle subscription update', {
         subscriptionId: subscription.id,
-        error: error.message,
+        error: message,
       });
     }
   }
@@ -641,10 +697,11 @@ class SubscriptionService {
       logger.info('Subscription cancelled from webhook', {
         subscriptionId: subscription.id,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to handle subscription cancellation', {
         subscriptionId: subscription.id,
-        error: error.message,
+        error: message,
       });
     }
   }
@@ -656,15 +713,17 @@ class SubscriptionService {
   async handlePaymentSuccess(invoice: Stripe.Invoice) {
     try {
       // Record payment in database
-      const inv = invoice as any;
+      const customerMetadata = (invoice.metadata) as Record<string, string> | undefined; // Stripe metadata is Record<string, string>
+      const userId = customerMetadata?.userId;
+
       await db.collection('payments').add({
-        userId: inv.customer_metadata?.userId || (inv.metadata && inv.metadata.userId),
+        userId,
         amount: invoice.amount_due,
         currency: invoice.currency,
         status: 'completed',
         paymentMethod: 'stripe',
         transactionId: invoice.id,
-        description: `Subscription payment - ${inv.subscription}`,
+        description: `Subscription payment - ${(invoice as unknown as { subscription: string }).subscription}`,
         createdAt: Timestamp.now(),
       });
 
@@ -673,10 +732,11 @@ class SubscriptionService {
         amount: invoice.amount_due,
         customerId: invoice.customer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to handle payment success', {
         invoiceId: invoice.id,
-        error: error.message,
+        error: message,
       });
     }
   }
@@ -688,15 +748,16 @@ class SubscriptionService {
   async handlePaymentFailure(invoice: Stripe.Invoice) {
     try {
       // Record failed payment
-      const inv = invoice as any;
+      const customerMetadata = (invoice.metadata) as Record<string, string> | undefined;
+
       await db.collection('payments').add({
-        userId: inv.customer_metadata?.userId,
+        userId: customerMetadata?.userId,
         amount: invoice.amount_due,
         currency: invoice.currency,
         status: 'failed',
         paymentMethod: 'stripe',
         transactionId: invoice.id,
-        description: `Failed payment - ${inv.subscription}`,
+        description: `Failed payment - ${(invoice as unknown as { subscription: string }).subscription}`,
         createdAt: Timestamp.now(),
       });
 
@@ -704,10 +765,11 @@ class SubscriptionService {
         invoiceId: invoice.id,
         customerId: invoice.customer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Failed to handle payment failure', {
         invoiceId: invoice.id,
-        error: error.message,
+        error: message,
       });
     }
   }
@@ -728,12 +790,13 @@ class SubscriptionService {
         plansCount: Object.keys(this.usageLimits).length,
         timestamp: new Date().toISOString(),
       };
-    } catch (error: any) {
-      logger.error('Subscription health check failed', { error: error.message });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('Subscription health check failed', { error: message });
       return {
         status: 'unhealthy',
         service: 'subscription',
-        error: error.message,
+        error: message,
         timestamp: new Date().toISOString(),
       };
     }

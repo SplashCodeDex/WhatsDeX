@@ -39,7 +39,7 @@ export default {
 
     try {
       const groupId = ctx.getId(ctx.id);
-      const groupDb = (await db.get(`group.${groupId}`)) || {};
+      const groupDb = (await db.get<{ warnings?: Warning[]; maxwarnings?: number }>(`group.${groupId}`)) || {};
       const warnings: Warning[] = groupDb?.warnings || [];
 
       const userWarning = warnings.find((warning: Warning) => warning.userId === accountId);

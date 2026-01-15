@@ -209,17 +209,10 @@ export class CommandSystem {
     const text = this.extractText(messageData);
     const jid = messageData.key.remoteJid || '';
 
-    // Delegate to GroupService
     const getGroupFunctions = (targetJid?: string): GroupFunctions => {
-      // If targetJid is provided, use it, otherwise use current jid (if group)
       const effectiveJid = targetJid || (jid.endsWith('@g.us') ? jid : '');
 
       if (!effectiveJid) {
-        // Return default/empty functions if not a group
-        // Or better: Create a "NoOp" or "Null" group function set in GroupService
-        // For now, we reuse the pattern but scoped to 'null' or erroring out
-        // But strict typing requires returning GroupFunctions.
-        // Let's rely on createFunctions handling it or return a safe default here.
         return this.context.groupService.createFunctions(bot, bot.tenantId, 'invalid@g.us', messageData.key.participant || jid);
       }
       return this.context.groupService.createFunctions(bot, bot.tenantId, effectiveJid, messageData.key.participant || jid);

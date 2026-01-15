@@ -230,8 +230,6 @@ class WhatsDeXBrain {
    */
   async getConversationMemoryDB(userId: string) {
     try {
-      // Transitioning to Firebase/Firestore
-      // For now, fall back to in-memory managed system
       return this.getConversationMemory(userId);
     } catch (error: any) {
       logger.error('Error retrieving conversation memory:', error);
@@ -244,8 +242,6 @@ class WhatsDeXBrain {
    */
   async updateConversationMemoryDB(userId: string, userMessage: string, aiResponse: string) {
     try {
-      // Transitioning to Firebase/Firestore
-      // For now, update in-memory managed system
       this.updateConversationMemory(userId, userMessage, aiResponse);
     } catch (error: any) {
       logger.error('Error updating conversation memory:', error);

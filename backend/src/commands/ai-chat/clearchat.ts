@@ -13,7 +13,7 @@ export default {
     try {
       await database.chat.clearHistory(userId, ctx.bot.tenantId);
       await ctx.reply(formatter.quote('✅ Your chat history has been cleared.'));
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

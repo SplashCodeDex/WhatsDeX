@@ -1,6 +1,5 @@
 import moment from 'moment-timezone';
 import { getJid, getSender, getGroup } from './baileysUtils.js';
-// import { Cooldown } from '../middleware/cooldown.js'; // Removed
 import { db } from '../lib/firebase.js';
 
 const createBotContext = async (
@@ -16,10 +15,6 @@ const createBotContext = async (
   const isGroup = rawBaileysMessage.key.remoteJid.endsWith('@g.us');
   const groupJid = getGroup(rawBaileysMessage);
   const groupId = getGroup(rawBaileysMessage);
-
-  // Instantiate Cooldown
-  // const cooldown = new Cooldown(); // Removed
-  const cooldown = null;
 
   const useDirectBaileys = process.env.USE_BAILEYS_DIRECT === 'true' || process.env.NODE_ENV === 'production';
 
@@ -220,7 +215,6 @@ const createBotContext = async (
     replyReact,
     simulateTyping,
     used,
-    // cooldown: null, // Removed broken Cooldown class usage
     ip: requestInfo.ip || 'unknown',
     userAgent: requestInfo.userAgent || 'WhatsApp',
     sessionId: requestInfo.sessionId || 'unknown',

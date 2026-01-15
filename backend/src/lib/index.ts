@@ -21,7 +21,3 @@ export * as queues from './queues.js';
 
 // Retry utilities
 export * from './retry.js';
-
-// Prisma client
-// Prisma client - Removed
-// export { default as prisma } from './prisma.js';

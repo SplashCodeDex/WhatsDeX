@@ -154,12 +154,6 @@ class MediaProcessor {
 
       const processingTime = Date.now() - (job.processedOn ?? Date.now());
 
-      try {
-        // const { default: prisma } = await import('../lib/prisma.js');
-        // await (prisma as any).analytics.create({ data: { metric: 'media_processed', value: processingTime, category: 'media', metadata: JSON.stringify({ type: 'image_optimize', outputPath }) } });
-        // await (prisma as any).analytics.create({ data: { metric: 'media_success', value: 1, category: 'media', metadata: JSON.stringify({ type: 'image_optimize' }) } });
-      } catch (_) { }
-
       return {
         success: true,
         originalPath: inputPath,
@@ -175,7 +169,6 @@ class MediaProcessor {
         processingTime,
       };
     } catch (error: any) {
-      try { /* const { default: prisma } = await import('../lib/prisma.js'); await (prisma as any).analytics.create({ data: { metric: 'media_failed', value: 1, category: 'media', metadata: JSON.stringify({ type: 'image_optimize' }) } }); */ } catch (_) { }
       logger.error('Image optimization failed', {
         jobId: job.id,
         userId,
@@ -319,11 +312,6 @@ class MediaProcessor {
       const thumbnailStats = await fs.stat(thumbnailPath);
 
       const processingTime = Date.now() - (job.processedOn ?? Date.now());
-      try {
-        // const { default: prisma } = await import('../lib/prisma.js');
-        // await (prisma as any).analytics.create({ data: { metric: 'media_processed', value: processingTime, category: 'media', metadata: JSON.stringify({ type: 'video_thumbnail', thumbnailPath, usedFfmpeg }) } });
-        // await (prisma as any).analytics.create({ data: { metric: 'media_success', value: 1, category: 'media', metadata: JSON.stringify({ type: 'video_thumbnail' }) } });
-      } catch (_) { }
 
       return {
         success: true,
@@ -340,7 +328,6 @@ class MediaProcessor {
         processingTime,
       };
     } catch (error: any) {
-      try { /* const { default: prisma } = await import('../lib/prisma.js'); await (prisma as any).analytics.create({ data: { metric: 'media_failed', value: 1, category: 'media', metadata: JSON.stringify({ type: 'video_thumbnail' }) } }); */ } catch (_) { }
       logger.error('Video thumbnail generation failed', {
         jobId: job.id,
         userId,
@@ -413,11 +400,16 @@ class MediaProcessor {
       const outputStats = await fs.stat(outputPath);
 
       const processingTime = Date.now() - (job.processedOn ?? Date.now());
-      try {
-        // const { default: prisma } = await import('../lib/prisma.js');
-        // await (prisma as any).analytics.create({ data: { metric: 'media_processed', value: processingTime, category: 'media', metadata: JSON.stringify({ type: 'file_convert', outputPath, outputFormat }) } });
-        // await (prisma as any).analytics.create({ data: { metric: 'media_success', value: 1, category: 'media', metadata: JSON.stringify({ type: 'file_convert' }) } });
-      } catch (_) { }
+
+      return {
+        success: true,
+        inputPath,
+        outputPath,
+        inputFormat: inputExt,
+        outputFormat,
+        inputSize: inputStats.size,
+        outputSize: outputStats.size,
+      };
 
       return {
         success: true,
@@ -430,7 +422,6 @@ class MediaProcessor {
         processingTime,
       };
     } catch (error: any) {
-      try { /* const { default: prisma } = await import('../lib/prisma.js'); await (prisma as any).analytics.create({ data: { metric: 'media_failed', value: 1, category: 'media', metadata: JSON.stringify({ type: 'file_convert' }) } }); */ } catch (_) { }
       logger.error('File conversion failed', {
         jobId: job.id,
         userId,
@@ -513,10 +504,6 @@ class MediaProcessor {
       }
 
       const processingTime = Date.now() - (job.processedOn ?? Date.now());
-      try {
-        // const { default: prisma } = await import('../lib/prisma.js');
-        // await (prisma as any).analytics.create({ data: { metric: 'media_cleanup', value: deletedCount, category: 'media', metadata: JSON.stringify({ freedSpace }) } });
-      } catch (_) { }
 
       return {
         success: true,
@@ -578,23 +565,6 @@ class MediaProcessor {
       // Additionally compute average processing time and success rate from analytics table (last 30d or provided)
       const avgProcessing: number | null = null;
       const successRate: number | null = null;
-      try {
-        // const { default: prisma } = await import('../lib/prisma.js');
-        // const now = new Date();
-        // const start = timeRange?.start ? new Date(timeRange.start) : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        // const end = timeRange?.end ? new Date(timeRange.end) : now;
-        // const processed = await (prisma as any).analytics.findMany({ where: { category: 'media', metric: 'media_processed', recordedAt: { gte: start, lte: end } }, select: { value: true } });
-        // const successes = await (prisma as any).analytics.findMany({ where: { category: 'media', metric: 'media_success', recordedAt: { gte: start, lte: end } }, select: { value: true } });
-        // const failures = await (prisma as any).analytics.findMany({ where: { category: 'media', metric: 'media_failed', recordedAt: { gte: start, lte: end } }, select: { value: true } });
-        // if (processed.length) {
-        //   const sum = processed.reduce((a: number, b: any) => a + b.value, 0);
-        //   avgProcessing = sum / processed.length;
-        // }
-        // const successCount = successes.reduce((a: number, b: any) => a + b.value, 0);
-        // const failCount = failures.reduce((a: number, b: any) => a + b.value, 0);
-        // const totalOps = successCount + failCount;
-        // if (totalOps > 0) successRate = (successCount / totalOps) * 100;
-      } catch (_) { }
 
       const analytics = {
         totalProcessed: files.length,

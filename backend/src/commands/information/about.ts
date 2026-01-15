@@ -13,7 +13,7 @@ export default {
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
     try {
-      const botDb = (await db.get('bot')) || {};
+      const botDb = (await db.get<{ mode?: string }>('bot')) || {};
 
       await ctx.reply({
         text:
@@ -30,7 +30,7 @@ export default {
           )}`,
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },
