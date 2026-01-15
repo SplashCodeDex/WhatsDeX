@@ -3,7 +3,7 @@
  * Prevents infinite growth while maintaining context
  */
 
-import { MemoryManager } from './memoryManager.js';
+import { MemoryManager } from './MemoryManager.js';
 import { db } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
 

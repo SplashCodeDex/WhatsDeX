@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import logger from '../utils/logger.js';
-import performanceMonitor from '../utils/performanceMonitor.js';
+import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { Bot, GlobalContext, Result } from '../types/index.js';
 
 /**

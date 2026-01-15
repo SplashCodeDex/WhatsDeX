@@ -7,7 +7,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
-import performanceMonitor from '../utils/performanceMonitor.js';
+import performanceMonitor from '../utils/PerformanceMonitor.js';
 import { proto } from 'baileys';
 import { type Bot, type Command, type MessageContext, type GlobalContext, type GroupFunctions } from '../types/index.js';
 
