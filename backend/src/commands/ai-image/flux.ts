@@ -40,7 +40,7 @@ export default {
           },
         ],
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

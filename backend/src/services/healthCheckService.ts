@@ -5,7 +5,7 @@
 import os from 'os';
 import { performance } from 'perf_hooks';
 import dbManager from '../utils/databaseManager.js';
-import { RateLimiter } from '../utils/rateLimiter.js';
+import { RateLimiter } from '../utils/RateLimiter.js';
 import logger from '../utils/logger.js';
 import redis from '../lib/redis.js';
 import { Result } from '../types/index.js';

@@ -22,11 +22,14 @@ export default {
           )}`
       );
 
+    type DeepDreamsResult = {
+      imageUrl: string;
+    };
     try {
       const apiUrl = tools.api.createUrl('zell', '/ai/deepdreams', {
         prompt: input,
       });
-      const result = (tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result) as any).imageUrl;
+      const result = (tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result) as DeepDreamsResult).imageUrl;
 
       await ctx.reply({
         image: {
@@ -44,7 +47,7 @@ export default {
           },
         ],
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

@@ -13,16 +13,16 @@ export { default as securityLogger } from './securityLogger.js';
 export * from './formatters.js';
 
 // Managers
-export * from './chatHistoryManager.js';
-export * from './memoryManager.js';
-export * from './processManager.js';
+export * from './ChatHistoryManager.js';
+export * from './MemoryManager.js';
+export * from './ProcessManager.js';
 
 // Utilities
-export * from './rateLimiter.js';
-export * from './performanceMonitor.js';
-export * from './connectionDebugger.js';
-export * from './messageClassifier.js';
-export * from './moduleSystemFixer.js';
+export * from './RateLimiter.js';
+export * from './PerformanceMonitor.js';
+export * from './ConnectionDebugger.js';
+export * from './MessageClassifier.js';
+export * from './ModuleSystemFixer.js';
 
 // Helpers
 export * from './baileysUtils.js';
