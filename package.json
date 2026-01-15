@@ -13,8 +13,5 @@
     "build:frontend": "npm run build -w frontend",
     "lint:frontend": "npm run lint -w frontend",
     "lint:backend": "npm run lint -w backend"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
   }
 }
