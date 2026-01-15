@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3001),
-  DATABASE_URL: z.string().url(),
+  // DATABASE_URL removed as we use Firestore exclusively
 
   // Bot Config
   BOT_NAME: z.string().default('whatsdex'),

@@ -2,7 +2,7 @@
 
 ## Phase 1: Frontend Registration Audit & Fix
 
-- [ ] Task: Audit `app/(auth)/register/page.tsx` and `features/auth/components/RegisterForm.tsx`.
+- [~] Task: Audit `app/(auth)/register/page.tsx` and `features/auth/components/RegisterForm.tsx`.
   - [ ] Subtask: Verify Zod schema definition matches backend requirements.
   - [ ] Subtask: Ensure Server Action (`features/auth/actions.ts`) handles API communication correctly.
 - [ ] Task: Wire Frontend to Backend.

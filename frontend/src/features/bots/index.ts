@@ -22,7 +22,7 @@ export {
 } from './hooks';
 
 // Components
-export { BotList, CreateBotDialog, BotCard } from './components';
+export { BotList, CreateBotDialog, BotCard, QRCodeDisplay } from './components';
 
 // Schemas
 export { createBotSchema, updateBotSchema, sendMessageSchema } from './schemas';

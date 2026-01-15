@@ -7,7 +7,7 @@ type CollectionKey = keyof FirestoreSchema;
 export class FirebaseService {
   private static instance: FirebaseService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): FirebaseService {
     if (!FirebaseService.instance) {
@@ -40,7 +40,7 @@ export class FirebaseService {
   ): Promise<FirestoreSchema[K] | null> {
     try {
       let docRef;
-      
+
       if (tenantId) {
         docRef = db.collection('tenants').doc(tenantId).collection(collection).doc(docId);
       } else {
@@ -53,9 +53,10 @@ export class FirebaseService {
 
       const doc = await docRef.get();
       return doc.exists ? (doc.data() as FirestoreSchema[K]) : null;
-    } catch (error: any) {
-      logger.error(`Firestore getDoc error [${collection}/${docId}]:`, error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore getDoc error [${collection}/${docId}]:`, err);
+      throw err;
     }
   }
 
@@ -71,7 +72,7 @@ export class FirebaseService {
   ): Promise<void> {
     try {
       let docRef;
-      
+
       if (tenantId) {
         docRef = db.collection('tenants').doc(tenantId).collection(collection).doc(docId);
       } else {
@@ -82,9 +83,10 @@ export class FirebaseService {
       }
 
       await docRef.set(data, { merge });
-    } catch (error: any) {
-      logger.error(`Firestore setDoc error [${collection}/${docId}]:`, error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore setDoc error [${collection}/${docId}]:`, err);
+      throw err;
     }
   }
 
@@ -97,7 +99,7 @@ export class FirebaseService {
   ): Promise<FirestoreSchema[K][]> {
     try {
       let colRef;
-      
+
       if (tenantId) {
         colRef = db.collection('tenants').doc(tenantId).collection(collection);
       } else {
@@ -106,9 +108,10 @@ export class FirebaseService {
 
       const snapshot = await colRef.get();
       return snapshot.docs.map(doc => doc.data() as FirestoreSchema[K]);
-    } catch (error: any) {
-      logger.error(`Firestore getCollection error [${collection}]:`, error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore getCollection error [${collection}]:`, err);
+      throw err;
     }
   }
 }

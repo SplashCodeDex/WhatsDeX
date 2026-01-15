@@ -17,23 +17,7 @@ const Formatter: FormatterType = {
 
 // Environment validation function
 function validateEnvironment() {
-  const required = ['DATABASE_URL'];
-  const missing = required.filter(env => !process.env[env]);
 
-  if (missing.length > 0) {
-    logger.error('❌ Missing required environment variables:', { missing });
-    logger.error('Please set these variables before starting the application.');
-    process.exit(1);
-  }
-
-  // Validate DATABASE_URL format
-  if (process.env.DATABASE_URL) {
-    const dbUrlPattern = /^(postgresql|mysql|sqlite|mongodb):\/\//;
-    if (!dbUrlPattern.test(process.env.DATABASE_URL)) {
-      logger.error('❌ DATABASE_URL format invalid. Must start with postgresql://, mysql://, sqlite://, or mongodb://');
-      process.exit(1);
-    }
-  }
 }
 
 // Run validation

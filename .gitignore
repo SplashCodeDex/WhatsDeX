@@ -8,7 +8,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
-auth/
+# auth/
 
 # Dependency directories
 node_modules/
@@ -142,3 +142,4 @@ lint*.txt
 backend/backend_typecheck_log.txt
 *.log
 *.txt
+!frontend/src/features/auth/

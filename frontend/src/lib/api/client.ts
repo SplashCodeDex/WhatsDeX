@@ -56,14 +56,20 @@ function createUrl(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>
 ): string {
-    // Ensure endpoint starts with /api if not present, but handle absolute URLs if needed
-    let path = endpoint;
-    if (!endpoint.startsWith('http') && !endpoint.startsWith('/api')) {
-        path = `/api${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    }
+    // Rely on Next.js Rewrite Proxy: Just use the relative path.
+    // Ensure it starts with /api if it's an API call (logic moved to caller or standard endpoints)
+    // Endpoints in endpoints.ts already include /api prefix or /internal which maps to /api/internal
+    // Actually, endpoints in endpoints.ts are like '/auth/login'.
+    // We need to ensure they hit '/api/auth/login' so the proxy catches them.
+    // Previous refactor added /api prefix to endpoints.
+    // So we just need to return the path.
 
-    const baseUrl = APP_CONFIG.apiUrl || 'http://localhost:4000';
-    const url = new URL(path, baseUrl);
+    const baseUrl = typeof window === 'undefined' ? 'http://localhost:3001' : '';
+    // Server-side fetch needs absolute URL (internal docker/localhost).
+    // Client-side fetch uses relative URL to hit proxy.
+
+    let path = endpoint;
+    const url = new URL(path, baseUrl || 'http://dummy.com'); // Dummy base for relative path construction
 
     if (params) {
         Object.entries(params).forEach(([key, value]) => {
@@ -73,7 +79,8 @@ function createUrl(
         });
     }
 
-    return url.toString();
+    // Return relative path for client, absolute for server
+    return typeof window === 'undefined' ? url.toString() : url.pathname + url.search;
 }
 
 /**

@@ -20,11 +20,12 @@ try {
         if (serviceAccountPath) {
             const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
             options.credential = admin.credential.cert(serviceAccount);
+            options.projectId = serviceAccount.project_id;
         }
 
 
         admin.initializeApp(options);
-        logger.info('🔥 Firebase Admin Initialized');
+        logger.info(`🔥 Firebase Admin Initialized (Project: ${options.projectId || 'ADC'})`);
     }
     db = admin.firestore();
     db.settings({ ignoreUndefinedProperties: true });

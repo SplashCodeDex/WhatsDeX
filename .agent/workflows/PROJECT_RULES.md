@@ -136,12 +136,15 @@ src/
 ### Strict Rules
 
 1.  **"Thin Page" Pattern**: `app/**/page.tsx` should ONLY fetch initial data and render a Feature Component. No logic allowed in `page.tsx`.
-2.  **Server Components Default**: All components are RSC by default. Use `'use client'` ONLY for interactivity (leaves of the tree).
-3.  **Atomic Design System**:
+2.  **No Middleware Files**: `middleware.ts` is DEPRECATED.
+    - **Proxy**: Use `next.config.ts` rewrites for API proxying.
+    - **Guards**: Use Server Component layouts (`layout.tsx`) for route protection.
+3.  **Server Components Default**: All components are RSC by default. Use `'use client'` ONLY for interactivity (leaves of the tree).
+4.  **Atomic Design System**:
     - **Primitives**: `components/ui` must be pure, stateless, and style-agnostic.
     - **Composition**: Build complex UIs by composing primitives, not by adding props.
-4.  **No `useEffect` for Data**: Use Server Components or Server Actions for data fetching. `useEffect` is strictly for synchronization (e.g., window events).
-5.  **Pixel Perfection**:
+5.  **No `useEffect` for Data**: Use Server Components or Server Actions for data fetching. `useEffect` is strictly for synchronization (e.g., window events).
+6.  **Pixel Perfection**:
     - Use strict Tailwind spacing tokens (e.g., `gap-4` not `gap-[15px]`).
     - All interactive elements must have: Hover, Active, and Focus-Visible states.
 

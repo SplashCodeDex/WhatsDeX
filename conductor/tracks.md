@@ -4,6 +4,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [ ] Track: System Stabilization & Core Wiring (Auth -> Dashboard)
+## [~] Track: System Stabilization & Core Wiring (Auth -> Dashboard)
 
 _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabilization_20260115/)_

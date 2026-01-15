@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreVertical, QrCode, Power, Trash2, Smartphone } from 'lucide-react';
-import Image from 'next/image';
+import { Power, QrCode, Smartphone, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,14 +12,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { useBotQR, useConnectBot, useDisconnectBot, useDeleteBot, type BotListItem } from '@/features/bots';
+import { QRCodeDisplay } from './QRCodeDisplay';
+import { useDeleteBot, useDisconnectBot, type BotListItem } from '@/features/bots';
 import { cn } from '@/lib/utils';
 
 interface BotCardProps {
@@ -29,7 +22,6 @@ interface BotCardProps {
 
 export function BotCard({ bot }: BotCardProps) {
     const [showQR, setShowQR] = useState(false);
-    const { data: qrData, isFetching: isQRLoading } = useBotQR(bot.id);
     const { mutate: deleteBot } = useDeleteBot();
     const { mutate: disconnectBot } = useDisconnectBot();
 
@@ -84,45 +76,11 @@ export function BotCard({ bot }: BotCardProps) {
             </Card>
 
             {/* QR Code Dialog */}
-            <Dialog open={showQR} onOpenChange={setShowQR}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Scan QR Code</DialogTitle>
-                        <DialogDescription>
-                            Open WhatsApp on your phone, go to Linked Devices, and scan this code.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex items-center justify-center p-6">
-                        {qrData?.qrCode ? (
-                            // Convert QR string to Image (TODO: Use a QR library, for now assume backend returns image URL or base64)
-                            // Since the type says 'string', we need to check if it's base64 or raw data.
-                            // For a real implementation we would use 'qrcode.react' package.
-                            // Assuming backend returns base64 string for now.
-                            <div className="relative h-64 w-64 border-2 border-primary/20 rounded-lg p-2">
-                                <img
-                                    src={qrData.qrCode}
-                                    alt="Scan Me"
-                                    className="h-full w-full object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="flex h-64 w-64 items-center justify-center rounded-lg border-2 border-dashed">
-                                {isQRLoading ? (
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                                        <span className="text-sm text-muted-foreground">Generating QR...</span>
-                                    </div>
-                                ) : (
-                                    <div className="text-center">
-                                        <QrCode className="mx-auto h-12 w-12 opacity-20" />
-                                        <p className="mt-2 text-sm text-muted-foreground">Waiting for QR Code...</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <QRCodeDisplay
+                botId={bot.id}
+                isOpen={showQR}
+                onOpenChange={setShowQR}
+            />
         </>
     );
 }

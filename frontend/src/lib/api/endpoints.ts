@@ -7,13 +7,13 @@
 export const API_ENDPOINTS = {
     // Auth
     AUTH: {
-        LOGIN: '/auth/login',
-        REGISTER: '/auth/register',
-        LOGOUT: '/auth/logout',
-        VERIFY: '/auth/me', // Changed from verify to me to match backend
-        FORGOT_PASSWORD: '/auth/forgot-password',
-        RESET_PASSWORD: '/auth/reset-password',
-        REFRESH: '/auth/refresh',
+        LOGIN: '/api/auth/login',
+        REGISTER: '/api/auth/register',
+        LOGOUT: '/api/auth/logout',
+        VERIFY: '/api/auth/me',
+        FORGOT_PASSWORD: '/api/auth/forgot-password',
+        RESET_PASSWORD: '/api/auth/reset-password',
+        REFRESH: '/api/auth/refresh',
     },
 
     // Bots (Protected via /api/internal)

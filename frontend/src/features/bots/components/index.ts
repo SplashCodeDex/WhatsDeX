@@ -1,3 +1,4 @@
-export * from './CreateBotDialog';
-export * from './BotList';
-export * from './BotCard';
+export { BotList } from './BotList';
+export { CreateBotDialog } from './CreateBotDialog';
+export { BotCard } from './BotCard';
+export { QRCodeDisplay } from './QRCodeDisplay';

@@ -57,6 +57,12 @@ export class MultiTenantApp {
   }
 
   setupMiddleware() {
+    // Request Logging
+    this.app.use((req, res, next) => {
+      logger.info(`INCOMING REQUEST: ${req.method} ${req.url}`);
+      next();
+    });
+
     // Security
     this.app.use(helmet({
       contentSecurityPolicy: {

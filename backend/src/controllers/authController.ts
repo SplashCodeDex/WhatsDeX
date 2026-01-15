@@ -2,11 +2,13 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { db } from '../lib/firebase.js';
+import { db, admin } from '../lib/firebase.js'; // Added admin import
 import { Timestamp } from 'firebase-admin/firestore';
 import { ConfigService } from '../services/ConfigService.js';
 import auditService from '../services/auditService.js';
 import { stripeService } from '../services/stripe.js';
+import logger from '../utils/logger.js';
+// Removed firebaseService import
 
 interface AuthUserPayload {
     userId: string;
@@ -22,11 +24,11 @@ interface RequestWithUser extends Request {
 }
 
 const signupSchema = z.object({
-    name: z.string().min(2),
+    displayName: z.string().min(2),
     email: z.string().email(),
     password: z.string().min(8),
-    tenantName: z.string().min(2),
-    subdomain: z.string().min(2).regex(/^[a-z0-9-]+$/),
+    tenantName: z.string().min(2).optional(),
+    subdomain: z.string().min(2).regex(/^[a-z0-9-]+$/).optional(),
     plan: z.enum(['FREE', 'BASIC', 'PRO', 'ENTERPRISE']).default('FREE'),
 });
 
@@ -35,10 +37,28 @@ const loginSchema = z.object({
     password: z.string(),
 });
 
+interface AvailabilityResult {
+    email?: { available: boolean; reason: string | null };
+    subdomain?: { available: boolean; reason: string | null };
+}
+
+// Helper for internal availability checks
+const checkAvailabilityHelper = async (email: string, subdomain: string) => {
+    // Check email
+    const userSnapshot = await db.collection('tenant_users').where('email', '==', email).limit(1).get();
+    if (!userSnapshot.empty) return { available: false, reason: 'Email already registered', field: 'email' };
+
+    // Check subdomain
+    const tenantSnapshot = await db.collection('tenants').where('subdomain', '==', subdomain).limit(1).get();
+    if (!tenantSnapshot.empty) return { available: false, reason: 'Subdomain already taken', field: 'subdomain' };
+
+    return { available: true };
+};
+
 export const checkAvailability = async (req: Request, res: Response) => {
     try {
         const { email, subdomain } = req.query;
-        const result: any = {};
+        const result: AvailabilityResult = {};
 
         if (email) {
             const userSnapshot = await db.collection('tenant_users').where('email', '==', String(email)).limit(1).get();
@@ -54,93 +74,125 @@ export const checkAvailability = async (req: Request, res: Response) => {
 
         res.json(result);
     } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('Error in checkAvailability:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
 
 export const signup = async (req: Request, res: Response) => {
     try {
+        logger.info('DEBUG: Signup request received', { body: req.body });
         const payload = signupSchema.parse(req.body);
-        const { name, email, password, tenantName, subdomain, plan } = payload;
+        let { displayName, email, password, tenantName, subdomain, plan } = payload;
 
-        // Check for existing user
-        const userSnapshot = await db.collection('tenant_users').where('email', '==', email).limit(1).get();
-        if (!userSnapshot.empty) {
-            return res.status(400).json({ error: 'Email already in use', field: 'email' });
+        const name = displayName;
+
+        if (!tenantName) {
+            tenantName = `${name}'s Workspace`;
         }
 
-        // Check for existing tenant
-        const tenantSnapshot = await db.collection('tenants').where('subdomain', '==', subdomain).limit(1).get();
-        if (!tenantSnapshot.empty) {
-            return res.status(400).json({ error: 'Subdomain already taken', field: 'subdomain' });
+        if (!subdomain) {
+            const baseSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
+            subdomain = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
         }
 
-        const hashedPassword = await bcrypt.hash(password, 12); // 2026: Higher rounds
+        // Check availability
+        logger.info('DEBUG: Checking availability for', { tenantName, subdomain, email });
+        const availability = await checkAvailabilityHelper(email, subdomain);
+        if (!availability.available) {
+            logger.warn('DEBUG: Availability check failed', availability);
+            return res.status(400).json({ error: availability.reason, field: availability.field });
+        }
 
-        const result = await db.runTransaction(async (transaction) => {
-            const tenantRef = db.collection('tenants').doc();
+        // Create tenant and user
+        logger.info('DEBUG: Creating tenant and user in Firebase');
+
+        // Use Firebase transaction to ensure data integrity
+        const result = await db.runTransaction(async (transaction: any) => { // Using db.runTransaction
+            // 1. Create Tenant
+            logger.info('DEBUG: Creating tenant document');
+            const tenantId = `tenant-${Date.now()}`;
+            const tenantRef = db.collection('tenants').doc(tenantId); // Using db directly
+
             const tenantData = {
-                id: tenantRef.id,
-                name: tenantName,
-                subdomain,
-                email,
-                status: 'active',
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now(),
+                id: tenantId,
+                name: tenantName!,
+                subdomain: subdomain!,
+                plan, // Default to FREE
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                status: 'ACTIVE',
+                settings: {
+                    theme: 'light',
+                    notifications: true,
+                },
             };
+
             transaction.set(tenantRef, tenantData);
 
-            const userRef = db.collection('tenant_users').doc();
-            const userData = {
-                id: userRef.id,
-                tenantId: tenantRef.id,
-                name,
+            // 2. Create User
+            logger.info('DEBUG: Creating user in Firebase Auth');
+            const userRecord = await admin.auth().createUser({ // Using admin.auth() directly
                 email,
-                passwordHash: hashedPassword,
-                role: 'admin',
-                isActive: true,
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now(),
+                password,
+                displayName: name,
+            });
+
+            logger.info('DEBUG: Creating user document');
+            const userRef = db.collection('tenant_users').doc(userRecord.uid); // Using tenant_users for consistency with other parts of code?
+            // Wait, previous code used 'users'. Let's check checkAvailability usage: 'tenant_users'.
+            // The codebase seems to use 'tenant_users'. I will stick to 'tenant_users'.
+
+            const userData = {
+                id: userRecord.uid,
+                email,
+                displayName: name,
+                tenantId,
+                role: 'ADMIN', // First user is Admin
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                status: 'ACTIVE',
             };
+
             transaction.set(userRef, userData);
 
-            // Plan handling
-            if (plan) {
-                const planCode = plan.toUpperCase();
-                const plansSnapshot = await db.collection('plans').where('code', '==', planCode).limit(1).get();
-                const planDoc = plansSnapshot.empty ? null : plansSnapshot.docs[0];
-                const planData = planDoc ? planDoc.data() : null;
+            // 3. Plan Handling
+            const planCode = plan.toUpperCase();
+            const plansSnapshot = await db.collection('plans').where('code', '==', planCode).limit(1).get();
+            const planDoc = plansSnapshot.empty ? null : plansSnapshot.docs[0];
+            const planData = planDoc ? planDoc.data() : null;
 
-                if (planData && planDoc) {
-                    let stripeSubscriptionId = `free_${Date.now()}`;
-                    let stripePriceId = 'FREE';
+            if (planData && planDoc) {
+                let stripeSubscriptionId = `free_${Date.now()}`;
+                let stripePriceId = 'FREE';
 
-                    if (planData.code !== 'FREE') {
-                        try {
-                            const customer = await stripeService.createCustomer({ userId: userRef.id, email, name, phone: undefined });
-                            const planKey = planData.code.toLowerCase();
-                            const subscription = await stripeService.createSubscription(customer.id, planKey, { userId: userRef.id });
-                            stripeSubscriptionId = subscription.id;
-                            stripePriceId = (subscription.items.data[0] as any).price.id;
-                        } catch (stripeErr) {
-                            console.error('Stripe signup failed, falling back', stripeErr);
-                        }
+                if (planData.code !== 'FREE') {
+                    try {
+                        const customer = await stripeService.createCustomer({ userId: userRecord.uid, email, name, phone: undefined }); // userRef.id -> userRecord.uid
+                        const planKey = planData.code.toLowerCase();
+                        const subscription = await stripeService.createSubscription(customer.id, planKey, { userId: userRecord.uid });
+                        stripeSubscriptionId = subscription.id;
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        stripePriceId = (subscription.items.data[0] as any).price.id;
+                    } catch (stripeErr) {
+                        logger.error('Stripe signup failed, falling back', stripeErr instanceof Error ? stripeErr : new Error(String(stripeErr)));
                     }
-
-                    const subRef = db.collection('tenant_subscriptions').doc();
-                    transaction.set(subRef, {
-                        id: subRef.id,
-                        tenantId: tenantRef.id,
-                        planId: planDoc.id,
-                        status: planData.code === 'FREE' ? 'active' : 'trialing',
-                        currentPeriodStart: Timestamp.now(),
-                        currentPeriodEnd: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-                        stripeSubscriptionId,
-                        stripePriceId,
-                        createdAt: Timestamp.now(),
-                        updatedAt: Timestamp.now(),
-                    });
                 }
+
+                const subRef = db.collection('tenant_subscriptions').doc();
+                transaction.set(subRef, {
+                    id: subRef.id,
+                    tenantId: tenantData.id, // tenantRef.id -> tenantData.id/tenantId
+                    planId: planDoc.id,
+                    status: planData.code === 'FREE' ? 'active' : 'trialing',
+                    currentPeriodStart: Timestamp.now(),
+                    currentPeriodEnd: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+                    stripeSubscriptionId,
+                    stripePriceId,
+                    createdAt: Timestamp.now(),
+                    updatedAt: Timestamp.now(),
+                });
             }
 
             return { tenant: tenantData, user: userData };
@@ -178,15 +230,18 @@ export const signup = async (req: Request, res: Response) => {
         res.status(201).json({
             success: true,
             token,
-            user: { id: result.user.id, name: result.user.name, email: result.user.email },
+            user: { id: result.user.id, name: result.user.displayName, email: result.user.email },
             tenant: { id: result.tenant.id, name: result.tenant.name, subdomain: result.tenant.subdomain },
         });
 
     } catch (error: unknown) {
         if (error instanceof z.ZodError) {
+            logger.warn('Signup validation failed:', error.issues);
             return res.status(400).json({ error: error.issues[0].message, field: error.issues[0].path[0] });
         }
-        res.status(500).json({ error: 'Internal server error' });
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('Signup error:', err);
+        res.status(500).json({ error: 'An unexpected error occurred during registration' });
     }
 };
 
@@ -210,7 +265,7 @@ export const login = async (req: Request, res: Response) => {
         const userDoc = userSnapshot.docs[0];
         const user = userDoc.data();
 
-        if (!user.isActive) {
+        if (user.status !== 'ACTIVE') {
             return res.status(401).json({ success: false, error: 'Account disabled' });
         }
 
@@ -257,7 +312,7 @@ export const login = async (req: Request, res: Response) => {
         res.json({
             success: true,
             token,
-            user: { id: user.id, name: user.name, email: user.email, role: user.role },
+            user: { id: user.id, name: user.displayName || user.name || 'User', email: user.email, role: user.role },
             tenant: { id: user.tenantId }
         });
 
@@ -265,6 +320,8 @@ export const login = async (req: Request, res: Response) => {
         if (error instanceof z.ZodError) {
             return res.status(400).json({ success: false, error: error.issues[0].message });
         }
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('Login error:', err);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };
@@ -285,10 +342,12 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
         const tenant = tenantDoc.data() || { id: user.tenantId, name: 'Unknown', subdomain: 'unknown' };
 
         res.json({
-            user: { id: user.id, name: user.name, email: user.email, role: user.role },
+            user: { id: user.id, name: user.displayName || user.name || 'User', email: user.email, role: user.role },
             tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
         });
     } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('getMe error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

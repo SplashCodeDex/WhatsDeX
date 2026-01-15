@@ -1,10 +1,13 @@
 import { Sidebar, Header } from '@/components/layouts';
+import { requireAuth } from '@/server/auth/session';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    await requireAuth();
+
     return (
         <div className="flex h-screen bg-background text-foreground">
             <Sidebar />

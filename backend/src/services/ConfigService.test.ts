@@ -15,19 +15,18 @@ describe('ConfigService', () => {
   });
 
   it('should validate and load valid configuration', () => {
-    process.env.DATABASE_URL = 'postgresql://localhost:5432/test';
     process.env.PORT = '3000';
     process.env.NODE_ENV = 'test';
 
     const config = ConfigService.getInstance();
-    
-    expect(config.get('DATABASE_URL')).toBe('postgresql://localhost:5432/test');
+
     expect(config.get('PORT')).toBe(3000);
     expect(config.get('NODE_ENV')).toBe('test');
   });
 
-  it('should throw error when required variables are missing', () => {
-    delete process.env.DATABASE_URL;
+  it('should throw error when configuration is invalid', () => {
+    // NODE_ENV is enum ['development', 'production', 'test']
+    process.env.NODE_ENV = 'invalid_env' as any;
 
     expect(() => {
       ConfigService.getInstance();
@@ -35,7 +34,6 @@ describe('ConfigService', () => {
   });
 
   it('should return default values for optional variables', () => {
-    process.env.DATABASE_URL = 'postgresql://localhost:5432/test';
     delete process.env.PORT; // Should default to 3001 if not set
 
     const config = ConfigService.getInstance();

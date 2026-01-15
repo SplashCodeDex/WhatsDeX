@@ -36,7 +36,6 @@ export interface Config {
     [key: string]: any;
   };
   database: {
-    url: string | undefined;
     maxConnections: number;
     connectionTimeout: number;
     idleTimeout: number;
@@ -185,7 +184,7 @@ export class ConfigManager {
 
       // Database Configuration
       database: {
-        url: this.getEnvString('DATABASE_URL'),
+
         maxConnections: this.getEnvNumber('DB_MAX_CONNECTIONS', 20),
         connectionTimeout: this.getEnvNumber('DB_CONNECTION_TIMEOUT', 2000),
         idleTimeout: this.getEnvNumber('DB_IDLE_TIMEOUT', 30000),
@@ -325,7 +324,6 @@ export class ConfigManager {
 
   validateConfiguration() {
     const required = [
-      'DATABASE_URL',
       'REDIS_URL',
       'JWT_SECRET',
       'OWNER_NUMBER'
@@ -341,11 +339,6 @@ export class ConfigManager {
     // Validate JWT secret strength
     if (this.config.auth.jwtSecret && this.config.auth.jwtSecret.length < 32) {
       logger.warn('⚠️ JWT secret is too short. Use at least 32 characters.');
-    }
-
-    // Validate database URL format
-    if (this.config.database.url && !this.config.database.url.startsWith('postgresql://')) {
-      logger.warn('⚠️ Database URL should use postgresql:// protocol');
     }
 
     logger.info('✅ Configuration validation passed');
