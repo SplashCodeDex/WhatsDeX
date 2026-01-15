@@ -8,10 +8,13 @@ export interface TenantDocument {
   id: string;
   name: string;
   subdomain: string;
-  plan: 'free' | 'premium' | 'enterprise';
+  plan: 'starter' | 'pro' | 'enterprise';
+  planTier: 'starter' | 'pro' | 'enterprise';
+  subscriptionStatus: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'paused';
   status: 'active' | 'suspended' | 'cancelled';
   ownerId: string; // Firebase Auth UID
   stripeCustomerId?: string;
+  trialEndsAt?: Timestamp | Date;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
   settings: {
@@ -30,6 +33,9 @@ export interface TenantUserDocument {
   email: string;
   displayName: string;
   role: 'owner' | 'admin' | 'viewer';
+  planTier: 'starter' | 'pro' | 'enterprise';
+  subscriptionStatus: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'paused';
+  trialEndsAt?: Timestamp | Date;
   joinedAt: Timestamp | Date;
   lastLogin?: Timestamp | Date;
   metadata?: Record<string, any>;
@@ -104,6 +110,26 @@ export interface BotGroupDocument {
 }
 
 /**
+ * 'tenants/{tenantId}/subscriptions' subcollection document
+ */
+export interface SubscriptionDocument {
+  id: string;
+  stripeSubscriptionId: string;
+  stripeCustomerId: string;
+  stripePriceId: string;
+  planTier: 'starter' | 'pro' | 'enterprise';
+  status: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'paused';
+  currentPeriodStart: Timestamp | Date;
+  currentPeriodEnd: Timestamp | Date;
+  trialStart?: Timestamp | Date;
+  trialEnd?: Timestamp | Date;
+  cancelAtPeriodEnd: boolean;
+  canceledAt?: Timestamp | Date;
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
+}
+
+/**
  * Generic type for Firestore collections mapping
  */
 export interface FirestoreSchema {
@@ -112,6 +138,7 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/bots': BotInstanceDocument;
   'tenants/{tenantId}/members': BotMemberDocument;
   'tenants/{tenantId}/groups': BotGroupDocument;
+  'tenants/{tenantId}/subscriptions': SubscriptionDocument;
   'tenants/{tenantId}/moderation': ModerationItem;
   'tenants/{tenantId}/violations': Violation;
 }

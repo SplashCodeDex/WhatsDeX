@@ -26,15 +26,18 @@ export const TenantSchema = z.object({
   name: z.string().min(2),
   subdomain: z.preprocess((val) => val ?? '', z.string().toLowerCase().optional()),
   plan: z.preprocess((val) => {
-    if (typeof val === 'string' && ['free', 'premium', 'enterprise'].includes(val)) return val;
-    return undefined; // Triggers default('free')
-  }, z.enum(['free', 'premium', 'enterprise']).default('free')),
+    if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
+    return undefined; // Triggers default('starter')
+  }, z.enum(['starter', 'pro', 'enterprise']).default('starter')),
+  planTier: z.enum(['starter', 'pro', 'enterprise']).default('starter'),
+  subscriptionStatus: z.enum(['trialing', 'active', 'past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired', 'paused']).default('trialing'),
   status: z.preprocess((val) => {
     if (typeof val === 'string' && ['active', 'suspended', 'cancelled'].includes(val)) return val;
     return undefined; // Triggers default('active')
   }, z.enum(['active', 'suspended', 'cancelled']).default('active')),
   ownerId: z.preprocess((val) => val ?? '', z.string().optional()),
   stripeCustomerId: z.string().nullish(),
+  trialEndsAt: TimestampSchema.nullish(),
   createdAt: TimestampSchema.nullish(),
   updatedAt: TimestampSchema.nullish(),
   settings: z.preprocess((val) => val ?? {}, z.object({
@@ -55,6 +58,9 @@ export const TenantUserSchema = z.object({
   email: z.string().email(),
   displayName: z.string(),
   role: z.enum(['owner', 'admin', 'viewer']),
+  planTier: z.enum(['starter', 'pro', 'enterprise']).default('starter'),
+  subscriptionStatus: z.enum(['trialing', 'active', 'past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired', 'paused']).default('trialing'),
+  trialEndsAt: TimestampSchema.nullish(),
   joinedAt: TimestampSchema,
   lastLogin: TimestampSchema.optional(),
   metadata: z.record(z.string(), z.any()).optional()
@@ -215,3 +221,61 @@ export const BotGroupSchema = z.object({
 }).readonly();
 
 export type BotGroup = z.infer<typeof BotGroupSchema>;
+
+/**
+ * Subscription Schema ('tenants/{tenantId}/subscriptions' subcollection)
+ */
+export const SubscriptionSchema = z.object({
+  id: z.string(),
+  stripeSubscriptionId: z.string(),
+  stripeCustomerId: z.string(),
+  stripePriceId: z.string(),
+  planTier: z.enum(['starter', 'pro', 'enterprise']),
+  status: z.enum(['trialing', 'active', 'past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired', 'paused']),
+  currentPeriodStart: TimestampSchema,
+  currentPeriodEnd: TimestampSchema,
+  trialStart: TimestampSchema.nullish(),
+  trialEnd: TimestampSchema.nullish(),
+  cancelAtPeriodEnd: z.boolean().default(false),
+  canceledAt: TimestampSchema.nullish(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema
+}).readonly();
+
+export type Subscription = z.infer<typeof SubscriptionSchema>;
+
+/**
+ * Campaign Status Enum
+ */
+export const CampaignStatusSchema = z.enum(['draft', 'pending', 'sending', 'completed', 'paused', 'error', 'cancelled']);
+export type CampaignStatus = z.infer<typeof CampaignStatusSchema>;
+
+/**
+ * Campaign Schema ('tenants/{tenantId}/campaigns' subcollection)
+ */
+export const CampaignSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  botId: z.string(), // The bot that will send the messages
+  message: z.string().min(1),
+  audience: z.object({
+    type: z.enum(['groups', 'contacts', 'selective']),
+    targets: z.array(z.string()), // JIDs
+  }),
+  schedule: z.object({
+    type: z.enum(['immediate', 'scheduled']),
+    scheduledAt: TimestampSchema.optional(),
+  }),
+  stats: z.object({
+    total: z.number().default(0),
+    sent: z.number().default(0),
+    failed: z.number().default(0),
+    pending: z.number().default(0)
+  }),
+  status: CampaignStatusSchema.default('draft'),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+  metadata: z.record(z.string(), z.any()).optional()
+}).readonly();
+
+export type Campaign = z.infer<typeof CampaignSchema>;
