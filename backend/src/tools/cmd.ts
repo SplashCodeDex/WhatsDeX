@@ -1,3 +1,4 @@
+
 /**
  * Command utilities
  */
@@ -16,7 +17,7 @@ type FlagOptions = {
  * @param args - The argument string
  * @param options - Flag configuration definition
  */
-export const parseFlag = (args: string | null | undefined, options: FlagOptions) => {
+export const parseFlag = (args: string | null | undefined, options: FlagOptions): Record<string, unknown> & { input: string } => {
     if (!args) return { input: '' };
     const result: Record<string, unknown> & { input: string } = { input: args };
     const argsArray = args.split(' ');
@@ -56,12 +57,12 @@ export const parseFlag = (args: string | null | undefined, options: FlagOptions)
 import logger from '../utils/logger.js';
 import { MessageContext } from '../types/index.js';
 
-export const isOwner = (config: any, senderId: string) => {
+export const isOwner = (config: any, senderId: string, ...args: any[]) => {
     const owners = (config.owner?.id || '').split(',').map((n: string) => n.trim());
     return owners.includes(senderId);
 };
 
-export const handleError = async (ctx: MessageContext, error: unknown, reply: boolean = true) => {
+export const handleError = async (ctx: MessageContext, error: unknown, reply: boolean = true, ...args: any[]) => {
     const { formatter } = ctx.bot.context;
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('Command Execution Error:', {

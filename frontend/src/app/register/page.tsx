@@ -223,7 +223,7 @@ export default function Register() {
     const result = await register({
       ...formData,
       tenantName: formData.companyName,
-      plan: selectedPlan
+      plan: selectedPlan.toUpperCase()
     } as any);
 
     if (result.success) {

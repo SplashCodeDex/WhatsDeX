@@ -47,7 +47,7 @@ export class CommandSystem {
     this.aliases.clear();
     this.categories.clear();
 
-    const commandsDir = path.join(__dirname, '..', '..', 'commands');
+    const commandsDir = path.join(__dirname, '..', 'commands');
 
     this.context.logger.info('🔄 Loading commands...');
 
