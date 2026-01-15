@@ -4,6 +4,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] [Global Stabilization & Linting Fixes](tracks/stabilization_20260108/plan.md)
-- [x] [Backend Refactor & Firebase Migration](tracks/refactor_20260108/plan.md)
-- [~] [Foundation Solidification - Cleanup, Testing, and Compliance](tracks/foundation_cleanup_20260115/plan.md)
+## [ ] Track: System Stabilization & Core Wiring (Auth -> Dashboard)
+
+_Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabilization_20260115/)_

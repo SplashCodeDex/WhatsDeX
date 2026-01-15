@@ -10,23 +10,23 @@ export const API_ENDPOINTS = {
         LOGIN: '/auth/login',
         REGISTER: '/auth/register',
         LOGOUT: '/auth/logout',
-        VERIFY: '/auth/verify',
+        VERIFY: '/auth/me', // Changed from verify to me to match backend
         FORGOT_PASSWORD: '/auth/forgot-password',
         RESET_PASSWORD: '/auth/reset-password',
         REFRESH: '/auth/refresh',
     },
 
-    // Bots
+    // Bots (Protected via /api/internal)
     BOTS: {
-        LIST: '/bots',
-        GET: (botId: string) => `/bots/${botId}` as const,
-        CREATE: '/bots',
-        UPDATE: (botId: string) => `/bots/${botId}` as const,
-        DELETE: (botId: string) => `/bots/${botId}` as const,
-        CONNECT: (botId: string) => `/bots/${botId}/connect` as const,
-        DISCONNECT: (botId: string) => `/bots/${botId}/disconnect` as const,
-        QR_CODE: (botId: string) => `/bots/${botId}/qr` as const,
-        STATUS: (botId: string) => `/bots/${botId}/status` as const,
+        LIST: '/internal/bots',
+        GET: (botId: string) => `/internal/bots/${botId}` as const,
+        CREATE: '/internal/bots',
+        UPDATE: (botId: string) => `/internal/bots/${botId}` as const,
+        DELETE: (botId: string) => `/internal/bots/${botId}` as const,
+        CONNECT: (botId: string) => `/internal/bots/${botId}/connect` as const,
+        DISCONNECT: (botId: string) => `/internal/bots/${botId}/disconnect` as const,
+        QR_CODE: (botId: string) => `/internal/bots/${botId}/qr` as const,
+        STATUS: (botId: string) => `/internal/bots/${botId}/status` as const,
     },
 
     // Messages

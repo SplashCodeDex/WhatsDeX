@@ -21,6 +21,9 @@ export {
     botKeys,
 } from './hooks';
 
+// Components
+export { BotList, CreateBotDialog, BotCard } from './components';
+
 // Schemas
 export { createBotSchema, updateBotSchema, sendMessageSchema } from './schemas';
 export type { CreateBotInput, UpdateBotInput, SendMessageInput } from './schemas';
