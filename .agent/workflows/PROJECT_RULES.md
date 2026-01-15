@@ -39,6 +39,11 @@ See [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE
 - **Catch Policy**: In `catch` blocks, use `if (error instanceof Error)` or `const err = ZodError.from(error)`.
 - **Global Handler**: The `errorHandler.ts` must log via `logger.security()` or `logger.performance()` depending on context.
 
+### Specific Error Messaging
+
+- **User-Facing Specificity**: Always prefer specific error messages (e.g., "Invalid email format" or "Credentials mismatch") over generic fallback messages (e.g., "An unexpected error occurred").
+- **Frontend Propagation**: The frontend must prioritize the specific `error` message returned by the backend over generic fallbacks. Generic errors should only be used as a last resort for truly unhandled exceptions (500s).
+
 ### Type Safety
 
 - **No `any` or `unknown` leakage**: `unknown` is only for the entry point of a catch block. It must be narrowed immediately.

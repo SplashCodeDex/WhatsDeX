@@ -69,7 +69,7 @@ export async function signIn(
                 success: false,
                 error: {
                     code: errorData.code ?? 'auth_error',
-                    message: errorData.message ?? 'Authentication failed',
+                    message: errorData.message ?? errorData.error ?? 'Authentication failed',
                 },
             };
         }

@@ -13,6 +13,7 @@ import initializeContext from '@/lib/context.js';
 import { MiddlewareSystem } from './middlewareSystem.js';
 import { permissionMiddleware } from '../middleware/permissions.js';
 import { cooldownMiddleware } from '../middleware/cooldown.js';
+import { moderationMiddleware } from '../middleware/moderation.js';
 import { eventHandler } from './eventHandler.js';
 import AuthSystem from './authSystem.js';
 
@@ -56,7 +57,10 @@ export class MultiTenantBotService {
   async createBotInstance(tenantId: string, botData: Partial<BotInstance>): Promise<Result<BotInstance>> {
     try {
       const canAddResult = await multiTenantService.canAddBot(tenantId);
-      if (!canAddResult.success || !canAddResult.data) {
+      if (!canAddResult.success) {
+        throw canAddResult.error;
+      }
+      if (!canAddResult.data) {
         throw new Error('Bot limit exceeded for your current plan.');
       }
 
@@ -158,6 +162,7 @@ export class MultiTenantBotService {
 
       // Register Default Middleware
       socket.use(cooldownMiddleware);
+      socket.use(moderationMiddleware);
       socket.use(permissionMiddleware);
 
       this.activeBots.set(botId, socket);
@@ -224,6 +229,13 @@ export class MultiTenantBotService {
         logger.info(`Bot ${botId} is ONLINE`);
         this.qrCodes.delete(botId);
         await this.updateBotStatus(tenantId, botId, 'online');
+
+        // Extract and save phone number
+        const bot = this.activeBots.get(botId);
+        if (bot?.user?.id) {
+          const phoneNumber = bot.user.id.split(':')[0];
+          await this.updateBot(tenantId, botId, { phoneNumber });
+        }
       }
     } catch (error: unknown) {
       logger.error(`Error handling connection update for ${botId}:`, error);
@@ -260,7 +272,9 @@ export class MultiTenantBotService {
 
       // If not a command, try AI (if enabled for this bot/tenant)
       if (!handledByCommand && context.unifiedAI) {
-        await context.unifiedAI.processMessage(bot, message);
+        // Create context for AI processing
+        const aiCtx = await commandSystem.createMessageContext(bot, message);
+        await context.unifiedAI.processMessage(bot, aiCtx);
       }
 
       // Increment stats
@@ -322,6 +336,41 @@ export class MultiTenantBotService {
 
   async startAllBots() {
     // To be implemented: fetch all bots with auto-start enabled and start them
+  }
+
+  /**
+   * Get all bots for a tenant from Firestore
+   */
+  async getAllBots(tenantId: string): Promise<Result<BotInstance[]>> {
+    try {
+      const bots = await firebaseService.getCollection<'tenants/{tenantId}/bots'>('bots', tenantId);
+
+      // Enrich with active status from memory if needed
+      const enrichedBots = bots.map(bot => {
+        const isActive = this.hasActiveBot(bot.id);
+        // If active in memory, status should be 'online' or 'connecting'
+        // If not active in memory, status should be 'offline' (or 'disconnected')
+        // We trust Firestore status mostly, but we can override if we know it's active.
+
+        let status = bot.status;
+        if (isActive && (status === 'offline' || status === 'error')) {
+          status = 'online'; // Fallback if Firestore wasn't updated
+        } else if (!isActive && status === 'online') {
+          status = 'offline'; // Fallback if it crashed without updating Firestore
+        }
+
+        return {
+          ...bot,
+          status
+        };
+      });
+
+      return { success: true, data: enrichedBots };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`getAllBots error [${tenantId}]:`, err);
+      return { success: false, error: err };
+    }
   }
 
   /**
@@ -392,6 +441,76 @@ export class MultiTenantBotService {
     logger.info('Stopping all active bots...');
     for (const botId of this.activeBots.keys()) {
       await this.stopBot(botId);
+    }
+  }
+
+  /**
+   * Send a message via a specific bot
+   */
+  async sendMessage(tenantId: string, botId: string, payload: {
+    to: string;
+    text: string;
+    type: 'text' | 'image' | 'video' | 'document';
+    url?: string;
+    caption?: string;
+  }): Promise<Result<any>> {
+    try {
+      const bot = this.activeBots.get(botId);
+      if (!bot) {
+        return { success: false, error: new Error('Bot is not online') };
+      }
+
+      // Basic JID formatting
+      const jid = payload.to.includes('@s.whatsapp.net') ? payload.to : `${payload.to}@s.whatsapp.net`;
+
+      let result;
+      if (payload.type === 'text') {
+        result = await bot.sendMessage(jid, { text: payload.text });
+      } else if (['image', 'video', 'document'].includes(payload.type) && payload.url) {
+        // Media message
+        result = await bot.sendMessage(jid, {
+          [payload.type]: { url: payload.url },
+          caption: payload.caption || payload.text
+        } as any);
+      } else {
+        return { success: false, error: new Error('Invalid message type or missing URL') };
+      }
+
+      await this.incrementBotStat(tenantId, botId, 'messagesSent');
+      return { success: true, data: result };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`sendMessage error [${botId}]:`, err);
+      // Increment error stat
+      await this.incrementBotStat(tenantId, botId, 'errorsCount');
+      return { success: false, error: err };
+    }
+  }
+
+  /**
+   * Request Pairing Code for a bot
+   */
+  async requestPairingCode(tenantId: string, botId: string, phoneNumber: string): Promise<Result<string>> {
+    try {
+      const authSystem = this.authSystems.get(botId);
+      if (!authSystem) {
+        // If not running, start it first
+        await this.startBot(tenantId, botId);
+        // Wait a bit for initialization? Or startBot returns when ready?
+        // startBot returns void, but we might need to wait for client init inside AuthSystem.
+        // Let's assume startBot initializes enough for us to get the system.
+      }
+
+      const activeAuthSystem = this.authSystems.get(botId);
+      if (!activeAuthSystem) {
+        return { success: false, error: new Error('Failed to initialize auth system') };
+      }
+
+      return await activeAuthSystem.getPairingCode(phoneNumber);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`requestPairingCode error [${botId}]:`, err);
+      return { success: false, error: err };
     }
   }
 }

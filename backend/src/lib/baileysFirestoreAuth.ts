@@ -6,18 +6,22 @@ import { firebaseService } from '@/services/FirebaseService.js';
  * Structure: tenants/{tenantId}/bots/{botId}/auth/{type}
  */
 export async function useFirestoreAuthState(tenantId: string, botId: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void> }> {
-  
+
   const writeData = async (data: any, id: string) => {
     const serialized = JSON.parse(JSON.stringify(data, BufferJSON.replacer));
-    // Using cast to any to bypass strict schema for auth subcollection
-    await firebaseService.setDoc(`bots/${botId}/auth` as any, id, serialized, tenantId);
+    // Wrap in object to ensure it is a valid Firestore document (cannot be primitive)
+    await firebaseService.setDoc(`bots/${botId}/auth` as any, id, { value: serialized }, tenantId);
   };
 
   const readData = async (id: string) => {
     try {
-      const data = await firebaseService.getDoc(`bots/${botId}/auth` as any, id, tenantId);
-      if (data) {
-        return JSON.parse(JSON.stringify(data), BufferJSON.reviver);
+      const doc = await firebaseService.getDoc(`bots/${botId}/auth` as any, id, tenantId);
+      if (doc && 'value' in doc) {
+        return JSON.parse(JSON.stringify((doc as any).value), BufferJSON.reviver);
+      }
+      // Backward compatibility for existing docs (if any) or handle potential direct saves
+      if (doc) {
+        return JSON.parse(JSON.stringify(doc), BufferJSON.reviver);
       }
       return null;
     } catch (error) {

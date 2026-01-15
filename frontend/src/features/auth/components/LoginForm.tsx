@@ -25,7 +25,12 @@ export function LoginForm() {
         if (result.success) {
             router.push('/dashboard');
         } else {
-            setError(getAuthErrorMessage(result.error.code) || result.error.message);
+            const mappedError = getAuthErrorMessage(result.error.code);
+            if (mappedError === 'An unexpected error occurred' && result.error.message) {
+                setError(result.error.message);
+            } else {
+                setError(mappedError);
+            }
             setIsLoading(false);
         }
     }

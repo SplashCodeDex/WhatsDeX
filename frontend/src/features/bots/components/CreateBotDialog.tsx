@@ -26,6 +26,7 @@ export function CreateBotDialog() {
         register,
         handleSubmit,
         reset,
+        setError,
         formState: { errors },
     } = useForm<CreateBotInput>({
         resolver: zodResolver(createBotSchema),
@@ -36,9 +37,13 @@ export function CreateBotDialog() {
             await createBot(data);
             setOpen(false);
             reset();
-        } catch {
-            // Error handled by mutation hook or global toast (TODO)
-            console.error('Failed to create bot');
+        } catch (err: any) {
+            console.error('Failed to create bot', err);
+            // Error is already handled by mutation throw, but we catch here to set form error
+            setError('root', {
+                type: 'manual',
+                message: err.message || 'Failed to create bot. Please try again.',
+            });
         }
     };
 
@@ -58,6 +63,11 @@ export function CreateBotDialog() {
                             Add a new WhatsApp bot instance. You'll be able to scan the QR code to connect it in the next step.
                         </DialogDescription>
                     </DialogHeader>
+                    {errors.root && (
+                        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                            {errors.root.message}
+                        </div>
+                    )}
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="name">Bot Name</Label>

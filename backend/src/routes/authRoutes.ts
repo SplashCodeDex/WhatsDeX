@@ -1,11 +1,12 @@
 import express from 'express';
-import { signup, login, getMe, checkAvailability } from '../controllers/authController.js';
+import { signup, login, logout, getMe, checkAvailability } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 router.post('/register', signup);
 router.post('/login', login);
+router.post('/logout', logout);
 router.get('/availability', checkAvailability);
 router.route('/me').get(authenticateToken, getMe).post(authenticateToken, getMe);
 

@@ -12,7 +12,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { QRCodeDisplay } from './QRCodeDisplay';
+import { BotConnectDialog } from './BotConnectDialog';
 import { useDeleteBot, useDisconnectBot, type BotListItem } from '@/features/bots';
 import { cn } from '@/lib/utils';
 
@@ -36,7 +36,7 @@ export function BotCard({ bot }: BotCardProps) {
                     <div className="flex flex-col space-y-1.5">
                         <CardTitle className="text-base font-medium">{bot.name}</CardTitle>
                         <CardDescription className="text-xs">
-                            {bot.phoneNumber || 'Not connected'}
+                            {bot.phoneNumber || (bot.status === 'connected' ? 'Connected' : 'Not connected')}
                         </CardDescription>
                     </div>
                     <div className={cn(
@@ -75,10 +75,10 @@ export function BotCard({ bot }: BotCardProps) {
                 </CardFooter>
             </Card>
 
-            {/* QR Code Dialog */}
-            <QRCodeDisplay
-                botId={bot.id}
-                isOpen={showQR}
+            {/* Connect Bot Dialog */}
+            <BotConnectDialog
+                bot={bot}
+                open={showQR}
                 onOpenChange={setShowQR}
             />
         </>

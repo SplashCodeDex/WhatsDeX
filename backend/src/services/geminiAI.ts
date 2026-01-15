@@ -30,11 +30,11 @@ interface AIAnalysis {
 }
 
 /**
- * Enhanced AI Brain - Next Generation Intelligence System
+ * Gemini AI - Next Generation Intelligence System
  * Handles natural conversation, context understanding, and intelligent tool usage
  * 2026 Mastermind Edition - Strictly Typed & Stateless
  */
-class EnhancedAIBrain extends EventEmitter {
+export class GeminiAI extends EventEmitter {
   private bot: Bot;
   private context: GlobalContext;
   private gemini: GeminiService;
@@ -45,17 +45,14 @@ class EnhancedAIBrain extends EventEmitter {
   private learningData: Map<string, any[]>;
   private availableTools: Map<string, any>;
 
-  constructor(bot: Bot, context: GlobalContext) {
+  constructor(context: GlobalContext) {
     super();
-    this.bot = bot;
     this.context = context;
     this.gemini = new GeminiService();
 
     this.conversationMemory = new Map();
     this.learningData = new Map();
     this.availableTools = new Map();
-
-    this.registerAllCommands();
 
     this.decisionEngine = {
       confidenceThreshold: 0.7,
@@ -64,28 +61,28 @@ class EnhancedAIBrain extends EventEmitter {
       learningEnabled: true
     };
 
-    logger.info('Enhanced AI Brain initialized with dynamic intelligence');
+    logger.info('Gemini AI initialized');
   }
 
   /**
    * Main message processing - handles ANY message intelligently
    */
-  async processMessage(ctx: MessageContext): Promise<Result<void>> {
+  async processMessage(bot: Bot, ctx: MessageContext): Promise<Result<void>> {
     try {
       const userId = ctx.sender.jid;
       const message = ctx.body || '';
 
       // Build comprehensive context
-      const context = await this.buildEnhancedContext(userId, message, ctx);
+      const context = await this.buildEnhancedContext(bot, userId, message, ctx);
 
       // Multi-layer intelligence processing
-      const intelligence = await this.analyzeWithMultiLayerIntelligence(message, context);
+      const intelligence = await this.analyzeWithMultiLayerIntelligence(bot, message, context);
 
       // Execute intelligent response
-      await this.executeIntelligentResponse(intelligence, ctx, context);
+      await this.executeIntelligentResponse(bot, intelligence, ctx, context);
 
       // Learn from interaction
-      await this.learnFromInteraction(userId, message, intelligence, ctx);
+      await this.learnFromInteraction(bot, userId, message, intelligence, ctx);
 
       return { success: true, data: undefined };
 
@@ -100,9 +97,9 @@ class EnhancedAIBrain extends EventEmitter {
   /**
    * Build comprehensive context from all available data
    */
-  async buildEnhancedContext(userId: string, message: string, ctx: MessageContext) {
-    const userProfile = await databaseService.user.get(userId, this.bot.tenantId);
-    
+  async buildEnhancedContext(bot: Bot, userId: string, message: string, ctx: MessageContext) {
+    const userProfile = await databaseService.user.get(userId, bot.tenantId);
+
     return {
       user: userProfile || { id: userId, name: 'Unknown' },
       conversation: await this.getConversationMemory(userId),
@@ -126,7 +123,7 @@ class EnhancedAIBrain extends EventEmitter {
   /**
    * Multi-layer intelligence analysis
    */
-  async analyzeWithMultiLayerIntelligence(message: string, context: any): Promise<AIAnalysis> {
+  async analyzeWithMultiLayerIntelligence(bot: Bot, message: string, context: any): Promise<AIAnalysis> {
     const analysis: AIAnalysis = {
       intents: [],
       confidence: 0,
@@ -141,7 +138,7 @@ class EnhancedAIBrain extends EventEmitter {
     analysis.intents = intents;
 
     // Layer 2: Context-Aware Decision Making
-    const decisions = await this.makeContextualDecisions(intents, context);
+    const decisions = await this.makeContextualDecisions(bot, intents, context);
     analysis.actions = decisions.actions;
     analysis.confidence = decisions.confidence;
 
@@ -204,7 +201,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Make contextual decisions based on intents and user context
    */
-  async makeContextualDecisions(intents: any[], context: any) {
+  async makeContextualDecisions(bot: Bot, intents: any[], context: any) {
     const decisions = {
       actions: [] as AIAction[],
       confidence: 0,
@@ -216,7 +213,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
       const contextualRelevance = this.assessContextualRelevance(intent, context);
 
       if (contextualRelevance > 0.5) {
-        const action = await this.intentToAction(intent, context);
+        const action = await this.intentToAction(bot, intent, context);
         if (action) {
           decisions.actions.push({
             ...action,
@@ -241,7 +238,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Convert intent to actionable command
    */
-  async intentToAction(intent: any, context: any): Promise<AIAction | null> {
+  async intentToAction(bot: Bot, intent: any, context: any): Promise<AIAction | null> {
     const intentMapping: Record<string, string> = {
       // Media & Downloads
       'download_youtube': 'youtubevideo',
@@ -283,7 +280,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
       return null;
     }
 
-    const command = this.bot.cmd.get(commandName);
+    const command = bot.cmd.get(commandName);
     if (!command) {
       // logger.warn(`Command not found for intent: ${intent.intent} -> ${commandName}`);
       return null;
@@ -301,7 +298,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Execute intelligent response based on analysis
    */
-  async executeIntelligentResponse(intelligence: AIAnalysis, ctx: MessageContext, context: any) {
+  async executeIntelligentResponse(bot: Bot, intelligence: AIAnalysis, ctx: MessageContext, context: any) {
     const { actions, confidence } = intelligence;
 
     if (actions.length === 0 || confidence < this.decisionEngine.confidenceThreshold) {
@@ -312,9 +309,9 @@ Be intelligent - understand implied requests, context clues, and natural languag
 
     // Execute high-confidence actions
     if (actions.length === 1) {
-      await this.executeSingleAction(actions[0], ctx, context);
+      await this.executeSingleAction(bot, actions[0], ctx, context);
     } else {
-      await this.executeMultipleActions(actions, ctx, context);
+      await this.executeMultipleActions(bot, actions, ctx, context);
     }
   }
 
@@ -361,10 +358,10 @@ Respond in the user's language if they're not using English.
   /**
    * Execute a single action intelligently
    */
-  async executeSingleAction(action: AIAction, ctx: MessageContext, context: any) {
+  async executeSingleAction(bot: Bot, action: AIAction, ctx: MessageContext, context: any) {
     try {
       if (!action.command) throw new Error('Command not specified');
-      const command = this.bot.cmd.get(action.command);
+      const command = bot.cmd.get(action.command);
       if (!command) {
         throw new Error(`Command not found: ${action.command}`);
       }
@@ -374,11 +371,11 @@ Respond in the user's language if they're not using English.
 
       // Execute command
       if (command.code) {
-          await command.code(smartCtx);
+        await command.code(smartCtx);
       }
 
       // Follow up with AI explanation if helpful
-      await this.provideIntelligentFollowUp(action, ctx, context);
+      await this.provideIntelligentFollowUp(bot, action, ctx, context);
 
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -457,33 +454,32 @@ Respond in the user's language if they're not using English.
   }
 
   /**
-   * Register all bot commands as AI tools
+   * Register all bot commands as AI tools (Per bot basis now)
    */
-  registerAllCommands() {
-    // In a stateless environment, we might need to access commands from the bot instance passed in constructor
-    // Assuming bot.cmd is available and populated
-    if (this.bot.cmd) {
-        for (const [name, command] of this.bot.cmd) {
-        this.availableTools.set(name, {
-            name,
-            description: command.description || `Execute ${name} command`,
-            category: command.category || 'misc',
-            parameters: this.inferCommandParameters(command),
-            execute: command.code
+  getCommandsAsTools(bot: Bot) {
+    const tools = new Map<string, any>();
+    if (bot.cmd) {
+      for (const [name, command] of bot.cmd) {
+        tools.set(name, {
+          name,
+          description: command.description || `Execute ${name} command`,
+          category: command.category || 'misc',
+          parameters: this.inferCommandParameters(command),
+          execute: command.code
         });
-        }
-        logger.info(`Registered ${this.availableTools.size} commands as AI tools`);
+      }
     }
+    return tools;
   }
 
   /**
    * Learn from user interactions to improve responses
    */
-  async learnFromInteraction(userId: string, message: string, intelligence: any, ctx: MessageContext) {
+  async learnFromInteraction(bot: Bot, userId: string, message: string, intelligence: any, ctx: MessageContext) {
     if (!this.decisionEngine.learningEnabled) return;
 
     // Track actual success based on execution results
-    const successMetrics = await this.calculateSuccessMetrics(intelligence, ctx);
+    const successMetrics = await this.calculateSuccessMetrics(bot, intelligence, ctx);
 
     const learningData = {
       timestamp: Date.now(),
@@ -616,7 +612,7 @@ Respond in the user's language if they're not using English.
   /**
    * Calculate success metrics for learning from interaction
    */
-  async calculateSuccessMetrics(intelligence: any, ctx: MessageContext) {
+  async calculateSuccessMetrics(bot: Bot, intelligence: any, ctx: MessageContext) {
     const startTime = Date.now();
     const metrics: any = {
       actionResults: [] as any[],
@@ -633,7 +629,7 @@ Respond in the user's language if they're not using English.
         for (const action of intelligence.actions) {
           try {
             // Check if action was executed successfully
-            const actionSuccess = await this.validateActionExecution(action, ctx);
+            const actionSuccess = await this.validateActionExecution(bot, action, ctx);
             metrics.actionResults.push({
               action: action.command || action.type,
               success: actionSuccess,
@@ -683,10 +679,10 @@ Respond in the user's language if they're not using English.
   /**
    * Validate if an action was executed successfully
    */
-  async validateActionExecution(action: any, ctx: any) {
+  async validateActionExecution(bot: Bot, action: any, ctx: any) {
     // Check if the action type exists and was callable
     if (action.type === 'command' && action.command) {
-      const command = this.bot.cmd.get(action.command);
+      const command = bot.cmd.get(action.command);
       return command !== undefined;
     }
 
@@ -764,8 +760,8 @@ Respond in the user's language if they're not using English.
   assessContextualRelevance(intent: any, context: any) { return 0.8; } // Simplified
   planWorkflow(actions: any[], context: any) { return { tools: [] as any[], reasoning: '' }; } // Simplified
   selectResponseStrategy(analysis: any, context: any) { return 'conversational'; } // Simplified
-  executeMultipleActions(actions: any[], ctx: any, context: any) { /* Implementation */ }
-  provideIntelligentFollowUp(action: any, ctx: any, context: any) { /* Implementation */ }
+  executeMultipleActions(bot: Bot, actions: any[], ctx: any, context: any) { /* Implementation */ }
+  provideIntelligentFollowUp(bot: Bot, action: any, ctx: any, context: any) { /* Implementation */ }
   getConversationMemory(userId: string) { return this.conversationMemory.get(userId) || []; }
   getRecentActions(userId: string) { return []; } // Simplified
   getActiveConversations(userId: string) { return []; } // Simplified
@@ -777,4 +773,4 @@ Respond in the user's language if they're not using English.
   }
 }
 
-export default EnhancedAIBrain;
+export default GeminiAI;

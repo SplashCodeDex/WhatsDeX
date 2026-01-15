@@ -6,7 +6,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 export class MultiTenantService {
   private static instance: MultiTenantService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): MultiTenantService {
     if (!MultiTenantService.instance) {
@@ -22,7 +22,7 @@ export class MultiTenantService {
     if (!tenantData.id) {
       return { success: false, error: new Error('Tenant ID is required') };
     }
-    
+
     try {
       const rawData = {
         id: tenantData.id,
@@ -103,25 +103,49 @@ export class MultiTenantService {
   /**
    * Check if tenant has reached bot limit
    */
+  /**
+   * Check if tenant has reached bot limit
+   */
   async canAddBot(tenantId: string): Promise<Result<boolean>> {
-    const result = await this.getTenant(tenantId);
-    if (!result.success) return result as Result<never>;
+    const tenantResult = await this.getTenant(tenantId);
+    if (!tenantResult.success) {
+      logger.error(`MultiTenantService.canAddBot failed to get tenant [${tenantId}]:`, tenantResult.error);
+      return tenantResult as Result<never>;
+    }
 
-    // Placeholder: This will be fully implemented once multiTenantBotService is refactored
-    return { success: true, data: true }; 
+    const settings = tenantResult.data.settings;
+    const maxBots = settings?.maxBots || 1; // Default to 1 if not set
+
+    try {
+      // Get all bots for this tenant
+      const bots = await firebaseService.getCollection('bots', tenantId);
+      const currentBotCount = bots.length;
+
+      if (currentBotCount >= maxBots) {
+        return {
+          success: true,
+          data: false
+        };
+      }
+
+      return { success: true, data: true };
+    } catch (error) {
+      logger.error(`MultiTenantService.canAddBot failed to count bots [${tenantId}]:`, error);
+      return { success: false, error: error as Error };
+    }
   }
 
   /**
    * List all tenants (Admin only)
    */
   async listTenants(): Promise<Tenant[]> {
-      try {
-          const snapshot = await firebaseService.getCollection('tenants');
-          return snapshot.map(doc => TenantSchema.parse(doc));
-      } catch (error) {
-          logger.error('MultiTenantService.listTenants error:', error);
-          return [];
-      }
+    try {
+      const snapshot = await firebaseService.getCollection('tenants');
+      return snapshot.map(doc => TenantSchema.parse(doc));
+    } catch (error) {
+      logger.error('MultiTenantService.listTenants error:', error);
+      return [];
+    }
   }
 }
 

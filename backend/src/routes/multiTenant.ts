@@ -46,10 +46,25 @@ router.get('/bots', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        // Implementation for listing bots from subcollection
-        // For now returning current active status from service
-        const bots = multiTenantBotService.getActiveBots();
-        res.json({ success: true, data: bots });
+        // Implementation for listing bots from Firestore (persistent state)
+        const result = await multiTenantBotService.getAllBots(tenantId);
+
+        if (result.success) {
+            // Map to frontend BotListItem shape
+            const bots = result.data.map(bot => ({
+                id: bot.id,
+                name: bot.name,
+                phoneNumber: bot.phoneNumber || null, // Assuming phoneNumber exists in BotInstance
+                status: bot.status === 'offline' ? 'disconnected' :
+                    bot.status === 'online' ? 'connected' :
+                        bot.status, // Map status: offline -> disconnected, online -> connected
+                messageCount: (bot.stats?.messagesSent || 0) + (bot.stats?.messagesReceived || 0),
+                lastActiveAt: bot.updatedAt ? new Date((bot.updatedAt as any)._seconds * 1000) : null // Basic conversion
+            }));
+            res.json({ success: true, data: bots });
+        } else {
+            res.status(500).json({ success: false, error: result.error?.message });
+        }
     } catch (error: any) {
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -194,6 +209,35 @@ router.get('/bots/:botId/qr', async (req: Request, res: Response) => {
         }
     } catch (error: any) {
         logger.error('Route /bots/:botId/qr GET error', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * Get Pairing Code for bot
+ */
+router.post('/bots/:botId/pairing-code', async (req: Request, res: Response) => {
+    try {
+        const tenantId = req.user?.tenantId;
+        const botId = req.params.botId as string;
+        const { phoneNumber } = req.body;
+
+        if (!tenantId) {
+            return res.status(401).json({ success: false, error: 'Authentication required' });
+        }
+        if (!phoneNumber) {
+            return res.status(400).json({ success: false, error: 'Phone number is required' });
+        }
+
+        const result = await multiTenantBotService.requestPairingCode(tenantId, botId, phoneNumber);
+
+        if (result.success) {
+            res.json({ success: true, data: { pairingCode: result.data } });
+        } else {
+            res.status(400).json({ success: false, error: result.error?.message || 'Failed to get pairing code' });
+        }
+    } catch (error: any) {
+        logger.error('Route /bots/:botId/pairing-code POST error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });

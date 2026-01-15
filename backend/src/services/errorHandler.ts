@@ -22,7 +22,7 @@ export class AppError extends Error {
 export class ErrorHandler {
   private static instance: ErrorHandler;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): ErrorHandler {
     if (!ErrorHandler.instance) {
@@ -40,6 +40,7 @@ export class ErrorHandler {
   public getUserFriendlyMessage(error: unknown): string {
     if (error instanceof AppError) return error.message;
     if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
     return 'An unexpected error occurred';
   }
 

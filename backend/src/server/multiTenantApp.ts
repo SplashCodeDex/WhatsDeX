@@ -12,6 +12,9 @@ import multiTenantBotService from '../services/multiTenantBotService.js';
 import multiTenantRoutes from '../routes/multiTenant.js';
 import authRoutes from '../routes/authRoutes.js';
 import templateRoutes from '../routes/templateRoutes.js';
+import analyticsRoutes from '../routes/analyticsRoutes.js';
+import contactRoutes from '../routes/contactRoutes.js';
+import messageRoutes from '../routes/messageRoutes.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
@@ -137,6 +140,15 @@ export class MultiTenantApp {
 
     // Template routes
     this.app.use('/api/templates', templateRoutes);
+
+    // Analytics routes
+    this.app.use('/api/analytics', authenticateToken, analyticsRoutes);
+
+    // Contacts routes
+    this.app.use('/api/contacts', authenticateToken, contactRoutes);
+
+    // Messages routes
+    this.app.use('/api/messages', authenticateToken, messageRoutes);
 
     // Tenant management
     this.app.get('/api/tenants', authenticateToken, async (req, res) => {

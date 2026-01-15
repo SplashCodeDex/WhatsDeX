@@ -156,7 +156,7 @@ async function apiClient<TData, TBody = unknown>(
                 success: false,
                 error: {
                     code: data.error?.code ?? 'unknown_error',
-                    message: data.error?.message ?? 'An unexpected error occurred',
+                    message: typeof data.error === 'string' ? data.error : (data.error?.message ?? data.message ?? 'An unexpected error occurred'),
                     details: data.error?.details,
                 },
             } as ApiErrorResponse;

@@ -25,6 +25,7 @@ export const envSchema = z.object({
   FIREBASE_TABLE_NAME: z.string().default('whatsdex'),
   FIREBASE_SESSION: z.string().default('state'),
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
+  FIREBASE_WEB_API_KEY: z.string().optional(), // Required for Firebase Auth REST API login
 
   // App URL & Frontend
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),

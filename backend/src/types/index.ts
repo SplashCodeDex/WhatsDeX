@@ -209,7 +209,7 @@ export interface GlobalContext {
     formatter: typeof import('../utils/formatters.js');
     logger: Logger;
     commandSystem: import('../services/commandSystem.js').CommandSystem;
-    unifiedAI: import('../services/aiProcessor.js').AIProcessor;
+    unifiedAI: import('../services/geminiAI.js').GeminiAI;
     groupService: import('../services/groupService.js').GroupService;
     multiTenantBotService: import('../services/multiTenantBotService.js').MultiTenantBotService;
     userService: import('../services/userService.js').UserService;

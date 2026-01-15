@@ -180,3 +180,36 @@ export function useDisconnectBot(): ReturnType<typeof useMutation<void, Error, s
         },
     });
 }
+
+/**
+ * Get Pairing Code mutation
+ */
+export function usePairingCode(botId: string) {
+    return useMutation({
+        mutationFn: async (phoneNumber: string) => {
+            const response = await api.post<{ pairingCode: string }>(API_ENDPOINTS.BOTS.PAIRING_CODE(botId), { phoneNumber });
+            if (isApiSuccess(response)) {
+                return response.data;
+            }
+            throw new Error(response.error.message);
+        }
+    });
+}
+
+/**
+ * Poll for bot status
+ */
+export function useBotStatus(botId: string, enabled: boolean) {
+    return useQuery({
+        queryKey: ['bot-status', botId],
+        queryFn: async () => {
+            const response = await api.get<{ status: string, isActive: boolean, hasQR: boolean }>(API_ENDPOINTS.BOTS.STATUS(botId));
+            if (isApiSuccess(response)) {
+                return response.data;
+            }
+            throw new Error(response.error.message);
+        },
+        enabled: enabled && !!botId,
+        refetchInterval: 2000, // Poll every 2 seconds
+    });
+}

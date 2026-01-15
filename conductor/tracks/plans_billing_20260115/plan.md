@@ -4,7 +4,7 @@
 Focus on setting up the Stripe connection and ensuring our plan definitions are synced between the code and Stripe.
 
 - [x] Task: Create `stripeService.ts` utility for Stripe initialization and basic API wrappers. (3e97b49)
-- [ ] Task: Implement `scripts/seed-stripe.ts` to programmatically create Starter, Pro, and Enterprise products/prices in Stripe.
+- [~] Task: Implement `scripts/seed-stripe.ts` to programmatically create Starter, Pro, and Enterprise products/prices in Stripe.
 - [ ] Task: Add 7-day trial configuration to the seeding script.
 - [ ] Task: Conductor - User Manual Verification 'Infrastructure & Stripe Seeding' (Protocol in workflow.md)
 

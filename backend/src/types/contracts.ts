@@ -24,19 +24,25 @@ export const TimestampSchema = z.union([
 export const TenantSchema = z.object({
   id: z.string(),
   name: z.string().min(2),
-  subdomain: z.string().toLowerCase(),
-  plan: z.enum(['free', 'premium', 'enterprise']),
-  status: z.enum(['active', 'suspended', 'cancelled']),
-  ownerId: z.string(),
-  stripeCustomerId: z.string().optional(),
-  createdAt: TimestampSchema,
-  updatedAt: TimestampSchema,
-  settings: z.object({
-    maxBots: z.number().int().min(1),
-    aiEnabled: z.boolean(),
-    customPairingCode: z.string().optional(),
-    timezone: z.string().default('UTC')
-  })
+  subdomain: z.preprocess((val) => val ?? '', z.string().toLowerCase().optional()),
+  plan: z.preprocess((val) => {
+    if (typeof val === 'string' && ['free', 'premium', 'enterprise'].includes(val)) return val;
+    return undefined; // Triggers default('free')
+  }, z.enum(['free', 'premium', 'enterprise']).default('free')),
+  status: z.preprocess((val) => {
+    if (typeof val === 'string' && ['active', 'suspended', 'cancelled'].includes(val)) return val;
+    return undefined; // Triggers default('active')
+  }, z.enum(['active', 'suspended', 'cancelled']).default('active')),
+  ownerId: z.preprocess((val) => val ?? '', z.string().optional()),
+  stripeCustomerId: z.string().nullish(),
+  createdAt: TimestampSchema.nullish(),
+  updatedAt: TimestampSchema.nullish(),
+  settings: z.preprocess((val) => val ?? {}, z.object({
+    maxBots: z.preprocess((val) => val ?? undefined, z.number().int().min(1).default(1)),
+    aiEnabled: z.preprocess((val) => val ?? undefined, z.boolean().default(false)),
+    customPairingCode: z.string().nullish(),
+    timezone: z.string().default('UTC').nullish()
+  }).optional())
 }).readonly();
 
 export type Tenant = z.infer<typeof TenantSchema>;

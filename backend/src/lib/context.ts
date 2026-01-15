@@ -6,7 +6,7 @@ import * as formatter from '../utils/formatters.js';
 import logger from '../utils/logger.js';
 import state from '../utils/state.js';
 import { CommandSystem } from '../services/commandSystem.js';
-import { AIProcessor } from '../services/aiProcessor.js';
+import { GeminiAI } from '../services/geminiAI.js';
 import { GlobalContext } from '../types/index.js';
 import { groupService } from '../services/groupService.js';
 import { databaseService } from '../services/database.js';
@@ -38,7 +38,7 @@ async function initializeContext(): Promise<GlobalContext> {
 
     // Instantiate systems that depend on context
     const commandSystem = new CommandSystem(context);
-    const unifiedAI = new AIProcessor(context);
+    const unifiedAI = new GeminiAI(context);
 
     context.commandSystem = commandSystem;
     context.unifiedAI = unifiedAI;

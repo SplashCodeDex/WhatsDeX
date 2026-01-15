@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Metadata } from 'next';
 import {
     Users,
@@ -9,50 +10,133 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { api, API_ENDPOINTS } from '@/lib/api';
+import { isApiSuccess } from '@/types';
 
 export const metadata: Metadata = {
     title: 'Dashboard Overview',
     description: 'WhatsDeX system overview and statistics',
 };
 
-const STATS = [
-    {
-        title: 'Total Messages',
-        value: '12,345',
-        change: '+12%',
-        trend: 'up',
-        icon: MessageSquare,
-        color: 'text-blue-500',
-        bg: 'bg-blue-500/10',
-    },
-    {
-        title: 'Active Bots',
-        value: '3',
-        change: '0%',
-        trend: 'neutral',
-        icon: Bot,
-        color: 'text-primary-500',
-        bg: 'bg-primary-500/10',
-    },
-    {
-        title: 'Total Contacts',
-        value: '1,234',
-        change: '+5%',
-        trend: 'up',
-        icon: Users,
-        color: 'text-orange-500',
-        bg: 'bg-orange-500/10',
-    },
-    {
-        title: 'System Health',
-        value: '99.9%',
-        change: '-0.1%',
-        trend: 'down',
-        icon: Activity,
-        color: 'text-green-500',
-        bg: 'bg-green-500/10',
-    },
-];
+// Server-side data fetching
+async function getDashboardStats() {
+    try {
+        // Fetch bots to calculate real stats
+        const botsResponse = await api.get<{ id: string; status: string; messageCount?: number }[]>(
+            API_ENDPOINTS.BOTS.LIST
+        );
+
+        if (!isApiSuccess(botsResponse)) {
+            return null;
+        }
+
+        const bots = botsResponse.data;
+        const activeBots = bots.filter(b => b.status === 'connected').length;
+        const totalMessages = bots.reduce((sum, b) => sum + (b.messageCount ?? 0), 0);
+
+        return {
+            totalMessages,
+            activeBots,
+            totalBots: bots.length,
+        };
+    } catch {
+        return null;
+    }
+}
+
+// Stats Card Component (Pure UI)
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    change?: string;
+    trend?: 'up' | 'down' | 'neutral';
+    icon: React.ElementType;
+    color: string;
+    bg: string;
+}
+
+function StatCard({ title, value, change, trend, icon: Icon, color, bg }: StatCardProps) {
+    return (
+        <div className="rounded-xl border border-border/50 bg-card p-6 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center justify-between space-y-0 pb-2">
+                <p className="text-sm font-medium text-muted-foreground">{title}</p>
+                <div className={cn("rounded-full p-2", bg)}>
+                    <Icon className={cn("h-4 w-4", color)} />
+                </div>
+            </div>
+            <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold">{value}</div>
+                {change && (
+                    <div className={cn(
+                        "flex items-center text-xs font-medium",
+                        trend === 'up' ? "text-green-500" :
+                            trend === 'down' ? "text-red-500" : "text-muted-foreground"
+                    )}>
+                        {change}
+                        {trend === 'up' && <ArrowUpRight className="ml-1 h-3 w-3" />}
+                        {trend === 'down' && <ArrowDownRight className="ml-1 h-3 w-3" />}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// Stats Grid using real data
+async function StatsGrid() {
+    const stats = await getDashboardStats();
+
+    // Define stat cards with actual data
+    const STATS: StatCardProps[] = [
+        {
+            title: 'Total Messages',
+            value: stats?.totalMessages.toLocaleString() ?? '—',
+            icon: MessageSquare,
+            color: 'text-blue-500',
+            bg: 'bg-blue-500/10',
+        },
+        {
+            title: 'Active Bots',
+            value: stats?.activeBots ?? '—',
+            icon: Bot,
+            color: 'text-primary-500',
+            bg: 'bg-primary-500/10',
+        },
+        {
+            title: 'Total Bots',
+            value: stats?.totalBots ?? '—',
+            icon: Users,
+            color: 'text-orange-500',
+            bg: 'bg-orange-500/10',
+        },
+        {
+            title: 'System Health',
+            value: stats ? '99.9%' : 'Offline',
+            icon: Activity,
+            color: stats ? 'text-green-500' : 'text-red-500',
+            bg: stats ? 'bg-green-500/10' : 'bg-red-500/10',
+        },
+    ];
+
+    return (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {STATS.map((stat) => (
+                <StatCard key={stat.title} {...stat} />
+            ))}
+        </div>
+    );
+}
+
+// Loading skeleton for stats
+function StatsGridSkeleton() {
+    return (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-[120px] rounded-xl border bg-card/50 p-6 animate-pulse" />
+            ))}
+        </div>
+    );
+}
 
 export default function DashboardHomePage() {
     return (
@@ -64,35 +148,10 @@ export default function DashboardHomePage() {
                 </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {STATS.map((stat) => (
-                    <div
-                        key={stat.title}
-                        className="rounded-xl border border-border/50 bg-card p-6 shadow-sm transition-all hover:shadow-md"
-                    >
-                        <div className="flex items-center justify-between space-y-0 pb-2">
-                            <p className="text-sm font-medium text-muted-foreground">
-                                {stat.title}
-                            </p>
-                            <div className={cn("rounded-full p-2", stat.bg)}>
-                                <stat.icon className={cn("h-4 w-4", stat.color)} />
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="text-2xl font-bold">{stat.value}</div>
-                            <div className={cn(
-                                "flex items-center text-xs font-medium",
-                                stat.trend === 'up' ? "text-green-500" :
-                                    stat.trend === 'down' ? "text-red-500" : "text-muted-foreground"
-                            )}>
-                                {stat.change}
-                                {stat.trend === 'up' && <ArrowUpRight className="ml-1 h-3 w-3" />}
-                                {stat.trend === 'down' && <ArrowDownRight className="ml-1 h-3 w-3" />}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            {/* Stats from Server Component */}
+            <Suspense fallback={<StatsGridSkeleton />}>
+                <StatsGrid />
+            </Suspense>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <div className="col-span-4 rounded-xl border border-border/50 bg-card p-6 shadow-sm">
@@ -102,7 +161,7 @@ export default function DashboardHomePage() {
                             Latest actions performed by your bots.
                         </p>
                     </div>
-                    {/* Placeholder for Activity Feed */}
+                    {/* Empty state until activity feed is wired */}
                     <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-border p-8 text-center animate-in fade-in-50">
                         <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
                             <Activity className="h-10 w-10 text-muted-foreground" />
@@ -121,7 +180,7 @@ export default function DashboardHomePage() {
                             Real-time server performance.
                         </p>
                     </div>
-                    {/* Placeholder for System Status */}
+                    {/* Empty state until system status is wired */}
                     <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-border p-8 text-center animate-in fade-in-50">
                         <p className="text-sm text-muted-foreground">System status visualization coming soon.</p>
                     </div>

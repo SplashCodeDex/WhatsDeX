@@ -248,6 +248,8 @@ export const signup = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = loginSchema.parse(req.body);
+
+        // Get user from Firestore to retrieve tenantId and role
         const userSnapshot = await db.collection('tenant_users').where('email', '==', email).limit(1).get();
 
         if (userSnapshot.empty) {
@@ -269,18 +271,46 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Account disabled' });
         }
 
-        const isValid = await bcrypt.compare(password, user.passwordHash);
-        if (!isValid) {
-            await auditService.logEvent({
-                eventType: 'SECURITY_LOGIN_FAILURE',
-                actor: email,
-                actorId: user.id,
-                action: 'Login attempt failed: Wrong password',
-                resource: 'auth',
-                riskLevel: 'MEDIUM',
-                ipAddress: req.ip
-            });
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        // Verify password via Firebase Auth REST API
+        // Firebase Admin SDK doesn't expose password verification directly,
+        // so we use the Firebase Auth REST API
+        const firebaseApiKey = process.env.FIREBASE_WEB_API_KEY;
+        if (!firebaseApiKey) {
+            logger.error('FIREBASE_WEB_API_KEY not configured');
+            return res.status(500).json({ success: false, error: 'Authentication service misconfigured' });
+        }
+
+        try {
+            const authResponse = await fetch(
+                `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        returnSecureToken: true
+                    })
+                }
+            );
+
+            if (!authResponse.ok) {
+                const errorData = await authResponse.json() as { error?: { message?: string } };
+                logger.warn('Firebase Auth failed:', errorData.error?.message);
+                await auditService.logEvent({
+                    eventType: 'SECURITY_LOGIN_FAILURE',
+                    actor: email,
+                    actorId: user.id,
+                    action: 'Login attempt failed: Wrong password',
+                    resource: 'auth',
+                    riskLevel: 'MEDIUM',
+                    ipAddress: req.ip
+                });
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
+        } catch (authError: unknown) {
+            logger.error('Firebase Auth request failed:', authError);
+            return res.status(500).json({ success: false, error: 'Authentication service unavailable' });
         }
 
         const config = ConfigService.getInstance();
@@ -322,8 +352,26 @@ export const login = async (req: Request, res: Response) => {
         }
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('Login error:', err);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        res.status(500).json({ success: false, error: 'An unexpected error occurred' });
     }
+};
+
+
+export const logout = (req: Request, res: Response) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+    });
+
+    // Also clear legacy cookie if present
+    res.clearCookie('session', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+    });
+
+    res.json({ success: true, message: 'Logged out successfully' });
 };
 
 export const getMe = async (req: RequestWithUser, res: Response) => {
