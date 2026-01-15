@@ -215,30 +215,30 @@ export class DatabaseService {
      * Bridge for commands using databaseService.getDoc/setDoc directly
      */
     async getDoc<T>(collection: string, docId: string, tenantId: string = 'system'): Promise<T | null> {
-        return await firebaseService.getDoc(collection as any, docId, tenantId) as T | null;
+        return await firebaseService.getDoc(collection as 'members' | 'groups', docId, tenantId) as T | null;
     }
 
-    async updateDoc(collection: string, docId: string, data: any, tenantId: string = 'system'): Promise<void> {
-        await firebaseService.setDoc(collection as any, docId, data, tenantId, true);
+    async updateDoc(collection: string, docId: string, data: Record<string, unknown>, tenantId: string = 'system'): Promise<void> {
+        await firebaseService.setDoc(collection as 'members' | 'groups', docId, data, tenantId, true);
     }
 
-    async setDoc(collection: string, docId: string, data: any, tenantId: string = 'system'): Promise<void> {
-        await firebaseService.setDoc(collection as any, docId, data, tenantId, false);
+    async setDoc(collection: string, docId: string, data: Record<string, unknown>, tenantId: string = 'system'): Promise<void> {
+        await firebaseService.setDoc(collection as 'members' | 'groups', docId, data, tenantId, false);
     }
 
     /**
      * Generic bridge for commands using db.get/db.set
      */
     async get(key: string): Promise<any> {
-        return await firebaseService.getDoc('system' as any, key);
+        return await firebaseService.getDoc('system' as 'members' | 'groups', key);
     }
 
-    async set(key: string, value: any): Promise<void> {
-        await firebaseService.setDoc('system' as any, key, value);
+    async set(key: string, value: unknown): Promise<void> {
+        await firebaseService.setDoc('system' as 'members' | 'groups', key, value as Record<string, unknown>);
     }
 
     async delete(key: string): Promise<void> {
-        await firebaseService.setDoc('system' as any, key, { deletedAt: Timestamp.now() } as any, undefined, true);
+        await firebaseService.setDoc('system' as 'members' | 'groups', key, { deletedAt: Timestamp.now() } as any, undefined, true);
     }
 
     async add(key: string, value: number): Promise<void> {
