@@ -20,9 +20,9 @@ export default {
 
     try {
       const apiUrl = tools.api.createUrl('diibot', '/api/search/wallpaper', {
-        query: input,
+        text: input,
       });
-      const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result).imageUrl;
+      const result = (tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result) as any).imageUrl;
 
       await ctx.reply({
         image: {

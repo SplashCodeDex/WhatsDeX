@@ -1,4 +1,3 @@
-
 /**
  * Command utilities
  */
@@ -17,7 +16,8 @@ type FlagOptions = {
  * @param args - The argument string
  * @param options - Flag configuration definition
  */
-export const parseFlag = (args: string, options: FlagOptions) => {
+export const parseFlag = (args: string | null | undefined, options: FlagOptions) => {
+    if (!args) return { input: '' };
     const result: Record<string, unknown> & { input: string } = { input: args };
     const argsArray = args.split(' ');
 
@@ -61,7 +61,7 @@ export const isOwner = (config: any, senderId: string) => {
     return owners.includes(senderId);
 };
 
-export const handleError = async (ctx: MessageContext, error: unknown) => {
+export const handleError = async (ctx: MessageContext, error: unknown, reply: boolean = true) => {
     const { formatter } = ctx.bot.context;
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('Command Execution Error:', {
@@ -70,7 +70,9 @@ export const handleError = async (ctx: MessageContext, error: unknown) => {
         error: err.message,
         stack: err.stack
     });
-    await ctx.reply(formatter.quote(`An error occurred: ${err.message}`));
+    if (reply) {
+        await ctx.reply(formatter.quote(`An error occurred: ${err.message}`));
+    }
 };
 
 export const fakeMetaAiQuotedText = (text: string) => {
@@ -96,7 +98,25 @@ export const isUrl = (url: string) => {
     );
 };
 
-export const checkQuotedMedia = (type: string | undefined, expectedTypes: string[]) => {
+export const checkQuotedMedia = (type: string | undefined, expectedTypes: string | string[]) => {
     if (!type) return false;
-    return expectedTypes.some(t => type.toLowerCase().includes(t.toLowerCase()));
+    const types = Array.isArray(expectedTypes) ? expectedTypes : [expectedTypes];
+    return types.some(t => type.toLowerCase().includes(t.toLowerCase()));
+};
+
+export const checkMedia = (type: string | undefined, expectedTypes: string | string[]) => {
+    if (!type) return false;
+    const types = Array.isArray(expectedTypes) ? expectedTypes : [expectedTypes];
+    return types.some(t => type.toLowerCase().includes(t.toLowerCase()));
+};
+
+export const getRandomElement = <T>(arr: T[]): T => {
+    if (!Array.isArray(arr) || arr.length === 0) return undefined as any;
+    return arr[Math.floor(Math.random() * arr.length)];
+};
+
+export const translate = async (text: string, lang: string = 'id'): Promise<string> => {
+    // Placeholder for translation - strictly typed
+    // In real implementation, call a translation service
+    return text; 
 };

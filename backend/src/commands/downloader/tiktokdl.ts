@@ -19,7 +19,7 @@ export default {
     if (!url)
       return await ctx.reply(
         `${formatter.quote(msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          cmd.generateCmdExample(
+          msg.generateCmdExample(
             ctx.used,
             'https://www.tiktok.com/@grazeuz/video/7486690677888158984'
           )

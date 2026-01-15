@@ -41,15 +41,16 @@ export default {
       const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
       const failedGroupIds: string[] = [];
 
-      const mediaType = checkMedia || checkQuotedMedia;
-      // Note: In real implementation, buffer logic should be robust
+      const rawType = ctx.msg.contentType || ctx.quoted?.contentType || '';
+      const mediaKey = rawType.includes('image') ? 'image' : rawType.includes('video') ? 'video' : 'document';
+
       const buffer = await (ctx.msg as any).media?.toBuffer() || await (ctx.quoted as any)?.media?.toBuffer();
 
       for (const groupId of filteredGroupIds) {
         await delay(500);
         try {
           await (ctx as any).core.sendStatusMentions(groupId, {
-            [mediaType]: buffer,
+            [mediaKey as string]: buffer,
             caption: input,
           });
         } catch (error: unknown) {

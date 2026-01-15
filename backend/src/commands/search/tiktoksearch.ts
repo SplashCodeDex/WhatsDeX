@@ -23,7 +23,7 @@ export default {
       const apiUrl = tools.api.createUrl('diibot', '/api/search/tiktok', {
         query: input,
       });
-      const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result).media
+      const result = (tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result) as any).media
         .no_watermark;
 
       await ctx.reply({

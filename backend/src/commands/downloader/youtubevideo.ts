@@ -6,6 +6,12 @@ import { createUrl } from '../../tools/api.js';
 import { parseFlag } from '../../tools/cmd.js';
 import logger from '../../utils/logger.js';
 
+interface YtVideoFlags {
+  document?: boolean;
+  quality?: number | string;
+  input: string;
+}
+
 export default {
   name: 'youtubevideo',
   aliases: ['ytmp4', 'ytv', 'ytvideo'],
@@ -25,7 +31,7 @@ export default {
           validator: val => !Number.isNaN(val) && parseInt(val, 10) > 0,
           parser: val => parseInt(val, 10),
         },
-      });
+      }) as unknown as YtVideoFlags;
 
       // --- Validation ---
       const urlSchema = z
@@ -52,7 +58,7 @@ export default {
       });
       const { result } = (await axios.get(apiUrl)).data;
 
-      const asDocument = flag?.document || false;
+      const asDocument = flag.document || false;
       if (asDocument) {
         await ctx.reply({
           document: { url: result.download },

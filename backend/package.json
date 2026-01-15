@@ -68,6 +68,7 @@
     "@types/node": "^22.19.3",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.0.16",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "globals": "^17.0.0",
     "tsx": "^4.21.0",

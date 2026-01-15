@@ -101,14 +101,15 @@ class SecurityMiddleware {
       }
 
       return { allowed: true };
-    } catch (error: any) {
-      logger.error('Security middleware error:', error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Security middleware error:', err);
       // Fail-safe: allow request but log the error
       await this.logSecurityEvent('middleware_error', {
         userId,
         userJid,
         remoteJid,
-        error: error.message,
+        error: err.message,
       });
       return { allowed: true };
     }
@@ -321,7 +322,7 @@ class SecurityMiddleware {
         }
         return pattern.test(domain);
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Invalid URL
       return true;
     }
@@ -373,8 +374,9 @@ class SecurityMiddleware {
         userAgent: details.clientInfo?.userAgent,
         sessionId: details.clientInfo?.sessionId,
       });
-    } catch (error: any) {
-      logger.error('Failed to log security event:', error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Failed to log security event:', err);
     }
   }
 

@@ -78,10 +78,11 @@ export default {
         text: response,
         footer: config.msg.footer,
       });
-    } catch (error: any) {
-      logger.error('Error in NLP command:', error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error in NLP command:', err);
       return ctx.reply(
-        formatter.quote(`❎ An error occurred while analyzing your input: ${error.message}`)
+        formatter.quote(`❎ An error occurred while analyzing your input: ${err.message}`)
       );
     }
   },

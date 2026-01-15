@@ -41,15 +41,16 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             const decoded = jwt.verify(token, secret) as UserPayload;
             req.user = decoded;
             next();
-        } catch (jwtError: any) {
-            if (jwtError.name === 'TokenExpiredError') {
+        } catch (jwtError: unknown) {
+            if (jwtError instanceof Error && jwtError.name === 'TokenExpiredError') {
                 return res.status(401).json({ error: 'Token expired' });
             }
             throw new Error('Invalid token signature');
         }
 
-    } catch (error: any) {
-        logger.security('Auth Middleware: Token verification failed', null, { error: error.message, ip: req.ip });
+    } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.security('Auth Middleware: Token verification failed', null, { error: err.message, ip: req.ip });
         return res.status(403).json({ error: 'Invalid or unauthorized token' });
     }
 };

@@ -57,8 +57,8 @@ export function convertMsToDuration(ms: number, units: string[] = []): string {
 /**
  * Convert text to title case
  */
-export function ucwords(text: string): string | null {
-    if (!text) return null;
+export function ucwords(text: string | null | undefined): string {
+    if (!text) return '';
     return text.toLowerCase().replace(/\b\w/g, t => t.toUpperCase());
 }
 

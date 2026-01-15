@@ -20,9 +20,9 @@ export default {
 
     try {
       const apiUrl = tools.api.createUrl('izumi', '/search/zerochan', {
-        query: input,
+        text: input,
       });
-      const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result).downloadLink;
+      const result = (tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result) as any).downloadLink;
 
       await ctx.reply({
         image: {

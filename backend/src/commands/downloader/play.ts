@@ -1,6 +1,12 @@
 import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
+interface PlayFlags {
+  index?: number;
+  source?: string;
+  input: string;
+}
+
 export default {
   name: 'play',
   aliases: ['p'],
@@ -23,7 +29,7 @@ export default {
         validator: (_val: any) => true,
         parser: (val: string) => val.toLowerCase(),
       },
-    });
+    }) as unknown as PlayFlags;
     const { input } = flag;
 
     if (!input)
@@ -39,8 +45,8 @@ export default {
       );
 
     try {
-      const searchIndex = flag?.index || 0;
-      const source = flag?.source || null;
+      const searchIndex = flag.index || 0;
+      const source = flag.source || null;
 
       if (source === 'soundcloud') {
         const searchApiUrl = tools.api.createUrl('izumi', '/search/soundcloud', {

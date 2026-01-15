@@ -1,5 +1,4 @@
 import WhatsDeXBrain from '../services/whatsDeXBrain.js';
-import { Cooldown } from './cooldown.js';
 import moment from 'moment-timezone';
 import { Bot, GlobalContext, MessageContext, BotMember, Command } from '../types/index.js';
 
@@ -80,13 +79,6 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                 condition: userDb?.banned && ctx.used.command !== 'owner',
                 msg: config.msg.banned,
                 reaction: '🚫',
-            },
-            {
-                key: 'cooldown',
-                condition:
-                    new Cooldown(ctx, config.system.cooldown).onCooldown && !isOwner && !userDb?.premium,
-                msg: config.msg.cooldown,
-                reaction: '💤',
             },
             {
                 key: 'gamerestrict',

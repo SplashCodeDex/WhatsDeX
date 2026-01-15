@@ -22,7 +22,7 @@ export default {
       const apiUrl = tools.api.createUrl('neko', '/search/pixiv', {
         q: input,
       });
-      const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result).imageUrl;
+      const result = (tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result) as any).imageUrl;
 
       await ctx.reply({
         image: {

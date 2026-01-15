@@ -21,10 +21,9 @@ export default {
 
     try {
       const apiUrl = tools.api.createUrl('izumi', '/search/pinterest', {
-        query: input,
+        text: input,
       });
-      const result = tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result.pins).media
-        .images.orig.url;
+      const result = (tools.cmd.getRandomElement((await axios.get(apiUrl)).data.result.pins) as any).media;
 
       await ctx.reply({
         image: {

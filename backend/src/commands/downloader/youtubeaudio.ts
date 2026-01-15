@@ -1,6 +1,11 @@
 import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
+interface YtAudioFlags {
+  document?: boolean;
+  input: string;
+}
+
 export default {
   name: 'youtubeaudio',
   aliases: ['yta', 'ytaudio', 'ytmp3'],
@@ -15,7 +20,7 @@ export default {
         type: 'boolean',
         key: 'document',
       },
-    });
+    }) as unknown as YtAudioFlags;
     const url = flag.input || null;
 
     if (!url)
@@ -38,7 +43,7 @@ export default {
       });
       const { result } = (await axios.get(apiUrl)).data;
 
-      const document = flag?.document || false;
+      const document = flag.document || false;
       if (document) {
         await ctx.reply({
           document: {

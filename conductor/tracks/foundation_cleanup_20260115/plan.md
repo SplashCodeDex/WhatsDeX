@@ -7,16 +7,16 @@ This plan outlines the steps to clean up the codebase, achieve high test coverag
 _Goal: Remove all dead code, unused exports, and redundant files to streamline the repository._
 
 - [x] Task: Audit and remove unused dependencies from `package.json` in root and `backend/`. f17825e
-- [ ] Task: Identify and remove dead code and unused exports across `backend/src/`.
-- [ ] Task: Delete deprecated files and directories (e.g., any legacy scripts or unused config).
-- [ ] Task: Clean up all commented-out code blocks in `backend/src/`.
+- [x] Task: Identify and remove dead code and unused exports across `backend/src/`.
+- [x] Task: Delete deprecated files and directories (e.g., any legacy scripts or unused config).
+- [x] Task: Clean up all commented-out code blocks in `backend/src/`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Codebase Cleanup and Redundancy Removal' (Protocol in workflow.md)
 
 ## Phase 2: Linting and Architectural Compliance
 
 _Goal: Achieve zero linting errors and align the code structure with project guidelines._
 
-- [ ] Task: Fix all ESLint warnings and errors in `backend/` and root.
+- [~] Task: Fix all ESLint warnings and errors in `backend/` and root. (In progress: Fixed `any` usage in authMiddleware and security)
 - [ ] Task: Ensure all files are formatted according to Prettier rules (`npm run format`).
 - [ ] Task: Audit and refactor `backend/src/` components to strictly follow `ARCHITECTURE.md` and `conductor/product-guidelines.md`.
 - [ ] Task: Verify that all public functions in `backend/src/` have JSDoc/docstrings as per workflow rules.

@@ -20,7 +20,7 @@ export default {
       );
 
       await ctx.reply({
-        text: result,
+        text: result as string,
         footer: config.msg.footer,
         buttons: [
           {
