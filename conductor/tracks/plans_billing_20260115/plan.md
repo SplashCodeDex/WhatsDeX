@@ -13,7 +13,7 @@ Prepare the data layer to store subscription states and implement the logic to g
 
 - [x] Task: Update User schema/types to include `planTier`, `subscriptionStatus`, and `trialEndsAt`. (fbb2afa)
 - [x] Task: Create `planMiddleware.ts` to enforce bot limits (1, 3, 10) based on user tier. (617e4d5)
-- [ ] Task: Implement `featureGating` utility to check for AI and Backup permissions in the backend.
+- [x] Task: Implement `featureGating` utility to check for AI and Backup permissions in the backend. (8a92b60)
 - [ ] Task: Conductor - User Manual Verification 'Database Schema & Middleware' (Protocol in workflow.md)
 
 ## Phase 3: Stripe Webhooks & Checkout Flow
