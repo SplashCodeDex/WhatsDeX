@@ -46,12 +46,17 @@ describe('MultiTenantService', () => {
 
     describe('canAddBot', () => {
         it('should return true if bot count is less than maxBots', async () => {
-            // Mock Tenant with maxBots = 2
+            // Mock Tenant with pro plan (maxBots = 3)
             mockFirebaseService.getDoc.mockResolvedValueOnce({
                 id: 'tenant-1',
                 name: 'Test Tenant',
-                plan: 'premium',
-                settings: { maxBots: 2 }
+                plan: 'pro',
+                planTier: 'pro',
+                status: 'active',
+                subscriptionStatus: 'active',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                settings: { aiEnabled: true }
             });
 
             // Mock existing bots (count = 1)
@@ -60,17 +65,23 @@ describe('MultiTenantService', () => {
             ]);
 
             const result = await service.canAddBot('tenant-1');
+            if (!result.success) console.error('Test Failed Error:', result.error);
             expect(result.success).toBe(true);
             expect(result.data).toBe(true);
         });
 
         it('should return false if bot count equals maxBots', async () => {
-            // Mock Tenant with maxBots = 1
+            // Mock Tenant with starter plan (maxBots = 1)
             mockFirebaseService.getDoc.mockResolvedValueOnce({
                 id: 'tenant-1',
                 name: 'Test Tenant',
-                plan: 'free',
-                settings: { maxBots: 1 }
+                plan: 'starter',
+                planTier: 'starter',
+                status: 'active',
+                subscriptionStatus: 'active',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                settings: { aiEnabled: false }
             });
 
             // Mock existing bots (count = 1)
@@ -84,16 +95,18 @@ describe('MultiTenantService', () => {
         });
 
         it('should handle missing settings and default to 1 bot', async () => {
-            // Mock Tenant with missing settings (defaults applied by getTenant schema parse usually,
-            // but here we mock the DB return. The Service calls getTenant which calls Schema.parse)
-            // So we need to ensure getTenant's internal Schema.parse logic is tested or assume
-            // getTenant works.
-
+            // Mock Tenant with missing plan (defaults to starter)
             mockFirebaseService.getDoc.mockResolvedValueOnce({
                 id: 'tenant-1',
                 name: 'Test Tenant',
-                plan: 'free',
+                plan: 'starter',
+                planTier: 'starter',
+                status: 'active',
+                subscriptionStatus: 'active',
+                createdAt: new Date(),
+                updatedAt: new Date(),
                 // missing settings
+                settings: { }
             });
 
             mockFirebaseService.getCollection.mockResolvedValueOnce([
@@ -102,6 +115,7 @@ describe('MultiTenantService', () => {
 
             const result = await service.canAddBot('tenant-1');
             // Default maxBots is 1. Existing is 1. Should be false.
+            expect(result.success).toBe(true);
             expect(result.data).toBe(false);
         });
 

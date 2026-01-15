@@ -128,11 +128,7 @@ export class MultiTenantService {
 
     try {
       // Get all bots for this tenant
-      const bots = await firebaseService.getCollection('tenants', tenantId); // FirebaseService handles subcollection
-      // Wait, let's check FirebaseService.getCollection implementation again.
-      // FirebaseService.getCollection('bots', tenantId) should work if 'bots' is a subcollection.
-      
-      const botDocs = await firebaseService.getCollection('tenants/{tenantId}/bots' as any, tenantId);
+      const botDocs = await firebaseService.getCollection('bots' as any, tenantId);
       const currentBotCount = botDocs.length;
 
       if (currentBotCount >= maxBots) {
