@@ -114,6 +114,35 @@ export class FirebaseService {
       throw err;
     }
   }
+
+  /**
+   * Generic method to delete a document
+   */
+  public async deleteDoc<K extends CollectionKey>(
+    collection: string,
+    docId: string,
+    tenantId?: string
+  ): Promise<void> {
+    try {
+      let docRef;
+
+      if (tenantId) {
+        docRef = db.collection('tenants').doc(tenantId).collection(collection).doc(docId);
+      } else {
+        if (collection !== 'tenants') {
+          throw new Error('Tenant ID is required for non-root collections');
+        }
+        docRef = db.collection(collection).doc(docId);
+      }
+
+      await docRef.delete();
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore deleteDoc error [${collection}/${docId}]:`, err);
+      throw err;
+    }
+  }
 }
+
 
 export const firebaseService = FirebaseService.getInstance();

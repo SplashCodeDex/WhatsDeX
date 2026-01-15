@@ -324,7 +324,71 @@ export class MultiTenantBotService {
     // To be implemented: fetch all bots with auto-start enabled and start them
   }
 
+  /**
+   * Get a single bot from Firestore
+   */
+  async getBot(tenantId: string, botId: string): Promise<Result<BotInstance>> {
+    try {
+      const doc = await firebaseService.getDoc<'tenants/{tenantId}/bots'>('bots', botId, tenantId);
+      if (!doc) {
+        return { success: false, error: new Error('Bot not found') };
+      }
+      return { success: true, data: doc as BotInstance };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`getBot error [${tenantId}/${botId}]:`, err);
+      return { success: false, error: err };
+    }
+  }
+
+  /**
+   * Update a bot in Firestore
+   */
+  async updateBot(tenantId: string, botId: string, data: Partial<BotInstance>): Promise<Result<BotInstance>> {
+    try {
+      const updateData = {
+        ...data,
+        updatedAt: Timestamp.now()
+      };
+      await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, updateData, tenantId, true);
+
+      const updated = await this.getBot(tenantId, botId);
+      return updated;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`updateBot error [${tenantId}/${botId}]:`, err);
+      return { success: false, error: err };
+    }
+  }
+
+  /**
+   * Delete a bot from Firestore and stop it if active
+   */
+  async deleteBot(tenantId: string, botId: string): Promise<Result<void>> {
+    try {
+      // Stop the bot if it's active
+      if (this.activeBots.has(botId)) {
+        await this.stopBot(botId);
+      }
+
+      await firebaseService.deleteDoc<'tenants/{tenantId}/bots'>('bots', botId, tenantId);
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`deleteBot error [${tenantId}/${botId}]:`, err);
+      return { success: false, error: err };
+    }
+  }
+
+  /**
+   * Get the QR code for a bot
+   */
+  getBotQR(botId: string): string | null {
+    return this.qrCodes.get(botId) || null;
+  }
+
   async stopAllBots(): Promise<void> {
+
     logger.info('Stopping all active bots...');
     for (const botId of this.activeBots.keys()) {
       await this.stopBot(botId);
