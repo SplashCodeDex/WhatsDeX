@@ -576,8 +576,8 @@ class MediaProcessor {
       const toGB = (bytes: number) => `${(bytes / (1024 * 1024 * 1024)).toFixed(2)}GB`;
 
       // Additionally compute average processing time and success rate from analytics table (last 30d or provided)
-      let avgProcessing: number | null = null;
-      let successRate: number | null = null;
+      const avgProcessing: number | null = null;
+      const successRate: number | null = null;
       try {
         // const { default: prisma } = await import('../lib/prisma.js');
         // const now = new Date();

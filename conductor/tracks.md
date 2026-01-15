@@ -4,6 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Full Firebase Migration and Backend Refactoring
-
-_Link: [./conductor/tracks/refactor_20260108/](./conductor/tracks/refactor_20260108/)_
+- [ ] [Global Stabilization & Linting Fixes](tracks/stabilization_20260108/plan.md)
+- [x] [Backend Refactor & Firebase Migration](tracks/refactor_20260108/plan.md)

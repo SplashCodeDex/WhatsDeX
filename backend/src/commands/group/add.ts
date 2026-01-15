@@ -1,36 +1,41 @@
 import { MessageContext } from '../../types/index.js';
+
 export default {
   name: 'add',
   category: 'group',
   permissions: {
     admin: true,
     botAdmin: true,
-    group: true,
-    restrict: true,
+    group: true
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
-    const input = ctx.args.join(' ') || null;
+    const { formatter } = ctx.bot.context;
+    const input = ctx.args.join('');
 
-    if (!input)
-      return await ctx.reply(
-        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          tools.msg.generateCmdExample(ctx.used, ctx.getId(ctx.sender.jid))
-        )}`
-      );
+    if (!input) {
+      return await ctx.reply(formatter.quote('⚠️ Please provide a phone number to add.'));
+    }
 
-    const accountJid = `${input.replace(/[^\d]/g, '')}@s.whatsapp.net`;
-
-    const isOnWhatsApp = await ctx.core.onWhatsApp(accountJid);
-    if (isOnWhatsApp.length === 0)
-      return await ctx.reply(formatter.quote('❎ Akun tidak ada di WhatsApp!'));
+    // Basic cleaning found in original code
+    const number = input.replace(/[^\d]/g, '');
+    const accountJid = `${number}@s.whatsapp.net`;
 
     try {
-      await ctx.group().add([accountJid]);
+      // Verify user exists on WhatsApp using bot socket
+      if (ctx.bot.onWhatsApp) {
+        const results = await ctx.bot.onWhatsApp(accountJid);
+        if (!results || results.length === 0 || !results[0].exists) {
+          return await ctx.reply(formatter.quote('❎ Only numbers registered on WhatsApp can be added.'));
+        }
+      }
 
-      await ctx.reply(formatter.quote('✅ Successfully added!'));
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+      await ctx.group().add([accountJid]);
+      await ctx.reply(formatter.quote('✅ Request to add user sent!'));
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      ctx.bot.context.logger.error('Add command failed', { error: err });
+      await ctx.reply(formatter.quote(`❌ Failed to add user: ${err}`));
     }
   },
 };

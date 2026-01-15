@@ -9,7 +9,7 @@ export default {
   },
   code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
-    const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
+    const accountJid = ctx.quoted?.senderJid || (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) || null;
 
     if (!accountJid)
       return await ctx.reply({
@@ -27,7 +27,7 @@ export default {
       return await ctx.reply(formatter.quote('❎ Dia adalah anggota!'));
 
     try {
-      await ctx.group().demote(accountJid);
+      await ctx.group().demote([accountJid]);
 
       await ctx.reply(formatter.quote('✅ Berhasil diturunkan dari admin menjadi anggota!'));
     } catch (error: any) {

@@ -58,3 +58,31 @@ export const handleError = async (ctx: any, error: any) => {
     console.error(error);
     await ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
 };
+
+export const fakeMetaAiQuotedText = (text: string) => {
+    return {
+        key: {
+            remoteJid: 'status@broadcast',
+            fromMe: false,
+            id: 'META_AI_MOCK',
+        },
+        message: {
+            conversation: text,
+        },
+        pushName: 'Meta AI',
+    };
+};
+
+export const isUrl = (url: string) => {
+    return url.match(
+        new RegExp(
+            /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/,
+            'gi'
+        )
+    );
+};
+
+export const checkQuotedMedia = (type: string | undefined, expectedTypes: string[]) => {
+    if (!type) return false;
+    return expectedTypes.some(t => type.toLowerCase().includes(t.toLowerCase()));
+};

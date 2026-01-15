@@ -1,4 +1,5 @@
 import { MessageContext } from '../../types/index.js';
+
 export default {
   name: 'group',
   category: 'group',
@@ -14,14 +15,16 @@ export default {
     if (!input)
       return await ctx.reply(
         `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
-          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, 'open'))}\n${formatter.quote(
-            tools.msg.generateNotes([
-              `Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`,
-            ])
-          )}`
+        `${formatter.quote(tools.msg.generateCmdExample(ctx.used, 'open'))}\n${formatter.quote(
+          tools.msg.generateNotes([
+            `Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} untuk melihat daftar.`,
+          ])
+        )}`
       );
 
-    if (input.toLowerCase() === 'list') {
+    const action = input.toLowerCase();
+
+    if (action === 'list') {
       const listText = await tools.list.get('group');
       return await ctx.reply({
         text: listText,
@@ -30,31 +33,38 @@ export default {
     }
 
     try {
-      switch (input.toLowerCase()) {
+      const group = ctx.group();
+      switch (action) {
         case 'open':
+          await group.open();
+          break;
         case 'close':
+          await group.close();
+          break;
         case 'lock':
+          await group.lock();
+          break;
         case 'unlock':
-          await ctx.group()[input.toLowerCase()]();
+          await group.unlock();
           break;
         case 'approve':
-          await ctx.group().joinApproval('on');
+          await group.joinApproval('on');
           break;
         case 'disapprove':
-          await ctx.group().joinApproval('off');
+          await group.joinApproval('off');
           break;
         case 'invite':
-          await ctx.group().membersCanAddMemberMode('on');
+          await group.membersCanAddMemberMode(true);
           break;
         case 'restrict':
-          await ctx.group().membersCanAddMemberMode('off');
+          await group.membersCanAddMemberMode(false);
           break;
         default:
           return await ctx.reply(formatter.quote(`❎ Setelan "${input}" tidak valid!`));
       }
 
       await ctx.reply(formatter.quote('✅ Berhasil mengubah setelan grup!'));
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

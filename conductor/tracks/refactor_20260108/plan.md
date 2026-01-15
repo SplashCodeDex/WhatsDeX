@@ -39,5 +39,5 @@
 - [x] Task: Global Type Safety & Final Polish
   - [x] Sub-task: Update `PROJECT_RULES.md` with new standards.
   - [x] Sub-task: Fix critical foundational type errors (700+ fixed).
-  - [~] Note: Remaining linting/type errors (~1600) to be addressed in a dedicated stabilization track.
+  - [x] Note: Remaining linting/type errors (~1600) to be addressed in `stabilization_20260108`.
 - [x] Task: Conductor - User Manual Verification 'Authentication & Validation' (Protocol in workflow.md)

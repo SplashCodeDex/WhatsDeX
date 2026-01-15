@@ -1,5 +1,5 @@
-
-import StripeService from './stripe.js';
+import Stripe from 'stripe';
+import { StripeService, CreateCustomerData, SubscriptionOptions } from './stripe.js';
 import logger from '../utils/logger.js';
 import { db } from '../lib/firebase.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
@@ -10,7 +10,7 @@ class SubscriptionService {
   private isInitialized: boolean;
   public usageLimits: Record<string, any>;
 
-  constructor(databaseService?: any) {
+  constructor() {
     // databaseService ignored as we use Firestore directly now
     this.stripe = new StripeService();
     this.isInitialized = false;
@@ -65,7 +65,7 @@ class SubscriptionService {
    * Initialize subscription service
    * @param {Object} config - Configuration object
    */
-  async initialize(config: any) {
+  async initialize(config: { stripeSecretKey: string; stripeWebhookSecret: string }) {
     try {
       await this.stripe.initialize(config.stripeSecretKey, config.stripeWebhookSecret);
 
@@ -95,9 +95,9 @@ class SubscriptionService {
       let customer = await this.getStripeCustomer(userId);
       if (!customer) {
         // Fix: Use a placeholder or proper tenantId if available
-        // In the new architecture, everything is tenant-scoped. 
+        // In the new architecture, everything is tenant-scoped.
         // For legacy compatibility, we'll use a 'default' tenant or skip if not found.
-        const user = await UserService.getUserById('default', userId); 
+        const user = await UserService.getUserById('default', userId);
         if (!user) {
           throw new Error(`User not found: ${userId}`);
         }
@@ -118,15 +118,17 @@ class SubscriptionService {
       // Create subscription
       const subscription = await this.stripe.createSubscription(customer.id, planKey, { userId });
 
+      const sub = subscription as any;
+
       // Save subscription to database
       const subscriptionData = {
         userId,
-        stripeSubscriptionId: subscription.id,
+        stripeSubscriptionId: sub.id,
         planKey,
-        status: subscription.status,
-        currentPeriodStart: Timestamp.fromDate(new Date(subscription.current_period_start * 1000)),
-        currentPeriodEnd: Timestamp.fromDate(new Date(subscription.current_period_end * 1000)),
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        status: sub.status,
+        currentPeriodStart: Timestamp.fromDate(new Date(sub.current_period_start * 1000)),
+        currentPeriodEnd: Timestamp.fromDate(new Date(sub.current_period_end * 1000)),
+        cancelAtPeriodEnd: sub.cancel_at_period_end,
         createdAt: Timestamp.now(),
       };
 
@@ -138,12 +140,12 @@ class SubscriptionService {
       logger.info('Subscription created successfully', {
         userId,
         planKey,
-        subscriptionId: subscription.id,
+        subscriptionId: sub.id,
       });
 
       return {
-        subscription,
-        clientSecret: subscription.latest_invoice.payment_intent?.client_secret,
+        subscription: sub,
+        clientSecret: (sub.latest_invoice as any)?.payment_intent?.client_secret,
       };
     } catch (error: any) {
       logger.error('Failed to create subscription', {
@@ -232,12 +234,13 @@ class SubscriptionService {
         newPlanKey
       );
 
+      const sub = stripeSubscription as any;
       // Update database
       await db.collection('subscriptions').doc(subscription.id).update({
         planKey: newPlanKey,
-        status: stripeSubscription.status,
-        currentPeriodStart: Timestamp.fromDate(new Date(stripeSubscription.current_period_start * 1000)),
-        currentPeriodEnd: Timestamp.fromDate(new Date(stripeSubscription.current_period_end * 1000)),
+        status: sub.status,
+        currentPeriodStart: Timestamp.fromDate(new Date(sub.current_period_start * 1000)),
+        currentPeriodEnd: Timestamp.fromDate(new Date(sub.current_period_end * 1000)),
       });
 
       logger.info('Subscription plan updated', {
@@ -544,7 +547,7 @@ class SubscriptionService {
    * @param {Object} event - Stripe webhook event
    * @returns {Promise<void>}
    */
-  async handleWebhook(event: any) {
+  async handleWebhook(event: Stripe.Event) {
     try {
       switch (event.type) {
         case 'customer.subscription.created':
@@ -580,7 +583,7 @@ class SubscriptionService {
    * Handle subscription updates from webhooks
    * @param {Object} subscription - Stripe subscription object
    */
-  async handleSubscriptionUpdate(subscription: any) {
+  async handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     try {
       const snapshot = await db.collection('subscriptions')
         .where('stripeSubscriptionId', '==', subscription.id)
@@ -593,8 +596,8 @@ class SubscriptionService {
 
         await db.collection('subscriptions').doc(docId).update({
           status: subscription.status,
-          currentPeriodStart: Timestamp.fromDate(new Date(subscription.current_period_start * 1000)),
-          currentPeriodEnd: Timestamp.fromDate(new Date(subscription.current_period_end * 1000)),
+          currentPeriodStart: Timestamp.fromDate(new Date((subscription as any).current_period_start * 1000)),
+          currentPeriodEnd: Timestamp.fromDate(new Date((subscription as any).current_period_end * 1000)),
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
         });
 
@@ -620,7 +623,7 @@ class SubscriptionService {
    * Handle subscription cancellations from webhooks
    * @param {Object} subscription - Stripe subscription object
    */
-  async handleSubscriptionCancellation(subscription: any) {
+  async handleSubscriptionCancellation(subscription: Stripe.Subscription) {
     try {
       const snapshot = await db.collection('subscriptions')
         .where('stripeSubscriptionId', '==', subscription.id)
@@ -650,17 +653,18 @@ class SubscriptionService {
    * Handle successful payments from webhooks
    * @param {Object} invoice - Stripe invoice object
    */
-  async handlePaymentSuccess(invoice: any) {
+  async handlePaymentSuccess(invoice: Stripe.Invoice) {
     try {
       // Record payment in database
+      const inv = invoice as any;
       await db.collection('payments').add({
-        userId: invoice.customer_metadata?.userId,
+        userId: inv.customer_metadata?.userId || (inv.metadata && inv.metadata.userId),
         amount: invoice.amount_due,
         currency: invoice.currency,
         status: 'completed',
         paymentMethod: 'stripe',
         transactionId: invoice.id,
-        description: `Subscription payment - ${invoice.subscription}`,
+        description: `Subscription payment - ${inv.subscription}`,
         createdAt: Timestamp.now(),
       });
 
@@ -681,17 +685,18 @@ class SubscriptionService {
    * Handle failed payments from webhooks
    * @param {Object} invoice - Stripe invoice object
    */
-  async handlePaymentFailure(invoice: any) {
+  async handlePaymentFailure(invoice: Stripe.Invoice) {
     try {
       // Record failed payment
+      const inv = invoice as any;
       await db.collection('payments').add({
-        userId: invoice.customer_metadata?.userId,
+        userId: inv.customer_metadata?.userId,
         amount: invoice.amount_due,
         currency: invoice.currency,
         status: 'failed',
         paymentMethod: 'stripe',
         transactionId: invoice.id,
-        description: `Failed payment - ${invoice.subscription}`,
+        description: `Failed payment - ${inv.subscription}`,
         createdAt: Timestamp.now(),
       });
 

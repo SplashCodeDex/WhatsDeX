@@ -1,64 +1,99 @@
 import logger from '../utils/logger.js';
+import { databaseService } from './database.js'; // Use the new service
+import { Bot, GlobalContext, MessageContext } from '../types/index.js';
 
-/**
- * Service for system monitoring and analytics
- * Transitions from Prisma to Firebase
- */
+interface Metrics {
+  responseTimes: { endpoint: string; responseTime: number; statusCode: number; timestamp: number }[];
+  commandUsage: Map<string, number>;
+  errors: { error: string; context: any; timestamp: number }[];
+  auditEvents: any[];
+  activeConnections: number;
+  memoryUsage: number;
+  cpuUsage: number;
+  uptime: number;
+}
+
 class MonitoringService {
+  private metrics: Metrics;
+
   constructor() {
     this.metrics = {
       responseTimes: [],
-      errorCounts: new Map(),
       commandUsage: new Map(),
+      errors: [],
+      auditEvents: [],
       activeConnections: 0,
       memoryUsage: 0,
-      cacheHitRate: 0,
+      cpuUsage: 0,
+      uptime: 0,
     };
-    this.startPeriodicTasks();
+
+    // Start periodic collection
+    this.startPeriodicCollection();
   }
 
-  async recordResponseTime(endpoint, responseTime, statusCode) {
-    logger.info('🔥 Firebase recordResponseTime placeholder', { endpoint, responseTime });
+  async recordResponseTime(endpoint: string, responseTime: number, statusCode: number) {
     this.metrics.responseTimes.push({ endpoint, responseTime, statusCode, timestamp: Date.now() });
     if (this.metrics.responseTimes.length > 1000) this.metrics.responseTimes.shift();
   }
 
-  async recordCommandUsage(command, userId, success = true, executionTime = null) {
-    logger.info('🔥 Firebase recordCommandUsage placeholder', { command, userId });
-    const key = `${command}:${success ? 'success' : 'error'}`;
+  async recordCommandUsage(command: string, userId: string, success = true, executionTime: number | null = null) {
+    const key = `${command}:${success ? 'success' : 'failure'}`;
     this.metrics.commandUsage.set(key, (this.metrics.commandUsage.get(key) || 0) + 1);
   }
 
-  async recordError(error, context = {}) {
-    logger.error('Monitoring recorded error:', { message: error.message, ...context });
-    logger.info('🔥 Firebase recordError placeholder');
+  async recordError(error: any, context: any = {}) {
+    this.metrics.errors.push({
+      error: error.message || String(error),
+      context,
+      timestamp: Date.now(),
+    });
+    if (this.metrics.errors.length > 100) this.metrics.errors.shift();
   }
 
-  async recordAuditEvent(event) {
-    logger.info('🔥 Firebase recordAuditEvent placeholder', { eventType: event.eventType });
+  async recordAuditEvent(event: any) {
+    this.metrics.auditEvents.push({
+      ...event,
+      timestamp: Date.now(),
+    });
+    if (this.metrics.auditEvents.length > 100) this.metrics.auditEvents.shift();
   }
 
-  getMetricsSummary() {
+  async getMetrics() {
     return {
+      responseTimes: this.calculateResponseTimeStats(),
+      commandUsage: Object.fromEntries(this.metrics.commandUsage),
       activeUsers: this.metrics.activeConnections,
-      timestamp: new Date().toISOString(),
+      systemHealth: {
+        memory: this.metrics.memoryUsage,
+        cpu: this.metrics.cpuUsage,
+        uptime: this.metrics.uptime,
+      },
+      recentErrors: this.metrics.errors.slice(-10),
     };
   }
 
-  async healthCheck() {
-    return {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-    };
+  calculateResponseTimeStats() {
+    if (this.metrics.responseTimes.length === 0) return { avg: 0, p95: 0, p99: 0 };
+
+    const times = this.metrics.responseTimes.map(m => m.responseTime).sort((a, b) => a - b);
+    const avg = times.reduce((a, b) => a + b, 0) / times.length;
+    const p95 = times[Math.floor(times.length * 0.95)];
+    const p99 = times[Math.floor(times.length * 0.99)];
+
+    return { avg, p95, p99 };
   }
 
-  startPeriodicTasks() {
-    // Basic memory usage tracking
+  startPeriodicCollection() {
     setInterval(() => {
       const used = process.memoryUsage().heapUsed / 1024 / 1024;
       this.metrics.memoryUsage = Math.round(used * 100) / 100;
-    }, 60000);
+      this.metrics.uptime = process.uptime();
+      // CPU usage requires more complex logic or external lib, skipping for now or mocking
+      this.metrics.cpuUsage = 0; 
+    }, 5000);
   }
 }
 
-export default new MonitoringService();
+export const monitoringService = new MonitoringService();
+export default monitoringService;

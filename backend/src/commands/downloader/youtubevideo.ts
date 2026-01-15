@@ -4,6 +4,7 @@ import z from 'zod';
 import { lookup } from 'mime-types';
 import { createUrl } from '../../tools/api.js';
 import { parseFlag } from '../../tools/cmd.js';
+import logger from '../../utils/logger.js';
 
 export default {
   name: 'youtubevideo',
@@ -69,7 +70,7 @@ export default {
         });
       }
     } catch (error: any) {
-      console.error(error);
+      logger.error('YoutubeVideo command error:', error);
       await ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
   },

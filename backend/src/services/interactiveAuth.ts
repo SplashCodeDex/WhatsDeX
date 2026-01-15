@@ -5,7 +5,7 @@ class InteractiveAuthEnhancement {
   unifiedAuth: any;
   phoneticAlphabet: Record<string, string>;
 
-  constructor(unifiedAuth) {
+  constructor(unifiedAuth: any) {
     this.unifiedAuth = unifiedAuth;
     this.phoneticAlphabet = {
       A: 'Alpha', B: 'Bravo', C: 'Charlie', D: 'Delta', E: 'Echo',
@@ -71,7 +71,7 @@ class InteractiveAuthEnhancement {
   /**
    * Interactive session choice for existing sessions
    */
-  async promptSessionChoice(sessionInfo) {
+  async promptSessionChoice(sessionInfo: any) {
     return new Promise(resolve => {
       console.log('\n' + '╔══════════════════════════════════════════════════════════════╗');
       console.log('║                    WhatsDeX Authentication                   ║');
@@ -209,7 +209,7 @@ class InteractiveAuthEnhancement {
   /**
    * Execute chosen authentication method
    */
-  async executeChosenMethod(choice, config) {
+  async executeChosenMethod(choice: any, config: any) {
     try {
       let method;
       let result;
@@ -261,7 +261,7 @@ class InteractiveAuthEnhancement {
 
     if (analytics.methodStats && Object.keys(analytics.methodStats).length > 0) {
       console.log('\nMethod Performance:');
-      Object.entries(analytics.methodStats).forEach(([method, stats]) => {
+      Object.entries(analytics.methodStats).forEach(([method, stats]: [string, any]) => {
         console.log(`  ${method}: ${stats.successes}/${stats.attempts} successes`);
       });
     }
@@ -272,7 +272,7 @@ class InteractiveAuthEnhancement {
   /**
    * Format phone number for display
    */
-  formatPhoneNumber(phone) {
+  formatPhoneNumber(phone: string) {
     if (!phone) return 'Not configured';
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length === 10) {

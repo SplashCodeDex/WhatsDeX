@@ -19,12 +19,14 @@ async function firestoreCheck(timeoutMs: number = 5000) {
   });
 }
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function waitForFirestore({
   maxRetries = parseInt(process.env.READINESS_MAX_RETRIES || '30', 10),
   intervalMs = parseInt(process.env.READINESS_INTERVAL_MS || '2000', 10),
   timeoutMs = parseInt(process.env.READINESS_TIMEOUT_MS || '5000', 10),
-  logger = console,
-} = {} as any) {
+  logger = console as any,
+} = {}) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       await firestoreCheck(timeoutMs);
@@ -63,8 +65,8 @@ export async function waitForRedis({
   password = parseRedisEnv().password,
   maxRetries = parseInt(process.env.READINESS_MAX_RETRIES || '30', 10),
   intervalMs = parseInt(process.env.READINESS_INTERVAL_MS || '2000', 10),
-  logger = console,
-} = {} as any) {
+  logger = console as any,
+} = {}) {
   let client: Redis | undefined;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -87,7 +89,7 @@ export async function waitForRedis({
   throw new Error('Redis readiness check failed');
 }
 
-export async function waitForDependencies({ logger = console } = {} as any) {
+export async function waitForDependencies({ logger = console as any } = {}) {
   // Firestore (required for data and auth)
   await waitForFirestore({ logger });
   // Redis (optional, but many features rely on it). Only wait if host/port set.

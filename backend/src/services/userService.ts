@@ -3,7 +3,7 @@ import { firebaseService } from '@/services/FirebaseService.js';
 import logger from '@/utils/logger.js';
 import { TenantUserDocument } from '@/types/index.js';
 
-class UserService {
+export class UserService {
   private static instance: UserService;
 
   private constructor() {}

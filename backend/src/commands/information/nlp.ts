@@ -1,6 +1,7 @@
 import { MessageContext } from '../../types/index.js';
 import NLPProcessorService from '../../services/nlpProcessor.js';
 import * as formatter from '../../utils/formatters.js';
+import logger from '../../utils/logger.js';
 
 export default {
   name: 'nlp',
@@ -27,12 +28,15 @@ export default {
       const nlpService = new NLPProcessorService();
 
       // Get user's recent commands for context
-      const userDb = await ctx.bot.context.database.user.get(ctx.author.id);
-      const recentCommands = userDb?.recentCommands || [];
+      // Note: ctx.author doesn't exist on MessageContext, referring to previous context issues.
+      // Assuming userId is ctx.sender.jid based on recent fixes.
+      const userId = ctx.sender.jid;
+      const userDb = await ctx.bot.context.database.user.get(userId, ctx.bot.tenantId);
+      const recentCommands: string[] = []; // User schema doesn't have recentCommands yet
 
       // Process the input
       const result = await nlpService.processInput(input, {
-        userId: ctx.author.id,
+        userId: userId,
         recentCommands,
         isGroup: ctx.isGroup(),
         isAdmin: ctx.isGroup() ? await ctx.group().isAdmin(ctx.sender.jid) : false,
@@ -75,7 +79,7 @@ export default {
         footer: config.msg.footer,
       });
     } catch (error: any) {
-      console.error('Error in NLP command:', error);
+      logger.error('Error in NLP command:', error);
       return ctx.reply(
         formatter.quote(`❎ An error occurred while analyzing your input: ${error.message}`)
       );

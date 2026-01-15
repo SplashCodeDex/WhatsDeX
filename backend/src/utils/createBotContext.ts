@@ -1,6 +1,6 @@
 import moment from 'moment-timezone';
 import { getJid, getSender, getGroup } from './baileysUtils.js';
-import { Cooldown } from '../middleware/cooldown.js';
+// import { Cooldown } from '../middleware/cooldown.js'; // Removed
 import { db } from '../lib/firebase.js';
 
 const createBotContext = async (
@@ -18,7 +18,8 @@ const createBotContext = async (
   const groupId = getGroup(rawBaileysMessage);
 
   // Instantiate Cooldown
-  const cooldown = new Cooldown();
+  // const cooldown = new Cooldown(); // Removed
+  const cooldown = null;
 
   const useDirectBaileys = process.env.USE_BAILEYS_DIRECT === 'true' || process.env.NODE_ENV === 'production';
 
@@ -144,7 +145,7 @@ const createBotContext = async (
       return []; // Not implemented in Baileys easily without extra logic
     },
     approvePendingMembers: async (jids: string[]) => {
-      return null; 
+      return null;
     },
     rejectPendingMembers: async (jids: string[]) => {
       return null;
@@ -219,7 +220,7 @@ const createBotContext = async (
     replyReact,
     simulateTyping,
     used,
-    cooldown,
+    // cooldown: null, // Removed broken Cooldown class usage
     ip: requestInfo.ip || 'unknown',
     userAgent: requestInfo.userAgent || 'WhatsApp',
     sessionId: requestInfo.sessionId || 'unknown',

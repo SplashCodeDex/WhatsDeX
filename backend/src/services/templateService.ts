@@ -66,7 +66,7 @@ export const templateService = {
     return templates;
   },
 
-  getTemplateById: async (id) => {
+  getTemplateById: async (id: string) => {
     return templates.find(t => t.id === id);
   }
 };

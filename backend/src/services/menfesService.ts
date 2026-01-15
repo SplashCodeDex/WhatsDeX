@@ -1,51 +1,81 @@
 /**
  * Menfes/Confess Service - Anonymous messaging system
- * Implements private messaging between users with proper privacy and rate limiting
  */
 
 import crypto from 'crypto';
+import { Result } from '../types/index.js';
+import logger from '../utils/logger.js';
 
-class MenfesService {
-  constructor() {
+interface MenfesSession {
+  id: string;
+  fromUser: string;
+  toUser: string;
+  fakeName: string;
+  startTime: number;
+  messageCount: number;
+  isActive: boolean;
+}
+
+interface MenfesMessage {
+  from: string;
+  to: string;
+  message: any;
+  timestamp: number;
+}
+
+interface RateLimitInfo {
+  lastUsed: number;
+  count: number;
+}
+
+export class MenfesService {
+  private static instance: MenfesService;
+  private activeSessions: Map<string, MenfesSession>;
+  private sessionTimeouts: Map<string, NodeJS.Timeout>;
+  private rateLimits: Map<string, RateLimitInfo>;
+  private messageHistory: Map<string, MenfesMessage[]>;
+
+  private constructor() {
     this.activeSessions = new Map();
     this.sessionTimeouts = new Map();
     this.rateLimits = new Map();
     this.messageHistory = new Map();
   }
 
+  public static getInstance(): MenfesService {
+    if (!MenfesService.instance) {
+      MenfesService.instance = new MenfesService();
+    }
+    return MenfesService.instance;
+  }
+
   /**
-   * Start menfes session between two users
-   * @param {string} fromUser - Sender user ID
-   * @param {string} toUser - Target user ID (phone number)
-   * @param {string} fakeName - Anonymous name to use
+   * Start menfes session
    */
-  async startMenfesSession(fromUser, toUser, fakeName) {
+  async startMenfesSession(fromUser: string, toUser: string, fakeName: string): Promise<Result<{ sessionId: string; message: string }>> {
     try {
-      // Validate phone number format
       const cleanNumber = toUser.replace(/\D/g, '');
       if (cleanNumber.length < 10 || cleanNumber.length > 15) {
-        throw new Error('Invalid phone number format');
+        return { success: false, error: new Error('Invalid phone number format') };
       }
 
       const targetJid = `${cleanNumber}@s.whatsapp.net`;
 
-      // Check if session already exists
       if (this.activeSessions.has(fromUser)) {
-        throw new Error(`Kamu Sedang Berada Di Sesi menfes!`);
+        return { success: false, error: new Error('Kamu Sedang Berada Di Sesi menfes!') };
       }
 
       if (this.activeSessions.has(targetJid)) {
-        throw new Error('Target user sudah dalam sesi menfes dengan orang lain');
+        return { success: false, error: new Error('Target user sudah dalam sesi menfes dengan orang lain') };
       }
 
-      // Check rate limits
       if (!this.checkRateLimit(fromUser, 'start_session')) {
-        throw new Error('Rate limit exceeded. Please wait before starting new session');
+        return { success: false, error: new Error('Rate limit exceeded. Please wait.') };
       }
 
       const sessionId = crypto.randomUUID();
 
-      const sessionData = {
+      const sessionData: MenfesSession = {
         id: sessionId,
         fromUser,
         toUser: targetJid,
@@ -55,7 +85,6 @@ class MenfesService {
         isActive: true,
       };
 
-      // Create bidirectional sessions
       this.activeSessions.set(fromUser, sessionData);
       this.activeSessions.set(targetJid, {
         ...sessionData,
@@ -64,262 +93,134 @@ class MenfesService {
         fakeName: 'Penerima',
       });
 
-      // Set session timeout (10 minutes)
       const timeout = setTimeout(() => {
         this.endMenfesSession(fromUser, 'timeout');
       }, 600000);
 
       this.sessionTimeouts.set(fromUser, timeout);
       this.sessionTimeouts.set(targetJid, timeout);
-
-      // Initialize message history
       this.messageHistory.set(sessionId, []);
 
       return {
         success: true,
-        sessionId,
-        message: `_Memulai menfes..._\n*Silahkan Mulai kirim pesan/media*\n*Durasi menfes hanya selama 10 menit*\n*Note :* jika ingin mengakhiri ketik _*delmenfes*_`,
+        data: {
+          sessionId,
+          message: `_Memulai menfes..._\n*Silahkan Mulai kirim pesan/media*\n*Durasi menfes hanya selama 10 menit*`,
+        }
       };
-    } catch (error: any) {
-      console.error('Error starting menfes session:', error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error starting menfes session:', err);
+      return { success: false, error: err };
     }
   }
 
   /**
    * Send menfes message
-   * @param {string} fromUser - Sender user ID
-   * @param {Object} message - Message object
    */
-  async sendMenfesMessage(fromUser, message) {
+  async sendMenfesMessage(fromUser: string, message: any): Promise<Result<{ forwarded: boolean }>> {
     try {
       const session = this.activeSessions.get(fromUser);
       if (!session || !session.isActive) {
-        throw new Error('No active menfes session found');
+        return { success: false, error: new Error('No active menfes session found') };
       }
 
-      // Check if session is still valid
       if (Date.now() - session.startTime > 600000) {
         await this.endMenfesSession(fromUser, 'expired');
-        throw new Error('Session expired');
+        return { success: false, error: new Error('Session expired') };
       }
 
-      // Check rate limits for messages
       if (!this.checkRateLimit(fromUser, 'send_message')) {
-        throw new Error('Rate limit exceeded. Please slow down');
+        return { success: false, error: new Error('Rate limit exceeded') };
       }
 
-      // Prepare message for forwarding
-      const menfesMessage = {
-        ...message,
-        contextInfo: {
-          isForwarded: true,
-          forwardingScore: 1,
-          quotedMessage: {
-            conversation: `*Pesan Dari ${session.fakeName}*`,
-          },
-          key: {
-            remoteJid: '0@s.whatsapp.net',
-            fromMe: false,
-            participant: '0@s.whatsapp.net',
-          },
-        },
-      };
-
-      // Store message in history
-      const messageHistory = this.messageHistory.get(session.id);
-      messageHistory.push({
+      const history = this.messageHistory.get(session.id) || [];
+      history.push({
         from: fromUser,
         to: session.toUser,
-        message: menfesMessage,
+        message,
         timestamp: Date.now(),
       });
+      this.messageHistory.set(session.id, history);
 
-      // Update message count
       session.messageCount++;
-
-      return {
-        success: true,
-        message: 'Pesan berhasil dikirim melalui menfes',
-        forwarded: true,
-      };
-    } catch (error: any) {
-      console.error('Error sending menfes message:', error);
-      throw error;
+      return { success: true, data: { forwarded: true } };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error sending menfes message:', err);
+      return { success: false, error: err };
     }
   }
 
   /**
    * End menfes session
-   * @param {string} userId - User ID
-   * @param {string} reason - Reason for ending
    */
-  async endMenfesSession(userId, reason = 'manual') {
+  async endMenfesSession(userId: string, reason = 'manual'): Promise<Result<{ messageCount: number }>> {
     try {
       const session = this.activeSessions.get(userId);
       if (!session) {
-        return { success: false, message: 'No active session found' };
+        return { success: false, error: new Error('No active session found') };
       }
 
-      // Clear timeouts
-      const timeout = this.sessionTimeouts.get(userId);
-      if (timeout) {
-        clearTimeout(timeout);
-        this.sessionTimeouts.delete(userId);
-      }
+      this.clearSessionTimeouts(userId, session.toUser);
 
-      const otherUser = session.fromUser === userId ? session.toUser : session.fromUser;
-
-      const otherTimeout = this.sessionTimeouts.get(otherUser);
-      if (otherTimeout) {
-        clearTimeout(otherTimeout);
-        this.sessionTimeouts.delete(otherUser);
-      }
-
-      // Remove sessions
       this.activeSessions.delete(userId);
-      this.activeSessions.delete(otherUser);
+      this.activeSessions.delete(session.toUser);
 
-      // Archive message history
-      const history = this.messageHistory.get(session.id);
-      if (history) {
-        // Keep history for 24 hours for moderation purposes
-        setTimeout(
-          () => {
-            this.messageHistory.delete(session.id);
-          },
-          24 * 60 * 60 * 1000
-        );
-      }
+      // Keep history for 24 hours then delete
+      setTimeout(() => this.messageHistory.delete(session.id), 86400000);
 
       return {
         success: true,
-        message: `Sukses Mengakhiri Sesi menfes!\nAlasan: ${reason}`,
-        sessionId: session.id,
-        messageCount: session.messageCount,
+        data: { messageCount: session.messageCount }
       };
-    } catch (error: any) {
-      console.error('Error ending menfes session:', error);
-      throw new Error('Failed to end menfes session');
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Get active session for user
-   * @param {string} userId - User ID
-   */
-  getActiveSession(userId) {
+  private clearSessionTimeouts(u1: string, u2: string): void {
+    [u1, u2].forEach(u => {
+      const t = this.sessionTimeouts.get(u);
+      if (t) {
+        clearTimeout(t);
+        this.sessionTimeouts.delete(u);
+      }
+    });
+  }
+
+  public getActiveSession(userId: string): MenfesSession | undefined {
     return this.activeSessions.get(userId);
   }
 
-  /**
-   * Get session statistics
-   * @param {string} sessionId - Session ID
-   */
-  getSessionStats(sessionId) {
-    const history = this.messageHistory.get(sessionId);
-    if (!history) {
-      return null;
-    }
-
-    return {
-      messageCount: history.length,
-      duration:
-        history.length > 0 ? history[history.length - 1].timestamp - history[0].timestamp : 0,
-      participants: [...new Set(history.map(h => h.from))],
-    };
-  }
-
-  /**
-   * Check rate limit for operations
-   * @param {string} userId - User ID
-   * @param {string} operation - Operation type
-   */
-  checkRateLimit(userId, operation) {
+  public checkRateLimit(userId: string, operation: string): boolean {
     const key = `${userId}_${operation}`;
     const now = Date.now();
     const limit = this.rateLimits.get(key);
 
-    const limits = {
-      start_session: { cooldown: 300000, maxPerCooldown: 1 }, // 5 minutes, 1 session
-      send_message: { cooldown: 10000, maxPerCooldown: 5 }, // 10 seconds, 5 messages
+    const configs: Record<string, { cooldown: number; max: number }> = {
+      start_session: { cooldown: 300000, max: 1 },
+      send_message: { cooldown: 10000, max: 5 },
     };
 
-    const config = limits[operation] || { cooldown: 60000, maxPerCooldown: 1 };
+    const config = configs[operation] || { cooldown: 60000, max: 1 };
 
     if (!limit || now - limit.lastUsed > config.cooldown) {
       this.rateLimits.set(key, { lastUsed: now, count: 1 });
       return true;
     }
 
-    if (limit.count >= config.maxPerCooldown) {
-      return false;
-    }
+    if (limit.count >= config.max) return false;
 
     limit.count++;
     return true;
   }
 
-  /**
-   * Clean up expired sessions and old data
-   */
-  cleanup() {
-    const now = Date.now();
-
-    // Clean up expired sessions
-    for (const [userId, session] of this.activeSessions.entries()) {
-      if (now - session.startTime > 600000) {
-        // 10 minutes
-        this.endMenfesSession(userId, 'expired');
-      }
-    }
-
-    // Clean up old message history (older than 24 hours)
-    for (const [sessionId, history] of this.messageHistory.entries()) {
-      if (history.length > 0 && now - history[0].timestamp > 24 * 60 * 60 * 1000) {
-        this.messageHistory.delete(sessionId);
-      }
-    }
-
-    // Clean up old rate limits (older than 1 hour)
-    for (const [key, limit] of this.rateLimits.entries()) {
-      if (now - limit.lastUsed > 60 * 60 * 1000) {
-        this.rateLimits.delete(key);
-      }
-    }
-  }
-
-  /**
-   * Get active sessions count (for monitoring)
-   */
-  getActiveSessionsCount() {
-    return this.activeSessions.size / 2; // Divide by 2 since each session has 2 entries
-  }
-
-  /**
-   * Moderate message content (basic filtering)
-   * @param {string} content - Message content
-   */
-  moderateContent(content) {
-    if (!content) return true;
-
-    // Basic content filtering
-    const forbiddenWords = [
-      'spam',
-      'scam',
-      'hack',
-      'illegal',
-      'drugs',
-      'violence',
-      'threat',
-      'harassment',
-    ];
-
-    const lowerContent = content.toLowerCase();
-    return !forbiddenWords.some(word => lowerContent.includes(word));
+  public getActiveSessionsCount(): number {
+    return this.activeSessions.size / 2;
   }
 }
 
-// Create and export service instance as ES module
-const menfesServiceInstance = new MenfesService();
-export default menfesServiceInstance;
+export const menfesService = MenfesService.getInstance();
+export default menfesService;

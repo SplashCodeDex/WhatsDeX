@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { envSchema, EnvConfig } from '../config/env.schema.js'; // Using .js extension for ESM/TS compatibility if needed, but usually .ts is fine for source. Let's try without .js first or match the project style. The project uses "type": "module" in package.json.
+import { envSchema, EnvConfig } from '../config/env.schema.js';
 import dotenv from 'dotenv';
 
 // Load .env file
@@ -12,7 +12,7 @@ export class ConfigService {
   private constructor() {
     try {
       this.config = envSchema.parse(process.env);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         console.error('❌ Invalid environment configuration:', error.format());
         throw error;
@@ -38,7 +38,7 @@ export class ConfigService {
 
   public get msg() {
     return {
-      footer: 'Developed by CodeDeX with ❤', // Hardcoded fallback for now, ideally moved to schema
+      footer: 'Developed by CodeDeX with ❤',
       banned: '⛔ Cannot process because you have been banned by the Owner!',
       cooldown: '🔄 This command is on cooldown, please wait...',
       gamerestrict: '⛔ Cannot process because this group has restricted games!',
@@ -53,7 +53,11 @@ export class ConfigService {
       owner: '⛔ This command can only be accessed by the Owner!',
       premium: '⛔ Cannot process because you are not a Premium user!',
       private: '⛔ This command can only be accessed in a private chat!',
-      restrict: '⛔ This command has been restricted for security reasons!'
+      restrict: '⛔ This command has been restricted for security reasons!',
+      wait: '⏳ Please wait...',
+      urlInvalid: '❎ Invalid URL!',
+      notFound: '❎ Result not found!',
+      readmore: String.fromCharCode(8206).repeat(4001),
     };
   }
 
@@ -75,6 +79,9 @@ export class ConfigService {
     return {
       geminiKey: this.get('GOOGLE_GEMINI_API_KEY'),
       metaKey: this.get('META_AI_KEY'),
+      google: {
+        geminiKey: this.get('GOOGLE_GEMINI_API_KEY'),
+      },
       summarization: {
         threshold: this.get('AI_SUMMARIZE_THRESHOLD'),
         messagesToSummarize: this.get('AI_MESSAGES_TO_SUMMARIZE'),
@@ -85,8 +92,27 @@ export class ConfigService {
 
   public get bot() {
     return {
+      name: this.get('BOT_NAME'),
+      prefix: this.get('BOT_PREFIX'),
       groupJid: this.get('GROUP_JID'),
-      jid: '' // Placeholder
+      jid: '', // Placeholder
+      id: '',   // Alias for jid
+      sessionId: this.get('SESSION_ID'),
+      tenantId: this.get('TENANT_ID'),
+      readyAt: new Date(),
+      uptime: '0s',
+      dbSize: '0B',
+      groupLink: this.get('GROUP_LINK') || 'https://chat.whatsapp.com/CodeDeX'
+    };
+  }
+
+  public get owner() {
+    return {
+      name: this.get('OWNER_NAME'),
+      number: this.get('OWNER_NUMBER')
     };
   }
 }
+
+export const configService = ConfigService.getInstance();
+export default configService;

@@ -3,20 +3,35 @@
  * Prevents unbounded growth and memory leaks
  */
 
-export class MemoryManager {
-  constructor(options = {}) {
+interface MemoryManagerOptions {
+  maxSize?: number;
+  ttl?: number;
+  cleanupInterval?: number;
+}
+
+interface MemoryItem<T> {
+  value: T;
+  expiresAt: number;
+}
+
+export class MemoryManager<T = any> {
+  private maxSize: number;
+  private ttl: number;
+  private cleanupInterval: number;
+  private data: Map<string, MemoryItem<T>>;
+  private accessTimes: Map<string, number>;
+
+  constructor(options: MemoryManagerOptions = {}) {
     this.maxSize = options.maxSize || 1000;
     this.ttl = options.ttl || 3600000; // 1 hour default
     this.cleanupInterval = options.cleanupInterval || 300000; // 5 minutes
     this.data = new Map();
     this.accessTimes = new Map();
     
-    // Start cleanup timer
     this.startCleanupTimer();
   }
 
-  set(key, value, customTTL = null) {
-    // Check if we need to evict items
+  set(key: string, value: T, customTTL: number | null = null): void {
     if (this.data.size >= this.maxSize) {
       this.evictLRU();
     }
@@ -28,28 +43,26 @@ export class MemoryManager {
     this.accessTimes.set(key, Date.now());
   }
 
-  get(key) {
+  get(key: string): T | null {
     const item = this.data.get(key);
     
     if (!item) return null;
 
-    // Check if expired
     if (Date.now() > item.expiresAt) {
       this.delete(key);
       return null;
     }
 
-    // Update access time for LRU
     this.accessTimes.set(key, Date.now());
     return item.value;
   }
 
-  delete(key) {
+  delete(key: string): void {
     this.data.delete(key);
     this.accessTimes.delete(key);
   }
 
-  has(key) {
+  has(key: string): boolean {
     const item = this.data.get(key);
     if (!item) return false;
     
@@ -61,9 +74,8 @@ export class MemoryManager {
     return true;
   }
 
-  // Evict least recently used item
-  evictLRU() {
-    let oldestKey = null;
+  private evictLRU(): void {
+    let oldestKey: string | null = null;
     let oldestTime = Date.now();
 
     for (const [key, accessTime] of this.accessTimes) {
@@ -78,10 +90,9 @@ export class MemoryManager {
     }
   }
 
-  // Clean up expired items
-  cleanup() {
+  cleanup(): void {
     const now = Date.now();
-    const expiredKeys = [];
+    const expiredKeys: string[] = [];
 
     for (const [key, item] of this.data) {
       if (now > item.expiresAt) {
@@ -90,28 +101,27 @@ export class MemoryManager {
     }
 
     expiredKeys.forEach(key => this.delete(key));
-    
-    console.log(`Cleaned up ${expiredKeys.length} expired items`);
   }
 
-  startCleanupTimer() {
+  private startCleanupTimer(): void {
     const timer = setInterval(() => {
       this.cleanup();
     }, this.cleanupInterval);
-    timer.unref(); // Allow the process to exit even if the timer is active
+    timer.unref();
   }
 
-  // Get stats
   getStats() {
     return {
       size: this.data.size,
       maxSize: this.maxSize,
-      memoryUsage: this.data.size / this.maxSize * 100
+      memoryUsage: (this.data.size / this.maxSize) * 100
     };
   }
 
-  clear() {
+  clear(): void {
     this.data.clear();
     this.accessTimes.clear();
   }
 }
+
+export default MemoryManager;

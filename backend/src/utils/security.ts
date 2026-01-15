@@ -6,7 +6,7 @@ import crypto from 'crypto';
  * @param {string} signature - X-Hub-Signature-256 header
  * @returns {boolean} - Whether signature is valid
  */
-export function validateWhatsAppSignature(body, signature) {
+export function validateWhatsAppSignature(body: any, signature: string) {
   if (!signature || !process.env.WHATSAPP_APP_SECRET) {
     return false;
   }
@@ -38,7 +38,7 @@ export function generateSecureToken(length = 32) {
  * @param {string} data - Data to hash
  * @returns {string} - Hashed data
  */
-export function hashData(data) {
+export function hashData(data: string) {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
@@ -47,7 +47,7 @@ export function hashData(data) {
  * @param {string} apiKey - API key to validate
  * @returns {boolean} - Whether API key format is valid
  */
-export function validateApiKey(apiKey) {
+export function validateApiKey(apiKey: string) {
   // WhatsApp API key format validation
   const whatsappApiKeyRegex = /^EAA[0-9A-Za-z]+$/;
   return whatsappApiKeyRegex.test(apiKey);

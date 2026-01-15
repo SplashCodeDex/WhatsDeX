@@ -1,4 +1,5 @@
 import { MessageContext } from '../../types/index.js';
+
 export default {
   name: 'unmute',
   category: 'group',
@@ -16,10 +17,8 @@ export default {
       return await ctx.reply(formatter.quote('✅ Berhasil me-unmute grup ini dari bot!'));
     }
 
-    const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
-    const accountId = ctx.getId(accountJid);
-
-    if (!accountJid)
+    const accountJid = ctx.quoted?.senderJid || (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) || null;
+    if (!accountJid) {
       return await ctx.reply({
         text:
           `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
@@ -31,6 +30,9 @@ export default {
           )}`,
         mentions: [ctx.sender.jid],
       });
+    }
+
+    const accountId = ctx.getId(accountJid);
 
     if (accountId === config.bot.id)
       return await ctx.reply(
@@ -42,12 +44,12 @@ export default {
       return await ctx.reply(formatter.quote('❎ Dia adalah owner grup!'));
 
     try {
-      let muteList = (await db.get(`group.${groupId}.mute`)) || [];
-      muteList = muteList.filter(mute => mute !== accountId);
-      await db.set(`group.${groupId}.mute`, muteList);
+      const currentMuteList: string[] = (await db.get(`group.${groupId}.mute`)) || [];
+      const updatedMuteList = currentMuteList.filter((mute: string) => mute !== accountId);
+      await db.set(`group.${groupId}.mute`, updatedMuteList);
 
       await ctx.reply(formatter.quote('✅ Berhasil me-unmute pengguna itu dari grup ini!'));
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

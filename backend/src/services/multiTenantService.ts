@@ -1,6 +1,6 @@
 import { firebaseService } from '@/services/FirebaseService.js';
 import logger from '@/utils/logger.js';
-import { TenantDocument } from '@/types/index.js';
+import { Tenant, TenantSchema, Result } from '@/types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
 
 export class MultiTenantService {
@@ -18,73 +18,110 @@ export class MultiTenantService {
   /**
    * Create a new tenant
    */
-  async createTenant(tenantData: Partial<TenantDocument>): Promise<TenantDocument | null> {
-    if (!tenantData.id) throw new Error('Tenant ID is required');
+  async createTenant(tenantData: Partial<Tenant>): Promise<Result<Tenant>> {
+    if (!tenantData.id) {
+      return { success: false, error: new Error('Tenant ID is required') };
+    }
     
-    const data: TenantDocument = {
-      id: tenantData.id,
-      name: tenantData.name || 'New Workspace',
-      subdomain: tenantData.subdomain || tenantData.id,
-      plan: tenantData.plan || 'free',
-      status: 'active',
-      ownerId: tenantData.ownerId || '',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-      settings: {
-        maxBots: tenantData.plan === 'premium' ? 2 : 1,
-        aiEnabled: tenantData.plan !== 'free',
-        timezone: 'UTC',
-        ...tenantData.settings
-      }
-    };
-
     try {
-      await firebaseService.setDoc< 'tenants' >('tenants', data.id, data);
+      const rawData = {
+        id: tenantData.id,
+        name: tenantData.name || 'New Workspace',
+        subdomain: (tenantData.subdomain || tenantData.id).toLowerCase(),
+        plan: tenantData.plan || 'free',
+        status: 'active',
+        ownerId: tenantData.ownerId || '',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        settings: {
+          maxBots: tenantData.plan === 'premium' ? 2 : 1,
+          aiEnabled: tenantData.plan !== 'free',
+          timezone: 'UTC',
+          ...tenantData.settings
+        }
+      };
+
+      // Zero-Trust Validation before write
+      const data = TenantSchema.parse(rawData);
+
+      await firebaseService.setDoc('tenants', data.id, data);
       logger.info(`Tenant created: ${data.id}`);
-      return data;
-    } catch (error: any) {
-      logger.error(`MultiTenantService.createTenant error [${data.id}]:`, error);
-      return null;
+      return { success: true, data };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`MultiTenantService.createTenant error [${tenantData.id}]:`, err);
+      return { success: false, error: err };
     }
   }
 
   /**
    * Get tenant by ID
    */
-  async getTenant(tenantId: string): Promise<TenantDocument | null> {
+  async getTenant(tenantId: string): Promise<Result<Tenant>> {
     try {
-      return await firebaseService.getDoc< 'tenants' >('tenants', tenantId);
-    } catch (error: any) {
-      logger.error(`MultiTenantService.getTenant error [${tenantId}]:`, error);
-      return null;
+      const doc = await firebaseService.getDoc('tenants', tenantId);
+      if (!doc) {
+        return { success: false, error: new Error(`Tenant not found: ${tenantId}`) };
+      }
+
+      // Zero-Trust Validation on read
+      const data = TenantSchema.parse(doc);
+      return { success: true, data };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`MultiTenantService.getTenant error [${tenantId}]:`, err);
+      return { success: false, error: err };
     }
   }
 
   /**
    * Update tenant data
    */
-  async updateTenant(tenantId: string, data: Partial<TenantDocument>): Promise<void> {
+  async updateTenant(tenantId: string, updates: Partial<Tenant>): Promise<Result<void>> {
     try {
-      await firebaseService.setDoc< 'tenants' >('tenants', tenantId, {
-        ...data,
+      const result = await this.getTenant(tenantId);
+      if (!result.success) return result as Result<never>;
+
+      const updatedData = {
+        ...result.data,
+        ...updates,
         updatedAt: Timestamp.now()
-      });
-    } catch (error: any) {
-      logger.error(`MultiTenantService.updateTenant error [${tenantId}]:`, error);
-      throw error;
+      };
+
+      // Validation
+      const validated = TenantSchema.parse(updatedData);
+
+      await firebaseService.setDoc('tenants', tenantId, validated);
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`MultiTenantService.updateTenant error [${tenantId}]:`, err);
+      return { success: false, error: err };
     }
   }
 
   /**
    * Check if tenant has reached bot limit
    */
-  async canAddBot(tenantId: string): Promise<boolean> {
-    const tenant = await this.getTenant(tenantId);
-    if (!tenant) return false;
+  async canAddBot(tenantId: string): Promise<Result<boolean>> {
+    const result = await this.getTenant(tenantId);
+    if (!result.success) return result as Result<never>;
 
-    // This logic will be fully implemented once multiTenantBotService is refactored
-    // to include a count method. For now, returning true based on plan check.
-    return true; 
+    // Placeholder: This will be fully implemented once multiTenantBotService is refactored
+    return { success: true, data: true }; 
+  }
+
+  /**
+   * List all tenants (Admin only)
+   */
+  async listTenants(): Promise<Tenant[]> {
+      try {
+          const snapshot = await firebaseService.getCollection('tenants');
+          return snapshot.map(doc => TenantSchema.parse(doc));
+      } catch (error) {
+          logger.error('MultiTenantService.listTenants error:', error);
+          return [];
+      }
   }
 }
 

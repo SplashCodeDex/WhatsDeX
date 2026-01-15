@@ -1,5 +1,6 @@
 import { AuthSystem, InteractiveAuth } from '../../services/index.js';
 import { MessageContext, GlobalContext } from '../../types/index.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Re-pair Command
@@ -8,6 +9,7 @@ import { MessageContext, GlobalContext } from '../../types/index.js';
 export default {
   name: 'repair',
   alias: ['reconnect', 'reauth', 'repair'],
+  // ... (omitting strictly unrelated lines to keep context short but matching)
   category: 'owner',
   desc: 'Force re-pairing with different authentication method',
   isOwner: true,
@@ -27,7 +29,7 @@ export default {
       await ctx.reply('🔄 Starting re-pairing process...');
 
       // Create unified smart auth manager instance
-      const authSystem = new AuthSystem(config as any);
+      const authSystem = new AuthSystem(config as any, 'system', 'repair_bot');
       // Use InteractiveAuth to enhance capabilities
       const interactiveAuth = new InteractiveAuth(authSystem);
 
@@ -113,7 +115,7 @@ export default {
         globalAny.context.lastRepairResult = authResult;
       }
     } catch (error: any) {
-      console.error('Re-pairing command error:', error);
+      logger.error('Re-pairing command error:', error);
       await ctx.reply(
         `❌ Re-pairing failed: ${error.message}\n\n💡 Try again or check your configuration.`
       );

@@ -1,39 +1,50 @@
-import { MessageContext, GlobalContext } from '../../types/index.js';
+import { MessageContext } from '../../types/index.js';
+import { z } from 'zod';
+
+const ConfirmationSchema = z.string().refine(val => val.toLowerCase() === 'y', {
+  message: 'Konfirmasi harus berupa "y"'
+});
 
 export default {
   name: 'reset',
   category: 'profile',
-  permissions: {
-    private: true,
-  },
-  code: async (ctx: MessageContext) => {
-    const { formatter, config, databaseService } = ctx.bot.context as GlobalContext;
+  code: async (ctx: MessageContext): Promise<void> => {
+    const { databaseService, formatter, logger } = ctx.bot.context;
+
+    if (!databaseService || !formatter) {
+      await ctx.reply('❌ System Error: Service unavailable.');
+      return;
+    }
 
     try {
-      const confirmation = ctx.args[0]?.toLowerCase();
+      const tenantId = ctx.bot.tenantId;
+      const senderId = ctx.sender.jid;
 
-      if (confirmation !== 'confirm') {
-        return await ctx.reply(
-          formatter.quote(
-            `🤖 Warning: This will delete ALL your saved data.\n\nTo confirm, please type:\n${formatter.monospace(`${ctx.prefix}reset confirm`)}`
-          )
-        );
+      if (!ctx.args[0]) {
+        await ctx.reply(formatter.quote('⚠️ PERINGATAN! Perintah ini akan menghapus semua data profil kamu (level, koin, wins).\nKetik `.reset y` untuk mengonfirmasi.'));
+        return;
       }
 
-      const senderId = ctx.sender.jid; // Use correct property
+      // 1. Validate Confirmation
+      const validation = ConfirmationSchema.safeParse(ctx.args[0]);
+      if (!validation.success) {
+        await ctx.reply(formatter.quote('ℹ️ Reset dibatalkan. Konfirmasi tidak valid.'));
+        return;
+      }
 
-      // Access deleteUser from the service directly or via the context adapter if available
-      // Based on context.ts, 'databaseService' is the instance with full methods
-      if (databaseService && databaseService.deleteUser) {
-        await databaseService.deleteUser(senderId);
-        await ctx.reply(formatter.quote('✅ User data has been successfully reset.'));
+      // 2. Delete User Data in Firestore (Tenant-scoped)
+      const result = await databaseService.deleteUser(tenantId, senderId);
+
+      if (result.success) {
+        await ctx.reply(formatter.quote('✅ Profil kamu telah berhasil direset. Data kamu sekarang bersih.'));
       } else {
-        // Fallback if databaseService isn't typed or available as expected, though context.ts puts it there
-        await ctx.reply(formatter.quote('❌ Database service not available.'));
+        throw result.error;
       }
 
-    } catch (error: any) {
-      await ctx.reply(formatter.quote(`Error: ${error.message}`));
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      logger.error(`[${ctx.bot.tenantId}] [Reset] Error: ${err}`, error);
+      await ctx.reply(formatter.quote(`Error: ${err}`));
     }
   },
 };

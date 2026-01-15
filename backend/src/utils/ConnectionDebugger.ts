@@ -1,20 +1,51 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * CONNECTION DEBUGGER - Analyzes and fixes WhatsApp connection issues
- * Helps identify why connections keep failing and reconnecting
  */
 
+interface ConnectionError {
+  message: string;
+  code?: string | number;
+  stack?: string[];
+}
+
+interface ConnectionAttempt {
+  timestamp: number;
+  status: string;
+  error: ConnectionError | null;
+  context: any;
+}
+
+interface Diagnosis {
+  issues: string[];
+  recommendations: string[];
+  severity: 'info' | 'warning' | 'error' | 'critical';
+}
+
+interface Recommendation {
+  priority: 'low' | 'medium' | 'high';
+  action: string;
+  description: string;
+  command?: string;
+  reason?: string;
+  items?: string[];
+}
+
 export class ConnectionDebugger {
+  private connectionAttempts: ConnectionAttempt[];
+  private errorPatterns: Map<string, number>;
+  private sessionIssues: any[];
+
   constructor() {
     this.connectionAttempts = [];
     this.errorPatterns = new Map();
     this.sessionIssues = [];
   }
 
-  logConnectionAttempt(status, error = null, context = {}) {
-    const attempt = {
+  public logConnectionAttempt(status: string, error: any = null, context = {}): void {
+    const attempt: ConnectionAttempt = {
       timestamp: Date.now(),
       status,
       error: error ? {
@@ -27,22 +58,19 @@ export class ConnectionDebugger {
 
     this.connectionAttempts.push(attempt);
 
-    // Keep only last 50 attempts
     if (this.connectionAttempts.length > 50) {
       this.connectionAttempts.shift();
     }
 
-    // Analyze patterns
     this.analyzeErrorPatterns();
   }
 
-  analyzeErrorPatterns() {
+  private analyzeErrorPatterns(): void {
     const recentErrors = this.connectionAttempts
-      .filter(attempt => attempt.error && Date.now() - attempt.timestamp < 300000) // Last 5 minutes
-      .map(attempt => attempt.error);
+      .filter(attempt => attempt.error && Date.now() - attempt.timestamp < 300000)
+      .map(attempt => attempt.error!);
 
-    // Count error types
-    const errorCounts = new Map();
+    const errorCounts = new Map<string, number>();
     recentErrors.forEach(error => {
       const key = `${error.code || 'unknown'}_${error.message?.substring(0, 50) || 'unknown'}`;
       errorCounts.set(key, (errorCounts.get(key) || 0) + 1);
@@ -51,16 +79,15 @@ export class ConnectionDebugger {
     this.errorPatterns = errorCounts;
   }
 
-  diagnoseConnectionIssues() {
-    const diagnosis = {
+  public diagnoseConnectionIssues(): Diagnosis {
+    const diagnosis: Diagnosis = {
       issues: [],
       recommendations: [],
       severity: 'info'
     };
 
-    // Check for rapid reconnections
     const recentAttempts = this.connectionAttempts
-      .filter(attempt => Date.now() - attempt.timestamp < 60000); // Last minute
+      .filter(attempt => Date.now() - attempt.timestamp < 60000);
 
     if (recentAttempts.length > 5) {
       diagnosis.issues.push('Rapid reconnection loop detected');
@@ -68,8 +95,8 @@ export class ConnectionDebugger {
       diagnosis.severity = 'critical';
     }
 
-    // Check for specific error patterns
-    for (const [errorKey, count] of this.errorPatterns) {
+    // Use Array.from to avoid iteration errors
+    Array.from(this.errorPatterns.entries()).forEach(([errorKey, count]) => {
       if (count > 3) {
         const [code, message] = errorKey.split('_');
 
@@ -87,151 +114,78 @@ export class ConnectionDebugger {
           diagnosis.severity = 'warning';
         }
       }
-    }
+    });
 
-    // Check session health
     const sessionHealth = this.checkSessionHealth();
     if (!sessionHealth.healthy) {
       diagnosis.issues.push(`Session health: ${sessionHealth.issue}`);
-      diagnosis.recommendations.push(sessionHealth.recommendation);
+      diagnosis.recommendations.push(sessionHealth.recommendation!);
       diagnosis.severity = 'error';
     }
 
     return diagnosis;
   }
 
-  checkSessionHealth() {
-
+  public checkSessionHealth(): { healthy: boolean; issue?: string; recommendation?: string } {
     try {
       const sessionPath = './sessions';
 
       if (!fs.existsSync(sessionPath)) {
-        return {
-          healthy: false,
-          issue: 'Session directory missing',
-          recommendation: 'Sessions will be created on first run'
-        };
+        return { healthy: false, issue: 'Session directory missing', recommendation: 'Restart application' };
       }
 
       const sessionFiles = fs.readdirSync(sessionPath);
-
       if (sessionFiles.length === 0) {
-        return {
-          healthy: true,
-          issue: 'No existing session - fresh start',
-          recommendation: 'New QR code will be generated'
-        };
+        return { healthy: true, issue: 'No existing session', recommendation: 'Fresh start' };
       }
 
-      // Check if session files are recent and valid
       const credsFile = path.join(sessionPath, 'creds.json');
       if (fs.existsSync(credsFile)) {
         const stats = fs.statSync(credsFile);
         const age = Date.now() - stats.mtime.getTime();
 
-        if (age > 30 * 24 * 60 * 60 * 1000) { // 30 days old
-          return {
-            healthy: false,
-            issue: 'Session is very old (>30 days)',
-            recommendation: 'Clear session and re-authenticate'
-          };
+        if (age > 30 * 24 * 60 * 60 * 1000) {
+          return { healthy: false, issue: 'Session is very old', recommendation: 'Re-authenticate' };
         }
       }
 
       return { healthy: true };
-
-    } catch (error: any) {
-      return {
-        healthy: false,
-        issue: `Session check failed: ${error.message}`,
-        recommendation: 'Clear session directory and restart'
-      };
+    } catch (error: unknown) {
+      return { healthy: false, issue: `Check failed: ${error instanceof Error ? error.message : error}`, recommendation: 'Clear session' };
     }
   }
 
-  getConnectionReport() {
+  public getConnectionReport() {
     const diagnosis = this.diagnoseConnectionIssues();
-    const recentAttempts = this.connectionAttempts.slice(-10);
-
     return {
       summary: {
         totalAttempts: this.connectionAttempts.length,
-        recentFailures: recentAttempts.filter(a => a.error).length,
+        recentFailures: this.connectionAttempts.slice(-10).filter(a => a.error).length,
         diagnosis
       },
-      recentAttempts,
       recommendations: this.generateRecommendations(diagnosis)
     };
   }
 
-  generateRecommendations(diagnosis) {
-    const recommendations = [];
+  private generateRecommendations(diagnosis: Diagnosis): Recommendation[] {
+    const recommendations: Recommendation[] = [];
 
     if (diagnosis.severity === 'critical') {
       recommendations.push({
         priority: 'high',
         action: 'clear_session',
-        description: 'Clear session directory and restart',
-        command: 'Remove-Item -Recurse -Force ./sessions'
+        description: 'Clear session directory and restart'
       });
     }
-
-    if (diagnosis.issues.some(issue => issue.includes('405'))) {
-      recommendations.push({
-        priority: 'medium',
-        action: 'wait_and_retry',
-        description: 'Wait 5 minutes before retrying connection',
-        reason: 'WhatsApp may be rate limiting connections'
-      });
-    }
-
-    recommendations.push({
-      priority: 'low',
-      action: 'check_environment',
-      description: 'Verify environment configuration',
-      items: [
-        'Check .env file exists and has required values',
-        'Verify API keys are valid',
-        'Test internet connection'
-      ]
-    });
 
     return recommendations;
   }
 
-  logSessionClear() {
-    this.sessionIssues.push({
-      timestamp: Date.now(),
-      action: 'session_cleared',
-      reason: 'Connection debugging recommendation'
-    });
-  }
-
-  shouldClearSession() {
-    const diagnosis = this.diagnoseConnectionIssues();
-    return diagnosis.severity === 'critical' ||
-      diagnosis.issues.some(issue => issue.includes('405') || issue.includes('401'));
-  }
-
-  async autoFix() {
-    const report = this.getConnectionReport();
-    const fixes = [];
-
-    if (this.shouldClearSession()) {
-      try {
-        await fs.promises.rm('./sessions', { recursive: true, force: true });
-        fixes.push('Cleared corrupted session directory');
-        this.logSessionClear();
-      } catch (error: any) {
-        fixes.push(`Failed to clear session: ${error.message}`);
-      }
-    }
-
-    return {
-      applied: fixes,
-      report
-    };
+  public shouldClearSession(): boolean {
+    const d = this.diagnoseConnectionIssues();
+    return d.severity === 'critical' || d.issues.some(i => i.includes('405') || i.includes('401'));
   }
 }
 
-export default ConnectionDebugger;
+export const connectionDebugger = new ConnectionDebugger();
+export default connectionDebugger;

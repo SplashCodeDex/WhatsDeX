@@ -1,12 +1,34 @@
 import Stripe from 'stripe';
 import logger from '../utils/logger.js';
 
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  interval: 'month' | 'year';
+  priceId?: string;
+  features: string[];
+}
+
+export interface CreateCustomerData {
+  userId: string;
+  email: string;
+  name?: string;
+  phone?: string;
+}
+
+export interface SubscriptionOptions {
+  userId: string;
+  [key: string]: unknown;
+}
+
 export class StripeService {
   private static instance: StripeService;
   private stripe: Stripe | null;
   private webhookSecret: string | null;
   private isInitialized: boolean;
-  public plans: any;
+  public plans: Record<string, SubscriptionPlan>;
 
   constructor() {
     this.stripe = null;
@@ -51,18 +73,19 @@ export class StripeService {
   async initialize(secretKey: string, webhookSecret: string) {
     try {
       this.stripe = new Stripe(secretKey, {
-        apiVersion: '2025-12-15.clover',
+        apiVersion: '2025-12-15.clover' as any, // Future date placeholder handling
       });
       this.webhookSecret = webhookSecret;
       this.isInitialized = true;
       logger.info('Stripe service initialized successfully');
-    } catch (error: any) {
-      logger.error('Failed to initialize Stripe service', { error: error.message });
-      throw error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Failed to initialize Stripe service', { error: err.message });
+      throw err;
     }
   }
 
-  async createCustomer(customerData: any) {
+  async createCustomer(customerData: CreateCustomerData) {
     if (!this.stripe) throw new Error('Stripe not initialized');
     try {
       const customer = await this.stripe.customers.create({
@@ -74,13 +97,13 @@ export class StripeService {
         },
       });
       return customer;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Stripe createCustomer error:', error);
       throw error;
     }
   }
 
-  async createSubscription(customerId: string, planKey: string, options: any = {}) {
+  async createSubscription(customerId: string, planKey: string, options: SubscriptionOptions = { userId: '' }) {
     if (!this.stripe) throw new Error('Stripe not initialized');
     try {
       const plan = this.plans[planKey];
@@ -97,7 +120,7 @@ export class StripeService {
         expand: ['latest_invoice.payment_intent'],
       });
       return subscription;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Stripe createSubscription error:', error);
       throw error;
     }
@@ -110,7 +133,7 @@ export class StripeService {
         cancel_at_period_end: cancelAtPeriodEnd,
       });
       return subscription;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Stripe cancelSubscription error:', error);
       throw error;
     }
@@ -132,13 +155,13 @@ export class StripeService {
         ],
       });
       return updatedSubscription;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Stripe updateSubscriptionPlan error:', error);
       throw error;
     }
   }
 
-  async handleWebhook(payload: any, signature: string) {
+  async handleWebhook(payload: string | Buffer, signature: string) {
     if (!this.stripe || !this.webhookSecret) throw new Error('Stripe not initialized');
     try {
       const event = this.stripe.webhooks.constructEvent(payload, signature, this.webhookSecret);

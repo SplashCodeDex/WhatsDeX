@@ -1,6 +1,12 @@
 import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
+interface InstagramMedia {
+  url: string;
+  type: string;
+  ext: string;
+}
+
 export default {
   name: 'instagramdl',
   aliases: ['ig', 'igdl', 'instagram'],
@@ -26,8 +32,9 @@ export default {
       const apiUrl = tools.api.createUrl('zell', '/download/instagram', {
         url,
       });
-      const result = (await axios.get(apiUrl)).data.result.url;
-      const album = result.map(res => {
+      const response = await axios.get(apiUrl);
+      const result: InstagramMedia[] = response.data.result.url;
+      const album = result.map((res: InstagramMedia) => {
         const isVideo = res.type === 'mp4';
         return {
           [isVideo ? 'video' : 'image']: {
@@ -41,7 +48,7 @@ export default {
         album,
         caption: formatter.quote(`URL: ${url}`),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

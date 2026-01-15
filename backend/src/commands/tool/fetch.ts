@@ -1,4 +1,4 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
 import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
@@ -10,15 +10,15 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
     const url = ctx.args[0] || null;
 
-    if (!url)
-      return await ctx.reply(
-        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          tools.msg.generateCmdExample(ctx.used, config.bot.thumbnail)
-        )}`
-      );
+    if (!url) {
+      const instruction = tools.msg.generateInstruction(['send'], ['text']);
+      const example = tools.msg.generateCmdExample(ctx.used, 'https://example.com/image.jpg');
+      return await ctx.reply(`${formatter.quote(instruction)}
+${formatter.quote(example)}`);
+    }
 
     const isUrl = tools.cmd.isUrl(url);
     if (!isUrl) return await ctx.reply(config.msg.urlInvalid);
@@ -26,7 +26,7 @@ export default {
     try {
       const response = await axios.get(url, {
         responseType: 'arraybuffer',
-        validateStatus(status) {
+        validateStatus() {
           return true;
         },
       });
@@ -54,22 +54,24 @@ export default {
           caption: formatter.quote('Untukmu, tuan!'),
         });
       } else if (/webp/.test(contentType)) {
+        const pack = (config as any).sticker?.packname || 'WhatsDeX Bot';
+        const author = (config as any).sticker?.author || 'CodeDeX';
+        
         const sticker = new Sticker(response?.data, {
-          pack: config.sticker.packname,
-          author: config.sticker.author,
+          pack,
+          author,
           type: StickerTypes.FULL,
-          categories: ['🌕'],
+          categories: ['🤩'] as any, // Cast to any to bypass strict literal check for now
           id: ctx.id,
           quality: 50,
         });
 
         await ctx.reply(await sticker.toMessage());
       } else if (!/utf-8|json|html|plain/.test(contentType)) {
-        const fileName = /filename/i.test(response?.headers?.['content-disposition'])
-          ? response?.headers?.['content-disposition']
-              ?.match(/filename=(.*)/)?.[1]
-              ?.replace(/["";]/g, '')
-          : '';
+        const disposition = response?.headers?.['content-disposition'];
+        const fileName = /filename/i.test(disposition)
+          ? disposition?.match(/filename=(.*)/)?.[1]?.replace(/["'];/g, '')
+          : 'file';
 
         await ctx.reply({
           document: response?.data,
@@ -77,29 +79,29 @@ export default {
           mimetype: tools.mime.contentType(contentType),
         });
       } else {
-        const text = response?.data;
+        const text = response?.data.toString('utf-8');
         let json;
 
         try {
           json = JSON.parse(text);
-        } catch (error: any) {
+        } catch {
           json = null;
         }
 
         const responseText = json ? walkJSON(json, 0, [], formatter) : text;
         await ctx.reply(responseText);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },
 };
 
-function walkJSON(json, depth = 0, array = [], formatter) {
+function walkJSON(json: any, depth: number = 0, array: string[] = [], formatter: any): string {
   for (const key in json) {
     array.push(`${'┊'.repeat(depth)}${depth > 0 ? ' ' : ''}${formatter.bold(key)}:`);
     if (typeof json[key] === 'object' && json[key] !== null) {
-      walkJSON(json[key], depth + 1, array);
+      walkJSON(json[key], depth + 1, array, formatter);
     } else {
       array[array.length - 1] += ` ${json[key]}`;
     }

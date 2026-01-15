@@ -1,5 +1,11 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
+
+interface StickerPackResult {
+  name: string;
+  author: string;
+  url: string;
+}
 
 export default {
   name: 'stickerpacksearch',
@@ -9,34 +15,35 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
     const input = ctx.args.join(' ') || null;
 
-    if (!input)
-      return await ctx.reply(
-        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          tools.msg.generateCmdExample(ctx.used, 'evangelion')
-        )}`
-      );
+    if (!input) {
+      const instruction = tools.msg.generateInstruction(['send'], ['text']);
+      const example = tools.msg.generateCmdExample(ctx.used, 'evangelion');
+      return await ctx.reply(`${formatter.quote(instruction)}
+${formatter.quote(example)}`);
+    }
 
     try {
-      const apiUrl = tools.api.createUrl('neko', '/search/stickerpack', {
-        q: input,
-      });
-      const { result } = (await axios.get(apiUrl)).data;
+      const apiUrl = `https://api.neko.fun/search/stickerpack?q=${encodeURIComponent(input)}`;
+      const { data } = await axios.get<{ result: StickerPackResult[] }>(apiUrl);
+      const result = data.result;
 
       const resultText = result
         .map(
-          res =>
-            `${formatter.quote(`Nama: ${res.name}`)}\n` +
-            `${formatter.quote(`Pembuat: ${res.author}`)}\n${formatter.quote(`URL: ${res.url}`)}`
+          (res: StickerPackResult) =>
+            `${formatter.quote(`Nama: ${res.name}`)}
+` +
+            `${formatter.quote(`Pembuat: ${res.author}`)}
+${formatter.quote(`URL: ${res.url}`)}`
         )
         .join('\n' + `${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
       await ctx.reply({
-        text: resultText || config.msg.notFound,
+        text: resultText || config.msg.notFound || 'No results found',
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

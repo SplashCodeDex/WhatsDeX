@@ -1,4 +1,10 @@
 import { MessageContext } from '../../types/index.js';
+
+interface Warning {
+  userId: string;
+  count: number;
+}
+
 export default {
   name: 'unwarning',
   category: 'group',
@@ -10,10 +16,8 @@ export default {
   },
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config, database: db } = ctx.bot.context;
-    const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
-    const accountId = ctx.getId(accountJid);
-
-    if (!accountJid)
+    const accountJid = ctx.quoted?.senderJid || (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) || null;
+    if (!accountJid) {
       return await ctx.reply({
         text:
           `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
@@ -24,6 +28,9 @@ export default {
           )}`,
         mentions: [ctx.sender.jid],
       });
+    }
+
+    const accountId = ctx.getId(accountJid);
 
     if (accountId === config.bot.id)
       return await ctx.reply(formatter.quote(`❎ Tidak bisa mengubah warning bot!`));
@@ -33,9 +40,9 @@ export default {
     try {
       const groupId = ctx.getId(ctx.id);
       const groupDb = (await db.get(`group.${groupId}`)) || {};
-      const warnings = groupDb?.warnings || [];
+      const warnings: Warning[] = groupDb?.warnings || [];
 
-      const userWarning = warnings.find(warning => warning.userId === accountId);
+      const userWarning = warnings.find((warning: Warning) => warning.userId === accountId);
       const currentWarnings = userWarning ? userWarning.count : 0;
 
       if (currentWarnings <= 0)
@@ -46,9 +53,9 @@ export default {
       if (userWarning && newWarning <= 0) {
         await db.set(
           `group.${groupId}.warnings`,
-          warnings.filter(warning => warning.userId !== accountId)
+          warnings.filter((warning: Warning) => warning.userId !== accountId)
         );
-      } else {
+      } else if (userWarning) {
         userWarning.count = newWarning;
         await db.set(`group.${groupId}.warnings`, warnings);
       }
@@ -58,7 +65,7 @@ export default {
           `✅ Berhasil mengurangi warning pengguna itu menjadi ${newWarning}/${groupDb?.maxwarnings || 3}.`
         )
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

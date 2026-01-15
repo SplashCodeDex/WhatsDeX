@@ -14,14 +14,14 @@ export default {
       '-i': {
         type: 'value',
         key: 'index',
-        validator: val => !isNaN(val) && parseInt(val) > 0,
-        parser: val => parseInt(val) - 1,
+        validator: (val: any) => !isNaN(val) && parseInt(val) > 0,
+        parser: (val: string) => parseInt(val) - 1,
       },
       '-s': {
         type: 'value',
         key: 'source',
-        validator: val => true,
-        parser: val => val.toLowerCase(),
+        validator: (_val: any) => true,
+        parser: (val: string) => val.toLowerCase(),
       },
     });
     const { input } = flag;
@@ -55,9 +55,11 @@ export default {
           footer: config.msg.footer,
         });
 
-        const downloadApiUrl = tools.api.createUrl('izumi', '/downloader/soundcloud', {
-          url: searchResult.url,
-        });
+        const downloadApiUrl = tools.api.createUrl('izumi', '/downloader/soundcloud',
+          {
+            url: searchResult.url,
+          }
+        );
         const downloadResult = (await axios.get(downloadApiUrl)).data.result.url;
 
         await ctx.reply({
@@ -75,7 +77,8 @@ export default {
         await ctx.reply({
           text:
             `${formatter.quote(`Judul: ${searchResult.trackName}`)}\n` +
-            `${formatter.quote(`Artis: ${searchResult.artistName}`)}\n${formatter.quote(
+            `${formatter.quote(`Artis: ${searchResult.artistName}`)}
+${formatter.quote(
               `URL: ${searchResult.externalUrl}`
             )}`,
           footer: config.msg.footer,
@@ -99,7 +102,8 @@ export default {
         const searchResult = (await axios.get(searchApiUrl)).data.results[searchIndex];
 
         await ctx.reply({
-          text: `${formatter.quote(`Judul: ${searchResult.title}`)}\n${formatter.quote(
+          text: `${formatter.quote(`Judul: ${searchResult.title}`)}
+${formatter.quote(
             `URL: ${searchResult.url}`
           )}`,
           footer: config.msg.footer,
@@ -118,7 +122,7 @@ export default {
           mimetype: tools.mime.lookup('mp3'),
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

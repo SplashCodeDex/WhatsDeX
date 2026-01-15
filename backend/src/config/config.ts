@@ -1,4 +1,6 @@
 // Import necessary modules and dependencies
+import logger from '../utils/logger.js';
+
 interface FormatterType {
   quote: (text: string) => string;
   italic: (text: string) => string;
@@ -19,8 +21,8 @@ function validateEnvironment() {
   const missing = required.filter(env => !process.env[env]);
 
   if (missing.length > 0) {
-    console.error('❌ Missing required environment variables:', missing);
-    console.error('Please set these variables before starting the application.');
+    logger.error('❌ Missing required environment variables:', { missing });
+    logger.error('Please set these variables before starting the application.');
     process.exit(1);
   }
 
@@ -28,7 +30,7 @@ function validateEnvironment() {
   if (process.env.DATABASE_URL) {
     const dbUrlPattern = /^(postgresql|mysql|sqlite|mongodb):\/\//;
     if (!dbUrlPattern.test(process.env.DATABASE_URL)) {
-      console.error('❌ DATABASE_URL format invalid. Must start with postgresql://, mysql://, sqlite://, or mongodb://');
+      logger.error('❌ DATABASE_URL format invalid. Must start with postgresql://, mysql://, sqlite://, or mongodb://');
       process.exit(1);
     }
   }

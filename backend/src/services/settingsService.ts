@@ -186,7 +186,7 @@ class SettingsService {
   }
 
   async getCategories() {
-    const categories = new Set();
+    const categories = new Set<string>();
     for (const setting of this.settings.values()) {
       categories.add(setting.category);
     }

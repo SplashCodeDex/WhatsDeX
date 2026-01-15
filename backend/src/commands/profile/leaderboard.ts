@@ -1,50 +1,57 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, BotMember } from '../../types/index.js';
+
 export default {
   name: 'leaderboard',
-  aliases: ['lb', 'peringkat'],
+  aliases: ['lb', 'top'],
   category: 'profile',
-  code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
+  code: async (ctx: MessageContext): Promise<void> => {
+    const { databaseService, formatter, logger } = ctx.bot.context;
+
+    if (!databaseService || !formatter) {
+      await ctx.reply('❌ System Error: Service unavailable.');
+      return;
+    }
+
     try {
-      const senderId = ctx.getId(ctx.sender.jid);
-      const users = await db.get('user');
+      const tenantId = ctx.bot.tenantId;
 
-      const leaderboardData = Object.entries(users)
-        .map(([id, data]) => ({
-          id,
-          username: data.username || 'guest',
-          level: data.level || 0,
-          winGame: data.winGame || 0,
-        }))
-        .sort((a, b) => b.winGame - a.winGame || b.level - a.level);
+      // Fetch Top 10 Users from Firestore
+      const topMembers = await databaseService.getLeaderboard(tenantId, 10);
 
-      const userRank = leaderboardData.findIndex(user => user.id === senderId) + 1;
-      const topUsers = leaderboardData.slice(0, 10);
-      let resultText = '';
+      if (topMembers.length === 0) {
+        await ctx.reply(formatter.quote('📭 Belum ada data leaderboard di tenant ini.'));
+        return;
+      }
 
-      topUsers.forEach((user, index) => {
-        const isSelf = user.id === senderId;
-        const displayName = isSelf ? `@${user.id}` : user.username ? user.username : `${user.id}`;
-        resultText += formatter.quote(
-          `${index + 1}. ${displayName} - Menang: ${user.winGame}, Level: ${user.level}\n`
-        );
+      let lbText = `🏆 *LEADERBOARD TOP 10* 🏆\n\n`;
+
+      topMembers.forEach((u: BotMember, index: number) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '👤';
+        const name = u.username || 'Anonymous';
+        lbText += `${medal} #${index + 1} *${name}*\n`;
+        lbText += `   ﹂ Level: ${u.level} | Wins: ${u.winGame} | ID: @${u.id.split('@')[0]}\n\n`;
       });
 
+      // Try to find sender's rank
+      const currentUser = await databaseService.getUser(tenantId, ctx.sender.jid);
+      const top100 = await databaseService.getLeaderboard(tenantId, 100);
+      const userRank = top100.findIndex((u: BotMember) => u.id === ctx.sender.jid) + 1;
+
       if (userRank > 10) {
-        const userStats = leaderboardData[userRank - 1];
-        const displayName = `@${senderId}`;
-        resultText += formatter.quote(
-          `${userRank}. ${displayName} - Menang: ${userStats.winGame}, Level: ${userStats.level}\n`
-        );
+        lbText += `--- Peringkat Kamu ---\n`;
+        lbText += `#${userRank} *${currentUser?.username || 'Kamu'}*\n`;
+        lbText += `   ﹂ Level: ${currentUser?.level || 0} | Wins: ${currentUser?.winGame || 0}\n`;
       }
 
       await ctx.reply({
-        text: resultText.trim(),
-        mentions: [`${senderId}@s.whatsapp.net`],
-        footer: config.msg.footer,
+        text: formatter.quote(lbText),
+        mentions: topMembers.map(u => u.id).concat(userRank > 10 ? [ctx.sender.jid] : [])
       });
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      logger.error(`[${ctx.bot.tenantId}] [Leaderboard] Error: ${err}`, error);
+      await ctx.reply(formatter.quote(`Error: ${err}`));
     }
   },
 };

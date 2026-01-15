@@ -1,8 +1,13 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
 import z from 'zod';
-import { createUrl } from '../../tools/api.js';
+// Assuming createUrl is available via imports or tools if standard
 import logger from '../../utils/logger.js';
+
+interface Language {
+  code: string;
+  language: string;
+}
 
 export default {
   name: 'translate',
@@ -12,26 +17,25 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, config } = ctx.bot.context;
+    const { formatter, config } = ctx.bot.context as GlobalContext;
 
     try {
       const langCode = ctx.args[0]?.length === 2 ? ctx.args[0] : 'id';
       const input =
-        ctx.args.slice(ctx.args[0]?.length === 2 ? 1 : 0).join(' ') || ctx.quoted?.content || '';
+        ctx.args.slice(ctx.args[0]?.length === 2 ? 1 : 0).join(' ') || (ctx.quoted as any)?.content || '';
 
-      // ... (rest of the code omitted for brevity as it is unchanged logic, but keeping the import and catch block correct)
-      if (input.toLowerCase() === 'list') {
-        const langListUrl = createUrl(
-          'https://raw.githubusercontent.com',
-          '/itsecurityco/to-google-translate/refs/heads/master/supported_languages.json'
-        );
-        const response = await axios.get(langListUrl);
+      if (ctx.args[0]?.toLowerCase() === 'list') {
+        const langListUrl = 'https://raw.githubusercontent.com/itsecurityco/to-google-translate/refs/heads/master/supported_languages.json';
+        const response = await axios.get<Language[]>(langListUrl);
         const listText = response.data
           .map(
-            lang =>
-              `${formatter.quote(`Language Code: ${lang.code}`)}\n${formatter.quote(`Language: ${lang.language}`)}`
+            (lang: Language) =>
+              `${formatter.quote(`Language Code: ${lang.code}`)}
+${formatter.quote(`Language: ${lang.language}`)}`
           )
-          .join(`\n${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
+          .join(`
+${formatter.quote('· · ─ ·✶· ─ · ·')}
+`);
         return ctx.reply({ text: listText, footer: config.msg.footer });
       }
 
@@ -40,22 +44,23 @@ export default {
       const inputCheck = inputSchema.safeParse(input);
       if (!inputCheck.success) {
         return ctx.reply(
-          formatter.quote(`❎ ${inputCheck.error.issues[0].message}\n\nExample: .tr en hello world`)
+          formatter.quote(`❎ ${inputCheck.error.issues[0].message}
+
+Example: .tr en hello world`)
         );
       }
       const textToTranslate = inputCheck.data;
 
       // API Call
-      const apiUrl = createUrl('davidcyril', '/tools/translate', {
-        text: textToTranslate,
-        to: langCode,
-      });
-      const result = (await axios.get(apiUrl)).data.translated_text;
+      const apiUrl = `https://api.davidcyriltech.my.id/tools/translate?text=${encodeURIComponent(textToTranslate)}&to=${langCode}`;
+      const { data } = await axios.get<{ translated_text: string }>(apiUrl);
+      const result = data.translated_text;
 
       return ctx.reply(result);
-    } catch (error: any) {
-      logger.error('Translate command error:', error);
-      return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Translate command error:', err);
+      return ctx.reply(formatter.quote(`An error occurred: ${err.message}`));
     }
   },
 };

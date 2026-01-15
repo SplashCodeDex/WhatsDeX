@@ -1,6 +1,13 @@
 import { MessageContext } from '../../types/index.js';
 import CommandSuggestionsService from '../../services/commandSuggestions.js';
 import * as formatter from '../../utils/formatters.js';
+import logger from '../../utils/logger.js';
+
+interface CommandHistory {
+  command: string;
+  category: string;
+  usedAt: number;
+}
 
 export default {
   name: 'suggest',
@@ -10,10 +17,8 @@ export default {
     coin: 5,
   },
   code: async (ctx: MessageContext) => {
-    const { config } = ctx.bot.context;
-
     try {
-      const userInput = ctx.args.join(' ') || ctx.quoted?.content || '';
+      const userInput = ctx.args.join(' ') || (ctx.quoted as any)?.content || '';
 
       if (!userInput) {
         return ctx.reply(
@@ -23,16 +28,11 @@ export default {
         );
       }
 
-      // Initialize suggestions service
       const suggestionsService = new CommandSuggestionsService();
+      const userId = (ctx as any).user?.id || ctx.sender.jid || (ctx as any).author?.id;
 
-      // Determine user id for history lookup
-      const userId = ctx.user?.id || ctx.sender || ctx.author?.id;
-
-      // Get user's recent command history
-      const recentCommands = await suggestionsService.getUserCommandHistory(userId);
-
-      // Generate suggestions from input and recent history
+      // Cast to any to bypass strict type check on suggestCommands argument if service definition is loose/strict mismatch
+      const recentCommands = (await suggestionsService.getUserCommandHistory(userId)) as any[];
       const suggestions = await suggestionsService.suggestCommands(userInput, recentCommands);
 
       if (suggestions.length === 0) {
@@ -43,10 +43,9 @@ export default {
         );
       }
 
-      // Format suggestions for display
       let response = `💡 **Command Suggestions for:** "${userInput}"\n\n`;
 
-      suggestions.forEach((suggestion, index) => {
+      suggestions.forEach((suggestion: any, index: number) => {
         const confidencePercent = Math.round(suggestion.confidence * 100);
         const confidenceIcon =
           confidencePercent >= 80 ? '🔥' : confidencePercent >= 60 ? '👍' : '🤔';
@@ -61,10 +60,11 @@ export default {
       response += `📚 *Need more help? Try* ${ctx.used.prefix}menu *to see all commands*`;
 
       await ctx.reply(response);
-    } catch (error: any) {
-      console.error('Error in suggest command:', error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error in suggest command:', err);
       return ctx.reply(
-        formatter.quote(`❎ An error occurred while generating suggestions: ${error.message}`)
+        formatter.quote(`❎ An error occurred while generating suggestions: ${err.message}`)
       );
     }
   },

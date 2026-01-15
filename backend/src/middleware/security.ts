@@ -383,17 +383,17 @@ class SecurityMiddleware {
    * @param {string} eventType - Event type
    * @returns {string} Risk level
    */
-  getRiskLevel(eventType: string): 'low' | 'medium' | 'high' | 'critical' {
-    const riskLevels: Record<string, 'low' | 'medium' | 'high' | 'critical'> = {
-      content_blocked: 'medium',
-      rate_limit_exceeded: 'low',
-      spam_detected: 'medium',
-      blocked_user: 'high',
-      command_injection: 'critical',
-      middleware_error: 'medium',
+  getRiskLevel(eventType: string): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' {
+    const riskLevels: Record<string, 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'> = {
+      content_blocked: 'MEDIUM',
+      rate_limit_exceeded: 'LOW',
+      spam_detected: 'MEDIUM',
+      blocked_user: 'HIGH',
+      command_injection: 'CRITICAL',
+      middleware_error: 'MEDIUM',
     };
 
-    return riskLevels[eventType] || 'low';
+    return riskLevels[eventType] || 'LOW';
   }
 
   /**
@@ -429,7 +429,7 @@ class SecurityMiddleware {
     const maxAge = 600000; // 10 minutes
 
     for (const [key, timestamps] of this.rateLimitCache.entries()) {
-      const validTimestamps = timestamps.filter(time => now - time < maxAge);
+      const validTimestamps = timestamps.filter((time: number) => now - time < maxAge);
       if (validTimestamps.length === 0) {
         this.rateLimitCache.delete(key);
       } else {

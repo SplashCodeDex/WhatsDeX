@@ -65,6 +65,9 @@ export class RateLimiter {
       multi.expire(redisKey, limit.window);
 
       const results = await multi.exec();
+      if (!results) {
+        throw new Error('Redis transaction failed');
+      }
       const currentCount = results[0][1] as number; // incr returns the new value
 
       if (currentCount > limit.requests) {
@@ -161,6 +164,9 @@ export class RateLimiter {
       multi.expire(redisKey, Math.ceil(windowMs / 1000));
 
       const results = await multi.exec();
+      if (!results) {
+        throw new Error('Redis transaction failed');
+      }
       const currentCount = results[1][1] as number; // zcard result
 
       if (currentCount >= limit) {
@@ -202,15 +208,18 @@ export class RateLimiter {
       });
 
       const results = await pipeline.exec();
+      if (!results) {
+        return { error: 'Redis pipeline failed' };
+      }
       const status: { [key: string]: { current: number; resetIn: number } } = {};
 
       for (let i = 0; i < keys.length; i += 2) {
         const keyName = keys[i / 2].split(':').pop() || 'unknown';
-        const count = results[i][1] as string | null;
-        const ttl = results[i + 1][1] as number;
+        const count = results[i] ? (results[i][1] as string | null) : null;
+        const ttl = results[i + 1] ? (results[i + 1][1] as number) : 0;
 
         status[keyName] = {
-          current: parseInt(count || '0'),
+          current: parseInt(count || '0', 10),
           resetIn: ttl > 0 ? ttl : 0
         };
       }

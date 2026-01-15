@@ -1,49 +1,59 @@
 import crypto from 'crypto';
 import redisClient from './redis.js';
-
+import { Result } from '../types/index.js';
 
 class Cache {
-  private redis: any;
-  private defaultTTL: number;
+  private readonly redis: typeof redisClient;
+  private readonly defaultTTL: number;
 
   constructor() {
     this.redis = redisClient;
     this.defaultTTL = 3600; // 1 hour
   }
 
-  createKey(data) {
+  createKey(data: unknown): string {
     return crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
   }
 
-  async get(key) {
+  async get<T>(key: string): Promise<Result<T | null>> {
     try {
       const data = await this.redis.get(key);
-      return data ? JSON.parse(data) : null;
-    } catch (error: any) {
-      console.error('Cache get error:', error);
-      return null;
+      return { 
+        success: true, 
+        data: data ? (JSON.parse(data) as T) : null 
+      };
+    } catch (error: unknown) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error : new Error('Unknown cache get error') 
+      };
     }
   }
 
-  async set(key, value, ttl = this.defaultTTL) {
+  async set(key: string, value: unknown, ttl: number = this.defaultTTL): Promise<Result<boolean>> {
     try {
       await this.redis.set(key, JSON.stringify(value), 'EX', ttl);
-      return true;
-    } catch (error: any) {
-      console.error('Cache set error:', error);
-      return false;
+      return { success: true, data: true };
+    } catch (error: unknown) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error : new Error('Unknown cache set error') 
+      };
     }
   }
 
-  async del(key) {
+  async del(key: string): Promise<Result<boolean>> {
     try {
       await this.redis.del(key);
-      return true;
-    } catch (error: any) {
-      console.error('Cache del error:', error);
-      return false;
+      return { success: true, data: true };
+    } catch (error: unknown) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error : new Error('Unknown cache del error') 
+      };
     }
   }
 }
 
-export default new Cache();
+export const cache = new Cache();
+export default cache;

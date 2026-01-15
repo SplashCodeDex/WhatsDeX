@@ -10,8 +10,8 @@ export default {
     const { formatter, tools, database: db } = ctx.bot.context;
     const userJid =
       ctx.quoted?.senderJid ||
-      (await ctx.getMentioned())[0] ||
-      (ctx.args[0] ? `${ctx.args[0].replace(/[^\\d]/g, '')}@s.whatsapp.net` : null);
+      (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) ||
+      (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, '')}@s.whatsapp.net` : null);
 
     if (!userJid)
       return await ctx.reply({
@@ -26,8 +26,8 @@ export default {
         mentions: [ctx.sender.jid],
       });
 
-    const isOnWhatsApp = await ctx.core.onWhatsApp(userJid);
-    if (isOnWhatsApp.length === 0)
+    const isOnWhatsApp = ctx.bot.onWhatsApp ? await ctx.bot.onWhatsApp(userJid) : [];
+    if (!isOnWhatsApp || isOnWhatsApp.length === 0)
       return await ctx.reply(formatter.quote('❎ Akun tidak ada di WhatsApp!'));
 
     try {

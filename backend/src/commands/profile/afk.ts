@@ -1,24 +1,41 @@
 import { MessageContext } from '../../types/index.js';
+
 export default {
   name: 'afk',
   category: 'profile',
-  code: async (ctx: MessageContext) => {
-    const { formatter, tools, database: db } = ctx.bot.context;
-    const input = ctx.args.join(' ') || null;
+  code: async (ctx: MessageContext): Promise<void> => {
+    const { databaseService, formatter, logger } = ctx.bot.context;
+
+    if (!databaseService || !formatter) {
+      await ctx.reply('❌ System Error: Service unavailable.');
+      return;
+    }
 
     try {
-      await db.set(`user.${ctx.getId(ctx.sender.jid)}.afk`, {
-        reason: input,
-        timestamp: Date.now(),
+      const tenantId = ctx.bot.tenantId;
+      const senderId = ctx.sender.jid;
+      const reason = ctx.args.join(' ') || 'Tanpa alasan';
+
+      // Update AFK status in Firestore
+      const result = await databaseService.updateUser(tenantId, senderId, {
+        afk: {
+          reason,
+          timestamp: Date.now()
+        }
       });
 
-      await ctx.reply(
-        formatter.quote(
-          `📴 Kamu akan AFK, ${input ? `dengan alasan ${formatter.inlineCode(input)}` : 'tanpa alasan apapun'}.`
-        )
-      );
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+      if (result.success) {
+        await ctx.reply(formatter.quote(`💤 @${senderId.split('@')[0]} sekarang AFK dengan alasan: ${reason}`), {
+          mentions: [senderId]
+        });
+      } else {
+        throw result.error;
+      }
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      logger.error(`[${ctx.bot.tenantId}] [AFK] Error: ${err}`, error);
+      await ctx.reply(formatter.quote(`Error: ${err}`));
     }
   },
 };

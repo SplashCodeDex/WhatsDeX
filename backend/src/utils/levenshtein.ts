@@ -1,5 +1,5 @@
 // src/utils/levenshtein.js
-export function levenshteinDistance(str1, str2) {
+export function levenshteinDistance(str1: string, str2: string) {
   const matrix = [];
 
   for (let i = 0; i <= str2.length; i++) {

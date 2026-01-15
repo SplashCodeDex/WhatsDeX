@@ -1,4 +1,5 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
+
 export default {
   name: 'listbanneduser',
   aliases: ['listban', 'listbanned'],
@@ -7,24 +8,21 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
+    const { formatter, tools, config, database: db } = ctx.bot.context as GlobalContext;
     try {
-      const users = await db.get('user');
-      const bannedUsers = [];
+      const users = (await db.get('user')) || {};
+      const bannedUsers: string[] = [];
 
       for (const userId in users) {
         if (users[userId].banned === true) bannedUsers.push(userId);
       }
 
       let resultText = '';
-      const userMentions = [];
+      const userMentions: string[] = [];
 
       bannedUsers.forEach(userId => {
         resultText += `${formatter.quote(`@${userId}`)}
 `;
-      });
-
-      bannedUsers.forEach(userId => {
         userMentions.push(`${userId}@s.whatsapp.net`);
       });
 
@@ -33,7 +31,7 @@ export default {
         mentions: userMentions,
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

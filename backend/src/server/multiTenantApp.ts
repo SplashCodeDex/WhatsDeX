@@ -13,8 +13,10 @@ import multiTenantRoutes from '../routes/multiTenant.js';
 import authRoutes from '../routes/authRoutes.js';
 import templateRoutes from '../routes/templateRoutes.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 export class MultiTenantApp {
+  // ... existing code ...
   private app: express.Application;
   private port: number;
   private server: any;
@@ -122,9 +124,8 @@ export class MultiTenantApp {
     });
 
     // Internal API routes
-    this.app.use('/api/internal', multiTenantRoutes);
+    this.app.use('/api/internal', authenticateToken, multiTenantRoutes);
 
-    // Public auth routes
     // Public auth routes
     this.app.use('/api/auth', authRoutes);
 
@@ -132,7 +133,7 @@ export class MultiTenantApp {
     this.app.use('/api/templates', templateRoutes);
 
     // Tenant management
-    this.app.get('/api/tenants', async (req, res) => {
+    this.app.get('/api/tenants', authenticateToken, async (req, res) => {
       try {
         const tenants = await multiTenantService.listTenants();
         res.json({ success: true, data: tenants });
@@ -143,17 +144,20 @@ export class MultiTenantApp {
     });
 
     // Bot management
-    this.app.post('/api/bots/:botId/start', async (req, res) => {
+    this.app.post('/api/bots/:botId/start', authenticateToken, async (req, res) => {
       try {
         const { botId } = req.params;
-        await multiTenantBotService.startBot(botId);
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) throw new Error('Tenant context missing');
+
+        await multiTenantBotService.startBot(tenantId, botId);
         res.json({ success: true, message: 'Bot started successfully' });
       } catch (error: any) {
         res.status(500).json({ error: error.message });
       }
     });
 
-    this.app.post('/api/bots/:botId/stop', async (req, res) => {
+    this.app.post('/api/bots/:botId/stop', authenticateToken, async (req, res) => {
       try {
         const { botId } = req.params;
         await multiTenantBotService.stopBot(botId);

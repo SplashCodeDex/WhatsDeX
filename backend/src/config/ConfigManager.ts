@@ -5,6 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import logger from '../utils/logger.js';
 
 export interface Config {
   system: {
@@ -325,9 +326,9 @@ export class ConfigManager {
       try {
         const envConfig = JSON.parse(fs.readFileSync(envConfigPath, 'utf8'));
         this.config = this.mergeDeep(this.config, envConfig);
-        console.log(`✅ Loaded ${this.environment} configuration`);
+        logger.info(`✅ Loaded ${this.environment} configuration`);
       } catch (error: any) {
-        console.warn(`⚠️ Failed to load ${this.environment} config:`, error.message);
+        logger.warn(`⚠️ Failed to load ${this.environment} config:`, error.message);
       }
     }
   }
@@ -343,21 +344,21 @@ export class ConfigManager {
     const missing = required.filter(key => !process.env[key]);
 
     if (missing.length > 0) {
-      console.error('❌ Missing required environment variables:', missing);
+      logger.error('❌ Missing required environment variables:', { missing });
       throw new Error(`Missing required configuration: ${missing.join(', ')}`);
     }
 
     // Validate JWT secret strength
     if (this.config.auth.jwtSecret && this.config.auth.jwtSecret.length < 32) {
-      console.warn('⚠️ JWT secret is too short. Use at least 32 characters.');
+      logger.warn('⚠️ JWT secret is too short. Use at least 32 characters.');
     }
 
     // Validate database URL format
     if (this.config.database.url && !this.config.database.url.startsWith('postgresql://')) {
-      console.warn('⚠️ Database URL should use postgresql:// protocol');
+      logger.warn('⚠️ Database URL should use postgresql:// protocol');
     }
 
-    console.log('✅ Configuration validation passed');
+    logger.info('✅ Configuration validation passed');
   }
 
   getEnvString(key: string, defaultValue: string | null = null): string | undefined {
@@ -429,7 +430,7 @@ export class ConfigManager {
   // Dynamic configuration updates
   updateConfig(path: string, value: any) {
     this.set(path, value);
-    console.log(`Configuration updated: ${path} = ${value}`);
+    logger.info(`Configuration updated: ${path} = ${value}`);
   }
 
   // Export configuration for external use

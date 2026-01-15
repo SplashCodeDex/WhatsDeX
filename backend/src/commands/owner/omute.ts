@@ -15,8 +15,7 @@ export default {
       return await ctx.reply(formatter.quote('✅ Berhasil me-mute grup ini dari bot!'));
     }
 
-    const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
-    const accountId = ctx.getId(accountJid);
+    const accountJid = ctx.quoted?.senderJid || (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) || null;
 
     if (!accountJid)
       return await ctx.reply({
@@ -31,6 +30,7 @@ export default {
         mentions: [ctx.sender.jid],
       });
 
+    const accountId = ctx.getId(accountJid);
     if (accountId === config.bot.id)
       return await ctx.reply(
         formatter.quote(

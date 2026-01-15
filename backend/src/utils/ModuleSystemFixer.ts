@@ -1,69 +1,65 @@
 /**
  * Module System Standardization Utility
- * Fixes mixed CommonJS/ES6 module issues
  */
 
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+interface ModuleIssue {
+  file: string;
+  problems: string[];
+  hasRequire: boolean;
+  hasImport: boolean;
+  hasModuleExports: boolean;
+  hasExportDefault: boolean;
+  content: string;
+}
+
+interface FixerReport {
+  totalFiles: number;
+  byProblemType: Record<string, number>;
+  summary: string[];
+}
+
 export class ModuleSystemFixer {
+  private rootDir: string;
+  private excludePatterns: string[];
+
   constructor() {
     this.rootDir = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
-    this.excludePatterns = [
-      'node_modules',
-      '.git',
-      'dist',
-      'build',
-      '.env'
-    ];
+    this.excludePatterns = ['node_modules', '.git', 'dist', 'build', '.env'];
   }
 
-  async scanAndFix() {
+  async scanAndFix(): Promise<ModuleIssue[]> {
     console.log('🔍 Scanning for module system issues...');
-    
     const issues = await this.findModuleIssues();
     console.log(`Found ${issues.length} files with mixed module systems`);
-    
-    for (const issue of issues) {
-      console.log(`📁 ${issue.file}: ${issue.problems.join(', ')}`);
-    }
-    
-    // Optionally auto-fix (commented out for safety)
-    // await this.autoFix(issues);
-    
     return issues;
   }
 
-  async findModuleIssues(dir = this.rootDir) {
-    const issues = [];
-    
+  async findModuleIssues(dir: string = this.rootDir): Promise<ModuleIssue[]> {
+    const issues: ModuleIssue[] = [];
     try {
       const entries = await fs.readdir(dir, { withFileTypes: true });
-      
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
-        
         if (entry.isDirectory() && !this.shouldExclude(entry.name)) {
-          const subIssues = await this.findModuleIssues(fullPath);
-          issues.push(...subIssues);
+          issues.push(...(await this.findModuleIssues(fullPath)));
         } else if (entry.isFile() && entry.name.endsWith('.js')) {
           const fileIssues = await this.analyzeFile(fullPath);
-          if (fileIssues.problems.length > 0) {
-            issues.push(fileIssues);
-          }
+          if (fileIssues.problems.length > 0) issues.push(fileIssues);
         }
       }
-    } catch (error: any) {
-      console.warn(`Warning: Cannot access ${dir}:`, error.message);
+    } catch (error: unknown) {
+      console.warn(`Warning: Cannot access ${dir}`);
     }
-    
     return issues;
   }
 
-  async analyzeFile(filePath) {
+  private async analyzeFile(filePath: string): Promise<ModuleIssue> {
     const content = await fs.readFile(filePath, 'utf8');
-    const problems = [];
+    const problems: string[] = [];
     
     const hasRequire = /require\s*\(/.test(content);
     const hasImport = /import\s+.*\s+from/.test(content);
@@ -71,19 +67,9 @@ export class ModuleSystemFixer {
     const hasExportDefault = /export\s+default/.test(content);
     const hasExports = /export\s+\{/.test(content);
     
-    // Check for mixed patterns
-    if (hasRequire && hasImport) {
-      problems.push('Mixed require() and import statements');
-    }
-    
-    if (hasModuleExports && (hasExportDefault || hasExports)) {
-      problems.push('Mixed module.exports and ES6 exports');
-    }
-    
-    // Check for __dirname usage (not available in ES6 modules)
-    if (/__dirname|__filename/.test(content)) {
-      problems.push('Uses __dirname/__filename (not available in ES6 modules)');
-    }
+    if (hasRequire && hasImport) problems.push('Mixed require() and import');
+    if (hasModuleExports && (hasExportDefault || hasExports)) problems.push('Mixed module.exports and ES6');
+    if (/__dirname|__filename/.test(content)) problems.push('Uses __dirname/__filename');
     
     return {
       file: path.relative(this.rootDir, filePath),
@@ -96,60 +82,12 @@ export class ModuleSystemFixer {
     };
   }
 
-  shouldExclude(name) {
+  private shouldExclude(name: string): boolean {
     return this.excludePatterns.some(pattern => name.includes(pattern));
   }
 
-  // Auto-fix functionality (use with caution)
-  async autoFix(issues) {
-    console.log('🔧 Starting auto-fix...');
-    
-    for (const issue of issues) {
-      if (issue.hasRequire || issue.hasModuleExports) {
-        await this.convertToES6(issue);
-      }
-    }
-  }
-
-  async convertToES6(issue) {
-    const filePath = path.join(this.rootDir, issue.file);
-    let content = issue.content;
-    
-    // Convert require() to import
-    content = content.replace(
-      /const\s+(\w+)\s+=\s+require\s*\(\s*['"`]([^'"`]+)['"`]\s*\)/g,
-      'import $1 from \'$2\';'
-    );
-    
-    content = content.replace(
-      /const\s+\{\s*([^}]+)\s*\}\s+=\s+require\s*\(\s*['"`]([^'"`]+)['"`]\s*\)/g,
-      'import { $1 } from \'$2\';'
-    );
-    
-    // Convert module.exports to export default
-    content = content.replace(
-      /module\.exports\s*=\s*/g,
-      'export default '
-    );
-    
-    // Fix __dirname and __filename
-    if (content.includes('__dirname') || content.includes('__filename')) {
-      const importStatement = "import { fileURLToPath } from 'url';\nimport path from 'path';\n\nconst __filename = fileURLToPath(import.meta.url);\nconst __dirname = path.dirname(__filename);\n";
-      
-      // Add import at the top
-      if (!content.includes('fileURLToPath')) {
-        content = importStatement + content;
-      }
-    }
-    
-    // Write the fixed file
-    await fs.writeFile(filePath, content, 'utf8');
-    console.log(`✅ Fixed: ${issue.file}`);
-  }
-
-  // Generate report
-  generateReport(issues) {
-    const report = {
+  public generateReport(issues: ModuleIssue[]): FixerReport {
+    const report: FixerReport = {
       totalFiles: issues.length,
       byProblemType: {},
       summary: []
@@ -164,34 +102,12 @@ export class ModuleSystemFixer {
     report.summary = [
       `📊 Module System Analysis Report`,
       `Total files with issues: ${report.totalFiles}`,
-      ``,
-      `Problem breakdown:`,
-      ...Object.entries(report.byProblemType).map(([problem, count]) => 
-        `  - ${problem}: ${count} files`
-      ),
-      ``,
-      `Recommended actions:`,
-      `1. Convert all require() statements to import`,
-      `2. Convert all module.exports to export default/export`,
-      `3. Replace __dirname/__filename with ES6 equivalents`,
-      `4. Update package.json to include "type": "module"`
+      ...Object.entries(report.byProblemType).map(([problem, count]) => `  - ${problem}: ${count} files`)
     ];
 
     return report;
   }
 }
 
-// CLI usage
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const fixer = new ModuleSystemFixer();
-  const issues = await fixer.scanAndFix();
-  const report = fixer.generateReport(issues);
-  
-  console.log('\n' + report.summary.join('\n'));
-  
-  if (issues.length > 0) {
-    console.log('\n⚠️ Manual review recommended before applying auto-fixes');
-  } else {
-    console.log('\n✅ No module system issues found!');
-  }
-}
+export const moduleSystemFixer = new ModuleSystemFixer();
+export default moduleSystemFixer;

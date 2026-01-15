@@ -12,8 +12,7 @@ export default {
     const input = ctx.args.join(' ') || ctx.quoted?.content || formatter.quote('👋 Halo, Dunia!');
 
     try {
-      const members = await ctx.group().members();
-      const mentions = members.map(member => member.jid);
+      const mentions = await ctx.group().members();
 
       await ctx.reply({
         text: input,

@@ -1,5 +1,6 @@
 import { MessageContext } from '../../types/index.js';
 import multiTenantBotService from '@/services/multiTenantBotService.js';
+import logger from '@/utils/logger.js';
 
 /**
  * Stop JadiBot Command
@@ -30,9 +31,9 @@ export default {
       await multiTenantBotService.stopBot(userId);
 
       await ctx.reply('✅ Bot instance stopped successfully!');
-      console.log(`JadiBot stopped for ${userId}`);
+      logger.info(`JadiBot stopped for ${userId}`);
     } catch (error: any) {
-      console.error('Error in stopjadibot command:', error);
+      logger.error('Error in stopjadibot command:', error);
 
       if (error.message.includes("don't have an active bot")) {
         await ctx.reply("You don't have an active bot instance!");

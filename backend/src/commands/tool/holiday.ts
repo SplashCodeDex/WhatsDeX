@@ -1,6 +1,11 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
 import moment from 'moment-timezone';
+
+interface Holiday {
+  tanggal: string;
+  keterangan: string;
+}
 
 export default {
   name: 'holiday',
@@ -10,30 +15,31 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
     const month = new Date().getMonth() + 1;
-    const apiUrl = tools.api.createUrl('https://dayoffapi.vercel.app', '/api', {
-      month,
-    });
+    // Assume tools.api.createUrl handles base URL correctly or use direct URL
+    const apiUrl = `https://dayoffapi.vercel.app/api?month=${month}`;
 
     try {
-      const result = (await axios.get(apiUrl)).data;
+      const { data } = await axios.get<Holiday[]>(apiUrl);
+      const result = data;
 
       const resultText = result
         .reverse()
-        .map(res => {
+        .map((res: Holiday) => {
           const formattedDate = moment
             .tz(res.tanggal, 'Asia/Jakarta')
             .locale('id')
             .format('dddd, DD MMMM YYYY');
-          return `${formatter.quote(res.keterangan)}\n${formatter.quote(formattedDate)}`;
+          return `${formatter.quote(res.keterangan)}
+${formatter.quote(formattedDate)}`;
         })
         .join('\n' + `${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
       await ctx.reply({
-        text: resultText || config.msg.notFound,
+        text: resultText || config.msg.notFound || 'No holidays found',
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

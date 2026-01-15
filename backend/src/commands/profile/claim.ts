@@ -1,108 +1,77 @@
-import { MessageContext } from '../../types/index.js';
-// List of available claim rewards
-import z from 'zod';
-import formatters from '../../utils/formatters.js';
-const { convertMsToDuration, ucwords } = formatters;
-import { formatTime, getRandomInt } from '../../utils.js';
+import { MessageContext, BotMember } from '../../types/index.js';
+import { Timestamp } from 'firebase-admin/firestore';
 
-const claimRewards = {
-  daily: {
-    reward: 100,
-    cooldown: 24 * 60 * 60 * 1000, // 24 hours (100 coins)
-    level: 1,
-    description: 'Daily reward',
-  },
-  weekly: {
-    reward: 500,
-    cooldown: 7 * 24 * 60 * 60 * 1000, // 7 days (500 coins)
-    level: 15,
-    description: 'Weekly reward',
-  },
-  monthly: {
-    reward: 2000,
-    cooldown: 30 * 24 * 60 * 60 * 1000, // 30 days (2000 coins)
-    level: 50,
-    description: 'Monthly reward',
-  },
-  yearly: {
-    reward: 10000,
-    cooldown: 365 * 24 * 60 * 60 * 1000, // 365 days (10000 coins)
-    level: 75,
-    description: 'Yearly reward',
-  },
-};
+const REWARDS = {
+  daily: 100,
+  weekly: 1000,
+  monthly: 5000,
+} as const;
 
-const claimTypes = Object.keys(claimRewards);
+const COOLDOWNS = {
+  daily: 24 * 60 * 60 * 1000,
+  weekly: 7 * 24 * 60 * 60 * 1000,
+  monthly: 30 * 24 * 60 * 60 * 1000,
+} as const;
 
 export default {
   name: 'claim',
-  aliases: ['bonus', 'klaim'],
   category: 'profile',
-  code: async (ctx: MessageContext) => {
-    const { formatter, config } = ctx.bot.context;
+  code: async (ctx: MessageContext): Promise<void> => {
+    const { databaseService, formatter, logger } = ctx.bot.context;
+
+    if (!databaseService || !formatter) {
+      await ctx.reply('❌ System Error: Service unavailable.');
+      return;
+    }
 
     try {
-      const input = (ctx.args.join(' ') || '').toLowerCase();
+      const tenantId = ctx.bot.tenantId;
+      const senderId = ctx.sender.jid;
+      const type = (ctx.args[0] || 'daily').toLowerCase();
 
-      if (input === 'list') {
-        const listText = claimTypes
-          .map(type => formatter.quote(`${type} (${claimRewards[type].description})`))
-          .join('\n');
-        return ctx.reply({ text: listText, footer: config.msg.footer });
+      if (!Object.keys(REWARDS).includes(type)) {
+        await ctx.reply(formatter.quote('ℹ️ Jenis claim tersedia: daily, weekly, monthly.'));
+        return;
       }
 
-      // Validation
-      const claimSchema = z.enum(claimTypes, {
-        errorMap: () => ({
-          message: 'Invalid claim type. Use ".claim list" to see available claims.',
-        }),
+      // 1. Fetch User
+      const user = await databaseService.getUser(tenantId, senderId);
+      const now = Date.now();
+
+      const lastClaims = user?.lastClaim || {};
+      const typeKey = type as keyof typeof REWARDS;
+      const lastClaimTime = lastClaims[typeKey] || 0;
+
+      // 2. Check Cooldown
+      if (now - lastClaimTime < COOLDOWNS[typeKey]) {
+        const remaining = COOLDOWNS[typeKey] - (now - lastClaimTime);
+        const hours = Math.floor(remaining / (60 * 60 * 1000));
+        const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+        await ctx.reply(formatter.quote(`⏳ Kamu sudah mengambil reward ${type}.\nTunggu ${hours}j ${minutes}m lagi.`));
+        return;
+      }
+
+      // 3. Update User
+      const rewardKey = type as keyof typeof REWARDS;
+      const reward = REWARDS[rewardKey];
+      const newCoins = (user?.coin || 0) + reward;
+      const updatedClaims = { ...lastClaims, [type]: now };
+
+      const result = await databaseService.updateUser(tenantId, senderId, {
+        coin: newCoins,
+        lastClaim: updatedClaims
       });
-      const claimCheck = claimSchema.safeParse(input);
 
-      if (!claimCheck.success) {
-        return ctx.reply(formatter.quote('❎ Invalid claim type. Use ".claim list" to see available claims.'));
+      if (result.success) {
+        await ctx.reply(formatter.quote(`✨ Selamat! Kamu mendapatkan ${reward} koin dari claim ${type}.`));
+      } else {
+        throw result.error;
       }
-      const claimType = claimCheck.data;
-      const claim = claimRewards[claimType];
 
-      // Business Logic
-      const senderId = ctx.getId(ctx.sender.jid);
-      const userDb = (await db.get(`user.${senderId}`)) || {};
-      const level = userDb?.level || 0;
-
-      if (ctx.isOwner || userDb?.premium)
-        return ctx.reply(formatter.quote('❎ You have unlimited coins and cannot claim rewards.'));
-      if (level < claim.level)
-        return ctx.reply(
-          formatter.quote(
-            `❎ You need to be level ${claim.level} to claim this. Your current level is ${level}.`
-          )
-        );
-
-      const currentTime = Date.now();
-      const lastClaim = (userDb?.lastClaim ?? {})[claimType] || 0;
-      const timePassed = currentTime - lastClaim;
-      const remainingTime = claim.cooldown - timePassed;
-
-      if (remainingTime > 0)
-        return ctx.reply(
-          formatter.quote(
-            `⏳ You have already claimed the ${claimType} reward. Please wait ${convertMsToDuration(remainingTime)}.`
-          )
-        );
-
-      const rewardCoin = (userDb?.coin || 0) + claim.reward;
-      await db.set(`user.${senderId}.coin`, rewardCoin);
-      await db.set(`user.${senderId}.lastClaim.${claimType}`, currentTime);
-
-      return ctx.reply(
-        formatter.quote(
-          `✅ You successfully claimed the ${claimType} reward of ${claim.reward} coins! Your current balance is ${rewardCoin}.`
-        )
-      );
-    } catch (error: any) {
-      console.error(error);
-      return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      logger.error(`[${ctx.bot.tenantId}] [Claim] Error: ${err}`, error);
+      await ctx.reply(formatter.quote(`Error: ${err}`));
     }
   },
 };

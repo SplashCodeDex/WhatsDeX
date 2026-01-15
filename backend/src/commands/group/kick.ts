@@ -1,39 +1,42 @@
 import { MessageContext } from '../../types/index.js';
+
 export default {
   name: 'kick',
-  aliases: ['dor'],
+  aliases: ['dor', 'remove'],
   category: 'group',
   permissions: {
     admin: true,
     botAdmin: true,
-    group: true,
-    restrict: true,
+    group: true
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
-    const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
+    const { formatter } = ctx.bot.context;
 
-    if (!accountJid)
-      return await ctx.reply({
-        text:
-          `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
-          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${ctx.getId(ctx.sender.jid)}`))}\n${formatter.quote(
-            tools.msg.generateNotes([
-              'Balas atau kutip pesan untuk menjadikan pengirim sebagai akun target.',
-            ])
-          )}`,
-        mentions: [ctx.sender.jid],
-      });
+    // Resolve target JID from quoted message or mentions
+    const mentions = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    const quotedJid = ctx.msg.message?.extendedTextMessage?.contextInfo?.participant;
+    const accountJid = quotedJid || mentions[0] || null;
 
-    if (await ctx.group().isOwner(accountJid))
-      return await ctx.reply(formatter.quote('❎ Dia adalah owner grup!'));
+    if (!accountJid) {
+      return await ctx.reply(formatter.quote('⚠️ Please reply to a user or mention them to kick.'));
+    }
+
+    // Check if target is owner (safety check)
+    // Note: ctx.group() creates functions scoped to the sender, so isOwner() checks if sender is owner
+    // We need to check if the TARGET is owner.
+    // GroupFunctions interface has `owner(): Promise<string | null>`
+    const groupOwner = await ctx.group().owner();
+    if (groupOwner === accountJid) {
+      return await ctx.reply(formatter.quote('❎ Cannot kick the group owner!'));
+    }
 
     try {
-      await ctx.group().kick(accountJid);
-
-      await ctx.reply(formatter.quote('✅ Berhasil dikeluarkan!'));
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+      await ctx.group().kick([accountJid]);
+      await ctx.reply(formatter.quote('✅ User kicked successfully!'));
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      ctx.bot.context.logger.error('Kick command failed', { error: err });
+      await ctx.reply(formatter.quote(`❌ Failed to kick user: ${err}`));
     }
   },
 };

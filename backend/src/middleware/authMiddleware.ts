@@ -1,40 +1,55 @@
 import { Request, Response, NextFunction } from 'express';
-import { auth } from '../lib/firebase.js';
+import jwt from 'jsonwebtoken';
 import logger from '../utils/logger.js';
+import { ConfigService } from '../services/ConfigService.js';
+
+interface UserPayload {
+    userId: string;
+    email: string;
+    tenantId: string;
+    role: string;
+    iat: number;
+    exp: number;
+}
+
+declare global {
+    namespace Express {
+        interface Request {
+            user?: UserPayload;
+        }
+    }
+}
 
 /**
- * Middleware to authenticate requests using Firebase Auth ID Tokens
- * Expected Header: Authorization: Bearer <ID_TOKEN>
+ * Middleware to authenticate requests using Custom JWT (issued by authController)
+ * Expected Header: Authorization: Bearer <JWT>
  */
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authHeader = req.headers['authorization'];
-        const token = (authHeader && authHeader.split(' ')[1]) || (req as any).cookies?.token;
+        const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.token;
 
         if (!token) {
             return res.status(401).json({ error: 'Access token required' });
         }
 
-        // Verify Firebase ID Token
-        const decodedToken = await auth.verifyIdToken(token);
-        
-        // Populate request with user info
-        (req as any).user = {
-            uid: decodedToken.uid,
-            email: decodedToken.email,
-            // Assuming tenantId is stored in custom claims during user creation/login
-            tenantId: decodedToken.tenantId || 'default',
-            role: decodedToken.role || 'user'
-        };
+        const config = ConfigService.getInstance();
+        const secret = config.get('JWT_SECRET'); // Strict config access
 
-        next();
-    } catch (error: any) {
-        logger.error('Auth Middleware: Token verification failed:', error.message);
-        
-        if (error.code === 'auth/id-token-expired') {
-            return res.status(401).json({ error: 'Token expired' });
+        // Verify Custom JWT
+        try {
+            const decoded = jwt.verify(token, secret) as UserPayload;
+            req.user = decoded;
+            next();
+        } catch (jwtError: any) {
+            if (jwtError.name === 'TokenExpiredError') {
+                return res.status(401).json({ error: 'Token expired' });
+            }
+            throw new Error('Invalid token signature');
         }
-        
+
+    } catch (error: any) {
+        logger.security('Auth Middleware: Token verification failed', null, { error: error.message, ip: req.ip });
         return res.status(403).json({ error: 'Invalid or unauthorized token' });
     }
 };
@@ -44,12 +59,16 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
  */
 export const authorizeRole = (roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        const user = (req as any).user;
-        
+        const user = req.user;
+
         if (!user || !roles.includes(user.role)) {
+            logger.security('Auth Middleware: Insufficient permissions', user?.userId, {
+                requiredRoles: roles,
+                userRole: user?.role
+            });
             return res.status(403).json({ error: 'Insufficient permissions' });
         }
-        
+
         next();
     };
 };

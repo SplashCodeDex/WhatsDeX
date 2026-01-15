@@ -1,9 +1,7 @@
 import path from 'path';
 import winston from 'winston';
-
 import fs from 'fs';
 import { SERVER_CONFIG } from '../config/constants.js';
-
 
 // Define log levels
 const levels = {
@@ -33,18 +31,15 @@ const format = winston.format.combine(
 );
 
 // Create the logger
-const logger = winston.createLogger({
+const winstonLogger = winston.createLogger({
   level: SERVER_CONFIG.LOG_LEVEL,
   levels,
   format,
   transports: [
-    // Console transport (keep production look: info/warn/error)
     new winston.transports.Console({
       level: process.env.CONSOLE_LOG_LEVEL || 'info',
       format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
-
-    // File transport for all logs (capture debug and above)
     new winston.transports.File({
       filename: path.join(process.cwd(), SERVER_CONFIG.LOG_DIR, 'app.log'),
       level: 'debug',
@@ -54,8 +49,6 @@ const logger = winston.createLogger({
         winston.format.json()
       ),
     }),
-
-    // Separate file for errors
     new winston.transports.File({
       filename: path.join(process.cwd(), SERVER_CONFIG.LOG_DIR, 'error.log'),
       level: 'error',
@@ -65,8 +58,6 @@ const logger = winston.createLogger({
         winston.format.json()
       ),
     }),
-
-    // HTTP requests log
     new winston.transports.File({
       filename: path.join(process.cwd(), SERVER_CONFIG.LOG_DIR, 'http.log'),
       level: 'http',
@@ -80,111 +71,86 @@ const logger = winston.createLogger({
   try {
     const logsDir = path.join(process.cwd(), SERVER_CONFIG.LOG_DIR);
     await fs.promises.mkdir(logsDir, { recursive: true });
-  } catch (error: any) {
-    // This error is not critical, but should be logged to the console.
-    console.error('❌ Warning: Failed to create logs directory:', error);
+  } catch (error: unknown) {
+    console.error('❌ Warning: Failed to create logs directory:', error instanceof Error ? error.message : error);
   }
 })();
 
-// Enhanced logger with additional methods
-const enhancedLogger = {
-  // Standard logging methods
-  error: (message, meta = {}) => {
-    logger.error(message, meta);
-  },
+// Enhanced logger interface
+export interface Logger {
+  error: (message: string, meta?: any) => void;
+  warn: (message: string, meta?: any) => void;
+  info: (message: string, meta?: any) => void;
+  http: (message: string, meta?: any) => void;
+  debug: (message: string, meta?: any) => void;
+  trace: (message: string, meta?: any) => void;
+  command: (command: string, userId: string, success?: boolean, executionTime?: number | null, error?: any) => void;
+  userActivity: (userId: string, action: string, details?: any) => void;
+  groupActivity: (groupId: string, action: string, userId: string, details?: any) => void;
+  apiRequest: (method: string, url: string, statusCode: number, responseTime: number, userId?: string | null) => void;
+  performance: (operation: string, duration: number, metadata?: any) => void;
+  security: (event: string, userId?: string | null, details?: any) => void;
+  withContext: (context: any) => Logger;
+  child: (meta?: any) => Logger;
+  stream: { write: (message: string) => void };
+}
 
-  warn: (message, meta = {}) => {
-    logger.warn(message, meta);
-  },
+// Enhanced logger implementation
+const enhancedLogger: Logger = {
+  error: (message, meta = {}) => { winstonLogger.error(message, meta); },
+  warn: (message, meta = {}) => { winstonLogger.warn(message, meta); },
+  info: (message, meta = {}) => { winstonLogger.info(message, meta); },
+  http: (message, meta = {}) => { winstonLogger.http(message, meta); },
+  debug: (message, meta = {}) => { winstonLogger.debug(message, meta); },
+  trace: (message, meta = {}) => { winstonLogger.debug(message, meta); },
 
-  info: (message, meta = {}) => {
-    logger.info(message, meta);
-  },
-
-  http: (message, meta = {}) => {
-    logger.http(message, meta);
-  },
-
-  debug: (message, meta = {}) => {
-    logger.debug(message, meta);
-  },
-
-  // Specialized methods for bot operations
   command: (command, userId, success = true, executionTime = null, error = null) => {
     const level = success ? 'info' : 'error';
     const message = `Command: ${command} | User: ${userId} | Success: ${success}`;
     const meta = {
-      command,
-      userId,
-      success,
-      executionTime,
-      error: error?.message || null,
-      stack: error?.stack || null,
+      command, userId, success, executionTime,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
     };
-
-    logger.log(level, message, meta);
+    winstonLogger.log(level, message, meta);
   },
 
   userActivity: (userId, action, details = {}) => {
-    const message = `User Activity: ${action} | User: ${userId}`;
-    logger.info(message, { userId, action, ...details });
+    winstonLogger.info(`User Activity: ${action} | User: ${userId}`, { userId, action, ...details });
   },
 
   groupActivity: (groupId, action, userId, details = {}) => {
-    const message = `Group Activity: ${action} | Group: ${groupId} | User: ${userId}`;
-    logger.info(message, { groupId, userId, action, ...details });
+    winstonLogger.info(`Group Activity: ${action} | Group: ${groupId} | User: ${userId}`, { groupId, userId, action, ...details });
   },
 
   apiRequest: (method, url, statusCode, responseTime, userId = null) => {
-    const message = `${method} ${url} ${statusCode} ${responseTime}ms`;
-    const meta = {
-      method,
-      url,
-      statusCode,
-      responseTime,
-      userId,
-    };
-
     const level = statusCode >= 400 ? 'warn' : 'http';
-    logger.log(level, message, meta);
+    winstonLogger.log(level, `${method} ${url} ${statusCode} ${responseTime}ms`, { method, url, statusCode, responseTime, userId });
   },
 
   performance: (operation, duration, metadata = {}) => {
-    const message = `Performance: ${operation} took ${duration}ms`;
-    logger.info(message, { operation, duration, ...metadata });
+    winstonLogger.info(`Performance: ${operation} took ${duration}ms`, { operation, duration, ...metadata });
   },
 
   security: (event, userId = null, details = {}) => {
-    const message = `Security Event: ${event}`;
-    logger.warn(message, { userId, event, ...details });
+    winstonLogger.warn(`Security Event: ${event}`, { userId, event, ...details });
   },
 
-  // Method to log with context
-  withContext: context => ({
+  withContext: (context) => ({
+    ...enhancedLogger,
     error: (message, meta = {}) => enhancedLogger.error(message, { ...context, ...meta }),
     warn: (message, meta = {}) => enhancedLogger.warn(message, { ...context, ...meta }),
     info: (message, meta = {}) => enhancedLogger.info(message, { ...context, ...meta }),
     debug: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
-    // pino/baileys compatibility: trace maps to debug
     trace: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
-    command: (command, userId, success, executionTime, error) =>
-      enhancedLogger.command(command, userId, success, executionTime, error),
   }),
 
-  // pino compatibility at root level
-  trace: (message, meta = {}) => enhancedLogger.debug(message, meta),
-
-  // Compatibility shim for libraries expecting pino-like child()
   child: (meta = {}) => enhancedLogger.withContext(meta),
 
-  // Stream for Morgan HTTP logging
   stream: {
-    write: message => {
-      logger.http(message.trim());
-    },
+    write: (message) => { winstonLogger.http(message.trim()); },
   },
 };
 
-// Export enhanced logger
 export { enhancedLogger as logger };
 export default enhancedLogger;

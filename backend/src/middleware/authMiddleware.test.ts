@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { authenticateToken } from '../authMiddleware.js';
+import { authenticateToken } from './authMiddleware.js';
 
 // Mock dependencies
 const mockVerifyIdToken = vi.fn();
-vi.mock('../../lib/firebase.js', () => ({
+vi.mock('../lib/firebase.js', () => ({
   auth: {
     verifyIdToken: (token: string) => mockVerifyIdToken(token),
   },

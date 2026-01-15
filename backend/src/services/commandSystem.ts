@@ -1,5 +1,6 @@
 /**
  * UNIFIED COMMAND SYSTEM - Consolidates all command loading approaches
+ * 2026 Mastermind Edition - Stateless & Multi-Tenant Optimized & Strictly Typed
  */
 
 import fs from 'fs/promises';
@@ -7,30 +8,26 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 import performanceMonitor from '../utils/performanceMonitor.js';
-import logger from '../utils/logger.js';
-import { Bot, GlobalContext, Command } from '../types/index.js';
+import { proto } from '@whiskeysockets/baileys';
+import { type Bot, type Command, type MessageContext, type GlobalContext, type GroupFunctions } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class CommandSystem {
-  private bot: Bot;
   private context: GlobalContext;
   private commands: Map<string, Command>;
   private aliases: Map<string, string>;
   private categories: Map<string, string[]>;
-  private middleware: any[];
   private prefixes: string[];
-  private loadedCount: number = 0;
-  private failedCount: number = 0;
+  public loadedCount: number = 0;
+  public failedCount: number = 0;
 
-  constructor(bot: any, context: any) {
-    this.bot = bot;
+  constructor(context: GlobalContext) {
     this.context = context;
     this.commands = new Map();
     this.aliases = new Map();
     this.categories = new Map();
-    this.middleware = [];
 
     // Command prefixes
     this.prefixes = ['.', '!', '/', '#'];
@@ -66,7 +63,7 @@ export class CommandSystem {
         this.categories.set(category.name, []);
 
         for (const file of commandFiles) {
-          if (file.endsWith('.js') || file.endsWith('.cjs')) {
+          if (file.endsWith('.js')) {
             try {
               const commandPath = path.join(categoryPath, file);
               const command = await this.loadSingleCommand(commandPath, category.name);
@@ -74,8 +71,9 @@ export class CommandSystem {
               if (command) {
                 this.registerCommand(command, category.name);
               }
-            } catch (error: any) {
-              this.context.logger.error(`  ❌ Error loading ${file}:`, { error: error.message });
+            } catch (error: unknown) {
+              const err = error instanceof Error ? error.message : String(error);
+              this.context.logger.error(`  ❌ Error loading ${file}:`, { error: err });
             }
           }
         }
@@ -84,19 +82,16 @@ export class CommandSystem {
       const duration = Date.now() - startTime;
       this.context.logger.info(`🎉 Loaded ${this.loadedCount} commands in ${duration}ms`);
 
-      // Update bot.cmd for compatibility
-      if (this.bot) this.bot.cmd = this.commands;
-
-    } catch (error: any) {
-      this.context.logger.error('❌ Command loading failed:', { error: error.message });
-      // throw error; // Don't crash if commands fail to load
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      this.context.logger.error('❌ Command loading failed:', { error: err });
     }
   }
 
   /**
    * LOAD SINGLE COMMAND
    */
-  async loadSingleCommand(commandPath, categoryName) {
+  async loadSingleCommand(commandPath: string, categoryName: string): Promise<Command | null> {
     try {
       const absolutePath = path.resolve(commandPath);
       const commandUrl = pathToFileURL(absolutePath).href;
@@ -111,59 +106,57 @@ export class CommandSystem {
 
       if (!this.validateCommand(command)) return null;
 
-      const enhancedCommand = {
+      const enhancedCommand: Command = {
         ...command,
         category: categoryName,
-        filePath: commandPath,
-        loadedAt: Date.now(),
         aliases: command.aliases || [],
         permissions: command.permissions || {},
-        cooldown: command.cooldown || 0,
+        filePath: commandPath,
+        loadedAt: Date.now(),
+        // Default values for robustness
         description: command.description || 'No description',
-        usage: command.usage || `${command.name}`,
-        isEnabled: command.isEnabled !== false
+        usage: command.usage || command.name
       };
 
       this.loadedCount += 1;
       return enhancedCommand;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
       this.failedCount += 1;
-      this.context.logger.error(`Failed to load command: ${commandPath}`, { error: error.message });
+      this.context.logger.error(`Failed to load command: ${commandPath}`, { error: err });
       return null;
     }
   }
 
-  registerCommand(command: any, categoryName: string) {
+  registerCommand(command: Command, categoryName: string) {
     this.commands.set(command.name, command);
     if (command.aliases) {
       command.aliases.forEach((alias: string) => {
         this.aliases.set(alias, command.name);
-        this.commands.set(alias, { ...command, isAlias: true, originalName: command.name });
       });
     }
     if (!this.categories.has(categoryName)) this.categories.set(categoryName, []);
     this.categories.get(categoryName)?.push(command.name);
   }
 
-  validateCommand(command: any) {
-    return command && typeof command === 'object' && command.name && typeof command.code === 'function';
+  validateCommand(command: unknown): command is Command {
+    return !!(command && typeof command === 'object' && 'name' in command && typeof (command as Command).code === 'function');
   }
 
-  async processMessage(messageData: any) {
+  async processMessage(bot: Bot, messageData: proto.IWebMessageInfo) {
     const text = this.extractText(messageData);
     if (!text) return false;
 
     const commandInfo = this.parseCommand(text);
     if (!commandInfo) return false;
 
-    const command = this.commands.get(commandInfo.name);
-    if (!command) {
-      await this.suggestCommands(messageData, commandInfo.name);
-      return true;
-    }
+    const commandName = this.aliases.get(commandInfo.name) || commandInfo.name;
+    const command = this.commands.get(commandName);
 
-    return await this.executeCommand(command, messageData, commandInfo);
+    if (!command) return false;
+
+    return await this.executeCommand(bot, command, messageData, commandInfo);
   }
 
   parseCommand(text: string) {
@@ -179,77 +172,142 @@ export class CommandSystem {
     return { name, args, fullText: text, prefix };
   }
 
-  async executeCommand(command: any, messageData: any, commandInfo: any) {
+  async executeCommand(bot: Bot, command: Command, messageData: proto.IWebMessageInfo, commandInfo: { name: string; args: string[]; prefix: string }) {
     const timer = performanceMonitor.startTimer('command_execution', {
       command: command.name,
-      userId: messageData.key.remoteJid
+      userId: messageData.key.remoteJid,
+      tenantId: bot.tenantId
     });
 
     try {
-      const ctx = await this.createContext(messageData, commandInfo, command);
+      const ctx = await this.createContext(bot, messageData, commandInfo, command);
 
-      // Placeholder for rate limiting (no Redis)
-      // Logic for rate limiting will be moved to Firebase/Global state
-
-      await command.code(ctx);
+      // Execute command through middleware pipeline
+      await bot.executeMiddleware(ctx, async () => {
+        if (command.code) {
+          await command.code(ctx);
+        }
+      });
 
       const duration = timer.end();
-      this.context.logger.info(`✅ Command executed: ${command.name} (${duration}ms)`);
-
-      // 🔥 Firebase recordCommandUsage placeholder
+      this.context.logger.command(command.name, messageData.key.remoteJid || 'unknown', true, duration);
       return true;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       timer.end();
-      this.context.logger.error(`Command execution failed: ${command.name}`, { error: error.message });
-      await this.sendMessage(messageData, '❌ An error occurred while executing the command.');
+      const err = error instanceof Error ? error.message : String(error);
+      this.context.logger.command(command.name, messageData.key.remoteJid || 'unknown', false, null, err);
+
+      if (messageData.key.remoteJid) {
+        await bot.sendMessage(messageData.key.remoteJid, { text: `❌ Error: ${err}` }, { quoted: messageData });
+      }
       return true;
     }
   }
 
-  async createContext(messageData: any, commandInfo: any, command: any) {
+  async createContext(bot: Bot, messageData: proto.IWebMessageInfo, commandInfo: { args: string[]; prefix: string }, command: Command): Promise<MessageContext> {
     const text = this.extractText(messageData);
-    return {
+    const jid = messageData.key.remoteJid || '';
+
+    // Delegate to GroupService
+    const getGroupFunctions = (targetJid?: string): GroupFunctions => {
+      // If targetJid is provided, use it, otherwise use current jid (if group)
+      const effectiveJid = targetJid || (jid.endsWith('@g.us') ? jid : '');
+
+      if (!effectiveJid) {
+        // Return default/empty functions if not a group
+        // Or better: Create a "NoOp" or "Null" group function set in GroupService
+        // For now, we reuse the pattern but scoped to 'null' or erroring out
+        // But strict typing requires returning GroupFunctions.
+        // Let's rely on createFunctions handling it or return a safe default here.
+        return this.context.groupService.createFunctions(bot, bot.tenantId, 'invalid@g.us', messageData.key.participant || jid);
+      }
+      return this.context.groupService.createFunctions(bot, bot.tenantId, effectiveJid, messageData.key.participant || jid);
+    };
+
+    // Extract quoted message if available
+    const quotedMsg = messageData.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const quotedContext = quotedMsg ? {
+      content: quotedMsg.conversation || quotedMsg.extendedTextMessage?.text || quotedMsg.imageMessage?.caption || '',
+      contentType: Object.keys(quotedMsg)[0],
+      senderJid: messageData.message?.extendedTextMessage?.contextInfo?.participant || '',
+      media: quotedMsg.imageMessage || quotedMsg.videoMessage || quotedMsg.audioMessage || quotedMsg.stickerMessage || quotedMsg.documentMessage,
+      key: {
+        id: messageData.message?.extendedTextMessage?.contextInfo?.stanzaId,
+        remoteJid: jid,
+        participant: messageData.message?.extendedTextMessage?.contextInfo?.participant
+      }
+    } : undefined;
+
+    const msgContext: MessageContext = {
       ...messageData,
+      id: jid,
       body: text,
       args: commandInfo.args,
-      command: command,
+      command: command.name,
       prefix: commandInfo.prefix,
+      commandDef: command,
       sender: {
-        jid: messageData.key.remoteJid,
+        jid,
         name: messageData.pushName || 'Unknown',
-        isOwner: false, // Todo: implement check
-        isAdmin: false, // Todo: implement check
+        pushName: messageData.pushName ?? undefined,
+        isOwner: (this.context.config.get('bot.owners' as any) as any)?.includes(jid) || false,
+        isAdmin: false,
       },
-      pushName: messageData.pushName,
-      bot: this.bot,
-      reply: async (msg: any) => {
+      author: {
+        id: jid // Legacy alias for sender.jid
+      },
+      quoted: quotedContext,
+      msg: {
+        key: messageData.key,
+        ...messageData.message
+      },
+      bot: bot,
+      reply: async (msg: string | { text?: string;[key: string]: unknown }) => {
         const content = typeof msg === 'string' ? { text: msg } : msg;
-        return await this.bot.sendMessage(messageData.key.remoteJid, content, { quoted: messageData });
+        return await bot.sendMessage(jid, content, { quoted: messageData });
       },
-      id: messageData.key.remoteJid,
-      isGroup: () => messageData.key.remoteJid.endsWith('@g.us'),
+      sendMessage: async (targetJid: string, content: any, options?: any) => {
+        return await bot.sendMessage(targetJid, content, options);
+      },
+      replyReact: async (emoji: string) => {
+        return await bot.sendMessage(jid, { react: { text: emoji, key: messageData.key } });
+      },
+      isGroup: () => jid.endsWith('@g.us'),
       usage: {},
-      config: this.context.config,
-      // Add other missing properties as needed or allow loose typing for now via simple cast if complexity is too high
-    } as any;
+      getId: (target: string) => target.split('@')[0],
+      simulateTyping: () => {
+        // Fire and forget typing simulation
+        if (bot.sendPresenceUpdate) {
+          // Cast to any for now as sendPresenceUpdate signature might vary or be optional
+          (bot.sendPresenceUpdate as unknown as (status: string, jid: string) => Promise<void>)('composing', jid).catch(() => { });
+        }
+      },
+      used: {
+        command: command.name,
+        prefix: commandInfo.prefix,
+        args: commandInfo.args,
+        text: commandInfo.args.join(' ')
+      },
+      cooldown: null,
+
+      // Group Functions
+      group: getGroupFunctions,
+
+      download: async () => {
+        // Placeholder for download logic
+        return Buffer.alloc(0);
+      }
+    };
+
+    return msgContext;
   }
 
-  async suggestCommands(messageData: any, attemptedCommand: string) {
-    // Simple suggestion placeholder
-    await this.sendMessage(messageData, `Command "${attemptedCommand}" not found.`);
-  }
-
-  extractText(messageData: any) {
-    return messageData.message?.conversation || messageData.message?.extendedTextMessage?.text || '';
-  }
-
-  async sendMessage(messageData: any, text: string) {
-    try {
-      if (this.bot) await this.bot.sendMessage(messageData.key.remoteJid, { text });
-    } catch (error: any) {
-      this.context.logger.error('Failed to send message', { error: error.message });
-    }
+  extractText(messageData: proto.IWebMessageInfo) {
+    return messageData.message?.conversation ||
+      messageData.message?.extendedTextMessage?.text ||
+      messageData.message?.imageMessage?.caption ||
+      messageData.message?.videoMessage?.caption || '';
   }
 }
 

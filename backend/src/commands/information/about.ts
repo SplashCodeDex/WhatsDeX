@@ -1,4 +1,11 @@
 import { MessageContext } from '../../types/index.js';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../../../package.json'), 'utf8'));
+
 export default {
   name: 'about',
   aliases: ['bot', 'infobot'],
@@ -14,7 +21,7 @@ export default {
 ` + // Can be changed as desired
           `${formatter.quote('· · ─ ·✶· ─ · ·')}\n` +
           `${formatter.quote(`Bot Name: ${config.bot.name}`)}\n` +
-          `${formatter.quote(`Version: ${require('../../package.json').version}`)}\n` +
+          `${formatter.quote(`Version: ${packageJson.version}`)}\n` +
           `${formatter.quote(`Owner: ${config.owner.name}`)}\n` +
           `${formatter.quote(`Mode: ${tools.msg.ucwords(botDb?.mode || 'public')}`)}\n` +
           `${formatter.quote(`Bot Uptime: ${config.bot.uptime}`)}\n` +
@@ -24,7 +31,7 @@ export default {
         footer: config.msg.footer,
       });
     } catch (error: any) {
-      await tools.cmd.handleError(ctx.bot.context, ctx, error);
+      await tools.cmd.handleError(ctx, error);
     }
   },
 };

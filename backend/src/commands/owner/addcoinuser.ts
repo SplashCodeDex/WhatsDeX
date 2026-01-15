@@ -10,8 +10,8 @@ export default {
     const { formatter, tools, database: db } = ctx.bot.context;
     const userJid =
       ctx.quoted?.senderJid ||
-      (await ctx.getMentioned())[0] ||
-      (ctx.args[0] ? `${ctx.args[0].replace(/[^\\d]/g, '')}@s.whatsapp.net` : null);
+      (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) ||
+      (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, '')}@s.whatsapp.net` : null);
     const coinAmount = parseInt(ctx.args[ctx.quoted?.senderJid ? 0 : 1], 10) || null;
 
     if (!userJid || !coinAmount)
@@ -27,8 +27,8 @@ export default {
         mentions: [ctx.sender.jid],
       });
 
-    const isOnWhatsApp = await ctx.core.onWhatsApp(userJid);
-    if (isOnWhatsApp.length === 0)
+    const isOnWhatsApp = ctx.bot.onWhatsApp ? await ctx.bot.onWhatsApp(userJid) : [];
+    if (!isOnWhatsApp || isOnWhatsApp.length === 0)
       return await ctx.reply(formatter.quote('❎ Akun tidak ada di WhatsApp!'));
 
     try {
@@ -43,7 +43,7 @@ export default {
 
       const silent = flag?.silent || false;
       if (!silent)
-        await ctx.sendMessage(userJid, {
+        await ctx.bot.sendMessage(userJid, {
           text: formatter.quote(`📺 Kamu telah menerima ${coinAmount} koin dari Owner!`),
         });
 

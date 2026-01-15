@@ -4,22 +4,30 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { db } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
+import { ConfigService } from '../services/ConfigService.js';
+import auditService from '../services/auditService.js';
+import { stripeService } from '../services/stripe.js';
+
+interface AuthUserPayload {
+    userId: string;
+    tenantId: string;
+    role: string;
+    email: string;
+    iat: number;
+    exp: number;
+}
 
 interface RequestWithUser extends Request {
-    user?: {
-        userId: string;
-        tenantId: string;
-        role: string;
-    };
+    user?: AuthUserPayload;
 }
 
 const signupSchema = z.object({
     name: z.string().min(2),
     email: z.string().email(),
-    password: z.string().min(6),
+    password: z.string().min(8),
     tenantName: z.string().min(2),
     subdomain: z.string().min(2).regex(/^[a-z0-9-]+$/),
-    plan: z.string().optional(),
+    plan: z.enum(['FREE', 'BASIC', 'PRO', 'ENTERPRISE']).default('FREE'),
 });
 
 const loginSchema = z.object({
@@ -45,7 +53,7 @@ export const checkAvailability = async (req: Request, res: Response) => {
         }
 
         res.json(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Availability check error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
@@ -53,10 +61,8 @@ export const checkAvailability = async (req: Request, res: Response) => {
 
 export const signup = async (req: Request, res: Response) => {
     try {
-        const { name, email, password, tenantName, subdomain, plan } = req.body;
-
-        // Validate core fields
-        signupSchema.parse({ name, email, password, tenantName, subdomain, plan });
+        const payload = signupSchema.parse(req.body);
+        const { name, email, password, tenantName, subdomain, plan } = payload;
 
         // Check for existing user
         const userSnapshot = await db.collection('tenant_users').where('email', '==', email).limit(1).get();
@@ -70,11 +76,9 @@ export const signup = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Subdomain already taken', field: 'subdomain' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 12); // 2026: Higher rounds
 
-        // Transactional creation
         const result = await db.runTransaction(async (transaction) => {
-            // Create Tenant
             const tenantRef = db.collection('tenants').doc();
             const tenantData = {
                 id: tenantRef.id,
@@ -87,7 +91,6 @@ export const signup = async (req: Request, res: Response) => {
             };
             transaction.set(tenantRef, tenantData);
 
-            // Create User
             const userRef = db.collection('tenant_users').doc();
             const userData = {
                 id: userRef.id,
@@ -96,28 +99,18 @@ export const signup = async (req: Request, res: Response) => {
                 email,
                 passwordHash: hashedPassword,
                 role: 'admin',
-                isActive: true, // explicit active flag
+                isActive: true,
                 createdAt: Timestamp.now(),
                 updatedAt: Timestamp.now(),
             };
             transaction.set(userRef, userData);
 
-            // Handle Plan Subscription
+            // Plan handling
             if (plan) {
                 const planCode = plan.toUpperCase();
-                // Find plan
                 const plansSnapshot = await db.collection('plans').where('code', '==', planCode).limit(1).get();
-                let planDoc = plansSnapshot.empty ? null : plansSnapshot.docs[0];
-                let planData = planDoc ? planDoc.data() : null;
-
-                if (!planData) {
-                    // Fallback to FREE
-                    const freePlanSnapshot = await db.collection('plans').where('code', '==', 'FREE').limit(1).get();
-                    if (!freePlanSnapshot.empty) {
-                        planDoc = freePlanSnapshot.docs[0];
-                        planData = planDoc.data();
-                    }
-                }
+                const planDoc = plansSnapshot.empty ? null : plansSnapshot.docs[0];
+                const planData = planDoc ? planDoc.data() : null;
 
                 if (planData && planDoc) {
                     let stripeSubscriptionId = `free_${Date.now()}`;
@@ -125,21 +118,13 @@ export const signup = async (req: Request, res: Response) => {
 
                     if (planData.code !== 'FREE') {
                         try {
-                            const stripeSvcModule: any = await import('../services/stripe.js');
-                            const StripeSvcClass = stripeSvcModule.default || stripeSvcModule;
-                            const stripeSvc = new StripeSvcClass();
-                            const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
-                            await stripeSvc.initialize(process.env.STRIPE_SECRET_KEY, webhookSecret);
-
-                            // Create customer
-                            const customer = await stripeSvc.createCustomer({ userId: userRef.id, email, name, phone: null });
+                            const customer = await stripeService.createCustomer({ userId: userRef.id, email, name, phone: undefined });
                             const planKey = planData.code.toLowerCase();
-                            const subscription = await stripeSvc.createSubscription(customer.id, planKey, { userId: userRef.id });
+                            const subscription = await stripeService.createSubscription(customer.id, planKey, { userId: userRef.id });
                             stripeSubscriptionId = subscription.id;
-                            const priceId = stripeSvc.getPlans?.()[planKey]?.priceId;
-                            stripePriceId = priceId || subscription.items?.data?.[0]?.price?.id || 'unknown';
+                            stripePriceId = (subscription.items.data[0] as any).price.id;
                         } catch (stripeErr) {
-                            console.error('Stripe initialization failed during signup, proceeding with local subscription only', stripeErr);
+                            console.error('Stripe signup failed, falling back', stripeErr);
                         }
                     }
 
@@ -162,28 +147,43 @@ export const signup = async (req: Request, res: Response) => {
             return { tenant: tenantData, user: userData };
         });
 
+        const config = ConfigService.getInstance();
+        const jwtSecret = config.get('JWT_SECRET');
+
         const token = jwt.sign(
             { userId: result.user.id, tenantId: result.tenant.id, role: result.user.role },
-            process.env.JWT_SECRET || 'secret',
+            jwtSecret,
             { expiresIn: '7d' }
         );
+
+        // Audit Logging
+        await auditService.logEvent({
+            eventType: 'USER_REGISTER',
+            actor: email,
+            actorId: result.user.id,
+            action: 'Account Created',
+            resource: 'tenant',
+            resourceId: result.tenant.id,
+            details: { plan, subdomain },
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent')
+        });
 
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
         res.status(201).json({
             success: true,
-            message: 'Signup successful',
             token,
             user: { id: result.user.id, name: result.user.name, email: result.user.email },
             tenant: { id: result.tenant.id, name: result.tenant.name, subdomain: result.tenant.subdomain },
         });
 
-    } catch (error: any) {
-        console.error('Signup error:', error);
+    } catch (error: unknown) {
         if (error instanceof z.ZodError) {
             return res.status(400).json({ error: error.issues[0].message, field: error.issues[0].path[0] });
         }
@@ -194,10 +194,17 @@ export const signup = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = loginSchema.parse(req.body);
-
         const userSnapshot = await db.collection('tenant_users').where('email', '==', email).limit(1).get();
 
         if (userSnapshot.empty) {
+            await auditService.logEvent({
+                eventType: 'SECURITY_LOGIN_FAILURE',
+                actor: email,
+                action: 'Login attempt failed: User not found',
+                resource: 'auth',
+                riskLevel: 'MEDIUM',
+                ipAddress: req.ip
+            });
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
 
@@ -205,43 +212,57 @@ export const login = async (req: Request, res: Response) => {
         const user = userDoc.data();
 
         if (!user.isActive) {
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            return res.status(401).json({ success: false, error: 'Account disabled' });
         }
 
         const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) {
+            await auditService.logEvent({
+                eventType: 'SECURITY_LOGIN_FAILURE',
+                actor: email,
+                actorId: user.id,
+                action: 'Login attempt failed: Wrong password',
+                resource: 'auth',
+                riskLevel: 'MEDIUM',
+                ipAddress: req.ip
+            });
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
 
-        // Get tenant
-        const tenantDoc = await db.collection('tenants').doc(user.tenantId).get();
-        if (!tenantDoc.exists) {
-            return res.status(401).json({ success: false, error: 'Tenant not found' });
-        }
-        const tenant = tenantDoc.data()!;
+        const config = ConfigService.getInstance();
+        const jwtSecret = config.get('JWT_SECRET');
 
         const token = jwt.sign(
-            { userId: user.id, tenantId: user.tenantId, role: user.role },
-            process.env.JWT_SECRET || 'secret',
+            { userId: user.id, tenantId: user.tenantId, role: user.role, email: user.email },
+            jwtSecret,
             { expiresIn: '7d' }
         );
+
+        await auditService.logEvent({
+            eventType: 'USER_LOGIN',
+            actor: email,
+            actorId: user.id,
+            action: 'Login successful',
+            resource: 'auth',
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent')
+        });
 
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
         res.json({
             success: true,
-            message: 'Login successful',
             token,
             user: { id: user.id, name: user.name, email: user.email, role: user.role },
-            tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
+            tenant: { id: user.tenantId }
         });
 
-    } catch (error: any) {
-        console.error('Login error:', error);
+    } catch (error: unknown) {
         if (error instanceof z.ZodError) {
             return res.status(400).json({ success: false, error: error.issues[0].message });
         }
@@ -268,7 +289,7 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
             user: { id: user.id, name: user.name, email: user.email, role: user.role },
             tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         res.status(500).json({ error: 'Internal server error' });
     }
 };

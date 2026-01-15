@@ -26,7 +26,8 @@ export default {
         )}`
       );
 
-    if (!(await ctx.group(groupJid)))
+    const group = await ctx.group(groupJid);
+    if (!group)
       return await ctx.reply(
         formatter.quote('❎ Grup tidak valid atau bot tidak ada di grup tersebut!')
       );
@@ -45,12 +46,11 @@ export default {
       });
 
       const silent = flag?.silent || false;
-      const group = await ctx.group(groupJid);
       const groupOwner = await group.owner();
       const groupName = await group.name();
 
       if (!silent && groupOwner) {
-        await ctx.sendMessage(groupOwner, {
+        await ctx.bot.sendMessage(groupOwner, {
           text: formatter.quote(
             `📢 Sewa bot untuk grup ${groupName} (@${groupJid}) telah dihentikan oleh Owner!`
           ),

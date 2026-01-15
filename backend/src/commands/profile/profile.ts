@@ -1,39 +1,55 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, BotMember } from '../../types/index.js';
+
 export default {
   name: 'profile',
-  aliases: ['me', 'prof', 'profil'],
+  aliases: ['p', 'me'],
   category: 'profile',
-  permissions: {},
-  code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
+  code: async (ctx: MessageContext): Promise<void> => {
+    const { databaseService, formatter, logger } = ctx.bot.context;
+
+    if (!databaseService || !formatter) {
+      await ctx.reply('❌ System Error: Service unavailable.');
+      return;
+    }
+
     try {
-      const senderId = ctx.getId(ctx.sender.jid);
-      const users = await db.get('user');
+      const senderId = ctx.sender.jid;
+      const tenantId = ctx.bot.tenantId;
 
-      const leaderboardData = Object.entries(users)
-        .map(([id, data]) => ({
-          id,
-          winGame: data.winGame || 0,
-          level: data.level || 0,
-        }))
-        .sort((a, b) => b.winGame - a.winGame || b.level - a.level);
+      // Fetch User Data from Firestore
+      const user = await databaseService.getUser(tenantId, senderId);
 
-      const userDb = (await db.get(`user.${senderId}`)) || {};
-      const isOwner = tools.cmd.isOwner(senderId, ctx.msg.key.id);
+      // Rank calculation (Fetching top 100 in tenant)
+      const topUsers = await databaseService.getLeaderboard(tenantId, 100);
+      const rank = topUsers.findIndex((u: BotMember) => u.id === senderId) + 1;
+
+      const profileInfo = [
+        `👤 *PROFILE USER*`,
+        ``,
+        `• *Name:* ${ctx.pushName || 'Unknown'}`,
+        `• *User ID:* @${senderId.split('@')[0]}`,
+        `• *Username:* ${user?.username || 'Belum diatur'}`,
+        `• *Status:* ${user?.premium ? '⭐ Premium' : 'Free User'}`,
+        ``,
+        `💰 *ACCOUNT STATS*`,
+        `• *Coins:* ${user?.coin || 0}`,
+        `• *Level:* ${user?.level || 0}`,
+        `• *Wins:* ${user?.winGame || 0}`,
+        `• *Rank:* ${rank > 0 ? `#${rank}` : 'Unranked'}`,
+        ``,
+        `📅 *TIMESTAMPS*`,
+        `• *Join Date:* ${user?.createdAt ? new Date((user.createdAt as any).toDate?.() || user.createdAt).toLocaleDateString() : 'Baru saja'}`
+      ].join('\n');
 
       await ctx.reply({
-        text:
-          `${formatter.quote(`Nama: ${ctx.sender.pushName} (${userDb?.username})`)}\n` +
-          `${formatter.quote(`Status: ${isOwner ? 'Owner' : userDb?.premium ? `Premium (${userDb?.premiumExpiration ? `${tools.msg.convertMsToDuration(Date.now() - userDb.premiumExpiration, ['hari'])} tersisa` : 'Selamanya'})` : 'Freemium'}`)}\n` +
-          `${formatter.quote(`Level: ${userDb?.level || 0} (${userDb?.xp || 0}/100)`)}\n` +
-          `${formatter.quote(`Koin: ${isOwner || userDb?.premium ? 'Tak terbatas' : userDb?.coin}`)}\n` +
-          `${formatter.quote(`Menang: ${userDb?.winGame || 0}`)}\n${formatter.quote(
-            `Peringkat: ${leaderboardData.findIndex(user => user.id === senderId) + 1}`
-          )}`,
-        footer: config.msg.footer,
+        text: formatter.quote(profileInfo),
+        mentions: [senderId]
       });
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      logger.error(`[${ctx.bot.tenantId}] [Profile] Error: ${err}`, error);
+      await ctx.reply(formatter.quote(`Error: ${err}`));
     }
   },
 };

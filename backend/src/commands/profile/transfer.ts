@@ -1,70 +1,64 @@
 import { MessageContext } from '../../types/index.js';
-import z from 'zod';
-import { db } from '@/utils.js';
+import { z } from 'zod';
+
+const AmountSchema = z.number().int().positive();
 
 export default {
   name: 'transfer',
-  aliases: ['tf'],
+  aliases: ['tf', 'kasih'],
   category: 'profile',
-  code: async (ctx: MessageContext) => {
-    const { formatter } = ctx.bot.context;
+  code: async (ctx: MessageContext): Promise<void> => {
+    const { databaseService, formatter, logger } = ctx.bot.context;
+
+    if (!databaseService || !formatter) {
+      await ctx.reply('❌ System Error: Service unavailable.');
+      return;
+    }
 
     try {
-      // Argument parsing
-      const userJid =
-        ctx.quoted?.senderJid ||
-        (await ctx.getMentioned())[0] ||
-        (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, '')}${`@s.whatsapp.net`}` : null);
-      const amountStr = ctx.quoted?.senderJid ? ctx.args[0] : ctx.args[1];
+      const senderId = ctx.sender.jid;
+      const tenantId = ctx.bot.tenantId;
 
-      // Validation
-      if (!userJid || !amountStr) {
-        return ctx.reply(
-          formatter.quote(
-            'Please specify a user and an amount to transfer.\n\nExample: .transfer @user 100'
-          )
-        );
+      // 1. Resolve Target
+      let targetId = '';
+      if (ctx.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
+        targetId = ctx.message.extendedTextMessage.contextInfo.mentionedJid[0];
+      } else if (ctx.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+        targetId = ctx.message.extendedTextMessage.contextInfo.participant || '';
       }
 
-      const amountSchema = z
-        .string()
-        .refine(val => /^-?\d+$/.test(val), { message: 'The amount must be a number.' })
-        .transform(val => parseInt(val, 10))
-        .refine(n => Number.isInteger(n) && n > 0, {
-          message: 'The amount must be a positive whole number.',
+      if (!targetId || targetId === senderId) {
+        await ctx.reply(formatter.quote('ℹ️ Tag atau balas pesan orang yang ingin kamu beri koin.'));
+        return;
+      }
+
+      // 2. Resolve Amount
+      const amountRaw = parseInt(ctx.args[0] || '0');
+      const validation = AmountSchema.safeParse(amountRaw);
+
+      if (!validation.success) {
+        await ctx.reply(formatter.quote('❌ Jumlah koin harus berupa angka positif.'));
+        return;
+      }
+
+      const amount = validation.data;
+
+      // 3. Perform Transfer
+      const result = await databaseService.transferCoins(tenantId, senderId, targetId, amount);
+
+      if (result.success) {
+        await ctx.reply({
+          text: formatter.quote(`✅ Berhasil mentransfer ${amount} koin ke @${targetId.split('@')[0]}`),
+          mentions: [targetId]
         });
-      const validationResult = amountSchema.safeParse(amountStr);
-
-      if (!validationResult.success) {
-        return ctx.reply(
-          formatter.quote(`❎ Invalid amount: ${validationResult.error.issues[0].message}`)
-        );
+      } else {
+        await ctx.reply(formatter.quote(`❌ Gagal transfer: ${result.error?.message || 'Unknown error'}`));
       }
-      const coinAmount = validationResult.data;
 
-      // Business logic
-      const senderJid = ctx.sender.jid;
-      const senderId = ctx.getId(senderJid);
-
-      const isOnWhatsApp = await ctx.core.onWhatsApp(userJid);
-      if (isOnWhatsApp.length === 0)
-        return ctx.reply(formatter.quote('❎ User not found on WhatsApp!'));
-
-      const userDb = (await db.get(`user.${senderId}`)) || {};
-
-      if (ctx.isOwner || userDb?.premium)
-        return ctx.reply(formatter.quote('❎ Unlimited coins cannot be transferred.'));
-      if (userDb?.coin < coinAmount)
-        return ctx.reply(formatter.quote('❎ You do not have enough coins for this transfer!'));
-
-      // Database transaction
-      await db.add(`user.${ctx.getId(userJid)}.coin`, coinAmount);
-      await db.subtract(`user.${senderId}.coin`, coinAmount);
-
-      return ctx.reply(formatter.quote(`✅ Successfully transferred ${coinAmount} coins!`));
-    } catch (error: any) {
-      console.error(error);
-      return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      logger.error(`[${ctx.bot.tenantId}] [Transfer] Error: ${err}`, error);
+      await ctx.reply(formatter.quote(`Error: ${err}`));
     }
   },
 };

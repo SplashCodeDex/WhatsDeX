@@ -1,59 +1,67 @@
 import OpenAI from 'openai';
+import { Result } from '../types/index.js';
+import logger from '../utils/logger.js';
 
 export class EmbeddingService {
-  constructor(context) {
-    this.context = context;
+  private static instance: EmbeddingService;
+  private client: any;
+  private model: string;
+  private maxRetries: number;
+  private baseDelay: number;
+
+  private constructor() {
     this.client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
-    this.model = 'text-embedding-3-small'; // 5x cheaper than ada-002!
+    this.model = 'text-embedding-3-small';
     this.maxRetries = 3;
-    this.baseDelay = 2000; // 2s base delay
+    this.baseDelay = 2000;
   }
 
-  async generateEmbedding(text) {
-    // Input validation and preprocessing
-    if (!text || typeof text !== 'string') {
-      throw new Error('Invalid input: text must be a non-empty string');
+  public static getInstance(): EmbeddingService {
+    if (!EmbeddingService.instance) {
+      EmbeddingService.instance = new EmbeddingService();
     }
-    
-    // Clean and truncate text (embedding model has token limits)
-    const cleanText = this.preprocessText(text);
-    
-    // Retry logic with exponential backoff
-    return await this.withRetry(async () => {
-      const response = await this.client.embeddings.create({
-        model: this.model,
-        input: cleanText,
-        encoding_format: 'float'
+    return EmbeddingService.instance;
+  }
+
+  async generateEmbedding(text: string): Promise<Result<number[]>> {
+    if (!text) return { success: false, error: new Error('Text is required') };
+
+    const cleanText = text.trim().substring(0, 8000);
+
+    try {
+      const embedding = await this.withRetry(async () => {
+        const response = await this.client.embeddings.create({
+          model: this.model,
+          input: cleanText,
+          encoding_format: 'float'
+        });
+        return response.data[0].embedding;
       });
-      
-      return response.data[0].embedding; // 1536-dimensional vector
-    });
+
+      return { success: true, data: embedding };
+    } catch (error: unknown) {
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
   }
 
-  preprocessText(text) {
-    // Clean whitespace, limit length for token efficiency
-    return text.trim().substring(0, 8000); // ~8k chars ≈ safe token limit
-  }
-
-  async withRetry(operation) {
+  private async withRetry<T>(operation: () => Promise<T>): Promise<T> {
+    let lastError: any;
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error: any) {
-        if (attempt === this.maxRetries) throw error;
-        
-        const delay = this.baseDelay * Math.pow(2, attempt - 1); // 2s→4s→8s
-        this.context.logger.warn(`Embedding API attempt ${attempt} failed, retrying in ${delay}ms:`, error.message);
-        await this.sleep(delay);
+        lastError = error;
+        if (attempt === this.maxRetries) break;
+        const delay = this.baseDelay * Math.pow(2, attempt - 1);
+        logger.warn(`Embedding API attempt ${attempt} failed, retrying...`);
+        await new Promise(res => setTimeout(res, delay));
       }
     }
-  }
-
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    throw lastError;
   }
 }
 
-export default new EmbeddingService(); // Singleton instance
+export const embeddingService = EmbeddingService.getInstance();
+export default embeddingService;

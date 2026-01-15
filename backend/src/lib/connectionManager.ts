@@ -1,18 +1,38 @@
 // lib/connectionManager.js
-import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
-import pino from 'pino';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { existsSync, rmSync } from 'node:fs';
-import { Boom } from '@hapi/boom';
-import qrcode from 'qrcode-terminal';
+import { Result } from '../types/index.js';
+
+interface ConnectionState {
+  isReconnecting: boolean;
+  attemptCount: number;
+  consecutiveFailures: number;
+  lastError: Error | null;
+  lastSuccessTime: number;
+  maxRetries: number;
+  baseDelay: number;
+  maxDelay: number;
+  backoffMultiplier: number;
+  circuitBreakerThreshold: number;
+  circuitBreakerTimeout: number;
+  lastDisconnected?: number;
+  totalSuccessfulReconnections?: number;
+  totalReconnectionTime?: number;
+}
+
+interface ConnectionConfig {
+  maxRetries?: number;
+  baseDelay?: number;
+  maxDelay?: number;
+  backoffMultiplier?: number;
+  circuitBreakerThreshold?: number;
+  circuitBreakerTimeout?: number;
+}
 
 class ConnectionManager {
-  private state: any;
+  private state: ConnectionState;
   private reconnectionTimeout: NodeJS.Timeout | null;
   private reconnectFn: (() => Promise<any>) | null = null;
 
-  constructor(config: any = {}) {
+  constructor(config: ConnectionConfig = {}) {
     this.state = {
       isReconnecting: false,
       attemptCount: 0,
@@ -29,7 +49,9 @@ class ConnectionManager {
     this.reconnectionTimeout = null;
   }
 
-  async handleReconnection(error: any, context: any) {
+  async handleReconnection(error: unknown, context: any): Promise<Result<void>> {
+    const err = error instanceof Error ? error : new Error(String(error));
+
     // Circuit breaker check
     if (this.isCircuitOpen()) {
       console.log('⚡ Circuit breaker OPEN - waiting before retry');
@@ -39,14 +61,14 @@ class ConnectionManager {
     // Check max retries BEFORE incrementing
     if (this.state.attemptCount >= this.state.maxRetries) {
       console.error('💀 Max reconnection attempts reached. Manual intervention required.');
-      throw new Error(`Connection failed after ${this.state.maxRetries} attempts`);
+      return { success: false, error: new Error(`Connection failed after ${this.state.maxRetries} attempts`) };
     }
 
     // Increment attempt count
     this.state.attemptCount++;
     this.state.consecutiveFailures++;
     this.state.isReconnecting = true;
-    this.state.lastError = error;
+    this.state.lastError = err;
 
     const delay = this.calculateBackoffDelay();
 
@@ -54,7 +76,7 @@ class ConnectionManager {
     console.log(
       `🔄 Reconnection attempt ${this.state.attemptCount}/${this.state.maxRetries} in ${Math.round(delay)}ms`
     );
-    console.log(`❌ Last error: ${error?.message || 'Unknown'}`);
+    console.log(`❌ Last error: ${err.message}`);
     console.log(
       `📊 Total failures: ${this.state.consecutiveFailures}, Success rate: ${(((this.state.attemptCount - this.state.consecutiveFailures) / this.state.attemptCount) * 100).toFixed(1)}%`
     );
@@ -77,10 +99,12 @@ class ConnectionManager {
 
       // Reset state on success
       this.onReconnectionSuccess();
-    } catch (reconnectionError) {
+      return { success: true, data: undefined };
+    } catch (reconnectionError: unknown) {
+      const recErr = reconnectionError instanceof Error ? reconnectionError : new Error(String(reconnectionError));
       console.error(
         `🔥 Reconnection attempt ${this.state.attemptCount} failed:`,
-        reconnectionError.message
+        recErr.message
       );
 
       // Check if we should continue trying
@@ -88,10 +112,10 @@ class ConnectionManager {
         console.log(
           `🔄 Will retry... (${this.state.maxRetries - this.state.attemptCount} attempts remaining)`
         );
-        return this.handleReconnection(reconnectionError, context);
+        return this.handleReconnection(recErr, context);
       } else {
         this.onReconnectionFailure();
-        throw reconnectionError;
+        return { success: false, error: recErr };
       }
     }
   }
@@ -100,7 +124,7 @@ class ConnectionManager {
     this.reconnectFn = reconnectFn;
   }
 
-  async attemptReconnection(context: any) {
+  async attemptReconnection(context: any): Promise<any> {
     return new Promise(async (resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Reconnection timeout'));
@@ -114,10 +138,11 @@ class ConnectionManager {
         // Clean up previous bot instance if exists
         if (context.bot) {
           try {
-            context.bot.end(undefined);
+            if (typeof context.bot.end === 'function') context.bot.end(undefined);
             context.bot = null;
-          } catch (cleanupError) {
-            console.warn('⚠️  Cleanup warning:', cleanupError.message);
+          } catch (cleanupError: unknown) {
+            const cleanErr = cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError));
+            console.warn('⚠️  Cleanup warning:', cleanErr.message);
           }
         }
 
@@ -126,28 +151,28 @@ class ConnectionManager {
 
         clearTimeout(timeout);
         resolve(newBot);
-      } catch (error: any) {
+      } catch (error: unknown) {
         clearTimeout(timeout);
         reject(error);
       }
     });
   }
 
-  calculateBackoffDelay() {
+  calculateBackoffDelay(): number {
     const exponentialDelay =
       this.state.baseDelay * Math.pow(this.state.backoffMultiplier, this.state.attemptCount - 1);
     const jitterDelay = exponentialDelay * (0.5 + Math.random() * 0.5); // Add jitter
     return Math.min(jitterDelay, this.state.maxDelay);
   }
 
-  isCircuitOpen() {
+  isCircuitOpen(): boolean {
     return (
       this.state.consecutiveFailures >= this.state.circuitBreakerThreshold &&
       Date.now() - this.state.lastSuccessTime > this.state.circuitBreakerTimeout
     );
   }
 
-  async waitForCircuitReset() {
+  async waitForCircuitReset(): Promise<void> {
     const waitTime = Math.min(
       this.state.circuitBreakerTimeout - (Date.now() - this.state.lastSuccessTime),
       300000 // Max 5 minutes
@@ -159,7 +184,7 @@ class ConnectionManager {
     }
   }
 
-  onReconnectionSuccess() {
+  onReconnectionSuccess(): void {
     const totalAttempts = this.state.attemptCount;
     const reconnectionTime = this.state.lastDisconnected
       ? Date.now() - this.state.lastDisconnected
@@ -188,13 +213,13 @@ class ConnectionManager {
 
     // Log success statistics
     const avgReconnectionTime =
-      this.state.totalReconnectionTime / this.state.totalSuccessfulReconnections;
+      (this.state.totalReconnectionTime || 0) / (this.state.totalSuccessfulReconnections || 1);
     console.log(
       `📈 Reconnection stats: ${this.state.totalSuccessfulReconnections} successful, avg time: ${Math.round(avgReconnectionTime / 1000)}s`
     );
   }
 
-  onReconnectionFailure() {
+  onReconnectionFailure(): void {
     console.error('💀 All reconnection attempts failed');
     this.state.isReconnecting = false;
 

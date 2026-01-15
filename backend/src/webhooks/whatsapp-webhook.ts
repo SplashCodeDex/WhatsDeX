@@ -27,6 +27,11 @@ router.post('/webhook/whatsapp', express.json(), async (req, res) => {
   try {
     const signature = req.headers['x-hub-signature-256'];
 
+    if (typeof signature !== 'string') {
+      logger.warn('Missing or invalid signature header');
+      return res.sendStatus(403);
+    }
+
     // Validate request signature (security)
     if (!validateWhatsAppSignature(req.body, signature)) {
       logger.warn('Invalid WhatsApp webhook signature');

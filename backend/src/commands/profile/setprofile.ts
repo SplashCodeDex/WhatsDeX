@@ -1,84 +1,62 @@
 import { MessageContext } from '../../types/index.js';
+import { z } from 'zod';
+
+const ArgsSchema = z.object({
+  username: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/).optional(),
+});
+
 export default {
   name: 'setprofile',
-  aliases: ['set', 'setp', 'setprof'],
+  aliases: ['setuser', 'editprofile'],
   category: 'profile',
-  code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
-    const input = ctx.args.join(' ') || null;
+  code: async (ctx: MessageContext): Promise<void> => {
+    const { databaseService, formatter, logger } = ctx.bot.context;
 
-    if (!input)
-      return await ctx.reply(
-        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
-          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, 'autolevelup'))}\n${formatter.quote(
-            tools.msg.generateNotes([
-              `Type ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} to see the list.`,
-            ])
-          )}`
-      );
-
-    if (input.toLowerCase() === 'list') {
-      const listText = await tools.list.get('setprofile');
-      return await ctx.reply({
-        text: listText,
-        footer: config.msg.footer,
-      });
+    if (!databaseService || !formatter) {
+      await ctx.reply('❌ System Error: Service unavailable.');
+      return;
     }
 
     try {
-      const senderId = ctx.getId(ctx.sender.jid);
-      const { args } = ctx;
-      const command = args[0]?.toLowerCase();
+      const senderId = ctx.sender.jid;
+      const tenantId = ctx.bot.tenantId;
 
-      switch (command) {
-        case 'username': {
-          const input = args.slice(1).join(' ').trim();
-
-          if (!input)
-            return await ctx.reply(
-              formatter.quote('❎ Please enter the username you want to use.')
-            );
-          if (/[^a-zA-Z0-9._-]/.test(input))
-            return await ctx.reply(
-              formatter.quote(
-                '❎ Username can only contain letters, numbers, dots (.), underscores (_) or hyphens (-).'
-              )
-            );
-
-          const usernameTaken = Object.values((await db.get('user')) || {}).some(
-            user => user.username === input
-          );
-          if (usernameTaken)
-            return await ctx.reply(
-              formatter.quote('❎ That username is already used by another user.')
-            );
-
-          const username = `@${input}`;
-          await db.set(`user.${senderId}.username`, username);
-          await ctx.reply(
-            formatter.quote(
-              `✅ Username successfully changed to ${formatter.inlineCode(username)}!`
-            )
-          );
-          break;
-        }
-        case 'autolevelup': {
-          const setKey = `user.${senderId}.autolevelup`;
-          const currentStatus = (await db.get(setKey)) || false;
-          const newStatus = !currentStatus;
-          await db.set(setKey, newStatus);
-
-          const statusText = newStatus ? 'enabled' : 'disabled';
-          await ctx.reply(formatter.quote(`✅ Auto level up successfully ${statusText}!`));
-          break;
-        }
-        default:
-          await ctx.reply(
-            formatter.quote(`❎ Setting ${formatter.inlineCode(input)} is not valid.`)
-          );
+      if (!ctx.args || ctx.args.length === 0) {
+        await ctx.reply(formatter.quote('ℹ️ Gunakan: .setprofile <username>\nContoh: .setprofile Nico_Dex'));
+        return;
       }
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+
+      // 1. Validate Args
+      const validation = ArgsSchema.safeParse({ username: ctx.args[0] });
+      if (!validation.success) {
+        await ctx.reply(formatter.quote('❌ Username harus 3-20 karakter dan hanya boleh berisi huruf, angka, atau underscore.'));
+        return;
+      }
+
+      const { username } = validation.data;
+
+      if (username) {
+        // 2. Check if username taken in this tenant
+        const isTaken = await databaseService.checkUsernameTaken(tenantId, username);
+        if (isTaken) {
+          await ctx.reply(formatter.quote(`❌ Username "${username}" sudah digunakan oleh orang lain di server ini.`));
+          return;
+        }
+
+        // 3. Update User
+        const result = await databaseService.updateUser(tenantId, senderId, { username });
+
+        if (result.success) {
+          await ctx.reply(formatter.quote(`✅ Username berhasil diatur menjadi: ${username}`));
+        } else {
+          throw result.error;
+        }
+      }
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      logger.error(`[${ctx.bot.tenantId}] [SetProfile] Error: ${err}`, error);
+      await ctx.reply(formatter.quote(`Error: ${err}`));
     }
   },
 };

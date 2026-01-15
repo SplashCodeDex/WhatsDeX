@@ -1,13 +1,13 @@
 import WhatsDeXBrain from '../services/whatsDeXBrain.js';
 import { Cooldown } from './cooldown.js';
 import moment from 'moment-timezone';
-import { Bot, GlobalContext, MessageContext } from '../types/index.js';
+import { Bot, GlobalContext, MessageContext, BotMember, Command } from '../types/index.js';
 
 /**
  * Check if user has enough coins
  * @returns {Promise<boolean>} true if BLOCKED (not enough coins), false if allowed
  */
-const checkCoin = async (database: any, required: number | string, userDb: any, senderId: string, isOwner: boolean): Promise<boolean> => {
+const checkCoin = async (database: any, required: number | string, userDb: BotMember | null, senderId: string, isOwner: boolean): Promise<boolean> => {
     if (isOwner) return false;
     const requiredCoins = Number(required);
     const userCoins = userDb?.coin || 0;
@@ -31,24 +31,22 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
         const senderJid = ctx.sender.jid;
         const senderId = ctx.getId(senderJid);
         const groupJid = isGroup ? ctx.id : null;
-        const groupId = isGroup ? ctx.getId(groupJid) : null;
-        const isOwner = cmd.isOwner(config, senderId, ctx.msg.key.id);
+        const groupId = isGroup ? ctx.getId(groupJid!) : null;
+        const isOwner = ctx.sender.isOwner;
         const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 
         // Get database
-        const userDb = await database.user.get(senderId);
-        const groupDb = isGroup ? await database.group.get(groupId) : {};
+        const userDb = await database.user.get(senderId, ctx.bot.tenantId);
+        const groupDb = isGroup ? await database.group.get(groupId!, ctx.bot.tenantId) : null;
 
         // Process message with the brain
         await brain.processMessage(ctx);
 
         // Log incoming command
         if (isGroup && !ctx.msg.key.fromMe) {
-            console.log(
-                `📨 Incoming command: ${ctx.used.command}, from group: ${groupId}, by: ${senderId}`
-            );
+            context.logger.info(`Incoming command: ${ctx.used.command} from group: ${groupId} by: ${senderId}`);
         } else if (isPrivate && !ctx.msg.key.fromMe) {
-            console.log(`📨 Incoming command: ${ctx.used.command}, from: ${senderId}`);
+            context.logger.info(`Incoming command: ${ctx.used.command} from: ${senderId}`);
         }
 
         // Add user XP and handle level-ups
@@ -61,22 +59,13 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
 
             if (userDb?.autolevelup) {
                 await ctx.reply({
-                    text: formatter.quote(` Congratulations! You have leveled up to level ${newUserLevel}.`),
-                    footer: config.msg.footer,
-                    buttons: [
-                        {
-                            buttonId: `${ctx.used.prefix}setprofile autolevelup`,
-                            buttonText: {
-                                displayText: 'Disable Auto Level Up',
-                            },
-                        },
-                    ],
+                    text: formatter.quote(`Congratulations! You have leveled up to level ${newUserLevel}.`),
                 });
             }
 
-            await database.user.update(senderId, { xp: newUserXp, level: newUserLevel });
+            await database.user.update(senderId, { xp: newUserXp, level: newUserLevel }, ctx.bot.tenantId);
         } else {
-            await database.user.update(senderId, { xp: newUserXp });
+            await database.user.update(senderId, { xp: newUserXp }, ctx.bot.tenantId);
         }
 
         // Simulate typing
@@ -90,14 +79,6 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                 key: 'banned',
                 condition: userDb?.banned && ctx.used.command !== 'owner',
                 msg: config.msg.banned,
-                buttons: [
-                    {
-                        buttonId: `${ctx.used.prefix}owner`,
-                        buttonText: {
-                            displayText: 'Contact Owner',
-                        },
-                    },
-                ],
                 reaction: '🚫',
             },
             {
@@ -110,10 +91,10 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
             {
                 key: 'gamerestrict',
                 condition:
-                    groupDb?.option?.gamerestrict &&
+                    (groupDb as any)?.option?.gamerestrict &&
                     isGroup &&
                     !isAdmin &&
-                    ctx.bot.cmd.get(ctx.used.command).category === 'game',
+                    ctx.bot.cmd.get(ctx.used.command)?.category === 'game',
                 msg: config.msg.gamerestrict,
                 reaction: '🎮',
             },
@@ -126,20 +107,6 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                     !userDb?.premium &&
                     !['price', 'owner'].includes(ctx.used.command),
                 msg: config.msg.privatePremiumOnly,
-                buttons: [
-                    {
-                        buttonId: `${ctx.used.prefix}price`,
-                        buttonText: {
-                            displayText: 'Premium Price',
-                        },
-                    },
-                    {
-                        buttonId: `${ctx.used.prefix}owner`,
-                        buttonText: {
-                            displayText: 'Contact Owner',
-                        },
-                    },
-                ],
                 reaction: '💎',
             },
             {
@@ -151,17 +118,9 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                     ctx.used.command !== 'botgroup' &&
                     config.bot.groupJid &&
                     !(await ctx.group(config.bot.groupJid).members()).some(
-                        member => member.jid === senderJid
+                        jid => jid === senderJid
                     ),
                 msg: config.msg.botGroupMembership,
-                buttons: [
-                    {
-                        buttonId: `${ctx.used.prefix}botgroup`,
-                        buttonText: {
-                            displayText: 'Bot Group',
-                        },
-                    },
-                ],
                 reaction: '🚫',
             },
             {
@@ -171,22 +130,8 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                     isGroup &&
                     !isOwner &&
                     !['price', 'owner'].includes(ctx.used.command) &&
-                    groupDb?.sewa !== true,
+                    (groupDb as any)?.sewa !== true,
                 msg: config.msg.groupSewa,
-                buttons: [
-                    {
-                        buttonId: `${ctx.used.prefix}price`,
-                        buttonText: {
-                            displayText: 'Rental Price',
-                        },
-                    },
-                    {
-                        buttonId: `${ctx.used.prefix}owner`,
-                        buttonText: {
-                            displayText: 'Contact Owner',
-                        },
-                    },
-                ],
                 reaction: '🔒',
             },
             {
@@ -207,7 +152,7 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
             },
         ];
 
-        for (const { condition, msg, reaction, key, buttons } of restrictions) {
+        for (const { condition, msg, reaction, key } of restrictions) {
             if (condition) {
                 const now = Date.now();
                 const lastSentMsg = userDb?.lastSentMsg?.[key] || 0;
@@ -215,14 +160,10 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                 if (!lastSentMsg || now - lastSentMsg > oneDay) {
                     simulateTyping();
                     await database.user.update(senderId, {
-                        lastSentMsg: { ...userDb.lastSentMsg, [key]: now },
-                    });
+                        lastSentMsg: { ...userDb?.lastSentMsg, [key]: now },
+                    }, ctx.bot.tenantId);
                     return await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(
-                            `The next response will be an emoji reaction ${formatter.inlineCode(reaction)}. `
-                        ),
-                        buttons: buttons || null,
                     });
                 }
                 return await ctx.replyReact(reaction);
@@ -230,103 +171,77 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
         }
 
         // Check permission conditions
-        const command = [...ctx.bot.cmd.values()].find(cmd =>
-            [cmd.name, ...(cmd.aliases || [])].includes(ctx.used.command)
-        );
+        const command = ctx.bot.cmd.get(ctx.used.command);
         if (!command) return await next();
-        const { permissions = {} } = command;
+        
+        const permissions = command.permissions || {};
         const permissionChecks = [
             {
-                key: 'admin',
+                key: 'admin' as const,
                 condition: isGroup && !isAdmin,
                 msg: config.msg.admin,
                 reaction: '🛡️',
             },
             {
-                key: 'botAdmin',
+                key: 'botAdmin' as const,
                 condition: isGroup && !(await ctx.group().isBotAdmin()),
                 msg: config.msg.botAdmin,
                 reaction: '🤖',
             },
             {
-                key: 'coin',
+                key: 'coin' as const,
                 condition:
                     permissions.coin &&
                     config.system.useCoin &&
                     (await checkCoin(database, permissions.coin, userDb, senderId, isOwner)),
                 msg: config.msg.coin,
-                buttons: [
-                    {
-                        buttonId: `${ctx.used.prefix}coin`,
-                        buttonText: {
-                            displayText: 'Check Coins',
-                        },
-                    },
-                ],
                 reaction: '💰',
             },
             {
-                key: 'group',
+                key: 'group' as const,
                 condition: isPrivate,
                 msg: config.msg.group,
                 reaction: '👥',
             },
             {
-                key: 'owner',
+                key: 'owner' as const,
                 condition: !isOwner,
                 msg: config.msg.owner,
                 reaction: '👑',
             },
             {
-                key: 'premium',
+                key: 'premium' as const,
                 condition: !isOwner && !userDb?.premium,
                 msg: config.msg.premium,
-                buttons: [
-                    {
-                        buttonId: `${ctx.used.prefix}price`,
-                        buttonText: {
-                            displayText: 'Premium Price',
-                        },
-                    },
-                    {
-                        buttonId: `${ctx.used.prefix}owner`,
-                        buttonText: {
-                            displayText: 'Contact Owner',
-                        },
-                    },
-                ],
                 reaction: '💎',
             },
             {
-                key: 'private',
+                key: 'private' as const,
                 condition: isGroup,
                 msg: config.msg.private,
                 reaction: '📩',
             },
             {
-                key: 'restrict',
+                key: 'restrict' as const,
                 condition: config.system.restrict,
                 msg: config.msg.restrict,
                 reaction: '🚫',
             },
         ];
 
-        for (const { key, condition, msg, reaction, buttons } of permissionChecks) {
-            if (permissions[key] && condition) {
+        for (const { key, condition, msg, reaction } of permissionChecks) {
+            const hasPermissionRequirement = (permissions as any)[key];
+            if (hasPermissionRequirement && condition) {
                 const now = Date.now();
                 const lastSentMsg = userDb?.lastSentMsg?.[key] || 0;
                 const oneDay = 24 * 60 * 60 * 1000;
                 if (!lastSentMsg || now - lastSentMsg > oneDay) {
                     simulateTyping();
                     await database.user.update(senderId, {
-                        lastSentMsg: { ...userDb.lastSentMsg, [key]: now },
-                    });
+                        lastSentMsg: { ...userDb?.lastSentMsg, [key]: now },
+                    }, ctx.bot.tenantId);
                     return await ctx.reply({
                         text: msg,
-                        footer: formatter.italic(
-                            `The next response will be an emoji reaction ${formatter.inlineCode(reaction)}. `
-                        ),
-                        buttons: buttons || null,
                     });
                 }
                 return await ctx.replyReact(reaction);

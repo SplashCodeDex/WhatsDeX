@@ -13,7 +13,7 @@ export default {
 
     try {
       const members = await ctx.group().members();
-      const mentions = members.map(member => member.jid);
+      const mentions = members;
 
       await ctx.reply({
         text: input,

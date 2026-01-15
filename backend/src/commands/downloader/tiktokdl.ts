@@ -13,7 +13,7 @@ export default {
       formatter,
       config,
       tools: { msg, cmd, api, mime },
-    } = ctx.self.context;
+    } = ctx.bot.context;
     const url = ctx.args[0] || null;
 
     if (!url)
@@ -45,7 +45,7 @@ export default {
           footer: config.msg.footer,
         });
       } else if (result.images) {
-        const album = result.images.map(imageUrl => ({
+        const album = result.images.map((imageUrl: string) => ({
           image: {
             url: imageUrl,
           },
@@ -57,7 +57,7 @@ export default {
           caption: formatter.quote(`URL: ${url}`),
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       await cmd.handleError(ctx, error, true);
     }
   },

@@ -3,7 +3,7 @@ import { db } from '../lib/firebase.js';
 import { levenshteinDistance } from '../utils/levenshtein.js';
 
 export default class CommandSuggestionsService {
-  async getUserCommandHistory(userId, limit = 20) {
+  async getUserCommandHistory(userId: string, limit = 20) {
     if (!userId) return [];
     try {
       const snapshot = await db.collection('command_usage')
@@ -25,23 +25,20 @@ export default class CommandSuggestionsService {
     }
   }
 
-  async suggestCommands(input, recentCommands = [], options: any = {}) {
+  async suggestCommands(input: string, recentCommands: any[] = [], options: any = {}) {
     const text = (input || '').toLowerCase().trim();
     if (!text) return [];
 
-    // Fetch popular commands from DB to build a catalog
-    // Firestore doesn't support groupBy easily. We'll rely on a static list and recent usage.
-    // If we really need global popular, we should maintain a 'command_stats' counters collection.
-    // For now, valid simplification: Use static popular + user history.
-
     // Build candidate set from recent
-    const recentSet = new Map();
+    const recentSet = new Map<string, number>();
     for (const rc of recentCommands || []) {
       const cmdName = (rc as any).command;
-      recentSet.set(cmdName, (recentSet.get(cmdName) || 0) + 1);
+      if (cmdName) {
+        recentSet.set(cmdName, (recentSet.get(cmdName) || 0) + 1);
+      }
     }
 
-    const candidates = new Map();
+    const candidates = new Map<string, any>();
     // Static popular list acting as base knowledge
     const staticPopular = [
       { command: 'menu', category: 'main', count: 100 },
@@ -109,8 +106,8 @@ export default class CommandSuggestionsService {
     }));
   }
 
-  describe(command, category) {
-    const dictionary = {
+  describe(command: string, category: string) {
+    const dictionary: Record<string, string> = {
       youtubevideo: 'Download a YouTube video',
       youtubeaudio: 'Download audio from YouTube',
       text2image: 'Generate an image from your prompt',

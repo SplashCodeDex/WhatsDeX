@@ -1,13 +1,30 @@
-const getJid = input => {
+import { proto } from '@whiskeysockets/baileys';
+
+/**
+ * Ensures a string is a valid WhatsApp JID
+ */
+const getJid = (input: string): string => {
   if (input.endsWith('@s.whatsapp.net') || input.endsWith('@g.us')) {
     return input;
   }
-  return `${input}@s.whatsapp.net`; // Default to user JID
+  return `${input.replace(/[^\d]/g, '')}@s.whatsapp.net`;
 };
 
-const getSender = msg =>
-  msg.key.fromMe ? getJid(msg.key.remoteJid) : getJid(msg.key.participant || msg.key.remoteJid);
+/**
+ * Extracts the sender JID from a message
+ */
+const getSender = (msg: proto.IWebMessageInfo): string => {
+  if (msg.key.fromMe) return getJid(msg.key.remoteJid!);
+  const participant = msg.key.participant || msg.key.remoteJid;
+  return getJid(participant!);
+};
 
-const getGroup = msg => (msg.key.remoteJid.endsWith('@g.us') ? msg.key.remoteJid : null);
+/**
+ * Extracts the group JID if the message is from a group
+ */
+const getGroup = (msg: proto.IWebMessageInfo): string | null => {
+  const remoteJid = msg.key.remoteJid || '';
+  return remoteJid.endsWith('@g.us') ? remoteJid : null;
+};
 
 export { getJid, getSender, getGroup };

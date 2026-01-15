@@ -1,6 +1,11 @@
 import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
+interface YoutubeSummaryPoint {
+  point: string;
+  summary: string;
+}
+
 export default {
   name: 'youtubesummarizer',
   aliases: ['ytsummarizer'],
@@ -29,7 +34,7 @@ export default {
       const { result } = (await axios.get(apiUrl)).data;
 
       const resultText = result.keyPoints
-        .map(res => `${formatter.quote(`Poin: ${res.point}`)}\n${formatter.quote(res.summary)}`)
+        .map((res: YoutubeSummaryPoint) => `${formatter.quote(`Poin: ${res.point}`)}\n${formatter.quote(res.summary)}`)
         .join('\n' + `${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
       await ctx.reply({
         text:
@@ -37,7 +42,7 @@ export default {
           `${formatter.quote('· · ─ ·✶· ─ · ·')}\n${resultText}`,
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

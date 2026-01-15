@@ -1,6 +1,11 @@
 import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 
+interface TwitterResult {
+  quality: string;
+  url: string;
+}
+
 export default {
   name: 'twitterdl',
   aliases: ['twitter', 'twit', 'twitdl', 'x', 'xdl'],
@@ -29,9 +34,14 @@ export default {
       const apiUrl = tools.api.createUrl('davidcyril', '/twitterv2', {
         url,
       });
-      const result = (await axios.get(apiUrl)).data.result.find(res =>
+      const response = await axios.get(apiUrl);
+      const result = response.data.result.find((res: TwitterResult) =>
         res.quality.includes('720p')
       );
+
+      if (!result) {
+        throw new Error('No 720p video found');
+      }
 
       await ctx.reply({
         video: {
@@ -41,7 +51,7 @@ export default {
         caption: formatter.quote(`URL: ${url}`),
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

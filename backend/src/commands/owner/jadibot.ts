@@ -1,5 +1,6 @@
 import { MessageContext } from '../../types/index.js';
 import multiTenantBotService from '../../services/multiTenantBotService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * JadiBot Command
@@ -27,9 +28,9 @@ export default {
       }
 
       // Check if user is premium
-      const user = await userService.getUser(userId);
-      const isPremium = user?.isPremium || false;
-      const isCreator = user?.isCreator || false;
+      const user = await userService.getUserById(ctx.bot.tenantId, userId);
+      const isPremium = user?.metadata?.premium || false;
+      const isCreator = user?.role === 'owner';
 
       if (!isPremium && !isCreator) {
         return await ctx.reply(
@@ -40,12 +41,15 @@ export default {
       await ctx.reply('⏳ Creating your bot instance...\nThis may take a few moments.');
 
       // Create bot instance
-      await multiTenantBotService.createBot(ctx.bot, ctx, userId);
+      await multiTenantBotService.createBotInstance(ctx.bot.tenantId, {
+        name: `${user?.displayName || 'User'}'s Bot`,
+        userId: userId
+      });
 
       await ctx.reply(`✅ Bot instance created successfully!\n\nUse !stopjadibot to stop your bot instance.`);
-      console.log(`JadiBot created for ${userId}`);
+      logger.info(`JadiBot created for ${userId}`);
     } catch (error: any) {
-      console.error('Error in jadibot command:', error);
+      logger.error('Error in jadibot command:', error);
 
       if (error.message.includes('Rate limit')) {
         await ctx.reply('Rate limit exceeded. Please wait before creating new bot.');

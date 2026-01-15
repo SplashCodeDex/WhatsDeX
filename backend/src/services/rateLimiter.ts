@@ -1,10 +1,25 @@
 import { RateLimiterRedis } from 'rate-limiter-flexible';
 import logger from '../utils/logger.js';
-import redis from 'redis';
+import { createClient } from 'redis';
+
+interface RateLimiterConfig {
+  points: number;
+  duration: number;
+  keyPrefix?: string;
+  blockDuration?: number;
+}
+
+interface RateLimitStatus {
+  remainingPoints: number;
+  msBeforeNext: number;
+  consumedPoints: number;
+  isBlocked: boolean;
+  error?: string;
+}
 
 class RateLimiterService {
-  private limiters: Map<string, RateLimiterRedis>;
-  private redisClient: any;
+  private limiters: Map<string, any>;
+  private redisClient: any; // Relaxed type to avoid Redis version mismatch issues without detailed check
 
   constructor() {
     this.limiters = new Map();
@@ -12,7 +27,7 @@ class RateLimiterService {
 
     // Initialize Redis client
     try {
-      this.redisClient = redis.createClient({
+      this.redisClient = createClient({
         url: process.env.REDIS_URL || 'redis://localhost:6379',
         password: process.env.REDIS_PASSWORD,
       });
@@ -36,13 +51,8 @@ class RateLimiterService {
 
   /**
    * Get or create a rate limiter for specific configuration
-   * @param {Object} config - Rate limiter configuration
-   * @param {number} config.points - Number of requests allowed
-   * @param {number} config.duration - Time window in seconds
-   * @param {string} config.keyPrefix - Prefix for Redis keys
-   * @returns {RateLimiterRedis} Rate limiter instance
    */
-  getLimiter(config) {
+  getLimiter(config: RateLimiterConfig): any {
     const key = `${config.points}:${config.duration}:${config.keyPrefix || 'default'}`;
 
     if (!this.limiters.has(key)) {
@@ -69,21 +79,18 @@ class RateLimiterService {
       );
     }
 
-    return this.limiters.get(key);
+    return this.limiters.get(key)!;
   }
 
   /**
    * Check if request is allowed
-   * @param {string} key - Unique identifier for the requester
-   * @param {Object} config - Rate limiter configuration
-   * @returns {Promise<boolean>} Whether the request is allowed
    */
-  async check(key, config) {
+  async check(key: string, config: RateLimiterConfig): Promise<boolean> {
     try {
       const limiter = this.getLimiter(config);
       await limiter.consume(key);
       return true;
-    } catch (rejRes) {
+    } catch (rejRes: any) {
       logger.warn('Rate limit exceeded', {
         key,
         points: config.points,
@@ -97,19 +104,16 @@ class RateLimiterService {
 
   /**
    * Get rate limit status for a key
-   * @param {string} key - Unique identifier for the requester
-   * @param {Object} config - Rate limiter configuration
-   * @returns {Promise<Object>} Rate limit status
    */
-  async getStatus(key, config) {
+  async getStatus(key: string, config: RateLimiterConfig): Promise<RateLimitStatus> {
     try {
       const limiter = this.getLimiter(config);
       const res = await limiter.get(key);
 
       return {
-        remainingPoints: res.remainingPoints,
-        msBeforeNext: res.msBeforeNext,
-        consumedPoints: res.consumedPoints,
+        remainingPoints: res ? res.remainingPoints : config.points,
+        msBeforeNext: res ? res.msBeforeNext : 0,
+        consumedPoints: res ? res.consumedPoints : 0,
         isBlocked: false,
       };
     } catch (error: any) {
@@ -125,12 +129,8 @@ class RateLimiterService {
 
   /**
    * Block a key manually
-   * @param {string} key - Unique identifier for the requester
-   * @param {number} seconds - Block duration in seconds
-   * @param {Object} config - Rate limiter configuration
-   * @returns {Promise<boolean>} Success status
    */
-  async block(key, seconds, config) {
+  async block(key: string, seconds: number, config: RateLimiterConfig): Promise<boolean> {
     try {
       const limiter = this.getLimiter(config);
       await limiter.block(key, seconds);
@@ -144,11 +144,8 @@ class RateLimiterService {
 
   /**
    * Unblock a key
-   * @param {string} key - Unique identifier for the requester
-   * @param {Object} config - Rate limiter configuration
-   * @returns {Promise<boolean>} Success status
    */
-  async unblock(key, config) {
+  async unblock(key: string, config: RateLimiterConfig): Promise<boolean> {
     try {
       const limiter = this.getLimiter(config);
       await limiter.delete(key);
@@ -162,12 +159,8 @@ class RateLimiterService {
 
   /**
    * Penalize a key (consume extra points)
-   * @param {string} key - Unique identifier for the requester
-   * @param {number} points - Points to consume
-   * @param {Object} config - Rate limiter configuration
-   * @returns {Promise<boolean>} Success status
    */
-  async penalize(key, points, config) {
+  async penalize(key: string, points: number, config: RateLimiterConfig): Promise<boolean> {
     try {
       const limiter = this.getLimiter(config);
       await limiter.penalty(key, points);
@@ -181,12 +174,8 @@ class RateLimiterService {
 
   /**
    * Reward a key (reduce consumed points)
-   * @param {string} key - Unique identifier for the requester
-   * @param {number} points - Points to reward
-   * @param {Object} config - Rate limiter configuration
-   * @returns {Promise<boolean>} Success status
    */
-  async reward(key, points, config) {
+  async reward(key: string, points: number, config: RateLimiterConfig): Promise<boolean> {
     try {
       const limiter = this.getLimiter(config);
       await limiter.reward(key, points);
@@ -249,10 +238,9 @@ class RateLimiterService {
 
   /**
    * Get rate limiter statistics
-   * @returns {Promise<Object>} Statistics about rate limiters
    */
   async getStats() {
-    const stats = {
+    const stats: any = {
       connected: !!this.redisClient,
       limitersCount: this.limiters.size,
       limiters: [],
@@ -262,7 +250,7 @@ class RateLimiterService {
       try {
         // Get Redis stats
         const redisInfo = await this.redisClient.info();
-        stats.redis = this.parseRedisInfo(redisInfo);
+        stats.redis = this.parseRedisInfo(redisInfo as any);
       } catch (error: any) {
         stats.redis = { error: error.message };
       }
@@ -283,17 +271,15 @@ class RateLimiterService {
 
   /**
    * Parse Redis INFO command output
-   * @param {string} info - Raw Redis info
-   * @returns {Object} Parsed info object
    */
-  parseRedisInfo(info) {
+  parseRedisInfo(info: string): Record<string, string> {
     const lines = info.split('\n');
-    const parsed = {};
+    const parsed: Record<string, string> = {};
 
     lines.forEach(line => {
       if (line.includes(':')) {
         const [key, value] = line.split(':');
-        parsed[key] = value;
+        parsed[key] = value.trim();
       }
     });
 
@@ -302,7 +288,6 @@ class RateLimiterService {
 
   /**
    * Health check
-   * @returns {Promise<Object>} Health status
    */
   async healthCheck() {
     try {
@@ -336,4 +321,5 @@ class RateLimiterService {
   }
 }
 
-export default RateLimiterService;
+export const rateLimiterService = new RateLimiterService();
+export default rateLimiterService;

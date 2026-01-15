@@ -8,30 +8,30 @@ export default {
     group: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
-    const accountJid = (await ctx.getMentioned())[0] || ctx.quoted?.senderJid || null;
+    const { formatter } = ctx.bot.context;
 
-    if (!accountJid)
-      return await ctx.reply({
-        text:
-          `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
-          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, `@${ctx.getId(ctx.sender.jid)}`))}\n${formatter.quote(
-            tools.msg.generateNotes([
-              'Balas atau kutip pesan untuk menjadikan pengirim sebagai akun target.',
-            ])
-          )}`,
-        mentions: [ctx.sender.jid],
-      });
+    // Resolve target JID from quoted message or mentions
+    const mentions = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    const quotedJid = ctx.msg.message?.extendedTextMessage?.contextInfo?.participant;
+    const accountJid = quotedJid || mentions[0] || null;
 
-    if (await ctx.group().isOwner(accountJid))
-      return await ctx.reply(formatter.quote('❎ Dia adalah owner grup!'));
+    if (!accountJid) {
+      return await ctx.reply(formatter.quote('⚠️ Please reply to a user or mention them to promote.'));
+    }
+
+    // Check if target is owner via direct metadata check
+    const groupOwner = await ctx.group().owner();
+    if (groupOwner === accountJid) {
+      return await ctx.reply(formatter.quote('❎ Only the owner can be demoted by no one!'));
+    }
 
     try {
-      await ctx.group().promote(accountJid);
-
-      await ctx.reply(formatter.quote('✅ Berhasil ditingkatkan dari anggota menjadi admin!'));
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+      await ctx.group().promote([accountJid]);
+      await ctx.reply(formatter.quote('✅ User promoted to admin successfully!'));
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      ctx.bot.context.logger.error('Promote command failed', { error: err });
+      await ctx.reply(formatter.quote(`❌ Failed to promote user: ${err} `));
     }
   },
 };

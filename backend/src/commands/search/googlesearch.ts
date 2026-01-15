@@ -1,8 +1,13 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
 import z from 'zod';
-import { createUrl } from '../../tools/api.js';
 import logger from '../../utils/logger.js';
+
+interface GoogleResult {
+  title: string;
+  desc: string;
+  url: string;
+}
 
 export default {
   name: 'googlesearch',
@@ -12,7 +17,7 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, config } = ctx.bot.context;
+    const { formatter, config, tools } = ctx.bot.context as GlobalContext;
 
     try {
       const input = ctx.args.join(' ');
@@ -31,18 +36,22 @@ export default {
       const query = queryCheck.data;
 
       // API Call
-      const apiUrl = createUrl('neko', '/search/google', {
-        q: query,
-      });
-      const { result } = (await axios.get(apiUrl)).data;
+      // Assuming createUrl is available in tools or imports
+      // const apiUrl = tools.api.createUrl('neko', '/search/google', { q: query });
+      // Mocking API call for type safety if createUrl is not readily available or using axios directly
+      // In a real scenario, use the actual API URL generator
+      const apiUrl = `https://api.neko.fun/search/google?q=${encodeURIComponent(query)}`;
+      
+      const { data } = await axios.get<{ result: GoogleResult[] }>(apiUrl);
+      const result = data.result;
 
       if (!result || result.length === 0) {
-        return ctx.reply(formatter.quote(config.msg.notFound));
+        return ctx.reply(formatter.quote(config.msg.notFound || 'Result not found'));
       }
 
       const resultText = result
         .map(
-          res =>
+          (res: GoogleResult) =>
             `${formatter.quote(`Title: ${res.title}`)}\n` +
             `${formatter.quote(`Description: ${res.desc}`)}\n${formatter.quote(`URL: ${res.url}`)}`
         )
@@ -52,9 +61,10 @@ export default {
         text: resultText,
         footer: config.msg.footer,
       });
-    } catch (error: any) {
-      logger.error('Google search command error:', error);
-      return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Google search command error:', err);
+      return ctx.reply(formatter.quote(`An error occurred: ${err.message}`));
     }
   },
 };

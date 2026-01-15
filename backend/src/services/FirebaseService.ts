@@ -87,6 +87,30 @@ export class FirebaseService {
       throw error;
     }
   }
+
+  /**
+   * Generic method to get all documents from a collection
+   */
+  public async getCollection<K extends CollectionKey>(
+    collection: string,
+    tenantId?: string
+  ): Promise<FirestoreSchema[K][]> {
+    try {
+      let colRef;
+      
+      if (tenantId) {
+        colRef = db.collection('tenants').doc(tenantId).collection(collection);
+      } else {
+        colRef = db.collection(collection);
+      }
+
+      const snapshot = await colRef.get();
+      return snapshot.docs.map(doc => doc.data() as FirestoreSchema[K]);
+    } catch (error: any) {
+      logger.error(`Firestore getCollection error [${collection}]:`, error);
+      throw error;
+    }
+  }
 }
 
 export const firebaseService = FirebaseService.getInstance();

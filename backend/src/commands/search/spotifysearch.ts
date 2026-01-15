@@ -1,5 +1,11 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
+
+interface SpotifyResult {
+  trackName: string;
+  artistName: string;
+  externalUrl: string;
+}
 
 export default {
   name: 'spotifysearch',
@@ -9,36 +15,38 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
     const input = ctx.args.join(' ') || null;
 
-    if (!input)
-      return await ctx.reply(
-        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          tools.msg.generateCmdExample(ctx.used, 'one last kiss - hikaru utada')
-        )}`
-      );
+    if (!input) {
+      const instruction = tools.msg.generateInstruction(['send'], ['text']);
+      const example = tools.msg.generateCmdExample(ctx.used, 'one last kiss - hikaru utada');
+      return await ctx.reply(`${formatter.quote(instruction)}
+${formatter.quote(example)}`);
+    }
 
     try {
-      const apiUrl = tools.api.createUrl('diibot', '/api/search/spotify', {
-        query: input,
-      });
-      const { result } = (await axios.get(apiUrl)).data;
+      const apiUrl = `https://api.diibot.fun/api/search/spotify?query=${encodeURIComponent(input)}`;
+      const { data } = await axios.get<{ result: SpotifyResult[] }>(apiUrl);
+      const result = data.result;
 
       const resultText = result
         .map(
-          res =>
-            `${formatter.quote(`Judul: ${res.trackName}`)}\n` +
-            `${formatter.quote(`Artis: ${res.artistName}`)}\n${formatter.quote(
+          (res: SpotifyResult) =>
+            `${formatter.quote(`Judul: ${res.trackName}`)}
+` + 
+            `${formatter.quote(`Artis: ${res.artistName}`)}
+${formatter.quote(
               `URL: ${res.externalUrl}`
             )}`
         )
-        .join('\n' + `${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
+        .join('\n' + `${formatter.quote('· · ─ ·✶· ─ · ·')}
+`);
       await ctx.reply({
-        text: resultText || config.msg.notFound,
+        text: resultText || config.msg.notFound || 'No results found',
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

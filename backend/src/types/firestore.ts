@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
+import { ModerationItem, Violation } from './contracts.js';
 
 /**
  * Root 'tenants' collection document
@@ -58,10 +59,59 @@ export interface BotInstanceDocument {
 }
 
 /**
+ * 'tenants/{tenantId}/members' subcollection document (WhatsApp users)
+ */
+export interface BotMemberDocument {
+  id: string; // JID
+  username?: string;
+  coin: number;
+  level: number;
+  winGame: number;
+  autolevelup?: boolean;
+  banned?: boolean;
+  afk?: {
+    reason: string | null;
+    timestamp: number;
+  } | null;
+  lastClaim?: Record<string, number>;
+  lastSentMsg?: Record<string, any>;
+  recentCommands?: any[];
+  premium: boolean;
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
+}
+
+/**
+ * 'tenants/{tenantId}/groups' subcollection document
+ */
+export interface BotGroupDocument {
+  id: string; // Group JID
+  name: string;
+  isBanned: boolean;
+  prefix?: string;
+  welcomeMessage?: string;
+  settings?: {
+    welcome?: {
+      enabled: boolean;
+      message: string;
+      leaveMessage: string;
+    };
+    [key: string]: any;
+  };
+  metadata?: Record<string, any>;
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
+}
+
+/**
  * Generic type for Firestore collections mapping
  */
 export interface FirestoreSchema {
   tenants: TenantDocument;
   'tenants/{tenantId}/users': TenantUserDocument;
   'tenants/{tenantId}/bots': BotInstanceDocument;
+  'tenants/{tenantId}/members': BotMemberDocument;
+  'tenants/{tenantId}/groups': BotGroupDocument;
+  'tenants/{tenantId}/moderation': ModerationItem;
+  'tenants/{tenantId}/violations': Violation;
 }

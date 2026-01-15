@@ -3,14 +3,29 @@
  * Ensures all dependencies are healthy before starting dependent services
  */
 
+import logger from '../utils/logger.js';
+
+interface ServiceDef {
+  name: string;
+  factory: () => Promise<any>;
+  dependencies: string[];
+  instance: any;
+  status: 'not_started' | 'starting' | 'running' | 'failed' | 'stopped';
+  healthCheck: ((instance: any) => Promise<boolean>) | null;
+}
+
 export class StartupOrchestrator {
+  private services: Map<string, ServiceDef>;
+  private dependencies: Map<string, string[]>;
+  private startupOrder: string[];
+
   constructor() {
     this.services = new Map();
     this.dependencies = new Map();
     this.startupOrder = [];
   }
 
-  registerService(name, factory, dependencies = []) {
+  registerService(name: string, factory: () => Promise<any>, dependencies: string[] = []) {
     this.services.set(name, {
       name,
       factory,
@@ -19,11 +34,11 @@ export class StartupOrchestrator {
       status: 'not_started',
       healthCheck: null
     });
-    
+
     this.dependencies.set(name, dependencies);
   }
 
-  setHealthCheck(serviceName, healthCheckFn) {
+  setHealthCheck(serviceName: string, healthCheckFn: (instance: any) => Promise<boolean>) {
     const service = this.services.get(serviceName);
     if (service) {
       service.healthCheck = healthCheckFn;
@@ -31,19 +46,19 @@ export class StartupOrchestrator {
   }
 
   async startAllServices() {
-    console.log('🚀 Starting service orchestration...');
-    
+    logger.info('🚀 Starting service orchestration...');
+
     // Calculate startup order based on dependencies
     this.calculateStartupOrder();
-    
+
     for (const serviceName of this.startupOrder) {
       await this.startService(serviceName);
     }
-    
-    console.log('✅ All services started successfully!');
+
+    logger.info('✅ All services started successfully!');
   }
 
-  async startService(serviceName) {
+  async startService(serviceName: string) {
     const service = this.services.get(serviceName);
     if (!service) {
       throw new Error(`Service ${serviceName} not found`);
@@ -53,7 +68,7 @@ export class StartupOrchestrator {
       return service.instance;
     }
 
-    console.log(`🔄 Starting service: ${serviceName}`);
+    logger.info(`🔄 Starting service: ${serviceName}`);
 
     // Wait for dependencies
     await this.waitForDependencies(serviceName);
@@ -63,35 +78,35 @@ export class StartupOrchestrator {
       service.status = 'starting';
       service.instance = await service.factory();
       service.status = 'running';
-      
+
       // Verify health
       if (service.healthCheck) {
         await this.verifyHealth(serviceName);
       }
-      
-      console.log(`✅ Service started: ${serviceName}`);
+
+      logger.info(`✅ Service started: ${serviceName}`);
       return service.instance;
-      
+
     } catch (error: any) {
       service.status = 'failed';
-      console.error(`❌ Service startup failed: ${serviceName}`, error.message);
+      logger.error(`❌ Service startup failed: ${serviceName}`, error.message);
       throw error;
     }
   }
 
-  async waitForDependencies(serviceName) {
+  async waitForDependencies(serviceName: string) {
     const dependencies = this.dependencies.get(serviceName) || [];
-    
+
     for (const depName of dependencies) {
-      console.log(`⏳ Waiting for dependency: ${depName}`);
+      logger.info(`⏳ Waiting for dependency: ${depName}`);
       await this.startService(depName);
-      
+
       // Verify dependency is healthy
       await this.verifyHealth(depName);
     }
   }
 
-  async verifyHealth(serviceName) {
+  async verifyHealth(serviceName: string) {
     const service = this.services.get(serviceName);
     if (!service || !service.healthCheck) return true;
 
@@ -110,7 +125,7 @@ export class StartupOrchestrator {
       }
 
       if (i < maxRetries - 1) {
-        console.log(`🔄 Retrying health check for ${serviceName} in ${retryDelay/1000}s...`);
+        console.log(`🔄 Retrying health check for ${serviceName} in ${retryDelay / 1000}s...`);
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }
@@ -119,26 +134,26 @@ export class StartupOrchestrator {
   }
 
   calculateStartupOrder() {
-    const visited = new Set();
-    const visiting = new Set();
-    const order = [];
+    const visited = new Set<string>();
+    const visiting = new Set<string>();
+    const order: string[] = [];
 
-    const visit = (serviceName) => {
+    const visit = (serviceName: string) => {
       if (visiting.has(serviceName)) {
         throw new Error(`Circular dependency detected: ${serviceName}`);
       }
-      
+
       if (visited.has(serviceName)) {
         return;
       }
 
       visiting.add(serviceName);
-      
+
       const dependencies = this.dependencies.get(serviceName) || [];
       for (const dep of dependencies) {
         visit(dep);
       }
-      
+
       visiting.delete(serviceName);
       visited.add(serviceName);
       order.push(serviceName);
@@ -153,7 +168,7 @@ export class StartupOrchestrator {
   }
 
   getServiceStatus() {
-    const status = {};
+    const status: Record<string, string> = {};
     for (const [name, service] of this.services) {
       status[name] = service.status;
     }
@@ -162,10 +177,10 @@ export class StartupOrchestrator {
 
   async stopAllServices() {
     console.log('🔄 Stopping all services...');
-    
+
     // Stop in reverse order
     const reverseOrder = [...this.startupOrder].reverse();
-    
+
     for (const serviceName of reverseOrder) {
       try {
         const service = this.services.get(serviceName);
@@ -178,7 +193,7 @@ export class StartupOrchestrator {
         console.error(`Error stopping ${serviceName}:`, error.message);
       }
     }
-    
+
     console.log('✅ All services stopped');
   }
 }

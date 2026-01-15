@@ -1,5 +1,6 @@
 import { MessageContext } from '../../types/index.js';
 import multiTenantBotService from '../../services/multiTenantBotService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * List JadiBot Command
@@ -36,9 +37,9 @@ export default {
 
       await ctx.reply(response);
 
-      console.log(`List jadibot requested by ${ctx.sender.id}, found ${activeBots.length} bots`);
+      logger.info(`List jadibot requested by ${ctx.sender.jid}, found ${activeBots.length} bots`);
     } catch (error: any) {
-      console.error('Error in listjadibot command:', error);
+      logger.error('Error in listjadibot command:', error);
       await ctx.reply('Terjadi kesalahan saat mengambil daftar bot. Silakan coba lagi.');
     }
   },

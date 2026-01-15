@@ -1,44 +1,62 @@
-import GeminiService from '../../services/gemini.js';
+import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
 import { EventEmitter } from 'events';
+import { Bot, GlobalContext, MessageContext, Result } from '../types/index.js';
+import { databaseService } from './database.js';
+
+interface AIDecisionEngine {
+  confidenceThreshold: number;
+  contextWindowSize: number;
+  maxToolCalls: number;
+  learningEnabled: boolean;
+}
+
+interface AIAction {
+  type: string;
+  command?: string;
+  parameters: Record<string, any>;
+  confidence: number;
+  reasoning: string;
+  originalIntent?: any;
+}
+
+interface AIAnalysis {
+  intents: any[];
+  confidence: number;
+  actions: AIAction[];
+  reasoning: string;
+  toolsNeeded: any[];
+  responseType: string;
+}
 
 /**
  * Enhanced AI Brain - Next Generation Intelligence System
  * Handles natural conversation, context understanding, and intelligent tool usage
+ * 2026 Mastermind Edition - Strictly Typed & Stateless
  */
 class EnhancedAIBrain extends EventEmitter {
-  private bot: any;
-  private context: any;
-  private gemini: any;
-  private conversationMemory: Map<string, any>;
-  private userProfiles: Map<string, any>;
-  private contextEmbeddings: Map<string, any>;
-  private learningData: Map<string, any>;
-  private availableTools: Map<string, any>;
-  private decisionEngine: {
-    confidenceThreshold: number;
-    contextWindowSize: number;
-    maxToolCalls: number;
-    learningEnabled: boolean;
-  };
+  private bot: Bot;
+  private context: GlobalContext;
+  private gemini: GeminiService;
+  private decisionEngine: AIDecisionEngine;
 
-  constructor(bot: any, context: any) {
+  // In-memory caches (should ideally be Redis/Database for scalability)
+  private conversationMemory: Map<string, any[]>;
+  private learningData: Map<string, any[]>;
+  private availableTools: Map<string, any>;
+
+  constructor(bot: Bot, context: GlobalContext) {
     super();
     this.bot = bot;
     this.context = context;
     this.gemini = new GeminiService();
 
-    // Enhanced memory and context systems
     this.conversationMemory = new Map();
-    this.userProfiles = new Map();
-    this.contextEmbeddings = new Map();
     this.learningData = new Map();
-
-    // Dynamic tool registry
     this.availableTools = new Map();
+
     this.registerAllCommands();
 
-    // AI decision engine
     this.decisionEngine = {
       confidenceThreshold: 0.7,
       contextWindowSize: 20,
@@ -52,10 +70,10 @@ class EnhancedAIBrain extends EventEmitter {
   /**
    * Main message processing - handles ANY message intelligently
    */
-  async processMessage(ctx: any) {
+  async processMessage(ctx: MessageContext): Promise<Result<void>> {
     try {
       const userId = ctx.sender.jid;
-      const message = ctx.message || ctx.text || '';
+      const message = ctx.body || '';
 
       // Build comprehensive context
       const context = await this.buildEnhancedContext(userId, message, ctx);
@@ -69,24 +87,30 @@ class EnhancedAIBrain extends EventEmitter {
       // Learn from interaction
       await this.learnFromInteraction(userId, message, intelligence, ctx);
 
-    } catch (error: any) {
-      logger.error('Enhanced AI Brain processing error:', error);
-      await this.handleFallbackResponse(ctx, error);
+      return { success: true, data: undefined };
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Enhanced AI Brain processing error:', err);
+      await this.handleFallbackResponse(ctx, err);
+      return { success: false, error: err };
     }
   }
 
   /**
    * Build comprehensive context from all available data
    */
-  async buildEnhancedContext(userId: string, message: string, ctx: any) {
-    const context = {
-      user: await this.getUserProfile(userId),
+  async buildEnhancedContext(userId: string, message: string, ctx: MessageContext) {
+    const userProfile = await databaseService.user.get(userId, this.bot.tenantId);
+    
+    return {
+      user: userProfile || { id: userId, name: 'Unknown' },
       conversation: await this.getConversationMemory(userId),
       message: {
         text: message,
         timestamp: Date.now(),
-        isGroup: ctx.isGroup,
-        groupInfo: ctx.isGroup ? await this.getGroupContext(ctx.from) : null,
+        isGroup: ctx.isGroup(),
+        groupInfo: ctx.isGroup() ? await this.getGroupContext(ctx.id) : null,
         mediaType: this.detectMediaType(ctx),
         sentiment: await this.analyzeSentiment(message)
       },
@@ -97,20 +121,18 @@ class EnhancedAIBrain extends EventEmitter {
         activeConversations: this.getActiveConversations(userId)
       }
     };
-
-    return context;
   }
 
   /**
    * Multi-layer intelligence analysis
    */
-  async analyzeWithMultiLayerIntelligence(message: string, context: any) {
-    const analysis = {
-      intents: [] as any[],
+  async analyzeWithMultiLayerIntelligence(message: string, context: any): Promise<AIAnalysis> {
+    const analysis: AIAnalysis = {
+      intents: [],
       confidence: 0,
-      actions: [] as any[],
+      actions: [],
       reasoning: '',
-      toolsNeeded: [] as any[],
+      toolsNeeded: [],
       responseType: 'conversational'
     };
 
@@ -170,10 +192,10 @@ Be intelligent - understand implied requests, context clues, and natural languag
 `;
 
     try {
-      const response = await this.gemini.generateContent(prompt);
+      const response = await this.gemini.getChatCompletion(prompt);
       const intents = JSON.parse(response);
       return Array.isArray(intents) ? intents : [intents];
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.warn('Intent detection failed, using fallback', error);
       return await this.fallbackIntentDetection(message, context);
     }
@@ -184,7 +206,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
    */
   async makeContextualDecisions(intents: any[], context: any) {
     const decisions = {
-      actions: [] as any[],
+      actions: [] as AIAction[],
       confidence: 0,
       reasoning: ''
     };
@@ -198,7 +220,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
         if (action) {
           decisions.actions.push({
             ...action,
-            relevance: contextualRelevance,
+            confidence: intent.confidence * contextualRelevance, // Adjusted confidence
             originalIntent: intent
           });
         }
@@ -207,11 +229,11 @@ Be intelligent - understand implied requests, context clues, and natural languag
 
     // Calculate overall confidence
     decisions.confidence = decisions.actions.length > 0
-      ? decisions.actions.reduce((sum: number, action: any) => sum + action.relevance, 0) / decisions.actions.length
+      ? decisions.actions.reduce((sum: number, action: any) => sum + action.confidence, 0) / decisions.actions.length
       : 0;
 
-    // Sort actions by relevance
-    decisions.actions.sort((a: any, b: any) => b.relevance - a.relevance);
+    // Sort actions by confidence
+    decisions.actions.sort((a, b) => b.confidence - a.confidence);
 
     return decisions;
   }
@@ -219,7 +241,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Convert intent to actionable command
    */
-  async intentToAction(intent: any, context: any) {
+  async intentToAction(intent: any, context: any): Promise<AIAction | null> {
     const intentMapping: Record<string, string> = {
       // Media & Downloads
       'download_youtube': 'youtubevideo',
@@ -263,7 +285,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
 
     const command = this.bot.cmd.get(commandName);
     if (!command) {
-      logger.warn(`Command not found: ${commandName}`);
+      // logger.warn(`Command not found for intent: ${intent.intent} -> ${commandName}`);
       return null;
     }
 
@@ -279,7 +301,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Execute intelligent response based on analysis
    */
-  async executeIntelligentResponse(intelligence: any, ctx: any, context: any) {
+  async executeIntelligentResponse(intelligence: AIAnalysis, ctx: MessageContext, context: any) {
     const { actions, confidence } = intelligence;
 
     if (actions.length === 0 || confidence < this.decisionEngine.confidenceThreshold) {
@@ -299,11 +321,11 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Handle conversational AI response with full context
    */
-  async handleConversationalResponse(ctx: any, context: any, intelligence: any) {
+  async handleConversationalResponse(ctx: MessageContext, context: any, intelligence: any) {
     const conversationPrompt = `
 You are an intelligent WhatsApp assistant. Respond naturally and helpfully.
 
-User Message: "${ctx.message}"
+User Message: "${ctx.body}"
 User Profile: ${JSON.stringify(context.user)}
 Conversation History: ${context.conversation.slice(-10).join(' | ')}
 Current Context: ${context.environment.timeOfDay}, ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][context.environment.dayOfWeek]}
@@ -325,12 +347,12 @@ Respond in the user's language if they're not using English.
 `;
 
     try {
-      const response = await this.gemini.generateContent(conversationPrompt);
+      const response = await this.gemini.getChatCompletion(conversationPrompt);
       await ctx.reply(response);
 
       // Update conversation memory
-      await this.updateConversationMemory(ctx.sender.jid, ctx.message, response);
-    } catch (error: any) {
+      await this.updateConversationMemory(ctx.sender.jid, ctx.body, response);
+    } catch (error: unknown) {
       logger.error('Conversational AI error:', error);
       await ctx.reply("I understand you're trying to communicate with me, but I'm having some processing difficulties right now. Could you try rephrasing your request?");
     }
@@ -339,8 +361,9 @@ Respond in the user's language if they're not using English.
   /**
    * Execute a single action intelligently
    */
-  async executeSingleAction(action: any, ctx: any, context: any) {
+  async executeSingleAction(action: AIAction, ctx: MessageContext, context: any) {
     try {
+      if (!action.command) throw new Error('Command not specified');
       const command = this.bot.cmd.get(action.command);
       if (!command) {
         throw new Error(`Command not found: ${action.command}`);
@@ -350,25 +373,28 @@ Respond in the user's language if they're not using English.
       const smartCtx = await this.prepareSmartContext(action, ctx, context);
 
       // Execute command
-      await command.code(smartCtx);
+      if (command.code) {
+          await command.code(smartCtx);
+      }
 
       // Follow up with AI explanation if helpful
       await this.provideIntelligentFollowUp(action, ctx, context);
 
-    } catch (error: any) {
-      logger.error(`Action execution failed: ${action.command}`, error);
-      await ctx.reply(`I tried to ${action.reasoning}, but encountered an issue: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Action execution failed: ${action.command}`, err);
+      await ctx.reply(`I tried to ${action.reasoning}, but encountered an issue: ${err.message}`);
     }
   }
 
   /**
    * Prepare smart context for command execution
    */
-  async prepareSmartContext(action: any, ctx: any, context: any) {
+  async prepareSmartContext(action: AIAction, ctx: MessageContext, context: any): Promise<MessageContext> {
     const smartCtx = { ...ctx };
 
     // Extract and format arguments intelligently
-    const args = await this.extractSmartArguments(action, ctx.message, context);
+    const args = await this.extractSmartArguments(action, ctx.body, context);
     smartCtx.args = args;
 
     // Add intelligence metadata
@@ -384,11 +410,12 @@ Respond in the user's language if they're not using English.
   /**
    * Extract arguments intelligently from natural language
    */
-  async extractSmartArguments(action: any, message: string, context: any) {
+  async extractSmartArguments(action: AIAction, message: string, context: any): Promise<string[]> {
     const { parameters, command } = action;
+    const cmdStr = command || '';
 
     // For download commands, extract URLs or search terms
-    if (command.includes('dl') || command.includes('download')) {
+    if (cmdStr.includes('dl') || cmdStr.includes('download') || cmdStr.includes('video') || cmdStr.includes('audio')) {
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       const urls = message.match(urlRegex);
       if (urls) {
@@ -400,24 +427,24 @@ Respond in the user's language if they're not using English.
         return [quoted[1]];
       }
       // Remove common words and use rest as search term
-      const searchTerm = message.replace(/(?:download|get|find)\s+/i, '').trim();
+      const searchTerm = message.replace(/(?:download|get|find|play|search)\s+/i, '').trim();
       return searchTerm ? [searchTerm] : [];
     }
 
     // For search commands
-    if (command.includes('search')) {
+    if (cmdStr.includes('search')) {
       const searchTerm = message.replace(/(?:search|find|look for)\s+/i, '').trim();
       return searchTerm ? [searchTerm] : [];
     }
 
     // For weather
-    if (command === 'weather') {
+    if (cmdStr === 'weather') {
       const location = this.extractLocation(message) || context.user.location || 'current location';
       return [location];
     }
 
     // For translation
-    if (command === 'translate') {
+    if (cmdStr === 'translate') {
       const text = parameters.text || message.replace(/translate\s+/i, '').trim();
       const lang = parameters.to || 'en';
       return [text, lang];
@@ -425,7 +452,7 @@ Respond in the user's language if they're not using English.
 
     // Default: split message into words, skip command-like words
     return message.split(' ').filter(word =>
-      !['please', 'can', 'you', 'could', 'would', 'help', 'me'].includes(word.toLowerCase())
+      !['please', 'can', 'you', 'could', 'would', 'help', 'me', 'bot'].includes(word.toLowerCase())
     );
   }
 
@@ -433,23 +460,26 @@ Respond in the user's language if they're not using English.
    * Register all bot commands as AI tools
    */
   registerAllCommands() {
-    for (const [name, command] of this.bot.cmd) {
-      this.availableTools.set(name, {
-        name,
-        description: command.description || `Execute ${name} command`,
-        category: command.category || 'misc',
-        parameters: this.inferCommandParameters(command),
-        execute: command.code
-      });
+    // In a stateless environment, we might need to access commands from the bot instance passed in constructor
+    // Assuming bot.cmd is available and populated
+    if (this.bot.cmd) {
+        for (const [name, command] of this.bot.cmd) {
+        this.availableTools.set(name, {
+            name,
+            description: command.description || `Execute ${name} command`,
+            category: command.category || 'misc',
+            parameters: this.inferCommandParameters(command),
+            execute: command.code
+        });
+        }
+        logger.info(`Registered ${this.availableTools.size} commands as AI tools`);
     }
-
-    logger.info(`Registered ${this.availableTools.size} commands as AI tools`);
   }
 
   /**
    * Learn from user interactions to improve responses
    */
-  async learnFromInteraction(userId: string, message: string, intelligence: any, ctx: any) {
+  async learnFromInteraction(userId: string, message: string, intelligence: any, ctx: MessageContext) {
     if (!this.decisionEngine.learningEnabled) return;
 
     // Track actual success based on execution results
@@ -505,46 +535,8 @@ Respond in the user's language if they're not using English.
 
     this.conversationMemory.set(userId, memory);
 
-    // Also save to database
-    await this.saveConversationToDB(userId, memory);
-  }
-
-  /**
-   * Get or create user profile
-   */
-  async getUserProfile(userId: string) {
-    let profile = this.userProfiles.get(userId);
-
-    if (!profile) {
-      profile = {
-        id: userId,
-        preferences: {},
-        language: 'en',
-        timezone: 'UTC',
-        interactionCount: 0,
-        firstSeen: Date.now(),
-        lastSeen: Date.now(),
-        commonIntents: {},
-        learningPattern: {}
-      };
-
-      // Try to load from database
-      try {
-        const dbProfile = await this.loadUserProfileFromDB(userId);
-        if (dbProfile) {
-          profile = { ...profile, ...dbProfile };
-        }
-      } catch (error: any) {
-        logger.warn('Could not load user profile from DB:', error);
-      }
-
-      this.userProfiles.set(userId, profile);
-    }
-
-    profile.lastSeen = Date.now();
-    profile.interactionCount++;
-
-    return profile;
+    // Ideally, save to database via DatabaseService here
+    // await databaseService.saveConversation(userId, memory);
   }
 
   // Helper methods
@@ -557,11 +549,11 @@ Respond in the user's language if they're not using English.
     return 'night';
   }
 
-  detectMediaType(ctx: any) {
-    if (ctx.image) return 'image';
-    if (ctx.video) return 'video';
-    if (ctx.audio) return 'audio';
-    if (ctx.document) return 'document';
+  detectMediaType(ctx: MessageContext) {
+    if (ctx.msg.contentType === 'imageMessage') return 'image';
+    if (ctx.msg.contentType === 'videoMessage') return 'video';
+    if (ctx.msg.contentType === 'audioMessage') return 'audio';
+    if (ctx.msg.contentType === 'documentMessage') return 'document';
     return 'text';
   }
 
@@ -624,9 +616,9 @@ Respond in the user's language if they're not using English.
   /**
    * Calculate success metrics for learning from interaction
    */
-  async calculateSuccessMetrics(intelligence: any, ctx: any) {
+  async calculateSuccessMetrics(intelligence: any, ctx: MessageContext) {
     const startTime = Date.now();
-    const metrics = {
+    const metrics: any = {
       actionResults: [] as any[],
       responseGenerated: false,
       errorOccurred: false,
@@ -648,11 +640,12 @@ Respond in the user's language if they're not using English.
               confidence: action.confidence,
               reasoning: action.reasoning
             });
-          } catch (error: any) {
+          } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
             metrics.actionResults.push({
               action: action.command || action.type,
               success: false,
-              error: error.message
+              error: err.message
             });
             metrics.errorOccurred = true;
           }
@@ -667,7 +660,7 @@ Respond in the user's language if they're not using English.
         responseRelevance: this.assessResponseRelevance(intelligence, ctx),
         intentConfidenceMatch: intelligence.confidence > 0.7,
         actionExecutionRate: metrics.actionResults.length > 0
-          ? metrics.actionResults.filter(r => r.success).length / metrics.actionResults.length
+          ? metrics.actionResults.filter((r: any) => r.success).length / metrics.actionResults.length
           : 1,
         contextAppropriate: this.assessContextAppropriateness(intelligence, ctx)
       };
@@ -678,7 +671,7 @@ Respond in the user's language if they're not using English.
       // Determine overall success
       metrics.overallSuccess = this.calculateOverallSuccess(metrics);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error calculating success metrics:', error);
       metrics.errorOccurred = true;
       metrics.overallSuccess = false;
@@ -706,7 +699,7 @@ Respond in the user's language if they're not using English.
    */
   assessResponseRelevance(intelligence: any, ctx: any) {
     // Simple heuristic - could be enhanced with NLP
-    const messageLength = (ctx.message || '').length;
+    const messageLength = (ctx.body || '').length;
     const actionCount = intelligence.actions ? intelligence.actions.length : 0;
     const confidenceScore = intelligence.confidence || 0;
 
@@ -734,7 +727,7 @@ Respond in the user's language if they're not using English.
     // Simple appropriateness check
     const hasActions = intelligence.actions && intelligence.actions.length > 0;
     const hasHighConfidence = intelligence.confidence > 0.6;
-    const messageWasQuestion = (ctx.message || '').includes('?');
+    const messageWasQuestion = (ctx.body || '').includes('?');
     const responseGenerated = ctx.replied || ctx.responseSent;
 
     // Appropriate if:
@@ -779,8 +772,7 @@ Respond in the user's language if they're not using English.
   getGroupContext(groupId: string) { return null; } // Simplified
   inferCommandParameters(command: any) { return {}; } // Simplified
   saveConversationToDB(userId: string, memory: any[]) { /* Implementation */ }
-  loadUserProfileFromDB(userId: string) { return null; } // Simplified
-  handleFallbackResponse(ctx: any, error: any) {
+  handleFallbackResponse(ctx: MessageContext, error: any) {
     ctx.reply("I apologize, but I'm experiencing some technical difficulties. Please try again in a moment.");
   }
 }

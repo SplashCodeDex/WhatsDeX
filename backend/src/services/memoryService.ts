@@ -1,92 +1,112 @@
-
 import { db } from '../lib/firebase.js';
-import embeddingService from './embeddingService.js';
+import { embeddingService } from './embeddingService.js';
 import { Timestamp } from 'firebase-admin/firestore';
-
-// Include logger if available in context, or import default
 import logger from '../utils/logger.js';
+import { Result } from '../types/index.js';
+
+interface ConversationEmbedding {
+  userId: string;
+  content: string;
+  embedding: number[];
+  metadata: Record<string, any>;
+  timestamp: Timestamp;
+}
+
+interface ConversationContext {
+  content: string;
+  timestamp: Date;
+  similarity: number;
+  metadata: Record<string, any>;
+}
 
 export class MemoryService {
-  private context: any;
+  private static instance: MemoryService;
   private similarityThreshold: number;
   private maxContexts: number;
 
-  constructor(context: any = {}) {
-    this.context = { logger, ...context };
+  private constructor() {
     this.similarityThreshold = 0.75;
     this.maxContexts = 5;
   }
 
+  public static getInstance(): MemoryService {
+    if (!MemoryService.instance) {
+      MemoryService.instance = new MemoryService();
+    }
+    return MemoryService.instance;
+  }
+
   /**
    * Store a conversation snippet with its vector embedding
-   * Runs asynchronously in the background
    */
-  async storeConversation(userId, conversationText, metadata = {}) {
+  async storeConversation(userId: string, conversationText: string, metadata: Record<string, any> = {}): Promise<Result<void>> {
     try {
-      // Generate embedding for the conversation
-      const embedding = await embeddingService.generateEmbedding(conversationText);
+      const embeddingResult = await embeddingService.generateEmbedding(conversationText);
+      if (!embeddingResult.success || !embeddingResult.data) {
+        throw new Error('Failed to generate embedding');
+      }
 
-      // Store in Firestore
       await db.collection('conversation_embeddings').add({
         userId,
         content: conversationText,
-        embedding, // Store as array of numbers
+        embedding: embeddingResult.data,
         metadata,
         timestamp: Timestamp.now()
       });
 
-      this.context.logger.info(`Stored conversation embedding for user ${userId}`);
-    } catch (error: any) {
-      this.context.logger.error('Error storing conversation embedding:', error);
+      logger.info(`Stored conversation embedding for user ${userId}`);
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error storing conversation embedding:', err);
+      return { success: false, error: err };
     }
   }
 
   /**
-   * Retrieve relevant historical contexts for a new user message
-   * Uses client-side cosine similarity search (inefficient for large datasets but works for Firestore without Vector Search)
+   * Retrieve relevant historical contexts
    */
-  async retrieveRelevantContext(userId, newText) {
+  async retrieveRelevantContext(userId: string, newText: string): Promise<Result<ConversationContext[]>> {
     try {
-      // Generate embedding for the new message
-      const queryEmbedding = await embeddingService.generateEmbedding(newText);
+      const queryEmbeddingResult = await embeddingService.generateEmbedding(newText);
+      if (!queryEmbeddingResult.success || !queryEmbeddingResult.data) {
+        throw new Error('Failed to generate query embedding');
+      }
+      const queryEmbedding = queryEmbeddingResult.data;
 
-      // Fetch all embeddings for this user (Warning: Heavy if user has many messages)
-      // Optimization: Limit to last N messages or use a dedicated Vector DB
       const snapshot = await db.collection('conversation_embeddings')
         .where('userId', '==', userId)
         .orderBy('timestamp', 'desc')
-        .limit(100) // Hard limit to prevent memory explosion
+        .limit(100)
         .get();
 
-      if (snapshot.empty) return [];
+      if (snapshot.empty) return { success: true, data: [] };
 
-      const documents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      // Calculate similarities
-      const results = documents.map((doc: any) => {
-        const similarity = this.cosineSimilarity(queryEmbedding, doc.embedding);
+      const results = snapshot.docs.map(doc => {
+        const data = doc.data() as ConversationEmbedding;
+        const similarity = this.cosineSimilarity(queryEmbedding, data.embedding);
         return {
-          content: doc.content,
-          timestamp: doc.timestamp instanceof Timestamp ? doc.timestamp.toDate() : doc.timestamp,
+          content: data.content,
+          timestamp: data.timestamp.toDate(),
           similarity,
-          metadata: doc.metadata
+          metadata: data.metadata
         };
       });
 
-      // Filter and Sort
-      return results
+      const filtered = results
         .filter(r => r.similarity > this.similarityThreshold)
         .sort((a, b) => b.similarity - a.similarity)
         .slice(0, this.maxContexts);
 
-    } catch (error: any) {
-      this.context.logger.error('Error retrieving context:', error);
-      return [];
+      return { success: true, data: filtered };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error retrieving context:', err);
+      return { success: false, error: err };
     }
   }
 
-  // Helper for Cosine Similarity
-  cosineSimilarity(vecA: number[], vecB: number[]) {
+  private cosineSimilarity(vecA: number[], vecB: number[]): number {
     if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
     let dot = 0;
     let normA = 0;
@@ -100,39 +120,33 @@ export class MemoryService {
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
-  /**
-   * Get conversation statistics for a user
-   */
-  async getConversationStats(userId) {
+  async getConversationStats(userId: string): Promise<Result<{ total: number; first: Date | null; last: Date | null }>> {
     try {
-      // Aggregations
       const coll = db.collection('conversation_embeddings').where('userId', '==', userId);
       const snapshot = await coll.count().get();
       const count = snapshot.data().count;
 
-      // Min/Max timestamp via separate queries
-      // Efficient for First/Last
       const first = await coll.orderBy('timestamp', 'asc').limit(1).get();
       const last = await coll.orderBy('timestamp', 'desc').limit(1).get();
 
       return {
-        total_conversations: count,
-        first_conversation: first.empty ? null : (first.docs[0].data().timestamp as Timestamp).toDate(),
-        last_conversation: last.empty ? null : (last.docs[0].data().timestamp as Timestamp).toDate()
+        success: true,
+        data: {
+          total: count,
+          first: first.empty ? null : (first.docs[0].data().timestamp as Timestamp).toDate(),
+          last: last.empty ? null : (last.docs[0].data().timestamp as Timestamp).toDate()
+        }
       };
-    } catch (error: any) {
-      this.context.logger.error('Error getting conversation stats:', error);
-      return null;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error getting conversation stats:', err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Clean up old conversation embeddings (for maintenance)
-   */
-  async cleanupOldConversations(daysToKeep = 30) {
+  async cleanupOldConversations(daysToKeep = 30): Promise<Result<number>> {
     try {
       const cutoffDate = Timestamp.fromMillis(Date.now() - daysToKeep * 24 * 60 * 60 * 1000);
-
       const snapshot = await db.collection('conversation_embeddings')
         .where('timestamp', '<', cutoffDate)
         .get();
@@ -141,31 +155,33 @@ export class MemoryService {
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
 
-      this.context.logger.info(`Cleaned up old conversations, deleted ${snapshot.size} records`);
-      return snapshot.size;
-    } catch (error: any) {
-      this.context.logger.error('Error cleaning up conversations:', error);
-      return 0;
+      logger.info(`Cleaned up old conversations, deleted ${snapshot.size} records`);
+      return { success: true, data: snapshot.size };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error cleaning up conversations:', err);
+      return { success: false, error: err };
     }
   }
 
-  setSimilarityThreshold(threshold) {
+  setSimilarityThreshold(threshold: number): void {
     if (threshold >= 0 && threshold <= 1) {
       this.similarityThreshold = threshold;
-      this.context.logger.info(`Updated similarity threshold to ${threshold}`);
+      logger.info(`Updated similarity threshold to ${threshold}`);
     } else {
       throw new Error('Similarity threshold must be between 0 and 1');
     }
   }
 
-  setMaxContexts(maxContexts) {
+  setMaxContexts(maxContexts: number): void {
     if (maxContexts > 0) {
       this.maxContexts = maxContexts;
-      this.context.logger.info(`Updated max contexts to ${maxContexts}`);
+      logger.info(`Updated max contexts to ${maxContexts}`);
     } else {
       throw new Error('Max contexts must be greater than 0');
     }
   }
 }
 
-export default new MemoryService();
+export const memoryService = MemoryService.getInstance();
+export default memoryService;

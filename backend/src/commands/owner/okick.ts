@@ -10,7 +10,7 @@ export default {
   },
   code: async (ctx: MessageContext) => {
     const { formatter, tools } = ctx.bot.context;
-    const accountJid = ctx.quoted?.senderJid || (await ctx.getMentioned())[0] || null;
+    const accountJid = ctx.quoted?.senderJid || (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) || null;
 
     if (!accountJid)
       return await ctx.reply({
@@ -28,7 +28,7 @@ export default {
       return await ctx.reply(formatter.quote('❎ Dia adalah owner grup!'));
 
     try {
-      await ctx.group().kick(accountJid);
+      await ctx.group().kick([accountJid]);
 
       await ctx.reply(formatter.quote('✅ Berhasil dikeluarkan!'));
     } catch (error: any) {

@@ -8,7 +8,13 @@ export interface Config {
         prefix: string;
         phoneNumber?: string;
         sessionId: string;
+        tenantId: string;
         owners: string[];
+        id?: string;
+        groupLink?: string;
+        readyAt?: Date;
+        uptime?: string;
+        dbSize?: string;
     };
     system: {
         port: number;
@@ -23,11 +29,24 @@ export interface Bot extends Partial<WASocket> {
         id: string;
         name?: string;
     };
+    tenantId: string;
+    botId: string;
+    context: GlobalContext;
+    ev: NonNullable<WASocket['ev']>;
+
     sendMessage: (jid: string, content: any, options?: any) => Promise<any>;
     decodeJid: (jid: string) => string;
     cmd: Map<string, Command>;
-    use: (middleware: (ctx: MessageContext, next: () => Promise<void>) => Promise<void> | void) => void;
+
+    onWhatsApp?: (jids: string | string[]) => Promise<{ exists: unknown; jid: string; lid: unknown }[]>;
+    groupFetchAllParticipating?: () => Promise<{ [id: string]: any }>;
+
+    // Middleware
+    use: (middleware: Middleware) => void;
+    executeMiddleware: (ctx: MessageContext, next: () => Promise<void>) => Promise<void>;
 }
+
+export type Middleware = (ctx: MessageContext, next: () => Promise<void>) => Promise<void> | void;
 
 declare module '@whiskeysockets/baileys' {
     export interface proto {
@@ -41,28 +60,76 @@ declare module '@whiskeysockets/baileys' {
     }
 }
 
+export interface GroupFunctions {
+    isAdmin: (jid?: string) => Promise<boolean>;
+    matchAdmin: (id: string) => Promise<boolean>;
+    members: () => Promise<string[]>;
+    isBotAdmin: () => Promise<boolean>;
+    metadata: () => Promise<any>;
+    owner: () => Promise<string | null>;
+    name: () => Promise<string>;
+    open: () => Promise<any>;
+    close: () => Promise<any>;
+    lock: () => Promise<any>;
+    unlock: () => Promise<any>;
+    add: (jids: string[]) => Promise<unknown>;
+    kick: (jids: string[]) => Promise<any>;
+    promote: (jids: string[]) => Promise<any>;
+    demote: (jids: string[]) => Promise<any>;
+    inviteCode: () => Promise<string>;
+    pendingMembers: () => Promise<any[]>;
+    approvePendingMembers: (jids: string[]) => Promise<any>;
+    rejectPendingMembers: (jids: string[]) => Promise<any>;
+    updateDescription: (desc: string) => Promise<any>;
+    updateSubject: (subject: string) => Promise<any>;
+    joinApproval: (mode: 'on' | 'off') => Promise<any>;
+    membersCanAddMemberMode: (mode: 'on' | 'off' | boolean) => Promise<any>;
+    isOwner: (jid?: string) => Promise<boolean>;
+}
+
 export interface MessageContext {
-    reply: (text: string | any, options?: any) => Promise<any>;
+    reply: (text: string | { [key: string]: any; text?: string }, options?: any) => Promise<any>;
     replyReact: (emoji: string) => Promise<any>;
+    editMessage?: (key: any, text: string) => Promise<any>;
+
     isGroup: () => boolean;
     sender: {
         jid: string;
         name: string;
+        pushName?: string | null;
         isOwner: boolean;
         isAdmin: boolean;
     };
+    author?: {
+        id: string;
+    };
+    pushName?: string | null;
     id: string; // Group ID or Chat ID
+    chat?: {
+        id: string;
+    };
     msg: proto.IWebMessageInfo & {
         contentType?: string;
         media?: any;
         body?: string;
         content?: string;
     };
+    quoted?: {
+        content: string;
+        contentType: string;
+        senderJid: string;
+        media: any;
+        key: any;
+    };
+    message?: any;
     body: string;
     args: string[];
     command: string;
     prefix: string;
+    commandDef?: Command;
+    bot: Bot;
     getId: (jid: string) => string;
+    getMentioned?: () => Promise<string[]>;
     simulateTyping: () => void;
     used: {
         command: string;
@@ -71,29 +138,12 @@ export interface MessageContext {
         text: string;
     };
     cooldown: any;
-    sendMessage: (jid: string, content: any, options?: any) => Promise<any>;
-    group: (jid?: string) => {
-        isAdmin: (jid: string) => Promise<boolean>;
-        matchAdmin: (jid: string) => Promise<boolean>;
-        members: () => Promise<any[]>;
-        isBotAdmin: () => Promise<boolean>;
-        metadata: () => Promise<any>;
-        owner: () => Promise<string | null>;
-        name: () => Promise<string>;
-        add: (jids: string[]) => Promise<any>;
-        kick: (jids: string[]) => Promise<any>;
-        promote: (jids: string[]) => Promise<any>;
-        demote: (jids: string[]) => Promise<any>;
-        inviteCode: () => Promise<string>;
-        pendingMembers: () => Promise<any[]>;
-        approvePendingMembers: (jids: string[]) => Promise<any>;
-        rejectPendingMembers: (jids: string[]) => Promise<any>;
-        updateDescription: (desc: string) => Promise<any>;
-        updateSubject: (subject: string) => Promise<any>;
-        joinApproval: (mode: 'on' | 'off') => Promise<any>;
-        membersCanAddMemberMode: (mode: 'on' | 'off') => Promise<any>;
-        isOwner: (jid: string) => Promise<boolean>;
-    };
+    core?: any;
+
+    // Group Functions
+    group: (jid?: string) => GroupFunctions;
+
+    // Misc
     download: () => Promise<Buffer>;
     replied?: boolean;
     responseSent?: boolean;
@@ -101,7 +151,8 @@ export interface MessageContext {
     intelligentMode?: boolean;
     processingTimestamp?: number;
     workerVersion?: string;
-    [key: string]: any; // Transient data
+    usage?: any;
+    sendMessage: (jid: string, content: any, options?: any) => Promise<any>;
 }
 
 export interface CommandPermissions {
@@ -120,27 +171,53 @@ export interface Command {
     category: string;
     description?: string;
     usage?: string;
+    cooldown?: number;
     permissions?: CommandPermissions;
     code?: (ctx: MessageContext) => Promise<void> | void;
     execute?: (ctx: MessageContext) => Promise<void> | void;
+    run?: (ctx: MessageContext) => Promise<void> | void;
+    // System props
+    filePath?: string;
+    loadedAt?: number;
+    isEnabled?: boolean;
 }
+
 
 export interface Logger {
     error: (message: any, meta?: any) => void;
     warn: (message: any, meta?: any) => void;
     info: (message: any, meta?: any) => void;
     debug: (message: any, meta?: any) => void;
+    trace: (message: any, meta?: any) => void;
+    http: (message: any, meta?: any) => void;
+    security: (message: any, userId?: string | null, details?: any) => void;
+    performance: (operation: string, duration: number, metadata?: any) => void;
     command: (command: string, userId: string, success?: boolean, executionTime?: number | null, error?: any) => void;
+    userActivity: (userId: string, action: string, details?: any) => void;
+    groupActivity: (groupId: string, action: string, userId: string, details?: any) => void;
+    apiRequest: (method: string, url: string, statusCode: number, responseTime: number, userId?: string | null) => void;
+    withContext: (context: any) => Logger;
+    child: (meta?: any) => Logger;
     [key: string]: any;
 }
 
 export interface GlobalContext {
-    database: any; // Using any for now to handle legacy and new firebase logic
+    database: import('../services/database.js').DatabaseService;
+    databaseService: import('../services/database.js').DatabaseService;
     config: ConfigService;
-    tools: Record<string, any>;
-    formatter: any;
+    tools: any;
+    formatter: typeof import('../utils/formatters.js');
     logger: Logger;
+    commandSystem: import('../services/commandSystem.js').CommandSystem;
+    unifiedAI: import('../services/aiProcessor.js').AIProcessor;
+    groupService: import('../services/groupService.js').GroupService;
+    multiTenantBotService: import('../services/multiTenantBotService.js').MultiTenantBotService;
+    userService: import('../services/userService.js').UserService;
+    state?: any;
     [key: string]: any;
 }
 
+
 export * from './firestore.js';
+export * from './contracts.js';
+export type { Result } from './contracts.js';

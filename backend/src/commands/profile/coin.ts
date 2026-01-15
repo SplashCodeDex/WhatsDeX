@@ -1,22 +1,43 @@
 import { MessageContext } from '../../types/index.js';
+
 export default {
   name: 'coin',
   aliases: ['koin'],
   category: 'profile',
-  code: async (ctx: MessageContext) => {
-    const { formatter, tools, database: db } = ctx.bot.context;
-    const senderId = ctx.getId(ctx.sender.jid);
-    const userDb = (await db.get(`user.${senderId}`)) || {};
+  code: async (ctx: MessageContext): Promise<void> => {
+    const { databaseService, formatter, logger } = ctx.bot.context;
 
-    if (tools.cmd.isOwner(senderId, ctx.msg.key.id) || userDb?.premium)
-      return await ctx.reply(formatter.quote('🤑 Kamu memiliki koin tak terbatas.'));
+    if (!databaseService || !formatter) {
+      await ctx.reply('❌ System Error: Service unavailable.');
+      return;
+    }
 
     try {
-      const userCoin = userDb?.coin || 0;
+      const senderId = ctx.sender.jid;
+      const tenantId = ctx.bot.tenantId;
+
+      // Check Owner using Context
+      if (ctx.sender.isOwner) {
+        await ctx.reply(formatter.quote('🤑 Kamu memiliki koin tak terbatas.'));
+        return;
+      }
+
+      // Fetch User Data from Firestore (Multi-tenant scoped)
+      const user = await databaseService.getUser(tenantId, senderId);
+
+      if (user?.premium) {
+        await ctx.reply(formatter.quote('🤑 Kamu memiliki koin tak terbatas.'));
+        return;
+      }
+
+      const userCoin = user?.coin || 0;
 
       await ctx.reply(formatter.quote(`💰 Kamu memiliki ${userCoin} koin tersisa.`));
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error.message : String(error);
+      logger.error(`[${ctx.bot.tenantId}] [Coin] Error: ${err}`, error);
+      await ctx.reply(formatter.quote(`Error: ${err}`));
     }
   },
 };

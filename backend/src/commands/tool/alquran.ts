@@ -1,25 +1,35 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
+
+interface QuranVerse {
+  number: number;
+  text: string;
+  transliteration: string;
+  translation_id: string;
+}
+
+interface QuranSurah {
+  name: string;
+  translate: string;
+  verses: QuranVerse[];
+}
 
 export default {
   name: 'alquran',
   aliases: ['quran'],
   category: 'tool',
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
-    const [surat, ayat] = ctx.args;
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
+    const [suratStr, ayatStr] = ctx.args;
 
-    if (!surat && !ayat)
-      return await ctx.reply(
-        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
-          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, '21 35'))}\n${formatter.quote(
-            tools.msg.generateNotes([
-              `Type ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} list`)} to see the list.`,
-            ])
-          )}`
-      );
+    if (!suratStr && !ayatStr) {
+      const instruction = tools.msg.generateInstruction(['send'], ['text']);
+      const example = tools.msg.generateCmdExample(ctx.used, '21 35');
+      return await ctx.reply(`${formatter.quote(instruction)}
+${formatter.quote(example)}`);
+    }
 
-    if (surat.toLowerCase() === 'list') {
+    if (suratStr.toLowerCase() === 'list') {
       const listText = await tools.list.get('alquran');
       return await ctx.reply({
         text: listText,
@@ -27,21 +37,21 @@ export default {
       });
     }
 
+    const surat = parseInt(suratStr);
     if (isNaN(surat) || surat < 1 || surat > 114)
       return await ctx.reply(formatter.quote('❎ Surah must be a number between 1 and 114!'));
 
     try {
-      const apiUrl = tools.api.createUrl('neko', '/religious/nuquran-surah', {
-        id: surat,
-      });
-      const { result } = (await axios.get(apiUrl)).data;
+      const apiUrl = `https://api.neko.fun/religious/nuquran-surah?id=${surat}`;
+      const { data } = await axios.get<{ result: QuranSurah }>(apiUrl);
+      const result = data.result;
       const { verses } = result;
 
-      if (ayat) {
-        if (ayat.includes('-')) {
-          const [startAyat, endAyat] = ayat.split('-').map(Number);
+      if (ayatStr) {
+        if (ayatStr.includes('-')) {
+          const [startAyat, endAyat] = ayatStr.split('-').map(Number);
           const selectedVerses = verses.filter(
-            vers => vers.number >= startAyat && vers.number <= endAyat
+            (vers: QuranVerse) => vers.number >= startAyat && vers.number <= endAyat
           );
 
           if (isNaN(startAyat) || isNaN(endAyat) || startAyat < 1 || endAyat < startAyat)
@@ -53,21 +63,26 @@ export default {
 
           const versesText = selectedVerses
             .map(
-              vers =>
-                `${formatter.quote(`Verse ${vers.number}:`)}\n` +
-                `${vers.text} (${vers.transliteration})\n${formatter.italic(vers.translation_id)}`
+              (vers: QuranVerse) =>
+                `${formatter.quote(`Verse ${vers.number}:`)}
+` +
+                `${vers.text} (${vers.transliteration})
+${formatter.italic(vers.translation_id)}`
             )
             .join('\n');
           await ctx.reply({
             text:
-              `${formatter.quote(`Surah: ${result.name}`)}\n` +
-              `${formatter.quote(`Meaning: ${result.translate}`)}\n` +
-              `${formatter.quote('· · ─ ·✶· ─ · ·')}\n${versesText}`,
+              `${formatter.quote(`Surah: ${result.name}`)}
+` +
+              `${formatter.quote(`Meaning: ${result.translate}`)}
+` +
+              `${formatter.quote('· · ─ ·✶· ─ · ·')}
+${versesText}`,
             footer: config.msg.footer,
           });
         } else {
-          const singleAyat = parseInt(ayat);
-          const verse = verses.find(vers => vers.number === singleAyat);
+          const singleAyat = parseInt(ayatStr);
+          const verse = verses.find((vers: QuranVerse) => vers.number === singleAyat);
 
           if (isNaN(singleAyat) || singleAyat < 1)
             return await ctx.reply(
@@ -78,30 +93,39 @@ export default {
 
           await ctx.reply({
             text:
-              `${formatter.quote(`Surah: ${result.name}`)}\n` +
-              `${formatter.quote(`Meaning: ${result.translate}`)}\n` +
-              `${formatter.quote('· · ─ ·✶· ─ · ·')}\n` +
-              `${verse.text} (${verse.transliteration})\n${formatter.italic(verse.translation_id)}`,
+              `${formatter.quote(`Surah: ${result.name}`)}
+` +
+              `${formatter.quote(`Meaning: ${result.translate}`)}
+` +
+              `${formatter.quote('· · ─ ·✶· ─ · ·')}
+` +
+              `${verse.text} (${verse.transliteration})
+${formatter.italic(verse.translation_id)}`,
             footer: config.msg.footer,
           });
         }
       } else {
         const versesText = verses
           .map(
-            vers =>
-              `${formatter.quote(`Verse ${vers.number}:`)}\n` +
-              `${vers.text} (${vers.transliteration})\n${formatter.italic(vers.translation_id)}`
+            (vers: QuranVerse) =>
+              `${formatter.quote(`Verse ${vers.number}:`)}
+` +
+              `${vers.text} (${vers.transliteration})
+${formatter.italic(vers.translation_id)}`
           )
           .join('\n');
         await ctx.reply({
           text:
-            `${formatter.quote(`Surah: ${result.name}`)}\n` +
-            `${formatter.quote(`Meaning: ${result.translate}`)}\n` +
-            `${formatter.quote('· · ─ ·✶· ─ · ·')}\n${versesText}`,
+            `${formatter.quote(`Surah: ${result.name}`)}
+` +
+            `${formatter.quote(`Meaning: ${result.translate}`)}
+` +
+            `${formatter.quote('· · ─ ·✶· ─ · ·')}
+${versesText}`,
           footer: config.msg.footer,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

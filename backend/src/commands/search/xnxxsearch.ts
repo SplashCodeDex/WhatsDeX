@@ -1,5 +1,10 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
+
+interface XnxxResult {
+  title: string;
+  link: string;
+}
 
 export default {
   name: 'xnxxsearch',
@@ -9,32 +14,32 @@ export default {
     premium: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
     const input = ctx.args.join(' ') || null;
 
-    if (!input)
-      return await ctx.reply(
-        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          tools.msg.generateCmdExample(ctx.used, 'evangelion')
-        )}`
-      );
+    if (!input) {
+      const instruction = tools.msg.generateInstruction(['send'], ['text']);
+      const example = tools.msg.generateCmdExample(ctx.used, 'evangelion');
+      return await ctx.reply(`${formatter.quote(instruction)}
+${formatter.quote(example)}`);
+    }
 
     try {
-      const apiUrl = tools.api.createUrl('hang', '/search/xnxx', {
-        q: input,
-      });
-      const { result } = (await axios.get(apiUrl)).data;
+      const apiUrl = `https://api.hang.fun/search/xnxx?q=${encodeURIComponent(input)}`;
+      const { data } = await axios.get<{ result: XnxxResult[] }>(apiUrl);
+      const result = data.result;
 
       const resultText = result
         .map(
-          res => `${formatter.quote(`Judul: ${res.title}`)}\n${formatter.quote(`URL: ${res.link}`)}`
+          (res: XnxxResult) => `${formatter.quote(`Judul: ${res.title}`)}
+${formatter.quote(`URL: ${res.link}`)}`
         )
         .join('\n' + `${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
       await ctx.reply({
-        text: resultText || config.msg.notFound,
+        text: resultText || config.msg.notFound || 'No results found',
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

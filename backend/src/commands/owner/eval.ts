@@ -1,22 +1,29 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import util from 'node:util';
 
 export default {
   name: 'eval',
   aliases: ['ev'],
+  category: 'owner',
+  permissions: {
+    owner: true,
+  },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
-    const isOwner = await tools.cmd.isOwner(ctx.bot.context.config, ctx.getId(ctx.sender.jid), ctx.msg.key.id, ctx.botInstanceId);
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
+    const isOwner = await tools.cmd.isOwner(config, ctx.getId(ctx.sender.jid), ctx.msg.key.id, (ctx as any).botInstanceId);
     if (!isOwner) return;
 
     try {
-      const code = ctx.msg.content.slice(ctx.msg.content.startsWith('==> ') ? 4 : 3);
+      const content = ctx.msg.content || '';
+      const isAsync = content.startsWith('==> ');
+      const code = content.slice(isAsync ? 4 : 3);
+      
       const result = await eval(
-        ctx.msg.content.startsWith('==> ') ? `(async () => { ${code} })()` : code
+        isAsync ? `(async () => { ${code} })()` : code
       );
 
       await ctx.reply(formatter.monospace(util.inspect(result)));
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, false, false);
     }
   },

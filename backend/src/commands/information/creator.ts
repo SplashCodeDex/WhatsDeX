@@ -1,18 +1,18 @@
-import { MessageContext } from '../../types/index.js';
-import VCard from 'vcard-creator';
-
+import { MessageContext, GlobalContext } from '../../types/index.js';
+import VCardModule from 'vcard-creator';
 
 export default {
   name: 'owner',
   aliases: ['creator', 'developer'],
   category: 'information',
   code: async (ctx: MessageContext) => {
-    const { tools, config } = ctx.bot.context;
+    const { tools, config } = ctx.bot.context as GlobalContext;
     try {
+      // Handle potential ESM/CJS interop issues with vcard-creator
+      const VCard = (VCardModule as any).default || VCardModule;
       const vcard = new VCard()
         .addName(config.owner.name)
-        .addCompany(config.owner.organization)
-        .addPhoneNumber(config.owner.id)
+        .addPhoneNumber(config.owner.number)
         .toString();
 
       await ctx.reply({
@@ -25,8 +25,8 @@ export default {
           ],
         },
       });
-    } catch (error: any) {
-      await tools.cmd.handleError(config, ctx, error);
+    } catch (error: unknown) {
+      await tools.cmd.handleError(ctx, error);
     }
   },
 };

@@ -1,4 +1,6 @@
 import { MessageContext } from '../../types/index.js';
+import { createUrl } from '../../tools/api.js';
+import logger from '../../utils/logger.js';
 export default {
   name: 'carbonify',
   aliases: ['carbon'],
@@ -13,15 +15,15 @@ export default {
     if (!input)
       return await ctx.reply(
         `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
-          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, 'console.log("halo, dunia!");'))}\n${formatter.quote(
-            tools.msg.generateNotes([
-              'Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.',
-            ])
-          )}`
+        `${formatter.quote(tools.msg.generateCmdExample(ctx.used, 'console.log("halo, dunia!");'))}\n${formatter.quote(
+          tools.msg.generateNotes([
+            'Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.',
+          ])
+        )}`
       );
 
     try {
-      const result = tools.api.createUrl('neko', '/maker/carbonify', {
+      const result = createUrl('neko', '/maker/carbonify', {
         text: input,
       });
 
@@ -33,7 +35,8 @@ export default {
         footer: config.msg.footer,
       });
     } catch (error: any) {
-      await tools.cmd.handleError(ctx, error, true);
+      logger.error('Error in carbonify:', error);
+      await ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
   },
 };

@@ -7,18 +7,14 @@ export default {
     coin: 0,
   },
   code: async (ctx: MessageContext) => {
-    const { database, formatter } = ctx.bot.context;
-    const userId = ctx.author.id;
+    const { database, formatter, tools } = ctx.bot.context;
+    const userId = ctx.sender.jid;
 
     try {
-      database.chat.clearHistory(userId);
+      await database.chat.clearHistory(userId, ctx.bot.tenantId);
       await ctx.reply(formatter.quote('✅ Your chat history has been cleared.'));
     } catch (error: any) {
-      const {
-        config,
-        tools: { cmd },
-      } = ctx.bot.context;
-      await cmd.handleError(config, ctx, error, true);
+      await tools.cmd.handleError(ctx, error);
     }
   },
 };

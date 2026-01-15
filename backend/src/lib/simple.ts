@@ -1,12 +1,18 @@
-
 import { jidDecode, downloadContentFromMessage, getContentType, proto } from '@whiskeysockets/baileys';
-import { fileTypeFromBuffer } from 'file-type';
 
-export const decodeJid = (jid: string | null | undefined) => {
+interface JidDecodeResult {
+  user: string;
+  server: string;
+  domainType?: number;
+}
+
+export const decodeJid = (jid: string | null | undefined): string | null | undefined => {
   if (!jid) return jid;
   if (/:\d+@/gi.test(jid)) {
-    const decode = jidDecode(jid) || {};
-    return (decode.user && decode.server && decode.user + '@' + decode.server) || jid;
+    const decode = jidDecode(jid) as JidDecodeResult | undefined;
+    if (decode && decode.user && decode.server) {
+      return `${decode.user}@${decode.server}`;
+    }
   }
   return jid;
 };

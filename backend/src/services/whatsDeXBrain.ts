@@ -1,5 +1,5 @@
 import intentRouter from './brain/intentRouter.js';
-import NLPProcessorService from './nlpProcessor.js';
+import NLPProcessorService, { NLPResult } from './nlpProcessor.js';
 import ContentModerationService from './contentModeration.js';
 import MetaAIService from './metaAI.js';
 import logger from '../utils/logger.js';
@@ -79,7 +79,7 @@ class WhatsDeXBrain {
   /**
    * Determine if a query should be handled by conversational AI
    */
-  isConversationalQuery(nlpResult: any) {
+  isConversationalQuery(nlpResult: NLPResult) {
     if (!nlpResult) return true;
     const conversationalIntents = ['question', 'chat', 'help', 'general'];
     return conversationalIntents.includes(nlpResult.intent) || nlpResult.confidence < 0.8; // Low confidence = conversational
@@ -88,7 +88,7 @@ class WhatsDeXBrain {
   /**
    * Handle conversational AI interactions with RAG-enhanced memory
    */
-  async handleConversationalAI(ctx: MessageContext, nlpResult: any) {
+  async handleConversationalAI(ctx: MessageContext, nlpResult: NLPResult) {
     const userId = ctx.sender.jid;
     const currentMessage = ctx.body || '';
 
@@ -280,8 +280,11 @@ class WhatsDeXBrain {
    */
   async retrieveHistoricalContext(userId: string, currentMessage: string) {
     try {
-      const contexts = await memoryService.retrieveRelevantContext(userId, currentMessage);
-      return contexts;
+      const result = await memoryService.retrieveRelevantContext(userId, currentMessage);
+      if (result.success) {
+        return result.data;
+      }
+      return [];
     } catch (error: any) {
       logger.error('Error retrieving historical context:', error);
       return []; // Graceful fallback - continue without historical context
@@ -291,7 +294,7 @@ class WhatsDeXBrain {
   /**
    * RAG: Build enhanced prompt with recent memory and historical context
    */
-  buildContextualPrompt(currentMessage: string, recentMemory: string[], historicalContext: any[], nlpResult: any) {
+  buildContextualPrompt(currentMessage: string, recentMemory: string[], historicalContext: any[], nlpResult: NLPResult) {
     let prompt = '';
 
     // Add historical context if available
@@ -329,7 +332,7 @@ class WhatsDeXBrain {
   /**
    * RAG: Store conversation in vector database asynchronously
    */
-  storeConversationAsync(userId: string, userMessage: string, aiResponse: string, nlpResult: any) {
+  storeConversationAsync(userId: string, userMessage: string, aiResponse: string, nlpResult: NLPResult) {
     const setImmediate = (globalThis as any).setImmediate || ((fn: any) => setTimeout(fn, 0));
     // Use setImmediate for non-blocking async operation
     setImmediate(async () => {

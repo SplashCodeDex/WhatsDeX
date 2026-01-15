@@ -4,7 +4,7 @@ export class MessageClassifier {
     // In the future, this could be a more sophisticated model
   }
 
-  async classify(text) {
+  async classify(text: string) {
     if (this.isQuestion(text)) {
       return { intent: 'question', confidence: 0.8 };
     }
@@ -16,11 +16,11 @@ export class MessageClassifier {
     return { intent: 'statement', confidence: 0.6 };
   }
 
-  isQuestion(text) {
+  isQuestion(text: string) {
     return text.endsWith('?');
   }
 
-  isGreeting(text) {
+  isGreeting(text: string) {
     const greetings = ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'];
     const lowerText = text.toLowerCase();
     return greetings.some(greeting => lowerText.startsWith(greeting));

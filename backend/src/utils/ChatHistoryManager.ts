@@ -3,7 +3,7 @@
  * Prevents infinite growth while maintaining context
  */
 
-import { MemoryManager } from './MemoryManager.js';
+import { MemoryManager } from './memoryManager.js';
 import { db } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
 
@@ -68,7 +68,7 @@ export class ChatHistoryManager {
   /**
    * Directly update chat state (useful for replacing history)
    */
-  async updateChat(userId, updates: { history?: any[], summary?: string }) {
+  async updateChat(userId: string, updates: { history?: any[], summary?: string }) {
     const chat = await this.getChat(userId);
     if (updates.history) chat.history = updates.history;
     if (updates.summary !== undefined) chat.summary = updates.summary;

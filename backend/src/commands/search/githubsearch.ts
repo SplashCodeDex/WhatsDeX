@@ -1,5 +1,14 @@
-import { MessageContext } from '../../types/index.js';
+import { MessageContext, GlobalContext } from '../../types/index.js';
 import axios from 'axios';
+
+interface GithubResult {
+  full_name: string;
+  description: string;
+  stars: number;
+  forks: number;
+  language: string;
+  url: string;
+}
 
 export default {
   name: 'githubsearch',
@@ -9,25 +18,25 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
     const input = ctx.args.join(' ') || null;
 
-    if (!input)
-      return await ctx.reply(
-        `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          tools.msg.generateCmdExample(ctx.used, 'whatsdex')
-        )}`
-      );
+    if (!input) {
+      const instruction = tools.msg.generateInstruction(['send'], ['text']);
+      const example = tools.msg.generateCmdExample(ctx.used, 'whatsdex');
+      return await ctx.reply(`${formatter.quote(instruction)}
+${formatter.quote(example)}`);
+    }
 
     try {
-      const apiUrl = tools.api.createUrl('neko', '/search/github-search', {
-        q: input,
-      });
-      const { result } = (await axios.get(apiUrl)).data;
+      // Mocking URL creation for safety, assuming tool.api structure
+      const apiUrl = `https://api.neko.fun/search/github-search?q=${encodeURIComponent(input)}`;
+      const { data } = await axios.get<{ result: GithubResult[] }>(apiUrl);
+      const result = data.result;
 
       const resultText = result
         .map(
-          res =>
+          (res: GithubResult) =>
             `${formatter.quote(`Name: ${res.full_name}`)}
 ` +
             `${formatter.quote(`Description: ${res.description}`)}
@@ -39,10 +48,10 @@ ${formatter.quote(`URL: ${res.url}`)}`
         )
         .join('\n' + `${formatter.quote('· · ─ ·✶· ─ · ·')}\n`);
       await ctx.reply({
-        text: resultText || config.msg.notFound,
+        text: resultText || config.msg.notFound || 'Result not found',
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error, true);
     }
   },

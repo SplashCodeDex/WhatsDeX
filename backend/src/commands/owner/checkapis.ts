@@ -1,5 +1,10 @@
-import { MessageContext } from '../../types/index.js';
-import axios from 'axios';
+import { MessageContext, GlobalContext } from '../../types/index.js';
+import axios, { AxiosError } from 'axios';
+
+interface APIConfig {
+  baseURL: string;
+  apikey?: string;
+}
 
 export default {
   name: 'checkapis',
@@ -9,12 +14,12 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
     try {
-      const APIs = tools.api.listUrl();
+      const APIs: Record<string, APIConfig> = tools.api.listUrl();
       let resultText = '';
 
-      for (const [name, api] of Object.entries(APIs)) {
+      for (const [, api] of Object.entries(APIs)) {
         try {
           const response = await axios.get(api.baseURL, {
             timeout: 5000,
@@ -25,17 +30,23 @@ export default {
           });
 
           if (response.status >= 200 && response.status < 500) {
-            resultText += formatter.quote(`${api.baseURL} 🟢 (${response.status})\n`);
+            resultText += formatter.quote(`${api.baseURL} 🟢 (${response.status})
+`);
           } else {
-            resultText += formatter.quote(`${api.baseURL} 🔴 (${response.status})\n`);
+            resultText += formatter.quote(`${api.baseURL} 🔴 (${response.status})
+`);
           }
-        } catch (error: any) {
-          if (error.response) {
-            resultText += formatter.quote(`${api.baseURL} 🔴 (${error.response.status})\n`);
-          } else if (error.request) {
-            resultText += formatter.quote(`${api.baseURL} 🔴 (Tidak ada respon)\n`);
+        } catch (error: unknown) {
+          const err = error as AxiosError;
+          if (err.response) {
+            resultText += formatter.quote(`${api.baseURL} 🔴 (${err.response.status})
+`);
+          } else if (err.request) {
+            resultText += formatter.quote(`${api.baseURL} 🔴 (Tidak ada respon)
+`);
           } else {
-            resultText += formatter.quote(`${api.baseURL} 🔴 (Kesalahan: ${error.message})\n`);
+            resultText += formatter.quote(`${api.baseURL} 🔴 (Kesalahan: ${err.message})
+`);
           }
         }
       }
@@ -44,7 +55,7 @@ export default {
         text: resultText.trim(),
         footer: config.msg.footer,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await tools.cmd.handleError(ctx, error);
     }
   },

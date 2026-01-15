@@ -1,6 +1,7 @@
 import { MessageContext } from '../../types/index.js';
 import axios from 'axios';
 import { createUrl } from '../../tools/api.js';
+import logger from '../../utils/logger.js';
 
 export default {
   name: 'deepseek',
@@ -25,7 +26,7 @@ export default {
 
       return ctx.reply(result);
     } catch (error: any) {
-      console.error(error);
+      logger.error('DeepSeek command error:', error);
       return ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
   },

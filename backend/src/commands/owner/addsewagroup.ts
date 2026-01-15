@@ -27,7 +27,8 @@ export default {
         )}`
       );
 
-    if (!(await ctx.group(groupJid)))
+    const group = await ctx.group(groupJid);
+    if (!group)
       return await ctx.reply(
         formatter.quote('❎ Grup tidak valid atau bot tidak ada di grup tersebut!')
       );
@@ -44,7 +45,6 @@ export default {
       });
 
       const silent = flag?.silent || false;
-      const group = await ctx.group(groupJid);
       const groupOwner = await group.owner();
       const groupName = await group.name();
 
@@ -53,7 +53,7 @@ export default {
         await db.set(`group.${groupId}.sewaExpiration`, expirationDate);
 
         if (!silent && groupOwner) {
-          await ctx.sendMessage(groupOwner, {
+          await ctx.bot.sendMessage(groupOwner, {
             text: formatter.quote(
               `📢 Bot berhasil disewakan ke grup ${groupName} (@${groupJid}) selama ${daysAmount} hari!`
             ),
@@ -69,7 +69,7 @@ export default {
         await db.delete(`group.${groupId}.sewaExpiration`);
 
         if (!silent && groupOwner) {
-          await ctx.sendMessage(groupOwner, {
+          await ctx.bot.sendMessage(groupOwner, {
             text: formatter.quote(
               `📢 Bot berhasil disewakan ke grup ${groupName} (@${groupJid}) selamanya!`
             ),

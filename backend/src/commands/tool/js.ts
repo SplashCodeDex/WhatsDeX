@@ -1,5 +1,6 @@
 import { MessageContext } from '../../types/index.js';
 import { spawn } from 'node:child_process';
+import logger from '../../utils/logger.js';
 
 export default {
   name: 'js',
@@ -28,7 +29,7 @@ export default {
           );
       }
 
-      const output = await new Promise(resolve => {
+      const output: string = await new Promise((resolve) => {
         const childProcess = spawn('node', ['-e', input]);
 
         let outputData = '';
@@ -62,7 +63,8 @@ export default {
 
       await ctx.reply(formatter.monospace(output));
     } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
+      logger.error('JS command error:', error);
+      await ctx.reply(formatter.quote(`An error occurred: ${error.message}`));
     }
   },
 };

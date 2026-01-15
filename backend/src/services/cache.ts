@@ -1,339 +1,187 @@
-import redis from 'redis';
+import redis from '../lib/redis.js';
 import logger from '../utils/logger.js';
+import { Result } from '../types/index.js';
 
-class CacheService {
-  constructor() {
-    this.client = null;
+export class CacheService {
+  private static instance: CacheService;
+  private client: typeof redis;
+  private isConnected: boolean;
+  private defaultTTL: number;
+
+  private constructor() {
+    this.client = redis;
     this.isConnected = false;
-    this.connect();
+    this.defaultTTL = 3600; // 1 hour
+
+    this.setupListeners();
   }
 
-  async connect() {
-    try {
-      this.client = redis.createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
-        password: process.env.REDIS_PASSWORD,
-      });
-
-      this.client.on('error', err => {
-        logger.error('Redis connection error:', err);
-        this.isConnected = false;
-      });
-
-      this.client.on('connect', () => {
-        logger.info('Connected to Redis');
-        this.isConnected = true;
-      });
-
-      this.client.on('ready', () => {
-        this.isConnected = true;
-      });
-
-      this.client.on('end', () => {
-        this.isConnected = false;
-      });
-
-      await this.client.connect();
-    } catch (error: any) {
-      logger.error('Failed to connect to Redis:', error);
-      this.isConnected = false;
+  public static getInstance(): CacheService {
+    if (!CacheService.instance) {
+      CacheService.instance = new CacheService();
     }
+    return CacheService.instance;
   }
 
-  /**
-   * Get a value from cache
-   * @param {string} key - Cache key
-   * @returns {Promise<any>} Cached value or null
-   */
-  async get(key) {
-    if (!this.isConnected || !this.client) {
-      return null;
+  private setupListeners(): void {
+    this.client.on('error', (err: Error) => {
+      logger.error('Redis Error:', err);
+      this.isConnected = false;
+    });
+
+    this.client.on('connect', () => {
+      this.isConnected = true;
+      logger.info('Redis Connected');
+    });
+
+    this.client.on('ready', () => {
+      this.isConnected = true;
+    });
+
+    this.client.on('end', () => {
+      this.isConnected = false;
+    });
+  }
+
+  createKey(data: any): string {
+    const serialized = typeof data === 'string' ? data : JSON.stringify(data);
+    return `cache:${Buffer.from(serialized).toString('base64').substring(0, 32)}`;
+  }
+
+  async get<T>(key: string): Promise<Result<T | null>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
     }
 
     try {
       const value = await this.client.get(key);
-      return value ? JSON.parse(value) : null;
-    } catch (error: any) {
-      logger.error('Cache get error:', error);
-      return null;
+      if (!value) return { success: true, data: null };
+
+      try {
+        const data = JSON.parse(value) as T;
+        return { success: true, data };
+      } catch (parseError) {
+        return { success: true, data: value as unknown as T };
+      }
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.get error [${key}]:`, err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Set a value in cache
-   * @param {string} key - Cache key
-   * @param {any} value - Value to cache
-   * @param {number} ttlSeconds - Time to live in seconds (default: 3600)
-   * @returns {Promise<boolean>} Success status
-   */
-  async set(key, value, ttlSeconds = 3600) {
-    if (!this.isConnected || !this.client) {
-      return false;
+  async set(key: string, value: any, ttlSeconds: number = this.defaultTTL): Promise<Result<void>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
     }
 
     try {
-      const serializedValue = JSON.stringify(value);
-      if (ttlSeconds > 0) {
-        await this.client.setEx(key, ttlSeconds, serializedValue);
-      } else {
-        await this.client.set(key, serializedValue);
-      }
-      return true;
-    } catch (error: any) {
-      logger.error('Cache set error:', error);
-      return false;
+      const serializedValue = typeof value === 'string' ? value : JSON.stringify(value);
+      await this.client.set(key, serializedValue, 'EX', ttlSeconds);
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.set error [${key}]:`, err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Delete a key from cache
-   * @param {string} key - Cache key
-   * @returns {Promise<boolean>} Success status
-   */
-  async delete(key) {
-    if (!this.isConnected || !this.client) {
-      return false;
+  async delete(key: string): Promise<Result<void>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
     }
 
     try {
       await this.client.del(key);
-      return true;
-    } catch (error: any) {
-      logger.error('Cache delete error:', error);
-      return false;
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.delete error [${key}]:`, err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Check if key exists
-   * @param {string} key - Cache key
-   * @returns {Promise<boolean>} Whether key exists
-   */
-  async exists(key) {
-    if (!this.isConnected || !this.client) {
-      return false;
+  async exists(key: string): Promise<Result<boolean>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
     }
 
     try {
       const result = await this.client.exists(key);
-      return result === 1;
-    } catch (error: any) {
-      logger.error('Cache exists error:', error);
-      return false;
+      return { success: true, data: result === 1 };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.exists error [${key}]:`, err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Set multiple keys at once
-   * @param {Object} keyValuePairs - Object with key-value pairs
-   * @param {number} ttlSeconds - Time to live in seconds
-   * @returns {Promise<boolean>} Success status
-   */
-  async mset(keyValuePairs, ttlSeconds = 3600) {
-    if (!this.isConnected || !this.client) {
-      return false;
+  async mset(keyValuePairs: Record<string, any>, ttlSeconds: number = this.defaultTTL): Promise<Result<void>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
     }
 
     try {
-      const pipeline = this.client.multi();
-      Object.entries(keyValuePairs).forEach(([key, value]) => {
-        const serializedValue = JSON.stringify(value);
-        if (ttlSeconds > 0) {
-          pipeline.setEx(key, ttlSeconds, serializedValue);
-        } else {
-          pipeline.set(key, serializedValue);
-        }
-      });
+      const pipeline = this.client.pipeline();
+      for (const [key, value] of Object.entries(keyValuePairs)) {
+        const serializedValue = typeof value === 'string' ? value : JSON.stringify(value);
+        pipeline.set(key, serializedValue, 'EX', ttlSeconds);
+      }
       await pipeline.exec();
-      return true;
-    } catch (error: any) {
-      logger.error('Cache mset error:', error);
-      return false;
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Cache.mset error:', err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Get multiple keys at once
-   * @param {Array<string>} keys - Array of cache keys
-   * @returns {Promise<Object>} Object with key-value pairs
-   */
-  async mget(keys) {
-    if (!this.isConnected || !this.client) {
-      return {};
+  async increment(key: string, amount: number = 1): Promise<Result<number>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
     }
 
     try {
-      const values = await this.client.mGet(keys);
-      const result = {};
-      keys.forEach((key, index) => {
-        if (values[index]) {
-          try {
-            result[key] = JSON.parse(values[index]);
-          } catch (parseError) {
-            logger.warn(`Failed to parse cached value for key ${key}:`, parseError);
-            result[key] = null;
-          }
-        } else {
-          result[key] = null;
-        }
-      });
-      return result;
-    } catch (error: any) {
-      logger.error('Cache mget error:', error);
-      return {};
+      const result = await this.client.incrby(key, amount);
+      return { success: true, data: result };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.increment error [${key}]:`, err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Increment a numeric value
-   * @param {string} key - Cache key
-   * @param {number} amount - Amount to increment by (default: 1)
-   * @returns {Promise<number|null>} New value or null on error
-   */
-  async increment(key, amount = 1) {
-    if (!this.isConnected || !this.client) {
-      return null;
+  async expire(key: string, ttlSeconds: number): Promise<Result<boolean>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
     }
 
     try {
-      return await this.client.incrBy(key, amount);
-    } catch (error: any) {
-      logger.error('Cache increment error:', error);
-      return null;
+      const result = await this.client.expire(key, ttlSeconds);
+      return { success: true, data: result === 1 };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.expire error [${key}]:`, err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Set expiration time for a key
-   * @param {string} key - Cache key
-   * @param {number} ttlSeconds - Time to live in seconds
-   * @returns {Promise<boolean>} Success status
-   */
-  async expire(key, ttlSeconds) {
-    if (!this.isConnected || !this.client) {
-      return false;
+  async ttl(key: string): Promise<Result<number>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
     }
 
     try {
-      return await this.client.expire(key, ttlSeconds);
-    } catch (error: any) {
-      logger.error('Cache expire error:', error);
-      return false;
+      const result = await this.client.ttl(key);
+      return { success: true, data: result };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.ttl error [${key}]:`, err);
+      return { success: false, error: err };
     }
   }
 
-  /**
-   * Get time to live for a key
-   * @param {string} key - Cache key
-   * @returns {Promise<number>} TTL in seconds (-2 if key doesn't exist, -1 if no expiration)
-   */
-  async ttl(key) {
-    if (!this.isConnected || !this.client) {
-      return -2;
-    }
-
-    try {
-      return await this.client.ttl(key);
-    } catch (error: any) {
-      logger.error('Cache ttl error:', error);
-      return -2;
-    }
-  }
-
-  /**
-   * Clear cache by pattern
-   * @param {string} pattern - Pattern to match (e.g., 'user:*')
-   * @returns {Promise<number>} Number of keys deleted
-   */
-  async invalidatePattern(pattern) {
-    if (!this.isConnected || !this.client) {
-      return 0;
-    }
-
-    try {
-      const keys = await this.client.keys(pattern);
-      if (keys.length > 0) {
-        return await this.client.del(keys);
-      }
-      return 0;
-    } catch (error: any) {
-      logger.error('Cache invalidate pattern error:', error);
-      return 0;
-    }
-  }
-
-  /**
-   * Get cache statistics
-   * @returns {Promise<Object>} Cache statistics
-   */
-  async getStats() {
-    if (!this.isConnected || !this.client) {
-      return { connected: false };
-    }
-
-    try {
-      const info = await this.client.info();
-      const dbSize = await this.client.dbSize();
-
-      return {
-        connected: true,
-        dbSize,
-        info: this.parseRedisInfo(info),
-      };
-    } catch (error: any) {
-      logger.error('Cache stats error:', error);
-      return { connected: false, error: error.message };
-    }
-  }
-
-  /**
-   * Parse Redis INFO command output
-   * @param {string} info - Raw Redis info
-   * @returns {Object} Parsed info object
-   */
-  parseRedisInfo(info) {
-    const lines = info.split('\n');
-    const parsed = {};
-
-    lines.forEach(line => {
-      if (line.includes(':')) {
-        const [key, value] = line.split(':');
-        parsed[key] = value;
-      }
-    });
-
-    return parsed;
-  }
-
-  /**
-   * Health check
-   * @returns {Promise<Object>} Health status
-   */
-  async healthCheck() {
-    try {
-      if (!this.isConnected || !this.client) {
-        return { status: 'disconnected' };
-      }
-
-      await this.client.ping();
-      const stats = await this.getStats();
-
-      return {
-        status: 'healthy',
-        ...stats,
-      };
-    } catch (error: any) {
-      return {
-        status: 'unhealthy',
-        error: error.message,
-      };
-    }
-  }
-
-  /**
-   * Close connection
-   */
-  async close() {
+  async disconnect(): Promise<void> {
     if (this.client) {
       await this.client.quit();
       this.isConnected = false;
@@ -341,4 +189,5 @@ class CacheService {
   }
 }
 
-export default CacheService;
+export const cacheService = CacheService.getInstance();
+export default cacheService;
