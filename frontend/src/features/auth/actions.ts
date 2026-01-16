@@ -115,6 +115,8 @@ export async function signUp(
         lastName: formData.get('lastName'),
         email: formData.get('email'),
         password: formData.get('password'),
+        tenantName: formData.get('tenantName') || undefined,
+        subdomain: formData.get('subdomain') || undefined,
         acceptTerms: formData.get('acceptTerms') === 'on',
     };
 
@@ -132,7 +134,8 @@ export async function signUp(
         };
     }
 
-    const { firstName, lastName, email, password } = parsed.data;
+    const { firstName, lastName, email, password, tenantName, subdomain } =
+        parsed.data;
 
     try {
         // Register with Backend API
@@ -145,6 +148,8 @@ export async function signUp(
                     displayName: `${firstName} ${lastName}`,
                     email,
                     password,
+                    tenantName,
+                    subdomain,
                 }),
             }
         );
