@@ -42,15 +42,25 @@ interface AvailabilityResult {
     subdomain?: { available: boolean; reason: string | null };
 }
 
-// Helper for internal availability checks
-const checkAvailabilityHelper = async (email: string, subdomain: string) => {
+// Helper for internal, transactional availability checks
+const checkAvailabilityInTransaction = async (
+    transaction: FirebaseFirestore.Transaction,
+    email: string,
+    subdomain: string
+) => {
     // Check email
-    const userSnapshot = await db.collection('tenant_users').where('email', '==', email).limit(1).get();
-    if (!userSnapshot.empty) return { available: false, reason: 'Email already registered', field: 'email' };
+    const userQuery = db.collection('tenant_users').where('email', '==', email).limit(1);
+    const userSnapshot = await transaction.get(userQuery);
+    if (!userSnapshot.empty) {
+        return { available: false, reason: 'Email already registered', field: 'email' };
+    }
 
     // Check subdomain
-    const tenantSnapshot = await db.collection('tenants').where('subdomain', '==', subdomain).limit(1).get();
-    if (!tenantSnapshot.empty) return { available: false, reason: 'Subdomain already taken', field: 'subdomain' };
+    const tenantQuery = db.collection('tenants').where('subdomain', '==', subdomain).limit(1);
+    const tenantSnapshot = await transaction.get(tenantQuery);
+    if (!tenantSnapshot.empty) {
+        return { available: false, reason: 'Subdomain already taken', field: 'subdomain' };
+    }
 
     return { available: true };
 };
@@ -97,20 +107,22 @@ export const signup = async (req: Request, res: Response) => {
             subdomain = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
         }
 
-        // Check availability
-        logger.info('DEBUG: Checking availability for', { tenantName, subdomain, email });
-        const availability = await checkAvailabilityHelper(email, subdomain);
-        if (!availability.available) {
-            logger.warn('DEBUG: Availability check failed', availability);
-            return res.status(400).json({ error: availability.reason, field: availability.field });
-        }
-
         // Create tenant and user
         logger.info('DEBUG: Creating tenant and user in Firebase');
 
         // Use Firebase transaction to ensure data integrity
-        const result = await db.runTransaction(async (transaction: any) => { // Using db.runTransaction
-            // 1. Create Tenant
+        const result = await db.runTransaction(async (transaction: FirebaseFirestore.Transaction) => { // Using db.runTransaction
+            // 1. Check availability within the transaction
+            const availability = await checkAvailabilityInTransaction(transaction, email, subdomain!);
+            if (!availability.available) {
+                // By throwing an error, we abort the transaction and can catch it outside.
+                const error: any = new Error(availability.reason);
+                error.field = availability.field;
+                error.isAvailabilityError = true;
+                throw error;
+            }
+
+            // 2. Create Tenant
             logger.info('DEBUG: Creating tenant document');
             const tenantId = `tenant-${Date.now()}`;
             const tenantRef = db.collection('tenants').doc(tenantId); // Using db directly
@@ -234,10 +246,14 @@ export const signup = async (req: Request, res: Response) => {
             tenant: { id: result.tenant.id, name: result.tenant.name, subdomain: result.tenant.subdomain },
         });
 
-    } catch (error: unknown) {
+    } catch (error: any) {
         if (error instanceof z.ZodError) {
             logger.warn('Signup validation failed:', error.issues);
             return res.status(400).json({ error: error.issues[0].message, field: error.issues[0].path[0] });
+        }
+        if (error.isAvailabilityError) {
+            logger.warn('DEBUG: Availability check failed within transaction', { reason: error.message, field: error.field });
+            return res.status(400).json({ error: error.message, field: error.field });
         }
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('Signup error:', err);
