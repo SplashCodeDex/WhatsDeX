@@ -17,5 +17,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
     },
+    env: {
+      GOOGLE_GEMINI_API_KEY: '["MOCK_KEY_FOR_TESTING"]',
+    },
   },
 });

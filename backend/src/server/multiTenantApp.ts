@@ -15,6 +15,10 @@ import templateRoutes from '../routes/templateRoutes.js';
 import analyticsRoutes from '../routes/analyticsRoutes.js';
 import contactRoutes from '../routes/contactRoutes.js';
 import messageRoutes from '../routes/messageRoutes.js';
+import campaignRoutes from '../routes/campaigns.js';
+import webhookRoutes from '../routes/webhookRoutes.js';
+import AnalyticsService from '../services/analytics.js';
+import AuditService from '../services/auditService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
@@ -44,6 +48,12 @@ export class MultiTenantApp {
 
       // Setup routes
       this.setupRoutes();
+
+      // Initialize Analytics (App Port + 1)
+      await AnalyticsService.initialize({
+        websocketPort: this.port + 1
+      });
+      logger.info(`Enterprise Analytics Gateway online at port ${this.port + 1}`);
 
       // Initialize services
       await this.initializeServices();
@@ -150,6 +160,12 @@ export class MultiTenantApp {
     // Messages routes
     this.app.use('/api/messages', authenticateToken, messageRoutes);
 
+    // Campaigns routes
+    this.app.use('/api/campaigns', authenticateToken, campaignRoutes);
+
+    // Webhooks routes
+    this.app.use('/api/webhooks', authenticateToken, webhookRoutes);
+
     // Tenant management
     this.app.get('/api/tenants', authenticateToken, async (req, res) => {
       try {
@@ -169,6 +185,18 @@ export class MultiTenantApp {
         if (!tenantId) throw new Error('Tenant context missing');
 
         await multiTenantBotService.startBot(tenantId, botId);
+
+        // Audit log
+        await AuditService.logEvent({
+          eventType: 'BOT_LIFECYCLE',
+          actor: 'TENANT_ADMIN',
+          actorId: tenantId,
+          action: 'START_BOT',
+          resource: 'BOT',
+          resourceId: botId,
+          riskLevel: 'LOW'
+        });
+
         res.json({ success: true, message: 'Bot started successfully' });
       } catch (error: any) {
         res.status(500).json({ error: error.message });

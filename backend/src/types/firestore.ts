@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { ModerationItem, Violation } from './contracts.js';
+import { ModerationItem, Violation, Campaign, Webhook } from './contracts.js';
 
 /**
  * Root 'tenants' collection document
@@ -38,7 +38,7 @@ export interface TenantUserDocument {
   trialEndsAt?: Timestamp | Date;
   joinedAt: Timestamp | Date;
   lastLogin?: Timestamp | Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -80,8 +80,8 @@ export interface BotMemberDocument {
     timestamp: number;
   } | null;
   lastClaim?: Record<string, number>;
-  lastSentMsg?: Record<string, any>;
-  recentCommands?: any[];
+  lastSentMsg?: Record<string, unknown>;
+  recentCommands?: unknown[];
   premium: boolean;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
@@ -102,9 +102,9 @@ export interface BotGroupDocument {
       message: string;
       leaveMessage: string;
     };
-    [key: string]: any;
+    [key: string]: unknown;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
@@ -141,4 +141,6 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/subscriptions': SubscriptionDocument;
   'tenants/{tenantId}/moderation': ModerationItem;
   'tenants/{tenantId}/violations': Violation;
+  'tenants/{tenantId}/campaigns': Campaign;
+  'tenants/{tenantId}/webhooks': Webhook;
 }

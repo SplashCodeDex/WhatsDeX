@@ -4,7 +4,10 @@ import logger from '@/utils/logger.js';
 import { firebaseService } from '@/services/FirebaseService.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
-import { BotInstance, BotInstanceSchema, Bot, Result, GlobalContext } from '@/types/index.js';
+import { webhookService } from './webhookService.js';
+import { AuditService } from './index.js';
+import { BotInstanceSchema, Bot, GlobalContext } from '@/types/index.js';
+import { Campaign, BotInstance, Result, CampaignStatus } from '../types/contracts.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 import QRCode from 'qrcode';
@@ -16,6 +19,7 @@ import { cooldownMiddleware } from '../middleware/cooldown.js';
 import { moderationMiddleware } from '../middleware/moderation.js';
 import { eventHandler } from './eventHandler.js';
 import AuthSystem from './authSystem.js';
+import { createBotContext } from '../utils/createBotContext.js';
 
 export class MultiTenantBotService {
   private static instance: MultiTenantBotService;
@@ -65,9 +69,12 @@ export class MultiTenantBotService {
       }
 
       const botId = `bot_${Date.now()}`;
+      // Destructure botData to exclude createdAt and updatedAt before spreading
+      const { createdAt, updatedAt, ...restBotData } = botData;
+
       const rawData = {
         id: botId,
-        name: botData.name || 'My Bot',
+        name: restBotData.name || 'My Bot',
         status: 'offline' as const,
         connectionMetadata: {
           browser: ['WhatsDeX', 'Chrome', '1.0.0'] as [string, string, string],
@@ -80,7 +87,7 @@ export class MultiTenantBotService {
         },
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        ...botData
+        ...restBotData
       };
 
       const data = BotInstanceSchema.parse(rawData);
@@ -214,8 +221,9 @@ export class MultiTenantBotService {
       if (connection === 'close') {
         const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+        const status = 'offline';
 
-        await this.updateBotStatus(tenantId, botId, 'offline');
+        await this.updateBotStatus(tenantId, botId, status);
 
         if (shouldReconnect) {
           logger.info(`Bot ${botId} disconnected, reconnecting...`);
@@ -225,17 +233,34 @@ export class MultiTenantBotService {
           this.activeBots.delete(botId);
           this.qrCodes.delete(botId);
         }
+
+        // Webhook Dispatch for disconnection
+        await webhookService.dispatch(tenantId, 'bot.disconnected', {
+          botId,
+          status: status,
+          reason: lastDisconnect?.error?.message || 'unknown'
+        });
+
       } else if (connection === 'open') {
+        const status = 'online';
         logger.info(`Bot ${botId} is ONLINE`);
         this.qrCodes.delete(botId);
-        await this.updateBotStatus(tenantId, botId, 'online');
+        await this.updateBotStatus(tenantId, botId, status);
 
         // Extract and save phone number
         const bot = this.activeBots.get(botId);
         if (bot?.user?.id) {
-          const phoneNumber = bot.user.id.split(':')[0];
-          await this.updateBot(tenantId, botId, { phoneNumber });
+          if (status === 'online' && !bot.phoneNumber && (update as any).me?.id) {
+            await this.updateBotPhoneNumber(tenantId, botId, (update as any).me.id);
+          }
         }
+
+        // Webhook Dispatch
+        await webhookService.dispatch(tenantId, 'bot.connected', {
+          botId,
+          phoneNumber: bot?.phoneNumber, // Use optional chaining as bot might not have phoneNumber yet
+          status: status
+        });
       }
     } catch (error: unknown) {
       logger.error(`Error handling connection update for ${botId}:`, error);
@@ -273,8 +298,18 @@ export class MultiTenantBotService {
       // If not a command, try AI (if enabled for this bot/tenant)
       if (!handledByCommand && context.unifiedAI) {
         // Create context for AI processing
-        const aiCtx = await commandSystem.createMessageContext(bot, message);
+        // Create context for AI processing
+        const aiCtx = await createBotContext(bot, message, context);
+        // 2. Process via AI/Brain
         await context.unifiedAI.processMessage(bot, aiCtx);
+
+        // 3. Webhook Dispatch
+        await webhookService.dispatch(tenantId, 'message.received', {
+          botId,
+          sender: aiCtx.sender.jid,
+          message: aiCtx.message?.conversation || aiCtx.message?.extendedTextMessage?.text || '',
+          timestamp: Date.now()
+        });
       }
 
       // Increment stats
@@ -316,7 +351,24 @@ export class MultiTenantBotService {
       { status, updatedAt: Timestamp.now() },
       tenantId,
       true
-    );
+    ).catch(err => logger.error(`Failed to update bot status ${botId}:`, err));
+  }
+
+  /**
+   * Helper to update bot phone number in Firestore
+   */
+  private async updateBotPhoneNumber(tenantId: string, botId: string, phoneNumber: string): Promise<void> {
+    try {
+      await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
+        'bots',
+        botId,
+        { phoneNumber, updatedAt: Timestamp.now() },
+        tenantId,
+        true
+      );
+    } catch (error) {
+      logger.error(`Failed to update bot phone number ${botId}:`, error);
+    }
   }
 
   public getActiveBots() {
@@ -361,7 +413,10 @@ export class MultiTenantBotService {
 
         return {
           ...bot,
-          status
+          status,
+          createdAt: (bot.createdAt as any)?.toDate?.() || bot.createdAt,
+          updatedAt: (bot.updatedAt as any)?.toDate?.() || bot.updatedAt,
+          lastSeen: (bot.lastSeen as any)?.toDate?.() || bot.lastSeen,
         };
       });
 

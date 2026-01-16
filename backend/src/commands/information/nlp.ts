@@ -65,7 +65,7 @@ export default {
         }
 
         if (result.alternatives && result.alternatives.length > 0) {
-          response += `\n🔄 **Alternatives:** ${result.alternatives.map(cmd => `${ctx.used.prefix}${cmd}`).join(', ')}\n`;
+          response += `\n🔄 **Alternatives:** ${result.alternatives.map((cmd: string) => `${ctx.used.prefix}${cmd}`).join(', ')}\n`;
         }
 
         response += `\n💭 *Would you like me to execute this command? Reply with "yes" or use the command directly!*`;

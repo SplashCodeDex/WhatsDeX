@@ -1,78 +1,93 @@
+/**
+ * NLP Processing Service
+ * Analyzes user input to detect intent and parameters
+ */
 
-import { MessageContext } from '../types/index.js';
+import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
+import { Result } from '../types/contracts.js';
 
-export interface NLPResult {
-    intent: string;
-    confidence: number;
-    command: string | null;
-    parameters: Record<string, any>;
-    explanation: string;
-    alternatives?: string[];
-}
-
-export interface NLPContext {
+interface ProcessorContext {
     userId: string;
-    recentCommands: any[];
+    recentCommands: string[];
     isGroup: boolean;
     isAdmin: boolean;
     isOwner: boolean;
 }
 
-export default class NLPProcessorService {
-    private intents = [
-        {
-            name: 'sticker_creation',
-            keywords: ['sticker', 'stiker', 'make sticker', 'buat stiker'],
-            command: 'sticker',
-            explanation: 'User wants to create a sticker from an image or video.'
-        },
-        {
-            name: 'video_download',
-            keywords: ['download video', 'unduh video', 'save video', 'ytdl', 'youtube'],
-            command: 'play',
-            explanation: 'User wants to download a video from a platform like YouTube.'
-        },
-        {
-            name: 'ai_chat',
-            keywords: ['ask', 'question', 'tell me', 'tanya', 'gemini', 'gpt'],
-            command: 'gemini',
-            explanation: 'User is asking a question or wanting to chat with AI.'
-        },
-        {
-            name: 'group_management',
-            keywords: ['kick', 'add', 'promote', 'demote', 'open group', 'close group'],
-            command: 'help',
-            explanation: 'User is trying to manage group settings or members.'
-        }
-    ];
+interface NLPResult {
+    intent: string;
+    confidence: number;
+    explanation: string;
+    command?: string;
+    parameters?: Record<string, unknown>;
+    alternatives?: string[];
+}
 
-    async processInput(input: string, context?: NLPContext): Promise<NLPResult> {
-        const text = input.toLowerCase().trim();
-        logger.debug(`Processing NLP input: "${text}"`);
+class NLPProcessorService {
+    private gemini: GeminiService;
 
-        // Basic keyword matching for MVP
-        for (const intent of this.intents) {
-            if (intent.keywords.some(k => text.includes(k))) {
+    constructor() {
+        this.gemini = new GeminiService();
+    }
+
+    /**
+     * Process natural language input to determine command intent
+     */
+    async processInput(text: string, context: ProcessorContext): Promise<NLPResult> {
+        try {
+            const prompt = `Analyze the following user input and determine if it matches a bot command.
+
+Input: "${text}"
+
+Context:
+- User ID: ${context.userId}
+- Is Group: ${context.isGroup}
+- Is Admin: ${context.isAdmin}
+- Is Owner: ${context.isOwner}
+
+Provide a JSON response with:
+- intent: What the user wants to do
+- confidence: 0.0 to 1.0
+- explanation: Reasoning
+- command: The matching command name (if any, without prefix)
+- parameters: Key-value pairs of extracted parameters
+- alternatives: Array of alternative command names
+
+Response format: {"intent": "...", "confidence": 0.9, "explanation": "...", "command": "...", "parameters": {}, "alternatives": []}`;
+
+            const response = await this.gemini.getChatCompletion(prompt);
+
+            // Attempt to parse JSON response
+            // Gemini might return markdown code block, so we strip it validly
+            const cleanJson = response.replace(/^```json\s*|\s*```$/g, '');
+
+            try {
+                const result = JSON.parse(cleanJson);
                 return {
-                    intent: intent.name,
-                    confidence: 0.85,
-                    command: intent.command,
-                    parameters: {}, // Extraction not implemented yet
-                    explanation: intent.explanation,
+                    intent: result.intent || 'Unknown',
+                    confidence: typeof result.confidence === 'number' ? result.confidence : 0,
+                    explanation: result.explanation || 'No explanation provided',
+                    command: result.command,
+                    parameters: result.parameters,
+                    alternatives: Array.isArray(result.alternatives) ? result.alternatives : []
+                };
+            } catch (e) {
+                logger.warn('Failed to parse NLP response as JSON:', e);
+                // Fallback result
+                return {
+                    intent: 'Analysis Failed',
+                    confidence: 0,
+                    explanation: 'Could not structure the AI response.',
                     alternatives: []
                 };
             }
-        }
 
-        // Default to unknown
-        return {
-            intent: 'unknown',
-            confidence: 0.2,
-            command: null,
-            parameters: {},
-            explanation: 'I am not quite sure what you want to do. Could you be more specific?',
-            alternatives: ['menu', 'gemini']
-        };
+        } catch (error) {
+            logger.error('NLP Processing Error:', error);
+            throw error;
+        }
     }
 }
+
+export default NLPProcessorService;

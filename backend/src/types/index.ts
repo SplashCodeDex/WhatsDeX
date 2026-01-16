@@ -29,6 +29,7 @@ export interface Bot extends Partial<WASocket> {
         id: string;
         name?: string;
     };
+    phoneNumber?: string;
     tenantId: string;
     botId: string;
     context: GlobalContext;

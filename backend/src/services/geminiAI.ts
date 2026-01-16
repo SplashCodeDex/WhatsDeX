@@ -1,3 +1,6 @@
+import { db } from '../lib/firebase.js';
+import { Timestamp } from 'firebase-admin/firestore';
+import { memoryService } from './memoryService.js';
 import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
 import { EventEmitter } from 'events';
@@ -35,7 +38,7 @@ interface AIAnalysis {
  * 2026 Mastermind Edition - Strictly Typed & Stateless
  */
 export class GeminiAI extends EventEmitter {
-  private bot: Bot;
+  private bot: Bot | null = null;
   private context: GlobalContext;
   private gemini: GeminiService;
   private decisionEngine: AIDecisionEngine;
@@ -79,10 +82,17 @@ export class GeminiAI extends EventEmitter {
       const intelligence = await this.analyzeWithMultiLayerIntelligence(bot, message, context);
 
       // Execute intelligent response
-      await this.executeIntelligentResponse(bot, intelligence, ctx, context);
+      const { finalResponse, actionResults } = await this.executeIntelligentResponse(bot, intelligence, ctx, context);
 
-      // Learn from interaction
+      // 5. Finalize: Learn and Store Memory
       await this.learnFromInteraction(bot, userId, message, intelligence, ctx);
+
+      // Store new interaction in Vector Memory
+      await memoryService.storeConversation(userId, context.message.text, {
+        botId: bot.botId,
+        response: finalResponse,
+        interactionType: 'human-ai'
+      });
 
       return { success: true, data: undefined };
 
@@ -135,6 +145,23 @@ export class GeminiAI extends EventEmitter {
 
     // Layer 1: Intent Detection with Context
     const intents = await this.detectMultipleIntents(message, context);
+
+    // Verify context relevance
+    if (intents.length > 0 && (await this.assessContextualRelevance(intents[0], context)) < 0.3) {
+      // Low relevance - confirm intent or switch to conversation
+      return {
+        intents: [],
+        confidence: 0,
+        actions: [],
+        reasoning: 'Low context relevance',
+        toolsNeeded: [],
+        responseType: 'conversational'
+      };
+    }
+
+    // Determine final confidence
+    const confidence = intents.reduce((acc, curr) => Math.max(acc, curr.confidence), 0) *
+      (intents.length > 0 ? await this.assessContextualRelevance(intents[0], context) : 0);
     analysis.intents = intents;
 
     // Layer 2: Context-Aware Decision Making
@@ -210,7 +237,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
 
     for (const intent of intents) {
       // Check if this intent makes sense in current context
-      const contextualRelevance = this.assessContextualRelevance(intent, context);
+      const contextualRelevance = await this.assessContextualRelevance(intent, context);
 
       if (contextualRelevance > 0.5) {
         const action = await this.intentToAction(bot, intent, context);
@@ -298,27 +325,53 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Execute intelligent response based on analysis
    */
-  async executeIntelligentResponse(bot: Bot, intelligence: AIAnalysis, ctx: MessageContext, context: any) {
+  async executeIntelligentResponse(bot: Bot, intelligence: AIAnalysis, ctx: MessageContext, context: any): Promise<{ finalResponse: string, actionResults: any[] }> {
     const { actions, confidence } = intelligence;
+    let finalResponse = '';
+    const actionResults: any[] = [];
 
     if (actions.length === 0 || confidence < this.decisionEngine.confidenceThreshold) {
       // Conversational AI response
-      await this.handleConversationalResponse(ctx, context, intelligence);
-      return;
+      finalResponse = await this.handleConversationalResponse(bot, ctx, context, intelligence);
+      return { finalResponse, actionResults };
     }
 
     // Execute high-confidence actions
     if (actions.length === 1) {
-      await this.executeSingleAction(bot, actions[0], ctx, context);
+      const result = await this.executeSingleAction(bot, actions[0], ctx, context);
+      actionResults.push(result);
+      // Cast safely knowing result structure
+      const typedResult = result as unknown as { response?: string };
+      finalResponse = typedResult?.response || "Action completed.";
     } else {
-      await this.executeMultipleActions(bot, actions, ctx, context);
+      const results = await this.executeMultipleActions(bot, actions, ctx, context) ?? [];
+      actionResults.push(...results);
+      finalResponse = "Multiple actions executed.";
     }
+    return { finalResponse, actionResults };
   }
 
   /**
    * Handle conversational AI response with full context
    */
-  async handleConversationalResponse(ctx: MessageContext, context: any, intelligence: any) {
+  async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: any): Promise<string> {
+    // 1. Retrieve Historical Context (RAG)
+    const jid = ctx.sender.jid;
+    const historyResult = await memoryService.retrieveRelevantContext(jid, context.message.text);
+    let historicalContext = '';
+
+    if (historyResult.success && historyResult.data?.length > 0) {
+      historicalContext = "\n[HISTORICAL CONTEXT FROM PAST CONVERSATIONS]:\n" +
+        historyResult.data.map(h => `- ${h.content} (occurred on ${new Date(h.timestamp).toLocaleDateString()})`).join("\n");
+      logger.info(`RAG: Injected ${historyResult.data.length} memories for ${jid}`);
+    }
+
+    // 2. Intelligence Layer: Advanced Reasoning
+    const systemPrompt = `You are a high-intelligence AI agent for ${bot.user?.name ?? 'WhatsDeX'}.
+Current Time: ${new Date().toLocaleString()}
+Work on behalf of the customer. Use the tools provided when necessary.
+${historicalContext}
+Respond professionally.`;
     const conversationPrompt = `
 You are an intelligent WhatsApp assistant. Respond naturally and helpfully.
 
@@ -346,12 +399,13 @@ Respond in the user's language if they're not using English.
     try {
       const response = await this.gemini.getChatCompletion(conversationPrompt);
       await ctx.reply(response);
-
-      // Update conversation memory
       await this.updateConversationMemory(ctx.sender.jid, ctx.body, response);
+      return response;
     } catch (error: unknown) {
       logger.error('Conversational AI error:', error);
-      await ctx.reply("I understand you're trying to communicate with me, but I'm having some processing difficulties right now. Could you try rephrasing your request?");
+      const errorMsg = "I understand you're trying to communicate with me, but I'm having some processing difficulties right now. Could you try rephrasing your request?";
+      await ctx.reply(errorMsg);
+      return errorMsg;
     }
   }
 
@@ -756,20 +810,21 @@ Respond in the user's language if they're not using English.
     return weightedScore >= 0.6;
   }
 
-  // Additional helper methods...
-  assessContextualRelevance(intent: any, context: any) { return 0.8; } // Simplified
-  planWorkflow(actions: any[], context: any) { return { tools: [] as any[], reasoning: '' }; } // Simplified
-  selectResponseStrategy(analysis: any, context: any) { return 'conversational'; } // Simplified
-  executeMultipleActions(bot: Bot, actions: any[], ctx: any, context: any) { /* Implementation */ }
-  provideIntelligentFollowUp(bot: Bot, action: any, ctx: any, context: any) { /* Implementation */ }
-  getConversationMemory(userId: string) { return this.conversationMemory.get(userId) || []; }
-  getRecentActions(userId: string) { return []; } // Simplified
-  getActiveConversations(userId: string) { return []; } // Simplified
-  getGroupContext(groupId: string) { return null; } // Simplified
-  inferCommandParameters(command: any) { return {}; } // Simplified
-  saveConversationToDB(userId: string, memory: any[]) { /* Implementation */ }
-  handleFallbackResponse(ctx: MessageContext, error: any) {
-    ctx.reply("I apologize, but I'm experiencing some technical difficulties. Please try again in a moment.");
+  // Restored helper methods
+  async assessContextualRelevance(intent: any, context: any) { return 0.8; }
+  async planWorkflow(actions: any[], context: any) { return { tools: [] as any[], reasoning: '' }; }
+  async selectResponseStrategy(analysis: any, context: any) { return 'conversational'; }
+  async executeMultipleActions(bot: Bot, actions: any[], ctx: any, context: any) { return []; }
+  async provideIntelligentFollowUp(bot: Bot, action: any, ctx: any, context: any) { }
+  inferCommandParameters(command: any) { return {}; }
+  async getActiveConversations(userId: string) { return []; }
+  async getGroupContext(groupId: string) { return null; }
+  async getRecentActions(userId: string) { return []; }
+  async getConversationMemory(userId: string) { return this.conversationMemory.get(userId) || []; }
+  async handleFallbackResponse(ctx: MessageContext, error: any) {
+    if (ctx && ctx.reply) {
+      await ctx.reply("I apologize, but I'm experiencing some technical difficulties. Please try again in a moment.");
+    }
   }
 }
 

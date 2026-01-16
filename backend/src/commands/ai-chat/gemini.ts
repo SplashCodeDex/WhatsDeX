@@ -112,12 +112,12 @@ export default {
 
       // --- Caching Implementation Start ---
       const cacheKey = cache.createKey(messages);
-      const cachedResponse = await cache.get(cacheKey);
+      const cacheResult = await cache.get(cacheKey);
 
-      if (cachedResponse) {
+      if (cacheResult.success && cacheResult.data) {
         logger.info(`✅ Cache hit for key: ${cacheKey}`);
         timer.end();
-        return ctx.reply(cachedResponse);
+        return ctx.reply(cacheResult.data as string);
       }
       logger.info(`❌ Cache miss for key: ${cacheKey}`);
       // --- Caching Implementation End ---

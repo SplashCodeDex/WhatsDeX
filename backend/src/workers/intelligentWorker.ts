@@ -21,7 +21,7 @@ class IntelligentWorker {
   async initialize(bot: Bot, context: GlobalContext) {
     this.bot = bot;
     this.context = context;
-    this.processor = new EnhancedAIBrain(bot, context);
+    this.processor = new EnhancedAIBrain(context);
     logger.info('Intelligent Worker ready for message processing');
   }
 
@@ -32,21 +32,24 @@ class IntelligentWorker {
     if (!this.processor) {
       throw new Error('Intelligent processor not initialized');
     }
+    if (!this.bot) {
+      throw new Error('Bot not initialized');
+    }
 
     const { messageData, botContext } = job.data;
-    
+
     try {
       // Create enhanced context for the message
       const ctx = await this.createEnhancedContext(messageData, botContext);
-      
+
       // Process with intelligent system
-      await this.processor.processMessage(ctx);
-      
+      await this.processor.processMessage(this.bot, ctx);
+
       logger.debug('Message processed intelligently', {
         userId: ctx.sender?.jid,
         processed: true
       });
-      
+
     } catch (error: any) {
       logger.error('Intelligent processing failed:', {
         error: error.message,
@@ -61,14 +64,14 @@ class IntelligentWorker {
    */
   async createEnhancedContext(messageData: any, botContext: any) {
     if (!this.context) throw new Error('Global context not initialized');
-    
+
     const ctx = await createBotContext(this.bot, messageData, this.context);
-    
+
     // Add intelligent enhancements
     ctx.intelligentMode = true;
     ctx.processingTimestamp = Date.now();
     ctx.workerVersion = 'intelligent-v3';
-    
+
     return ctx;
   }
 

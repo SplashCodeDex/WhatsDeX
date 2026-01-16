@@ -2,20 +2,47 @@ import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import crypto from 'crypto';
 import logger from '../utils/logger.js';
 import cache from '../lib/cache.js';
+import { ApiKeyManager, isQuotaError } from '../lib/apiKeyManager.js';
+
+export interface GeminiToolCall {
+  id: string;
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+export interface GeminiResponse {
+  finish_reason: 'stop' | 'tool_calls';
+  message: {
+    role: string;
+    content: string;
+    tool_calls?: GeminiToolCall[];
+  };
+}
 
 class GeminiService {
-  private apiKey: string | undefined;
+  private keyManager: ApiKeyManager;
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
-  private cache: any;
+  private currentKey: string;
+  private cache: typeof cache;
 
   constructor() {
-    this.apiKey = process.env.GOOGLE_GEMINI_API_KEY;
-    if (!this.apiKey) {
-      throw new Error('GOOGLE_GEMINI_API_KEY environment variable is required');
+    const managerResult = ApiKeyManager.getInstance();
+    if (!managerResult.success) {
+      throw managerResult.error;
     }
+    this.keyManager = managerResult.data;
 
-    this.genAI = new GoogleGenerativeAI(this.apiKey);
+    // Get initial key
+    const keyResult = this.keyManager.getKey();
+    if (!keyResult.success) {
+      throw keyResult.error;
+    }
+    this.currentKey = keyResult.data;
+
+    this.genAI = new GoogleGenerativeAI(this.currentKey);
     this.model = this.genAI.getGenerativeModel({
       model: 'gemini-2.0-flash-exp',
       generationConfig: {
@@ -29,7 +56,35 @@ class GeminiService {
     // Initialize cache service
     this.cache = cache;
 
-    logger.info('Gemini service initialized with official Google Generative AI SDK');
+    const stats = this.keyManager.getStats();
+    logger.info(`Gemini service initialized with ${stats.totalKeys} API keys (${stats.healthyKeys} healthy)`);
+  }
+
+  /**
+   * Refresh the client with a new key from the rotation pool.
+   * Called after marking a key as failed.
+   */
+  private refreshClient(): void {
+    const keyResult = this.keyManager.getKey();
+    if (!keyResult.success) {
+      logger.error('[GeminiService] Failed to get new key during rotation:', keyResult.error);
+      return;
+    }
+
+    if (keyResult.data !== this.currentKey) {
+      this.currentKey = keyResult.data;
+      this.genAI = new GoogleGenerativeAI(this.currentKey);
+      this.model = this.genAI.getGenerativeModel({
+        model: 'gemini-2.0-flash-exp',
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+      });
+      logger.info(`[GeminiService] Rotated to new API key ...${this.currentKey.slice(-4)}`);
+    }
   }
 
   /**
@@ -44,11 +99,11 @@ class GeminiService {
   }
 
   /**
-   * Get a chat completion from Google Gemini API with caching
+   * Get a chat completion from Google Gemini API with caching and key rotation
    * @param {string} text - The user's input text
    * @returns {Promise<string>} The response text from Gemini
    */
-  async getChatCompletion(text: string, correlationId: string | null = null) {
+  async getChatCompletion(text: string, correlationId: string | null = null): Promise<string> {
     if (!text) {
       throw new Error('Input text is required.');
     }
@@ -57,22 +112,24 @@ class GeminiService {
 
     // Try to get from cache first
     if (this.cache) {
-      const cachedResponse = await this.cache.get(cacheKey);
-      if (cachedResponse) {
+      const cacheResult = await this.cache.get<string>(cacheKey);
+      if (cacheResult.success && cacheResult.data) {
         logger.debug('Returning cached Gemini response', { cacheKey, correlationId });
-        return cachedResponse;
+        return cacheResult.data;
       }
     }
 
-    const maxRetries = 3;
+    // Max attempts = number of keys + 1 retry per key
+    const maxAttempts = this.keyManager.getKeyCount() + 1;
     const baseDelay = 1000;
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         logger.info('Gemini chat completion request', {
           correlationId,
           attempt,
           textLength: text.length,
+          keyHint: `...${this.currentKey.slice(-4)}`,
         });
 
         const result = await this.model.generateContent(text);
@@ -82,6 +139,9 @@ class GeminiService {
         if (!message) {
           throw new Error('Empty response from Gemini API');
         }
+
+        // Mark key as successful
+        this.keyManager.markSuccess(this.currentKey);
 
         // Cache the response
         if (this.cache) {
@@ -95,28 +155,42 @@ class GeminiService {
           responseLength: message.length,
         });
         return message;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        const isQuota = isQuotaError(error);
+
+        // Mark key as failed
+        this.keyManager.markFailed(this.currentKey, isQuota);
+
         logger.warn('Gemini chat completion attempt failed', {
           correlationId,
           attempt,
-          maxRetries,
-          error: error.message,
-          retryAfter: attempt < maxRetries ? baseDelay * 2 ** (attempt - 1) : null,
+          maxAttempts,
+          error: err.message,
+          isQuotaError: isQuota,
+          retryAfter: attempt < maxAttempts ? baseDelay * 2 ** (attempt - 1) : null,
         });
 
-        if (attempt === maxRetries) {
-          logger.error('Gemini chat completion failed after retries', {
+        if (attempt === maxAttempts) {
+          logger.error('Gemini chat completion failed after all keys exhausted', {
             correlationId,
-            error: error.message,
+            error: err.message,
             text: `${text.substring(0, 100)}...`,
           });
-          throw new Error(`Failed to get response from Gemini API: ${error.message}`);
+          throw new Error(`Failed to get response from Gemini API: ${err.message}`);
         }
 
-        // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, baseDelay * 2 ** (attempt - 1)));
+        // Rotate to next key
+        this.refreshClient();
+
+        // Exponential backoff (shorter for quota errors since we rotated)
+        const delay = isQuota ? 500 : baseDelay * 2 ** (attempt - 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
+
+    // TypeScript requires this, but it's unreachable
+    throw new Error('Unexpected end of retry loop');
   }
 
   /**
@@ -135,10 +209,10 @@ class GeminiService {
 
     // Try to get from cache first
     if (this.cache) {
-      const cachedResponse = await this.cache.get(cacheKey);
-      if (cachedResponse) {
+      const cacheResult = await this.cache.get<string>(cacheKey);
+      if (cacheResult.success && cacheResult.data) {
         logger.debug('Returning cached Gemini conversation response', { cacheKey, correlationId });
-        return cachedResponse;
+        return cacheResult.data;
       }
     }
 
@@ -210,13 +284,14 @@ class GeminiService {
     }
   }
 
+
   /**
    * Get a chat completion with function calling support and caching
    * @param {Array} messages - Array of message objects
    * @param {Array} tools - Array of tool definitions
-   * @returns {Promise<Object>} The full response object with potential tool calls
+   * @returns {Promise<GeminiResponse>} The full response object with potential tool calls
    */
-  async getChatCompletionWithTools(messages: any[], tools: any[]) {
+  async getChatCompletionWithTools(messages: any[], tools: any[]): Promise<GeminiResponse> {
     if (!messages || messages.length === 0) {
       throw new Error('Messages are required.');
     }
@@ -233,10 +308,10 @@ class GeminiService {
 
     // Try to get from cache first
     if (this.cache) {
-      const cachedResponse = await this.cache.get(cacheKey);
-      if (cachedResponse) {
+      const cacheResult = await this.cache.get(cacheKey);
+      if (cacheResult.success && cacheResult.data) {
         logger.debug('Returning cached Gemini tools response', { cacheKey });
-        return cachedResponse;
+        return cacheResult.data as GeminiResponse;
       }
     }
 
@@ -280,7 +355,7 @@ class GeminiService {
 
       if (functionCalls && functionCalls.length > 0) {
         responseData = {
-          finish_reason: 'tool_calls',
+          finish_reason: 'tool_calls' as const,
           message: {
             role: 'assistant',
             content: response.text(),
@@ -295,7 +370,7 @@ class GeminiService {
         };
       } else {
         responseData = {
-          finish_reason: 'stop',
+          finish_reason: 'stop' as const,
           message: {
             role: 'assistant',
             content: response.text(),
@@ -335,10 +410,10 @@ class GeminiService {
 
     // Try to get from cache first
     if (this.cache) {
-      const cachedSummary = await this.cache.get(cacheKey);
-      if (cachedSummary) {
+      const cacheResult = await this.cache.get<string>(cacheKey);
+      if (cacheResult.success && cacheResult.data) {
         logger.debug('Returning cached Gemini summary', { cacheKey });
-        return cachedSummary;
+        return cacheResult.data;
       }
     }
 
@@ -388,10 +463,10 @@ Summary:`;
 
     // Try to get from cache first
     if (this.cache) {
-      const cachedResult = await this.cache.get(cacheKey);
-      if (cachedResult) {
+      const cacheResult = await this.cache.get(cacheKey);
+      if (cacheResult.success && cacheResult.data) {
         logger.debug('Returning cached moderation result', { cacheKey });
-        return cachedResult;
+        return cacheResult.data;
       }
     }
 
@@ -460,12 +535,16 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
   /**
    * Clear cache for specific patterns
    * @param {string} pattern - Cache key pattern to clear
+   * @returns {Promise<number>} Number of cleared cache entries
    */
-  async clearCache(pattern: string = 'gemini:*') {
+  async clearCache(pattern: string = 'gemini:*'): Promise<number> {
     if (this.cache) {
-      const cleared = await this.cache.invalidatePattern(pattern);
-      logger.info(`Cleared ${cleared} cached Gemini responses`);
-      return cleared;
+      const result = await this.cache.invalidatePattern(pattern);
+      if (result.success) {
+        logger.info(`Cleared ${result.data} cached Gemini responses`);
+        return result.data;
+      }
+      logger.warn('Failed to clear cache:', result.error);
     }
     return 0;
   }

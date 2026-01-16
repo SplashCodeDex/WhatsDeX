@@ -10,12 +10,12 @@ export async function useFirestoreAuthState(tenantId: string, botId: string): Pr
   const writeData = async (data: any, id: string) => {
     const serialized = JSON.parse(JSON.stringify(data, BufferJSON.replacer));
     // Wrap in object to ensure it is a valid Firestore document (cannot be primitive)
-    await firebaseService.setDoc(`bots/${botId}/auth` as any, id, { value: serialized }, tenantId);
+    await (firebaseService as any).setDoc(`bots/${botId}/auth`, id, { value: serialized }, tenantId);
   };
 
   const readData = async (id: string) => {
     try {
-      const doc = await firebaseService.getDoc(`bots/${botId}/auth` as any, id, tenantId);
+      const doc = await (firebaseService as any).getDoc(`bots/${botId}/auth`, id, tenantId);
       if (doc && 'value' in doc) {
         return JSON.parse(JSON.stringify((doc as any).value), BufferJSON.reviver);
       }
@@ -32,7 +32,7 @@ export async function useFirestoreAuthState(tenantId: string, botId: string): Pr
   const removeData = async (id: string) => {
     // Note: FirebaseService doesn't have deleteDoc yet, but we'll add it or mock it
     // For now, setting to empty as placeholder
-    await firebaseService.setDoc(`bots/${botId}/auth` as any, id, { deleted: true } as any, tenantId);
+    await (firebaseService as any).setDoc(`bots/${botId}/auth`, id, { deleted: true }, tenantId);
   };
 
   const creds: AuthenticationCreds = await readData('creds') || initAuthCreds();

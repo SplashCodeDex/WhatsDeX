@@ -279,3 +279,33 @@ export const CampaignSchema = z.object({
 }).readonly();
 
 export type Campaign = z.infer<typeof CampaignSchema>;
+
+/**
+ * Webhook Event Enum
+ */
+export const WebhookEventSchema = z.enum([
+  'message.received',
+  'message.sent',
+  'bot.connected',
+  'bot.disconnected',
+  'bot.error',
+  'campaign.completed'
+]);
+export type WebhookEvent = z.infer<typeof WebhookEventSchema>;
+
+/**
+ * Webhook Schema ('tenants/{tenantId}/webhooks' subcollection)
+ */
+export const WebhookSchema = z.object({
+  id: z.string(),
+  url: z.string().url(),
+  events: z.array(WebhookEventSchema).min(1),
+  secret: z.string().min(16), // For HMAC signing
+  isActive: z.boolean().default(true),
+  name: z.string().optional(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema,
+  metadata: z.record(z.string(), z.any()).optional()
+}).readonly();
+
+export type Webhook = z.infer<typeof WebhookSchema>;

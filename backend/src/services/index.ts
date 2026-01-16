@@ -11,9 +11,8 @@ export { default as DatabaseService } from './database.js';
 export { default as CacheService } from './cache.js';
 
 // AI Services
-export { default as AIProcessor } from './aiProcessor.js';
-export { default as EnhancedAIBrain } from './enhancedAIBrain.js';
-export { default as WhatsDeXBrain } from './whatsDeXBrain.js';
+export { default as GeminiAI } from './geminiAI.js';
+export { GeminiAI as EnhancedAIBrain } from './geminiAI.js'; // Legacy alias
 
 // Bot Services
 export { default as CommandSystem } from './commandSystem.js';

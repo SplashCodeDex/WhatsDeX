@@ -1,66 +1,148 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Result } from '../types/index.js';
 import logger from '../utils/logger.js';
+import { ApiKeyManager, isQuotaError } from '../lib/apiKeyManager.js';
 
+/**
+ * Embedding Service with API Key Rotation
+ *
+ * Generates text embeddings using Google's text-embedding-004 model
+ * with automatic API key rotation on rate limits.
+ */
 export class EmbeddingService {
-  private static instance: EmbeddingService;
+  private static instance: EmbeddingService | null = null;
+  private keyManager: ApiKeyManager;
   private genAI: GoogleGenerativeAI;
-  private model: string;
-  private maxRetries: number;
-  private baseDelay: number;
+  private currentKey: string;
+  private readonly model: string;
+  private readonly baseDelay: number;
 
-  private constructor() {
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GOOGLE_GEMINI_API_KEY environment variable is required');
-    }
-    this.genAI = new GoogleGenerativeAI(apiKey);
+  private constructor(keyManager: ApiKeyManager, initialKey: string) {
+    this.keyManager = keyManager;
+    this.currentKey = initialKey;
+    this.genAI = new GoogleGenerativeAI(this.currentKey);
     this.model = 'text-embedding-004';
-    this.maxRetries = 3;
-    this.baseDelay = 2000;
+    this.baseDelay = 1000;
+
+    const stats = this.keyManager.getStats();
+    logger.info(`EmbeddingService initialized with ${stats.totalKeys} API keys (${stats.healthyKeys} healthy)`);
   }
 
-  public static getInstance(): EmbeddingService {
-    if (!EmbeddingService.instance) {
-      EmbeddingService.instance = new EmbeddingService();
+  /**
+   * Get or create the singleton instance.
+   * Returns Result pattern for safe initialization.
+   */
+  public static getInstance(): Result<EmbeddingService> {
+    if (EmbeddingService.instance) {
+      return { success: true, data: EmbeddingService.instance };
     }
-    return EmbeddingService.instance;
+
+    const managerResult = ApiKeyManager.getInstance();
+    if (!managerResult.success) {
+      return managerResult;
+    }
+
+    const keyResult = managerResult.data.getKey();
+    if (!keyResult.success) {
+      return keyResult;
+    }
+
+    EmbeddingService.instance = new EmbeddingService(managerResult.data, keyResult.data);
+    return { success: true, data: EmbeddingService.instance };
   }
 
+  /**
+   * Reset singleton (for testing).
+   */
+  public static resetInstance(): void {
+    EmbeddingService.instance = null;
+  }
+
+  /**
+   * Refresh the client with a new key from the rotation pool.
+   */
+  private refreshClient(): void {
+    const keyResult = this.keyManager.getKey();
+    if (!keyResult.success) {
+      logger.error('[EmbeddingService] Failed to get new key during rotation:', keyResult.error);
+      return;
+    }
+
+    if (keyResult.data !== this.currentKey) {
+      this.currentKey = keyResult.data;
+      this.genAI = new GoogleGenerativeAI(this.currentKey);
+      logger.info(`[EmbeddingService] Rotated to new API key ...${this.currentKey.slice(-4)}`);
+    }
+  }
+
+  /**
+   * Generate embedding for text with automatic key rotation on failures.
+   *
+   * @param text - The text to generate embedding for (max 8000 chars)
+   * @returns Result containing the embedding vector or an error
+   */
   async generateEmbedding(text: string): Promise<Result<number[]>> {
-    if (!text) return { success: false, error: new Error('Text is required') };
+    if (!text) {
+      return { success: false, error: new Error('Text is required') };
+    }
 
     const cleanText = text.trim().substring(0, 8000);
+    const maxAttempts = this.keyManager.getKeyCount() + 1;
 
-    try {
-      const embedding = await this.withRetry(async () => {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
         const embeddingModel = this.genAI.getGenerativeModel({ model: this.model });
         const result = await embeddingModel.embedContent(cleanText);
-        return result.embedding.values;
-      });
+        const embedding = result.embedding.values;
 
-      return { success: true, data: embedding };
-    } catch (error: unknown) {
-      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
-    }
-  }
+        // Mark key as successful
+        this.keyManager.markSuccess(this.currentKey);
 
-  private async withRetry<T>(operation: () => Promise<T>): Promise<T> {
-    let lastError: unknown;
-    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-      try {
-        return await operation();
+        return { success: true, data: embedding };
       } catch (error: unknown) {
-        lastError = error;
-        if (attempt === this.maxRetries) break;
-        const delay = this.baseDelay * Math.pow(2, attempt - 1);
-        logger.warn(`Embedding API attempt ${attempt} failed, retrying...`);
+        const err = error instanceof Error ? error : new Error(String(error));
+        const isQuota = isQuotaError(error);
+
+        // Mark key as failed
+        this.keyManager.markFailed(this.currentKey, isQuota);
+
+        logger.warn(`[EmbeddingService] Attempt ${attempt}/${maxAttempts} failed`, {
+          error: err.message,
+          isQuotaError: isQuota,
+          keyHint: `...${this.currentKey.slice(-4)}`,
+        });
+
+        if (attempt === maxAttempts) {
+          logger.error('[EmbeddingService] All keys exhausted', { error: err.message });
+          return { success: false, error: err };
+        }
+
+        // Rotate to next key
+        this.refreshClient();
+
+        // Exponential backoff (shorter for quota errors)
+        const delay = isQuota ? 300 : this.baseDelay * Math.pow(2, attempt - 1);
         await new Promise(res => setTimeout(res, delay));
       }
     }
-    throw lastError;
+
+    // Unreachable, but TypeScript requires it
+    return { success: false, error: new Error('Unexpected end of retry loop') };
   }
 }
 
-export const embeddingService = EmbeddingService.getInstance();
+/**
+ * Get the singleton instance, throwing on initialization failure.
+ * Use EmbeddingService.getInstance() for Result-pattern access.
+ */
+function getEmbeddingService(): EmbeddingService {
+  const result = EmbeddingService.getInstance();
+  if (!result.success) {
+    throw result.error;
+  }
+  return result.data;
+}
+
+// Lazy initialization - will throw if env var not set
+export const embeddingService = getEmbeddingService();
 export default embeddingService;
