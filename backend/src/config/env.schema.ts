@@ -14,9 +14,8 @@ export const envSchema = z.object({
   SESSION_ID: z.string().default('default'),
   TENANT_ID: z.string().default('system'),
 
-  // Owner Config
-  OWNER_NAME: z.string().default('Your Name'),
-  OWNER_NUMBER: z.string().default('1234567890'),
+  // NOTE: OWNER_NAME and OWNER_NUMBER are now per-tenant settings in Firestore
+  // See: TenantConfigService.getTenantSettings()
 
   // Auth Adapter
   AUTH_ADAPTER: z.enum(['default', 'mysql', 'mongodb', 'firebase']).default('default'),

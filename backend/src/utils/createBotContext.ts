@@ -230,7 +230,18 @@ const createBotContext = async (
     }
   };
 
-  const isOwner = tools.cmd.isOwner(config, senderId, rawBaileysMessage.key.id);
+  // Fetch tenant settings for owner check
+  let ownerNumber = 'system';
+  try {
+    const tenantResult = await originalContext.tenantConfigService.getTenantSettings(botInstance?.tenantId || 'system');
+    if (tenantResult.success && tenantResult.data.ownerNumber) {
+      ownerNumber = tenantResult.data.ownerNumber;
+    }
+  } catch (err) {
+    originalContext.logger.warn('Failed to fetch tenant settings for owner check', err);
+  }
+
+  const isOwner = tools.cmd.isOwner([ownerNumber], senderId, rawBaileysMessage.key.id);
   const isAdmin = isGroup ? await ctx.group().isAdmin(senderId) : false;
 
   ctx.isOwner = isOwner;

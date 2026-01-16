@@ -10,7 +10,9 @@ export default {
     restrict: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
+    const { formatter, tools, config, tenantConfigService } = ctx.bot.context as GlobalContext;
+    const tenantId = (ctx.bot as any).tenantId;
+
     const url = ctx.args[0] || null;
 
     if (!url) {
@@ -25,6 +27,9 @@ ${formatter.quote(example)}`);
     if (!isUrl) return await ctx.reply(config.msg.urlInvalid || 'Invalid URL');
 
     try {
+      const tenantResult = await tenantConfigService.getTenantSettings(tenantId);
+      const ownerName = tenantResult.success ? tenantResult.data.ownerName || 'Unknown' : 'Unknown';
+
       const urlCode = new URL(url).pathname.split('/').pop();
       if (!urlCode) throw new Error('Invalid invite link');
 
@@ -35,7 +40,7 @@ ${formatter.quote(example)}`);
       if (res) {
         await ctx.sendMessage(res, {
           text: formatter.quote(
-            `👋 Halo! Saya adalah bot WhatsApp bernama ${config.bot.name}, dimiliki oleh ${config.owner.name}. Saya bisa melakukan banyak perintah, seperti membuat stiker, menggunakan AI untuk pekerjaan tertentu, dan beberapa perintah berguna lainnya. Saya di sini untuk menghibur dan menyenangkan kamu!`
+            `👋 Halo! Saya adalah bot WhatsApp bernama ${config.bot.name}, dimiliki oleh ${ownerName}. Saya bisa melakukan banyak perintah, seperti membuat stiker, menggunakan AI untuk pekerjaan tertentu, dan beberapa perintah berguna lainnya. Saya di sini untuk menghibur dan menyenangkan kamu!`
           ),
         });
       }

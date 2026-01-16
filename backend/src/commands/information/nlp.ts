@@ -34,6 +34,10 @@ export default {
       const userDb = await ctx.bot.context.database.user.get(userId, ctx.bot.tenantId);
       const recentCommands: string[] = []; // User schema doesn't have recentCommands yet
 
+      // Fetch owner number from tenant settings
+      const tenantResult = await ctx.bot.context.tenantConfigService.getTenantSettings((ctx.bot as any).tenantId);
+      const ownerNumber = tenantResult.success ? tenantResult.data.ownerNumber : 'system';
+
       // Process the input
       const result = await nlpService.processInput(input, {
         userId: userId,
@@ -41,7 +45,7 @@ export default {
         isGroup: ctx.isGroup(),
         isAdmin: ctx.isGroup() ? await ctx.group().isAdmin(ctx.sender.jid) : false,
         isOwner: ctx.bot.context.tools.cmd.isOwner(
-          config,
+          [ownerNumber],
           ctx.getId(ctx.sender.jid),
           ctx.msg.key?.id
         ),

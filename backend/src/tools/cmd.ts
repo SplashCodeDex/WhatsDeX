@@ -57,8 +57,7 @@ export const parseFlag = (args: string | null | undefined, options: FlagOptions)
 import logger from '../utils/logger.js';
 import { MessageContext } from '../types/index.js';
 
-export const isOwner = (config: any, senderId: string, ...args: any[]) => {
-    const owners = (config.owner?.id || '').split(',').map((n: string) => n.trim());
+export const isOwner = (owners: string[], senderId: string, ...args: any[]) => {
     return owners.includes(senderId);
 };
 
@@ -119,5 +118,5 @@ export const getRandomElement = <T>(arr: T[]): T => {
 export const translate = async (text: string, lang: string = 'id'): Promise<string> => {
     // Placeholder for translation - strictly typed
     // In real implementation, call a translation service
-    return text; 
+    return text;
 };

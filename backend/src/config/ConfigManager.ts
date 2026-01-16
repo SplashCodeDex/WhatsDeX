@@ -323,11 +323,29 @@ export class ConfigManager {
   }
 
   validateConfiguration() {
-    const required = [
-      'REDIS_URL',
-      'JWT_SECRET',
-      'OWNER_NUMBER'
-    ];
+    /**
+     * IMPORTANT: Configuration Hierarchy
+     *
+     * 1. INFRASTRUCTURE (validated here) - Platform operator only
+     *    - JWT_SECRET: Required for authentication
+     *    - REDIS_URL: Optional in development, required in production
+     *
+     * 2. TENANT SETTINGS (Firestore) - Customer controlled
+     *    - ownerNumber, botDefaults, features, etc.
+     *    - Managed via TenantConfigService, NOT env vars
+     *
+     * 3. BOT SETTINGS (Firestore) - Per-bot configuration
+     *    - prefix, mode, aiEnabled, etc.
+     *    - Stored in tenants/{tenantId}/bots/{botId}
+     */
+
+    // Only require JWT_SECRET for auth infrastructure
+    const required: string[] = ['JWT_SECRET'];
+
+    // Redis is required in production but optional in development
+    if (this.environment === 'production') {
+      required.push('REDIS_URL');
+    }
 
     const missing = required.filter(key => !process.env[key]);
 
@@ -339,6 +357,13 @@ export class ConfigManager {
     // Validate JWT secret strength
     if (this.config.auth.jwtSecret && this.config.auth.jwtSecret.length < 32) {
       logger.warn('⚠️ JWT secret is too short. Use at least 32 characters.');
+    }
+
+    // Warn about missing optional but recommended vars
+    const recommended = ['REDIS_URL', 'GOOGLE_GEMINI_API_KEY'];
+    const missingRecommended = recommended.filter(key => !process.env[key]);
+    if (missingRecommended.length > 0) {
+      logger.warn('⚠️ Missing recommended environment variables:', { missingRecommended });
     }
 
     logger.info('✅ Configuration validation passed');

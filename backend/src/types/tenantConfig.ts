@@ -1,0 +1,141 @@
+/**
+ * Tenant Configuration Types
+ *
+ * These schemas define tenant-specific settings stored in Firestore,
+ * NOT in environment variables. Each tenant controls their own configuration
+ * via the dashboard.
+ */
+
+import { z } from 'zod';
+
+// =============================================================================
+// Tenant Settings Schema (stored in tenants/{tenantId}/settings/general)
+// =============================================================================
+
+export const TenantSettingsSchema = z.object({
+    // Owner Information
+    ownerNumber: z.string().min(10).describe('Primary WhatsApp number for this tenant'),
+    ownerName: z.string().optional(),
+    organization: z.string().optional(),
+
+    // Bot Defaults (applied to new bots)
+    botDefaults: z.object({
+        prefix: z.array(z.string()).default(['.', '!', '/']),
+        mode: z.enum(['public', 'private', 'group-only']).default('public'),
+        autoReconnect: z.boolean().default(true),
+        cooldownMs: z.number().min(0).default(10000),
+    }).default(() => ({
+        prefix: ['.', '!', '/'],
+        mode: 'public' as const,
+        autoReconnect: true,
+        cooldownMs: 10000,
+    })),
+
+    // Feature Toggles (based on subscription plan)
+    features: z.object({
+        aiEnabled: z.boolean().default(false),
+        campaignsEnabled: z.boolean().default(false),
+        analyticsEnabled: z.boolean().default(true),
+        webhooksEnabled: z.boolean().default(false),
+        maxBots: z.number().min(1).default(1),
+    }).default(() => ({
+        aiEnabled: false,
+        campaignsEnabled: false,
+        analyticsEnabled: true,
+        webhooksEnabled: false,
+        maxBots: 1,
+    })),
+
+    // Notification Preferences
+    notifications: z.object({
+        email: z.boolean().default(true),
+        webhookUrl: z.string().url().optional(),
+        notifyOnBotDisconnect: z.boolean().default(true),
+        notifyOnErrors: z.boolean().default(true),
+    }).default(() => ({
+        email: true,
+        notifyOnBotDisconnect: true,
+        notifyOnErrors: true,
+    })),
+
+    // Metadata
+    createdAt: z.date().optional(),
+    updatedAt: z.date().optional(),
+});
+
+export type TenantSettings = z.infer<typeof TenantSettingsSchema>;
+
+// =============================================================================
+// Bot Configuration Schema (stored in tenants/{tenantId}/bots/{botId})
+// =============================================================================
+
+export const BotConfigSchema = z.object({
+    // Identity
+    name: z.string().min(1).default('My Bot'),
+    phoneNumber: z.string().optional(),
+
+    // Behavior
+    prefix: z.array(z.string()).default(['.', '!', '/']),
+    mode: z.enum(['public', 'private', 'group-only']).default('public'),
+    selfMode: z.boolean().default(false),
+
+    // Automation
+    autoReply: z.boolean().default(false),
+    autoReplyMessage: z.string().optional(),
+    welcomeMessage: z.string().optional(),
+
+    // AI Configuration
+    aiEnabled: z.boolean().default(false),
+    aiPersonality: z.string().optional(),
+
+    // Rate Limiting
+    cooldownMs: z.number().min(0).default(10000),
+    maxCommandsPerMinute: z.number().min(1).default(60),
+
+    // Status
+    status: z.enum(['online', 'offline', 'connecting', 'error']).default('offline'),
+    lastSeen: z.date().optional(),
+
+    // Metadata
+    createdAt: z.date().optional(),
+    updatedAt: z.date().optional(),
+});
+
+export type BotConfig = z.infer<typeof BotConfigSchema>;
+
+// =============================================================================
+// Default Values (used when creating new tenants/bots)
+// =============================================================================
+
+export const DEFAULT_TENANT_SETTINGS: Partial<TenantSettings> = {
+    botDefaults: {
+        prefix: ['.', '!', '/'],
+        mode: 'public',
+        autoReconnect: true,
+        cooldownMs: 10000,
+    },
+    features: {
+        aiEnabled: false,
+        campaignsEnabled: false,
+        analyticsEnabled: true,
+        webhooksEnabled: false,
+        maxBots: 1,
+    },
+    notifications: {
+        email: true,
+        notifyOnBotDisconnect: true,
+        notifyOnErrors: true,
+    },
+};
+
+export const DEFAULT_BOT_CONFIG: Partial<BotConfig> = {
+    name: 'My Bot',
+    prefix: ['.', '!', '/'],
+    mode: 'public',
+    selfMode: false,
+    autoReply: false,
+    aiEnabled: false,
+    cooldownMs: 10000,
+    maxCommandsPerMinute: 60,
+    status: 'offline',
+};

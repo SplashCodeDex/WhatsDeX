@@ -175,6 +175,20 @@ match /tenants/{tenantId}/{document=**} {
 
 ### Configuration
 
+#### Configuration Hierarchy
+
+WhatsDeX uses a **layered configuration system** that separates infrastructure from tenant settings:
+
+| Layer | Location | Controlled By | Examples |
+|-------|----------|---------------|----------|
+| **Infrastructure** | `.env` | Platform Operator | JWT_SECRET, REDIS_URL, STRIPE_KEY |
+| **Platform Defaults** | `ConfigManager.ts` | Code | Rate limits, feature flags |
+| **Tenant Settings** | Firestore | End-user (Dashboard) | ownerNumber, botDefaults |
+| **Bot Configuration** | Firestore | End-user (Dashboard) | prefix, mode, aiEnabled |
+
+> **Rule**: End-users NEVER have access to infrastructure configuration.
+> All user-configurable settings live in Firestore via `TenantConfigService`.
+
 - All secrets via environment variables
 - `.env.example` templates in each package
 

@@ -107,12 +107,6 @@ export class ConfigService {
     };
   }
 
-  public get owner() {
-    return {
-      name: this.get('OWNER_NAME'),
-      number: this.get('OWNER_NUMBER')
-    };
-  }
 }
 
 export const configService = ConfigService.getInstance();

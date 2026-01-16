@@ -99,14 +99,6 @@ export default {
     urlInvalid: Formatter.quote('❎ Invalid URL!'), // Message if the URL is invalid
   },
 
-  // Bot owner information
-  owner: {
-    name: process.env.OWNER_NAME || 'Your Name', // REPLACE WITH YOUR NAME
-    organization: process.env.OWNER_ORGANIZATION || 'Your Organization', // REPLACE WITH YOUR ORGANIZATION
-    id: process.env.OWNER_NUMBER || '1234567890', // REPLACE WITH YOUR PHONE NUMBER
-    co: process.env.CO_OWNER_NUMBERS ? process.env.CO_OWNER_NUMBERS.split(',') : [], // Co-owner's phone number
-  },
-
   // Bot sticker
   sticker: {
     packname: process.env.STICKER_PACKNAME || 'WhatsDeX Sticker Pack', // Sticker pack name

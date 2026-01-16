@@ -214,6 +214,7 @@ export interface GlobalContext {
     groupService: import('../services/groupService.js').GroupService;
     multiTenantBotService: import('../services/multiTenantBotService.js').MultiTenantBotService;
     userService: import('../services/userService.js').UserService;
+    tenantConfigService: import('../services/tenantConfigService.js').TenantConfigService;
     state?: any;
     [key: string]: any;
 }

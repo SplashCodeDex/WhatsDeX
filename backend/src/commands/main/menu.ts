@@ -6,8 +6,13 @@ export default {
   aliases: ['allmenu', 'help', 'list', 'listmenu'],
   category: 'main',
   code: async (ctx: MessageContext) => {
-    const { config, formatter, state } = ctx.bot.context as GlobalContext;
+    const { config, formatter, state, tenantConfigService } = ctx.bot.context as GlobalContext;
+    const tenantId = (ctx.bot as any).tenantId;
+
     try {
+      const tenantResult = await tenantConfigService.getTenantSettings(tenantId);
+      const ownerName = tenantResult.success ? tenantResult.data.ownerName || 'Unknown' : 'Unknown';
+
       const tag: Record<string, string> = {
         'ai-chat': 'AI (Chat)',
         'ai-image': 'AI (Image)',
@@ -30,7 +35,7 @@ export default {
       const allCommands = Array.from(ctx.bot.cmd.values()) as Command[];
 
       const text =
-        `Hello, @${ctx.getId(ctx.sender.jid)}! I am a WhatsApp bot named ${config.bot.name}, owned by ${config.owner.name}. I can perform many commands, such as creating stickers, using AI for specific tasks, and other useful commands.\n` +
+        `Hello, @${ctx.getId(ctx.sender.jid)}! I am a WhatsApp bot named ${config.bot.name}, owned by ${ownerName}. I can perform many commands, such as creating stickers, using AI for specific tasks, and other useful commands.\n` +
         '\n' +
         `${formatter.quote(`Date: ${moment.tz(config.system.timeZone).locale('en').format('dddd, DD MMMM YYYY')}`)}\n` +
         `${formatter.quote(`Time: ${moment.tz(config.system.timeZone).format('HH:mm:ss')}`)}\n` +

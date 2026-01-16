@@ -6,18 +6,25 @@ export default {
   aliases: ['creator', 'developer'],
   category: 'information',
   code: async (ctx: MessageContext) => {
-    const { tools, config } = ctx.bot.context as GlobalContext;
+    const { tools, config, tenantConfigService } = ctx.bot.context as GlobalContext;
+    const tenantId = (ctx.bot as any).tenantId;
+
     try {
+      // Get tenant settings
+      const tenantResult = await tenantConfigService.getTenantSettings(tenantId);
+      const ownerName = tenantResult.success ? tenantResult.data.ownerName || 'Unknown' : 'Unknown';
+      const ownerNumber = tenantResult.success ? tenantResult.data.ownerNumber : '0000000000';
+
       // Handle potential ESM/CJS interop issues with vcard-creator
       const VCard = (VCardModule as any).default || VCardModule;
       const vcard = new VCard()
-        .addName(config.owner.name)
-        .addPhoneNumber(config.owner.number)
+        .addName(ownerName)
+        .addPhoneNumber(ownerNumber)
         .toString();
 
       await ctx.reply({
         contacts: {
-          displayName: config.owner.name,
+          displayName: ownerName,
           contacts: [
             {
               vcard,

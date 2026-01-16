@@ -10,8 +10,18 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
-    const isOwner = await tools.cmd.isOwner(config, ctx.getId(ctx.sender.jid), ctx.msg.key?.id, (ctx as any).botInstanceId);
+    const { formatter, config, tools, tenantConfigService } = ctx.bot.context as GlobalContext;
+    const tenantId = (ctx.bot as any).tenantId;
+
+    let ownerNumber = 'system';
+    try {
+      const tenantResult = await tenantConfigService.getTenantSettings(tenantId);
+      if (tenantResult.success && tenantResult.data.ownerNumber) {
+        ownerNumber = tenantResult.data.ownerNumber;
+      }
+    } catch (err) { }
+
+    const isOwner = await tools.cmd.isOwner([ownerNumber], ctx.getId(ctx.sender.jid), ctx.msg.key?.id, (ctx as any).botInstanceId);
     if (!isOwner) return;
 
     try {

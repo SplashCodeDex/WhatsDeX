@@ -12,6 +12,7 @@ import { groupService } from '../services/groupService.js';
 import { databaseService } from '../services/database.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { userService } from '../services/userService.js';
+import { tenantConfigService } from '../services/tenantConfigService.js';
 
 /**
  * Initialize and return the fully prepared global context
@@ -31,6 +32,7 @@ async function initializeContext(): Promise<GlobalContext> {
         groupService,
         multiTenantBotService,
         userService,
+        tenantConfigService,
         // These will be initialized below
         commandSystem: null as any,
         unifiedAI: null as any,

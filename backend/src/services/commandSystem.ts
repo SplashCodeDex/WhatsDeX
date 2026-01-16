@@ -63,7 +63,7 @@ export class CommandSystem {
         this.categories.set(category.name, []);
 
         for (const file of commandFiles) {
-          if (file.endsWith('.js')) {
+          if ((file.endsWith('.js') || file.endsWith('.ts')) && !file.endsWith('.d.ts')) {
             try {
               const commandPath = path.join(categoryPath, file);
               const command = await this.loadSingleCommand(commandPath, category.name);
@@ -244,7 +244,7 @@ export class CommandSystem {
         jid,
         name: messageData.pushName || 'Unknown',
         pushName: messageData.pushName ?? undefined,
-        isOwner: ((this.context.config as unknown as { get: (key: string) => string[] | undefined }).get('bot.owners'))?.includes(jid) || false,
+        isOwner: false, // Will be set below
         isAdmin: false,
       },
       author: {
@@ -292,6 +292,17 @@ export class CommandSystem {
         return Buffer.alloc(0);
       }
     };
+
+    // Set isOwner using TenantConfigService
+    try {
+      const tenantResult = await this.context.tenantConfigService.getTenantSettings(bot.tenantId);
+      const ownerNumber = tenantResult.success ? tenantResult.data.ownerNumber : 'system';
+      // Use the unified checks from tools if available, or manual check
+      msgContext.sender.isOwner = this.context.tools.cmd.isOwner([ownerNumber], jid);
+    } catch (err) {
+      // Fail safe to false
+      msgContext.sender.isOwner = false;
+    }
 
     return msgContext;
   }
