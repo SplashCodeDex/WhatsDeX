@@ -49,6 +49,15 @@ export const registerSchema = z.object({
         .max(50, 'Last name is too long'),
     email: emailSchema,
     password: passwordSchema,
+    tenantName: z.string().min(2, 'Workspace name must be at least 2 characters').optional(),
+    subdomain: z
+        .string()
+        .min(2, 'Subdomain must be at least 2 characters')
+        .regex(
+            /^[a-z0-9-]+$/,
+            'Subdomain can only contain lowercase letters, numbers, and hyphens'
+        )
+        .optional(),
     acceptTerms: z.boolean().refine((val) => val === true, {
         message: 'You must accept the terms and conditions',
     }),
