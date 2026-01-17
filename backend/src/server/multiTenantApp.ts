@@ -89,14 +89,30 @@ export class MultiTenantApp {
     }));
 
     // CORS
+    const allowedOriginsConfig = this.config.get('CORS_ALLOWED_ORIGINS');
+    const allowedOrigins = allowedOriginsConfig ? allowedOriginsConfig.split(',').map(origin => origin.trim()) : [];
+
+    const appUrl = this.config.get('NEXT_PUBLIC_APP_URL');
+    if (appUrl && !allowedOrigins.includes(appUrl)) {
+      allowedOrigins.push(appUrl);
+    }
+
+    if (allowedOriginsConfig) {
+        logger.info(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+    } else {
+        logger.warn(`CORS_ALLOWED_ORIGINS not set. Falling back to default: ${appUrl}`);
+    }
+
     this.app.use(cors({
       origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-        if (!origin ||
-          origin.includes('localhost') ||
-          origin.endsWith('.whatsdx.com') ||
-          origin === this.config.get('NEXT_PUBLIC_APP_URL')) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+          return callback(null, true);
+        }
+        if (allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
+          logger.warn(`CORS blocked for origin: ${origin}`);
           callback(new Error('Not allowed by CORS'));
         }
       },

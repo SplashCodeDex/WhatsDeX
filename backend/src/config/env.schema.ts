@@ -28,6 +28,7 @@ export const envSchema = z.object({
 
   // App URL & Frontend
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+  CORS_ALLOWED_ORIGINS: z.string().optional(),
   JWT_SECRET: z.string().default('secret'),
 
   // Rate Limiting
