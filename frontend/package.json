@@ -39,11 +39,14 @@
     "@types/node": "22.15.21",
     "@types/react": "19.2.0",
     "@types/react-dom": "19.2.0",
+    "@vitejs/plugin-react": "^5.1.2",
     "eslint": "9.19.0",
     "eslint-config-next": "16.1.2",
+    "jsdom": "^27.4.0",
     "lightningcss": "^1.30.2",
     "tailwindcss": "4.1.18",
     "typescript": "5.9.3",
+    "vite-tsconfig-paths": "^6.0.4",
     "vitest": "3.2.1"
   }
 }
