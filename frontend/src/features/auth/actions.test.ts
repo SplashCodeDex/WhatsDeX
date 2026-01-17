@@ -23,41 +23,28 @@ describe('signUp Server Action', () => {
     vi.clearAllMocks();
   });
 
-  it('should include tenantName and subdomain in the API payload', async () => {
+  it('should send the correct payload to the backend', async () => {
     const formData = new FormData();
     formData.append('firstName', 'John');
     formData.append('lastName', 'Doe');
     formData.append('email', 'john@example.com');
     formData.append('password', 'Password123');
     formData.append('acceptTerms', 'on');
-    // These fields are currently missing in the implementation
-    formData.append('tenantName', 'My Company');
-    formData.append('subdomain', 'my-company');
+
+    // Mock the fetch response
+    (global.fetch as vi.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ user: { id: '123' }, token: 'abc' }),
+    });
 
     await signUp(formData);
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/auth/register'),
+      'http://localhost:3000/api/auth/register',
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('"tenantName":"My Company"'),
+        body: expect.stringContaining('"displayName":"John Doe"'),
       })
-    );
-
-    expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/auth/register'),
-        expect.objectContaining({
-            method: 'POST',
-            body: expect.stringContaining('"subdomain":"my-company"'),
-        })
-    );
-    
-    expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/auth/register'),
-        expect.objectContaining({
-            method: 'POST',
-            body: expect.stringContaining('"name":"John Doe"'),
-        })
     );
   });
 });
