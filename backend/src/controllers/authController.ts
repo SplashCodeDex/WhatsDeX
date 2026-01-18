@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { db, admin } from '../lib/firebase.js'; // Added admin import
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, Transaction } from 'firebase-admin/firestore';
 import { ConfigService } from '../services/ConfigService.js';
 import auditService from '../services/auditService.js';
 import { stripeService } from '../services/stripe.js';
@@ -26,7 +26,7 @@ interface RequestWithUser extends Request {
 const signupSchema = z.object({
     displayName: z.string().min(2),
     email: z.string().email(),
-    password: z.string().min(8),
+    password: z.string().min(8, 'Password must be at least 8 characters').regex(/[A-Z]/, 'Password must contain at least one uppercase letter').regex(/[0-9]/, 'Password must contain at least one number'),
     tenantName: z.string().min(2).optional(),
     subdomain: z.string().min(2).regex(/^[a-z0-9-]+$/).optional(),
     plan: z.enum(['FREE', 'BASIC', 'PRO', 'ENTERPRISE']).default('FREE'),
@@ -109,7 +109,7 @@ export const signup = async (req: Request, res: Response) => {
         logger.info('DEBUG: Creating tenant and user in Firebase');
 
         // Use Firebase transaction to ensure data integrity
-        const result = await db.runTransaction(async (transaction: any) => { // Using db.runTransaction
+        const result = await db.runTransaction(async (transaction: Transaction) => {
             // 1. Create Tenant
             logger.info('DEBUG: Creating tenant document');
             const tenantId = `tenant-${Date.now()}`;
@@ -173,8 +173,10 @@ export const signup = async (req: Request, res: Response) => {
                         const planKey = planData.code.toLowerCase();
                         const subscription = await stripeService.createSubscription(customer.id, planKey, { userId: userRecord.uid });
                         stripeSubscriptionId = subscription.id;
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        stripePriceId = (subscription.items.data[0] as any).price.id;
+                        const price = subscription.items?.data[0]?.price;
+                        if (price && typeof price === 'object') {
+                            stripePriceId = price.id;
+                        }
                     } catch (stripeErr) {
                         logger.error('Stripe signup failed, falling back', stripeErr instanceof Error ? stripeErr : new Error(String(stripeErr)));
                     }
