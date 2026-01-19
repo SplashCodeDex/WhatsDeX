@@ -29,6 +29,7 @@ type PairingForm = z.infer<typeof pairingSchema>;
 
 export function BotConnectDialog({ bot, open, onOpenChange }: BotConnectDialogProps) {
     const [activeTab, setActiveTab] = useState<'qr' | 'code'>('qr');
+    const [isGeneratingQR, setIsGeneratingQR] = useState(false);
     const { data: statusData } = useBotStatus(bot.id, open); // Poll status while open
     const { mutate: requestPairingCode, isPending: isRequestingCode, data: pairingCodeData, error: pairingError } = usePairingCode(bot.id);
 
@@ -36,8 +37,17 @@ export function BotConnectDialog({ bot, open, onOpenChange }: BotConnectDialogPr
     useEffect(() => {
         if (statusData?.status === 'connected') {
             onOpenChange(false);
+            setIsGeneratingQR(false); // Reset on success
         }
     }, [statusData?.status, onOpenChange]);
+
+    // Reset state when dialog closes
+    useEffect(() => {
+        if (!open) {
+            setIsGeneratingQR(false);
+            setActiveTab('qr');
+        }
+    }, [open]);
 
     const { register, handleSubmit, formState: { errors } } = useForm<PairingForm>({
         resolver: zodResolver(pairingSchema),
@@ -77,7 +87,11 @@ export function BotConnectDialog({ bot, open, onOpenChange }: BotConnectDialogPr
                     <div className="mt-4 h-[300px] flex flex-col items-center justify-center">
                         <TabsContent value="qr" className="w-full flex-1 flex flex-col items-center justify-center mt-0">
                             <div className="scale-90">
-                                <QRCodeDisplay botId={bot.id} />
+                                <QRCodeDisplay
+                                    botId={bot.id}
+                                    isGenerating={isGeneratingQR}
+                                    onGenerate={() => setIsGeneratingQR(true)}
+                                />
                             </div>
                             <p className="text-sm text-muted-foreground mt-2">Open WhatsApp &gt; Linked Devices &gt; Link a Device</p>
                         </TabsContent>

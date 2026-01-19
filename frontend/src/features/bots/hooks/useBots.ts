@@ -61,7 +61,7 @@ export function useBot(botId: string): ReturnType<typeof useQuery<Bot>> {
 /**
  * Fetch QR code for bot connection
  */
-export function useBotQR(botId: string): ReturnType<typeof useQuery<QRCodeResponse>> {
+export function useBotQR(botId: string, enabled: boolean = true): ReturnType<typeof useQuery<QRCodeResponse>> {
     return useQuery({
         queryKey: botKeys.qr(botId),
         queryFn: async () => {
@@ -71,7 +71,7 @@ export function useBotQR(botId: string): ReturnType<typeof useQuery<QRCodeRespon
             }
             throw new Error(response.error.message);
         },
-        enabled: !!botId,
+        enabled: enabled && !!botId,
         // QR codes expire, so refetch frequently
         refetchInterval: 30000,
         staleTime: 20000,
