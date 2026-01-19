@@ -149,7 +149,7 @@ export class MultiTenantApp {
     this.app.use('/api/auth', authRoutes);
 
     // Template routes
-    this.app.use('/api/templates', templateRoutes);
+    this.app.use('/api/templates', authenticateToken, templateRoutes);
 
     // Analytics routes
     this.app.use('/api/analytics', authenticateToken, analyticsRoutes);
