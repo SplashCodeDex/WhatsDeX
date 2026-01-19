@@ -7,6 +7,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { ConfigService } from '../services/ConfigService.js';
 import auditService from '../services/auditService.js';
 import { stripeService } from '../services/stripe.js';
+import { multiTenantService } from '../services/multiTenantService.js';
 import logger from '../utils/logger.js';
 // Removed firebaseService import
 
@@ -105,104 +106,30 @@ export const signup = async (req: Request, res: Response) => {
             return res.status(400).json({ error: availability.reason, field: availability.field });
         }
 
-        // Create tenant and user
-        logger.info('DEBUG: Creating tenant and user in Firebase');
-
-        // Use Firebase transaction to ensure data integrity
-        const result = await db.runTransaction(async (transaction: any) => { // Using db.runTransaction
-            // 1. Create Tenant
-            logger.info('DEBUG: Creating tenant document');
-            const tenantId = `tenant-${Date.now()}`;
-            const tenantRef = db.collection('tenants').doc(tenantId); // Using db directly
-
-            const tenantData = {
-                id: tenantId,
-                name: tenantName!,
-                subdomain: subdomain!,
-                plan, // Default to FREE
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                status: 'ACTIVE',
-                settings: {
-                    theme: 'light',
-                    notifications: true,
-                },
-            };
-
-            transaction.set(tenantRef, tenantData);
-
-            // 2. Create User
-            logger.info('DEBUG: Creating user in Firebase Auth');
-            const userRecord = await admin.auth().createUser({ // Using admin.auth() directly
+        // Delegate tenant and user creation to the service
+        const result = await multiTenantService.createNewTenantWithUser({
+            tenantName: tenantName,
+            subdomain: subdomain,
+            plan,
+            user: {
+                displayName: name,
                 email,
                 password,
-                displayName: name,
-            });
-
-            logger.info('DEBUG: Creating user document');
-            const userRef = db.collection('tenant_users').doc(userRecord.uid); // Using tenant_users for consistency with other parts of code?
-            // Wait, previous code used 'users'. Let's check checkAvailability usage: 'tenant_users'.
-            // The codebase seems to use 'tenant_users'. I will stick to 'tenant_users'.
-
-            const userData = {
-                id: userRecord.uid,
-                email,
-                displayName: name,
-                tenantId,
-                role: 'ADMIN', // First user is Admin
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                status: 'ACTIVE',
-            };
-
-            transaction.set(userRef, userData);
-
-            // 3. Plan Handling
-            const planCode = plan.toUpperCase();
-            const plansSnapshot = await db.collection('plans').where('code', '==', planCode).limit(1).get();
-            const planDoc = plansSnapshot.empty ? null : plansSnapshot.docs[0];
-            const planData = planDoc ? planDoc.data() : null;
-
-            if (planData && planDoc) {
-                let stripeSubscriptionId = `free_${Date.now()}`;
-                let stripePriceId = 'FREE';
-
-                if (planData.code !== 'FREE') {
-                    try {
-                        const customer = await stripeService.createCustomer({ userId: userRecord.uid, email, name, phone: undefined }); // userRef.id -> userRecord.uid
-                        const planKey = planData.code.toLowerCase();
-                        const subscription = await stripeService.createSubscription(customer.id, planKey, { userId: userRecord.uid });
-                        stripeSubscriptionId = subscription.id;
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        stripePriceId = (subscription.items.data[0] as any).price.id;
-                    } catch (stripeErr) {
-                        logger.error('Stripe signup failed, falling back', stripeErr instanceof Error ? stripeErr : new Error(String(stripeErr)));
-                    }
-                }
-
-                const subRef = db.collection('tenant_subscriptions').doc();
-                transaction.set(subRef, {
-                    id: subRef.id,
-                    tenantId: tenantData.id, // tenantRef.id -> tenantData.id/tenantId
-                    planId: planDoc.id,
-                    status: planData.code === 'FREE' ? 'active' : 'trialing',
-                    currentPeriodStart: Timestamp.now(),
-                    currentPeriodEnd: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-                    stripeSubscriptionId,
-                    stripePriceId,
-                    createdAt: Timestamp.now(),
-                    updatedAt: Timestamp.now(),
-                });
-            }
-
-            return { tenant: tenantData, user: userData };
+            },
         });
+
+        if (!result.success) {
+            // If the service returns an error, pass it to the client
+            return res.status(500).json({ error: result.error.message });
+        }
+
+        const { user, tenant } = result.data;
 
         const config = ConfigService.getInstance();
         const jwtSecret = config.get('JWT_SECRET');
 
         const token = jwt.sign(
-            { userId: result.user.id, tenantId: result.tenant.id, role: result.user.role },
+            { userId: user.id, tenantId: tenant.id, role: user.role },
             jwtSecret,
             { expiresIn: '7d' }
         );
@@ -211,10 +138,10 @@ export const signup = async (req: Request, res: Response) => {
         await auditService.logEvent({
             eventType: 'USER_REGISTER',
             actor: email,
-            actorId: result.user.id,
+            actorId: user.id,
             action: 'Account Created',
             resource: 'tenant',
-            resourceId: result.tenant.id,
+            resourceId: tenant.id,
             details: { plan, subdomain },
             ipAddress: req.ip,
             userAgent: req.get('User-Agent')
@@ -230,8 +157,8 @@ export const signup = async (req: Request, res: Response) => {
         res.status(201).json({
             success: true,
             token,
-            user: { id: result.user.id, name: result.user.displayName, email: result.user.email },
-            tenant: { id: result.tenant.id, name: result.tenant.name, subdomain: result.tenant.subdomain },
+            user: { id: user.id, name: user.displayName, email: user.email },
+            tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
         });
 
     } catch (error: unknown) {

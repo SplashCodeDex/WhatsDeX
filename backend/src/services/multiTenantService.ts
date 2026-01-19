@@ -3,8 +3,137 @@ import logger from '@/utils/logger.js';
 import { Tenant, TenantSchema, Result } from '@/types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getPlanLimits } from '@/utils/featureGating.js';
+import { db, admin } from '../lib/firebase.js';
+import { stripeService } from './stripe.js';
+import Stripe from 'stripe';
+
+interface TenantData {
+    id: string;
+    name: string;
+    subdomain: string;
+    plan: 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE';
+    createdAt: Date;
+    updatedAt: Date;
+    status: string;
+    settings: {
+        theme: string;
+        notifications: boolean;
+    };
+}
+
+interface UserData {
+    id: string;
+    email: string;
+    displayName: string;
+    tenantId: string;
+    role: string;
+    createdAt: Date;
+    updatedAt: Date;
+    status: string;
+}
 
 export class MultiTenantService {
+    // ... (existing methods)
+
+    async createNewTenantWithUser(creationData: {
+        tenantName: string;
+        subdomain: string;
+        plan: 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE';
+        user: {
+            displayName: string;
+            email: string;
+            password: string;
+        };
+    }): Promise<Result<{ tenant: TenantData; user: UserData }>> {
+        const { tenantName, subdomain, plan, user } = creationData;
+        const { displayName, email, password } = user;
+
+        try {
+            const result = await db.runTransaction(async (transaction) => {
+                // 1. Create Tenant
+                const tenantId = `tenant-${Date.now()}`;
+                const tenantRef = db.collection('tenants').doc(tenantId);
+
+                const tenantData: TenantData = {
+                    id: tenantId,
+                    name: tenantName,
+                    subdomain: subdomain,
+                    plan,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    status: 'ACTIVE',
+                    settings: {
+                        theme: 'light',
+                        notifications: true,
+                    },
+                };
+                transaction.set(tenantRef, tenantData);
+
+                // 2. Create Firebase Auth User
+                const userRecord = await admin.auth().createUser({
+                    email,
+                    password,
+                    displayName,
+                });
+
+                // 3. Create User Document
+                const userRef = db.collection('tenant_users').doc(userRecord.uid);
+                const userData: UserData = {
+                    id: userRecord.uid,
+                    email,
+                    displayName,
+                    tenantId,
+                    role: 'ADMIN',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    status: 'ACTIVE',
+                };
+                transaction.set(userRef, userData);
+
+                // 4. Handle Plan and Subscription
+                const planCode = plan.toUpperCase();
+                const plansSnapshot = await db.collection('plans').where('code', '==', planCode).limit(1).get();
+                const planDoc = plansSnapshot.docs[0];
+
+                if (planDoc) {
+                    const planData = planDoc.data();
+                    let stripeSubscriptionId = `free_${Date.now()}`;
+                    let stripePriceId = 'FREE';
+
+                    if (planData.code !== 'FREE') {
+                        const customer = await stripeService.createCustomer({ userId: userRecord.uid, email, name: displayName, phone: undefined });
+                        const planKey = planData.code.toLowerCase();
+                        const subscription: Stripe.Subscription = await stripeService.createSubscription(customer.id, planKey, { userId: userRecord.uid });
+                        stripeSubscriptionId = subscription.id;
+                        const price = subscription.items.data[0].price;
+                        stripePriceId = price.id;
+                    }
+
+                    const subRef = db.collection('tenant_subscriptions').doc();
+                    transaction.set(subRef, {
+                        id: subRef.id,
+                        tenantId: tenantData.id,
+                        planId: planDoc.id,
+                        status: planData.code === 'FREE' ? 'active' : 'trialing',
+                        currentPeriodStart: Timestamp.now(),
+                        currentPeriodEnd: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+                        stripeSubscriptionId,
+                        stripePriceId,
+                        createdAt: Timestamp.now(),
+                        updatedAt: Timestamp.now(),
+                    });
+                }
+
+                return { tenant: tenantData, user: userData };
+            });
+
+            return { success: true, data: result };
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error(`MultiTenantService.createNewTenantWithUser error:`, err);
+            return { success: false, error: err };
+        }
+    }
   private static instance: MultiTenantService;
 
   private constructor() { }
