@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useCreateCampaign } from '../hooks/useCampaigns.js';
-import { useBots } from '@/features/bots/hooks/useBots.js';
+import { useCreateCampaign } from '../hooks/useCampaigns';
+import { useBots } from '@/features/bots/hooks/useBots';
 import {
     Dialog,
     DialogContent,
@@ -11,18 +11,18 @@ import {
     DialogTitle,
     DialogTrigger,
     DialogFooter
-} from '@/components/ui/dialog.js';
-import { Button } from '@/components/ui/button.js';
-import { Input } from '@/components/ui/input.js';
-import { Textarea } from '@/components/ui/textarea.js';
-import { Label } from '@/components/ui/label.js';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue
-} from '@/components/ui/select.js';
+} from '@/components/ui/select';
 import { Plus, Send, AlertCircle } from 'lucide-react';
 
 export function CreateCampaignDialog() {
@@ -88,17 +88,17 @@ export function CreateCampaignDialog() {
                         <Label htmlFor="botId" className="text-zinc-300">Sending Bot</Label>
                         <Select
                             value={formData.botId}
-                            onValueChange={(val) => setFormData(prev => ({ ...prev, botId: val }))}
+                            onValueChange={(val: string) => setFormData(prev => ({ ...prev, botId: val }))}
                             required
                         >
                             <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-200">
                                 <SelectValue placeholder="Select a bot to send from" />
                             </SelectTrigger>
                             <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-200">
-                                {bots?.data?.filter(b => b.status === 'online').map(bot => (
+                                {bots?.filter((b: any) => b.status === 'online').map((bot: any) => (
                                     <SelectItem key={bot.id} value={bot.id}>{bot.name} ({bot.phoneNumber})</SelectItem>
                                 ))}
-                                {bots?.data?.filter(b => b.status === 'online').length === 0 && (
+                                {bots?.filter((b: any) => b.status === 'online').length === 0 && (
                                     <div className="p-2 text-xs text-zinc-500 flex items-center gap-1">
                                         <AlertCircle className="w-3 h-3" /> No online bots found
                                     </div>

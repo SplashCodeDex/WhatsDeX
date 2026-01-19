@@ -68,8 +68,8 @@ export function BotConnectDialog({ bot, open, onOpenChange }: BotConnectDialogPr
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
                 className="sm:max-w-md"
-                onPointerDownOutside={(e) => e.preventDefault()}
-                onEscapeKeyDown={(e) => e.preventDefault()}
+                onPointerDownOutside={(e: Event) => e.preventDefault()}
+                onEscapeKeyDown={(e: Event) => e.preventDefault()}
             >
                 <DialogHeader>
                     <DialogTitle>Connect {bot.name}</DialogTitle>

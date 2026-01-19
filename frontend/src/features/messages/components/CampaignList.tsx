@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { useCampaigns, useStartCampaign, useDeleteCampaign } from '../hooks/useCampaigns.js';
-import { Button } from '@/components/ui/button.js';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card.js';
-import { Badge } from '@/components/ui/badge.js';
-import { Progress } from '@/components/ui/progress.js';
+import { useCampaigns, useStartCampaign, useDeleteCampaign } from '../hooks/useCampaigns';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Play, Trash2, Clock, Send, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 

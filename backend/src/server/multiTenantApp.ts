@@ -17,6 +17,7 @@ import contactRoutes from '../routes/contactRoutes.js';
 import messageRoutes from '../routes/messageRoutes.js';
 import campaignRoutes from '../routes/campaigns.js';
 import webhookRoutes from '../routes/webhookRoutes.js';
+import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
 import AuditService from '../services/auditService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
@@ -134,7 +135,8 @@ export class MultiTenantApp {
 
   setupRoutes() {
     // Health check
-    this.app.get('/health', async (req, res) => {
+    // Health check
+    this.app.get('/api/health', async (req, res) => {
       res.json({
         status: 'healthy',
         uptime: process.uptime(),
@@ -176,6 +178,9 @@ export class MultiTenantApp {
         res.status(500).json({ error: 'Failed to get tenants' });
       }
     });
+
+    // Tenant Settings Routes
+    this.app.use('/api/tenant', authenticateToken, tenantSettingsRoutes);
 
     // Bot management
     this.app.post('/api/bots/:botId/start', authenticateToken, async (req, res) => {

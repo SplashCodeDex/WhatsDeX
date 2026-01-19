@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { CampaignList, CreateCampaignDialog } from '@/features/messages/index.js';
+import { CampaignList, CreateCampaignDialog } from '@/features/messages/index';
 import { Send, Info } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert.js';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function MessagesPage() {
     return (

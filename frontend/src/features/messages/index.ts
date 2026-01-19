@@ -7,10 +7,10 @@
  * - Bulk messaging
  */
 
-export * from './components/CampaignList.js';
-export * from './components/CreateCampaignDialog.js';
-export * from './types.js';
-export * from './hooks/useCampaigns.js';
+export * from './components/CampaignList';
+export * from './components/CreateCampaignDialog';
+export * from './types';
+export * from './hooks/useCampaigns';
 // Components will be added here
 // Hooks
 // Server Actions
