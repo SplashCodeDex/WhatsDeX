@@ -19,7 +19,7 @@ Prepare the data layer to store subscription states and implement the logic to g
 ## Phase 3: Stripe Webhooks & Checkout Flow
 Connect the backend to Stripe's lifecycle events to automate user upgrades.
 
-- [ ] Task: Implement `/api/billing/checkout` endpoint to create Stripe Checkout sessions (with trial support).
+- [x] Task: Implement `/api/billing/checkout` endpoint to create Stripe Checkout sessions (with trial support). (171dda2)
 - [ ] Task: Implement `/api/billing/webhook` endpoint with Zod validation and idempotency checks.
 - [ ] Task: Handle `checkout.session.completed` to initialize subscription in Firestore.
 - [ ] Task: Handle `customer.subscription.updated` and `deleted` to sync status changes.
