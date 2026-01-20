@@ -16,14 +16,14 @@ Prepare the data layer to store subscription states and implement the logic to g
 - [x] Task: Implement `featureGating` utility to check for AI and Backup permissions in the backend. (8a92b60)
 - [x] Task: Conductor - User Manual Verification 'Database Schema & Middleware' (Protocol in workflow.md) (ded29ea)
 
-## Phase 3: Stripe Webhooks & Checkout Flow
+## Phase 3: Stripe Webhooks & Checkout Flow [checkpoint: c1f43b3]
 Connect the backend to Stripe's lifecycle events to automate user upgrades.
 
 - [x] Task: Implement `/api/billing/checkout` endpoint to create Stripe Checkout sessions (with trial support). (171dda2)
 - [x] Task: Implement `/api/billing/webhook` endpoint with Zod validation and idempotency checks. (393f0ed)
 - [x] Task: Handle `checkout.session.completed` to initialize subscription in Firestore. (d1c1bf0)
 - [x] Task: Handle `customer.subscription.updated` and `deleted` to sync status changes. (bb19549)
-- [ ] Task: Conductor - User Manual Verification 'Stripe Webhooks & Checkout Flow' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Stripe Webhooks & Checkout Flow' (Protocol in workflow.md) (c1f43b3)
 
 ## Phase 4: Frontend UI Components
 Build the user-facing parts of the billing system.
