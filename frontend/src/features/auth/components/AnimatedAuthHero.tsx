@@ -36,24 +36,26 @@ interface AnimatedAuthHeroProps {
     isTransitioning?: boolean;
 }
 
-export function AnimatedAuthHero({ hideContent = false, particles = [], isTransitioning = false }: AnimatedAuthHeroProps) {
+export function AnimatedAuthHero({ hideContent = false, particles = [] }: AnimatedAuthHeroProps) {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            setMousePosition({
-                x: (e.clientX / window.innerWidth - 0.5) * 20, // -10 to 10
-                y: (e.clientY / window.innerHeight - 0.5) * 20, // -10 to 10
-            });
-        };
-        window.addEventListener("mousemove", handleMouseMove);
-        return () => window.removeEventListener("mousemove", handleMouseMove);
-    }, []);
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const { clientX, clientY, currentTarget } = e;
+        const { width, height, left, top } = currentTarget.getBoundingClientRect();
+
+        const x = (clientX - left) / width - 0.5;
+        const y = (clientY - top) / height - 0.5;
+
+        setMousePosition({ x: x * 20, y: y * 20 });
+    };
 
     const { x, y } = mousePosition;
 
     return (
-        <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600">
+        <div
+            className="absolute inset-0 overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600"
+            onMouseMove={handleMouseMove}
+        >
             {/* Grid Pattern - Static */}
             <div
                 className="absolute inset-0 opacity-[0.07]"
@@ -68,7 +70,7 @@ export function AnimatedAuthHero({ hideContent = false, particles = [], isTransi
 
             {/* Flowing Data Lines - Reverse Parallax */}
             <motion.div style={{ x: x * -0.5, y: y * -0.5 }} className="absolute inset-0">
-                <FlowingLines isWarping={isTransitioning} />
+                <FlowingLines />
             </motion.div>
 
             {/* Floating Chat Bubbles - Deep Parallax */}
@@ -153,9 +155,9 @@ export function AnimatedAuthHero({ hideContent = false, particles = [], isTransi
 
             {/* Content Overlay */}
             {!hideContent && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-white pointer-events-none">
                     <motion.div
-                        className="max-w-lg text-center"
+                        className="max-w-lg text-center pointer-events-auto"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: DURATION.slow, delay: 0.2 }}
@@ -174,14 +176,6 @@ export function AnimatedAuthHero({ hideContent = false, particles = [], isTransi
                         {/* Headline */}
                         <motion.h2
                             className="mb-4 text-4xl font-bold tracking-tight"
-                            animate={{
-                                textShadow: [
-                                    '0 0 20px rgba(255,255,255,0.2)',
-                                    '0 0 40px rgba(255,255,255,0.4)',
-                                    '0 0 20px rgba(255,255,255,0.2)',
-                                ],
-                            }}
-                            transition={{ duration: 3, repeat: Infinity }}
                         >
                             Welcome to{' '}
                             <span className="bg-gradient-to-r from-white via-primary-200 to-white bg-clip-text text-transparent">
@@ -331,7 +325,7 @@ function SpinningGear({ className, size, direction, delay = 0 }: SpinningGearPro
     );
 }
 
-function FlowingLines({ isWarping }: { isWarping?: boolean }) {
+function FlowingLines() {
     return (
         <div className="absolute inset-x-0 bottom-0 h-32 overflow-hidden">
             {[0, 1, 2].map((i) => (
@@ -341,7 +335,7 @@ function FlowingLines({ isWarping }: { isWarping?: boolean }) {
                     style={{ bottom: `${i * 40 + 20}px` }}
                     animate={{ x: ['-100%', '100%'] }}
                     transition={{
-                        duration: isWarping ? 0.3 : 4 + i, // WARP SPEED when transitioning
+                        duration: 4 + i,
                         repeat: Infinity,
                         ease: 'linear',
                         delay: i * 0.5,

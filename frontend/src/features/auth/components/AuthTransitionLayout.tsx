@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
 import { AnimatedAuthHero } from "./AnimatedAuthHero";
 import { Particle } from "../utils";
 import { cn } from "@/lib/utils";
@@ -16,14 +15,6 @@ interface AuthTransitionLayoutProps {
 export function AuthTransitionLayout({ children, particles }: AuthTransitionLayoutProps) {
     const pathname = usePathname();
     const isRegister = pathname === "/register";
-    const [isTransitioning, setIsTransitioning] = useState(false);
-
-    // Trigger warp speed on route change
-    useEffect(() => {
-        setIsTransitioning(true);
-        const timer = setTimeout(() => setIsTransitioning(false), 800);
-        return () => clearTimeout(timer);
-    }, [pathname]);
 
     return (
         <div className="relative flex min-h-screen w-full overflow-hidden bg-background perspective-[2000px]">
@@ -41,12 +32,12 @@ export function AuthTransitionLayout({ children, particles }: AuthTransitionLayo
                 <AnimatedAuthHero
                     hideContent={isRegister}
                     particles={particles}
-                    isTransitioning={isTransitioning}
                 />
             </motion.div>
 
             {/* Form Container */}
             <motion.div
+                id="auth-form-container" // ID for mouse exclusion
                 layout
                 className={cn(
                     "relative z-10 flex flex-col justify-center transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] min-h-screen",
@@ -65,10 +56,21 @@ export function AuthTransitionLayout({ children, particles }: AuthTransitionLayo
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={pathname}
-                            initial={{ opacity: 0, x: isRegister ? -30 : 30, rotateY: isRegister ? -15 : 15 }}
+                            // Smoother transition: Reduced X distance, adjusted Tilt direction
+                            // When going to Register (Center), enter from Right (15), exit to Left (-15)
+                            // When going to Login (Left), enter from Left (-15), exit to Right (15)
+                            initial={{
+                                opacity: 0,
+                                x: isRegister ? 15 : -15,
+                                rotateY: isRegister ? 5 : -5
+                            }}
                             animate={{ opacity: 1, x: 0, rotateY: 0 }}
-                            exit={{ opacity: 0, x: isRegister ? 30 : -30, rotateY: isRegister ? 15 : -15 }}
-                            transition={{ duration: 0.5, ease: "easeOut" }}
+                            exit={{
+                                opacity: 0,
+                                x: isRegister ? -15 : 15,
+                                rotateY: isRegister ? -5 : 5
+                            }}
+                            transition={{ duration: 0.4, ease: "easeInOut" }}
                         >
                             <div className={cn(
                                 isRegister && "rounded-2xl bg-white/90 p-8 shadow-2xl backdrop-blur-sm sm:p-10 dark:bg-card/90"
