@@ -152,6 +152,7 @@ src/
 6.  **Pixel Perfection**:
     - Use strict Tailwind spacing tokens (e.g., `gap-4` not `gap-[15px]`).
     - All interactive elements must have: Hover, Active, and Focus-Visible states.
+7.  **No Emojis in UI**: NEVER use emojis in the UI. Always use proper SVG icons from `lucide-react` or custom icons from `components/ui/icons.tsx`. Emojis are only permitted if explicitly requested by the user.
 
 ### State Management Hierarchy
 
