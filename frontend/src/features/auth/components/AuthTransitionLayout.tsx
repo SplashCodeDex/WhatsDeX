@@ -37,7 +37,7 @@ export function AuthTransitionLayout({ children, particles }: AuthTransitionLayo
 
             {/* Form Container */}
             <motion.div
-                id="auth-form-container" // ID for mouse exclusion
+                id="auth-form-container" // ID ensures mouse events on the form don't trigger the background parallax
                 layout
                 className={cn(
                     "relative z-10 flex flex-col justify-center transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] min-h-screen",
@@ -53,28 +53,25 @@ export function AuthTransitionLayout({ children, particles }: AuthTransitionLayo
                     "w-full transition-all duration-500",
                     isRegister ? "max-w-lg" : "max-w-sm lg:w-96"
                 )}>
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="wait" initial={false}>
                         <motion.div
                             key={pathname}
-                            // Smoother transition: Reduced X distance, adjusted Tilt direction
-                            // When going to Register (Center), enter from Right (15), exit to Left (-15)
-                            // When going to Login (Left), enter from Left (-15), exit to Right (15)
-                            initial={{
-                                opacity: 0,
-                                x: isRegister ? 15 : -15,
-                                rotateY: isRegister ? 5 : -5
-                            }}
-                            animate={{ opacity: 1, x: 0, rotateY: 0 }}
-                            exit={{
-                                opacity: 0,
-                                x: isRegister ? -15 : 15,
-                                rotateY: isRegister ? -5 : 5
-                            }}
-                            transition={{ duration: 0.4, ease: "easeInOut" }}
+                            // Clean Scale/Fade Transition - Eliminates directional jumps
+                            // This provides a "Morphing" feel that works perfectly for both directions
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 1.05, y: -10 }}
+                            transition={{ duration: 0.35, ease: "easeInOut" }}
                         >
                             <div className={cn(
+                                "relative", // Needed for border glow positioning
                                 isRegister && "rounded-2xl bg-white/90 p-8 shadow-2xl backdrop-blur-sm sm:p-10 dark:bg-card/90"
                             )}>
+                                {/* Subtle Animated Gradient Border for Register Card */}
+                                {isRegister && (
+                                    <div className="absolute -inset-[1px] -z-10 rounded-2xl bg-gradient-to-r from-transparent via-primary-500/20 to-transparent opacity-50 blur-sm" />
+                                )}
+
                                 <StaggeredEnter>
                                     <StaggeredItem>
                                         {children}

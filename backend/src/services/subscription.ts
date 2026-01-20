@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { StripeService } from './stripe.js';
+import { StripeService } from './stripeService.js';
 import logger from '../utils/logger.js';
 import { db } from '../lib/firebase.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';

@@ -178,8 +178,22 @@ export function AnimatedAuthHero({ hideContent = false, particles = [] }: Animat
                             className="mb-4 text-4xl font-bold tracking-tight"
                         >
                             Welcome to{' '}
-                            <span className="bg-gradient-to-r from-white via-primary-200 to-white bg-clip-text text-transparent">
-                                WhatsDeX
+                            <span className="inline-flex overflow-hidden">
+                                {Array.from("WhatsDeX").map((char, index) => (
+                                    <motion.span
+                                        key={index}
+                                        className="bg-gradient-to-r from-white via-primary-200 to-white bg-clip-text text-transparent"
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{
+                                            duration: 0.3,
+                                            delay: 1.5 + index * 0.08, // Start after other animations
+                                            ease: "easeOut"
+                                        }}
+                                    >
+                                        {char}
+                                    </motion.span>
+                                ))}
                             </span>
                         </motion.h2>
 

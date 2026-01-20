@@ -6,7 +6,7 @@ import { db, admin } from '../lib/firebase.js'; // Added admin import
 import { Timestamp } from 'firebase-admin/firestore';
 import { ConfigService } from '../services/ConfigService.js';
 import auditService from '../services/auditService.js';
-import { stripeService } from '../services/stripe.js';
+import stripeService from '../services/stripeService.js';
 import logger from '../utils/logger.js';
 // Removed firebaseService import
 

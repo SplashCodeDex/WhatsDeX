@@ -21,7 +21,7 @@ export { default as MultiTenantService } from './multiTenantService.js';
 export { default as MultiTenantBotService } from './multiTenantBotService.js';
 
 // Payment/Subscription
-export { default as StripeService } from './stripe.js';
+export { default as StripeService } from './stripeService.js';
 export { default as SubscriptionService } from './subscription.js';
 
 // Utility Services

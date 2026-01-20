@@ -25,14 +25,14 @@ Connect the backend to Stripe's lifecycle events to automate user upgrades.
 - [x] Task: Handle `customer.subscription.updated` and `deleted` to sync status changes. (bb19549)
 - [x] Task: Conductor - User Manual Verification 'Stripe Webhooks & Checkout Flow' (Protocol in workflow.md) (c1f43b3)
 
-## Phase 4: Frontend UI Components
+## Phase 4: Frontend UI Components [checkpoint: ae715f9]
 Build the user-facing parts of the billing system.
 
 - [x] Task: Create a responsive `PricingPage` with Monthly/Yearly toggle and "7-Day Free Trial" CTAs. (296b366)
 - [x] Task: Implement `BillingSettings` component in the dashboard to show current plan and trial countdown. (296b366)
 - [x] Task: Add "Upgrade Required" modal/toast for contextual upgrades (e.g., when adding too many bots). (f1328d0)
 - [x] Task: Implement "Manage Subscription" button that redirects to the Stripe Customer Portal. (296b366)
-- [ ] Task: Conductor - User Manual Verification 'Frontend UI Components' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Frontend UI Components' (Protocol in workflow.md) (ae715f9)
 
 ## Phase 5: Final Verification & Polishing
 End-to-end testing of the trial-to-paid lifecycle and edge cases.

@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 import logger from '../utils/logger.js';
 import { ConfigService } from '../services/ConfigService.js';
 import multiTenantService from '../services/multiTenantService.js';
-import multiTenantStripeService from '../services/multiTenantStripeService.js';
+import stripeService from '../services/stripeService.js';
 import multiTenantBotService from '../services/multiTenantBotService.js';
 import multiTenantRoutes from '../routes/multiTenant.js';
 import authRoutes from '../routes/authRoutes.js';
@@ -244,7 +244,7 @@ export class MultiTenantApp {
       const stripeWebhookSecret = this.config.get('STRIPE_WEBHOOK_SECRET');
 
       if (stripeKey) {
-        await multiTenantStripeService.initialize(stripeKey, stripeWebhookSecret || '');
+        await stripeService.initialize(stripeKey, stripeWebhookSecret || '');
         logger.info('Stripe service initialized');
       }
     } catch (error: any) {
