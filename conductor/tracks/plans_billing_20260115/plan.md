@@ -1,20 +1,20 @@
 # Plan: Plans & Billing Integration
 
-## Phase 1: Infrastructure & Stripe Seeding
+## Phase 1: Infrastructure & Stripe Seeding [checkpoint: ded29ea]
 Focus on setting up the Stripe connection and ensuring our plan definitions are synced between the code and Stripe.
 
 - [x] Task: Create `stripeService.ts` utility for Stripe initialization and basic API wrappers. (3e97b49)
 - [x] Task: Implement `scripts/seed-stripe.ts` to programmatically create Starter, Pro, and Enterprise products/prices in Stripe. (combined with next task)
 - [x] Task: Add 7-day trial configuration to the seeding script. (8cda33b)
-- [ ] Task: Conductor - User Manual Verification 'Infrastructure & Stripe Seeding' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Infrastructure & Stripe Seeding' (Protocol in workflow.md) (ded29ea)
 
-## Phase 2: Database Schema & Middleware
+## Phase 2: Database Schema & Middleware [checkpoint: ded29ea]
 Prepare the data layer to store subscription states and implement the logic to gate features.
 
 - [x] Task: Update User schema/types to include `planTier`, `subscriptionStatus`, and `trialEndsAt`. (fbb2afa)
 - [x] Task: Create `planMiddleware.ts` to enforce bot limits (1, 3, 10) based on user tier. (617e4d5)
 - [x] Task: Implement `featureGating` utility to check for AI and Backup permissions in the backend. (8a92b60)
-- [ ] Task: Conductor - User Manual Verification 'Database Schema & Middleware' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Database Schema & Middleware' (Protocol in workflow.md) (ded29ea)
 
 ## Phase 3: Stripe Webhooks & Checkout Flow
 Connect the backend to Stripe's lifecycle events to automate user upgrades.
