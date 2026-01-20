@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { unstable_noStore as noStore } from 'next/cache';
 import { AnimatedAuthHero, generateParticles } from '@/features/auth';
 
@@ -7,12 +8,13 @@ export const metadata: Metadata = {
     description: 'Create your WhatsDeX account',
 };
 
-export default function RegisterLayout({
+export default async function RegisterLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
-}>): React.JSX.Element {
+}>): Promise<React.JSX.Element> {
     noStore(); // Opt out of static rendering
+    await headers(); // Force dynamic rendering context for Math.random()
     const particles = generateParticles();
 
     return (
