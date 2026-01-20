@@ -2,10 +2,22 @@
 // Layout logic is handled in specific route layouts (login/layout.tsx and register/layout.tsx)
 // This file serves as a root provider/metadata wrapper if needed.
 
-export default function AuthLayout({
+import { headers } from 'next/headers';
+import { unstable_noStore as noStore } from 'next/cache';
+import { AuthTransitionLayout, generateParticles } from '@/features/auth';
+
+export default async function AuthLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
-}>): React.JSX.Element {
-    return <>{children}</>;
+}>): Promise<React.JSX.Element> {
+    noStore(); // Opt out of static rendering
+    await headers(); // Force dynamic rendering context for Math.random()
+    const particles = generateParticles();
+
+    return (
+        <AuthTransitionLayout particles={particles}>
+            {children}
+        </AuthTransitionLayout>
+    );
 }

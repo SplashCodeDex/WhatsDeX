@@ -32,9 +32,10 @@ const FEATURE_PILLS = [
 interface AnimatedAuthHeroProps {
     hideContent?: boolean;
     particles?: Particle[];
+    isTransitioning?: boolean;
 }
 
-export function AnimatedAuthHero({ hideContent = false, particles = [] }: AnimatedAuthHeroProps) {
+export function AnimatedAuthHero({ hideContent = false, particles = [], isTransitioning = false }: AnimatedAuthHeroProps) {
     return (
         <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600">
             {/* Grid Pattern - Static */}
@@ -50,7 +51,7 @@ export function AnimatedAuthHero({ hideContent = false, particles = [] }: Animat
             />
 
             {/* Flowing Data Lines */}
-            <FlowingLines />
+            <FlowingLines isWarping={isTransitioning} />
 
             {/* Floating Chat Bubbles */}
             <FloatingBubble
@@ -304,7 +305,7 @@ function SpinningGear({ className, size, direction, delay = 0 }: SpinningGearPro
     );
 }
 
-function FlowingLines() {
+function FlowingLines({ isWarping }: { isWarping?: boolean }) {
     return (
         <div className="absolute inset-x-0 bottom-0 h-32 overflow-hidden">
             {[0, 1, 2].map((i) => (
@@ -314,7 +315,7 @@ function FlowingLines() {
                     style={{ bottom: `${i * 40 + 20}px` }}
                     animate={{ x: ['-100%', '100%'] }}
                     transition={{
-                        duration: 4 + i,
+                        duration: isWarping ? 0.3 : 4 + i, // WARP SPEED when transitioning
                         repeat: Infinity,
                         ease: 'linear',
                         delay: i * 0.5,
