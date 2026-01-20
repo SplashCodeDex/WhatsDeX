@@ -64,7 +64,11 @@ function createUrl(
     // Previous refactor added /api prefix to endpoints.
     // So we just need to return the path.
 
-    const baseUrl = typeof window === 'undefined' ? 'http://localhost:3001' : '';
+    // Use environment variable or default to 3001.
+    // This allows changing the port in .env without code changes.
+    const baseUrl = typeof window === 'undefined'
+        ? (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001')
+        : '';
     // Server-side fetch needs absolute URL (internal docker/localhost).
     // Client-side fetch uses relative URL to hit proxy.
 

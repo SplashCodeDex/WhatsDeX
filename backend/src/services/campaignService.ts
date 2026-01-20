@@ -1,6 +1,5 @@
 import { firebaseService } from './FirebaseService.js';
-import { multiTenantBotService } from './multiTenantBotService.js';
-import { webhookService } from './webhookService.js';
+import { queueService } from './queueService.js';
 import { Campaign, CampaignSchema, CampaignStatus, Result } from '../types/contracts.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import logger from '../utils/logger.js';
@@ -72,10 +71,8 @@ export class CampaignService {
             // Update status to sending
             await this.updateCampaignStatus(tenantId, campaignId, 'sending');
 
-            // Run execution in background
-            this.executeCampaign(tenantId, campaign).catch(err => {
-                logger.error(`Campaign ${campaignId} execution failed:`, err);
-            });
+            // Add to Queue (Worker will pick up the current progress)
+            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'sending' });
 
             return { success: true, data: undefined };
         } catch (error: unknown) {
@@ -86,67 +83,39 @@ export class CampaignService {
     }
 
     /**
-     * Internal execution logic with delays to prevent anti-ban
+     * Pause a campaign execution
      */
-    private async executeCampaign(tenantId: string, campaign: Campaign): Promise<void> {
-        const { id, botId, message, audience } = campaign;
-        const targets = audience.targets;
-
-        let sent = 0;
-        let failed = 0;
-
-        for (const target of targets) {
-            try {
-                // Send message via bot service
-                const result = await multiTenantBotService.sendMessage(tenantId, botId, {
-                    to: target,
-                    text: message,
-                    type: 'text'
-                });
-
-                if (result.success) {
-                    sent++;
-                } else {
-                    failed++;
-                    logger.warn(`Campaign ${id} failed to send to ${target}:`, result.error);
-                }
-
-                // Random delay between 5-15 seconds (Safety)
-                const delay = Math.floor(Math.random() * (15000 - 5000 + 1)) + 5000;
-                await new Promise(resolve => setTimeout(resolve, delay));
-
-                // Periodic stats update every 5 messages
-                if ((sent + failed) % 5 === 0) {
-                    await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
-                }
-
-            } catch (err) {
-                failed++;
-                logger.error(`Campaign ${id} loop error:`, err);
-            }
+    async pauseCampaign(tenantId: string, campaignId: string): Promise<Result<void>> {
+        try {
+            await this.updateCampaignStatus(tenantId, campaignId, 'paused');
+            return { success: true, data: undefined };
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error(`CampaignService.pauseCampaign error [${tenantId}/${campaignId}]:`, err);
+            return { success: false, error: err };
         }
+    }
 
-        // Final update
-        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>(
-            'campaigns',
-            id,
-            {
-                status: 'completed' as CampaignStatus,
-                stats: { sent, failed, pending: 0, total: targets.length },
-                updatedAt: Timestamp.now().toDate()
-            },
-            tenantId,
-            true
-        );
+    /**
+     * Resume a paused campaign
+     */
+    async resumeCampaign(tenantId: string, campaignId: string): Promise<Result<void>> {
+        try {
+            const campaignDoc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
+            if (!campaignDoc) return { success: false, error: new Error('Campaign not found') };
 
-        logger.info(`Campaign ${id} finished. Sent: ${sent}, Failed: ${failed}`);
+            const campaign = CampaignSchema.parse(campaignDoc);
 
-        // Webhook Dispatch
-        await webhookService.dispatch(tenantId, 'campaign.completed', {
-            campaignId: id,
-            name: campaign.name,
-            stats: { sent, failed, total: targets.length }
-        });
+            // Re-trigger the job. The worker logic will see the updated status and continue from the last index stored in metadata/stats.
+            await this.updateCampaignStatus(tenantId, campaignId, 'sending');
+            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'sending' });
+
+            return { success: true, data: undefined };
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error(`CampaignService.resumeCampaign error [${tenantId}/${campaignId}]:`, err);
+            return { success: false, error: err };
+        }
     }
 
     private async updateCampaignStatus(tenantId: string, campaignId: string, status: CampaignStatus): Promise<void> {
@@ -159,16 +128,6 @@ export class CampaignService {
         );
     }
 
-    private async updateCampaignStats(tenantId: string, campaignId: string, stats: Partial<Campaign['stats']>): Promise<void> {
-        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>(
-            'campaigns',
-            campaignId,
-            { stats: stats as any, updatedAt: Timestamp.now().toDate() },
-            tenantId,
-            true
-        );
-    }
-
     /**
      * Delete a campaign
      */
@@ -176,8 +135,33 @@ export class CampaignService {
         try {
             await firebaseService.deleteDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
             return { success: true, data: undefined };
+        } catch (error: boolean | any) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            return { success: false, error: err };
+        }
+    }
+
+    /**
+     * Duplicate an existing campaign as a draft
+     */
+    async duplicateCampaign(tenantId: string, campaignId: string): Promise<Result<Campaign>> {
+        try {
+            const campaignDoc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
+            if (!campaignDoc) return { success: false, error: new Error('Campaign not found') };
+
+            const original = CampaignSchema.parse(campaignDoc);
+
+            // Create a copy as draft
+            return await this.createCampaign(tenantId, {
+                name: `${original.name} (Copy)`,
+                message: original.message,
+                botId: original.botId,
+                audience: original.audience,
+                status: 'draft'
+            });
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
+            logger.error(`CampaignService.duplicateCampaign error [${tenantId}/${campaignId}]:`, err);
             return { success: false, error: err };
         }
     }

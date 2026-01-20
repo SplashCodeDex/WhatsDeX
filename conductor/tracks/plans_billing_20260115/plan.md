@@ -37,6 +37,6 @@ Build the user-facing parts of the billing system.
 ## Phase 5: Final Verification & Polishing
 End-to-end testing of the trial-to-paid lifecycle and edge cases.
 
-- [ ] Task: Write E2E tests for the full flow: Sign up -> Start Trial -> Upgrade to Pro.
-- [ ] Task: Verify mobile responsiveness of the Pricing page and Billing settings.
+- [x] Task: Write E2E tests for the full flow: Sign up -> Start Trial -> Upgrade to Pro. (2140054)
+- [x] Task: Verify mobile responsiveness of the Pricing page and Billing settings. (ab45a8a)
 - [ ] Task: Conductor - User Manual Verification 'Final Verification & Polishing' (Protocol in workflow.md)

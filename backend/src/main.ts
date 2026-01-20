@@ -2,6 +2,7 @@ import { ConfigService } from './services/ConfigService.js';
 import initializeContext from './lib/context.js';
 import MultiTenantApp from './server/multiTenantApp.js';
 import logger from './utils/logger.js';
+import './jobs/campaignWorker.js'; // Start Campaign Worker
 
 /**
  * Main entry point for WhatsDeX

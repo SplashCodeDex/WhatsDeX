@@ -18,6 +18,13 @@ export function useCampaigns() {
             }
             return response.data;
         },
+        // Poll every 5 seconds if any campaign is actively sending
+        refetchInterval: (query) => {
+            const campaigns = query.state.data as Campaign[] | undefined;
+            const hasActive = campaigns?.some(c => c.status === 'sending');
+            return hasActive ? 5000 : false;
+        },
+        refetchIntervalInBackground: true,
     });
 }
 
@@ -47,6 +54,50 @@ export function useStartCampaign() {
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: campaignKeys.list() });
             queryClient.invalidateQueries({ queryKey: campaignKeys.detail(id) });
+        },
+    });
+}
+
+export function usePauseCampaign() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            const response = await api.post<{ success: true }>(`/api/campaigns/${id}/pause`);
+            return response;
+        },
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: campaignKeys.list() });
+            queryClient.invalidateQueries({ queryKey: campaignKeys.detail(id) });
+        },
+    });
+}
+
+export function useResumeCampaign() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            const response = await api.post<{ success: true }>(`/api/campaigns/${id}/resume`);
+            return response;
+        },
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: campaignKeys.list() });
+            queryClient.invalidateQueries({ queryKey: campaignKeys.detail(id) });
+        },
+    });
+}
+
+export function useDuplicateCampaign() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            const response = await api.post<Campaign>(`/api/campaigns/${id}/duplicate`);
+            if (!response.success) {
+                throw new Error(response.error.message);
+            }
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: campaignKeys.list() });
         },
     });
 }

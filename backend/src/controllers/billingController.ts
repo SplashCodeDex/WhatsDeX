@@ -33,6 +33,9 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     let stripeCustomerId = tenantData.stripeCustomerId;
 
     const stripe = stripeService.stripe;
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe service not initialized' });
+    }
 
     // Create Stripe customer if it doesn't exist
     if (!stripeCustomerId) {

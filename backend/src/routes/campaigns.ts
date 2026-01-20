@@ -55,6 +55,60 @@ router.post('/:id/start', async (req, res) => {
 });
 
 /**
+ * POST /campaigns/:id/pause
+ * Pause campaign execution
+ */
+router.post('/:id/pause', async (req, res) => {
+    const tenantId = req.headers['x-tenant-id'] as string;
+    const { id } = req.params;
+
+    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+
+    const result = await campaignService.pauseCampaign(tenantId, id);
+    if (result.success) {
+        res.json(result);
+    } else {
+        res.status(400).json(result);
+    }
+});
+
+/**
+ * POST /campaigns/:id/resume
+ * Resume campaign execution
+ */
+router.post('/:id/resume', async (req, res) => {
+    const tenantId = req.headers['x-tenant-id'] as string;
+    const { id } = req.params;
+
+    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+
+    const result = await campaignService.resumeCampaign(tenantId, id);
+    if (result.success) {
+        res.json(result);
+    } else {
+        res.status(400).json(result);
+    }
+});
+
+/**
+ * POST /campaigns/:id/duplicate
+ * Duplicate a campaign
+ */
+router.post('/:id/duplicate', async (req, res) => {
+    const tenantId = req.headers['x-tenant-id'] as string;
+    const { id } = req.params;
+
+    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+
+    const result = await campaignService.duplicateCampaign(tenantId, id);
+    if (result.success) {
+        res.status(201).json(result);
+    } else {
+        res.status(500).json(result);
+    }
+});
+
+/**
  * DELETE /campaigns/:id
  * Delete a campaign
  */

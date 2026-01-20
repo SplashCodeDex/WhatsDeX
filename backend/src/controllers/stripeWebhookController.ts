@@ -18,6 +18,9 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
   let event;
 
   try {
+    if (!stripeService.stripe) {
+      throw new Error('Stripe service not initialized');
+    }
     // req.body must be the raw body for signature verification
     event = stripeService.stripe.webhooks.constructEvent(
       (req as any).rawBody || req.body,
@@ -97,8 +100,8 @@ const handleCheckoutSessionCompleted = async (session: any) => {
     userId: userId || null,
     planTier: planId || 'starter',
     status: subscription.status,
-    currentPeriodStart: subscription.current_period_start ? Timestamp.fromMillis(subscription.current_period_start * 1000) : Timestamp.now(),
-    currentPeriodEnd: subscription.current_period_end ? Timestamp.fromMillis(subscription.current_period_end * 1000) : Timestamp.now(),
+    currentPeriodStart: subscription.current_period_start ? Timestamp.fromMillis((subscription as any).current_period_start * 1000) : Timestamp.now(),
+    currentPeriodEnd: subscription.current_period_end ? Timestamp.fromMillis((subscription as any).current_period_end * 1000) : Timestamp.now(),
     cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
     stripeCustomerId: session.customer as string,
     createdAt: new Date(),
@@ -117,7 +120,7 @@ const handleSubscriptionUpdated = async (subscription: any) => {
       return;
     }
     const tenantDoc = tenantQuery.docs[0];
-    
+
     await tenantDoc.ref.update({
       subscriptionStatus: subscription.status,
       trialEndsAt: subscription.trial_end ? Timestamp.fromMillis(subscription.trial_end * 1000) : null,
@@ -143,13 +146,13 @@ const handleSubscriptionUpdated = async (subscription: any) => {
 
 const handleSubscriptionDeleted = async (subscription: any) => {
   logger.info('Handling customer.subscription.deleted', { subscriptionId: subscription.id });
-  
+
   const tenantQuery = await db.collection('tenants').where('stripeSubscriptionId', '==', subscription.id).limit(1).get();
   if (tenantQuery.empty) {
     logger.error('Tenant not found for subscription deleted', { subscriptionId: subscription.id });
     return;
   }
-  
+
   const tenantDoc = tenantQuery.docs[0];
   await tenantDoc.ref.update({
     planTier: 'starter',

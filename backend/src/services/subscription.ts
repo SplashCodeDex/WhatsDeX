@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { StripeService } from './stripeService.js';
+import { StripeService, stripeService } from './stripeService.js';
 import logger from '../utils/logger.js';
 import { db } from '../lib/firebase.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
@@ -38,7 +38,7 @@ class SubscriptionService {
 
   constructor() {
     // databaseService ignored as we use Firestore directly now
-    this.stripe = new StripeService();
+    this.stripe = stripeService;
     this.isInitialized = false;
 
     // Usage limits for different plans
