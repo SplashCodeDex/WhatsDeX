@@ -1,0 +1,61 @@
+'use client';
+
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { Rocket, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+interface UpgradeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  description?: string;
+}
+
+export function UpgradeModal({ 
+  isOpen, 
+  onClose, 
+  title = "Upgrade to Pro", 
+  description = "You've reached the limit of your current plan. Upgrade to unlock more bots and features." 
+}: UpgradeModalProps) {
+  const router = useRouter();
+
+  const handleUpgrade = () => {
+    router.push('/dashboard/billing');
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30">
+            <Rocket size={24} />
+          </div>
+          <DialogTitle className="text-center text-xl">{title}</DialogTitle>
+          <DialogDescription className="text-center">
+            {description}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="grid gap-4 py-4">
+          <div className="flex flex-col gap-2">
+            <Button onClick={handleUpgrade} size="lg" className="w-full font-semibold">
+              View Plans & Upgrade
+            </Button>
+            <Button variant="ghost" onClick={onClose} className="w-full">
+              Maybe Later
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
