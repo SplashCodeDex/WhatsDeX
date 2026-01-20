@@ -86,6 +86,12 @@ export default function HomePage(): React.JSX.Element {
                     </p>
                     <div className="flex gap-4">
                         <Link
+                            href="/pricing"
+                            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            Pricing
+                        </Link>
+                        <Link
                             href="/privacy"
                             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                         >

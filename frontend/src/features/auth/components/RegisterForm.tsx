@@ -23,6 +23,7 @@ export function RegisterForm() {
         const result = await signUp(formData);
 
         if (result.success) {
+            import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
             router.push('/dashboard');
         } else {
             setError(result.error.message || getAuthErrorMessage(result.error.code));

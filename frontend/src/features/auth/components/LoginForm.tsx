@@ -24,6 +24,7 @@ export function LoginForm() {
         const result = await signIn(formData);
 
         if (result.success) {
+            import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
             router.push('/dashboard');
         } else {
             const mappedError = getAuthErrorMessage(result.error.code);

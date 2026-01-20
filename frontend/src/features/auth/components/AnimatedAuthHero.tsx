@@ -7,6 +7,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Bot, BarChart3, Rocket, Shield } from 'lucide-react';
 import type { Particle } from '../utils';
@@ -36,6 +37,21 @@ interface AnimatedAuthHeroProps {
 }
 
 export function AnimatedAuthHero({ hideContent = false, particles = [], isTransitioning = false }: AnimatedAuthHeroProps) {
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            setMousePosition({
+                x: (e.clientX / window.innerWidth - 0.5) * 20, // -10 to 10
+                y: (e.clientY / window.innerHeight - 0.5) * 20, // -10 to 10
+            });
+        };
+        window.addEventListener("mousemove", handleMouseMove);
+        return () => window.removeEventListener("mousemove", handleMouseMove);
+    }, []);
+
+    const { x, y } = mousePosition;
+
     return (
         <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600">
             {/* Grid Pattern - Static */}
@@ -50,80 +66,90 @@ export function AnimatedAuthHero({ hideContent = false, particles = [], isTransi
                 }}
             />
 
-            {/* Flowing Data Lines */}
-            <FlowingLines isWarping={isTransitioning} />
+            {/* Flowing Data Lines - Reverse Parallax */}
+            <motion.div style={{ x: x * -0.5, y: y * -0.5 }} className="absolute inset-0">
+                <FlowingLines isWarping={isTransitioning} />
+            </motion.div>
 
-            {/* Floating Chat Bubbles */}
-            <FloatingBubble
-                className="left-[15%] top-[20%]"
-                size="lg"
-                delay={0}
-            />
-            <FloatingBubble
-                className="right-[20%] top-[15%]"
-                size="md"
-                delay={1.5}
-                variant="glass"
-            />
-            <FloatingBubble
-                className="left-[25%] bottom-[30%]"
-                size="sm"
-                delay={0.8}
-            />
-            <FloatingBubble
-                className="right-[15%] bottom-[25%]"
-                size="md"
-                delay={2.2}
-                variant="dark"
-            />
+            {/* Floating Chat Bubbles - Deep Parallax */}
+            <motion.div style={{ x: x * 2, y: y * 2 }} className="absolute inset-0">
+                <FloatingBubble
+                    className="left-[15%] top-[20%]"
+                    size="lg"
+                    delay={0}
+                />
+                <FloatingBubble
+                    className="right-[20%] top-[15%]"
+                    size="md"
+                    delay={1.5}
+                    variant="glass"
+                />
+                <FloatingBubble
+                    className="left-[25%] bottom-[30%]"
+                    size="sm"
+                    delay={0.8}
+                />
+                <FloatingBubble
+                    className="right-[15%] bottom-[25%]"
+                    size="md"
+                    delay={2.2}
+                    variant="dark"
+                />
+            </motion.div>
 
-            {/* Spinning Gears */}
-            <SpinningGear
-                className="left-[10%] bottom-[20%]"
-                size={60}
-                direction="cw"
-            />
-            <SpinningGear
-                className="right-[25%] top-[25%]"
-                size={45}
-                direction="ccw"
-                delay={2}
-            />
-            <SpinningGear
-                className="right-[10%] bottom-[40%]"
-                size={35}
-                direction="cw"
-                delay={4}
-            />
+            {/* Spinning Gears - Medium Parallax */}
+            <motion.div style={{ x: x * 1, y: y * 1 }} className="absolute inset-0">
+                <SpinningGear
+                    className="left-[10%] bottom-[20%]"
+                    size={60}
+                    direction="cw"
+                />
+                <SpinningGear
+                    className="right-[25%] top-[25%]"
+                    size={45}
+                    direction="ccw"
+                    delay={2}
+                />
+                <SpinningGear
+                    className="right-[10%] bottom-[40%]"
+                    size={35}
+                    direction="cw"
+                    delay={4}
+                />
+            </motion.div>
 
-            {/* Glowing Orbs */}
-            <motion.div
-                className="absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-white/10 blur-3xl"
-                animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.1, 0.15, 0.1],
-                }}
-                transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                }}
-            />
-            <motion.div
-                className="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-accent-400/20 blur-3xl"
-                animate={{
-                    scale: [1.2, 1, 1.2],
-                    opacity: [0.15, 0.1, 0.15],
-                }}
-                transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                }}
-            />
+            {/* Glowing Orbs - Subtle Parallax */}
+            <motion.div style={{ x: x * 0.5, y: y * 0.5 }} className="absolute inset-0">
+                <motion.div
+                    className="absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-white/10 blur-3xl"
+                    animate={{
+                        scale: [1, 1.2, 1],
+                        opacity: [0.1, 0.15, 0.1],
+                    }}
+                    transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                    }}
+                />
+                <motion.div
+                    className="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-accent-400/20 blur-3xl"
+                    animate={{
+                        scale: [1.2, 1, 1.2],
+                        opacity: [0.15, 0.1, 0.15],
+                    }}
+                    transition={{
+                        duration: 5,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                    }}
+                />
+            </motion.div>
 
-            {/* Animated Particles */}
-            <Particles particles={particles} />
+            {/* Animated Particles - Front Layer */}
+            <motion.div style={{ x: x * 3, y: y * 3 }} className="absolute inset-0">
+                <Particles particles={particles} />
+            </motion.div>
 
             {/* Content Overlay */}
             {!hideContent && (
