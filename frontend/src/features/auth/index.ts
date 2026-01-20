@@ -12,7 +12,7 @@
 export { signIn, signUp, signOut, requestPasswordReset, getSession } from './actions';
 
 // Components
-export { LoginForm, RegisterForm } from './components';
+export { LoginForm, RegisterForm, AnimatedAuthHero } from './components';
 
 // Hooks
 export { useAuth } from './hooks';

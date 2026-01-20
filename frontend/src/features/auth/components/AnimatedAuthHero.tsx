@@ -1,0 +1,315 @@
+/**
+ * AnimatedAuthHero - Animated hero section for auth pages
+ *
+ * Features floating chat bubbles, spinning gears, and particle effects.
+ * Uses Framer Motion for GPU-accelerated animations.
+ */
+
+'use client';
+
+import { motion } from 'framer-motion';
+
+// Animation durations per PROJECT_RULES
+const DURATION = {
+    fast: 0.15,
+    normal: 0.25,
+    slow: 0.4,
+    float: 6,
+    spin: 12,
+    particle: 8,
+} as const;
+
+export function AnimatedAuthHero() {
+    return (
+        <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600">
+            {/* Grid Pattern - Static */}
+            <div
+                className="absolute inset-0 opacity-[0.07]"
+                style={{
+                    backgroundImage: `
+                        linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+                    `,
+                    backgroundSize: '40px 40px',
+                }}
+            />
+
+            {/* Flowing Data Lines */}
+            <FlowingLines />
+
+            {/* Floating Chat Bubbles */}
+            <FloatingBubble
+                className="left-[15%] top-[20%]"
+                size="lg"
+                delay={0}
+            />
+            <FloatingBubble
+                className="right-[20%] top-[15%]"
+                size="md"
+                delay={1.5}
+                variant="glass"
+            />
+            <FloatingBubble
+                className="left-[25%] bottom-[30%]"
+                size="sm"
+                delay={0.8}
+            />
+            <FloatingBubble
+                className="right-[15%] bottom-[25%]"
+                size="md"
+                delay={2.2}
+                variant="dark"
+            />
+
+            {/* Spinning Gears */}
+            <SpinningGear
+                className="left-[10%] bottom-[20%]"
+                size={60}
+                direction="cw"
+            />
+            <SpinningGear
+                className="right-[25%] top-[25%]"
+                size={45}
+                direction="ccw"
+                delay={2}
+            />
+            <SpinningGear
+                className="right-[10%] bottom-[40%]"
+                size={35}
+                direction="cw"
+                delay={4}
+            />
+
+            {/* Glowing Orbs */}
+            <motion.div
+                className="absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-white/10 blur-3xl"
+                animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.1, 0.15, 0.1],
+                }}
+                transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                }}
+            />
+            <motion.div
+                className="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-accent-400/20 blur-3xl"
+                animate={{
+                    scale: [1.2, 1, 1.2],
+                    opacity: [0.15, 0.1, 0.15],
+                }}
+                transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                }}
+            />
+
+            {/* Particles */}
+            <Particles />
+
+            {/* Content Overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-white">
+                <motion.div
+                    className="max-w-md text-center"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: DURATION.slow, delay: 0.2 }}
+                >
+                    <motion.h2
+                        className="mb-4 text-3xl font-bold"
+                        animate={{
+                            textShadow: [
+                                '0 0 20px rgba(255,255,255,0.3)',
+                                '0 0 40px rgba(255,255,255,0.5)',
+                                '0 0 20px rgba(255,255,255,0.3)',
+                            ],
+                        }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                    >
+                        Welcome to WhatsDeX
+                    </motion.h2>
+                    <p className="text-lg text-white/80">
+                        The most powerful WhatsApp bot management platform. Connect,
+                        automate, and scale your messaging effortlessly.
+                    </p>
+                </motion.div>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================================
+// Sub-Components
+// ============================================================================
+
+interface FloatingBubbleProps {
+    className: string;
+    size: 'sm' | 'md' | 'lg';
+    delay?: number;
+    variant?: 'solid' | 'glass' | 'dark';
+}
+
+function FloatingBubble({
+    className,
+    size,
+    delay = 0,
+    variant = 'solid',
+}: FloatingBubbleProps) {
+    const sizes = {
+        sm: 'w-12 h-10',
+        md: 'w-16 h-14',
+        lg: 'w-20 h-16',
+    };
+
+    const variants = {
+        solid: 'bg-primary-400/40 border-primary-300/50',
+        glass: 'bg-white/10 backdrop-blur-sm border-white/20',
+        dark: 'bg-slate-800/40 border-slate-600/30',
+    };
+
+    return (
+        <motion.div
+            className={`absolute ${className}`}
+            animate={{
+                y: [-10, 10, -10],
+                rotate: [-3, 3, -3],
+            }}
+            transition={{
+                duration: DURATION.float,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay,
+            }}
+        >
+            <div
+                className={`${sizes[size]} ${variants[variant]} relative rounded-2xl border shadow-lg`}
+            >
+                {/* Bubble tail */}
+                <div
+                    className={`absolute -bottom-2 left-3 h-4 w-4 rotate-45 ${variants[variant]} border-b border-r`}
+                />
+                {/* Typing dots */}
+                <div className="absolute inset-0 flex items-center justify-center gap-1">
+                    {[0, 1, 2].map((i) => (
+                        <motion.div
+                            key={i}
+                            className="h-2 w-2 rounded-full bg-white/60"
+                            animate={{ opacity: [0.4, 1, 0.4] }}
+                            transition={{
+                                duration: 1.2,
+                                repeat: Infinity,
+                                delay: i * 0.2,
+                            }}
+                        />
+                    ))}
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
+interface SpinningGearProps {
+    className: string;
+    size: number;
+    direction: 'cw' | 'ccw';
+    delay?: number;
+}
+
+function SpinningGear({ className, size, direction, delay = 0 }: SpinningGearProps) {
+    const rotation = direction === 'cw' ? 360 : -360;
+
+    return (
+        <motion.div
+            className={`absolute ${className}`}
+            animate={{ rotate: rotation }}
+            transition={{
+                duration: DURATION.spin,
+                repeat: Infinity,
+                ease: 'linear',
+                delay,
+            }}
+        >
+            <svg
+                width={size}
+                height={size}
+                viewBox="0 0 24 24"
+                fill="none"
+                className="text-white/20"
+            >
+                <path
+                    d="M12 15a3 3 0 100-6 3 3 0 000 6z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                />
+                <path
+                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                />
+            </svg>
+        </motion.div>
+    );
+}
+
+function FlowingLines() {
+    return (
+        <div className="absolute inset-x-0 bottom-0 h-32 overflow-hidden">
+            {[0, 1, 2].map((i) => (
+                <motion.div
+                    key={i}
+                    className="absolute bottom-0 h-px w-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    style={{ bottom: `${i * 40 + 20}px` }}
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{
+                        duration: 4 + i,
+                        repeat: Infinity,
+                        ease: 'linear',
+                        delay: i * 0.5,
+                    }}
+                />
+            ))}
+        </div>
+    );
+}
+
+function Particles() {
+    // Use fixed height value to avoid SSR issues with window
+    const PARTICLE_TRAVEL_DISTANCE = -800;
+
+    const particles = Array.from({ length: 12 }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        delay: Math.random() * 5,
+        duration: 6 + Math.random() * 4,
+        size: 2 + Math.random() * 3,
+    }));
+
+    return (
+        <div className="absolute inset-0 overflow-hidden">
+            {particles.map((p) => (
+                <motion.div
+                    key={p.id}
+                    className="absolute rounded-full bg-white/40"
+                    style={{
+                        left: p.left,
+                        width: p.size,
+                        height: p.size,
+                        bottom: -10,
+                    }}
+                    animate={{
+                        y: [0, PARTICLE_TRAVEL_DISTANCE],
+                        opacity: [0, 1, 0],
+                    }}
+                    transition={{
+                        duration: p.duration,
+                        repeat: Infinity,
+                        ease: 'linear',
+                        delay: p.delay,
+                    }}
+                />
+            ))}
+        </div>
+    );
+}
