@@ -18,6 +18,7 @@ import messageRoutes from '../routes/messageRoutes.js';
 import campaignRoutes from '../routes/campaigns.js';
 import webhookRoutes from '../routes/webhookRoutes.js';
 import billingRoutes from '../routes/billingRoutes.js';
+import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
 import AuditService from '../services/auditService.js';
@@ -109,7 +110,12 @@ export class MultiTenantApp {
     this.app.use(compression() as any);
 
     // Body parsing
-    this.app.use(express.json({ limit: '10mb' }));
+    this.app.use(express.json({ 
+      limit: '10mb',
+      verify: (req: any, res, buf) => {
+        req.rawBody = buf;
+      }
+    }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
     this.app.use(cookieParser() as any);
 
@@ -184,6 +190,7 @@ export class MultiTenantApp {
     this.app.use('/api/tenant', authenticateToken, tenantSettingsRoutes);
 
     // Billing routes
+    this.app.use('/api/billing/webhook', stripeWebhookRoutes);
     this.app.use('/api/billing', authenticateToken, billingRoutes);
 
     // Bot management
