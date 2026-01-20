@@ -17,6 +17,7 @@ import contactRoutes from '../routes/contactRoutes.js';
 import messageRoutes from '../routes/messageRoutes.js';
 import campaignRoutes from '../routes/campaigns.js';
 import webhookRoutes from '../routes/webhookRoutes.js';
+import billingRoutes from '../routes/billingRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
 import AuditService from '../services/auditService.js';
@@ -181,6 +182,9 @@ export class MultiTenantApp {
 
     // Tenant Settings Routes
     this.app.use('/api/tenant', authenticateToken, tenantSettingsRoutes);
+
+    // Billing routes
+    this.app.use('/api/billing', authenticateToken, billingRoutes);
 
     // Bot management
     this.app.post('/api/bots/:botId/start', authenticateToken, async (req, res) => {
