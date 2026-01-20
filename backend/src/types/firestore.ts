@@ -49,8 +49,8 @@ export interface BotInstanceDocument {
   name: string;
   phoneNumber?: string;
   userId?: string; // Legacy/Owner mapping
-  status: 'online' | 'offline' | 'connecting' | 'error';
-  lastSeen?: Timestamp | Date;
+  status: 'connected' | 'disconnected' | 'connecting' | 'qr_pending' | 'error';
+  lastSeenAt?: Timestamp | Date;
   connectionMetadata: {
     browser: [string, string, string]; // e.g. ['WhatsDeX', 'Chrome', '1.0.0']
     platform: string;
@@ -58,6 +58,8 @@ export interface BotInstanceDocument {
   stats: {
     messagesSent: number;
     messagesReceived: number;
+    contactsCount: number;
+    lastMessageAt?: Timestamp | Date | null;
     errorsCount: number;
   };
   createdAt: Timestamp | Date;

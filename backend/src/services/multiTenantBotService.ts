@@ -75,7 +75,7 @@ export class MultiTenantBotService {
       const rawData = {
         id: botId,
         name: restBotData.name || 'My Bot',
-        status: 'offline' as const,
+        status: 'disconnected' as const,
         connectionMetadata: {
           browser: ['WhatsDeX', 'Chrome', '1.0.0'] as [string, string, string],
           platform: 'web'
@@ -83,6 +83,7 @@ export class MultiTenantBotService {
         stats: {
           messagesSent: 0,
           messagesReceived: 0,
+          contactsCount: 0,
           errorsCount: 0
         },
         createdAt: Timestamp.now(),
@@ -111,7 +112,7 @@ export class MultiTenantBotService {
   async startBot(tenantId: string, botId: string): Promise<Result<void>> {
     try {
       if (this.activeBots.has(botId)) {
-        logger.info(`Bot ${botId} is already running`);
+        logger.info(`Bot ${botId} is already running`, { tenantId, botId });
         return { success: true, data: undefined };
       }
 
@@ -125,14 +126,14 @@ export class MultiTenantBotService {
           const qrCodeUrl = await QRCode.toDataURL(qr);
           this.qrCodes.set(botId, qrCodeUrl);
         } catch (err) {
-          logger.error(`QR Generation failed for ${botId}`, err);
+          logger.error(`QR Generation failed for ${botId}`, { tenantId, botId, error: err });
         }
       });
 
       // Handle Disconnection
       authSystem.on('disconnected', async (error) => {
         this.activeBots.delete(botId);
-        await this.updateBotStatus(tenantId, botId, 'offline');
+        await this.updateBotStatus(tenantId, botId, 'disconnected');
 
         const statusCode = (error as any)?.output?.statusCode;
         if (statusCode === DisconnectReason.loggedOut) {
@@ -143,9 +144,9 @@ export class MultiTenantBotService {
 
       // Handle Connection Success
       authSystem.on('connected', async () => {
-        logger.info(`Bot ${botId} (Tenant: ${tenantId}) is ONLINE`);
+        logger.info(`Bot ${botId} is CONNECTED`, { tenantId, botId });
         this.qrCodes.delete(botId);
-        await this.updateBotStatus(tenantId, botId, 'online');
+        await this.updateBotStatus(tenantId, botId, 'connected');
       });
 
       // Connect via AuthSystem to get the socket
@@ -195,12 +196,12 @@ export class MultiTenantBotService {
         }
       });
 
-      logger.info(`Bot ${botId} (Tenant: ${tenantId}) orchestrator started`);
+      logger.info(`Bot ${botId} orchestrator started`, { tenantId, botId });
       return { success: true, data: undefined };
 
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Failed to start bot ${botId}:`, err);
+      logger.error(`Failed to start bot ${botId}`, { tenantId, botId, error: err });
       await this.updateBotStatus(tenantId, botId, 'error');
       return { success: false, error: err };
     }
@@ -221,15 +222,15 @@ export class MultiTenantBotService {
       if (connection === 'close') {
         const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-        const status = 'offline';
+        const status = 'disconnected';
 
         await this.updateBotStatus(tenantId, botId, status);
 
         if (shouldReconnect) {
-          logger.info(`Bot ${botId} disconnected, reconnecting...`);
+          logger.info(`Bot ${botId} disconnected, reconnecting...`, { tenantId, botId });
           setTimeout(() => this.startBot(tenantId, botId), 5000);
         } else {
-          logger.info(`Bot ${botId} logged out.`);
+          logger.info(`Bot ${botId} logged out.`, { tenantId, botId });
           this.activeBots.delete(botId);
           this.qrCodes.delete(botId);
         }
@@ -242,15 +243,15 @@ export class MultiTenantBotService {
         });
 
       } else if (connection === 'open') {
-        const status = 'online';
-        logger.info(`Bot ${botId} is ONLINE`);
+        const status = 'connected';
+        logger.info(`Bot ${botId} is CONNECTED`, { tenantId, botId });
         this.qrCodes.delete(botId);
         await this.updateBotStatus(tenantId, botId, status);
 
         // Extract and save phone number
         const bot = this.activeBots.get(botId);
         if (bot?.user?.id) {
-          if (status === 'online' && !bot.phoneNumber && (update as any).me?.id) {
+          if (status === 'connected' && !bot.phoneNumber && (update as any).me?.id) {
             await this.updateBotPhoneNumber(tenantId, botId, (update as any).me.id);
           }
         }
@@ -263,7 +264,7 @@ export class MultiTenantBotService {
         });
       }
     } catch (error: unknown) {
-      logger.error(`Error handling connection update for ${botId}:`, error);
+      logger.error(`Error handling connection update for ${botId}`, { tenantId, botId, error });
     }
   }
 
@@ -400,15 +401,15 @@ export class MultiTenantBotService {
       // Enrich with active status from memory if needed
       const enrichedBots = bots.map(bot => {
         const isActive = this.hasActiveBot(bot.id);
-        // If active in memory, status should be 'online' or 'connecting'
-        // If not active in memory, status should be 'offline' (or 'disconnected')
+        // If active in memory, status should be 'connected' or 'connecting'
+        // If not active in memory, status should be 'disconnected' (or 'disconnected')
         // We trust Firestore status mostly, but we can override if we know it's active.
 
         let status = bot.status;
-        if (isActive && (status === 'offline' || status === 'error')) {
-          status = 'online'; // Fallback if Firestore wasn't updated
-        } else if (!isActive && status === 'online') {
-          status = 'offline'; // Fallback if it crashed without updating Firestore
+        if (isActive && (status === 'disconnected' || status === 'error')) {
+          status = 'connected'; // Fallback if Firestore wasn't updated
+        } else if (!isActive && status === 'connected') {
+          status = 'disconnected'; // Fallback if it crashed without updating Firestore
         }
 
         return {
@@ -416,7 +417,11 @@ export class MultiTenantBotService {
           status,
           createdAt: (bot.createdAt as any)?.toDate?.() || bot.createdAt,
           updatedAt: (bot.updatedAt as any)?.toDate?.() || bot.updatedAt,
-          lastSeen: (bot.lastSeen as any)?.toDate?.() || bot.lastSeen,
+          lastSeenAt: (bot.lastSeenAt as any)?.toDate?.() || bot.lastSeenAt,
+          stats: {
+            ...bot.stats,
+            lastMessageAt: (bot.stats?.lastMessageAt as any)?.toDate?.() || bot.stats?.lastMessageAt,
+          },
         };
       });
 
@@ -457,6 +462,23 @@ export class MultiTenantBotService {
       await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, updateData, tenantId, true);
 
       const updated = await this.getBot(tenantId, botId);
+      if (updated.success) {
+        // Ensure Date conversion for the returned object
+        const bot = updated.data;
+        return {
+          success: true,
+          data: {
+            ...bot,
+            createdAt: (bot.createdAt as any)?.toDate?.() || bot.createdAt,
+            updatedAt: (bot.updatedAt as any)?.toDate?.() || bot.updatedAt,
+            lastSeenAt: (bot.lastSeenAt as any)?.toDate?.() || bot.lastSeenAt,
+            stats: {
+              ...bot.stats,
+              lastMessageAt: (bot.stats?.lastMessageAt as any)?.toDate?.() || bot.stats?.lastMessageAt,
+            },
+          } as BotInstance
+        };
+      }
       return updated;
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));

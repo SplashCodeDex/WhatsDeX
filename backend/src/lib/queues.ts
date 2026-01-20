@@ -1,5 +1,6 @@
 import Queue from 'bull';
 import configManager from '../config/ConfigManager.js';
+import logger from '../utils/logger.js';
 
 
 const config: any = configManager.export();
@@ -25,19 +26,19 @@ export const jobResultsQueue = new Queue('job-results', {
 
 // Add event listeners for logging and debugging (optional but recommended)
 imageGenerationQueue.on('completed', (job, result) => {
-  console.log(`✅ Job ${job.id} (image-generation) completed successfully.`);
+  logger.info(`✅ Job ${job.id} (image-generation) completed successfully.`);
 });
 
 imageGenerationQueue.on('failed', (job, err) => {
-  console.error(`❌ Job ${job.id} (image-generation) failed with error:`, err.message);
+  logger.error(`❌ Job ${job.id} (image-generation) failed with error:`, { error: err.message });
 });
 
 jobResultsQueue.on('completed', (job, result) => {
-  console.log(`✅ Job ${job.id} (job-results) completed successfully.`);
+  logger.info(`✅ Job ${job.id} (job-results) completed successfully.`);
 });
 
 jobResultsQueue.on('failed', (job, err) => {
-  console.error(`❌ Job ${job.id} (job-results) failed with error:`, err.message);
+  logger.error(`❌ Job ${job.id} (job-results) failed with error:`, { error: err.message });
 });
 
-console.log('✅ Bull queues initialized.');
+logger.info('✅ Bull queues initialized.');

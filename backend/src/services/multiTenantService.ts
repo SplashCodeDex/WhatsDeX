@@ -1,8 +1,9 @@
 import { firebaseService } from '@/services/FirebaseService.js';
 import logger from '@/utils/logger.js';
-import { Tenant, TenantSchema, Result } from '@/types/index.js';
+import { Tenant, TenantSchema, Result, TenantUser, TenantUserSchema } from '@/types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getPlanLimits } from '@/utils/featureGating.js';
+import { db } from '@/lib/firebase.js';
 
 export class MultiTenantService {
   private static instance: MultiTenantService;
@@ -14,6 +15,81 @@ export class MultiTenantService {
       MultiTenantService.instance = new MultiTenantService();
     }
     return MultiTenantService.instance;
+  }
+
+  /**
+   * Initialize a new tenant with an owner and lookup entry (Atomic)
+   */
+  async initializeTenant(payload: {
+    userId: string;
+    email: string;
+    displayName: string;
+    tenantName: string;
+    subdomain: string;
+    plan?: string;
+  }): Promise<Result<{ tenant: Tenant; user: TenantUser }>> {
+    const { userId, email, displayName, tenantName, subdomain, plan = 'starter' } = payload;
+    const tenantId = `tenant-${Date.now()}`;
+    const limits = getPlanLimits(plan);
+
+    try {
+      const result = await db.runTransaction(async (transaction) => {
+        // 1. Create Tenant
+        const tenantData: any = {
+          id: tenantId,
+          name: tenantName,
+          subdomain: subdomain.toLowerCase(),
+          plan: plan.toLowerCase(),
+          planTier: plan.toLowerCase(),
+          subscriptionStatus: 'trialing',
+          status: 'active',
+          ownerId: userId,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+          settings: {
+            maxBots: limits.maxBots,
+            aiEnabled: plan !== 'starter',
+            timezone: 'UTC'
+          }
+        };
+        const validatedTenant = TenantSchema.parse(tenantData);
+        transaction.set(db.collection('tenants').doc(tenantId), validatedTenant);
+
+        // 2. Create User in subcollection
+        const userData: any = {
+          id: userId,
+          email,
+          displayName,
+          role: 'owner',
+          planTier: plan.toLowerCase(),
+          subscriptionStatus: 'trialing',
+          trialEndsAt: tenantData.trialEndsAt,
+          joinedAt: Timestamp.now(),
+          lastLogin: Timestamp.now(),
+        };
+        const validatedUser = TenantUserSchema.parse(userData);
+        transaction.set(db.collection('tenants').doc(tenantId).collection('users').doc(userId), validatedUser);
+
+        // 3. Create Global Lookup Entry
+        transaction.set(db.collection('users').doc(userId), {
+          id: userId,
+          email,
+          tenantId,
+          role: 'owner',
+          createdAt: Timestamp.now()
+        });
+
+        return { tenant: validatedTenant, user: validatedUser };
+      });
+
+      logger.info(`Tenant and Owner initialized: ${tenantId} / ${userId}`);
+      return { success: true, data: result };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('MultiTenantService.initializeTenant error:', err);
+      return { success: false, error: err };
+    }
   }
 
   /**

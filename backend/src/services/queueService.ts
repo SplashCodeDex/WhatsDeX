@@ -41,13 +41,14 @@ class QueueService {
     /**
      * Add a campaign to the processing queue
      */
-    async addCampaignJob(tenantId: string, campaign: Campaign): Promise<void> {
+    async addCampaignJob(tenantId: string, campaign: Campaign, options: any = {}): Promise<void> {
         try {
             await this.campaignQueue.add(
                 'process-campaign',
                 { tenantId, campaign },
                 {
                     jobId: `camp_${campaign.id}`, // Deduplication
+                    ...options
                 }
             );
             logger.info(`Added campaign to queue: ${campaign.id} (Tenant: ${tenantId})`);

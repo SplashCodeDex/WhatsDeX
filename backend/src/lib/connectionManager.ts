@@ -1,5 +1,5 @@
-// lib/connectionManager.js
 import { Result } from '../types/index.js';
+import logger from '../utils/logger.js';
 
 interface ConnectionState {
   isReconnecting: boolean;
@@ -54,13 +54,13 @@ class ConnectionManager {
 
     // Circuit breaker check
     if (this.isCircuitOpen()) {
-      console.log('⚡ Circuit breaker OPEN - waiting before retry');
+      logger.warn('⚡ Circuit breaker OPEN - waiting before retry');
       await this.waitForCircuitReset();
     }
 
     // Check max retries BEFORE incrementing
     if (this.state.attemptCount >= this.state.maxRetries) {
-      console.error('💀 Max reconnection attempts reached. Manual intervention required.');
+      logger.error('💀 Max reconnection attempts reached. Manual intervention required.');
       return { success: false, error: new Error(`Connection failed after ${this.state.maxRetries} attempts`) };
     }
 
@@ -73,13 +73,13 @@ class ConnectionManager {
     const delay = this.calculateBackoffDelay();
 
     // Show correct attempt numbers
-    console.log(
-      `🔄 Reconnection attempt ${this.state.attemptCount}/${this.state.maxRetries} in ${Math.round(delay)}ms`
-    );
-    console.log(`❌ Last error: ${err.message}`);
-    console.log(
-      `📊 Total failures: ${this.state.consecutiveFailures}, Success rate: ${(((this.state.attemptCount - this.state.consecutiveFailures) / this.state.attemptCount) * 100).toFixed(1)}%`
-    );
+    logger.info(`🔄 Reconnection attempt ${this.state.attemptCount}/${this.state.maxRetries} in ${Math.round(delay)}ms`, {
+      attempt: this.state.attemptCount,
+      maxRetries: this.state.maxRetries,
+      delay
+    });
+    logger.info(`❌ Last error: ${err.message}`);
+    logger.info(`📊 Total failures: ${this.state.consecutiveFailures}, Success rate: ${(((this.state.attemptCount - this.state.consecutiveFailures) / this.state.attemptCount) * 100).toFixed(1)}%`);
 
     // Clear any existing timeout
     if (this.reconnectionTimeout) {
@@ -92,7 +92,7 @@ class ConnectionManager {
         this.reconnectionTimeout = setTimeout(resolve, delay);
       });
 
-      console.log(`⚡ Executing reconnection attempt ${this.state.attemptCount}...`);
+      logger.info(`⚡ Executing reconnection attempt ${this.state.attemptCount}...`);
 
       // Try reconnection
       await this.attemptReconnection(context);
@@ -102,16 +102,11 @@ class ConnectionManager {
       return { success: true, data: undefined };
     } catch (reconnectionError: unknown) {
       const recErr = reconnectionError instanceof Error ? reconnectionError : new Error(String(reconnectionError));
-      console.error(
-        `🔥 Reconnection attempt ${this.state.attemptCount} failed:`,
-        recErr.message
-      );
+      logger.error(`🔥 Reconnection attempt ${this.state.attemptCount} failed:`, { error: recErr.message });
 
       // Check if we should continue trying
       if (this.state.attemptCount < this.state.maxRetries) {
-        console.log(
-          `🔄 Will retry... (${this.state.maxRetries - this.state.attemptCount} attempts remaining)`
-        );
+        logger.info(`🔄 Will retry... (${this.state.maxRetries - this.state.attemptCount} attempts remaining)`);
         return this.handleReconnection(recErr, context);
       } else {
         this.onReconnectionFailure();
@@ -142,11 +137,11 @@ class ConnectionManager {
             context.bot = null;
           } catch (cleanupError: unknown) {
             const cleanErr = cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError));
-            console.warn('⚠️  Cleanup warning:', cleanErr.message);
+            logger.warn('⚠️  Cleanup warning:', { error: cleanErr.message });
           }
         }
 
-        console.log('⚡ Executing reconnection callback...');
+        logger.info('⚡ Executing reconnection callback...');
         const newBot = await this.reconnectFn();
 
         clearTimeout(timeout);
@@ -179,7 +174,7 @@ class ConnectionManager {
     );
 
     if (waitTime > 0) {
-      console.log(`⏳ Circuit breaker cooling down for ${Math.round(waitTime / 1000)}s`);
+      logger.info(`⏳ Circuit breaker cooling down for ${Math.round(waitTime / 1000)}s`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
   }
@@ -190,9 +185,9 @@ class ConnectionManager {
       ? Date.now() - this.state.lastDisconnected
       : 0;
 
-    console.log(`✅ Reconnection successful after ${totalAttempts} attempts`);
+    logger.info(`✅ Reconnection successful after ${totalAttempts} attempts`);
     if (reconnectionTime > 0) {
-      console.log(`⏱️  Total reconnection time: ${Math.round(reconnectionTime / 1000)}s`);
+      logger.info(`⏱️  Total reconnection time: ${Math.round(reconnectionTime / 1000)}s`);
     }
 
     // Track statistics before resetting
@@ -214,13 +209,11 @@ class ConnectionManager {
     // Log success statistics
     const avgReconnectionTime =
       (this.state.totalReconnectionTime || 0) / (this.state.totalSuccessfulReconnections || 1);
-    console.log(
-      `📈 Reconnection stats: ${this.state.totalSuccessfulReconnections} successful, avg time: ${Math.round(avgReconnectionTime / 1000)}s`
-    );
+    logger.info(`📈 Reconnection stats: ${this.state.totalSuccessfulReconnections} successful, avg time: ${Math.round(avgReconnectionTime / 1000)}s`);
   }
 
   onReconnectionFailure(): void {
-    console.error('💀 All reconnection attempts failed');
+    logger.error('💀 All reconnection attempts failed');
     this.state.isReconnecting = false;
 
     if (this.reconnectionTimeout) {

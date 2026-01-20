@@ -24,7 +24,8 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Send, AlertCircle, Users, Radio, Sparkles } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Send, AlertCircle, Users, Radio, Sparkles, Calendar } from 'lucide-react';
 
 export function CreateCampaignDialog() {
     const [open, setOpen] = useState(false);
@@ -36,7 +37,9 @@ export function CreateCampaignDialog() {
         message: '',
         botId: '',
         audienceType: 'selective' as 'groups' | 'contacts' | 'selective',
-        targets: '' // Comma separated for selective
+        targets: '', // Comma separated for selective
+        isScheduled: false,
+        scheduledAt: ''
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -52,7 +55,10 @@ export function CreateCampaignDialog() {
                 type: formData.audienceType,
                 targets: targets
             },
-            schedule: { type: 'immediate' }
+            schedule: formData.isScheduled && formData.scheduledAt ? {
+                type: 'scheduled',
+                scheduledAt: new Date(formData.scheduledAt).toISOString() as any
+            } : { type: 'immediate' }
         }, {
             onSuccess: () => {
                 setOpen(false);
@@ -61,7 +67,9 @@ export function CreateCampaignDialog() {
                     message: '',
                     botId: '',
                     audienceType: 'selective',
-                    targets: ''
+                    targets: '',
+                    isScheduled: false,
+                    scheduledAt: ''
                 });
             }
         });
@@ -162,7 +170,11 @@ export function CreateCampaignDialog() {
                                 <Users className="w-4 h-4 text-primary" /> Target Audience
                             </Label>
                             <div className="flex gap-1">
-                                <Badge variant={formData.audienceType === 'selective' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setFormData(prev => ({ ...prev, audienceType: 'selective' }))}>
+                                <Badge
+                                    variant={formData.audienceType === 'selective' ? 'default' : 'outline'}
+                                    className="cursor-pointer"
+                                    onClick={() => setFormData(prev => ({ ...prev, audienceType: 'selective' }))}
+                                >
                                     Selective
                                 </Badge>
                                 <Badge variant="outline" className="opacity-50 cursor-not-allowed">Groups</Badge>
@@ -181,6 +193,36 @@ export function CreateCampaignDialog() {
                                 />
                                 <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                                     <Radio className="w-3 h-3" /> Manual input mode. Bulk import from CSV coming soon.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Scheduling Section */}
+                    <div className="space-y-4 p-4 rounded-xl border border-border/40 bg-muted/20">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-primary" />
+                                <Label className="text-sm font-semibold">Schedule Broadcast</Label>
+                            </div>
+                            <Switch
+                                checked={formData.isScheduled}
+                                onCheckedChange={(val: boolean) => setFormData(prev => ({ ...prev, isScheduled: val }))}
+                            />
+                        </div>
+
+                        {formData.isScheduled && (
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 pt-2 border-t border-border/20">
+                                <Label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Select Date & Time</Label>
+                                <Input
+                                    type="datetime-local"
+                                    className="bg-background/50 h-10"
+                                    value={formData.scheduledAt}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, scheduledAt: e.target.value }))}
+                                    required={formData.isScheduled}
+                                />
+                                <p className="text-[10px] text-muted-foreground italic">
+                                    Broadcast will start automatically at the selected time.
                                 </p>
                             </div>
                         )}

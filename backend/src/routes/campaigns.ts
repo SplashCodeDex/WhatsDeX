@@ -1,5 +1,6 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { campaignService } from '../services/campaignService.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 import logger from '../utils/logger.js';
 
 const router = Router();
@@ -8,15 +9,15 @@ const router = Router();
  * GET /campaigns
  * List all campaigns for the tenant
  */
-router.get('/', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+router.get('/', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await campaignService.getCampaigns(tenantId);
     if (result.success) {
-        res.json(result);
+        res.json({ success: true, data: result.data });
     } else {
-        res.status(500).json(result);
+        res.status(500).json({ success: false, error: result.error?.message || 'Failed to fetch campaigns' });
     }
 });
 
@@ -24,105 +25,85 @@ router.get('/', async (req, res) => {
  * POST /campaigns
  * Create a new campaign
  */
-router.post('/', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+router.post('/', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await campaignService.createCampaign(tenantId, req.body);
     if (result.success) {
-        res.status(201).json(result);
+        res.status(201).json({ success: true, data: result.data });
     } else {
-        res.status(400).json(result);
+        res.status(400).json({ success: false, error: result.error?.message || 'Failed to create campaign' });
     }
 });
 
-/**
- * POST /campaigns/:id/start
- * Trigger campaign execution
- */
-router.post('/:id/start', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
+router.post('/:id/start', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
     const { id } = req.params;
 
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await campaignService.startCampaign(tenantId, id);
     if (result.success) {
-        res.json(result);
+        res.json({ success: true, data: { message: 'Campaign started' } });
     } else {
-        res.status(400).json(result);
+        res.status(400).json({ success: false, error: result.error?.message || 'Failed to start campaign' });
     }
 });
 
-/**
- * POST /campaigns/:id/pause
- * Pause campaign execution
- */
-router.post('/:id/pause', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
+router.post('/:id/pause', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
     const { id } = req.params;
 
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await campaignService.pauseCampaign(tenantId, id);
     if (result.success) {
-        res.json(result);
+        res.json({ success: true, data: { message: 'Campaign paused' } });
     } else {
-        res.status(400).json(result);
+        res.status(400).json({ success: false, error: result.error?.message || 'Failed to pause campaign' });
     }
 });
 
-/**
- * POST /campaigns/:id/resume
- * Resume campaign execution
- */
-router.post('/:id/resume', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
+router.post('/:id/resume', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
     const { id } = req.params;
 
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await campaignService.resumeCampaign(tenantId, id);
     if (result.success) {
-        res.json(result);
+        res.json({ success: true, data: { message: 'Campaign resumed' } });
     } else {
-        res.status(400).json(result);
+        res.status(400).json({ success: false, error: result.error?.message || 'Failed to resume campaign' });
     }
 });
 
-/**
- * POST /campaigns/:id/duplicate
- * Duplicate a campaign
- */
-router.post('/:id/duplicate', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
+router.post('/:id/duplicate', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
     const { id } = req.params;
 
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await campaignService.duplicateCampaign(tenantId, id);
     if (result.success) {
-        res.status(201).json(result);
+        res.status(201).json({ success: true, data: result.data });
     } else {
-        res.status(500).json(result);
+        res.status(500).json({ success: false, error: result.error?.message || 'Failed to duplicate campaign' });
     }
 });
 
-/**
- * DELETE /campaigns/:id
- * Delete a campaign
- */
-router.delete('/:id', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
+router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
     const { id } = req.params;
 
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await campaignService.deleteCampaign(tenantId, id);
     if (result.success) {
-        res.json(result);
+        res.json({ success: true, data: { message: 'Campaign deleted' } });
     } else {
-        res.status(500).json(result);
+        res.status(500).json({ success: false, error: result.error?.message || 'Failed to delete campaign' });
     }
 });
 

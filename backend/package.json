@@ -46,6 +46,7 @@
     "rate-limiter-flexible": "^9.0.1",
     "redis": "^5.10.0",
     "sharp": "^0.34.5",
+    "socket.io": "^4.8.3",
     "stripe": "^20.1.2",
     "vcard-creator": "^0.7.2",
     "wa-sticker-formatter": "^3.6.0",
@@ -58,6 +59,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/compression": "^1.8.1",
+    "@types/cookie": "^0.6.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

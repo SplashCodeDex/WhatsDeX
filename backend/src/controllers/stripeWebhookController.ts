@@ -12,7 +12,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
 
   if (!sig || !webhookSecret) {
     logger.warn('Stripe webhook received without signature or secret');
-    return res.status(400).json({ error: 'Missing signature or webhook secret' });
+    return res.status(400).json({ success: false, error: 'Missing signature or webhook secret' });
   }
 
   let event;
@@ -29,7 +29,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
     );
   } catch (err: any) {
     logger.error('Stripe webhook signature verification failed', { error: err.message });
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    return res.status(400).json({ success: false, error: `Webhook Error: ${err.message}` });
   }
 
   // Idempotency check: check if event has already been processed
@@ -69,7 +69,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
   } catch (err: any) {
     logger.error('Error processing Stripe event', { eventId: event.id, error: err.message });
     await eventRef.update({ status: 'failed', error: err.message });
-    res.status(500).json({ error: 'Webhook handler failed' });
+    res.status(500).json({ success: false, error: 'Webhook handler failed' });
   }
 };
 
@@ -83,7 +83,11 @@ const handleCheckoutSessionCompleted = async (session: any) => {
   }
 
   const stripe = stripeService.stripe;
-  const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+  if (!stripe) {
+    logger.error('Stripe not initialized in checkout session handler');
+    return;
+  }
+  const subscription = await stripe.subscriptions.retrieve(session.subscription as string) as any;
 
   await db.collection('tenants').doc(tenantId).update({
     planTier: planId || 'starter',

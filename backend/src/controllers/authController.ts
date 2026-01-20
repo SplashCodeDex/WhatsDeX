@@ -1,14 +1,12 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { db, admin } from '../lib/firebase.js'; // Added admin import
+import { db, admin } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { ConfigService } from '../services/ConfigService.js';
 import auditService from '../services/auditService.js';
-import stripeService from '../services/stripeService.js';
 import logger from '../utils/logger.js';
-// Removed firebaseService import
+import { multiTenantService } from '../services/multiTenantService.js';
 
 interface AuthUserPayload {
     userId: string;
@@ -44,8 +42,8 @@ interface AvailabilityResult {
 
 // Helper for internal availability checks
 const checkAvailabilityHelper = async (email: string, subdomain: string) => {
-    // Check email
-    const userSnapshot = await db.collection('tenant_users').where('email', '==', email).limit(1).get();
+    // Check email in global users lookup
+    const userSnapshot = await db.collection('users').where('email', '==', email).limit(1).get();
     if (!userSnapshot.empty) return { available: false, reason: 'Email already registered', field: 'email' };
 
     // Check subdomain
@@ -61,7 +59,7 @@ export const checkAvailability = async (req: Request, res: Response) => {
         const result: AvailabilityResult = {};
 
         if (email) {
-            const userSnapshot = await db.collection('tenant_users').where('email', '==', String(email)).limit(1).get();
+            const userSnapshot = await db.collection('users').where('email', '==', String(email)).limit(1).get();
             const existingUser = !userSnapshot.empty;
             result.email = { available: !existingUser, reason: existingUser ? 'Email already registered' : null };
         }
@@ -72,137 +70,73 @@ export const checkAvailability = async (req: Request, res: Response) => {
             result.subdomain = { available: !existingTenant, reason: existingTenant ? 'Subdomain already taken' : null };
         }
 
-        res.json(result);
+        res.json({ success: true, data: result });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('Error in checkAvailability:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };
 
 export const signup = async (req: Request, res: Response) => {
     try {
-        logger.info('DEBUG: Signup request received', { body: req.body });
+        logger.info('Signup request received', { email: req.body.email });
         const payload = signupSchema.parse(req.body);
         let { displayName, email, password, tenantName, subdomain, plan } = payload;
 
-        const name = displayName;
-
         if (!tenantName) {
-            tenantName = `${name}'s Workspace`;
+            tenantName = `${displayName}'s Workspace`;
         }
 
         if (!subdomain) {
-            const baseSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
+            const baseSlug = displayName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
             subdomain = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
         }
 
         // Check availability
-        logger.info('DEBUG: Checking availability for', { tenantName, subdomain, email });
         const availability = await checkAvailabilityHelper(email, subdomain);
         if (!availability.available) {
-            logger.warn('DEBUG: Availability check failed', availability);
-            return res.status(400).json({ error: availability.reason, field: availability.field });
+            return res.status(400).json({ success: false, error: availability.reason, field: availability.field });
         }
 
-        // Create tenant and user
-        logger.info('DEBUG: Creating tenant and user in Firebase');
+        // 1. Create Firebase Auth User
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName,
+        });
 
-        // Use Firebase transaction to ensure data integrity
-        const result = await db.runTransaction(async (transaction: any) => { // Using db.runTransaction
-            // 1. Create Tenant
-            logger.info('DEBUG: Creating tenant document');
-            const tenantId = `tenant-${Date.now()}`;
-            const tenantRef = db.collection('tenants').doc(tenantId); // Using db directly
+        const userId = userRecord.uid;
 
-            const tenantData = {
-                id: tenantId,
-                name: tenantName!,
-                subdomain: subdomain!,
-                plan, // Default to FREE
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                status: 'ACTIVE',
-                settings: {
-                    theme: 'light',
-                    notifications: true,
-                },
-            };
+        // 2. Initialize Tenant & User via MultiTenantService
+        const initResult = await multiTenantService.initializeTenant({
+            userId,
+            email,
+            displayName,
+            tenantName,
+            subdomain,
+            plan: plan === 'FREE' ? 'starter' : plan.toLowerCase()
+        });
 
-            transaction.set(tenantRef, tenantData);
+        if (!initResult.success) {
+            // Rollback Firebase User if possible (optional, but good)
+            await admin.auth().deleteUser(userId).catch(e => logger.error('Cleanup: Failed to delete user after init failure', e));
+            return res.status(500).json({ success: false, error: 'Failed to initialize account environment' });
+        }
 
-            // 2. Create User
-            logger.info('DEBUG: Creating user in Firebase Auth');
-            const userRecord = await admin.auth().createUser({ // Using admin.auth() directly
-                email,
-                password,
-                displayName: name,
-            });
+        const { tenant, user } = initResult.data;
 
-            logger.info('DEBUG: Creating user document');
-            const userRef = db.collection('tenant_users').doc(userRecord.uid); // Using tenant_users for consistency with other parts of code?
-            // Wait, previous code used 'users'. Let's check checkAvailability usage: 'tenant_users'.
-            // The codebase seems to use 'tenant_users'. I will stick to 'tenant_users'.
-
-            const userData = {
-                id: userRecord.uid,
-                email,
-                displayName: name,
-                tenantId,
-                role: 'ADMIN', // First user is Admin
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                status: 'ACTIVE',
-            };
-
-            transaction.set(userRef, userData);
-
-            // 3. Plan Handling
-            const planCode = plan.toUpperCase();
-            const plansSnapshot = await db.collection('plans').where('code', '==', planCode).limit(1).get();
-            const planDoc = plansSnapshot.empty ? null : plansSnapshot.docs[0];
-            const planData = planDoc ? planDoc.data() : null;
-
-            if (planData && planDoc) {
-                let stripeSubscriptionId = `free_${Date.now()}`;
-                let stripePriceId = 'FREE';
-
-                if (planData.code !== 'FREE') {
-                    try {
-                        const customer = await stripeService.createCustomer({ userId: userRecord.uid, email, name, phone: undefined }); // userRef.id -> userRecord.uid
-                        const planKey = planData.code.toLowerCase();
-                        const subscription = await stripeService.createSubscription(customer.id, planKey, { userId: userRecord.uid });
-                        stripeSubscriptionId = subscription.id;
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        stripePriceId = (subscription.items.data[0] as any).price.id;
-                    } catch (stripeErr) {
-                        logger.error('Stripe signup failed, falling back', stripeErr instanceof Error ? stripeErr : new Error(String(stripeErr)));
-                    }
-                }
-
-                const subRef = db.collection('tenant_subscriptions').doc();
-                transaction.set(subRef, {
-                    id: subRef.id,
-                    tenantId: tenantData.id, // tenantRef.id -> tenantData.id/tenantId
-                    planId: planDoc.id,
-                    status: planData.code === 'FREE' ? 'active' : 'trialing',
-                    currentPeriodStart: Timestamp.now(),
-                    currentPeriodEnd: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-                    stripeSubscriptionId,
-                    stripePriceId,
-                    createdAt: Timestamp.now(),
-                    updatedAt: Timestamp.now(),
-                });
-            }
-
-            return { tenant: tenantData, user: userData };
+        // 3. Set Custom Claims
+        await admin.auth().setCustomUserClaims(userId, {
+            tenantId: tenant.id,
+            role: 'owner'
         });
 
         const config = ConfigService.getInstance();
         const jwtSecret = config.get('JWT_SECRET');
 
         const token = jwt.sign(
-            { userId: result.user.id, tenantId: result.tenant.id, role: result.user.role },
+            { userId, tenantId: tenant.id, role: 'owner', email },
             jwtSecret,
             { expiresIn: '7d' }
         );
@@ -211,10 +145,10 @@ export const signup = async (req: Request, res: Response) => {
         await auditService.logEvent({
             eventType: 'USER_REGISTER',
             actor: email,
-            actorId: result.user.id,
+            actorId: userId,
             action: 'Account Created',
             resource: 'tenant',
-            resourceId: result.tenant.id,
+            resourceId: tenant.id,
             details: { plan, subdomain },
             ipAddress: req.ip,
             userAgent: req.get('User-Agent')
@@ -229,19 +163,20 @@ export const signup = async (req: Request, res: Response) => {
 
         res.status(201).json({
             success: true,
-            token,
-            user: { id: result.user.id, name: result.user.displayName, email: result.user.email },
-            tenant: { id: result.tenant.id, name: result.tenant.name, subdomain: result.tenant.subdomain },
+            data: {
+                token,
+                user: { id: userId, name: displayName, email },
+                tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
+            }
         });
 
     } catch (error: unknown) {
         if (error instanceof z.ZodError) {
-            logger.warn('Signup validation failed:', error.issues);
-            return res.status(400).json({ error: error.issues[0].message, field: error.issues[0].path[0] });
+            return res.status(400).json({ success: false, error: error.issues[0].message, field: error.issues[0].path[0] });
         }
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('Signup error:', err);
-        res.status(500).json({ error: 'An unexpected error occurred during registration' });
+        res.status(500).json({ success: false, error: 'An unexpected error occurred during registration' });
     }
 };
 
@@ -249,75 +184,60 @@ export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = loginSchema.parse(req.body);
 
-        // Get user from Firestore to retrieve tenantId and role
-        const userSnapshot = await db.collection('tenant_users').where('email', '==', email).limit(1).get();
-
-        if (userSnapshot.empty) {
-            await auditService.logEvent({
-                eventType: 'SECURITY_LOGIN_FAILURE',
-                actor: email,
-                action: 'Login attempt failed: User not found',
-                resource: 'auth',
-                riskLevel: 'MEDIUM',
-                ipAddress: req.ip
-            });
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
-        }
-
-        const userDoc = userSnapshot.docs[0];
-        const user = userDoc.data();
-
-        if (user.status !== 'ACTIVE') {
-            return res.status(401).json({ success: false, error: 'Account disabled' });
-        }
-
-        // Verify password via Firebase Auth REST API
-        // Firebase Admin SDK doesn't expose password verification directly,
-        // so we use the Firebase Auth REST API
         const firebaseApiKey = process.env.FIREBASE_WEB_API_KEY;
         if (!firebaseApiKey) {
             logger.error('FIREBASE_WEB_API_KEY not configured');
             return res.status(500).json({ success: false, error: 'Authentication service misconfigured' });
         }
 
+        let uid: string;
         try {
             const authResponse = await fetch(
                 `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email,
-                        password,
-                        returnSecureToken: true
-                    })
+                    body: JSON.stringify({ email, password, returnSecureToken: true })
                 }
             );
 
             if (!authResponse.ok) {
-                const errorData = await authResponse.json() as { error?: { message?: string } };
-                logger.warn('Firebase Auth failed:', errorData.error?.message);
-                await auditService.logEvent({
-                    eventType: 'SECURITY_LOGIN_FAILURE',
-                    actor: email,
-                    actorId: user.id,
-                    action: 'Login attempt failed: Wrong password',
-                    resource: 'auth',
-                    riskLevel: 'MEDIUM',
-                    ipAddress: req.ip
-                });
-                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+                const errorData = await authResponse.json() as any;
+                logger.warn('Login: Firebase Auth failed', { email, error: errorData.error?.message });
+                return res.status(401).json({ success: false, error: 'Invalid email or password' });
             }
+
+            const authData = await authResponse.json() as any;
+            uid = authData.localId;
         } catch (authError: unknown) {
-            logger.error('Firebase Auth request failed:', authError);
+            logger.error('Login: Firebase Auth request failed', authError);
             return res.status(500).json({ success: false, error: 'Authentication service unavailable' });
+        }
+
+        // 2. Get User Lookup
+        const lookupDoc = await db.collection('users').doc(uid).get();
+        if (!lookupDoc.exists) {
+            logger.error('Login: User lookup missing for UID', { uid, email });
+            return res.status(404).json({ success: false, error: 'User profile not found' });
+        }
+        const { tenantId, role } = lookupDoc.data()!;
+
+        // 3. Get Full User Data from Subcollection
+        const userDoc = await db.collection('tenants').doc(tenantId).collection('users').doc(uid).get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, error: 'Account data not found in tenant' });
+        }
+        const user = userDoc.data()!;
+
+        if (user.status === 'suspended') {
+            return res.status(403).json({ success: false, error: 'Account suspended' });
         }
 
         const config = ConfigService.getInstance();
         const jwtSecret = config.get('JWT_SECRET');
 
         const token = jwt.sign(
-            { userId: user.id, tenantId: user.tenantId, role: user.role, email: user.email },
+            { userId: uid, tenantId, role, email: user.email },
             jwtSecret,
             { expiresIn: '7d' }
         );
@@ -325,12 +245,17 @@ export const login = async (req: Request, res: Response) => {
         await auditService.logEvent({
             eventType: 'USER_LOGIN',
             actor: email,
-            actorId: user.id,
+            actorId: uid,
             action: 'Login successful',
             resource: 'auth',
             ipAddress: req.ip,
             userAgent: req.get('User-Agent')
         });
+
+        // Update last login (Async)
+        db.collection('tenants').doc(tenantId).collection('users').doc(uid).update({
+            lastLogin: Timestamp.now()
+        }).catch(e => logger.error('Failed to update last login', e));
 
         res.cookie('token', token, {
             httpOnly: true,
@@ -341,9 +266,11 @@ export const login = async (req: Request, res: Response) => {
 
         res.json({
             success: true,
-            token,
-            user: { id: user.id, name: user.displayName || user.name || 'User', email: user.email, role: user.role },
-            tenant: { id: user.tenantId }
+            data: {
+                token,
+                user: { id: uid, name: user.displayName || 'User', email: user.email, role },
+                tenant: { id: tenantId }
+            }
         });
 
     } catch (error: unknown) {
@@ -356,7 +283,6 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
-
 export const logout = (req: Request, res: Response) => {
     res.clearCookie('token', {
         httpOnly: true,
@@ -364,38 +290,36 @@ export const logout = (req: Request, res: Response) => {
         sameSite: 'strict',
     });
 
-    // Also clear legacy cookie if present
-    res.clearCookie('session', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-    });
-
-    res.json({ success: true, message: 'Logged out successfully' });
+    res.json({ success: true, data: { message: 'Logged out successfully' } });
 };
 
 export const getMe = async (req: RequestWithUser, res: Response) => {
     try {
-        if (!req.user?.userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+        if (!req.user?.userId || !req.user?.tenantId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
 
-        const userDoc = await db.collection('tenant_users').doc(req.user.userId).get();
+        const { userId, tenantId } = req.user;
+
+        const userDoc = await db.collection('tenants').doc(tenantId).collection('users').doc(userId).get();
         if (!userDoc.exists) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ success: false, error: 'User not found' });
         }
         const user = userDoc.data()!;
 
-        const tenantDoc = await db.collection('tenants').doc(user.tenantId).get();
-        const tenant = tenantDoc.data() || { id: user.tenantId, name: 'Unknown', subdomain: 'unknown' };
+        const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+        const tenant = tenantDoc.data() || { id: tenantId, name: 'Unknown', subdomain: 'unknown' };
 
         res.json({
-            user: { id: user.id, name: user.displayName || user.name || 'User', email: user.email, role: user.role },
-            tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
+            success: true,
+            data: {
+                user: { id: user.id, name: user.displayName, email: user.email, role: user.role },
+                tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
+            }
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('getMe error:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };

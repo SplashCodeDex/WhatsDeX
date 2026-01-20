@@ -3,6 +3,7 @@ import { Campaign, CampaignStatus } from '../types/contracts.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { firebaseService } from '../services/FirebaseService.js';
 import { webhookService } from '../services/webhookService.js';
+import { campaignSocketService } from '../services/campaignSocketService.js';
 import logger from '../utils/logger.js';
 import { Timestamp } from 'firebase-admin/firestore';
 
@@ -22,26 +23,26 @@ class CampaignWorker {
     private worker: any;
 
     constructor() {
-        this.worker = new Worker<CampaignJobData>(
+        this.worker = new Worker(
             'campaigns',
             async (job: any) => {
                 await this.processCampaign(job);
             },
             {
                 connection: redisOptions,
-                concurrency: 5, // Process 5 diff campaigns in parallel (not messages, campaigns)
+                concurrency: 5,
                 limiter: {
                     max: 10,
-                    duration: 1000 // Global rate limit check
+                    duration: 1000
                 }
-            }
+            } as any
         );
 
-        this.worker.on('completed', (job) => {
-            logger.info(`Campaign Job ${job.id} completed`);
+        this.worker.on('completed', (job: any) => {
+            logger.info(`Campaign Job ${job.id} completed`, { jobId: job.id });
         });
 
-        this.worker.on('failed', (job, err) => {
+        this.worker.on('failed', (job: any, err: any) => {
             logger.error(`Campaign Job ${job?.id} failed:`, err);
         });
 
@@ -53,7 +54,12 @@ class CampaignWorker {
         const { id, botId, message, audience } = campaign;
         const targets = audience.targets;
 
-        logger.info(`Processing campaign ${id} for tenant ${tenantId}. Targets: ${targets.length}`);
+        logger.info(`Processing campaign ${id} for tenant ${tenantId}`, {
+            tenantId,
+            campaignId: id,
+            botId,
+            targetCount: targets.length
+        });
 
         // Fetch current campaign state to handle resume/pause correctly
         const currentDoc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
@@ -61,7 +67,11 @@ class CampaignWorker {
         // Determine starting index based on existing stats (for Resume support)
         const startIndex = (currentDoc?.stats?.sent || 0) + (currentDoc?.stats?.failed || 0);
 
-        logger.info(`Campaign ${id} starting from index ${startIndex}/${targets.length}`);
+        logger.info(`Campaign ${id} starting from index ${startIndex}/${targets.length}`, {
+            tenantId,
+            campaignId: id,
+            startIndex
+        });
 
         let sent = currentDoc?.stats?.sent || 0;
         let failed = currentDoc?.stats?.failed || 0;
@@ -72,7 +82,12 @@ class CampaignWorker {
             // Re-check status periodically (every message is safer for "instant" pause)
             const doc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
             if (!doc || doc.status === 'paused' || doc.status === 'cancelled') {
-                logger.info(`Campaign ${id} stopped/paused [status: ${doc?.status}]. Progress: ${sent + failed}/${targets.length}`);
+                logger.info(`Campaign ${id} stopped/paused [status: ${doc?.status}]`, {
+                    tenantId,
+                    campaignId: id,
+                    status: doc?.status,
+                    progress: sent + failed
+                });
                 await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
                 return; // Exit loop, job will be re-added when resumed
             }
@@ -89,13 +104,26 @@ class CampaignWorker {
                     sent++;
                 } else {
                     failed++;
-                    logger.warn(`Campaign ${id} send failed to ${target}:`, result.error);
+                    logger.warn(`Campaign ${id} send failed to ${target}`, {
+                        tenantId,
+                        campaignId: id,
+                        target,
+                        error: result.error
+                    });
                 }
 
                 // Stats Update (Update every 5 or on final)
                 if ((sent + failed) % 5 === 0 || i === targets.length - 1) {
                     await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
                 }
+
+                // Emit real-time progress via Socket.io
+                campaignSocketService.emitProgress(tenantId, id, {
+                    sent,
+                    failed,
+                    total: targets.length,
+                    status: 'sending'
+                });
 
                 // Anti-Ban Delay (5-15s) - Skip delay if it's the last one
                 if (i < targets.length - 1) {
@@ -105,7 +133,12 @@ class CampaignWorker {
 
             } catch (err) {
                 failed++;
-                logger.error(`Campaign ${id} loop error for ${target}:`, err);
+                logger.error(`Campaign ${id} loop error for ${target}`, {
+                    tenantId,
+                    campaignId: id,
+                    target,
+                    error: err
+                });
                 await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
             }
         }

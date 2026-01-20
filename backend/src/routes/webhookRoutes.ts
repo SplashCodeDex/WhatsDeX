@@ -1,5 +1,6 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { webhookService } from '../services/webhookService.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 import logger from '../utils/logger.js';
 
 const router = Router();
@@ -8,15 +9,15 @@ const router = Router();
  * GET /api/webhooks
  * List all webhooks for the tenant
  */
-router.get('/', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+router.get('/', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await webhookService.getWebhooks(tenantId);
     if (result.success) {
-        res.json(result);
+        res.json({ success: true, data: result.data });
     } else {
-        res.status(500).json(result);
+        res.status(500).json({ success: false, error: result.error?.message || 'Failed to fetch webhooks' });
     }
 });
 
@@ -24,33 +25,29 @@ router.get('/', async (req, res) => {
  * POST /api/webhooks
  * Create a new webhook
  */
-router.post('/', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+router.post('/', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await webhookService.createWebhook(tenantId, req.body);
     if (result.success) {
-        res.status(201).json(result);
+        res.status(201).json({ success: true, data: result.data });
     } else {
-        res.status(400).json(result);
+        res.status(400).json({ success: false, error: result.error?.message || 'Failed to create webhook' });
     }
 });
 
-/**
- * DELETE /api/webhooks/:id
- * Delete a webhook
- */
-router.delete('/:id', async (req, res) => {
-    const tenantId = req.headers['x-tenant-id'] as string;
-    const { id } = req.params;
+router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+    const tenantId = req.user?.tenantId;
+    const id = req.params.id as string;
 
-    if (!tenantId) return res.status(400).json({ success: false, error: 'Missing tenant ID' });
+    if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const result = await webhookService.deleteWebhook(tenantId, id);
     if (result.success) {
-        res.json(result);
+        res.json({ success: true, data: { message: 'Webhook deleted' } });
     } else {
-        res.status(500).json(result);
+        res.status(500).json({ success: false, error: result.error?.message || 'Failed to delete webhook' });
     }
 });
 

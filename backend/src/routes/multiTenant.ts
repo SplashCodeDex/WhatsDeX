@@ -7,9 +7,12 @@ const router = express.Router();
 
 router.get('/status', (req: Request, res: Response) => {
     res.json({
-        status: 'ok',
-        message: 'Internal API operational',
-        tenantId: req.user?.tenantId
+        success: true,
+        data: {
+            status: 'ok',
+            message: 'Internal API operational',
+            tenantId: req.user?.tenantId
+        }
     });
 });
 
@@ -54,12 +57,10 @@ router.get('/bots', async (req: Request, res: Response) => {
             const bots = result.data.map(bot => ({
                 id: bot.id,
                 name: bot.name,
-                phoneNumber: bot.phoneNumber || null, // Assuming phoneNumber exists in BotInstance
-                status: bot.status === 'offline' ? 'disconnected' :
-                    bot.status === 'online' ? 'connected' :
-                        bot.status, // Map status: offline -> disconnected, online -> connected
+                phoneNumber: bot.phoneNumber || null,
+                status: bot.status,
                 messageCount: (bot.stats?.messagesSent || 0) + (bot.stats?.messagesReceived || 0),
-                lastActiveAt: bot.updatedAt ? new Date((bot.updatedAt as any)._seconds * 1000) : null // Basic conversion
+                lastActiveAt: bot.updatedAt || null
             }));
             res.json({ success: true, data: bots });
         } else {
@@ -129,7 +130,7 @@ router.delete('/bots/:botId', async (req: Request, res: Response) => {
 
         const result = await multiTenantBotService.deleteBot(tenantId, botId);
         if (result.success) {
-            res.json({ success: true, message: 'Bot deleted successfully' });
+            res.json({ success: true, data: { message: 'Bot deleted successfully' } });
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Delete failed' });
         }
@@ -152,7 +153,7 @@ router.post('/bots/:botId/connect', async (req: Request, res: Response) => {
 
         const result = await multiTenantBotService.startBot(tenantId, botId);
         if (result.success) {
-            res.json({ success: true, message: 'Bot connection initiated' });
+            res.json({ success: true, data: { message: 'Bot connection initiated' } });
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Connection failed' });
         }
@@ -175,7 +176,7 @@ router.post('/bots/:botId/disconnect', async (req: Request, res: Response) => {
 
         const result = await multiTenantBotService.stopBot(botId);
         if (result.success) {
-            res.json({ success: true, message: 'Bot disconnected successfully' });
+            res.json({ success: true, data: { message: 'Bot disconnected successfully' } });
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Disconnect failed' });
         }

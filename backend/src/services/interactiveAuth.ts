@@ -1,5 +1,6 @@
 import { db } from '../lib/firebase.js';
-import { BufferJSON } from 'baileys';
+import { Timestamp } from 'firebase-admin/firestore';
+import { logger } from '../utils/logger.js';
 
 class InteractiveAuthEnhancement {
   unifiedAuth: any;
@@ -21,7 +22,7 @@ class InteractiveAuthEnhancement {
    */
   async detectExistingSession() {
     try {
-      console.log('🔍 Detecting existing authenticated session...');
+      logger.info('🔍 Detecting existing authenticated session...');
 
       const sessionId = this.unifiedAuth.config.bot?.sessionId || 'default_session';
       const sessionRef = db.collection('waba_sessions').doc(sessionId);
@@ -35,10 +36,6 @@ class InteractiveAuthEnhancement {
       if (!credsData) {
         return { hasSession: false, isValid: false, reason: 'Session document exists but empty' };
       }
-
-      // Parse with BufferJSON to handle buffer reviver if we stored it that way (we stored as JSON object mostly)
-      // But standard Baileys JSON replacer logic might be in effect.
-      // For analysis we just need specific fields so generic parsing is fine.
 
       const credsAnalysis = await this.analyzeCredsData(credsData);
 
@@ -63,7 +60,7 @@ class InteractiveAuthEnhancement {
 
       return { hasSession: false, isValid: false, reason: 'Session exists but not valid' };
     } catch (error: any) {
-      console.error('Failed to detect existing session:', (error as any).message);
+      logger.error('Failed to detect existing session:', { error: (error as any).message });
       return { hasSession: false, isValid: false, reason: 'Detection failed' };
     }
   }
@@ -71,32 +68,32 @@ class InteractiveAuthEnhancement {
   /**
    * Interactive session choice for existing sessions
    */
-  async promptSessionChoice(sessionInfo: any) {
+  async promptSessionChoice(sessionInfo: any): Promise<any> {
     return new Promise(resolve => {
-      console.log('\n' + '╔══════════════════════════════════════════════════════════════╗');
-      console.log('║                    WhatsDeX Authentication                   ║');
-      console.log('╠══════════════════════════════════════════════════════════════╣');
-      console.log('║                                                              ║');
-      console.log(`║  ✅ Session Status: Active session found                     ║`);
-      console.log(
-        `║  📱 Phone: ${this.formatPhoneNumber(sessionInfo.sessionInfo.phoneNumber) || 'Unknown'}                     ║`
+      logger.info('\n' + '╔══════════════════════════════════════════════════════════════╗');
+      logger.info('║                    WhatsDeX Authentication                   ║');
+      logger.info('╠══════════════════════════════════════════════════════════════╣');
+      logger.info('║                                                              ║');
+      logger.info(`║  ✅ Session Status: Active session found                     ║`);
+      logger.info(
+        `║  📱 Phone: ${this.padRight(this.formatPhoneNumber(sessionInfo.sessionInfo.phoneNumber) || 'Unknown', 42)} ║`
       );
-      console.log(
-        `║  🕒 Last active: ${sessionInfo.sessionInfo.lastActive || 'Unknown'}                     ║`
+      logger.info(
+        `║  🕒 Last active: ${this.padRight(sessionInfo.sessionInfo.lastActive || 'Unknown', 43)} ║`
       );
-      console.log('║                                                              ║');
-      console.log('║  What would you like to do?                                  ║');
-      console.log('║                                                              ║');
-      console.log('║  1. 🚀 Continue existing session                             ║');
-      console.log('║  2. 🔄 Re-authenticate (New session)                         ║');
-      console.log('║  3. 📊 View session analytics                                ║');
-      console.log('║                                                              ║');
-      console.log('║  Your choice (1-3) [Default: Continue]:                      ║');
-      console.log('╚══════════════════════════════════════════════════════════════╝');
+      logger.info('║                                                              ║');
+      logger.info('║  What would you like to do?                                  ║');
+      logger.info('║                                                              ║');
+      logger.info('║  1. 🚀 Continue existing session                             ║');
+      logger.info('║  2. 🔄 Re-authenticate (New session)                         ║');
+      logger.info('║  3. 📊 View session analytics                                ║');
+      logger.info('║                                                              ║');
+      logger.info('║  Your choice (1-3) [Default: Continue]:                      ║');
+      logger.info('╚══════════════════════════════════════════════════════════════╝');
 
       // Set timeout for auto-selection
       const timeout = setTimeout(() => {
-        console.log('\n⏰ No input received, continuing with existing session...');
+        logger.info('\n⏰ No input received, continuing with existing session...');
         resolve('continue');
       }, 15000); // 15 seconds
 
@@ -109,13 +106,13 @@ class InteractiveAuthEnhancement {
           case '1':
           case 'continue':
           case 'c':
-            console.log('✅ Continuing with existing authenticated session');
+            logger.info('✅ Continuing with existing authenticated session');
             resolve('continue');
             break;
           case '2':
           case 're-auth':
           case 'r':
-            console.log('🔄 Re-authentication requested');
+            logger.info('🔄 Re-authentication requested');
             resolve('re-auth');
             break;
           case '3':
@@ -128,7 +125,7 @@ class InteractiveAuthEnhancement {
             }, 2000);
             break;
           default:
-            console.log(`❌ Invalid choice: ${input}. Please enter 1, 2, or 3.`);
+            logger.info(`❌ Invalid choice: ${input}. Please enter 1, 2, or 3.`);
             // Retry
             setTimeout(() => {
               this.promptSessionChoice(sessionInfo).then(resolve);
@@ -142,30 +139,30 @@ class InteractiveAuthEnhancement {
   /**
    * Interactive authentication method choice
    */
-  async promptAuthenticationChoice() {
+  async promptAuthenticationChoice(): Promise<any> {
     return new Promise(resolve => {
-      console.log('\n' + '╔══════════════════════════════════════════════════════════════╗');
-      console.log('║                    WhatsDeX Authentication                   ║');
-      console.log('╠══════════════════════════════════════════════════════════════╣');
-      console.log('║                                                              ║');
-      console.log('║  🔍 Session Status: No active session found                  ║');
-      console.log('║                                                              ║');
-      console.log('║  Choose authentication method:                               ║');
-      console.log('║                                                              ║');
-      console.log('║  1. 📱 QR Code (Recommended for beginners)                   ║');
-      console.log('║     Scan with WhatsApp camera                                ║');
-      console.log('║                                                              ║');
-      console.log('║  2. 🔢 Pairing Code (Advanced users)                         ║');
-      console.log('║     Enter code in WhatsApp Linked Devices                    ║');
-      console.log('║                                                              ║');
-      console.log('║  3. 🔄 Auto-select (Based on learning data)                  ║');
-      console.log('║                                                              ║');
-      console.log('║  Your choice (1-3) [Press Enter for auto]:                   ║');
-      console.log('╚══════════════════════════════════════════════════════════════╝');
+      logger.info('\n' + '╔══════════════════════════════════════════════════════════════╗');
+      logger.info('║                    WhatsDeX Authentication                   ║');
+      logger.info('╠══════════════════════════════════════════════════════════════╣');
+      logger.info('║                                                              ║');
+      logger.info('║  🔍 Session Status: No active session found                  ║');
+      logger.info('║                                                              ║');
+      logger.info('║  Choose authentication method:                               ║');
+      logger.info('║                                                              ║');
+      logger.info('║  1. 📱 QR Code (Recommended for beginners)                   ║');
+      logger.info('║     Scan with WhatsApp camera                                ║');
+      logger.info('║                                                              ║');
+      logger.info('║  2. 🔢 Pairing Code (Advanced users)                         ║');
+      logger.info('║     Enter code in WhatsApp Linked Devices                    ║');
+      logger.info('║                                                              ║');
+      logger.info('║  3. 🔄 Auto-select (Based on learning data)                  ║');
+      logger.info('║                                                              ║');
+      logger.info('║  Your choice (1-3) [Press Enter for auto]:                   ║');
+      logger.info('╚══════════════════════════════════════════════════════════════╝');
 
       // Set timeout for auto-selection
       const timeout = setTimeout(() => {
-        console.log('\n⏰ No input received, auto-selecting based on learning data...');
+        logger.info('\n⏰ No input received, auto-selecting based on learning data...');
         resolve('auto');
       }, 20000); // 20 seconds
 
@@ -178,24 +175,24 @@ class InteractiveAuthEnhancement {
           case '1':
           case 'qr':
           case 'q':
-            console.log('📱 QR Code authentication selected');
+            logger.info('📱 QR Code authentication selected');
             resolve('qr');
             break;
           case '2':
           case 'pairing':
           case 'p':
-            console.log('🔢 Pairing Code authentication selected');
+            logger.info('🔢 Pairing Code authentication selected');
             resolve('pairing');
             break;
           case '3':
           case 'auto':
           case 'a':
           case '': // Enter key
-            console.log('🔄 Auto-selection based on learning data');
+            logger.info('🔄 Auto-selection based on learning data');
             resolve('auto');
             break;
           default:
-            console.log(`❌ Invalid choice: ${input}. Please enter 1, 2, or 3.`);
+            logger.info(`❌ Invalid choice: ${input}. Please enter 1, 2, or 3.`);
             // Retry
             setTimeout(() => {
               this.promptAuthenticationChoice().then(resolve);
@@ -241,7 +238,7 @@ class InteractiveAuthEnhancement {
 
       return { method, result };
     } catch (error: any) {
-      console.error('Failed to execute chosen authentication method:', error.message);
+      logger.error('Failed to execute chosen authentication method:', { error: error.message });
       throw error;
     }
   }
@@ -252,21 +249,21 @@ class InteractiveAuthEnhancement {
   displayAnalytics() {
     const analytics = this.unifiedAuth.getAnalytics();
 
-    console.log('\n' + '📊 UNIFIED AUTHENTICATION ANALYTICS');
-    console.log('═'.repeat(50));
-    console.log(`Total Attempts: ${analytics.totalAttempts}`);
-    console.log(`Success Rate: ${analytics.successRate}`);
-    console.log(`Active Sessions: ${analytics.activeSessions}`);
-    console.log(`Learning Data Points: ${analytics.learningDataPoints}`);
+    logger.info('\n' + '📊 UNIFIED AUTHENTICATION ANALYTICS');
+    logger.info('═'.repeat(50));
+    logger.info(`Total Attempts: ${analytics.totalAttempts}`);
+    logger.info(`Success Rate: ${analytics.successRate}`);
+    logger.info(`Active Sessions: ${analytics.activeSessions}`);
+    logger.info(`Learning Data Points: ${analytics.learningDataPoints}`);
 
     if (analytics.methodStats && Object.keys(analytics.methodStats).length > 0) {
-      console.log('\nMethod Performance:');
+      logger.info('\nMethod Performance:');
       Object.entries(analytics.methodStats).forEach(([method, stats]: [string, any]) => {
-        console.log(`  ${method}: ${stats.successes}/${stats.attempts} successes`);
+        logger.info(`  ${method}: ${stats.successes}/${stats.attempts} successes`);
       });
     }
 
-    console.log('\nPress Enter to continue...');
+    logger.info('\nPress Enter to continue...');
   }
 
   /**
@@ -300,9 +297,13 @@ class InteractiveAuthEnhancement {
         processedHistoryMessages: credsData.processedHistoryMessages || [],
       };
     } catch (error: any) {
-      console.error('Failed to analyze creds data:', (error as any).message);
+      logger.error('Failed to analyze creds data:', { error: (error as any).message });
       throw error;
     }
+  }
+
+  private padRight(str: string, length: number): string {
+    return str + ' '.repeat(Math.max(0, length - str.length));
   }
 }
 

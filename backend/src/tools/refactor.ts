@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { logger } from '../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +20,7 @@ function walk(dir: string, callback: (filePath: string) => void) {
     }
 }
 
-console.log(`Starting refined refactor in ${rootDir}...`);
+logger.info(`Starting refined refactor in ${rootDir}...`);
 
 walk(rootDir, (filePath) => {
     // IMPORTANT: Skip this script and the dist/refactor.js
@@ -74,10 +75,9 @@ walk(rootDir, (filePath) => {
         modified = true;
     }
 
-    if (modified) {
-        fs.writeFileSync(filePath, content);
-        console.log(`✅ Refactored: ${filePath.replace(rootDir, '')}`);
-    }
+    fs.writeFileSync(filePath, content);
+    logger.info(`✅ Refactored: ${filePath.replace(rootDir, '')}`);
+}
 });
 
-console.log('Refactor complete.');
+logger.info('Refactor complete.');

@@ -5,6 +5,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { logger } from './logger.js';
 
 interface ModuleIssue {
   file: string;
@@ -32,9 +33,9 @@ export class ModuleSystemFixer {
   }
 
   async scanAndFix(): Promise<ModuleIssue[]> {
-    console.log('🔍 Scanning for module system issues...');
+    logger.info('🔍 Scanning for module system issues...');
     const issues = await this.findModuleIssues();
-    console.log(`Found ${issues.length} files with mixed module systems`);
+    logger.info(`Found ${issues.length} files with mixed module systems`);
     return issues;
   }
 
@@ -52,7 +53,7 @@ export class ModuleSystemFixer {
         }
       }
     } catch (error: unknown) {
-      console.warn(`Warning: Cannot access ${dir}`);
+      logger.warn(`Warning: Cannot access ${dir}`);
     }
     return issues;
   }
@@ -60,17 +61,17 @@ export class ModuleSystemFixer {
   private async analyzeFile(filePath: string): Promise<ModuleIssue> {
     const content = await fs.readFile(filePath, 'utf8');
     const problems: string[] = [];
-    
+
     const hasRequire = /require\s*\(/.test(content);
     const hasImport = /import\s+.*\s+from/.test(content);
     const hasModuleExports = /module\.exports/.test(content);
     const hasExportDefault = /export\s+default/.test(content);
     const hasExports = /export\s+\{/.test(content);
-    
+
     if (hasRequire && hasImport) problems.push('Mixed require() and import');
     if (hasModuleExports && (hasExportDefault || hasExports)) problems.push('Mixed module.exports and ES6');
     if (/__dirname|__filename/.test(content)) problems.push('Uses __dirname/__filename');
-    
+
     return {
       file: path.relative(this.rootDir, filePath),
       problems,

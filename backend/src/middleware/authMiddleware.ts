@@ -31,7 +31,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.token;
 
         if (!token) {
-            return res.status(401).json({ error: 'Access token required' });
+            return res.status(401).json({ success: false, error: 'Access token required' });
         }
 
         const config = ConfigService.getInstance();
@@ -44,7 +44,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             next();
         } catch (jwtError: unknown) {
             if (jwtError instanceof Error && jwtError.name === 'TokenExpiredError') {
-                return res.status(401).json({ error: 'Token expired' });
+                return res.status(401).json({ success: false, error: 'Token expired' });
             }
             throw new Error('Invalid token signature');
         }
@@ -52,7 +52,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.security('Auth Middleware: Token verification failed', null, { error: err.message, ip: req.ip });
-        return res.status(403).json({ error: 'Invalid or unauthorized token' });
+        return res.status(403).json({ success: false, error: 'Invalid or unauthorized token' });
     }
 };
 
@@ -68,7 +68,7 @@ export const authorizeRole = (roles: string[]) => {
                 requiredRoles: roles,
                 userRole: user?.role
             });
-            return res.status(403).json({ error: 'Insufficient permissions' });
+            return res.status(403).json({ success: false, error: 'Insufficient permissions' });
         }
 
         next();

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 import { Button } from '@/components/ui/button';
 
@@ -12,7 +13,7 @@ interface ErrorProps {
 export default function Error({ error, reset }: ErrorProps): React.JSX.Element {
     useEffect(() => {
         // Log the error to an error reporting service
-        console.error('Application error:', error);
+        logger.error('Application error:', { error: error });
     }, [error]);
 
     return (

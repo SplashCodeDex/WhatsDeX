@@ -14,6 +14,7 @@ import { useAuthStore } from '../store';
 import { type AuthUser } from '../types';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 
 export interface UseAuthReturn {
     user: AuthUser | null;
@@ -79,7 +80,7 @@ export function useAuth(): UseAuthReturn {
             router.push(ROUTES.LOGIN);
             router.refresh(); // Refresh to clear server component cache
         } catch (signOutError) {
-            console.error('Sign out error:', signOutError);
+            logger.error('Sign out error:', signOutError);
         }
     }, [setUser, router]);
 

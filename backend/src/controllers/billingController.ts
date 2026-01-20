@@ -10,15 +10,15 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     const user = (req as any).user;
 
     if (!planId || !interval) {
-      return res.status(400).json({ error: 'planId and interval are required' });
+      return res.status(400).json({ success: false, error: 'planId and interval are required' });
     }
 
     if (!['starter', 'pro', 'enterprise'].includes(planId)) {
-      return res.status(400).json({ error: 'Invalid planId' });
+      return res.status(400).json({ success: false, error: 'Invalid planId' });
     }
 
     if (!['month', 'year'].includes(interval)) {
-      return res.status(400).json({ error: 'Invalid interval' });
+      return res.status(400).json({ success: false, error: 'Invalid interval' });
     }
 
     const tenantId = user.tenantId;
@@ -26,7 +26,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     const tenantDoc = await tenantRef.get();
 
     if (!tenantDoc.exists) {
-      return res.status(404).json({ error: 'Tenant not found' });
+      return res.status(404).json({ success: false, error: 'Tenant not found' });
     }
 
     const tenantData = tenantDoc.data()!;
@@ -34,7 +34,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
 
     const stripe = stripeService.stripe;
     if (!stripe) {
-      return res.status(503).json({ error: 'Stripe service not initialized' });
+      return res.status(503).json({ success: false, error: 'Stripe service not initialized' });
     }
 
     // Create Stripe customer if it doesn't exist
@@ -62,7 +62,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
 
     if (!price) {
       logger.error('Stripe price not found', { planId, interval });
-      return res.status(500).json({ error: 'Price configuration not found in Stripe' });
+      return res.status(500).json({ success: false, error: 'Price configuration not found in Stripe' });
     }
 
     const config = ConfigService.getInstance();
@@ -91,10 +91,10 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       cancel_url: `${appUrl}/dashboard/billing?canceled=true`,
     });
 
-    res.json({ url: session.url });
+    res.json({ success: true, data: { url: session.url } });
   } catch (error: any) {
     logger.error('Error creating checkout session', { error: error.message });
-    res.status(500).json({ error: 'Failed to create checkout session' });
+    res.status(500).json({ success: false, error: 'Failed to create checkout session' });
   }
 };
 
@@ -105,19 +105,22 @@ export const getSubscription = async (req: Request, res: Response) => {
 
     const tenantDoc = await db.collection('tenants').doc(tenantId).get();
     if (!tenantDoc.exists) {
-      return res.status(404).json({ error: 'Tenant not found' });
+      return res.status(404).json({ success: false, error: 'Tenant not found' });
     }
 
     const data = tenantDoc.data()!;
     res.json({
-      planTier: data.planTier || 'starter',
-      status: data.subscriptionStatus || 'trialing',
-      trialEndsAt: data.trialEndsAt ? data.trialEndsAt.toDate().toISOString() : null,
-      currentPeriodEnd: data.currentPeriodEnd ? data.currentPeriodEnd.toDate().toISOString() : null,
-      cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
+      success: true,
+      data: {
+        planTier: data.planTier || 'starter',
+        status: data.subscriptionStatus || 'trialing',
+        trialEndsAt: data.trialEndsAt ? (data.trialEndsAt as any).toDate().toISOString() : null,
+        currentPeriodEnd: data.currentPeriodEnd ? (data.currentPeriodEnd as any).toDate().toISOString() : null,
+        cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
+      }
     });
   } catch (error: any) {
     logger.error('Error getting subscription', { error: error.message });
-    res.status(500).json({ error: 'Failed to get subscription info' });
+    res.status(500).json({ success: false, error: 'Failed to get subscription info' });
   }
 };

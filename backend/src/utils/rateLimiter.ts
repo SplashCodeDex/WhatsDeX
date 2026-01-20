@@ -3,6 +3,7 @@
  * Fixes primitive rate limiting that resets on restart
  */
 import { Redis } from 'ioredis';
+import logger from './logger.js';
 
 interface RateLimitConfig {
   requests: number;
@@ -90,7 +91,7 @@ export class RateLimiter {
       };
 
     } catch (error: any) {
-      console.error('Rate limiting error:', error);
+      logger.error('Rate limiting error:', error);
       // Fail open - allow request if rate limiter is down
       return {
         allowed: true,
@@ -186,7 +187,7 @@ export class RateLimiter {
       };
 
     } catch (error: any) {
-      console.error('Sliding window rate limit error:', error);
+      logger.error('Sliding window rate limit error:', error);
       return { allowed: true, error: error.message, current: 0, limit: 0, remaining: 0 }; // Return a full RateLimitResult
     }
   }
@@ -227,7 +228,7 @@ export class RateLimiter {
       return { tier: userTier, limits: status };
 
     } catch (error: any) {
-      console.error('Error getting rate limit status:', error);
+      logger.error('Error getting rate limit status:', error);
       return { error: error.message };
     }
   }
@@ -243,7 +244,7 @@ export class RateLimiter {
 
       return { reset: keys.length };
     } catch (error: any) {
-      console.error('Error resetting rate limits:', error);
+      logger.error('Error resetting rate limits:', error);
       return { error: error.message };
     }
   }

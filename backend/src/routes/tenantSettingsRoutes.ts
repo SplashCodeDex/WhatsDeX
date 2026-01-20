@@ -49,7 +49,7 @@ router.patch('/settings', async (req: Request, res: Response) => {
             return res.status(400).json({
                 success: false,
                 error: 'Validation failed',
-                details: parseResult.error.errors
+                details: (parseResult as any).error.errors
             });
         }
 

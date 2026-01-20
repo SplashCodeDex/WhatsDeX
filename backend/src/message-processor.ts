@@ -3,6 +3,7 @@
  * This file was created to resolve a missing module error.
  * TODO: Implement actual message processing logic or locate the original file.
  */
+import { logger } from './utils/logger.js';
 
 interface MessageJob {
     id?: string;
@@ -10,6 +11,6 @@ interface MessageJob {
 }
 
 export default async function messageProcessor(job: MessageJob) {
-    console.warn(`[STUB] Processing message job ${job.id}. Logic not implemented.`);
+    logger.warn(`[STUB] Processing message job ${job.id}. Logic not implemented.`);
     return Promise.resolve();
 }

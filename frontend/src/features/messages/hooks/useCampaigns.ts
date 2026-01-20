@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { Campaign } from '../types';
+import { useCampaignSocket } from './useCampaignSocket';
 
 export const campaignKeys = {
     all: ['campaigns'] as const,
@@ -9,6 +10,9 @@ export const campaignKeys = {
 };
 
 export function useCampaigns() {
+    // Initialize socket connection for real-time updates
+    useCampaignSocket();
+
     return useQuery({
         queryKey: campaignKeys.list(),
         queryFn: async () => {
@@ -17,14 +21,7 @@ export function useCampaigns() {
                 throw new Error(response.error.message);
             }
             return response.data;
-        },
-        // Poll every 5 seconds if any campaign is actively sending
-        refetchInterval: (query) => {
-            const campaigns = query.state.data as Campaign[] | undefined;
-            const hasActive = campaigns?.some(c => c.status === 'sending');
-            return hasActive ? 5000 : false;
-        },
-        refetchIntervalInBackground: true,
+        }
     });
 }
 
@@ -48,8 +45,11 @@ export function useStartCampaign() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const response = await api.post<{ success: true }>(`/api/campaigns/${id}/start`);
-            return response;
+            const response = await api.post<{ message: string }>(`/api/campaigns/${id}/start`);
+            if (!response.success) {
+                throw new Error(response.error.message || 'Failed to start campaign');
+            }
+            return response.data;
         },
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: campaignKeys.list() });
@@ -62,8 +62,11 @@ export function usePauseCampaign() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const response = await api.post<{ success: true }>(`/api/campaigns/${id}/pause`);
-            return response;
+            const response = await api.post<{ message: string }>(`/api/campaigns/${id}/pause`);
+            if (!response.success) {
+                throw new Error(response.error.message || 'Failed to pause campaign');
+            }
+            return response.data;
         },
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: campaignKeys.list() });
@@ -76,8 +79,11 @@ export function useResumeCampaign() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const response = await api.post<{ success: true }>(`/api/campaigns/${id}/resume`);
-            return response;
+            const response = await api.post<{ message: string }>(`/api/campaigns/${id}/resume`);
+            if (!response.success) {
+                throw new Error(response.error.message || 'Failed to resume campaign');
+            }
+            return response.data;
         },
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: campaignKeys.list() });
@@ -106,8 +112,11 @@ export function useDeleteCampaign() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const response = await api.delete<{ success: true }>(`/api/campaigns/${id}`);
-            return response;
+            const response = await api.delete<{ message: string }>(`/api/campaigns/${id}`);
+            if (!response.success) {
+                throw new Error(response.error.message || 'Failed to delete campaign');
+            }
+            return response.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: campaignKeys.list() });

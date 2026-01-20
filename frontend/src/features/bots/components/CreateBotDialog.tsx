@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +39,7 @@ export function CreateBotDialog() {
             setOpen(false);
             reset();
         } catch (err: any) {
-            console.error('Failed to create bot', err);
+            logger.error('Failed to create bot', { error: err });
             // Error is already handled by mutation throw, but we catch here to set form error
             setError('root', {
                 type: 'manual',

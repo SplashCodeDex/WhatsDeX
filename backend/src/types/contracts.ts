@@ -23,7 +23,7 @@ export const TimestampSchema = z.union([
  */
 export const TenantSchema = z.object({
   id: z.string(),
-  name: z.string().min(2),
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   subdomain: z.preprocess((val) => val ?? '', z.string().toLowerCase().optional()),
   plan: z.preprocess((val) => {
     if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
@@ -76,8 +76,8 @@ export const BotInstanceSchema = z.object({
   name: z.string(),
   phoneNumber: z.string().optional(),
   userId: z.string().optional(),
-  status: z.enum(['online', 'offline', 'connecting', 'error']),
-  lastSeen: TimestampSchema.optional(),
+  status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error']),
+  lastSeenAt: TimestampSchema.optional(),
   connectionMetadata: z.object({
     browser: z.tuple([z.string(), z.string(), z.string()]),
     platform: z.string()
@@ -85,6 +85,8 @@ export const BotInstanceSchema = z.object({
   stats: z.object({
     messagesSent: z.number().default(0),
     messagesReceived: z.number().default(0),
+    contactsCount: z.number().default(0),
+    lastMessageAt: TimestampSchema.nullish(),
     errorsCount: z.number().default(0)
   }),
   createdAt: TimestampSchema,
@@ -255,9 +257,9 @@ export type CampaignStatus = z.infer<typeof CampaignStatusSchema>;
  */
 export const CampaignSchema = z.object({
   id: z.string(),
-  name: z.string().min(1),
-  botId: z.string(), // The bot that will send the messages
-  message: z.string().min(1),
+  name: z.string().min(1, { message: "Campaign name is required" }),
+  botId: z.string({ required_error: "Bot ID is required" }), // The bot that will send the messages
+  message: z.string().min(1, { message: "Message content cannot be empty" }),
   audience: z.object({
     type: z.enum(['groups', 'contacts', 'selective']),
     targets: z.array(z.string()), // JIDs
@@ -298,9 +300,9 @@ export type WebhookEvent = z.infer<typeof WebhookEventSchema>;
  */
 export const WebhookSchema = z.object({
   id: z.string(),
-  url: z.string().url(),
-  events: z.array(WebhookEventSchema).min(1),
-  secret: z.string().min(16), // For HMAC signing
+  url: z.string().url({ message: "Invalid webhook URL format" }),
+  events: z.array(WebhookEventSchema).min(1, { message: "At least one event must be selected" }),
+  secret: z.string().min(16, { message: "Secret must be at least 16 characters for security" }), // For HMAC signing
   isActive: z.boolean().default(true),
   name: z.string().optional(),
   createdAt: TimestampSchema,

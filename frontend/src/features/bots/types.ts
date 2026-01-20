@@ -7,7 +7,7 @@ import type { Timestamp } from 'firebase/firestore';
 /**
  * Bot connection status
  */
-export type BotStatus = 'connected' | 'disconnected' | 'connecting' | 'qr_pending';
+export type BotStatus = 'connected' | 'disconnected' | 'connecting' | 'qr_pending' | 'error';
 
 /**
  * Bot document type (matches Firestore schema)
@@ -57,6 +57,7 @@ export interface BotStats {
     messagesReceived: number;
     contactsCount: number;
     lastMessageAt: Date | null;
+    errorsCount: number;
 }
 
 /**

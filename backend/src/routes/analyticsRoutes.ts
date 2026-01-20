@@ -29,7 +29,7 @@ router.get('/dashboard', authenticateToken, async (req: Request, res: Response) 
 
         const bots = botsSnapshot.docs.map(doc => doc.data());
         const totalBots = bots.length;
-        const activeBots = bots.filter(b => b.status === 'connected' || b.status === 'open').length;
+        const activeBots = bots.filter(b => b.status === 'connected' || b.status === 'connecting').length;
 
         // 2. Calculate Message Stats (if messages are stored in subcollection)
         // This is expensive if we count documents. For now, we sum 'messageCount' from bot metadata if available.
@@ -37,8 +37,8 @@ router.get('/dashboard', authenticateToken, async (req: Request, res: Response) 
         // Fallback: 0 if no stats available yet.
         let totalMessages = 0;
         bots.forEach(bot => {
-            if (bot.messageCount && typeof bot.messageCount === 'number') {
-                totalMessages += bot.messageCount;
+            if (bot.stats && typeof bot.stats === 'object') {
+                totalMessages += (bot.stats.messagesSent || 0) + (bot.stats.messagesReceived || 0);
             }
         });
 

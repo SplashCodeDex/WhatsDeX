@@ -68,11 +68,19 @@ export class CampaignService {
                 return { success: false, error: new Error(`Campaign is already ${campaign.status}`) };
             }
 
-            // Update status to sending
-            await this.updateCampaignStatus(tenantId, campaignId, 'sending');
+            // Calculate delay if scheduled
+            let delay = 0;
+            if (campaign.schedule?.type === 'scheduled' && campaign.schedule.scheduledAt) {
+                const scheduledTime = campaign.schedule.scheduledAt instanceof Date
+                    ? campaign.schedule.scheduledAt.getTime()
+                    : (campaign.schedule.scheduledAt as any)._seconds * 1000;
+
+                delay = Math.max(0, scheduledTime - Date.now());
+                logger.info(`Scheduling campaign ${campaignId} for ${campaign.schedule.scheduledAt} (delay: ${delay}ms)`);
+            }
 
             // Add to Queue (Worker will pick up the current progress)
-            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'sending' });
+            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'sending' }, { delay });
 
             return { success: true, data: undefined };
         } catch (error: unknown) {

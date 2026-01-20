@@ -6,6 +6,7 @@
 import { MemoryManager } from './memoryManager.js';
 import { db } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
+import { logger } from './logger.js';
 
 export class ChatHistoryManager {
   maxHistoryLength: number;
@@ -60,7 +61,7 @@ export class ChatHistoryManager {
     this.memoryManager.set(userId, chat);
 
     // Async save to database (don't wait)
-    this.saveToDatabase(userId, chat).catch(console.error);
+    this.saveToDatabase(userId, chat).catch(err => logger.error('Async save history failed', { error: err }));
 
     return chat;
   }
@@ -104,7 +105,7 @@ export class ChatHistoryManager {
     // Keep only recent messages
     chat.history = recentMessages;
 
-    console.log(`Compressed history for user ${chat.history.length} messages, summary: ${chat.summary.length} chars`);
+    logger.info(`Compressed history for user ${chat.history.length} messages, summary: ${chat.summary.length} chars`);
   }
 
   async summarizeMessages(messages: any[]) {
@@ -174,7 +175,7 @@ export class ChatHistoryManager {
         lastActivity: record.lastUpdated ? (record.lastUpdated instanceof Timestamp ? record.lastUpdated.toMillis() : Date.now()) : Date.now()
       };
     } catch (error: any) {
-      console.error('Error loading chat from database:', error);
+      logger.error('Error loading chat from database:', { error: error });
       return null;
     }
   }
@@ -206,7 +207,7 @@ export class ChatHistoryManager {
         await db.collection('conversation_memory').add(data);
       }
     } catch (error: any) {
-      console.error('Error saving chat to database:', error);
+      logger.error('Error saving chat to database:', { error: error });
     }
   }
 
@@ -230,7 +231,7 @@ export class ChatHistoryManager {
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
     } catch (e) {
-      console.error('Cleanup failed', e);
+      logger.error('Cleanup failed', { error: e });
     }
   }
 }

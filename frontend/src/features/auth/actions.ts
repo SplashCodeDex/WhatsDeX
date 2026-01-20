@@ -11,6 +11,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { ROUTES } from '@/lib/constants';
+import { api, API_ENDPOINTS } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
 import {
     loginSchema,
@@ -53,28 +55,20 @@ export async function signIn(
     const { email, password } = parsed.data;
 
     try {
-        // Authenticate with Backend API
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            }
+        // Authenticate with Backend API via centralized client
+        const response = await api.post<{ user: AuthUser; token: string }>(
+            API_ENDPOINTS.AUTH.LOGIN,
+            { email, password }
         );
 
-        if (!response.ok) {
-            const errorData = await response.json();
+        if (!response.success) {
             return {
                 success: false,
-                error: {
-                    code: errorData.code ?? 'auth_error',
-                    message: errorData.message ?? errorData.error ?? 'Authentication failed',
-                },
+                error: response.error,
             };
         }
 
-        const { user, token } = await response.json();
+        const { user, token } = response.data;
 
         // Set session cookie
         const cookieStore = await cookies();
@@ -88,11 +82,11 @@ export async function signIn(
 
         return {
             success: true,
-            data: user as AuthUser,
+            data: user,
             message: 'Signed in successfully',
         };
     } catch (err) {
-        console.error('Sign in error:', err);
+        logger.error('Sign in error:', { error: err });
         return {
             success: false,
             error: {
@@ -135,32 +129,24 @@ export async function signUp(
     const { firstName, lastName, email, password } = parsed.data;
 
     try {
-        // Register with Backend API
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
+        // Register with Backend API via centralized client
+        const response = await api.post<{ user: AuthUser; token: string }>(
+            API_ENDPOINTS.AUTH.REGISTER,
             {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    displayName: `${firstName} ${lastName}`,
-                    email,
-                    password,
-                }),
+                displayName: `${firstName} ${lastName}`,
+                email,
+                password,
             }
         );
 
-        if (!response.ok) {
-            const errorData = await response.json();
+        if (!response.success) {
             return {
                 success: false,
-                error: {
-                    code: errorData.code ?? 'auth_error',
-                    message: errorData.message ?? errorData.error ?? 'Registration failed',
-                },
+                error: response.error,
             };
         }
 
-        const { user, token } = await response.json();
+        const { user, token } = response.data;
 
         // Set session cookie
         const cookieStore = await cookies();
@@ -174,17 +160,16 @@ export async function signUp(
 
         return {
             success: true,
-            data: user as AuthUser,
+            data: user,
             message: 'Account created successfully',
         };
     } catch (err: any) {
-        console.error('Sign up error:', err);
-        const targetUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`;
+        logger.error('Sign up error:', { error: err });
         return {
             success: false,
             error: {
                 code: 'network_error',
-                message: `Connection failed to ${targetUrl}. Error: ${err.message}`,
+                message: 'Unable to connect to registration service.',
             },
         };
     }
@@ -223,14 +208,9 @@ export async function requestPasswordReset(
     }
 
     try {
-        await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: parsed.data.email }),
-            }
-        );
+        await api.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+            email: parsed.data.email,
+        });
 
         // Always return success to prevent email enumeration
         return {
@@ -239,7 +219,7 @@ export async function requestPasswordReset(
             message: 'If an account exists, a password reset email has been sent',
         };
     } catch (err) {
-        console.error('Password reset error:', err);
+        logger.error('Password reset error:', { error: err });
         return {
             success: true,
             data: undefined,
@@ -260,24 +240,15 @@ export async function getSession(): Promise<AuthUser | null> {
     }
 
     try {
-        // Verify session with Backend API
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${sessionCookie.value}`,
-                },
-            }
-        );
+        // Verify session with Backend API via centralized client
+        // The client automatically attaches the cookie/header if called on server
+        const response = await api.get<{ user: AuthUser }>(API_ENDPOINTS.AUTH.VERIFY);
 
-        if (!response.ok) {
+        if (!response.success) {
             return null;
         }
 
-        const { user } = await response.json();
-        return user as AuthUser;
+        return response.data.user;
     } catch {
         return null;
     }

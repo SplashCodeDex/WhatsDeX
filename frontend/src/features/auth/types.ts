@@ -10,12 +10,13 @@ import type { User as FirebaseUser } from 'firebase/auth';
  * Authenticated user data (client-side safe)
  */
 export interface AuthUser {
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-    photoURL: string | null;
-    emailVerified: boolean;
-    tenantId: string | null;
+    id: string;
+    email: string;
+    name: string;
+    photoURL?: string | null;
+    role?: string;
+    tenantId?: string | null;
+    emailVerified?: boolean;
 }
 
 /**
@@ -80,9 +81,9 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
  */
 export function firebaseUserToAuthUser(user: FirebaseUser): AuthUser {
     return {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
+        id: user.uid,
+        email: user.email ?? '',
+        name: user.displayName ?? 'User',
         photoURL: user.photoURL,
         emailVerified: user.emailVerified,
         tenantId: null, // Will be populated from custom claims

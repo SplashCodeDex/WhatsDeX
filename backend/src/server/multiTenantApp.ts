@@ -1,3 +1,4 @@
+import { createServer, Server as HttpServer } from 'http';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -22,14 +23,15 @@ import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
 import AuditService from '../services/auditService.js';
+import { campaignSocketService } from '../services/campaignSocketService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
 export class MultiTenantApp {
   // ... existing code ...
   private app: express.Application;
+  private httpServer: HttpServer;
   private port: number;
-  private server: any;
   private activeTenants: Map<string, any>;
   private isInitialized: boolean;
   private config: ConfigService;
@@ -37,6 +39,7 @@ export class MultiTenantApp {
   constructor() {
     this.config = ConfigService.getInstance();
     this.app = express();
+    this.httpServer = createServer(this.app);
     this.port = this.config.get('PORT');
     this.activeTenants = new Map();
     this.isInitialized = false;
@@ -57,6 +60,9 @@ export class MultiTenantApp {
         websocketPort: this.port + 1
       });
       logger.info(`Enterprise Analytics Gateway online at port ${this.port + 1}`);
+
+      // Initialize Campaign WebSockets (Shared Port)
+      campaignSocketService.initialize(this.httpServer);
 
       // Initialize services
       await this.initializeServices();
@@ -110,7 +116,7 @@ export class MultiTenantApp {
     this.app.use(compression() as any);
 
     // Body parsing
-    this.app.use(express.json({ 
+    this.app.use(express.json({
       limit: '10mb',
       verify: (req: any, res, buf) => {
         req.rawBody = buf;
@@ -268,7 +274,7 @@ export class MultiTenantApp {
         await this.initialize();
       }
 
-      this.server = this.app.listen(this.port, () => {
+      this.httpServer.listen(this.port, () => {
         logger.info(`Multi-tenant WhatsDeX server running on port ${this.port}`);
       });
 
@@ -285,8 +291,8 @@ export class MultiTenantApp {
     logger.info('Shutting down multi-tenant server...');
     try {
       await multiTenantBotService.stopAllBots();
-      if (this.server) {
-        this.server.close(() => {
+      if (this.httpServer) {
+        this.httpServer.close(() => {
           logger.info('Server closed successfully');
           process.exit(0);
         });

@@ -24,4 +24,5 @@ export interface Campaign {
     status: CampaignStatus;
     createdAt: string;
     updatedAt: string;
+    metadata?: Record<string, any>;
 }

@@ -96,7 +96,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
             updatedAt: new Date()
         });
 
-        res.json({ success: true, message: 'Contact updated' });
+        res.json({ success: true, data: { message: 'Contact updated' } });
     } catch (error: any) {
         logger.error('PATCH /contacts/:id error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
@@ -119,7 +119,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
             .doc(contactId)
             .delete();
 
-        res.json({ success: true, message: 'Contact deleted' });
+        res.json({ success: true, data: { message: 'Contact deleted' } });
     } catch (error: any) {
         logger.error('DELETE /contacts/:id error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });

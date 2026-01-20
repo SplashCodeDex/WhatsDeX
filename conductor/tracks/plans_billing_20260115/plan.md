@@ -34,9 +34,9 @@ Build the user-facing parts of the billing system.
 - [x] Task: Implement "Manage Subscription" button that redirects to the Stripe Customer Portal. (296b366)
 - [x] Task: Conductor - User Manual Verification 'Frontend UI Components' (Protocol in workflow.md) (ae715f9)
 
-## Phase 5: Final Verification & Polishing
+## Phase 5: Final Verification & Polishing [checkpoint: bcda090]
 End-to-end testing of the trial-to-paid lifecycle and edge cases.
 
 - [x] Task: Write E2E tests for the full flow: Sign up -> Start Trial -> Upgrade to Pro. (2140054)
 - [x] Task: Verify mobile responsiveness of the Pricing page and Billing settings. (ab45a8a)
-- [ ] Task: Conductor - User Manual Verification 'Final Verification & Polishing' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Final Verification & Polishing' (Protocol in workflow.md) (bcda090)
