@@ -30,8 +30,8 @@ Build the user-facing parts of the billing system.
 
 - [x] Task: Create a responsive `PricingPage` with Monthly/Yearly toggle and "7-Day Free Trial" CTAs. (296b366)
 - [x] Task: Implement `BillingSettings` component in the dashboard to show current plan and trial countdown. (296b366)
-- [ ] Task: Add "Upgrade Required" modal/toast for contextual upgrades (e.g., when adding too many bots).
-- [ ] Task: Implement "Manage Subscription" button that redirects to the Stripe Customer Portal.
+- [x] Task: Add "Upgrade Required" modal/toast for contextual upgrades (e.g., when adding too many bots). (f1328d0)
+- [x] Task: Implement "Manage Subscription" button that redirects to the Stripe Customer Portal. (296b366)
 - [ ] Task: Conductor - User Manual Verification 'Frontend UI Components' (Protocol in workflow.md)
 
 ## Phase 5: Final Verification & Polishing
