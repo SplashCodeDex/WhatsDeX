@@ -25,6 +25,8 @@ vi.mock('../lib/firebase.js', () => ({
     get: vi.fn(),
     set: vi.fn(),
     update: vi.fn(),
+    where: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
   },
 }));
 
@@ -88,17 +90,49 @@ describe('StripeWebhookController', () => {
     (stripeService.stripe.subscriptions.retrieve as any).mockResolvedValue({
       id: 'sub_123',
       status: 'trialing',
-      current_period_end: 1735689600, // 2025-01-01
+      current_period_start: 1735689600,
+      current_period_end: 1735689600,
       trial_end: 1735689600,
+      cancel_at_period_end: false,
     });
 
     await handleStripeWebhook(mockReq as Request, mockRes as Response);
 
+    expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(db.collection).toHaveBeenCalledWith('tenants');
-    expect(db.doc).toHaveBeenCalledWith('tenant-123');
     expect(db.update).toHaveBeenCalledWith(expect.objectContaining({
       planTier: 'pro',
       subscriptionStatus: 'trialing',
+    }));
+  });
+
+  it('should handle customer.subscription.updated', async () => {
+    (db.collection('').doc('').get as any).mockResolvedValue({ exists: false });
+
+    const mockSubscription = {
+      id: 'sub_123',
+      status: 'active',
+      current_period_start: 1735689600,
+      current_period_end: 1735689600,
+      cancel_at_period_end: false,
+      metadata: {
+        tenantId: 'tenant-123',
+        planId: 'pro',
+      },
+    };
+
+    (stripeService.stripe.webhooks.constructEvent as any).mockReturnValue({
+      id: 'evt_update',
+      type: 'customer.subscription.updated',
+      data: { object: mockSubscription },
+    });
+
+    await handleStripeWebhook(mockReq as Request, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(db.collection).toHaveBeenCalledWith('tenants');
+    expect(db.update).toHaveBeenCalledWith(expect.objectContaining({
+      subscriptionStatus: 'active',
     }));
   });
 });
