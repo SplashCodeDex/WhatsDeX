@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { GoogleIcon } from '@/components/ui/icons';
 import { useAuth, signIn, type LoginInput, getAuthErrorMessage } from '@/features/auth';
 
 export function LoginForm() {
@@ -118,24 +119,7 @@ export function LoginForm() {
                 </div>
 
                 <Button variant="outline" type="button" disabled={isLoading}>
-                    <svg className="mr-2 h-4 w-4" aria-hidden="true" viewBox="0 0 24 24">
-                        <path
-                            d="M12.0003 20.4144C16.6467 20.4144 20.5471 16.6467 20.5471 12.0003C20.5471 11.4239 20.4907 10.8624 20.3831 10.3205H12.0003V13.7383H16.7903C16.5819 14.8527 15.9389 15.8071 15.0003 16.4357V18.6757H17.8787C19.5627 17.1239 20.5471 14.8091 20.5471 12.0003Z"
-                            fill="currentColor"
-                        />
-                        <path
-                            d="M12.0001 22.95C14.4032 22.95 16.4194 22.153 17.8923 20.7302L15.0141 18.4901C14.217 19.0252 13.197 19.3402 12.0001 19.3402C9.68069 19.3402 7.7176 17.7733 7.01529 15.6602H4.03975V17.9658C5.50395 20.8732 8.52041 22.95 12.0001 22.95Z"
-                            fill="currentColor"
-                        />
-                        <path
-                            d="M7.01549 15.6602C6.83785 15.1274 6.73949 14.562 6.73949 13.9804C6.73949 13.3989 6.83785 12.8335 7.01549 12.3007V9.99506H4.04015C3.44199 11.1918 3.10303 12.548 3.10303 13.9804C3.10303 15.4128 3.44199 16.769 4.04015 17.9658L7.01549 15.6602Z"
-                            fill="currentColor"
-                        />
-                        <path
-                            d="M12.0001 8.61993C13.3072 8.61993 14.4849 9.06869 15.4081 9.95111L18.0055 7.35336C16.4168 5.87274 14.4006 4.95 12.0001 4.95C8.52041 4.95 5.50395 7.02685 4.04015 9.93427L7.01549 12.2399C7.7176 10.1268 9.68069 8.61993 12.0001 8.61993Z"
-                            fill="currentColor"
-                        />
-                    </svg>
+                    <GoogleIcon className="mr-2 h-4 w-4" />
                     Google
                 </Button>
             </div>

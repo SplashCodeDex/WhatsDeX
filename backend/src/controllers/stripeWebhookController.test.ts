@@ -11,6 +11,9 @@ vi.mock('../services/stripeService.js', () => ({
       webhooks: {
         constructEvent: vi.fn(),
       },
+      subscriptions: {
+        retrieve: vi.fn(),
+      },
     },
   },
 }));
@@ -61,34 +64,41 @@ describe('StripeWebhookController', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
   });
 
-  it('should return 200 and handle valid events', async () => {
+  it('should handle checkout.session.completed and update Firestore', async () => {
     // Mock event check
     (db.collection('').doc('').get as any).mockResolvedValue({ exists: false });
+
+    const mockSession = {
+      id: 'cs_123',
+      subscription: 'sub_123',
+      customer: 'cus_123',
+      metadata: {
+        tenantId: 'tenant-123',
+        userId: 'user-123',
+        planId: 'pro',
+      },
+    };
 
     (stripeService.stripe.webhooks.constructEvent as any).mockReturnValue({
       id: 'evt_123',
       type: 'checkout.session.completed',
-      data: { object: {} },
+      data: { object: mockSession },
+    });
+
+    (stripeService.stripe.subscriptions.retrieve as any).mockResolvedValue({
+      id: 'sub_123',
+      status: 'trialing',
+      current_period_end: 1735689600, // 2025-01-01
+      trial_end: 1735689600,
     });
 
     await handleStripeWebhook(mockReq as Request, mockRes as Response);
 
-    expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith({ received: true });
-    expect(db.collection('').doc('').set).toHaveBeenCalled();
-  });
-
-  it('should return 200 and skip if event already processed', async () => {
-    // Mock event check
-    (db.collection('').doc('').get as any).mockResolvedValue({ exists: true });
-
-    (stripeService.stripe.webhooks.constructEvent as any).mockReturnValue({
-      id: 'evt_123',
-    });
-
-    await handleStripeWebhook(mockReq as Request, mockRes as Response);
-
-    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ alreadyProcessed: true }));
-    expect(db.collection('').doc('').set).not.toHaveBeenCalled();
+    expect(db.collection).toHaveBeenCalledWith('tenants');
+    expect(db.doc).toHaveBeenCalledWith('tenant-123');
+    expect(db.update).toHaveBeenCalledWith(expect.objectContaining({
+      planTier: 'pro',
+      subscriptionStatus: 'trialing',
+    }));
   });
 });

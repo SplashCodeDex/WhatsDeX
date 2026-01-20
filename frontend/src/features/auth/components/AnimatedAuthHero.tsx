@@ -9,6 +9,7 @@
 
 import { motion } from 'framer-motion';
 import { Bot, BarChart3, Rocket, Shield } from 'lucide-react';
+import type { Particle } from '../utils';
 
 // Animation durations per PROJECT_RULES
 const DURATION = {
@@ -28,7 +29,12 @@ const FEATURE_PILLS = [
     { icon: Shield, label: 'Secure' },
 ] as const;
 
-export function AnimatedAuthHero() {
+interface AnimatedAuthHeroProps {
+    hideContent?: boolean;
+    particles?: Particle[];
+}
+
+export function AnimatedAuthHero({ hideContent = false, particles = [] }: AnimatedAuthHeroProps) {
     return (
         <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600">
             {/* Grid Pattern - Static */}
@@ -115,70 +121,72 @@ export function AnimatedAuthHero() {
                 }}
             />
 
-            {/* Particles */}
-            <Particles />
+            {/* Animated Particles */}
+            <Particles particles={particles} />
 
             {/* Content Overlay */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-white">
-                <motion.div
-                    className="max-w-lg text-center"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: DURATION.slow, delay: 0.2 }}
-                >
-                    {/* Badge */}
+            {!hideContent && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-white">
                     <motion.div
-                        className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm backdrop-blur-sm"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4 }}
+                        className="max-w-lg text-center"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: DURATION.slow, delay: 0.2 }}
                     >
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
-                        Enterprise-Grade Platform
+                        {/* Badge */}
+                        <motion.div
+                            className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm backdrop-blur-sm"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.4 }}
+                        >
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                            Enterprise-Grade Platform
+                        </motion.div>
+
+                        {/* Headline */}
+                        <motion.h2
+                            className="mb-4 text-4xl font-bold tracking-tight"
+                            animate={{
+                                textShadow: [
+                                    '0 0 20px rgba(255,255,255,0.2)',
+                                    '0 0 40px rgba(255,255,255,0.4)',
+                                    '0 0 20px rgba(255,255,255,0.2)',
+                                ],
+                            }}
+                            transition={{ duration: 3, repeat: Infinity }}
+                        >
+                            Welcome to{' '}
+                            <span className="bg-gradient-to-r from-white via-primary-200 to-white bg-clip-text text-transparent">
+                                WhatsDeX
+                            </span>
+                        </motion.h2>
+
+                        {/* Description */}
+                        <p className="mb-8 text-base leading-relaxed text-white/70">
+                            Transform your WhatsApp communication with AI-powered bots,
+                            bulk messaging, and real-time analytics. Built for businesses
+                            that demand scale, reliability, and results.
+                        </p>
+
+                        {/* Feature Pills */}
+                        <div className="flex flex-wrap justify-center gap-3">
+                            {FEATURE_PILLS.map((feature, i) => (
+                                <motion.div
+                                    key={feature.label}
+                                    className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm backdrop-blur-sm"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.6 + i * 0.1 }}
+                                >
+                                    <feature.icon className="h-3.5 w-3.5" />
+                                    <span>{feature.label}</span>
+                                </motion.div>
+                            ))}
+                        </div>
                     </motion.div>
-
-                    {/* Headline */}
-                    <motion.h2
-                        className="mb-4 text-4xl font-bold tracking-tight"
-                        animate={{
-                            textShadow: [
-                                '0 0 20px rgba(255,255,255,0.2)',
-                                '0 0 40px rgba(255,255,255,0.4)',
-                                '0 0 20px rgba(255,255,255,0.2)',
-                            ],
-                        }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                    >
-                        Welcome to{' '}
-                        <span className="bg-gradient-to-r from-white via-primary-200 to-white bg-clip-text text-transparent">
-                            WhatsDeX
-                        </span>
-                    </motion.h2>
-
-                    {/* Description */}
-                    <p className="mb-8 text-base leading-relaxed text-white/70">
-                        Transform your WhatsApp communication with AI-powered bots,
-                        bulk messaging, and real-time analytics. Built for businesses
-                        that demand scale, reliability, and results.
-                    </p>
-
-                    {/* Feature Pills */}
-                    <div className="flex flex-wrap justify-center gap-3">
-                        {FEATURE_PILLS.map((feature, i) => (
-                            <motion.div
-                                key={feature.label}
-                                className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm backdrop-blur-sm"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.6 + i * 0.1 }}
-                            >
-                                <feature.icon className="h-3.5 w-3.5" />
-                                <span>{feature.label}</span>
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
-            </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -317,17 +325,9 @@ function FlowingLines() {
     );
 }
 
-function Particles() {
+function Particles({ particles }: { particles: Particle[] }) {
     // Use fixed height value to avoid SSR issues with window
     const PARTICLE_TRAVEL_DISTANCE = -800;
-
-    const particles = Array.from({ length: 12 }, (_, i) => ({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        delay: Math.random() * 5,
-        duration: 6 + Math.random() * 4,
-        size: 2 + Math.random() * 3,
-    }));
 
     return (
         <div className="absolute inset-0 overflow-hidden">

@@ -43,3 +43,4 @@ export type {
 } from './types';
 
 export { getAuthErrorMessage, firebaseUserToAuthUser } from './types';
+export * from './utils';
