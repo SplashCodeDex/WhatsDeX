@@ -133,7 +133,8 @@ export async function signUp(
         const response = await api.post<{ user: AuthUser; token: string }>(
             API_ENDPOINTS.AUTH.REGISTER,
             {
-                displayName: `${firstName} ${lastName}`,
+                firstName,
+                lastName,
                 email,
                 password,
             }
