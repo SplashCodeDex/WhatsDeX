@@ -28,8 +28,8 @@ Connect the backend to Stripe's lifecycle events to automate user upgrades.
 ## Phase 4: Frontend UI Components
 Build the user-facing parts of the billing system.
 
-- [~] Task: Create a responsive `PricingPage` with Monthly/Yearly toggle and "7-Day Free Trial" CTAs.
-- [ ] Task: Implement `BillingSettings` component in the dashboard to show current plan and trial countdown.
+- [x] Task: Create a responsive `PricingPage` with Monthly/Yearly toggle and "7-Day Free Trial" CTAs. (296b366)
+- [x] Task: Implement `BillingSettings` component in the dashboard to show current plan and trial countdown. (296b366)
 - [ ] Task: Add "Upgrade Required" modal/toast for contextual upgrades (e.g., when adding too many bots).
 - [ ] Task: Implement "Manage Subscription" button that redirects to the Stripe Customer Portal.
 - [ ] Task: Conductor - User Manual Verification 'Frontend UI Components' (Protocol in workflow.md)
