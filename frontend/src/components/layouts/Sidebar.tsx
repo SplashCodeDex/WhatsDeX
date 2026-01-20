@@ -18,6 +18,7 @@ import {
     CreditCard,
     LogOut,
     Menu,
+    Palette,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -49,6 +50,11 @@ const NAV_ITEMS = [
         title: 'Billing',
         href: '/dashboard/billing',
         icon: CreditCard,
+    },
+    {
+        title: 'Assets',
+        href: '/dashboard/assets',
+        icon: Palette,
     },
     {
         title: 'Settings',
