@@ -34,7 +34,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                     <div
                         className={cn(
                             "box-border h-4 w-4 rounded-sm border border-primary text-primary-foreground shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                            "peer-checked:bg-primary peer-checked:text-primary-foreground",
+                            "peer-checked:bg-gradient-to-r peer-checked:from-primary-600 peer-checked:to-primary-500 peer-checked:border-primary-600",
                             "transition-all duration-200 ease-in-out",
                             "flex items-center justify-center", // Center the icon
                             className

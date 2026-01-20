@@ -26,13 +26,13 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 default: [
-                    'bg-primary-600 text-white shadow-sm',
-                    'hover:bg-primary-700',
-                    'dark:bg-primary-500 dark:hover:bg-primary-600',
+                    'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/20',
+                    'hover:from-primary-700 hover:to-primary-600 hover:shadow-primary-500/30',
+                    'dark:from-primary-500 dark:to-primary-400 dark:hover:from-primary-600 dark:hover:to-primary-500',
                 ],
                 destructive: [
-                    'bg-error text-error-foreground shadow-sm',
-                    'hover:bg-error/90',
+                    'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/20',
+                    'hover:from-red-700 hover:to-red-600 hover:shadow-red-500/30',
                 ],
                 outline: [
                     'border border-input bg-background shadow-sm',
