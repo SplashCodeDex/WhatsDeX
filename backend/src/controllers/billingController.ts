@@ -94,3 +94,27 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to create checkout session' });
   }
 };
+
+export const getSubscription = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const tenantId = user.tenantId;
+
+    const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+    if (!tenantDoc.exists) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+
+    const data = tenantDoc.data()!;
+    res.json({
+      planTier: data.planTier || 'starter',
+      status: data.subscriptionStatus || 'trialing',
+      trialEndsAt: data.trialEndsAt ? data.trialEndsAt.toDate().toISOString() : null,
+      currentPeriodEnd: data.currentPeriodEnd ? data.currentPeriodEnd.toDate().toISOString() : null,
+      cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
+    });
+  } catch (error: any) {
+    logger.error('Error getting subscription', { error: error.message });
+    res.status(500).json({ error: 'Failed to get subscription info' });
+  }
+};
