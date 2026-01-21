@@ -1,6 +1,6 @@
 import type { WASocket, proto } from 'baileys';
 import type { ConfigService } from '../services/ConfigService.js';
-import type { Firestore } from 'firebase-admin/firestore';
+import type { BotConfig } from './tenantConfig.js';
 
 export interface Config {
     bot: {
@@ -32,6 +32,7 @@ export interface Bot extends Partial<WASocket> {
     phoneNumber?: string;
     tenantId: string;
     botId: string;
+    config: BotConfig;
     context: GlobalContext;
     ev: NonNullable<WASocket['ev']>;
 

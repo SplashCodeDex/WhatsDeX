@@ -1,0 +1,415 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '@/components/ui/select';
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage
+} from '@/components/ui/form';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Save, Sparkles, Shield, Zap, Settings2 } from 'lucide-react';
+import { BotConfig } from '../types.js';
+import { useUpdateBot } from '../hooks/index.js';
+import { updateBotSchema, UpdateBotInput } from '../schemas.js';
+import { toast } from 'sonner';
+
+interface BotSettingsDialogProps {
+    botId: string;
+    initialConfig: Partial<BotConfig> | undefined;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
+export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: BotSettingsDialogProps) {
+    const { mutate: updateBot, isPending: isUpdating } = useUpdateBot();
+
+    const form = useForm<UpdateBotInput>({
+        resolver: zodResolver(updateBotSchema),
+        defaultValues: {
+            config: {
+                ...initialConfig,
+                prefix: initialConfig?.prefix || ['.', '!', '/'],
+            }
+        }
+    });
+
+    // Reset form when initialConfig changes or dialog opens
+    useEffect(() => {
+        if (open && initialConfig) {
+            form.reset({
+                config: {
+                    ...initialConfig,
+                    prefix: initialConfig?.prefix || ['.', '!', '/'],
+                }
+            });
+        }
+    }, [open, initialConfig, form]);
+
+    const onSave = (data: UpdateBotInput) => {
+        // Handle exactOptionalPropertyTypes by removing undefined values
+        // This ensures compatibility with strict TypeScript settings
+        const filteredConfig = data.config
+            ? Object.fromEntries(
+                Object.entries(data.config).filter(([_, v]) => v !== undefined)
+            )
+            : undefined;
+
+        const filteredData: UpdateBotInput = {
+            ...data,
+            config: filteredConfig as unknown as UpdateBotInput['config'],
+        };
+
+        updateBot(
+            { id: botId, data: filteredData },
+            {
+                onSuccess: () => {
+                    toast.success('Bot settings updated successfully');
+                    onOpenChange(false);
+                },
+                onError: (error) => {
+                    toast.error(error.message || 'Failed to update bot settings');
+                },
+            }
+        );
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <div className="flex items-center gap-2">
+                        <Settings2 className="w-5 h-5 text-primary" />
+                        <DialogTitle>Bot Configuration</DialogTitle>
+                    </div>
+                    <DialogDescription>
+                        Fine-tune your bot's behavior, AI personality, and automated responses.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSave)} className="space-y-6">
+                        <Tabs defaultValue="behavior" className="w-full">
+                            <TabsList className="grid w-full grid-cols-4">
+                                <TabsTrigger value="behavior" className="gap-2">
+                                    <Shield className="w-4 h-4" /> Behavior
+                                </TabsTrigger>
+                                <TabsTrigger value="ai" className="gap-2">
+                                    <Sparkles className="w-4 h-4" /> AI
+                                </TabsTrigger>
+                                <TabsTrigger value="automation" className="gap-2">
+                                    <Zap className="w-4 h-4" /> Automation
+                                </TabsTrigger>
+                                <TabsTrigger value="advanced" className="gap-2">
+                                    Advanced
+                                </TabsTrigger>
+                            </TabsList>
+
+                            {/* Behavior Tab */}
+                            <TabsContent value="behavior" className="space-y-4 pt-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="config.mode"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Bot Mode</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select mode" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="public">Public (Everyone)</SelectItem>
+                                                        <SelectItem value="private">Private (DMs Only)</SelectItem>
+                                                        <SelectItem value="group-only">Group Only</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>Where the bot responds.</FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="config.prefix"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Prefixes</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder=".,!,/"
+                                                        {...field}
+                                                        onChange={(e) => field.onChange(e.target.value.split(',').map(s => s.trim()))}
+                                                        value={field.value?.join(',') || ''}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Comma-separated triggers.</FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-x-8 gap-y-4 pt-4 border-t">
+                                    <FormField
+                                        control={form.control}
+                                        name="config.alwaysOnline"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between gap-2">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Always Online</FormLabel>
+                                                    <p className="text-xs text-muted-foreground">Force "available" status</p>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="config.antiCall"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between gap-2">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Anti-Call</FormLabel>
+                                                    <p className="text-xs text-muted-foreground">Reject incoming calls</p>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="config.autoRead"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between gap-2">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Auto-Read</FormLabel>
+                                                    <p className="text-xs text-muted-foreground">Blue ticks on messages</p>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="config.autoTypingCmd"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between gap-2">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Typing Effect</FormLabel>
+                                                    <p className="text-xs text-muted-foreground">Show typing during commands</p>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </TabsContent>
+
+                            {/* AI Tab */}
+                            <TabsContent value="ai" className="space-y-4 pt-4">
+                                <FormField
+                                    control={form.control}
+                                    name="config.aiEnabled"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="flex items-center gap-2">
+                                                    Enable Gemini AI <Badge variant="secondary" className="bg-purple-100 text-purple-700">Premium</Badge>
+                                                </FormLabel>
+                                                <FormDescription>
+                                                    Allow the bot to use AI for intelligent conversations.
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="config.aiPersonality"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>AI Personality / Prompt</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="You are a helpful assistant named WhatsDeX..." {...field} />
+                                            </FormControl>
+                                            <FormDescription>Defines how the AI responds.</FormDescription>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="config.autoAiLabel"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center justify-between gap-2">
+                                            <div className="space-y-0.5">
+                                                <FormLabel>AI Label</FormLabel>
+                                                <p className="text-xs text-muted-foreground">Prefix AI replies with [AI]</p>
+                                            </div>
+                                            <FormControl>
+                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </TabsContent>
+
+                            {/* Automation Tab */}
+                            <TabsContent value="automation" className="space-y-4 pt-4">
+                                <FormField
+                                    control={form.control}
+                                    name="config.autoReply"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel>Away Auto-Reply</FormLabel>
+                                                <FormDescription>Send automated message when offline.</FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="config.autoReplyMessage"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Auto-Reply Message</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="config.welcomeMessage"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Welcome Message (DM)</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} />
+                                            </FormControl>
+                                            <FormDescription>Triggered on first-time contact.</FormDescription>
+                                        </FormItem>
+                                    )}
+                                />
+                            </TabsContent>
+
+                            {/* Advanced Tab */}
+                            <TabsContent value="advanced" className="space-y-4 pt-4">
+                                <div className="grid grid-cols-2 gap-4 border p-4 rounded-lg">
+                                    <FormField
+                                        control={form.control}
+                                        name="config.selfMode"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between gap-2">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Self Mode</FormLabel>
+                                                    <p className="text-xs text-destructive font-medium">Restricted to Owner</p>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="config.cooldownMs"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Global Cooldown (ms)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t">
+                                    <h4 className="text-sm font-medium">Sticker Metadata</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="config.stickerPackname"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Pack Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="config.stickerAuthor"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Author</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+
+                        <DialogFooter className="pt-4 border-t gap-2 sm:gap-0">
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isUpdating}>
+                                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                Save Configuration
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}

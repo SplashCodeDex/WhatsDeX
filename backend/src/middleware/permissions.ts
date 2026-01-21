@@ -9,6 +9,23 @@ import { Middleware, MessageContext } from '../types/index.js';
 import logger from '../utils/logger.js';
 
 export const permissionMiddleware: Middleware = async (ctx: MessageContext, next: () => Promise<void>) => {
+    // 0. Bot-Level Access Control (Multi-Tenant Mode & SelfMode)
+    const { mode, selfMode } = ctx.bot.config;
+
+    // Self Mode: Only owner/self can trigger
+    if (selfMode && !ctx.sender.isOwner) {
+        return; // Silent ignore for non-owners in self mode
+    }
+
+    // Mode Enforcement
+    if (mode === 'group-only' && !ctx.isGroup()) {
+        return ctx.reply('⚠️ This bot is configured to work in groups only.');
+    }
+
+    if (mode === 'private' && ctx.isGroup()) {
+        return; // Silent ignore in groups if mode is private
+    }
+
     const cmd = ctx.commandDef;
 
     // If no command matched, or command has no permissions, just pass
@@ -55,11 +72,7 @@ export const permissionMiddleware: Middleware = async (ctx: MessageContext, next
 
     // 6. Premium Check
     if (perms.premium) {
-        // TODO: Access database to check premium status
-        // For now, checks if owner (owners are always premium)
         if (!ctx.sender.isOwner) {
-            // Check actual DB status using ctx.bot.context.databaseService
-            // Assuming databaseService has isPremium method or user retrieval
             const { databaseService } = ctx.bot.context;
             const user = await databaseService.getUser(ctx.bot.tenantId, ctx.sender.jid);
             if (!user?.premium) {

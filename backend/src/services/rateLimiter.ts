@@ -67,8 +67,8 @@ class RateLimiterService {
           points: config.points,
           duration: config.duration,
           keyPrefix: config.keyPrefix || 'rl',
-          inmemoryBlockOnConsumed: config.points, // Block if consumed all points
-          inmemoryBlockDuration: config.blockDuration || 60, // Block duration in seconds
+          inMemoryBlockOnConsumed: config.points, // Block if consumed all points
+          inMemoryBlockDuration: config.blockDuration || 60, // Block duration in seconds
           insuranceLimiter: new RateLimiterRedis({
             storeClient: this.redisClient,
             points: Math.floor(config.points / 2),

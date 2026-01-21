@@ -19,23 +19,23 @@ export {
     useConnectBot,
     useDisconnectBot,
     botKeys,
-} from './hooks';
+} from './hooks/index.js';
 
 // Components
-export { BotList, CreateBotDialog, BotCard, QRCodeDisplay } from './components';
+export { BotList, CreateBotDialog, BotCard, QRCodeDisplay } from './components/index.js';
 
 // Schemas
-export { createBotSchema, updateBotSchema, sendMessageSchema } from './schemas';
-export type { CreateBotInput, UpdateBotInput, SendMessageInput } from './schemas';
+export { createBotSchema, updateBotSchema, sendMessageSchema } from './schemas.js';
+export type { CreateBotInput, UpdateBotInput, SendMessageInput } from './schemas.js';
 
 // Types
 export type {
     Bot,
     BotListItem,
     BotStatus,
-    BotSettings,
+    BotConfig,
     BotStats,
     BusinessHours,
     QRCodeResponse,
     BotConnectionEvent,
-} from './types';
+} from './types.js';

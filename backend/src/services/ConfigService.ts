@@ -64,7 +64,6 @@ export class ConfigService {
 
   public get system() {
     return {
-      autoTypingOnCmd: true,
       cooldown: this.get('BOT_COOLDOWN_MS'),
       requireBotGroupMembership: this.get('REQUIRE_BOT_GROUP_MEMBERSHIP'),
       requireGroupSewa: this.get('REQUIRE_GROUP_SEWA'),
@@ -82,6 +81,20 @@ export class ConfigService {
       metaKey: this.get('META_AI_KEY'),
       google: {
         geminiKey: this.get('GOOGLE_GEMINI_API_KEY'),
+      },
+      gemini: {
+        model: this.get('GEMINI_MODEL'),
+        generationConfig: {
+          temperature: this.get('GEMINI_TEMP'),
+          topP: this.get('GEMINI_TOP_P'),
+          topK: this.get('GEMINI_TOP_K'),
+          maxOutputTokens: this.get('GEMINI_MAX_TOKENS'),
+        }
+      },
+      memory: {
+        maxSize: this.get('AI_MEMORY_MAX_SIZE'),
+        ttl: this.get('AI_MEMORY_TTL'),
+        cleanupInterval: this.get('AI_MEMORY_CLEANUP_INTERVAL'),
       },
       summarization: {
         threshold: this.get('AI_SUMMARIZE_THRESHOLD'),

@@ -21,24 +21,20 @@ export const metadata: Metadata = {
 // Server-side data fetching
 async function getDashboardStats() {
     try {
-        // Fetch bots to calculate real stats
-        const botsResponse = await api.get<{ id: string; status: string; messageCount?: number }[]>(
-            API_ENDPOINTS.BOTS.LIST
-        );
+        const response = await api.get<{
+            totalBots: number;
+            activeBots: number;
+            totalMessages: number;
+            totalContacts: number;
+            systemHealth: string;
+            metrics: { memory: number; cpu: number; uptime: number };
+        }>(API_ENDPOINTS.ANALYTICS.DASHBOARD);
 
-        if (!isApiSuccess(botsResponse)) {
+        if (!isApiSuccess(response)) {
             return null;
         }
 
-        const bots = botsResponse.data;
-        const activeBots = bots.filter(b => b.status === 'connected').length;
-        const totalMessages = bots.reduce((sum, b) => sum + (b.messageCount ?? 0), 0);
-
-        return {
-            totalMessages,
-            activeBots,
-            totalBots: bots.length,
-        };
+        return response.data;
     } catch {
         return null;
     }
@@ -90,31 +86,31 @@ async function StatsGrid() {
     const STATS: StatCardProps[] = [
         {
             title: 'Total Messages',
-            value: stats?.totalMessages.toLocaleString() ?? '—',
+            value: stats?.totalMessages.toLocaleString() ?? '0',
             icon: MessageSquare,
             color: 'text-blue-500',
             bg: 'bg-blue-500/10',
         },
         {
             title: 'Active Bots',
-            value: stats?.activeBots ?? '—',
+            value: stats?.activeBots ?? '0',
             icon: Bot,
             color: 'text-primary-500',
             bg: 'bg-primary-500/10',
         },
         {
-            title: 'Total Bots',
-            value: stats?.totalBots ?? '—',
+            title: 'Total Contacts',
+            value: stats?.totalContacts.toLocaleString() ?? '0',
             icon: Users,
             color: 'text-orange-500',
             bg: 'bg-orange-500/10',
         },
         {
             title: 'System Health',
-            value: stats ? '99.9%' : 'Offline',
+            value: stats?.systemHealth ?? 'Offline',
             icon: Activity,
-            color: stats ? 'text-green-500' : 'text-red-500',
-            bg: stats ? 'bg-green-500/10' : 'bg-red-500/10',
+            color: stats?.systemHealth === 'Healthy' ? 'text-green-500' : 'text-red-500',
+            bg: stats?.systemHealth === 'Healthy' ? 'bg-green-500/10' : 'bg-red-500/10',
         },
     ];
 
@@ -138,7 +134,9 @@ function StatsGridSkeleton() {
     );
 }
 
-export default function DashboardHomePage() {
+export default async function DashboardHomePage() {
+    const dashboardStats = await getDashboardStats();
+
     return (
         <div className="space-y-8">
             <div>
@@ -180,9 +178,32 @@ export default function DashboardHomePage() {
                             Real-time server performance.
                         </p>
                     </div>
-                    {/* Empty state until system status is wired */}
-                    <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-border p-8 text-center animate-in fade-in-50">
-                        <p className="text-sm text-muted-foreground">System status visualization coming soon.</p>
+                    {/* Real system metrics */}
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">CPU Usage</span>
+                                <span className="font-medium">{dashboardStats?.metrics.cpu ?? 0}%</span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                                <div 
+                                    className="h-full bg-primary-500 transition-all duration-500" 
+                                    style={{ width: `${dashboardStats?.metrics.cpu ?? 0}%` }}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">Memory</span>
+                                <span className="font-medium">{dashboardStats?.metrics.memory ?? 0} MB</span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                                <div 
+                                    className="h-full bg-accent-500 transition-all duration-500" 
+                                    style={{ width: `${Math.min(100, (dashboardStats?.metrics.memory ?? 0) / 10)}%` }}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

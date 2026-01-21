@@ -41,6 +41,21 @@ export class EventHandler {
             }
         });
 
+        // Anti-Call Protection
+        bot.ev.on('call', async (calls) => {
+            if (!bot.config?.antiCall) return;
+
+            for (const call of calls) {
+                if (call.status === 'offer') {
+                    logger.info(`[${bot.botId}] Incoming call from ${call.from}, rejecting...`);
+                    // @ts-ignore - Baileys rejectCall type might be missing in some versions but works
+                    if (bot.rejectCall) {
+                        await bot.rejectCall(call.id, call.from);
+                    }
+                }
+            }
+        });
+
         // Initial Connection (Sync all groups?)
         // Note: Doing this on every connect might be heavy.
         // Better to rely on lazy sync or specific admin command 'sync-all'.

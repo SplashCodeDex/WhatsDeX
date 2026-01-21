@@ -211,8 +211,12 @@ export class DatabaseService {
 
     public chat = {
         clearHistory: async (jid: string, tenantId: string = 'system') => {
-            // Placeholder: Implement chat history clearing in Firestore
-            logger.info(`Chat history cleared for ${jid} (${tenantId})`);
+            try {
+                await firebaseService.deleteDoc('tenants/{tenantId}/conversation_memory' as any, jid, tenantId);
+                logger.info(`Chat history cleared for ${jid} (${tenantId})`);
+            } catch (error: any) {
+                logger.error(`DatabaseService.clearHistory failed for ${jid} (${tenantId})`, error);
+            }
         }
     };
 

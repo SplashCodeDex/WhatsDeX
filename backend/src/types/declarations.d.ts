@@ -1,21 +1,8 @@
-declare module 'qrcode';
-declare module 'chess.js';
-declare module 'yt-search';
-declare module 'aki-api';
-declare module 'awesome-phonenumber';
-declare module 'file-type';
-declare module 'hispamemes';
-declare module 'similarity';
-declare module 'node-gtts';
-declare module 'fluent-ffmpeg';
-declare module 'node-webpmux';
-declare module 'javascript-obfuscator';
-declare module 'canvacord';
-declare module 'parse-ms';
-declare module 'perf_hooks';
-declare module 'pino';
+declare global {
+  type BullWorker<T = any> = any;
+  type BullJob<T = any> = any;
+}
 
-declare module 'cheerio';
-declare module 'bullmq';
-declare module '@upstash/redis';
-declare module 'rate-limiter-flexible';
+declare module 'yt-search';
+declare module 'qrcode';
+declare module 'file-type';

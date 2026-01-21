@@ -217,8 +217,40 @@ export class SessionManager {
   }
 
   private async performBackup(): Promise<void> {
-    // Placeholder for backup logic
-    logger.info('Performing automated session backup...');
+    try {
+      const files = await fs.readdir(this.sessionDir);
+      const sessionFiles = files.filter(f => f.endsWith('.session'));
+      
+      if (sessionFiles.length === 0) return;
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = path.join(this.backupDir, `backup-${timestamp}`);
+      await fs.mkdir(backupPath, { recursive: true });
+
+      for (const file of sessionFiles) {
+        await fs.copyFile(
+          path.join(this.sessionDir, file),
+          path.join(backupPath, file)
+        );
+      }
+
+      logger.info(`Automated backup complete: ${sessionFiles.length} sessions backed up to ${backupPath}`);
+      
+      // Cleanup old backups (keep last 5)
+      const backups = await fs.readdir(this.backupDir);
+      const sortedBackups = backups
+        .filter(b => b.startsWith('backup-'))
+        .sort()
+        .reverse();
+
+      if (sortedBackups.length > 5) {
+        for (let i = 5; i < sortedBackups.length; i++) {
+          await fs.rm(path.join(this.backupDir, sortedBackups[i]), { recursive: true, force: true });
+        }
+      }
+    } catch (error: any) {
+      logger.error('Automated backup failed:', error);
+    }
   }
 
   public getActiveSessions(): SessionData[] {

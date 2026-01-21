@@ -78,6 +78,12 @@ export const BotConfigSchema = z.object({
     prefix: z.array(z.string()).default(['.', '!', '/']),
     mode: z.enum(['public', 'private', 'group-only']).default('public'),
     selfMode: z.boolean().default(false),
+    alwaysOnline: z.boolean().default(true),
+    antiCall: z.boolean().default(true),
+    autoRead: z.boolean().default(true),
+    autoMention: z.boolean().default(false),
+    autoAiLabel: z.boolean().default(true),
+    autoTypingCmd: z.boolean().default(true),
 
     // Automation
     autoReply: z.boolean().default(false),
@@ -87,6 +93,10 @@ export const BotConfigSchema = z.object({
     // AI Configuration
     aiEnabled: z.boolean().default(false),
     aiPersonality: z.string().optional(),
+
+    // Sticker Configuration
+    stickerPackname: z.string().default('WhatsDeX Sticker Pack'),
+    stickerAuthor: z.string().default('CodeDeX'),
 
     // Rate Limiting
     cooldownMs: z.number().min(0).default(10000),
@@ -133,8 +143,16 @@ export const DEFAULT_BOT_CONFIG: Partial<BotConfig> = {
     prefix: ['.', '!', '/'],
     mode: 'public',
     selfMode: false,
+    alwaysOnline: true,
+    antiCall: true,
+    autoRead: true,
+    autoMention: false,
+    autoAiLabel: true,
+    autoTypingCmd: true,
     autoReply: false,
     aiEnabled: false,
+    stickerPackname: 'WhatsDeX Sticker Pack',
+    stickerAuthor: 'CodeDeX',
     cooldownMs: 10000,
     maxCommandsPerMinute: 60,
     status: 'offline',

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import * as FileType from 'file-type';
 
 export interface APIConfig {
     baseURL: string;
@@ -66,14 +67,49 @@ export const createUrl = (name: string, path: string, params: Record<string, str
 export const listUrl = (): Record<string, APIConfig> => APIs;
 
 export const uploadImage = async (buffer: Buffer): Promise<string> => {
-    // Placeholder: Upload to a temporary hosting service (e.g., telegraph, imgur)
-    // For now returning a mock URL to satisfy types
-    return 'https://example.com/uploaded.jpg';
+    try {
+        const type = await FileType.fromBuffer(buffer);
+        const form = new FormData();
+        form.append('file', buffer, {
+            filename: `file.${type?.ext || 'jpg'}`,
+            contentType: type?.mime || 'image/jpeg',
+        });
+
+        const response = await axios.post('https://telegra.ph/upload', form, {
+            headers: form.getHeaders(),
+        });
+
+        if (response.data && response.data[0] && response.data[0].src) {
+            return 'https://telegra.ph' + response.data[0].src;
+        }
+        
+        throw new Error('Telegraph upload failed: Invalid response');
+    } catch (error: any) {
+        throw new Error(`Failed to upload image: ${error.message}`);
+    }
 };
 
 export const uploadFile = async (buffer: Buffer, filename: string): Promise<string> => {
-    // Placeholder
-    return 'https://example.com/uploaded_file.bin';
+    try {
+        const type = await FileType.fromBuffer(buffer);
+        const form = new FormData();
+        form.append('file', buffer, {
+            filename: filename || `file.${type?.ext || 'bin'}`,
+            contentType: type?.mime || 'application/octet-stream',
+        });
+
+        const response = await axios.post('https://telegra.ph/upload', form, {
+            headers: form.getHeaders(),
+        });
+
+        if (response.data && response.data[0] && response.data[0].src) {
+            return 'https://telegra.ph' + response.data[0].src;
+        }
+        
+        throw new Error('Telegraph upload failed: Invalid response');
+    } catch (error: any) {
+        throw new Error(`Failed to upload file: ${error.message}`);
+    }
 };
 
 export default {

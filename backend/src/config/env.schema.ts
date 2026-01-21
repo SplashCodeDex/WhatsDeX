@@ -32,6 +32,12 @@ export const envSchema = z.object({
 
   // Rate Limiting
   RATE_LIMIT_MAX: z.coerce.number().default(100),
+  RATE_LIMIT_GLOBAL_REQ: z.coerce.number().default(100),
+  RATE_LIMIT_USER_REQ: z.coerce.number().default(30),
+  RATE_LIMIT_CMD_REQ: z.coerce.number().default(10),
+  RATE_LIMIT_AI_REQ: z.coerce.number().default(5),
+  RATE_LIMIT_DOWNLOAD_REQ: z.coerce.number().default(3),
+  RATE_LIMIT_PREMIUM_REQ: z.coerce.number().default(100),
 
   // Stripe
   STRIPE_SECRET_KEY: z.string().optional(),
@@ -47,14 +53,43 @@ export const envSchema = z.object({
   PRIVATE_PREMIUM_ONLY: z.coerce.boolean().default(false),
   RESTRICT_COMMANDS: z.coerce.boolean().default(false),
   USE_COIN: z.coerce.boolean().default(true),
+  MAX_LISTENERS: z.coerce.number().default(50),
+  REPORT_ERROR_TO_OWNER: z.coerce.boolean().default(true),
+  SELF_OWNER: z.coerce.boolean().default(false),
+  SELF_REPLY: z.coerce.boolean().default(true),
+  USE_PAIRING_CODE: z.coerce.boolean().default(false),
+  CUSTOM_PAIRING_CODE: z.string().default('UMBR4L15'),
+  USE_STORE: z.coerce.boolean().default(false),
+
+  // Redis
+  REDIS_URL: z.string().optional(),
+  REDIS_HOST: z.string().default('localhost'),
+  REDIS_PORT: z.coerce.number().default(6379),
+  REDIS_PASSWORD: z.string().optional(),
 
   // AI & Gemini
   GOOGLE_GEMINI_API_KEY: z.string().optional(),
   META_AI_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-pro'),
+  GEMINI_TEMP: z.coerce.number().default(0.7),
+  GEMINI_TOP_P: z.coerce.number().default(0.8),
+  GEMINI_TOP_K: z.coerce.number().default(40),
+  GEMINI_MAX_TOKENS: z.coerce.number().default(2048),
+  AI_MEMORY_MAX_SIZE: z.coerce.number().default(1000),
+  AI_MEMORY_TTL: z.coerce.number().default(3600000),
+  AI_MEMORY_CLEANUP_INTERVAL: z.coerce.number().default(300000),
   AI_SUMMARIZE_THRESHOLD: z.coerce.number().default(16),
   AI_MESSAGES_TO_SUMMARIZE: z.coerce.number().default(10),
   AI_HISTORY_PRUNE_LENGTH: z.coerce.number().default(6),
   GROUP_LINK: z.string().url().optional(),
+
+  // Connection
+  CONN_MAX_RETRIES: z.coerce.number().default(15),
+  CONN_BASE_DELAY: z.coerce.number().default(3000),
+  CONN_MAX_DELAY: z.coerce.number().default(300000),
+  CONN_BACKOFF_MULTIPLIER: z.coerce.number().default(1.5),
+  CONN_CB_THRESHOLD: z.coerce.number().default(5),
+  CONN_CB_TIMEOUT: z.coerce.number().default(600000),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

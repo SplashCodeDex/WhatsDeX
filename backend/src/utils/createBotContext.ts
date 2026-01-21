@@ -1,6 +1,7 @@
 import moment from 'moment-timezone';
 import { getJid, getSender, getGroup } from './baileysUtils.js';
 import { db } from '../lib/firebase.js';
+import { downloadContentFromMessage, getContentType } from 'baileys';
 
 const createBotContext = async (
   botInstance: any,
@@ -180,16 +181,32 @@ const createBotContext = async (
     }
   });
 
+  // Determine the prefix to use: Priority given to BotConfig
+  const prefixes = botInstance.config?.prefix || [config.bot.prefix];
+  const messageBody = rawBaileysMessage.message?.conversation ||
+    rawBaileysMessage.message?.extendedTextMessage?.text || '';
+
+  let detectedPrefix = '';
+  for (const p of prefixes) {
+    if (messageBody.startsWith(p)) {
+      detectedPrefix = p;
+      break;
+    }
+  }
+
+  // Handle Auto Read if configured
+  if (botInstance.config?.autoRead && rawBaileysMessage.key.remoteJid) {
+    botInstance.readMessages([rawBaileysMessage.key]).catch(() => { });
+  }
+
   // Simulate ctx.used (command parsing)
   const used = {
-    command:
-      rawBaileysMessage.message?.conversation
-        ?.split(' ')[0]
-        ?.toLowerCase()
-        .substring(config.bot.prefix.length) || '',
-    prefix: config.bot.prefix,
-    args: rawBaileysMessage.message?.conversation?.split(' ').slice(1) || [],
-    text: rawBaileysMessage.message?.conversation || '',
+    command: detectedPrefix ?
+      messageBody.split(' ')[0].toLowerCase().substring(detectedPrefix.length) :
+      '',
+    prefix: detectedPrefix || prefixes[0],
+    args: messageBody.split(' ').slice(1) || [],
+    text: messageBody,
   };
 
   const getCommand = (commandName: string) =>
@@ -225,8 +242,27 @@ const createBotContext = async (
       }
     },
     download: async () => {
-      // Placeholder for download method
-      return Buffer.from([]);
+      // 2026: Functional Media Download
+      const quotedMsg = rawBaileysMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const messageToDownload = quotedMsg ?
+        { [Object.keys(quotedMsg)[0]]: quotedMsg[Object.keys(quotedMsg)[0]] } :
+        rawBaileysMessage.message;
+
+      if (!messageToDownload) throw new Error('No media found to download');
+
+      const type = getContentType(messageToDownload);
+      if (!type) throw new Error('Could not determine media type');
+
+      const stream = await downloadContentFromMessage(
+        (messageToDownload as any)[type],
+        type.replace('Message', '') as any
+      );
+
+      let buffer = Buffer.from([]);
+      for await (const chunk of stream) {
+        buffer = Buffer.concat([buffer, chunk]);
+      }
+      return buffer;
     }
   };
 

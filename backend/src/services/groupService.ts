@@ -32,12 +32,12 @@ export class GroupService {
             promote: async (jids) => this.promoteParticipants(bot, groupJid, jids),
             demote: async (jids) => this.demoteParticipants(bot, groupJid, jids),
             inviteCode: async () => this.getInviteCode(bot, groupJid),
-            pendingMembers: async () => [], // TODO
-            approvePendingMembers: async (_jids) => ({}), // TODO
-            rejectPendingMembers: async (_jids) => ({}), // TODO
+            pendingMembers: async () => this.getPendingMembers(bot, groupJid),
+            approvePendingMembers: async (jids) => this.handlePendingMembers(bot, groupJid, jids, 'approve'),
+            rejectPendingMembers: async (jids) => this.handlePendingMembers(bot, groupJid, jids, 'reject'),
             updateDescription: async (desc) => this.updateDescription(bot, groupJid, desc),
             updateSubject: async (subject) => this.updateSubject(bot, groupJid, subject),
-            joinApproval: async (_mode) => ({}), // TODO
+            joinApproval: async (mode) => this.updateJoinApproval(bot, groupJid, mode),
             membersCanAddMemberMode: async (mode) => this.updateMemberAddMode(bot, groupJid, mode),
             isOwner: async (targetJid = senderJid) => {
                 const owner = await this.getOwner(bot, groupJid);
@@ -184,6 +184,36 @@ export class GroupService {
             }
         } catch (error) {
             logger.error(`GroupService.updateSetting failed to set ${setting} to ${value}`, error);
+            return { error };
+        }
+    }
+
+    async updateJoinApproval(bot: Bot, groupJid: string, mode: 'on' | 'off') {
+        try {
+            if (!bot.groupJoinApprovalMode) throw new Error('Method not supported');
+            return await bot.groupJoinApprovalMode(groupJid, mode);
+        } catch (error) {
+            logger.error(`GroupService.updateJoinApproval failed`, error);
+            return { error };
+        }
+    }
+
+    async getPendingMembers(bot: Bot, groupJid: string) {
+        try {
+            if (!bot.groupRequestParticipantsList) throw new Error('Method not supported');
+            return await bot.groupRequestParticipantsList(groupJid);
+        } catch (error) {
+            logger.error(`GroupService.getPendingMembers failed`, error);
+            return [];
+        }
+    }
+
+    async handlePendingMembers(bot: Bot, groupJid: string, jids: string[], action: 'approve' | 'reject') {
+        try {
+            if (!bot.groupRequestParticipantsUpdate) throw new Error('Method not supported');
+            return await bot.groupRequestParticipantsUpdate(groupJid, jids, action);
+        } catch (error) {
+            logger.error(`GroupService.handlePendingMembers failed for ${action}`, error);
             return { error };
         }
     }

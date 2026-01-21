@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Power, QrCode, Smartphone, Trash2 } from 'lucide-react';
+import { Power, QrCode, Smartphone, Trash2, Settings2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +12,9 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { BotConnectDialog } from './BotConnectDialog';
-import { useDeleteBot, useDisconnectBot, type BotListItem } from '@/features/bots';
+import { BotConnectDialog, BotSettingsDialog } from './index.js';
+import { useDeleteBot, useDisconnectBot, useBot } from '../hooks/index.js';
+import type { BotListItem } from '../types.js';
 import { cn } from '@/lib/utils';
 
 interface BotCardProps {
@@ -22,6 +23,11 @@ interface BotCardProps {
 
 export function BotCard({ bot }: BotCardProps) {
     const [showQR, setShowQR] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+
+    // Fetch full bot data only when settings are open
+    const { data: fullBot } = useBot(bot.id);
+
     const { mutate: deleteBot } = useDeleteBot();
     const { mutate: disconnectBot } = useDisconnectBot();
 
@@ -31,7 +37,7 @@ export function BotCard({ bot }: BotCardProps) {
 
     return (
         <>
-            <Card>
+            <Card className="overflow-hidden transition-all hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="flex flex-col space-y-1.5">
                         <CardTitle className="text-base font-medium">{bot.name}</CardTitle>
@@ -56,20 +62,38 @@ export function BotCard({ bot }: BotCardProps) {
                         </div>
                     </div>
                 </CardContent>
-                <CardFooter className="flex justify-between pt-2">
-                    {bot.status !== 'connected' ? (
-                        <Button variant="outline" size="sm" onClick={handleQRClick} className="w-full mr-2">
-                            <QrCode className="mr-2 h-3 w-3" />
-                            Connect
-                        </Button>
-                    ) : (
-                        <Button variant="outline" size="sm" onClick={() => disconnectBot(bot.id)} className="w-full mr-2 text-destructive hover:text-destructive">
-                            <Power className="mr-2 h-3 w-3" />
-                            Disconnect
-                        </Button>
-                    )}
+                <CardFooter className="flex justify-between pt-2 gap-2">
+                    <div className="flex-1 flex gap-2">
+                        {bot.status !== 'connected' ? (
+                            <Button variant="outline" size="sm" onClick={handleQRClick} className="flex-1">
+                                <QrCode className="mr-2 h-3 w-3" />
+                                Connect
+                            </Button>
+                        ) : (
+                            <Button variant="outline" size="sm" onClick={() => disconnectBot(bot.id)} className="flex-1 text-destructive hover:text-destructive">
+                                <Power className="mr-2 h-3 w-3" />
+                                Disconnect
+                            </Button>
+                        )}
 
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => deleteBot(bot.id)}>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => setShowSettings(true)}
+                            title="Bot Settings"
+                        >
+                            <Settings2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => deleteBot(bot.id)}
+                        title="Delete Bot"
+                    >
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 </CardFooter>
@@ -80,6 +104,14 @@ export function BotCard({ bot }: BotCardProps) {
                 bot={bot}
                 open={showQR}
                 onOpenChange={setShowQR}
+            />
+
+            {/* Bot Settings Dialog */}
+            <BotSettingsDialog
+                botId={bot.id}
+                initialConfig={fullBot?.config}
+                open={showSettings}
+                onOpenChange={setShowSettings}
             />
         </>
     );

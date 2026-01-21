@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { db } from '../lib/firebase.js'; // Ensure correct import path
 import logger from '../utils/logger.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
+import monitoringService from '../services/monitoring.js';
 
 const router = express.Router();
 
@@ -53,6 +54,8 @@ router.get('/dashboard', authenticateToken, async (req: Request, res: Response) 
         const contactsSnapshot = await contactsQuery.count().get();
         const totalContacts = contactsSnapshot.data().count;
 
+        const metrics = await monitoringService.getMetrics();
+
         res.json({
             success: true,
             data: {
@@ -60,7 +63,8 @@ router.get('/dashboard', authenticateToken, async (req: Request, res: Response) 
                 activeBots,
                 totalMessages,
                 totalContacts,
-                systemHealth: '99.9%' // Placeholder for now, could check Redis/services
+                systemHealth: metrics.responseTimes.avg < 1000 ? 'Healthy' : 'Degraded',
+                metrics: metrics.systemHealth
             }
         });
 

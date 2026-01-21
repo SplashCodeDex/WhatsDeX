@@ -69,7 +69,8 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
 
         // Simulate typing
         const simulateTyping = () => {
-            if (config.system.autoTypingOnCmd) ctx.simulateTyping();
+            // 2026: Auto-typing behavior
+            ctx.simulateTyping();
         };
 
         // Check restriction conditions

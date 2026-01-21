@@ -4,6 +4,7 @@ import logger from '@/utils/logger.js';
 import { firebaseService } from '@/services/FirebaseService.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
+import { tenantConfigService } from './tenantConfigService.js';
 import { webhookService } from './webhookService.js';
 import { AuditService } from './index.js';
 import { BotInstanceSchema, Bot, GlobalContext } from '@/types/index.js';
@@ -120,6 +121,10 @@ export class MultiTenantBotService {
       const authSystem = new AuthSystem({ bot: {} }, tenantId, botId);
       this.authSystems.set(botId, authSystem);
 
+      // Fetch Bot Configuration from Firestore
+      const configResult = await tenantConfigService.getBotConfig(tenantId, botId);
+      const botConfig = configResult.success ? configResult.data : undefined;
+
       // Handle QR updates
       authSystem.on('qr', async (qr) => {
         try {
@@ -147,6 +152,15 @@ export class MultiTenantBotService {
         logger.info(`Bot ${botId} is CONNECTED`, { tenantId, botId });
         this.qrCodes.delete(botId);
         await this.updateBotStatus(tenantId, botId, 'connected');
+
+        // Handle Always Online if configured
+        if (botConfig?.alwaysOnline) {
+          const bot = this.activeBots.get(botId);
+          if (bot && bot.sendPresenceUpdate) {
+            await bot.sendPresenceUpdate('available');
+            logger.debug(`Bot ${botId} set to AVAILABLE (Always Online)`);
+          }
+        }
       });
 
       // Connect via AuthSystem to get the socket
@@ -163,6 +177,7 @@ export class MultiTenantBotService {
       // Inject identifying properties
       socket.tenantId = tenantId;
       socket.botId = botId;
+      socket.config = botConfig!; // Inject dynamic config
       socket.context = await this.getContext();
 
       socket.use = (mw) => mwSystem.use(mw);

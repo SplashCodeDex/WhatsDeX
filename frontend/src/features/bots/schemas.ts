@@ -26,11 +26,38 @@ export const updateBotSchema = z.object({
         .min(1, 'Bot name is required')
         .max(50, 'Bot name must be less than 50 characters')
         .optional(),
-    settings: z
+    config: z
         .object({
+            // Identity
+            name: z.string().min(1).optional(),
+
+            // Behavior
+            prefix: z.array(z.string()).optional(),
+            mode: z.enum(['public', 'private', 'group-only']).optional(),
+            selfMode: z.boolean().optional(),
+            alwaysOnline: z.boolean().optional(),
+            antiCall: z.boolean().optional(),
+            autoRead: z.boolean().optional(),
+            autoMention: z.boolean().optional(),
+            autoAiLabel: z.boolean().optional(),
+            autoTypingCmd: z.boolean().optional(),
+
+            // Automation
             autoReply: z.boolean().optional(),
-            welcomeMessage: z.string().max(500).nullable().optional(),
-            awayMessage: z.string().max(500).nullable().optional(),
+            autoReplyMessage: z.string().optional(),
+            welcomeMessage: z.string().optional(),
+
+            // AI Configuration
+            aiEnabled: z.boolean().optional(),
+            aiPersonality: z.string().optional(),
+
+            // Sticker Configuration
+            stickerPackname: z.string().optional(),
+            stickerAuthor: z.string().optional(),
+
+            // Rate Limiting
+            cooldownMs: z.number().min(0).optional(),
+            maxCommandsPerMinute: z.number().min(1).optional(),
         })
         .optional(),
 });

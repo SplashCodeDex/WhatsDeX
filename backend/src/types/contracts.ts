@@ -89,6 +89,7 @@ export const BotInstanceSchema = z.object({
     lastMessageAt: TimestampSchema.nullish(),
     errorsCount: z.number().default(0)
   }),
+  config: z.any().optional(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema
 }).readonly();

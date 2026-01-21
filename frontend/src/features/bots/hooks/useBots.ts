@@ -11,7 +11,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { isApiSuccess } from '@/types';
 
-import type { Bot, BotListItem, CreateBotInput, UpdateBotInput, QRCodeResponse } from '../types';
+import type { Bot, BotListItem, BotStatus, BotConfig, QRCodeResponse } from '../types.js';
+import type { CreateBotInput, UpdateBotInput } from '../schemas.js';
 
 /**
  * Query key factory for bots

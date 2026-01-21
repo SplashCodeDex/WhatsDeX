@@ -20,18 +20,45 @@ export interface Bot {
     lastSeenAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
-    settings: BotSettings;
+    config: BotConfig;
     stats: BotStats;
 }
 
 /**
- * Bot settings
+ * Bot specific configuration (Behavioral settings)
  */
-export interface BotSettings {
+export interface BotConfig {
+    // Identity
+    name: string;
+    phoneNumber?: string;
+
+    // Behavior
+    prefix: string[];
+    mode: 'public' | 'private' | 'group-only';
+    selfMode: boolean;
+    alwaysOnline: boolean;
+    antiCall: boolean;
+    autoRead: boolean;
+    autoMention: boolean;
+    autoAiLabel: boolean;
+    autoTypingCmd: boolean;
+
+    // Automation
     autoReply: boolean;
-    welcomeMessage: string | null;
-    awayMessage: string | null;
-    businessHours: BusinessHours | null;
+    autoReplyMessage?: string;
+    welcomeMessage?: string;
+
+    // AI Configuration
+    aiEnabled: boolean;
+    aiPersonality?: string;
+
+    // Sticker Configuration
+    stickerPackname: string;
+    stickerAuthor: string;
+
+    // Rate Limiting
+    cooldownMs: number;
+    maxCommandsPerMinute: number;
 }
 
 /**
@@ -75,17 +102,12 @@ export interface BotListItem {
 /**
  * Create bot input
  */
-export interface CreateBotInput {
-    name: string;
-}
+// Exported from schemas.js
 
 /**
  * Update bot input
  */
-export interface UpdateBotInput {
-    name?: string;
-    settings?: Partial<BotSettings>;
-}
+// Exported from schemas.js
 
 /**
  * QR Code response

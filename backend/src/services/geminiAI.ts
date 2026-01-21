@@ -551,33 +551,10 @@ Respond in the user's language if they're not using English.
     if (!this.decisionEngine.learningEnabled) return;
 
     // Track actual success based on execution results
-    const successMetrics = await this.calculateSuccessMetrics(bot, intelligence, ctx);
+    const _successMetrics = await this.calculateSuccessMetrics(bot, intelligence, ctx);
 
-    const learningData = {
-      timestamp: Date.now(),
-      message,
-      intents: intelligence.intents,
-      actions: intelligence.actions,
-      confidence: intelligence.confidence,
-      success: successMetrics.overallSuccess,
-      successDetails: {
-        actionExecutions: successMetrics.actionResults,
-        responseGenerated: successMetrics.responseGenerated,
-        errorOccurred: successMetrics.errorOccurred,
-        userSatisfactionIndicators: successMetrics.userSatisfactionIndicators,
-        executionTime: successMetrics.executionTime
-      }
-    };
-
-    const userLearning = this.learningData.get(userId) || [];
-    userLearning.push(learningData);
-
-    // Keep only recent learning data
-    if (userLearning.length > 100) {
-      userLearning.splice(0, userLearning.length - 100);
-    }
-
-    this.learningData.set(userId, userLearning);
+    // TODO: Implement persistent learning data in Firestore subcollection (tenants/{tenantId}/learning)
+    // For now, we skip in-memory storage to maintain statelessness (Rule 5)
   }
 
   async getConversationMemory(userId: string, tenantId: string) {
