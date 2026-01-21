@@ -1,4 +1,4 @@
-import { Tenant } from '@/types/index.js';
+import { Tenant } from '../types/contracts.js';
 import { Timestamp } from 'firebase-admin/firestore';
 
 export type Feature = 'ai' | 'backups' | 'broadcast' | 'analytics';
@@ -15,7 +15,7 @@ export interface PlanLimits {
  */
 export const hasFeatureAccess = (tenant: Tenant, feature: Feature): boolean => {
   const plan = tenant.planTier || 'starter';
-  
+
   // Check if trial has expired and status is not active
   if (tenant.subscriptionStatus === 'canceled') return false;
   if (tenant.subscriptionStatus === 'unpaid') return false;
@@ -72,8 +72,8 @@ export const isTrialActive = (tenant: Tenant): boolean => {
   if (!tenant.trialEndsAt) return false;
 
   const now = Date.now();
-  const trialEnd = tenant.trialEndsAt instanceof Timestamp 
-    ? tenant.trialEndsAt.toMillis() 
+  const trialEnd = tenant.trialEndsAt instanceof Timestamp
+    ? tenant.trialEndsAt.toMillis()
     : new Date(tenant.trialEndsAt).getTime();
 
   return now < trialEnd;

@@ -45,6 +45,7 @@ export class GeminiAI extends EventEmitter {
   private decisionEngine: AIDecisionEngine;
 
   constructor(context: GlobalContext) {
+
     super();
     this.context = context;
     this.gemini = new GeminiService();
@@ -523,7 +524,7 @@ Respond in the user's language if they're not using English.
   getCommandsAsTools(bot: Bot) {
     const tools = new Map<string, any>();
     if (bot.cmd) {
-      for (const [name, command] of bot.cmd) {
+      Array.from(bot.cmd.entries()).forEach(([name, command]) => {
         tools.set(name, {
           name,
           description: command.description || `Execute ${name} command`,
@@ -531,9 +532,16 @@ Respond in the user's language if they're not using English.
           parameters: this.inferCommandParameters(command),
           execute: command.code
         });
-      }
+      });
     }
     return tools;
+  }
+
+  async handleFallbackResponse(ctx: MessageContext, error: any) {
+    if (ctx && ctx.reply) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      await ctx.reply(`I apologize, but I'm experiencing some technical difficulties: ${errorMsg}. Please try again in a moment.`);
+    }
   }
 
   /**
@@ -826,12 +834,6 @@ Respond in the user's language if they're not using English.
   async getActiveConversations(userId: string) { return []; }
   async getGroupContext(groupId: string) { return null; }
   async getRecentActions(userId: string) { return []; }
-  async getConversationMemory(userId: string) { return this.conversationMemory.get(userId) || []; }
-  async handleFallbackResponse(ctx: MessageContext, error: any) {
-    if (ctx && ctx.reply) {
-      await ctx.reply("I apologize, but I'm experiencing some technical difficulties. Please try again in a moment.");
-    }
-  }
 }
 
 export default GeminiAI;

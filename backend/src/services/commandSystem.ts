@@ -308,12 +308,12 @@ export class CommandSystem {
 
       download: async () => {
         // 2026: Functional Media Download
-        const messageToDownload = msgContext.quoted?.media ? 
-            { [msgContext.quoted.contentType]: msgContext.quoted.media } : 
-            messageData.message;
-        
+        const messageToDownload = msgContext.quoted?.media ?
+          { [msgContext.quoted.contentType]: msgContext.quoted.media } :
+          messageData.message;
+
         if (!messageToDownload) throw new Error('No media found to download');
-        
+
         const type = getContentType(messageToDownload);
         if (!type) throw new Error('Could not determine media type');
 
@@ -321,7 +321,7 @@ export class CommandSystem {
           (messageToDownload as any)[type],
           type.replace('Message', '') as any
         );
-        
+
         let buffer = Buffer.from([]);
         for await (const chunk of stream) {
           buffer = Buffer.concat([buffer, chunk]);
@@ -329,6 +329,9 @@ export class CommandSystem {
         return buffer;
       }
     };
+
+    return msgContext;
+  }
 
   extractText(messageData: proto.IWebMessageInfo) {
     return messageData.message?.conversation ||
