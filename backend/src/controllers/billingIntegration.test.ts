@@ -77,7 +77,10 @@ describe('Billing Integration Flow', () => {
     });
 
     await createCheckoutSession(mockReq as Request, mockRes as Response);
-    expect(mockRes.json).toHaveBeenCalledWith({ url: 'https://stripe.com/checkout' });
+    expect(mockRes.json).toHaveBeenCalledWith({
+      success: true,
+      data: { url: 'https://stripe.com/checkout' }
+    });
 
     // 2. Simulate Webhook for Session Completion
     const webhookReq = {
@@ -121,8 +124,11 @@ describe('Billing Integration Flow', () => {
       stripeSubscriptionId: 'sub_123',
     }));
 
-    // Verify subscription record creation
-    expect(db.collection).toHaveBeenCalledWith('tenant_subscriptions');
+    // Verify subscription record creation in SUBCOLLECTION
+    expect(db.collection).toHaveBeenCalledWith('tenants');
+    expect(db.doc).toHaveBeenCalledWith('tenant-123');
+    expect(db.collection).toHaveBeenCalledWith('subscriptions');
+    expect(db.doc).toHaveBeenCalledWith('sub_123');
     expect(db.set).toHaveBeenCalledWith(expect.objectContaining({
       planTier: 'pro',
       status: 'trialing',

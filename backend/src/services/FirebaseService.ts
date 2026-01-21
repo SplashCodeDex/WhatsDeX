@@ -109,12 +109,19 @@ export class FirebaseService {
 
       // Validation (Zero-Trust)
       // Since data might be Partial, we use a partial schema for validation if merge is true
-      const validationData = merge ? data : schema.parse(data);
       if (merge) {
         // Best effort validation for partial updates
         // Note: Zod doesn't easily support dynamic partial validation against a deep schema
         // but for our flat-ish documents, it works well enough.
-        (schema as any).partial().parse(data);
+        // We safely check if .partial() exists (e.g. not a preprocessed or readonly schema)
+        if (typeof (schema as any).partial === 'function') {
+          (schema as any).partial().parse(data);
+        } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+          // Handle Readonly schemas
+          (schema as any).unwrap().partial().parse(data);
+        }
+      } else {
+        schema.parse(data);
       }
 
       const docRef = db.collection(path).doc(docId);

@@ -90,7 +90,10 @@ describe('BillingController', () => {
       customer: 'cus_123',
       line_items: [expect.objectContaining({ price: 'price_123' })],
     }));
-    expect(mockRes.json).toHaveBeenCalledWith({ url: mockSession.url });
+    expect(mockRes.json).toHaveBeenCalledWith({
+      success: true,
+      data: { url: mockSession.url }
+    });
   });
 
   it('should create a customer if it does not exist', async () => {

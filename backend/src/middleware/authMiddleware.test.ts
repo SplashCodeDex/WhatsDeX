@@ -55,7 +55,7 @@ describe('authMiddleware', () => {
   it('should return 401 if no token is provided', async () => {
     await authenticateToken(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Access token required' });
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Access token required' });
   });
 
   it('should return 403 if token verification fails', async () => {
@@ -67,7 +67,7 @@ describe('authMiddleware', () => {
 
     await authenticateToken(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid or unauthorized token' });
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Invalid or unauthorized token' });
   });
 
   it('should return 401 if token is expired', async () => {
@@ -80,7 +80,7 @@ describe('authMiddleware', () => {
 
     await authenticateToken(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Token expired' });
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Token expired' });
   });
 
   it('should call next() and populate req.user if token is valid', async () => {

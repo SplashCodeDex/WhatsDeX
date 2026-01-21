@@ -6,6 +6,7 @@ import logger from '../utils/logger.js';
 import { EventEmitter } from 'events';
 import { Bot, GlobalContext, MessageContext, Result } from '../types/index.js';
 import { databaseService } from './database.js';
+import { cacheService } from './cache.js';
 
 interface AIDecisionEngine {
   confidenceThreshold: number;
@@ -35,7 +36,7 @@ interface AIAnalysis {
 /**
  * Gemini AI - Next Generation Intelligence System
  * Handles natural conversation, context understanding, and intelligent tool usage
- * 2026 Mastermind Edition - Strictly Typed & Stateless
+ * 2026 Mastermind Edition - Memoized (Rule 5)
  */
 export class GeminiAI extends EventEmitter {
   private bot: Bot | null = null;
@@ -43,19 +44,10 @@ export class GeminiAI extends EventEmitter {
   private gemini: GeminiService;
   private decisionEngine: AIDecisionEngine;
 
-  // In-memory caches (should ideally be Redis/Database for scalability)
-  private conversationMemory: Map<string, any[]>;
-  private learningData: Map<string, any[]>;
-  private availableTools: Map<string, any>;
-
   constructor(context: GlobalContext) {
     super();
     this.context = context;
     this.gemini = new GeminiService();
-
-    this.conversationMemory = new Map();
-    this.learningData = new Map();
-    this.availableTools = new Map();
 
     this.decisionEngine = {
       confidenceThreshold: 0.7,
@@ -64,7 +56,7 @@ export class GeminiAI extends EventEmitter {
       learningEnabled: true
     };
 
-    logger.info('Gemini AI initialized');
+    logger.info('Gemini AI initialized with Rule 5 Memoization');
   }
 
   /**
@@ -73,22 +65,40 @@ export class GeminiAI extends EventEmitter {
   async processMessage(bot: Bot, ctx: MessageContext): Promise<Result<void>> {
     try {
       const userId = ctx.sender.jid;
+      const tenantId = bot.tenantId;
       const message = ctx.body || '';
 
-      // Build comprehensive context
-      const context = await this.buildEnhancedContext(bot, userId, message, ctx);
+      // Rule 5: Check if we have a memoized intent analysis for this exact message
+      const analysisCacheKey = `ai:analysis:${tenantId}:${cacheService.createKey(message)}`;
+      const cachedAnalysis = await cacheService.get<AIAnalysis>(analysisCacheKey);
 
-      // Multi-layer intelligence processing
-      const intelligence = await this.analyzeWithMultiLayerIntelligence(bot, message, context);
+      let intelligence: AIAnalysis;
+
+      if (cachedAnalysis.success && cachedAnalysis.data) {
+        logger.info(`Rule 5: Using memoized AI analysis for ${userId}`);
+        intelligence = cachedAnalysis.data;
+      } else {
+        // Build comprehensive context
+        const context = await this.buildEnhancedContext(bot, userId, message, ctx);
+
+        // Multi-layer intelligence processing
+        intelligence = await this.analyzeWithMultiLayerIntelligence(bot, message, context);
+
+        // Memoize the analysis for 15 minutes if confidence is high
+        if (intelligence.confidence > 0.8) {
+          await cacheService.set(analysisCacheKey, intelligence, 900);
+        }
+      }
 
       // Execute intelligent response
-      const { finalResponse, actionResults } = await this.executeIntelligentResponse(bot, intelligence, ctx, context);
+      const contextForExecution = await this.buildEnhancedContext(bot, userId, message, ctx);
+      const { finalResponse, actionResults } = await this.executeIntelligentResponse(bot, intelligence, ctx, contextForExecution);
 
       // 5. Finalize: Learn and Store Memory
       await this.learnFromInteraction(bot, userId, message, intelligence, ctx);
 
       // Store new interaction in Vector Memory
-      await memoryService.storeConversation(userId, context.message.text, {
+      await memoryService.storeConversation(userId, message, {
         botId: bot.botId,
         response: finalResponse,
         interactionType: 'human-ai'
@@ -112,7 +122,7 @@ export class GeminiAI extends EventEmitter {
 
     return {
       user: userProfile || { id: userId, name: 'Unknown' },
-      conversation: await this.getConversationMemory(userId),
+      conversation: await this.getConversationMemory(userId, bot.tenantId),
       message: {
         text: message,
         timestamp: Date.now(),
@@ -125,7 +135,7 @@ export class GeminiAI extends EventEmitter {
         timeOfDay: this.getTimeOfDay(),
         dayOfWeek: new Date().getDay(),
         previousActions: await this.getRecentActions(userId),
-        activeConversations: this.getActiveConversations(userId)
+        activeConversations: await this.getActiveConversations(userId)
       }
     };
   }
@@ -399,7 +409,7 @@ Respond in the user's language if they're not using English.
     try {
       const response = await this.gemini.getChatCompletion(conversationPrompt);
       await ctx.reply(response);
-      await this.updateConversationMemory(ctx.sender.jid, ctx.body, response);
+      await this.updateConversationMemory(ctx.sender.jid, bot.tenantId, ctx.body, response);
       return response;
     } catch (error: unknown) {
       logger.error('Conversational AI error:', error);
@@ -562,32 +572,28 @@ Respond in the user's language if they're not using English.
     this.learningData.set(userId, userLearning);
   }
 
-  /**
-   * Update conversation memory with context
-   */
-  async updateConversationMemory(userId: string, userMessage: string, aiResponse: string) {
-    const memory = this.conversationMemory.get(userId) || [];
+  async getConversationMemory(userId: string, tenantId: string) {
+    const cacheKey = `ai:memory:${tenantId}:${userId}`;
+    const cached = await cacheService.get<any[]>(cacheKey);
+    return cached.success ? (cached.data || []) : [];
+  }
+
+  async updateConversationMemory(userId: string, tenantId: string, userMessage: string, aiResponse: string) {
+    const memory = await this.getConversationMemory(userId, tenantId);
 
     memory.push({
       timestamp: Date.now(),
       user: userMessage,
-      ai: aiResponse,
-      context: {
-        timeOfDay: this.getTimeOfDay(),
-        dayOfWeek: new Date().getDay()
-      }
+      ai: aiResponse
     });
 
-    // Keep last 50 exchanges
-    if (memory.length > 50) {
-      memory.splice(0, memory.length - 50);
-    }
+    // Keep last 20 exchanges for cost-efficiency
+    if (memory.length > 20) memory.splice(0, memory.length - 20);
 
-    this.conversationMemory.set(userId, memory);
-
-    // Ideally, save to database via DatabaseService here
-    // await databaseService.saveConversation(userId, memory);
+    const cacheKey = `ai:memory:${tenantId}:${userId}`;
+    await cacheService.set(cacheKey, memory, 3600 * 24); // 24h retention
   }
+
 
   // Helper methods
   getTimeOfDay() {

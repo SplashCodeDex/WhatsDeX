@@ -1,4 +1,5 @@
 import { Worker, Job } from 'bullmq';
+import type { Worker as BullWorker, Job as BullJob } from 'bullmq';
 import { Campaign, CampaignStatus } from '../types/contracts.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { firebaseService } from '../services/FirebaseService.js';
@@ -20,12 +21,12 @@ interface CampaignJobData {
 }
 
 class CampaignWorker {
-    private worker: any;
+    private worker: BullWorker;
 
     constructor() {
         this.worker = new Worker(
             'campaigns',
-            async (job: any) => {
+            async (job: BullJob<CampaignJobData>) => {
                 await this.processCampaign(job);
             },
             {
@@ -42,14 +43,14 @@ class CampaignWorker {
             logger.info(`Campaign Job ${job.id} completed`, { jobId: job.id });
         });
 
-        this.worker.on('failed', (job: any, err: any) => {
+        this.worker.on('failed', (job: BullJob<CampaignJobData> | undefined, err: Error) => {
             logger.error(`Campaign Job ${job?.id} failed:`, err);
         });
 
         logger.info('CampaignWorker initialized');
     }
 
-    private async processCampaign(job: any): Promise<void> {
+    private async processCampaign(job: BullJob<CampaignJobData>): Promise<void> {
         const { tenantId, campaign } = job.data;
         const { id, botId, message, audience } = campaign;
         const targets = audience.targets;

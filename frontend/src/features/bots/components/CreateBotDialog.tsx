@@ -18,11 +18,17 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCreateBot, createBotSchema, type CreateBotInput } from '@/features/bots';
+import { useCreateBot, createBotSchema, type CreateBotInput, useBots } from '@/features/bots';
+import { useSubscription } from '@/features/billing';
 
 export function CreateBotDialog() {
     const [open, setOpen] = useState(false);
+    const { data: bots } = useBots();
+    const { limits, isAtLimit, isLoading: isLoadingPlan } = useSubscription();
     const { mutateAsync: createBot, isPending } = useCreateBot();
+    
+    const reachedLimit = bots && !isLoadingPlan ? isAtLimit(bots.length) : false;
+
     const {
         register,
         handleSubmit,
@@ -34,6 +40,8 @@ export function CreateBotDialog() {
     });
 
     const onSubmit = async (data: CreateBotInput) => {
+        if (reachedLimit) return;
+        
         try {
             await createBot(data);
             setOpen(false);
@@ -51,9 +59,9 @@ export function CreateBotDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button disabled={reachedLimit}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Bot
+                    {reachedLimit ? 'Limit Reached' : 'Create Bot'}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
@@ -61,7 +69,10 @@ export function CreateBotDialog() {
                     <DialogHeader>
                         <DialogTitle>Create New Bot</DialogTitle>
                         <DialogDescription>
-                            Add a new WhatsApp bot instance. You'll be able to scan the QR code to connect it in the next step.
+                            {reachedLimit 
+                                ? `You have reached your limit of ${limits?.maxBots} bots. Upgrade your plan to add more.`
+                                : "Add a new WhatsApp bot instance. You'll be able to scan the QR code to connect it in the next step."
+                            }
                         </DialogDescription>
                     </DialogHeader>
                     {errors.root && (
@@ -69,26 +80,37 @@ export function CreateBotDialog() {
                             {errors.root.message}
                         </div>
                     )}
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Bot Name</Label>
-                            <Input
-                                id="name"
-                                placeholder="My Business Bot"
-                                disabled={isPending}
-                                error={!!errors.name}
-                                {...register('name')}
-                            />
-                            {errors.name && (
-                                <p className="text-sm text-destructive">{errors.name.message}</p>
-                            )}
+                    {!reachedLimit && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="name">Bot Name</Label>
+                                <Input
+                                    id="name"
+                                    placeholder="My Business Bot"
+                                    disabled={isPending}
+                                    error={!!errors.name}
+                                    {...register('name')}
+                                />
+                                {errors.name && (
+                                    <p className="text-sm text-destructive">{errors.name.message}</p>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                     <DialogFooter>
-                        <Button type="submit" disabled={isPending}>
-                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Bot
-                        </Button>
+                        {reachedLimit ? (
+                            <Button type="button" className="w-full" onClick={() => {
+                                setOpen(false);
+                                // Logic to redirect to billing or open upgrade modal
+                            }}>
+                                Upgrade Plan
+                            </Button>
+                        ) : (
+                            <Button type="submit" disabled={isPending}>
+                                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Create Bot
+                            </Button>
+                        )}
                     </DialogFooter>
                 </form>
             </DialogContent>

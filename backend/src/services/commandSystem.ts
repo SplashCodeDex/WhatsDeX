@@ -6,13 +6,16 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { trace, SpanStatusCode } from '@opentelemetry/api';
 
 import performanceMonitor from '../utils/performanceMonitor.js';
-import { proto } from 'baileys';
+import { proto, downloadContentFromMessage, getContentType } from 'baileys';
 import { type Bot, type Command, type MessageContext, type GlobalContext, type GroupFunctions } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const tracer = trace.getTracer('whatsdex-command-system');
 
 export class CommandSystem {
   private context: GlobalContext;
@@ -179,30 +182,48 @@ export class CommandSystem {
       tenantId: bot.tenantId
     });
 
-    try {
-      const ctx = await this.createContext(bot, messageData, commandInfo, command);
-
-      // Execute command through middleware pipeline
-      await bot.executeMiddleware(ctx, async () => {
-        if (command.code) {
-          await command.code(ctx);
-        }
-      });
-
-      const duration = timer.end();
-      this.context.logger.command(command.name, messageData.key?.remoteJid || 'unknown', true, duration);
-      return true;
-
-    } catch (error: unknown) {
-      timer.end();
-      const err = error instanceof Error ? error.message : String(error);
-      this.context.logger.command(command.name, messageData.key?.remoteJid || 'unknown', false, null, err);
-
-      if (messageData.key?.remoteJid) {
-        await bot.sendMessage(messageData.key.remoteJid, { text: `❌ Error: ${err}` }, { quoted: messageData });
+    return await tracer.startActiveSpan(`command:${command.name}`, {
+      attributes: {
+        'app.command': command.name,
+        'app.tenant_id': bot.tenantId,
+        'app.user_jid': messageData.key?.remoteJid || 'unknown',
+        'app.is_group': !!messageData.key?.remoteJid?.endsWith('@g.us')
       }
-      return true;
-    }
+    }, async (span) => {
+      try {
+        const ctx = await this.createContext(bot, messageData, commandInfo, command);
+
+        // Execute command through middleware pipeline
+        await bot.executeMiddleware(ctx, async () => {
+          if (command.code) {
+            await command.code(ctx);
+          }
+        });
+
+        const duration = timer.end();
+        this.context.logger.command(command.name, messageData.key?.remoteJid || 'unknown', true, duration);
+        span.setStatus({ code: SpanStatusCode.OK });
+        span.end();
+        return true;
+
+      } catch (error: unknown) {
+        timer.end();
+        const err = error instanceof Error ? error : new Error(String(error));
+        this.context.logger.command(command.name, messageData.key?.remoteJid || 'unknown', false, null, err);
+
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: err.message
+        });
+        span.recordException(err);
+        span.end();
+
+        if (messageData.key?.remoteJid) {
+          await bot.sendMessage(messageData.key.remoteJid, { text: `❌ Error: ${err.message}` }, { quoted: messageData });
+        }
+        return true;
+      }
+    });
   }
 
   async createContext(bot: Bot, messageData: proto.IWebMessageInfo, commandInfo: { args: string[]; prefix: string }, command: Command): Promise<MessageContext> {
@@ -222,7 +243,7 @@ export class CommandSystem {
     const quotedMsg = messageData.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     const quotedContext = quotedMsg ? {
       content: quotedMsg.conversation || quotedMsg.extendedTextMessage?.text || quotedMsg.imageMessage?.caption || '',
-      contentType: Object.keys(quotedMsg)[0],
+      contentType: getContentType(quotedMsg) || Object.keys(quotedMsg)[0],
       senderJid: messageData.message?.extendedTextMessage?.contextInfo?.participant || '',
       media: quotedMsg.imageMessage || quotedMsg.videoMessage || quotedMsg.audioMessage || quotedMsg.stickerMessage || quotedMsg.documentMessage,
       key: {
@@ -250,7 +271,7 @@ export class CommandSystem {
       author: {
         id: jid // Legacy alias for sender.jid
       },
-      quoted: quotedContext,
+      quoted: quotedContext as any,
       msg: {
         key: messageData.key,
         ...messageData.message
@@ -270,10 +291,8 @@ export class CommandSystem {
       usage: {},
       getId: (target: string) => target.split('@')[0],
       simulateTyping: () => {
-        // Fire and forget typing simulation
         if (bot.sendPresenceUpdate) {
-          // Cast to any for now as sendPresenceUpdate signature might vary or be optional
-          (bot.sendPresenceUpdate as unknown as (status: string, jid: string) => Promise<void>)('composing', jid).catch(() => { });
+          (bot.sendPresenceUpdate as any)('composing', jid).catch(() => { });
         }
       },
       used: {
@@ -288,24 +307,28 @@ export class CommandSystem {
       group: getGroupFunctions,
 
       download: async () => {
-        // Placeholder for download logic
-        return Buffer.alloc(0);
+        // 2026: Functional Media Download
+        const messageToDownload = msgContext.quoted?.media ? 
+            { [msgContext.quoted.contentType]: msgContext.quoted.media } : 
+            messageData.message;
+        
+        if (!messageToDownload) throw new Error('No media found to download');
+        
+        const type = getContentType(messageToDownload);
+        if (!type) throw new Error('Could not determine media type');
+
+        const stream = await downloadContentFromMessage(
+          (messageToDownload as any)[type],
+          type.replace('Message', '') as any
+        );
+        
+        let buffer = Buffer.from([]);
+        for await (const chunk of stream) {
+          buffer = Buffer.concat([buffer, chunk]);
+        }
+        return buffer;
       }
     };
-
-    // Set isOwner using TenantConfigService
-    try {
-      const tenantResult = await this.context.tenantConfigService.getTenantSettings(bot.tenantId);
-      const ownerNumber = tenantResult.success ? tenantResult.data.ownerNumber : 'system';
-      // Use the unified checks from tools if available, or manual check
-      msgContext.sender.isOwner = this.context.tools.cmd.isOwner([ownerNumber], jid);
-    } catch (err) {
-      // Fail safe to false
-      msgContext.sender.isOwner = false;
-    }
-
-    return msgContext;
-  }
 
   extractText(messageData: proto.IWebMessageInfo) {
     return messageData.message?.conversation ||

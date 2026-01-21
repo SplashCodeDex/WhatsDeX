@@ -68,9 +68,9 @@ const createBotContext = async (
   // Implement ctx.group() methods
   const group = (jid = groupId) => ({
     isAdmin: async (userJid: string) => {
-      if (!jid) return false;
+      if (!jid || !botInstance.tenantId) return false;
       try {
-        const memberSnapshot = await db.collection('groups').doc(jid).collection('members').doc(userJid).get();
+        const memberSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
         if (memberSnapshot.exists) {
           const role = memberSnapshot.data()?.role;
           return role === 'admin' || role === 'superadmin';
@@ -79,11 +79,11 @@ const createBotContext = async (
       return false;
     },
     isBotAdmin: async () => {
-      if (!jid) return false;
+      if (!jid || !botInstance.tenantId) return false;
       const botJid = config.bot?.jid;
       if (!botJid) return false;
       try {
-        const memberSnapshot = await db.collection('groups').doc(jid).collection('members').doc(botJid).get();
+        const memberSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').doc(botJid).get();
         if (memberSnapshot.exists) {
           const role = memberSnapshot.data()?.role;
           return role === 'admin' || role === 'superadmin';
@@ -92,9 +92,9 @@ const createBotContext = async (
       return false;
     },
     members: async () => {
-      if (!jid) return [];
+      if (!jid || !botInstance.tenantId) return [];
       try {
-        const membersSnapshot = await db.collection('groups').doc(jid).collection('members').get();
+        const membersSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').get();
         return membersSnapshot.docs.map(doc => ({
           jid: doc.id,
           id: doc.id,
@@ -168,9 +168,9 @@ const createBotContext = async (
     },
     matchAdmin: async (userJid: string) => {
       // Logic same as isAdmin for now
-      if (!jid) return false;
+      if (!jid || !botInstance.tenantId) return false;
       try {
-        const memberSnapshot = await db.collection('groups').doc(jid).collection('members').doc(userJid).get();
+        const memberSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
         if (memberSnapshot.exists) {
           const role = memberSnapshot.data()?.role;
           return role === 'admin' || role === 'superadmin';

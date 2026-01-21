@@ -30,13 +30,12 @@ walk(rootDir, (filePath) => {
     let modified = false;
 
     // 1. Fix ESM imports: from './module' to './module.js'
-    const esmRegex = /^(import|export)\s+[\s\S]*?from\s+['"](\.\.?\/[^'"]+)(?<!\.js|\.json|\.css|\.png|\.jpg|\.jpeg|\.svg|\.webp|\.mp4|\.mp3|\.wav|\.ogg)['"]/gm;
+    const esmRegex = /from\s+['"](\.\.?\/[^'"]+)(?<!\.js|\.json|\.css|\.png|\.jpg|\.jpeg|\.svg|\.webp|\.mp4|\.mp3|\.wav|\.ogg)['"]/g;
 
     if (esmRegex.test(content)) {
-        content = content.replace(esmRegex, (match, type, relPath) => {
-            // Keep the original structure but update the path
-            const beforeFrom = match.split(/from\s+/)[0];
-            return `${beforeFrom}from '${relPath}.js'`.replace(/\.js\.js/g, '.js');
+        content = content.replace(esmRegex, (match, relPath) => {
+            const quote = match.slice(-1);
+            return `from ${quote}${relPath}.js${quote}`;
         });
         modified = true;
     }
@@ -75,8 +74,10 @@ walk(rootDir, (filePath) => {
         modified = true;
     }
 
-    fs.writeFileSync(filePath, content);
-    logger.info(`✅ Refactored: ${filePath.replace(rootDir, '')}`);
+    if (modified) {
+        fs.writeFileSync(filePath, content);
+        logger.info(`✅ Refactored: ${filePath.replace(rootDir, '')}`);
+    }
 });
 
 logger.info('Refactor complete.');

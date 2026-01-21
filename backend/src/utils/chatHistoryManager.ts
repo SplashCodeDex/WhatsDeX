@@ -1,6 +1,7 @@
 /**
  * Chat History Manager with Size Limits and Intelligent Summarization
- * Prevents infinite growth while maintaining context
+ * Prevents infinite growth while maintaining context.
+ * Refactored for Multi-Tenancy (Rule 3).
  */
 
 import { MemoryManager } from './memoryManager.js';
@@ -24,23 +25,28 @@ export class ChatHistoryManager {
     });
   }
 
-  async getChat(userId: string) {
-    let chat = this.memoryManager.get(userId);
+  private getCacheKey(tenantId: string, userId: string) {
+    return `${tenantId}:${userId}`;
+  }
+
+  async getChat(tenantId: string, userId: string) {
+    const key = this.getCacheKey(tenantId, userId);
+    let chat = this.memoryManager.get(key);
 
     if (!chat) {
       // Load from database if not in memory
-      chat = await this.loadFromDatabase(userId);
+      chat = await this.loadFromDatabase(tenantId, userId);
       if (!chat) {
         chat = { history: [], summary: '', lastActivity: Date.now() };
       }
-      this.memoryManager.set(userId, chat);
+      this.memoryManager.set(key, chat);
     }
 
     return chat;
   }
 
-  async addMessage(userId: string, role: string, content: string) {
-    const chat = await this.getChat(userId);
+  async addMessage(tenantId: string, userId: string, role: string, content: string) {
+    const chat = await this.getChat(tenantId, userId);
 
     // Add new message
     chat.history.push({
@@ -58,10 +64,11 @@ export class ChatHistoryManager {
     }
 
     // Save back to memory
-    this.memoryManager.set(userId, chat);
+    const key = this.getCacheKey(tenantId, userId);
+    this.memoryManager.set(key, chat);
 
     // Async save to database (don't wait)
-    this.saveToDatabase(userId, chat).catch(err => logger.error('Async save history failed', { error: err }));
+    this.saveToDatabase(tenantId, userId, chat).catch(err => logger.error('Async save history failed', { tenantId, userId, error: err }));
 
     return chat;
   }
@@ -69,14 +76,15 @@ export class ChatHistoryManager {
   /**
    * Directly update chat state (useful for replacing history)
    */
-  async updateChat(userId: string, updates: { history?: any[], summary?: string }) {
-    const chat = await this.getChat(userId);
+  async updateChat(tenantId: string, userId: string, updates: { history?: any[], summary?: string }) {
+    const chat = await this.getChat(tenantId, userId);
     if (updates.history) chat.history = updates.history;
     if (updates.summary !== undefined) chat.summary = updates.summary;
     chat.lastActivity = Date.now();
 
-    this.memoryManager.set(userId, chat);
-    await this.saveToDatabase(userId, chat);
+    const key = this.getCacheKey(tenantId, userId);
+    this.memoryManager.set(key, chat);
+    await this.saveToDatabase(tenantId, userId, chat);
     return chat;
   }
 
@@ -104,65 +112,26 @@ export class ChatHistoryManager {
 
     // Keep only recent messages
     chat.history = recentMessages;
-
-    logger.info(`Compressed history for user ${chat.history.length} messages, summary: ${chat.summary.length} chars`);
   }
 
   async summarizeMessages(messages: any[]) {
-    // Create a concise summary of the messages
+    // Simplified summarization
     const userMessages = messages.filter(m => m.role === 'user').length;
     const assistantMessages = messages.filter(m => m.role === 'assistant').length;
-
-    const topics = this.extractTopics(messages);
-    const timespan = this.getTimespan(messages);
-
-    return `Previous conversation (${timespan}): ${userMessages} user messages, ${assistantMessages} responses. Topics discussed: ${topics.join(', ')}.`;
-  }
-
-  extractTopics(messages: any[]) {
-    const topics = new Set();
-    const keywords = ['help', 'question', 'problem', 'how', 'what', 'why', 'when', 'where'];
-
-    messages.forEach(message => {
-      keywords.forEach(keyword => {
-        if (message.content.toLowerCase().includes(keyword)) {
-          topics.add(keyword);
-        }
-      });
-    });
-
-    return Array.from(topics).slice(0, 5); // Max 5 topics
-  }
-
-  getTimespan(messages: any[]) {
-    if (messages.length === 0) return 'unknown time';
-
-    const start = messages[0].timestamp;
-    const end = messages[messages.length - 1].timestamp;
-    const duration = end - start;
-
-    const hours = Math.floor(duration / (1000 * 60 * 60));
-    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
+    return `Previous context: ${userMessages} user messages and ${assistantMessages} assistant responses.`;
   }
 
   async combineSummaries(oldSummary: string, newSummary: string) {
-    // Intelligently combine summaries
     return `${oldSummary} | ${newSummary}`;
   }
 
-  async loadFromDatabase(userId: string) {
+  async loadFromDatabase(tenantId: string, userId: string) {
     try {
-      const snapshot = await db.collection('conversation_memory')
-        .where('userId', '==', userId)
-        .limit(1)
-        .get();
+      const doc = await db.collection('tenants').doc(tenantId).collection('conversation_memory').doc(userId).get();
 
-      if (snapshot.empty) return null;
+      if (!doc.exists) return null;
 
-      const record = snapshot.docs[0].data();
+      const record = doc.data()!;
       let history = [];
       try {
         history = typeof record.messages === 'string' ? JSON.parse(record.messages) : record.messages;
@@ -175,25 +144,14 @@ export class ChatHistoryManager {
         lastActivity: record.lastUpdated ? (record.lastUpdated instanceof Timestamp ? record.lastUpdated.toMillis() : Date.now()) : Date.now()
       };
     } catch (error: any) {
-      logger.error('Error loading chat from database:', { error: error });
+      logger.error('Error loading chat from database:', { tenantId, userId, error });
       return null;
     }
   }
 
-  async saveToDatabase(userId: string, chat: any) {
+  async saveToDatabase(tenantId: string, userId: string, chat: any) {
     try {
-      // Ensure we store messages as JSON string or objects. Firestore handles objects well.
-      // But looking at load, it tries JSON.parse. I will store as JSON string to be safe
-      // or change load to accept objects.
-      // Let's store as object array if possible, but Firestore has limits on document size/depth.
-      // JSON string is safer for complex message structures.
       const messagesJson = JSON.stringify(chat.history);
-
-      const snapshot = await db.collection('conversation_memory')
-        .where('userId', '==', userId)
-        .limit(1)
-        .get();
-
       const data = {
         userId,
         messages: messagesJson,
@@ -201,13 +159,9 @@ export class ChatHistoryManager {
         lastUpdated: Timestamp.now()
       };
 
-      if (!snapshot.empty) {
-        await snapshot.docs[0].ref.update(data);
-      } else {
-        await db.collection('conversation_memory').add(data);
-      }
+      await db.collection('tenants').doc(tenantId).collection('conversation_memory').doc(userId).set(data, { merge: true });
     } catch (error: any) {
-      logger.error('Error saving chat to database:', { error: error });
+      logger.error('Error saving chat to database:', { tenantId, userId, error });
     }
   }
 
@@ -222,18 +176,19 @@ export class ChatHistoryManager {
     };
   }
 
-  // Cleanup inactive users
-  async cleanupInactiveUsers(inactivityThreshold = 24 * 60 * 60 * 1000) { // 24 hours
+  // Cleanup inactive users for a specific tenant
+  async cleanupInactiveUsers(tenantId: string, inactivityThreshold = 24 * 60 * 60 * 1000) {
     const cutoff = Timestamp.fromMillis(Date.now() - inactivityThreshold);
     try {
-      const snapshot = await db.collection('conversation_memory').where('lastUpdated', '<', cutoff).get();
+      const snapshot = await db.collection('tenants').doc(tenantId).collection('conversation_memory').where('lastUpdated', '<', cutoff).get();
       const batch = db.batch();
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
     } catch (e) {
-      logger.error('Cleanup failed', { error: e });
+      logger.error('Cleanup failed', { tenantId, error: e });
     }
   }
 }
 
-export default new ChatHistoryManager();
+export const chatHistoryManager = new ChatHistoryManager();
+export default chatHistoryManager;

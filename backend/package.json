@@ -11,7 +11,10 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "seed:stripe": "tsx scripts/seed-stripe.ts",
+    "seed:firestore": "tsx scripts/seed-firestore.ts",
+    "seed:all": "npm run seed:firestore && npm run seed:stripe"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

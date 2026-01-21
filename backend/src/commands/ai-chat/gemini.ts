@@ -63,9 +63,10 @@ export default {
       // Service call with tool handling
       const geminiService = new GeminiService();
       const userId = ctx.sender.jid;
+      const tenantId = ctx.bot.tenantId;
 
       // Use ChatHistoryManager
-      const chat = (await chatHistoryManager.getChat(userId)) || { history: [], summary: '' };
+      const chat = (await chatHistoryManager.getChat(tenantId, userId)) || { history: [], summary: '' };
       let currentHistory = chat.history || [];
       let currentSummary = chat.summary || '';
 
@@ -187,7 +188,7 @@ export default {
         const finalMessageContent = finalResponse.message.content;
         messages.push(finalResponse.message);
 
-        await chatHistoryManager.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
+                await chatHistoryManager.updateChat(tenantId, userId, { history: messages.slice(1), summary: currentSummary });
 
         // --- Caching Implementation Start ---
         await cache.set(cacheKey, finalMessageContent);
@@ -200,7 +201,7 @@ export default {
       const result = responseMessage.content;
       messages.push(responseMessage);
 
-      await chatHistoryManager.updateChat(userId, { history: messages.slice(1), summary: currentSummary });
+              await chatHistoryManager.updateChat(tenantId, userId, { history: messages.slice(1), summary: currentSummary });
 
       // --- Caching Implementation Start ---
       await cache.set(cacheKey, result);

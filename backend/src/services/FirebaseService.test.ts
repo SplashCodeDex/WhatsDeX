@@ -4,7 +4,18 @@ import { FirebaseService } from '@/services/FirebaseService.js';
 // Use vi.hoisted to define variables that must be available in vi.mock
 const { mockDb } = vi.hoisted(() => {
   const mockDoc = {
-    get: vi.fn(async () => ({ exists: true, data: () => ({}) })),
+    get: vi.fn(async () => ({ 
+      exists: true, 
+      data: () => ({ 
+        id: 'bot-456',
+        name: 'Test Bot',
+        status: 'disconnected',
+        connectionMetadata: { browser: ['Chrome', 'OSX', '1.0'], platform: 'web' },
+        stats: { messagesSent: 0, messagesReceived: 0, contactsCount: 0, errorsCount: 0 },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }) 
+    })),
     set: vi.fn(async () => {}),
     update: vi.fn(async () => {}),
     delete: vi.fn(async () => {}),
@@ -35,21 +46,10 @@ describe('FirebaseService', () => {
     service = FirebaseService.getInstance();
   });
 
-  describe('Path Generation', () => {
-    it('should correctly generate tenant root paths', () => {
-      const path = (service as any).getTenantPath('tenant-1');
-      expect(path).toBe('tenants/tenant-1');
-    });
-
-    it('should correctly generate tenant subcollection paths', () => {
-      const path = (service as any).getTenantSubcollectionPath('tenant-1', 'bots');
-      expect(path).toBe('tenants/tenant-1/bots');
-    });
-  });
-
   describe('CRUD Operations', () => {
-    it('should throw error if tenantId is missing for tenant-scoped operations', async () => {
-      await expect(service.getDoc('bots', 'bot-1')).rejects.toThrow('Tenant ID is required');
+    it('should throw error if schema is not found', async () => {
+      // @ts-ignore
+      await expect(service.getDoc('invalid-collection', 'id-1')).rejects.toThrow('No schema defined');
     });
 
     it('should call Firestore with correct path for tenant-scoped get', async () => {
@@ -58,18 +58,27 @@ describe('FirebaseService', () => {
       
       await service.getDoc('bots', botId, tenantId);
 
-      expect(mockDb.collection).toHaveBeenCalledWith('tenants');
+      // Path should be 'tenants/tenant-123/bots'
+      expect(mockDb.collection).toHaveBeenCalledWith('tenants/tenant-123/bots');
     });
   });
 
   describe('setDoc', () => {
     it('should call Firestore set with correct data', async () => {
       const tenantId = 'tenant-123';
-      const data = { name: 'New Bot' };
+      const data = { 
+        id: 'bot-1',
+        name: 'New Bot',
+        status: 'connected' as const,
+        connectionMetadata: { browser: ['Chrome', 'OSX', '1.0'] as [string, string, string], platform: 'web' },
+        stats: { messagesSent: 0, messagesReceived: 0, contactsCount: 0, errorsCount: 0 },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
       
-      await service.setDoc('bots', 'bot-1', data, tenantId);
+      await service.setDoc('bots', 'bot-1', data, tenantId, false);
 
-      expect(mockDb.collection).toHaveBeenCalledWith('tenants');
+      expect(mockDb.collection).toHaveBeenCalledWith('tenants/tenant-123/bots');
     });
   });
 });

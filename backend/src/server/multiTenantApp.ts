@@ -199,43 +199,7 @@ export class MultiTenantApp {
     this.app.use('/api/billing/webhook', stripeWebhookRoutes);
     this.app.use('/api/billing', authenticateToken, billingRoutes);
 
-    // Bot management
-    this.app.post('/api/bots/:botId/start', authenticateToken, async (req, res) => {
-      try {
-        const botId = req.params.botId as string;
-        const tenantId = req.user?.tenantId as string;
-        if (!tenantId) throw new Error('Tenant context missing');
-
-        await multiTenantBotService.startBot(tenantId, botId);
-
-        // Audit log
-        await AuditService.logEvent({
-          eventType: 'BOT_LIFECYCLE',
-          actor: 'TENANT_ADMIN',
-          actorId: tenantId,
-          action: 'START_BOT',
-          resource: 'BOT',
-          resourceId: botId,
-          riskLevel: 'LOW'
-        });
-
-        res.json({ success: true, message: 'Bot started successfully' });
-      } catch (error: any) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-
-    this.app.post('/api/bots/:botId/stop', authenticateToken, async (req, res) => {
-      try {
-        const botId = req.params.botId as string;
-        await multiTenantBotService.stopBot(botId);
-        res.json({ success: true, message: 'Bot stopped successfully' });
-      } catch (error: any) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-
-    // ... (rest of bot management routes updated to use multiTenantBotService)
+    // Bot management logic is handled in multiTenantRoutes mapped to /api/internal/bots
 
     // Error handling
     this.app.use(errorHandler);
