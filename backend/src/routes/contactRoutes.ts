@@ -84,12 +84,23 @@ router.patch('/:id', async (req: Request, res: Response) => {
         const contactId = req.params.id as string;
         if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
+        // 1. Check if the request body is empty
+        if (Object.keys(req.body).length === 0) {
+            return res.status(400).json({ success: false, error: 'Request body cannot be empty.' });
+        }
+
         const payload = contactSchema.partial().parse(req.body);
 
         const contactRef = db.collection('tenants')
             .doc(tenantId)
             .collection('contacts')
             .doc(contactId);
+
+        // 2. Check if the contact exists
+        const contactDoc = await contactRef.get();
+        if (!contactDoc.exists) {
+            return res.status(404).json({ success: false, error: 'Contact not found' });
+        }
 
         await contactRef.update({
             ...payload,
@@ -98,6 +109,9 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
         res.json({ success: true, data: { message: 'Contact updated' } });
     } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ success: false, error: error.issues[0].message });
+        }
         logger.error('PATCH /contacts/:id error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
