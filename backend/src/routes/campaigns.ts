@@ -43,7 +43,7 @@ router.post('/:id/start', authenticateToken, async (req: Request, res: Response)
 
     if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const result = await campaignService.startCampaign(tenantId, id);
+    const result = await campaignService.startCampaign(tenantId, id as string);
     if (result.success) {
         res.json({ success: true, data: { message: 'Campaign started' } });
     } else {
@@ -57,7 +57,7 @@ router.post('/:id/pause', authenticateToken, async (req: Request, res: Response)
 
     if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const result = await campaignService.pauseCampaign(tenantId, id);
+    const result = await campaignService.pauseCampaign(tenantId, id as string);
     if (result.success) {
         res.json({ success: true, data: { message: 'Campaign paused' } });
     } else {
@@ -71,7 +71,7 @@ router.post('/:id/resume', authenticateToken, async (req: Request, res: Response
 
     if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const result = await campaignService.resumeCampaign(tenantId, id);
+    const result = await campaignService.resumeCampaign(tenantId, id as string);
     if (result.success) {
         res.json({ success: true, data: { message: 'Campaign resumed' } });
     } else {
@@ -85,7 +85,7 @@ router.post('/:id/duplicate', authenticateToken, async (req: Request, res: Respo
 
     if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const result = await campaignService.duplicateCampaign(tenantId, id);
+    const result = await campaignService.duplicateCampaign(tenantId, id as string);
     if (result.success) {
         res.status(201).json({ success: true, data: result.data });
     } else {
@@ -99,7 +99,7 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
 
     if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const result = await campaignService.deleteCampaign(tenantId, id);
+    const result = await campaignService.deleteCampaign(tenantId, id as string);
     if (result.success) {
         res.json({ success: true, data: { message: 'Campaign deleted' } });
     } else {

@@ -257,9 +257,9 @@ export type CampaignStatus = z.infer<typeof CampaignStatusSchema>;
  */
 export const CampaignSchema = z.object({
   id: z.string(),
-  name: z.string().min(1, { message: "Campaign name is required" }),
-  botId: z.string({ required_error: "Bot ID is required" }), // The bot that will send the messages
-  message: z.string().min(1, { message: "Message content cannot be empty" }),
+  name: z.string().min(1),
+  botId: z.string().min(1, "Bot ID is required"), // The bot that will send the messages
+  message: z.string().min(1),
   audience: z.object({
     type: z.enum(['groups', 'contacts', 'selective']),
     targets: z.array(z.string()), // JIDs

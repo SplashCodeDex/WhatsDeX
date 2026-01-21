@@ -89,16 +89,18 @@ const handleCheckoutSessionCompleted = async (session: any) => {
   }
   const subscription = await stripe.subscriptions.retrieve(session.subscription as string) as any;
 
+  // 1. Update Tenant Root Document
   await db.collection('tenants').doc(tenantId).update({
     planTier: planId || 'starter',
     subscriptionStatus: subscription.status,
     stripeSubscriptionId: subscription.id,
+    stripeCustomerId: session.customer as string,
     trialEndsAt: subscription.trial_end ? Timestamp.fromMillis(subscription.trial_end * 1000) : null,
     updatedAt: new Date(),
   });
 
-  // Create/Update subscription record
-  await db.collection('tenant_subscriptions').doc(subscription.id).set({
+  // 2. Create/Update Subscription in Subcollection (Mandate)
+  await db.collection('tenants').doc(tenantId).collection('subscriptions').doc(subscription.id).set({
     id: subscription.id,
     tenantId,
     userId: userId || null,
@@ -111,35 +113,42 @@ const handleCheckoutSessionCompleted = async (session: any) => {
     createdAt: new Date(),
     updatedAt: new Date(),
   });
+
+  // 3. Sync User Plan Tier if userId is present
+  if (userId) {
+    await db.collection('tenants').doc(tenantId).collection('users').doc(userId).update({
+      planTier: planId || 'starter',
+      subscriptionStatus: subscription.status,
+      updatedAt: new Date()
+    }).catch(e => logger.error('Failed to sync user plan tier', e));
+  }
 };
 
 const handleSubscriptionUpdated = async (subscription: any) => {
   logger.info('Handling customer.subscription.updated', { subscriptionId: subscription.id });
   const { tenantId, planId } = subscription.metadata || {};
 
-  if (!tenantId) {
+  let targetTenantId = tenantId;
+
+  if (!targetTenantId) {
     const tenantQuery = await db.collection('tenants').where('stripeSubscriptionId', '==', subscription.id).limit(1).get();
     if (tenantQuery.empty) {
       logger.error('Tenant not found for subscription updated', { subscriptionId: subscription.id });
       return;
     }
-    const tenantDoc = tenantQuery.docs[0];
-
-    await tenantDoc.ref.update({
-      subscriptionStatus: subscription.status,
-      trialEndsAt: subscription.trial_end ? Timestamp.fromMillis(subscription.trial_end * 1000) : null,
-      updatedAt: new Date(),
-    });
-  } else {
-    await db.collection('tenants').doc(tenantId).update({
-      planTier: planId || 'starter',
-      subscriptionStatus: subscription.status,
-      trialEndsAt: subscription.trial_end ? Timestamp.fromMillis(subscription.trial_end * 1000) : null,
-      updatedAt: new Date(),
-    });
+    targetTenantId = tenantQuery.docs[0].id;
   }
 
-  await db.collection('tenant_subscriptions').doc(subscription.id).update({
+  // 1. Update Tenant Root
+  await db.collection('tenants').doc(targetTenantId).update({
+    planTier: planId || 'starter',
+    subscriptionStatus: subscription.status,
+    trialEndsAt: subscription.trial_end ? Timestamp.fromMillis(subscription.trial_end * 1000) : null,
+    updatedAt: new Date(),
+  });
+
+  // 2. Update Subscription in Subcollection
+  await db.collection('tenants').doc(targetTenantId).collection('subscriptions').doc(subscription.id).update({
     status: subscription.status,
     currentPeriodStart: subscription.current_period_start ? Timestamp.fromMillis(subscription.current_period_start * 1000) : Timestamp.now(),
     currentPeriodEnd: subscription.current_period_end ? Timestamp.fromMillis(subscription.current_period_end * 1000) : Timestamp.now(),
@@ -158,13 +167,17 @@ const handleSubscriptionDeleted = async (subscription: any) => {
   }
 
   const tenantDoc = tenantQuery.docs[0];
+  const tenantId = tenantDoc.id;
+
+  // 1. Reset Tenant Root
   await tenantDoc.ref.update({
     planTier: 'starter',
     subscriptionStatus: 'canceled',
     updatedAt: new Date(),
   });
 
-  await db.collection('tenant_subscriptions').doc(subscription.id).update({
+  // 2. Update Subscription in Subcollection
+  await db.collection('tenants').doc(tenantId).collection('subscriptions').doc(subscription.id).update({
     status: 'canceled',
     updatedAt: new Date(),
   });

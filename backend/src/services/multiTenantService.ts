@@ -28,8 +28,14 @@ export class MultiTenantService {
     subdomain: string;
     plan?: string;
   }): Promise<Result<{ tenant: Tenant; user: TenantUser }>> {
-    const { userId, email, displayName, tenantName, subdomain, plan = 'starter' } = payload;
+    const { userId, email, displayName, tenantName, subdomain, plan: rawPlan = 'starter' } = payload;
     const tenantId = `tenant-${Date.now()}`;
+    
+    // Type-safe plan narrowing
+    const plan = (rawPlan.toLowerCase() === 'starter' || rawPlan.toLowerCase() === 'pro' || rawPlan.toLowerCase() === 'enterprise')
+      ? (rawPlan.toLowerCase() as 'starter' | 'pro' | 'enterprise')
+      : 'starter';
+
     const limits = getPlanLimits(plan);
 
     try {

@@ -82,14 +82,14 @@ export function PricingTable() {
         <div className="mt-10 flex justify-center">
           <Tabs
             defaultValue="month"
-            onValueChange={(v) => setInterval(v as 'month' | 'year')}
+            onValueChange={(v: string) => setInterval(v as 'month' | 'year')}
             className="w-[300px]"
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="month">Monthly</TabsTrigger>
               <TabsTrigger value="year">
                 Yearly
-                <Badge variant="success" className="ml-2 scale-75">
+                <Badge variant="secondary" className="ml-2 scale-75 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                   Save 20%
                 </Badge>
               </TabsTrigger>

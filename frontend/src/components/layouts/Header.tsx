@@ -29,7 +29,7 @@ export function Header() {
 
                 <div className="flex items-center gap-3 border-l border-border pl-4">
                     <div className="hidden flex-col items-end md:flex">
-                        <span className="text-sm font-medium">{user?.displayName || 'User'}</span>
+                        <span className="text-sm font-medium">{user?.name || 'User'}</span>
                         <span className="text-xs text-muted-foreground">{user?.email}</span>
                     </div>
                     <Button variant="outline" size="icon" className="rounded-full">

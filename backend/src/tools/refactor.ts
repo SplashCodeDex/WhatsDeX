@@ -77,7 +77,6 @@ walk(rootDir, (filePath) => {
 
     fs.writeFileSync(filePath, content);
     logger.info(`✅ Refactored: ${filePath.replace(rootDir, '')}`);
-}
 });
 
 logger.info('Refactor complete.');
