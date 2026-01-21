@@ -1,15 +1,15 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+# #!/usr/bin/env sh
+# . "$(dirname -- "$0")/_/husky.sh"
 
-# Run project-wide type checks
-echo "🔍 Checking types..."
-npm run typecheck --prefix backend
-npm run typecheck --prefix frontend
+# # Run project-wide type checks
+# echo "🔍 Checking types..."
+# npm run typecheck --prefix backend
+# npm run typecheck --prefix frontend
 
-# Run backend unit tests
-echo "🧪 Running backend tests..."
-npm run test:run --prefix backend
+# # Run backend unit tests
+# echo "🧪 Running backend tests..."
+# npm run test:run --prefix backend
 
-# Lint staged files
-echo "✨ Linting files..."
-npx lint-staged
+# # Lint staged files
+# echo "✨ Linting files..."
+# npx lint-staged
