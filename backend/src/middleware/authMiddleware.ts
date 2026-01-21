@@ -29,13 +29,15 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
     try {
         const authHeader = req.headers['authorization'];
         const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.token;
+        const source = authHeader ? 'header' : (req.cookies?.token ? 'cookie' : 'none');
 
         if (!token) {
+            logger.security('Auth Middleware: Missing token', null, { ip: req.ip });
             return res.status(401).json({ success: false, error: 'Access token required' });
         }
 
         const config = ConfigService.getInstance();
-        const secret = config.get('JWT_SECRET'); // Strict config access
+        const secret = config.get('JWT_SECRET');
 
         // Verify Custom JWT
         try {
@@ -43,16 +45,26 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             req.user = decoded;
             next();
         } catch (jwtError: unknown) {
-            if (jwtError instanceof Error && jwtError.name === 'TokenExpiredError') {
+            const name = jwtError instanceof Error ? jwtError.name : 'UnknownError';
+            const message = jwtError instanceof Error ? jwtError.message : String(jwtError);
+
+            logger.security('Auth Middleware: Token verification failed', null, {
+                error: message,
+                type: name,
+                source,
+                ip: req.ip
+            });
+
+            if (name === 'TokenExpiredError') {
                 return res.status(401).json({ success: false, error: 'Token expired' });
             }
-            throw new Error('Invalid token signature');
+            return res.status(403).json({ success: false, error: `Auth error: ${name}` });
         }
 
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.security('Auth Middleware: Token verification failed', null, { error: err.message, ip: req.ip });
-        return res.status(403).json({ success: false, error: 'Invalid or unauthorized token' });
+        logger.error('Auth Middleware Critical Error:', err);
+        return res.status(500).json({ success: false, error: 'Internal server error in auth pipeline' });
     }
 };
 

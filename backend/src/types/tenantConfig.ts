@@ -102,6 +102,9 @@ export const BotConfigSchema = z.object({
     cooldownMs: z.number().min(0).default(10000),
     maxCommandsPerMinute: z.number().min(1).default(60),
 
+    // Command Management
+    disabledCommands: z.array(z.string()).default([]),
+
     // Status
     status: z.enum(['online', 'offline', 'connecting', 'error']).default('offline'),
     lastSeen: z.date().optional(),

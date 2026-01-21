@@ -58,6 +58,9 @@ export const updateBotSchema = z.object({
             // Rate Limiting
             cooldownMs: z.number().min(0).optional(),
             maxCommandsPerMinute: z.number().min(1).optional(),
+
+            // Command Management
+            disabledCommands: z.array(z.string()).optional(),
         })
         .optional(),
 });

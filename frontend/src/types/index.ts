@@ -4,7 +4,7 @@
  * Centralized type exports for the entire frontend.
  */
 
-export * from './api.js';
-export * from './firebase.js';
-export * from './billing.js';
-export * from './tenantConfig.js';
+export * from './api';
+export * from './firebase';
+export * from './billing';
+export * from './tenantConfig';

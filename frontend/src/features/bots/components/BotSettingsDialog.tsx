@@ -33,10 +33,10 @@ import {
     FormMessage
 } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save, Sparkles, Shield, Zap, Settings2 } from 'lucide-react';
-import { BotConfig } from '../types.js';
-import { useUpdateBot } from '../hooks/index.js';
-import { updateBotSchema, UpdateBotInput } from '../schemas.js';
+import { Loader2, Save, Sparkles, Shield, Zap, Settings2, Terminal, Search, Filter } from 'lucide-react';
+import { BotConfig, Command } from '../types';
+import { useUpdateBot } from '../hooks/index';
+import { updateBotSchema, UpdateBotInput } from '../schemas';
 import { toast } from 'sonner';
 
 interface BotSettingsDialogProps {
@@ -71,7 +71,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
         }
     }, [open, initialConfig, form]);
 
-    const onSave = (data: UpdateBotInput) => {
+    const onSave = async (data: UpdateBotInput) => {
         // Handle exactOptionalPropertyTypes by removing undefined values
         // This ensures compatibility with strict TypeScript settings
         const filteredConfig = data.config
@@ -85,18 +85,18 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
             config: filteredConfig as unknown as UpdateBotInput['config'],
         };
 
-        updateBot(
-            { id: botId, data: filteredData },
-            {
-                onSuccess: () => {
-                    toast.success('Bot settings updated successfully');
-                    onOpenChange(false);
-                },
-                onError: (error) => {
-                    toast.error(error.message || 'Failed to update bot settings');
-                },
-            }
-        );
+        try {
+            // Rule #2: Robust Error Handling (The Result Pattern)
+            // The useUpdateBot hook handles the API call and returns data or throws.
+            // We ensure specific feedback via toast.
+            await updateBot({ id: botId, data: filteredData });
+            toast.success('Configuration updated successfully');
+            onOpenChange(false);
+        } catch (error: any) {
+            // Rule #2: User-Facing Specificity
+            const errorMessage = error?.message || 'Failed to update bot configuration';
+            toast.error(errorMessage);
+        }
     };
 
     return (
@@ -124,6 +124,9 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                 </TabsTrigger>
                                 <TabsTrigger value="automation" className="gap-2">
                                     <Zap className="w-4 h-4" /> Automation
+                                </TabsTrigger>
+                                <TabsTrigger value="commands" className="gap-2">
+                                    <Terminal className="w-4 h-4" /> Commands
                                 </TabsTrigger>
                                 <TabsTrigger value="advanced" className="gap-2">
                                     Advanced
@@ -328,10 +331,76 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
-                                            <FormDescription>Triggered on first-time contact.</FormDescription>
+                                            <DialogDescription className="text-xs">Triggered on first-time contact.</DialogDescription>
                                         </FormItem>
                                     )}
                                 />
+                            </TabsContent>
+
+                            {/* Commands Tab (Command Store) */}
+                            <TabsContent value="commands" className="space-y-4 pt-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Search commands..."
+                                            className="pl-9"
+                                            onChange={(e) => {
+                                                // Local filter logic could go here
+                                            }}
+                                        />
+                                    </div>
+                                    <Button variant="outline" size="icon">
+                                        <Filter className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
+                                <div className="rounded-lg border bg-card">
+                                    <div className="p-4 border-b bg-muted/30">
+                                        <h4 className="text-sm font-semibold">Global Command Store</h4>
+                                        <p className="text-xs text-muted-foreground">Selectively enable or disable commands for this bot instance.</p>
+                                    </div>
+
+                                    <div className="max-h-[400px] overflow-y-auto p-4 space-y-6">
+                                        {/* Since we don't have the full command list from API yet,
+                                            we'll use a curated list of most common ones for now */}
+                                        {['Main', 'Sticker', 'AI', 'Downloader', 'Tool'].map((cat) => (
+                                            <div key={cat} className="space-y-3">
+                                                <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{cat}</h5>
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    {getMockCommands(cat).map((cmd: { name: string; desc: string }) => (
+                                                        <FormField
+                                                            key={cmd.name}
+                                                            control={form.control}
+                                                            name="config.disabledCommands"
+                                                            render={({ field }) => (
+                                                                <FormItem className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors border border-transparent hover:border-border">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-sm font-medium">{cmd.name}</span>
+                                                                        <span className="text-xs text-muted-foreground">{cmd.desc}</span>
+                                                                    </div>
+                                                                    <FormControl>
+                                                                        <Switch
+                                                                            checked={!field.value?.includes(cmd.name)}
+                                                                            onCheckedChange={(checked: boolean) => {
+                                                                                const current = field.value || [];
+                                                                                if (checked) {
+                                                                                    field.onChange(current.filter(c => c !== cmd.name));
+                                                                                } else {
+                                                                                    field.onChange([...current, cmd.name]);
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </TabsContent>
 
                             {/* Advanced Tab */}
@@ -412,4 +481,39 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
             </DialogContent>
         </Dialog>
     );
+}
+
+/**
+ * Mock command data for the Command Store UI
+ * In a real-world scenario, this would be fetched from a global metadata API
+ */
+function getMockCommands(category: string) {
+    const commands: Record<string, { name: string; desc: string }[]> = {
+        'Main': [
+            { name: 'menu', desc: 'Display all available commands' },
+            { name: 'ping', desc: 'Check bot responsiveness' },
+            { name: 'uptime', desc: 'Show how long the bot has been running' },
+        ],
+        'Sticker': [
+            { name: 'sticker', desc: 'Convert image/video to sticker' },
+            { name: 'emojimix', desc: 'Combine two emojis into a sticker' },
+        ],
+        'AI': [
+            { name: 'ai', desc: 'Chat with Gemini Pro' },
+            { name: 'imagine', desc: 'Generate images from text' },
+            { name: 'translate', desc: 'AI-powered translation' },
+        ],
+        'Downloader': [
+            { name: 'instagram', desc: 'Download IG reels/posts' },
+            { name: 'tiktok', desc: 'Download TT videos (no watermark)' },
+            { name: 'youtube', desc: 'Download YT audio/video' },
+        ],
+        'Tool': [
+            { name: 'screenshot', desc: 'Take a screenshot of a website' },
+            { name: 'weather', desc: 'Get current weather info' },
+            { name: 'shorten', desc: 'Shorten long URLs' },
+        ]
+    };
+
+    return commands[category] || [];
 }

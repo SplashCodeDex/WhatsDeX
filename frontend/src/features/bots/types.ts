@@ -59,6 +59,21 @@ export interface BotConfig {
     // Rate Limiting
     cooldownMs: number;
     maxCommandsPerMinute: number;
+
+    // Command Management
+    disabledCommands: string[];
+}
+
+/**
+ * Command metadata (used in UI registries)
+ */
+export interface Command {
+    name: string;
+    aliases: string[];
+    category: string;
+    description: string;
+    usage: string;
+    permissions: Record<string, any>;
 }
 
 /**

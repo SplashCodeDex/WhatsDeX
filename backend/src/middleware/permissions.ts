@@ -10,7 +10,14 @@ import logger from '../utils/logger.js';
 
 export const permissionMiddleware: Middleware = async (ctx: MessageContext, next: () => Promise<void>) => {
     // 0. Bot-Level Access Control (Multi-Tenant Mode & SelfMode)
-    const { mode, selfMode } = ctx.bot.config;
+    const { mode, selfMode, disabledCommands = [] } = ctx.bot.config;
+
+    const cmd = ctx.commandDef;
+
+    // 0.1 Command Toggle Check (Command Store)
+    if (cmd && disabledCommands.includes(cmd.name)) {
+        return ctx.reply(`⚠️ The \`${cmd.name}\` command is currently disabled for this bot.`);
+    }
 
     // Self Mode: Only owner/self can trigger
     if (selfMode && !ctx.sender.isOwner) {
@@ -25,8 +32,6 @@ export const permissionMiddleware: Middleware = async (ctx: MessageContext, next
     if (mode === 'private' && ctx.isGroup()) {
         return; // Silent ignore in groups if mode is private
     }
-
-    const cmd = ctx.commandDef;
 
     // If no command matched, or command has no permissions, just pass
     if (!cmd || !cmd.permissions) {

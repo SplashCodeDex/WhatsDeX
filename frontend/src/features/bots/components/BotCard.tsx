@@ -12,9 +12,9 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { BotConnectDialog, BotSettingsDialog } from './index.js';
-import { useDeleteBot, useDisconnectBot, useBot } from '../hooks/index.js';
-import type { BotListItem } from '../types.js';
+import { BotConnectDialog, BotSettingsDialog } from './index';
+import { useDeleteBot, useDisconnectBot, useBot } from '../hooks/index';
+import type { BotListItem } from '../types';
 import { cn } from '@/lib/utils';
 
 interface BotCardProps {

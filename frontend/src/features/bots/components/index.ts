@@ -1,6 +1,6 @@
-export { BotList } from './BotList.js';
-export { CreateBotDialog } from './CreateBotDialog.js';
-export { BotCard } from './BotCard.js';
-export { QRCodeDisplay } from './QRCodeDisplay.js';
-export { BotConnectDialog } from './BotConnectDialog.js';
-export { BotSettingsDialog } from './BotSettingsDialog.js';
+export { BotList } from './BotList';
+export { CreateBotDialog } from './CreateBotDialog';
+export { BotCard } from './BotCard';
+export { QRCodeDisplay } from './QRCodeDisplay';
+export { BotConnectDialog } from './BotConnectDialog';
+export { BotSettingsDialog } from './BotSettingsDialog';

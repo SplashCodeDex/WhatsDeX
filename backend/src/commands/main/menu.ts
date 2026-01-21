@@ -33,6 +33,7 @@ export default {
       };
 
       const allCommands = Array.from(ctx.bot.cmd.values()) as Command[];
+      const disabledCommands = ctx.bot.config?.disabledCommands || [];
 
       const text =
         `Hello, @${ctx.getId(ctx.sender.jid)}! I am a WhatsApp bot named ${config.bot.name}, owned by ${ownerName}. I can perform many commands, such as creating stickers, using AI for specific tasks, and other useful commands.\n` +
@@ -49,7 +50,10 @@ export default {
         Object.keys(tag)
           .map((c) => {
             const commands = allCommands.filter(
-              (cmd: Command) => cmd.category === c && !(cmd as any).hide
+              (cmd: Command) =>
+                cmd.category === c &&
+                !(cmd as any).hide &&
+                !disabledCommands.includes(cmd.name)
             );
             if (commands.length === 0) return '';
             return (
