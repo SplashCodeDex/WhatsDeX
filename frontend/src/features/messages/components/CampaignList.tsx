@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Play, Trash2, Clock, Send, AlertCircle, CheckCircle2, Pause, BarChart3 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export function CampaignList() {
     const { data: campaigns, isLoading, error } = useCampaigns();
@@ -123,15 +124,25 @@ export function CampaignList() {
                                         <Play className="w-3 h-3 mr-1.5" /> Resume
                                     </Button>
                                 )}
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-8 border-border/40 hover:bg-muted/10 group-hover:border-primary/20 transition-all shadow-none"
-                                    onClick={() => duplicateMutation.mutate(campaign.id)}
-                                    disabled={duplicateMutation.isPending}
-                                >
-                                    <Clock className="w-3 h-3 mr-1.5" /> Duplicate
-                                </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 border-border/40 hover:bg-muted/10 group-hover:border-primary/20 transition-all shadow-none"
+                                        asChild
+                                    >
+                                        <Link href={`/dashboard/messages/campaigns/${campaign.id}`}>
+                                            <BarChart3 className="w-3 h-3 mr-1.5" /> Details
+                                        </Link>
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 border-border/40 hover:bg-muted/10 group-hover:border-primary/20 transition-all shadow-none"
+                                        onClick={() => duplicateMutation.mutate(campaign.id)}
+                                        disabled={duplicateMutation.isPending}
+                                    >
+                                        <Clock className="w-3 h-3 mr-1.5" /> Duplicate
+                                    </Button>
                             </div>
                             <Button
                                 size="sm"

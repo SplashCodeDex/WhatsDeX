@@ -9,6 +9,7 @@
 
 export * from './components/CampaignList';
 export * from './components/CampaignWizard';
+export * from './components/CampaignDetail';
 export * from './types';
 export * from './hooks/useCampaigns';
 // Components will be added here

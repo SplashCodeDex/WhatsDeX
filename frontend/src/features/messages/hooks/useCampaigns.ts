@@ -25,6 +25,20 @@ export function useCampaigns() {
     });
 }
 
+export function useCampaign(id: string) {
+    return useQuery({
+        queryKey: campaignKeys.detail(id),
+        queryFn: async () => {
+            const response = await api.get<Campaign>(`/api/campaigns/${id}`);
+            if (!response.success) {
+                throw new Error(response.error.message);
+            }
+            return response.data;
+        },
+        enabled: !!id,
+    });
+}
+
 export function useCreateCampaign() {
     const queryClient = useQueryClient();
     return useMutation({
