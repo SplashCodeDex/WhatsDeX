@@ -14,7 +14,7 @@ Establish the data layer and import logic for contacts following Rule 1 (Zod) an
     - [x] Sub-task: Implement: Create `backend/src/routes/contactRoutes.ts` and wire to `multiTenantApp.ts`.
 - [x] Task: Conductor - User Manual Verification 'Contact & Audience Foundation' (Protocol in workflow.md) (6c13105)
 
-## Phase 2: Rich Template System & AI Spinning
+## Phase 2: Rich Template System & AI Spinning [checkpoint: 01931ee]
 Build the template management system with integrated AI personalization.
 
 - [x] Task: Implement `TemplateService`. (e32d138)
@@ -26,7 +26,7 @@ Build the template management system with integrated AI personalization.
 - [x] Task: Create Template API Routes. (720203d)
     - [x] Sub-task: Write Tests: Test `/api/templates` endpoints.
     - [x] Sub-task: Implement: Create `backend/src/routes/templateRoutes.ts`.
-- [ ] Task: Conductor - User Manual Verification 'Rich Template System & AI Spinning' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Rich Template System & AI Spinning' (Protocol in workflow.md) (01931ee)
 
 ## Phase 3: Broadcast Engine & Hybrid Distribution
 The core execution engine using BullMQ and multi-bot pooling.
