@@ -37,9 +37,9 @@ The core execution engine using BullMQ and multi-bot pooling.
 - [x] Task: Implement Hybrid Distribution (Single vs Pool). (53a8bc6)
     - [x] Sub-task: Write Tests: Verify load-balancing logic across multiple bots for Enterprise tier.
     - [x] Sub-task: Implement: Update `multiTenantBotService` to support bot pooling.
-- [ ] Task: Implement Intelligent Throttling.
-    - [ ] Sub-task: Write Tests: Verify randomized delays and rate-limiting enforcement.
-    - [ ] Sub-task: Implement: Add throttling middleware to the broadcast worker.
+- [x] Task: Implement Intelligent Throttling. (f70d722)
+    - [x] Sub-task: Write Tests: Verify randomized delays and rate-limiting enforcement.
+    - [x] Sub-task: Implement: Add throttling middleware to the broadcast worker.
 - [ ] Task: Conductor - User Manual Verification 'Broadcast Engine & Hybrid Distribution' (Protocol in workflow.md)
 
 ## Phase 4: Real-time Monitoring & Dashboard UI
