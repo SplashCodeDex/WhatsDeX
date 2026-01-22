@@ -34,7 +34,7 @@ The core execution engine using BullMQ and multi-bot pooling.
 - [x] Task: Define `Campaign` Logic & Queue. (93c5965)
     - [x] Sub-task: Write Tests: Test campaign state transitions and queue job adding.
     - [x] Sub-task: Implement: Create `backend/src/services/campaignService.ts` and `backend/src/jobs/broadcastWorker.ts`.
-- [ ] Task: Implement Hybrid Distribution (Single vs Pool).
+- [~] Task: Implement Hybrid Distribution (Single vs Pool).
     - [ ] Sub-task: Write Tests: Verify load-balancing logic across multiple bots for Enterprise tier.
     - [ ] Sub-task: Implement: Update `multiTenantBotService` to support bot pooling.
 - [ ] Task: Implement Intelligent Throttling.

@@ -136,7 +136,7 @@ class CampaignWorker {
             // For now, simplify: fetch ALL contacts and filter. In 2026 production, this would be a Firestore Query.
             const allContacts = await firebaseService.getCollection<Contact>('contacts', tenantId);
             // Apply aud.filters (Basic tag filter implementation)
-            if (aud.filters.tags) {
+            if (aud.filters && aud.filters.tags) {
                 return allContacts.filter(c => c.tags.some(t => aud.filters.tags.includes(t)));
             }
             return allContacts;
