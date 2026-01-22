@@ -20,9 +20,9 @@ Build the template management system with integrated AI personalization.
 - [x] Task: Implement `TemplateService`. (e32d138)
     - [x] Sub-task: Write Tests: Test CRUD operations for templates in `tenants/{tenantId}/templates`.
     - [x] Sub-task: Implement: Create `backend/src/services/templateService.ts`.
-- [ ] Task: Integrate AI Message Spinning.
-    - [ ] Sub-task: Write Tests: Test `GeminiAI.spinMessage` logic with OpenTelemetry trace verification.
-    - [ ] Sub-task: Implement: Add `spinMessage` to `backend/src/services/geminiAI.ts` using Rule 5 (Memoization).
+- [x] Task: Integrate AI Message Spinning. (40c22e2)
+    - [x] Sub-task: Write Tests: Test `GeminiAI.spinMessage` logic with OpenTelemetry trace verification.
+    - [x] Sub-task: Implement: Add `spinMessage` to `backend/src/services/geminiAI.ts` using Rule 5 (Memoization).
 - [ ] Task: Create Template API Routes.
     - [ ] Sub-task: Write Tests: Test `/api/templates` endpoints.
     - [ ] Sub-task: Implement: Create `backend/src/routes/templateRoutes.ts`.
