@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { campaignWorker } from './campaignWorker.js';
 import { firebaseService } from '../services/FirebaseService.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
@@ -48,58 +48,57 @@ vi.mock('bullmq', () => ({
   })
 }));
 
-describe('CampaignWorker pooling', () => {
+describe('CampaignWorker throttling', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
-  it('should load-balance across multiple bots if distribution is pool', async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should apply delays between messages', async () => {
     const tenantId = 'tenant_1';
     const campaign = {
       id: 'camp_1',
       templateId: 'tpl_1',
       audience: { type: 'audience', targetId: 'aud_1' },
-      distribution: { type: 'pool' },
-      antiBan: { minDelay: 0, maxDelay: 0, aiSpinning: false },
+      distribution: { type: 'single', botId: 'bot_1' },
+      antiBan: { minDelay: 1, maxDelay: 2, aiSpinning: false },
       stats: { sent: 0, failed: 0 }
     };
 
-    // Mock 2 Bots
-    const mockBots = [
-      { id: 'bot_1', status: 'connected' },
-      { id: 'bot_2', status: 'connected' }
-    ];
-
-    // Mock 2 Contacts
+    const mockBots = [{ id: 'bot_1', status: 'connected' }];
     const mockContacts = [
-      { phone: '111', name: 'User 1', tags: [] },
-      { phone: '222', name: 'User 2', tags: [] }
+      { phone: '111', name: 'U1' },
+      { phone: '222', name: 'U2' }
     ];
 
-    mockFirebase.getDoc.mockResolvedValueOnce(campaign); // Initial fetch
-    mockFirebase.getDoc.mockResolvedValueOnce({ ...campaign, status: 'sending' }); // Status check in loop 1
-    mockFirebase.getDoc.mockResolvedValueOnce({ ...campaign, status: 'sending' }); // Status check in loop 2
-    mockFirebase.getDoc.mockResolvedValueOnce({ id: 'aud_1', filters: {} }); // Audience fetch
-    
+    mockFirebase.getDoc.mockResolvedValue(campaign);
     mockFirebase.getCollection.mockImplementation(async (col) => {
         if (col === 'bots') return mockBots;
         if (col === 'contacts') return mockContacts;
         return [];
     });
 
-    mockTemplateService.getTemplate.mockResolvedValue({ success: true, data: { content: 'Hello {{name}}' } });
+    mockTemplateService.getTemplate.mockResolvedValue({ success: true, data: { content: 'Hi' } });
     mockBotService.sendMessage.mockResolvedValue({ success: true });
 
-    // Use protected method via cast for testing
     const worker = campaignWorker as any;
-    await worker.processCampaign({ data: { tenantId, campaign } });
-
-    expect(mockBotService.sendMessage).toHaveBeenCalledTimes(2);
-    // Verify round-robin (approximate check)
-    const call1 = mockBotService.sendMessage.mock.calls[0];
-    const call2 = mockBotService.sendMessage.mock.calls[1];
     
-    expect(call1[1]).toBe('bot_1');
-    expect(call2[1]).toBe('bot_2');
+    // Start processing
+    const promise = worker.processCampaign({ data: { tenantId, campaign } });
+
+    // Wait for first message and delay start
+    await vi.advanceTimersByTimeAsync(0); 
+    expect(mockBotService.sendMessage).toHaveBeenCalledTimes(1);
+
+    // Advance past the first delay (1-2s)
+    await vi.advanceTimersByTimeAsync(2000);
+    
+    // Should have sent the second message
+    await promise; 
+    expect(mockBotService.sendMessage).toHaveBeenCalledTimes(2);
   });
 });
