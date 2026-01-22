@@ -21,7 +21,7 @@ const buttonVariants = cva(
         'active:scale-[0.98]',
         // Icon sizing
         '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
-        'overflow-hidden shadow-sm hover:shadow-md cursor-pointer',
+        'overflow-hidden shadow-sm hover:shadow-md cursor-pointer group',
     ],
     {
         variants: {
@@ -81,77 +81,83 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     (
         { className, variant, size, asChild = false, isLoading = false, children, disabled, ...props },
         ref
-    ) => {
+    ): React.JSX.Element => {
         const Comp = asChild ? Slot : motion.button;
-        const [isHovered, setIsHovered] = React.useState(false);
 
         return (
             <Comp
                 className={cn(buttonVariants({ variant, size, className }))}
                 ref={ref}
                 disabled={disabled ?? isLoading}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                {...(asChild ? {} : props)}
+                {...(asChild ? props : {
+                    whileHover: { scale: 1.01 },
+                    whileTap: { scale: 0.98 },
+                    ...props
+                })}
             >
-                {/* Animated Background Pulse for primary variants on hover */}
-                {variant === 'default' && !isLoading && (
-                    <motion.div
-                        className="absolute inset-0 bg-white/20 pointer-events-none"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: isHovered ? 1 : 0 }}
-                        transition={{ duration: 0.2 }}
-                    />
-                )}
+                {asChild ? (
+                    children
+                ) : (
+                    <>
+                        {/* Animated Background Pulse for primary variants on hover - Stateless via CSS */}
+                        {variant === 'default' && !isLoading && (
+                            <div
+                                className="absolute inset-0 bg-white/20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            />
+                        )}
 
-                <AnimatePresence mode="wait">
-                    {isLoading ? (
-                        <motion.div
-                            key="loading"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="flex items-center gap-2"
-                        >
-                            <motion.svg
-                                className="h-4 w-4"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                initial={{ rotate: 0 }}
-                                animate={{ rotate: 360 }}
-                                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                            >
-                                <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                    fill="none"
-                                />
-                                <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                />
-                            </motion.svg>
-                            <span className="truncate">{children}</span>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="content"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center gap-2"
-                        >
-                            {children}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                        <AnimatePresence mode="wait">
+                            {isLoading ? (
+                                <motion.div
+                                    key="loading"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <motion.svg
+                                        className="h-4 w-4"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        initial={{ rotate: 0 }}
+                                        animate={{ rotate: 360 }}
+                                        transition={{
+                                            repeat: Infinity,
+                                            duration: 1,
+                                            ease: 'linear',
+                                        }}
+                                    >
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                            fill="none"
+                                        />
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        />
+                                    </motion.svg>
+                                    <span className="truncate">{children}</span>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="content"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex items-center gap-2"
+                                >
+                                    {children}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </>
+                )}
             </Comp>
         );
     }
