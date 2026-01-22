@@ -56,12 +56,12 @@ WebSocket integration and the multi-step campaign wizard.
     - [x] Sub-task: Implement: Create `frontend/src/app/(dashboard)/messages/campaigns/[id]/page.tsx`.
 - [x] Task: Conductor - User Manual Verification 'Real-time Monitoring & Dashboard UI' (Protocol in workflow.md) (29fbdf6)
 
-## Phase 5: Final Polish & "Mastermind" Verification
+## Phase 5: Final Polish & "Mastermind" Verification [checkpoint: 882390d]
 End-to-end audit and performance verification.
 
-- [ ] Task: Final System Walkthrough.
-    - [ ] Sub-task: Perform full CSV -> Template -> Schedule -> Pool Send flow.
-- [ ] Task: Verify Quality Gates.
-    - [ ] Sub-task: Run `npm run typecheck` and verify >80% coverage.
-    - [ ] Sub-task: Confirm all Rule 16 ESM extensions are correct.
-- [ ] Task: Conductor - User Manual Verification 'Final Polish & "Mastermind" Verification' (Protocol in workflow.md)
+- [x] Task: Final System Walkthrough. (882390d)
+    - [x] Perform full CSV -> Template -> Schedule -> Pool Send flow.
+- [x] Task: Verify Quality Gates. (882390d)
+    - [x] Run `npm run typecheck` and verify >80% coverage.
+    - [x] Confirm all Rule 16 ESM extensions are correct.
+- [x] Task: Conductor - User Manual Verification 'Final Polish & "Mastermind" Verification' (Protocol in workflow.md) (882390d)
