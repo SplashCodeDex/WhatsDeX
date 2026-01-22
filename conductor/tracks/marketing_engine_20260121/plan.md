@@ -45,9 +45,9 @@ The core execution engine using BullMQ and multi-bot pooling.
 ## Phase 4: Real-time Monitoring & Dashboard UI
 WebSocket integration and the multi-step campaign wizard.
 
-- [ ] Task: Wire Real-time Progress.
-    - [ ] Sub-task: Write Tests: Verify WebSocket event emission during broadcast.
-    - [ ] Sub-task: Implement: Add socket.io emitters to `broadcastWorker.ts`.
+- [x] Task: Wire Real-time Progress. (4095a11)
+    - [x] Sub-task: Write Tests: Verify WebSocket event emission during broadcast.
+    - [x] Sub-task: Implement: Add socket.io emitters to `broadcastWorker.ts`.
 - [ ] Task: Build Campaign Wizard (Frontend).
     - [ ] Sub-task: Write Tests: Test the multi-step form logic and Server Action calls.
     - [ ] Sub-task: Implement: Create `frontend/src/features/messages/components/CampaignWizard.tsx`.
