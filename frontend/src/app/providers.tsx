@@ -31,9 +31,13 @@ export function Providers({ children }: ProvidersProps): React.JSX.Element {
             <Toaster
                 position="top-right"
                 expand={false}
-                richColors
+                richColors={false}
                 closeButton
                 theme="system"
+                toastOptions={{
+                    className: 'group hover:scale-[1.02] transition-transform active:scale-[0.98]',
+                    duration: 4000,
+                }}
             />
             {children}
         </QueryProvider>
