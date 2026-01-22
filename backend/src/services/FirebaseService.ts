@@ -15,7 +15,8 @@ import {
   CampaignSchema,
   WebhookSchema,
   ContactSchema,
-  AudienceSchema
+  AudienceSchema,
+  TemplateSchema
 } from '@/types/contracts.js';
 import { z } from 'zod';
 
@@ -34,6 +35,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/webhooks': WebhookSchema as any,
   'tenants/{tenantId}/contacts': ContactSchema as any,
   'tenants/{tenantId}/audiences': AudienceSchema as any,
+  'tenants/{tenantId}/templates': TemplateSchema as any,
 };
 
 export class FirebaseService {

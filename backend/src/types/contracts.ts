@@ -345,3 +345,20 @@ export const AudienceSchema = z.object({
 }).readonly();
 
 export type Audience = z.infer<typeof AudienceSchema>;
+
+/**
+ * Template Schema ('tenants/{tenantId}/templates' subcollection)
+ */
+export const TemplateSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  name: z.string().min(1, "Template name is required"),
+  content: z.string().min(1, "Template content is required"), // Supports {{variable}}
+  category: z.enum(['marketing', 'utility', 'authentication']).default('marketing'),
+  mediaType: z.enum(['text', 'image', 'video', 'document']).default('text'),
+  mediaUrl: z.string().url().optional().or(z.literal('')),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema
+}).readonly();
+
+export type MessageTemplate = z.infer<typeof TemplateSchema>;
