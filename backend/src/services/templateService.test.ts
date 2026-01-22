@@ -41,7 +41,7 @@ describe('TemplateService', () => {
 
       expect(result.success).toBe(true);
       expect(mockFirebase.setDoc).toHaveBeenCalledWith(
-        'tenants/{tenantId}/templates',
+        'templates',
         expect.any(String),
         expect.objectContaining({
           name: 'Welcome Template',

@@ -42,7 +42,7 @@ Jane Doe,0987654321,jane@example.com,new`;
       }
       expect(mockFirebase.setDoc).toHaveBeenCalledTimes(2);
       expect(mockFirebase.setDoc).toHaveBeenCalledWith(
-        'tenants/{tenantId}/contacts',
+        'contacts',
         expect.any(String),
         expect.objectContaining({
             name: 'John Doe',

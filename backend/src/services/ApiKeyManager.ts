@@ -53,7 +53,7 @@ export class ApiKeyManager {
     constructor(initialKeys?: string[]) {
         if (initialKeys && initialKeys.length > 0) {
             this.keys = initialKeys.map(key => this.createKeyState(key));
-            logger.log(`[ApiKeyManager] Loaded ${this.keys.length} API keys (manual).`);
+            logger.info(`[ApiKeyManager] Loaded ${this.keys.length} keys from memory.`);
         } else {
             this.loadKeys();
         }
@@ -88,7 +88,7 @@ export class ApiKeyManager {
                 const parsed = JSON.parse(keysJson);
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     this.keys = parsed.map((key: string) => this.createKeyState(key.trim()));
-                    logger.log(`[ApiKeyManager] Loaded ${this.keys.length} API keys for rotation.`);
+                    logger.info(`[ApiKeyManager] Loaded ${this.keys.length} API keys for rotation.`);
                     return;
                 }
             } catch {
@@ -96,7 +96,7 @@ export class ApiKeyManager {
                 const commaSeparated = keysJson.split(',').map((k: string) => k.trim()).filter(Boolean);
                 if (commaSeparated.length > 0) {
                     this.keys = commaSeparated.map((key: string) => this.createKeyState(key));
-                    logger.log(`[ApiKeyManager] Loaded ${this.keys.length} API keys (comma-separated).`);
+                    logger.info(`[ApiKeyManager] Loaded ${this.keys.length} API keys (comma-separated).`);
                     return;
                 }
             }
@@ -133,7 +133,7 @@ export class ApiKeyManager {
      */
     private saveState(): void {
         try {
-            if (typeof window === 'undefined' || !window.localStorage) return;
+            if (typeof localStorage === 'undefined') return;
 
             const stateToSave = this.keys.reduce((acc, k) => {
                 // Save state if used or has history
@@ -212,7 +212,7 @@ export class ApiKeyManager {
      */
     private loadState(): void {
         try {
-            if (typeof window === 'undefined' || !window.localStorage) return;
+            if (typeof localStorage === 'undefined') return;
 
             const savedRaw = localStorage.getItem(this.STORAGE_KEY);
             if (!savedRaw) return;
@@ -239,7 +239,7 @@ export class ApiKeyManager {
             });
 
             if (loadedCount > 0) {
-                logger.log(`[ApiKeyManager] Restored health state for ${loadedCount} keys from localStorage.`);
+                logger.info(`[ApiKeyManager] Restored health state for ${loadedCount} keys from localStorage.`);
             }
         } catch (e) {
             console.error('[ApiKeyManager] Failed to load state from localStorage', e);
@@ -282,7 +282,7 @@ export class ApiKeyManager {
         const keyState = this.keys.find(k => k.key === key);
         if (keyState) {
             keyState.retryAfter = Date.now() + (seconds * 1000);
-            logger.log(`[ApiKeyManager] Key ...${key.slice(-4)} retry-after set to ${seconds}s`);
+            logger.info(`[ApiKeyManager] Key ...${key.slice(-4)} retry-after set to ${seconds}s`);
             this.saveState();
         }
     }
@@ -299,7 +299,7 @@ export class ApiKeyManager {
             // Check if we should transition to HALF_OPEN
             if (keyState.halfOpenTestTime !== null && now >= keyState.halfOpenTestTime) {
                 keyState.circuitState = 'HALF_OPEN';
-                logger.log(`[ApiKeyManager] Key ...${keyState.key.slice(-4)} circuit → HALF_OPEN (allowing test request)`);
+                logger.info(`[ApiKeyManager] Key ...${keyState.key.slice(-4)} circuit → HALF_OPEN (allowing test request)`);
                 return false; // Allow one test request
             }
             return true; // Still blocked
@@ -438,12 +438,12 @@ export class ApiKeyManager {
         if (keyState) {
             // Circuit breaker: reset to CLOSED on success
             if (keyState.circuitState !== 'CLOSED') {
-                logger.log(`[ApiKeyManager] Key ...${key.slice(-4)} circuit → CLOSED (recovered)`);
+                logger.info(`[ApiKeyManager] Key ...${key.slice(-4)} circuit → CLOSED (recovered)`);
             }
 
             // Reset failure tracking on success
             if (keyState.failedAt !== null || keyState.failCount > 0) {
-                logger.log(`[ApiKeyManager] Key ...${key.slice(-4)} recovered after ${keyState.failCount} failures`);
+                logger.info(`[ApiKeyManager] Key ...${key.slice(-4)} recovered after ${keyState.failCount} failures`);
             }
             keyState.failedAt = null;
             keyState.failCount = 0;
@@ -500,7 +500,7 @@ export class ApiKeyManager {
      */
     public async waitForBackoff(key: string): Promise<void> {
         const delay = this.getBackoffDelay(key);
-        logger.log(`[ApiKeyManager] Waiting ${delay}ms before retry...`);
+        logger.info(`[ApiKeyManager] Waiting ${delay}ms before retry...`);
         return new Promise(resolve => setTimeout(resolve, delay));
     }
 }
