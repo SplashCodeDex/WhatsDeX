@@ -17,9 +17,9 @@ Establish the data layer and import logic for contacts following Rule 1 (Zod) an
 ## Phase 2: Rich Template System & AI Spinning
 Build the template management system with integrated AI personalization.
 
-- [ ] Task: Implement `TemplateService`.
-    - [ ] Sub-task: Write Tests: Test CRUD operations for templates in `tenants/{tenantId}/templates`.
-    - [ ] Sub-task: Implement: Create `backend/src/services/templateService.ts`.
+- [x] Task: Implement `TemplateService`. (e32d138)
+    - [x] Sub-task: Write Tests: Test CRUD operations for templates in `tenants/{tenantId}/templates`.
+    - [x] Sub-task: Implement: Create `backend/src/services/templateService.ts`.
 - [ ] Task: Integrate AI Message Spinning.
     - [ ] Sub-task: Write Tests: Test `GeminiAI.spinMessage` logic with OpenTelemetry trace verification.
     - [ ] Sub-task: Implement: Add `spinMessage` to `backend/src/services/geminiAI.ts` using Rule 5 (Memoization).
