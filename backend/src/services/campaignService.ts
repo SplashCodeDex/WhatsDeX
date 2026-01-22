@@ -1,37 +1,53 @@
 import { firebaseService } from './FirebaseService.js';
 import { queueService } from './queueService.js';
 import { Campaign, CampaignSchema, CampaignStatus, Result } from '../types/contracts.js';
-import { Timestamp } from 'firebase-admin/firestore';
 import logger from '../utils/logger.js';
+import crypto from 'crypto';
 
 export class CampaignService {
+    private static instance: CampaignService;
+
+    private constructor() {}
+
+    public static getInstance(): CampaignService {
+        if (!CampaignService.instance) {
+            CampaignService.instance = new CampaignService();
+        }
+        return CampaignService.instance;
+    }
+
     /**
      * Create a new campaign for a tenant
      */
-    async createCampaign(tenantId: string, data: Partial<Campaign>): Promise<Result<Campaign>> {
+    async createCampaign(tenantId: string, data: Omit<Campaign, 'id' | 'tenantId' | 'createdAt' | 'updatedAt' | 'stats' | 'status'>): Promise<Result<Campaign>> {
         try {
-            const campaignId = `camp_${Date.now()}`;
-            const rawCampaign = {
+            const campaignId = `camp_${crypto.randomUUID()}`;
+            const campaign: Campaign = {
+                ...data,
                 id: campaignId,
-                name: data.name || 'New Campaign',
-                botId: data.botId,
-                message: data.message,
-                audience: data.audience || { type: 'selective', targets: [] },
-                schedule: data.schedule || { type: 'immediate' },
+                tenantId,
                 stats: {
-                    total: data.audience?.targets?.length || 0,
+                    total: 0, // Will be calculated by the worker when starting
                     sent: 0,
                     failed: 0,
-                    pending: data.audience?.targets?.length || 0
+                    pending: 0
                 },
                 status: 'draft' as CampaignStatus,
-                createdAt: Timestamp.now().toDate(),
-                updatedAt: Timestamp.now().toDate(),
-                ...data
+                createdAt: new Date(),
+                updatedAt: new Date(),
             };
 
-            const campaign = CampaignSchema.parse(rawCampaign);
-            await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, campaign as any, tenantId);
+            const validation = CampaignSchema.safeParse(campaign);
+            if (!validation.success) {
+                return { success: false, error: new Error(validation.error.issues[0].message) };
+            }
+
+            await firebaseService.setDoc('campaigns', campaignId, campaign, tenantId);
+
+            // If immediate, start it
+            if (campaign.schedule.type === 'immediate') {
+                await this.startCampaign(tenantId, campaignId);
+            }
 
             return { success: true, data: campaign };
         } catch (error: unknown) {
@@ -46,8 +62,8 @@ export class CampaignService {
      */
     async getCampaigns(tenantId: string): Promise<Result<Campaign[]>> {
         try {
-            const campaigns = await firebaseService.getCollection<'tenants/{tenantId}/campaigns'>('campaigns', tenantId);
-            return { success: true, data: campaigns as Campaign[] };
+            const campaigns = await firebaseService.getCollection<Campaign>('campaigns', tenantId);
+            return { success: true, data: campaigns };
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
             logger.error(`CampaignService.getCampaigns error [${tenantId}]:`, err);
@@ -60,27 +76,25 @@ export class CampaignService {
      */
     async startCampaign(tenantId: string, campaignId: string): Promise<Result<void>> {
         try {
-            const campaignDoc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
-            if (!campaignDoc) return { success: false, error: new Error('Campaign not found') };
+            const campaign = await firebaseService.getDoc<Campaign>('campaigns', campaignId, tenantId);
+            if (!campaign) return { success: false, error: new Error('Campaign not found') };
 
-            const campaign = CampaignSchema.parse(campaignDoc);
             if (campaign.status === 'sending' || campaign.status === 'completed') {
                 return { success: false, error: new Error(`Campaign is already ${campaign.status}`) };
             }
 
+            // Update status to pending
+            await this.updateCampaignStatus(tenantId, campaignId, 'pending');
+
             // Calculate delay if scheduled
             let delay = 0;
-            if (campaign.schedule?.type === 'scheduled' && campaign.schedule.scheduledAt) {
-                const scheduledTime = campaign.schedule.scheduledAt instanceof Date
-                    ? campaign.schedule.scheduledAt.getTime()
-                    : (campaign.schedule.scheduledAt as any)._seconds * 1000;
-
+            if (campaign.schedule.type === 'scheduled' && campaign.schedule.scheduledAt) {
+                const scheduledTime = new Date(campaign.schedule.scheduledAt).getTime();
                 delay = Math.max(0, scheduledTime - Date.now());
-                logger.info(`Scheduling campaign ${campaignId} for ${campaign.schedule.scheduledAt} (delay: ${delay}ms)`);
             }
 
-            // Add to Queue (Worker will pick up the current progress)
-            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'sending' }, { delay });
+            // Add to Queue
+            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'pending' }, { delay });
 
             return { success: true, data: undefined };
         } catch (error: unknown) {
@@ -104,33 +118,11 @@ export class CampaignService {
         }
     }
 
-    /**
-     * Resume a paused campaign
-     */
-    async resumeCampaign(tenantId: string, campaignId: string): Promise<Result<void>> {
-        try {
-            const campaignDoc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
-            if (!campaignDoc) return { success: false, error: new Error('Campaign not found') };
-
-            const campaign = CampaignSchema.parse(campaignDoc);
-
-            // Re-trigger the job. The worker logic will see the updated status and continue from the last index stored in metadata/stats.
-            await this.updateCampaignStatus(tenantId, campaignId, 'sending');
-            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'sending' });
-
-            return { success: true, data: undefined };
-        } catch (error: unknown) {
-            const err = error instanceof Error ? error : new Error(String(error));
-            logger.error(`CampaignService.resumeCampaign error [${tenantId}/${campaignId}]:`, err);
-            return { success: false, error: err };
-        }
-    }
-
     private async updateCampaignStatus(tenantId: string, campaignId: string, status: CampaignStatus): Promise<void> {
-        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>(
+        await firebaseService.setDoc<Campaign>(
             'campaigns',
             campaignId,
-            { status, updatedAt: Timestamp.now().toDate() },
+            { status, updatedAt: new Date() },
             tenantId,
             true
         );
@@ -141,39 +133,14 @@ export class CampaignService {
      */
     async deleteCampaign(tenantId: string, campaignId: string): Promise<Result<void>> {
         try {
-            await firebaseService.deleteDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
+            await firebaseService.deleteDoc('campaigns', campaignId, tenantId);
             return { success: true, data: undefined };
-        } catch (error: boolean | any) {
+        } catch (error: any) {
             const err = error instanceof Error ? error : new Error(String(error));
-            return { success: false, error: err };
-        }
-    }
-
-    /**
-     * Duplicate an existing campaign as a draft
-     */
-    async duplicateCampaign(tenantId: string, campaignId: string): Promise<Result<Campaign>> {
-        try {
-            const campaignDoc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
-            if (!campaignDoc) return { success: false, error: new Error('Campaign not found') };
-
-            const original = CampaignSchema.parse(campaignDoc);
-
-            // Create a copy as draft
-            return await this.createCampaign(tenantId, {
-                name: `${original.name} (Copy)`,
-                message: original.message,
-                botId: original.botId,
-                audience: original.audience,
-                status: 'draft'
-            });
-        } catch (error: unknown) {
-            const err = error instanceof Error ? error : new Error(String(error));
-            logger.error(`CampaignService.duplicateCampaign error [${tenantId}/${campaignId}]:`, err);
             return { success: false, error: err };
         }
     }
 }
 
-export const campaignService = new CampaignService();
+export const campaignService = CampaignService.getInstance();
 export default campaignService;

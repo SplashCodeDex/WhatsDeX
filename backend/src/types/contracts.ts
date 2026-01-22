@@ -258,12 +258,21 @@ export type CampaignStatus = z.infer<typeof CampaignStatusSchema>;
  */
 export const CampaignSchema = z.object({
   id: z.string(),
+  tenantId: z.string(),
   name: z.string().min(1),
-  botId: z.string().min(1, "Bot ID is required"), // The bot that will send the messages
-  message: z.string().min(1),
+  templateId: z.string().min(1, "Template ID is required"),
   audience: z.object({
-    type: z.enum(['groups', 'contacts', 'selective']),
-    targets: z.array(z.string()), // JIDs
+    type: z.enum(['groups', 'contacts', 'audience']),
+    targetId: z.string(), // ID of the Audience or Group
+  }),
+  distribution: z.object({
+    type: z.enum(['single', 'pool']),
+    botId: z.string().optional(), // Used if type is 'single'
+  }),
+  antiBan: z.object({
+    aiSpinning: z.boolean().default(false),
+    minDelay: z.number().default(10), // seconds
+    maxDelay: z.number().default(30), // seconds
   }),
   schedule: z.object({
     type: z.enum(['immediate', 'scheduled']),

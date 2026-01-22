@@ -1,9 +1,11 @@
 import { Worker, Job } from 'bullmq';
-import { Campaign, CampaignStatus } from '../types/contracts.js';
+import { Campaign, CampaignStatus, MessageTemplate, Contact, Audience } from '../types/contracts.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { firebaseService } from '../services/FirebaseService.js';
 import { webhookService } from '../services/webhookService.js';
 import { campaignSocketService } from '../services/campaignSocketService.js';
+import { TemplateService } from '../services/templateService.js';
+import { GeminiAI } from '../services/geminiAI.js';
 import logger from '../utils/logger.js';
 import { Timestamp } from 'firebase-admin/firestore';
 
@@ -20,7 +22,7 @@ interface CampaignJobData {
 }
 
 class CampaignWorker {
-    private worker: any; // Use any to bypass BullMQ namespace issues in this specific environment
+    private worker: any;
 
     constructor() {
         this.worker = new Worker(
@@ -30,7 +32,7 @@ class CampaignWorker {
             },
             {
                 connection: redisOptions,
-                concurrency: 5,
+                concurrency: 2, // Process 2 campaigns at once per instance
                 limiter: {
                     max: 10,
                     duration: 1000
@@ -39,139 +41,162 @@ class CampaignWorker {
         );
 
         this.worker.on('completed', (job: Job<CampaignJobData>) => {
-            logger.info(`Campaign Job ${job.id} completed`, { jobId: job.id });
+            logger.info(`Campaign Job ${job.id} completed`);
         });
 
         this.worker.on('failed', (job: Job<CampaignJobData> | undefined, err: Error) => {
             logger.error(`Campaign Job ${job?.id} failed:`, err);
         });
 
-        logger.info('CampaignWorker initialized');
+        logger.info('CampaignWorker initialized with enhanced features');
     }
 
     private async processCampaign(job: Job<CampaignJobData>): Promise<void> {
         const { tenantId, campaign } = job.data;
-        const { id, botId, message, audience } = campaign;
-        const targets = audience.targets;
+        const { id, targetId } = { ...campaign, targetId: campaign.audience.targetId };
 
-        logger.info(`Processing campaign ${id} for tenant ${tenantId}`, {
-            tenantId,
-            campaignId: id,
-            botId,
-            targetCount: targets.length
-        });
+        // 1. Fetch Latest Campaign & Template
+        const currentCampaign = await firebaseService.getDoc<Campaign>('campaigns', id, tenantId);
+        if (!currentCampaign) throw new Error('Campaign not found');
 
-        // Fetch current campaign state to handle resume/pause correctly
-        const currentDoc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
+        const templateResult = await TemplateService.getInstance().getTemplate(tenantId, currentCampaign.templateId);
+        if (!templateResult.success || !templateResult.data) throw new Error('Template not found');
+        const template = templateResult.data;
 
-        // Determine starting index based on existing stats (for Resume support)
-        const startIndex = (currentDoc?.stats?.sent || 0) + (currentDoc?.stats?.failed || 0);
+        // 2. Load Targets (Contacts)
+        const targets = await this.loadTargets(tenantId, currentCampaign.audience);
+        if (targets.length === 0) {
+            await this.finalizeCampaign(tenantId, id, 0, 0, 0);
+            return;
+        }
 
-        logger.info(`Campaign ${id} starting from index ${startIndex}/${targets.length}`, {
-            tenantId,
-            campaignId: id,
-            startIndex
-        });
+        // 3. Update Total Stats
+        await this.updateCampaignStats(tenantId, id, { total: targets.length, pending: targets.length });
 
-        let sent = currentDoc?.stats?.sent || 0;
-        let failed = currentDoc?.stats?.failed || 0;
+        // 4. Distribution Strategy
+        const bots = await this.getAvailableBots(tenantId, currentCampaign.distribution);
+        if (bots.length === 0) throw new Error('No active bots available for broadcast');
+
+        let sent = currentCampaign.stats.sent || 0;
+        let failed = currentCampaign.stats.failed || 0;
+        const startIndex = sent + failed;
+
+        await this.updateCampaignStatus(tenantId, id, 'sending');
 
         for (let i = startIndex; i < targets.length; i++) {
-            const target = targets[i];
-
-            // Re-check status periodically (every message is safer for "instant" pause)
-            const doc = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
-            if (!doc || doc.status === 'paused' || doc.status === 'cancelled') {
-                logger.info(`Campaign ${id} stopped/paused [status: ${doc?.status}]`, {
-                    tenantId,
-                    campaignId: id,
-                    status: doc?.status,
-                    progress: sent + failed
-                });
-                await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
-                return; // Exit loop, job will be re-added when resumed
+            const contact = targets[i];
+            
+            // Check for Pause/Cancel
+            const statusCheck = await firebaseService.getDoc<Campaign>('campaigns', id, tenantId);
+            if (!statusCheck || statusCheck.status === 'paused' || statusCheck.status === 'cancelled') {
+                return;
             }
 
+            // Round-robin through bot pool
+            const bot = bots[i % bots.length];
+
             try {
-                // Send Message
-                const result = await multiTenantBotService.sendMessage(tenantId, botId, {
-                    to: target,
-                    text: message,
+                // Prepare Message (Spin + Inject)
+                const content = await this.prepareMessage(tenantId, template, contact, currentCampaign.antiBan.aiSpinning);
+
+                const result = await multiTenantBotService.sendMessage(tenantId, bot.id, {
+                    to: contact.phone,
+                    text: content,
                     type: 'text'
                 });
 
-                if (result.success) {
-                    sent++;
-                } else {
-                    failed++;
-                    logger.warn(`Campaign ${id} send failed to ${target}`, {
-                        tenantId,
-                        campaignId: id,
-                        target,
-                        error: result.error
-                    });
-                }
+                if (result.success) sent++; else failed++;
 
-                // Stats Update (Update every 5 or on final)
-                if ((sent + failed) % 5 === 0 || i === targets.length - 1) {
+                // Progress Reporting
+                if (i % 5 === 0 || i === targets.length - 1) {
                     await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
+                    campaignSocketService.emitProgress(tenantId, id, { sent, failed, total: targets.length, status: 'sending' });
                 }
 
-                // Emit real-time progress via Socket.io
-                campaignSocketService.emitProgress(tenantId, id, {
-                    sent,
-                    failed,
-                    total: targets.length,
-                    status: 'sending'
-                });
-
-                // Anti-Ban Delay (5-15s) - Skip delay if it's the last one
+                // Intelligent Throttling
                 if (i < targets.length - 1) {
-                    const delay = Math.floor(Math.random() * (15000 - 5000 + 1)) + 5000;
-                    await new Promise(resolve => setTimeout(resolve, delay));
+                    const delay = Math.floor(Math.random() * (currentCampaign.antiBan.maxDelay - currentCampaign.antiBan.minDelay + 1) + currentCampaign.antiBan.minDelay) * 1000;
+                    await new Promise(r => setTimeout(r, delay));
                 }
 
             } catch (err) {
                 failed++;
-                logger.error(`Campaign ${id} loop error for ${target}`, {
-                    tenantId,
-                    campaignId: id,
-                    target,
-                    error: err
-                });
-                await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
+                logger.error(`Campaign error for ${contact.phone}:`, err);
             }
         }
 
-        // Final Completion Update
-        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>(
-            'campaigns',
-            id,
-            {
-                status: 'completed' as CampaignStatus,
-                stats: { sent, failed, pending: 0, total: targets.length },
-                updatedAt: Timestamp.now().toDate()
-            },
-            tenantId,
-            true
-        );
+        await this.finalizeCampaign(tenantId, id, sent, failed, targets.length);
+    }
 
-        // Notify Webhooks
-        await webhookService.dispatch(tenantId, 'campaign.completed', {
-            campaignId: id,
-            name: campaign.name,
-            stats: { sent, failed, total: targets.length }
-        });
+    private async loadTargets(tenantId: string, audience: Campaign['audience']): Promise<Contact[]> {
+        if (audience.type === 'audience') {
+            // Load from Audience subcollection
+            const aud = await firebaseService.getDoc<Audience>('audiences', audience.targetId, tenantId);
+            if (!aud) return [];
+            // For now, simplify: fetch ALL contacts and filter. In 2026 production, this would be a Firestore Query.
+            const allContacts = await firebaseService.getCollection<Contact>('contacts', tenantId);
+            // Apply aud.filters (Basic tag filter implementation)
+            if (aud.filters.tags) {
+                return allContacts.filter(c => c.tags.some(t => aud.filters.tags.includes(t)));
+            }
+            return allContacts;
+        }
+        // Group support TODO
+        return [];
+    }
+
+    private async getAvailableBots(tenantId: string, distribution: Campaign['distribution']) {
+        const allBots = await firebaseService.getCollection<any>('bots', tenantId);
+        const activeBots = allBots.filter(b => b.status === 'connected');
+
+        if (distribution.type === 'single' && distribution.botId) {
+            return activeBots.filter(b => b.id === distribution.botId);
+        }
+        return activeBots;
+    }
+
+    private async prepareMessage(tenantId: string, template: MessageTemplate, contact: Contact, spin: boolean): Promise<string> {
+        let content = template.content;
+
+        // 1. Inject Variables
+        const vars = { 
+            name: contact.name, 
+            phone: contact.phone, 
+            email: contact.email, 
+            ...(contact.attributes || {}) 
+        };
+
+        for (const [key, value] of Object.entries(vars)) {
+            content = content.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+        }
+
+        // 2. AI Spinning (Rule 5 Memoized)
+        if (spin) {
+            // @ts-ignore
+            const ai = new GeminiAI({});
+            const spinResult = await ai.spinMessage(content, tenantId);
+            if (spinResult.success) content = spinResult.data;
+        }
+
+        return content;
     }
 
     private async updateCampaignStats(tenantId: string, campaignId: string, stats: Partial<Campaign['stats']>): Promise<void> {
-        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>(
-            'campaigns',
-            campaignId,
-            { stats: stats as any, updatedAt: Timestamp.now().toDate() },
-            tenantId,
-            true
-        );
+        await firebaseService.setDoc<Campaign>('campaigns', campaignId, { stats: stats as any, updatedAt: new Date() }, tenantId, true);
+    }
+
+    private async updateCampaignStatus(tenantId: string, campaignId: string, status: CampaignStatus): Promise<void> {
+        await firebaseService.setDoc<Campaign>('campaigns', campaignId, { status, updatedAt: new Date() }, tenantId, true);
+    }
+
+    private async finalizeCampaign(tenantId: string, id: string, sent: number, failed: number, total: number) {
+        await firebaseService.setDoc<Campaign>('campaigns', id, {
+            status: 'completed',
+            stats: { sent, failed, pending: 0, total },
+            updatedAt: new Date()
+        }, tenantId, true);
+
+        await webhookService.dispatch(tenantId, 'campaign.completed', { campaignId: id, stats: { sent, failed, total } });
     }
 }
 
