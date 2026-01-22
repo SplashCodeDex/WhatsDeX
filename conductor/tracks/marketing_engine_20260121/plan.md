@@ -1,6 +1,6 @@
 # Plan: Marketing & Broadcast Engine (WANotifier Clone)
 
-## Phase 1: Contact & Audience Foundation
+## Phase 1: Contact & Audience Foundation [checkpoint: 6c13105]
 Establish the data layer and import logic for contacts following Rule 1 (Zod) and Rule 3 (Subcollections).
 
 - [x] Task: Define Data Contracts & Schemas. (c6ded13)
@@ -12,7 +12,7 @@ Establish the data layer and import logic for contacts following Rule 1 (Zod) an
 - [x] Task: Create Contact API Routes. (d36f528)
     - [x] Sub-task: Write Tests: Test `/api/contacts/import` and `/api/contacts` endpoints.
     - [x] Sub-task: Implement: Create `backend/src/routes/contactRoutes.ts` and wire to `multiTenantApp.ts`.
-- [ ] Task: Conductor - User Manual Verification 'Contact & Audience Foundation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Contact & Audience Foundation' (Protocol in workflow.md) (6c13105)
 
 ## Phase 2: Rich Template System & AI Spinning
 Build the template management system with integrated AI personalization.
