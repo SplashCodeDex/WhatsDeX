@@ -42,7 +42,7 @@ The core execution engine using BullMQ and multi-bot pooling.
     - [x] Sub-task: Implement: Add throttling middleware to the broadcast worker.
 - [x] Task: Conductor - User Manual Verification 'Broadcast Engine & Hybrid Distribution' (Protocol in workflow.md) (aeead14)
 
-## Phase 4: Real-time Monitoring & Dashboard UI
+## Phase 4: Real-time Monitoring & Dashboard UI [checkpoint: 29fbdf6]
 WebSocket integration and the multi-step campaign wizard.
 
 - [x] Task: Wire Real-time Progress. (4095a11)
@@ -54,7 +54,7 @@ WebSocket integration and the multi-step campaign wizard.
 - [x] Task: Build Monitoring Dashboard (Frontend). (0921414)
     - [x] Sub-task: Verify real-time progress bar updates and error log display.
     - [x] Sub-task: Implement: Create `frontend/src/app/(dashboard)/messages/campaigns/[id]/page.tsx`.
-- [ ] Task: Conductor - User Manual Verification 'Real-time Monitoring & Dashboard UI' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Real-time Monitoring & Dashboard UI' (Protocol in workflow.md) (29fbdf6)
 
 ## Phase 5: Final Polish & "Mastermind" Verification
 End-to-end audit and performance verification.
