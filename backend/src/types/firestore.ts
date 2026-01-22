@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { ModerationItem, Violation, Campaign, Webhook } from './contracts.js';
+import { ModerationItem, Violation, Campaign, Webhook, Contact, Audience } from './contracts.js';
 
 /**
  * Root 'tenants' collection document
@@ -145,4 +145,6 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/violations': Violation;
   'tenants/{tenantId}/campaigns': Campaign;
   'tenants/{tenantId}/webhooks': Webhook;
+  'tenants/{tenantId}/contacts': Contact;
+  'tenants/{tenantId}/audiences': Audience;
 }

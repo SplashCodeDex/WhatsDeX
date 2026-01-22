@@ -13,7 +13,9 @@ import {
   ModerationItemSchema,
   ViolationSchema,
   CampaignSchema,
-  WebhookSchema
+  WebhookSchema,
+  ContactSchema,
+  AudienceSchema
 } from '@/types/contracts.js';
 import { z } from 'zod';
 
@@ -30,6 +32,8 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/violations': ViolationSchema as any,
   'tenants/{tenantId}/campaigns': CampaignSchema as any,
   'tenants/{tenantId}/webhooks': WebhookSchema as any,
+  'tenants/{tenantId}/contacts': ContactSchema as any,
+  'tenants/{tenantId}/audiences': AudienceSchema as any,
 };
 
 export class FirebaseService {
