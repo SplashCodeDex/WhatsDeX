@@ -44,7 +44,7 @@ describe('ConfigService', () => {
     // Set specific values for this test
     process.env.REDIS_HOST = 'redis-server';
     process.env.CONN_MAX_RETRIES = '20';
-    process.env.GEMINI_MODEL = 'gemini-1.5-flash';
+    process.env.GEMINI_MODEL = 'gemini-2.5-flash';
 
     // Reset instance to pick up new process.env
     ConfigService.resetInstance();
@@ -52,9 +52,9 @@ describe('ConfigService', () => {
 
     expect(config.get('REDIS_HOST')).toBe('redis-server');
     expect(config.get('CONN_MAX_RETRIES')).toBe(20);
-    expect(config.get('GEMINI_MODEL')).toBe('gemini-1.5-flash');
+    expect(config.get('GEMINI_MODEL')).toBe('gemini-2.5-flash');
 
     // Verify system/ai objects still work for infrastructure
-    expect(config.ai.gemini.model).toBe('gemini-1.5-flash');
+    expect(config.ai.gemini.model).toBe('gemini-2.5-flash');
   });
 });
