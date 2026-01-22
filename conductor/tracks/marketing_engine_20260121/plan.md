@@ -23,9 +23,9 @@ Build the template management system with integrated AI personalization.
 - [x] Task: Integrate AI Message Spinning. (40c22e2)
     - [x] Sub-task: Write Tests: Test `GeminiAI.spinMessage` logic with OpenTelemetry trace verification.
     - [x] Sub-task: Implement: Add `spinMessage` to `backend/src/services/geminiAI.ts` using Rule 5 (Memoization).
-- [ ] Task: Create Template API Routes.
-    - [ ] Sub-task: Write Tests: Test `/api/templates` endpoints.
-    - [ ] Sub-task: Implement: Create `backend/src/routes/templateRoutes.ts`.
+- [x] Task: Create Template API Routes. (720203d)
+    - [x] Sub-task: Write Tests: Test `/api/templates` endpoints.
+    - [x] Sub-task: Implement: Create `backend/src/routes/templateRoutes.ts`.
 - [ ] Task: Conductor - User Manual Verification 'Rich Template System & AI Spinning' (Protocol in workflow.md)
 
 ## Phase 3: Broadcast Engine & Hybrid Distribution
