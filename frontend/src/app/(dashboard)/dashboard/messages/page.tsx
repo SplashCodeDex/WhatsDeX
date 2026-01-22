@@ -1,11 +1,14 @@
 'use client';
 
-import React from 'react';
-import { CampaignList, CreateCampaignDialog } from '@/features/messages/index';
-import { Send, Info } from 'lucide-react';
+import React, { useState } from 'react';
+import { CampaignList, CampaignWizard } from '@/features/messages/index';
+import { Send, Info, Plus, ListFilter, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 export default function MessagesPage() {
+    const [showWizard, setShowWizard] = useState(false);
+
     return (
         <div className="flex flex-col h-full bg-black">
             {/* Header */}
@@ -18,25 +21,45 @@ export default function MessagesPage() {
                         Build, manage, and scale your WhatsApp broadcast campaigns.
                     </p>
                 </div>
-                <CreateCampaignDialog />
+                
+                <Button 
+                    onClick={() => setShowWizard(!showWizard)}
+                    className={showWizard ? "bg-zinc-800 hover:bg-zinc-700" : ""}
+                >
+                    {showWizard ? (
+                        <><X className="w-4 h-4 mr-2" /> Cancel Wizard</>
+                    ) : (
+                        <><Plus className="w-4 h-4 mr-2" /> New Campaign</>
+                    )}
+                </Button>
             </div>
 
             <div className="flex-1 overflow-auto p-8">
                 <div className="max-w-7xl mx-auto space-y-8">
+                    {showWizard && (
+                        <div className="animate-in fade-in zoom-in-95 duration-300">
+                            <CampaignWizard />
+                        </div>
+                    )}
+
                     {/* Info Banner */}
-                    <Alert className="bg-blue-500/10 border-blue-500/50 text-blue-200">
-                        <Info className="h-4 w-4 text-blue-400" />
-                        <AlertTitle>Mastermind Tip</AlertTitle>
-                        <AlertDescription>
-                            Broadcast campaigns are sent with random delays (5-15s) to stay beneath WhatsApp's spam detection radar.
-                            Ensure your sending bot is online before starting.
-                        </AlertDescription>
-                    </Alert>
+                    {!showWizard && (
+                        <Alert className="bg-blue-500/10 border-blue-500/50 text-blue-200">
+                            <Info className="h-4 w-4 text-blue-400" />
+                            <AlertTitle>Mastermind Tip</AlertTitle>
+                            <AlertDescription>
+                                Broadcast campaigns use BullMQ for background processing and randomized throttling to stay beneath WhatsApp's spam detection radar.
+                            </AlertDescription>
+                        </Alert>
+                    )}
 
                     {/* Campaign List Sections */}
                     <section>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold text-zinc-100">Active & Recent Campaigns</h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+                                <ListFilter className="w-5 h-5 text-blue-500" /> 
+                                {showWizard ? "Recent Campaigns" : "Active & Recent Campaigns"}
+                            </h2>
                         </div>
                         <CampaignList />
                     </section>

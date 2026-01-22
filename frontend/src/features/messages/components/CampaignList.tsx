@@ -62,7 +62,7 @@ export function CampaignList() {
                         <CardContent className="space-y-5">
                             <div className="relative p-3 rounded-lg bg-muted/30 border border-border/30">
                                 <div className="text-sm text-foreground/80 italic font-medium line-clamp-2">
-                                    "{campaign.message}"
+                                    "{campaign.templateId}"
                                 </div>
                                 <div className="absolute top-2 right-2 text-primary/10">
                                     <Send className="w-8 h-8 rotate-12" />

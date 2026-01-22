@@ -8,7 +8,7 @@
  */
 
 export * from './components/CampaignList';
-export * from './components/CreateCampaignDialog';
+export * from './components/CampaignWizard';
 export * from './types';
 export * from './hooks/useCampaigns';
 // Components will be added here

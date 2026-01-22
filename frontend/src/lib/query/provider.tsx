@@ -66,8 +66,7 @@ function getQueryClient(): QueryClient {
  * </QueryProvider>
  */
 export function QueryProvider({ children }: QueryProviderProps): React.JSX.Element {
-    // Using useState to ensure client is stable across renders
-    const [queryClient] = useState(() => getQueryClient());
+    const queryClient = getQueryClient();
 
     return (
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

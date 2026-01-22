@@ -1,3 +1,5 @@
+'use client';
+
 export default function NotFound(): React.JSX.Element {
     return (
         <div className="flex min-h-screen flex-col items-center justify-center px-4">

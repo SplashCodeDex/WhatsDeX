@@ -31,7 +31,7 @@ const getStrength = (password: string): PasswordStrength => {
         { score: 4, label: 'Mastermind', description: 'Unbreakable. Excellent!', color: 'bg-primary-500' },
     ];
 
-    return strengths[score];
+    return (strengths[score] || strengths[0])!;
 };
 
 /**

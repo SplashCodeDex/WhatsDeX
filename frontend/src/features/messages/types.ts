@@ -9,12 +9,21 @@ export interface CampaignStats {
 
 export interface Campaign {
     id: string;
+    tenantId: string;
     name: string;
-    botId: string;
-    message: string;
+    templateId: string;
     audience: {
-        type: 'groups' | 'contacts' | 'selective';
-        targets: string[];
+        type: 'groups' | 'contacts' | 'audience';
+        targetId: string;
+    };
+    distribution: {
+        type: 'single' | 'pool';
+        botId?: string;
+    };
+    antiBan: {
+        aiSpinning: boolean;
+        minDelay: number;
+        maxDelay: number;
     };
     schedule: {
         type: 'immediate' | 'scheduled';
@@ -25,4 +34,16 @@ export interface Campaign {
     createdAt: string;
     updatedAt: string;
     metadata?: Record<string, any>;
+}
+
+export interface MessageTemplate {
+    id: string;
+    tenantId: string;
+    name: string;
+    content: string;
+    category: 'marketing' | 'utility' | 'authentication';
+    mediaType: 'text' | 'image' | 'video' | 'document';
+    mediaUrl?: string;
+    createdAt: string;
+    updatedAt: string;
 }
