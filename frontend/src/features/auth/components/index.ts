@@ -1,6 +1,7 @@
 export { ForgotPasswordForm } from './ForgotPasswordForm';
 export { ResetPasswordForm } from './ResetPasswordForm';
+export { InteractiveAuthProgressBar } from './InteractiveAuthProgressBar';
 export { LoginForm } from './LoginForm';
-export * from './RegisterForm';
-export * from './AnimatedAuthHero';
-export * from './AuthTransitionLayout';
+export { RegisterForm } from './RegisterForm';
+export { AnimatedAuthHero } from './AnimatedAuthHero';
+export { AuthTransitionLayout } from './AuthTransitionLayout';
