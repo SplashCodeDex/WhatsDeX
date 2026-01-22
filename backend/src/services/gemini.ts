@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import logger from '../utils/logger.js';
 import cache from '../lib/cache.js';
 import { ApiKeyManager, isQuotaError } from '../lib/apiKeyManager.js';
+import { ConfigService } from './ConfigService.js';
 
 export interface GeminiToolCall {
   id: string;
@@ -27,8 +28,10 @@ class GeminiService {
   private model: GenerativeModel;
   private currentKey: string;
   private cache: typeof cache;
+  private config: ConfigService;
 
   constructor() {
+    this.config = ConfigService.getInstance();
     const managerResult = ApiKeyManager.getInstance();
     if (!managerResult.success) {
       throw managerResult.error;
@@ -44,7 +47,7 @@ class GeminiService {
 
     this.genAI = new GoogleGenerativeAI(this.currentKey);
     this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-exp',
+      model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -75,7 +78,7 @@ class GeminiService {
       this.currentKey = keyResult.data;
       this.genAI = new GoogleGenerativeAI(this.currentKey);
       this.model = this.genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash-exp',
+        model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
         generationConfig: {
           temperature: 0.7,
           topK: 40,

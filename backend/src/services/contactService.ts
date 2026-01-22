@@ -61,7 +61,7 @@ export class ContactService {
             }
 
             try {
-                await firebaseService.setDoc('tenants/{tenantId}/contacts', contactData.id, contactData, tenantId);
+                await firebaseService.setDoc('contacts', contactData.id, contactData, tenantId);
                 count++;
             } catch (e: any) {
                 errors.push(`Row ${index + 2}: Save failed - ${e.message}`);

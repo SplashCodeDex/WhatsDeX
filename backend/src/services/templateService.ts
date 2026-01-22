@@ -34,7 +34,7 @@ export class TemplateService {
         return { success: false, error: new Error(validation.error.issues[0].message) };
       }
 
-      await firebaseService.setDoc('tenants/{tenantId}/templates', id, template, tenantId);
+      await firebaseService.setDoc('templates', id, template, tenantId);
       return { success: true, data: template };
     } catch (error: any) {
       logger.error('Error creating template', error);

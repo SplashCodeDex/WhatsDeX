@@ -52,7 +52,8 @@ export const spinMessageController = async (req: Request, res: Response) => {
         if (result.success) {
             return res.json(result);
         } else {
-            return res.status(500).json(result);
+            const errorMessage = result.error instanceof Error ? result.error.message : String(result.error);
+            return res.status(500).json({ success: false, error: errorMessage });
         }
     } catch (error: any) {
         logger.error('spinMessageController error', error);
