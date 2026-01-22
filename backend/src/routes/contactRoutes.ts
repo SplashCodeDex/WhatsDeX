@@ -2,8 +2,15 @@ import express, { Request, Response } from 'express';
 import { db } from '../lib/firebase.js';
 import { z } from 'zod';
 import logger from '../utils/logger.js';
+import { importContactsController } from '../controllers/contactController.js';
 
 const router = express.Router();
+
+/**
+ * POST /contacts/import
+ * Import contacts from CSV
+ */
+router.post('/import', importContactsController);
 
 // Validation Schemas
 const contactSchema = z.object({
