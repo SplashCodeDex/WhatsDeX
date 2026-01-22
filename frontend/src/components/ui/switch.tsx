@@ -14,23 +14,12 @@ const Switch = React.forwardRef<
     return (
         <SwitchPrimitives.Root
             className={cn(
-                "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary/20 data-[state=unchecked]:bg-white/5 backdrop-blur-md shadow-lg relative overflow-hidden",
+                "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary/20 data-[state=unchecked]:bg-white/5 backdrop-blur-md relative overflow-hidden",
                 className
             )}
             {...props}
             ref={ref}
         >
-            {/* Animated background glow */}
-            <AnimatePresence>
-                {props.checked && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute inset-0 bg-primary/20 blur-md pointer-events-none"
-                    />
-                )}
-            </AnimatePresence>
 
             <SwitchPrimitives.Thumb asChild>
                 <motion.span
@@ -38,9 +27,6 @@ const Switch = React.forwardRef<
                     animate={{
                         x: props.checked ? 20 : 0,
                         backgroundColor: props.checked ? "var(--color-primary)" : "#ffffff",
-                        boxShadow: props.checked
-                            ? "0 0 10px var(--color-primary)"
-                            : "0 2px 4px rgba(0,0,0,0.2)"
                     }}
                     transition={{
                         type: "spring",

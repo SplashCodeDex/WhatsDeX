@@ -66,7 +66,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         whileTap={{ scale: 0.9 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                         className={cn(
-                            "relative flex h-5 w-5 items-center justify-center rounded-md border shadow-lg backdrop-blur-md transition-shadow",
+                            "relative flex h-5 w-5 items-center justify-center rounded-md border backdrop-blur-md transition-shadow",
                             "peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
                             "disabled:cursor-not-allowed disabled:opacity-50",
                             className
@@ -108,17 +108,6 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         </AnimatePresence>
                     </motion.div>
 
-                    {/* Glow effect on checked state */}
-                    <AnimatePresence>
-                        {isChecked && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 0.4, scale: 1.2 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                className="absolute -z-10 h-full w-full rounded-full bg-primary blur-md"
-                            />
-                        )}
-                    </AnimatePresence>
                 </div>
 
                 {label && (
