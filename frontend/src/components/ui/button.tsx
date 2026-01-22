@@ -36,8 +36,8 @@ const buttonVariants = cva(
                     'hover:shadow-destructive/40 hover:brightness-110 active:brightness-95',
                 ],
                 outline: [
-                    'border border-white/10 bg-white/5 backdrop-blur-md text-foreground',
-                    'hover:bg-white/10 hover:border-white/20 hover:shadow-lg active:bg-white/5',
+                    'border border-input bg-background/50 backdrop-blur-md text-foreground',
+                    'hover:bg-muted hover:border-border hover:shadow-md active:bg-muted/80',
                 ],
                 secondary: [
                     'bg-muted text-foreground',

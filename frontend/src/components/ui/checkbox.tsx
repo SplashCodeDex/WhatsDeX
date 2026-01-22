@@ -46,12 +46,14 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         initial={false}
                         animate={{
                             scale: isChecked ? 1 : 0.95,
-                            backgroundColor: isChecked ? 'var(--color-primary)' : 'rgba(255, 255, 255, 0.03)',
+                            backgroundColor: isChecked
+                                ? 'var(--color-primary)'
+                                : 'var(--color-muted)',
                             borderColor: isChecked
                                 ? 'var(--color-primary)'
                                 : error
                                     ? 'var(--color-destructive)'
-                                    : 'rgba(255, 255, 255, 0.15)',
+                                    : 'var(--color-border)',
                         }}
                         whileHover={{
                             scale: 1.05,
@@ -59,7 +61,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                                 ? 'var(--color-primary)'
                                 : error
                                     ? 'var(--color-destructive)'
-                                    : 'rgba(255, 255, 255, 0.3)'
+                                    : 'oklch(var(--border) / 0.8)'
                         }}
                         whileTap={{ scale: 0.9 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
