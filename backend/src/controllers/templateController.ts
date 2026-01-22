@@ -45,9 +45,7 @@ export const spinMessageController = async (req: Request, res: Response) => {
         const { content } = req.body;
         if (!content) return res.status(400).json({ success: false, error: 'Content is required' });
 
-        // @ts-ignore - Context passing TODO
-        const ai = new GeminiAI({});
-        const result = await ai.spinMessage(content, tenantId);
+        const result = await GeminiAI.spinMessage(content, tenantId);
 
         if (result.success) {
             return res.json(result);

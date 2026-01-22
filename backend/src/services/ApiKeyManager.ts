@@ -68,7 +68,7 @@ export class ApiKeyManager {
             });
         }
 
-        console.log(`[ApiKeyManager] Initialized with ${this.keys.length} keys.`);
+        logger.info(`[ApiKeyManager] Initialized with ${this.keys.length} keys.`);
     }
 
     private loadKeys(): void {
@@ -107,7 +107,7 @@ export class ApiKeyManager {
         if (singleKey && typeof singleKey === 'string' && !singleKey.startsWith('[')) {
             this.keys = [this.createKeyState(singleKey.trim())];
         } else if (this.keys.length === 0) {
-            console.warn('[ApiKeyManager] No API keys configured!');
+            logger.warn('[ApiKeyManager] No API keys configured!');
         }
     }
 

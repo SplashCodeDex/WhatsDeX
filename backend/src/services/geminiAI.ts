@@ -583,8 +583,9 @@ Respond in the user's language if they're not using English.
    * AI Message Spinning (Enterprise Anti-Ban)
    * Rephrases a message while preserving variables {{var}}
    * Rule 5: Memoized for efficiency
+   * Static version for easy utility usage
    */
-  async spinMessage(content: string, tenantId: string): Promise<Result<string>> {
+  public static async spinMessage(content: string, tenantId: string): Promise<Result<string>> {
     try {
       const cacheKey = `ai:spin:${tenantId}:${cacheService.createKey(content)}`;
       const cached = await cacheService.get<string>(cacheKey);
@@ -593,6 +594,7 @@ Respond in the user's language if they're not using English.
         return { success: true, data: cached.data };
       }
 
+      const gemini = new GeminiService();
       const prompt = `
 Rephrase the following marketing message to make it sound slightly different but keep the same meaning and tone.
 STRICT RULE: Do NOT change or remove any variables inside double curly braces like {{name}}, {{phone}}, etc.
@@ -601,16 +603,24 @@ Return ONLY the rephrased text.
 Message: "${content}"
 `;
 
-      const rephrased = await this.gemini.getChatCompletion(prompt);
+      const rephrased = await gemini.getChatCompletion(prompt);
       
       // Memoize for 24 hours
       await cacheService.set(cacheKey, rephrased, 3600 * 24);
 
       return { success: true, data: rephrased };
     } catch (error: any) {
-      logger.error('AI Message Spinning failed', error);
+      logger.error('AI Message Spinning failed (static)', error);
       return { success: false, error };
     }
+  }
+
+  /**
+   * AI Message Spinning (Enterprise Anti-Ban)
+   * Instance version
+   */
+  async spinMessage(content: string, tenantId: string): Promise<Result<string>> {
+    return GeminiAI.spinMessage(content, tenantId);
   }
 
 

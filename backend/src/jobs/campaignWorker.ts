@@ -172,9 +172,7 @@ class CampaignWorker {
 
         // 2. AI Spinning (Rule 5 Memoized)
         if (spin) {
-            // @ts-ignore
-            const ai = new GeminiAI({});
-            const spinResult = await ai.spinMessage(content, tenantId);
+            const spinResult = await GeminiAI.spinMessage(content, tenantId);
             if (spinResult.success) content = spinResult.data;
         }
 
