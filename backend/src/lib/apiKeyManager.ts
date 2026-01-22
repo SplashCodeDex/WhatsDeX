@@ -122,9 +122,11 @@ export class ApiKeyManager {
     private constructor(apiKeys: readonly string[]) {
         this.stateFilePath = CONFIG.STATE_FILE;
         this.keys = apiKeys.map((key) => this.createKeyState(key));
-        this.loadState();
 
-        logger.info(`[ApiKeyManager] Initialized with ${this.keys.length} keys`);
+        if (apiKeys.length > 0) {
+            this.loadState();
+            logger.info(`[ApiKeyManager] Initialized with ${this.keys.length} keys`);
+        }
     }
 
     /**
@@ -138,25 +140,26 @@ export class ApiKeyManager {
 
         const envValue = process.env.GOOGLE_GEMINI_API_KEY;
         if (!envValue) {
-            return {
-                success: false,
-                error: new Error('GOOGLE_GEMINI_API_KEY environment variable is required'),
-            };
+            logger.warn('[ApiKeyManager] GOOGLE_GEMINI_API_KEY is not set. AI features will be disabled.');
+            // Create a disabled instance
+            ApiKeyManager.instance = new ApiKeyManager([]);
+            return { success: true, data: ApiKeyManager.instance };
         }
 
         try {
             const keys = ApiKeysEnvSchema.parse(envValue);
             if (keys.length === 0) {
-                return {
-                    success: false,
-                    error: new Error('At least one API key is required'),
-                };
+                logger.warn('[ApiKeyManager] GOOGLE_GEMINI_API_KEY is empty. AI features will be disabled.');
+                // Create a disabled instance
+                ApiKeyManager.instance = new ApiKeyManager([]);
+                return { success: true, data: ApiKeyManager.instance };
             }
 
             ApiKeyManager.instance = new ApiKeyManager(keys);
             return { success: true, data: ApiKeyManager.instance };
         } catch (error) {
             const err = error instanceof Error ? error : new Error(String(error));
+            logger.error('[ApiKeyManager] Failed to parse API keys:', err);
             return { success: false, error: err };
         }
     }

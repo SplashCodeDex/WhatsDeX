@@ -41,7 +41,7 @@ describe('ApiKeyManager', () => {
     });
 
     describe('getInstance', () => {
-        it('should return error when env var is not set', async () => {
+        it('should return a disabled instance when env var is not set', async () => {
             delete process.env.GOOGLE_GEMINI_API_KEY;
 
             // Dynamic import to get fresh module
@@ -50,9 +50,9 @@ describe('ApiKeyManager', () => {
 
             const result = ApiKeyManager.getInstance();
 
-            expect(result.success).toBe(false);
-            if (!result.success) {
-                expect(result.error.message).toContain('GOOGLE_GEMINI_API_KEY');
+            expect(result.success).toBe(true);
+            if (result.success) {
+                expect(result.data.getKeyCount()).toBe(0);
             }
         });
 
