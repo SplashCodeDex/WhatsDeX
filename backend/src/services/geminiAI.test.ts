@@ -10,15 +10,35 @@ const { mockGeminiService } = vi.hoisted(() => ({
 }));
 
 // Mock dependencies
-vi.mock('./gemini.js', () => ({
-  default: vi.fn().mockImplementation(() => mockGeminiService)
+vi.mock('../lib/apiKeyManager.js', () => ({
+  ApiKeyManager: {
+    getInstance: vi.fn(() => ({
+      success: true,
+      data: {
+        getKey: vi.fn(() => ({ success: true, data: 'mock-key' })),
+        getStats: vi.fn(() => ({ totalKeys: 1, healthyKeys: 1 })),
+        markSuccess: vi.fn(),
+        markFailed: vi.fn(),
+        getKeyCount: vi.fn(() => 1)
+      }
+    }))
+  },
+  isQuotaError: vi.fn(() => false)
 }));
+
+vi.mock('./gemini.js', () => {
+  return {
+    default: vi.fn().mockImplementation(function() {
+      return mockGeminiService;
+    })
+  };
+});
 
 vi.mock('./cache.js', () => ({
   cacheService: {
     get: vi.fn(),
     set: vi.fn(),
-    createKey: vi.fn((val) => val)
+    createKey: vi.fn((val) => `hash_${val}`)
   }
 }));
 
