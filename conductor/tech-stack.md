@@ -22,7 +22,7 @@
 - **Execution:** `tsx` (TypeScript Execute) - **STRICT: DO NOT use ts-node**
 - **WhatsApp API:** Baileys (@whiskeysockets/baileys) 7.0.0-rc.9
 - **Job Queues:** BullMQ / Bull (Redis backed)
-- **Real-time:** WebSockets (ws 8.19.0)
+- **Real-time:** WebSockets (Socket.io 4.8.3)
 - **Observability:** OpenTelemetry (Tracing & Metrics)
 - **Logging:** Winston / Pino
 

@@ -30,8 +30,8 @@ The platform operates on a multi-tenant architecture where each customer's data 
 ### 3. Messaging & Automation
 
 - **Unified Inbox:** View and reply to messages directly from the dashboard.
-- **Broadcast/Marketing:** Create and send bulk messages, media, and document campaigns (similar to WANotifier).
-- **Templates:** Manage and use message templates for consistent communication.
+- **Broadcast/Marketing:** High-performance engine using **BullMQ** for reliable background processing. Supports **Hybrid Distribution** (Single Bot vs Multi-Bot Pooling) and **Intelligent Throttling** with randomized delays to maximize deliverability.
+- **Rich Templates:** Manage media-heavy templates with dynamic variable injection (`{{name}}`, `{{phone}}`) and **AI Message Spinning** (Enterprise only) to prevent account bans.
 - **Auto-Replies:** Set up automated responses based on keywords or triggers.
 
 ### 4. Advanced Features (Premium)
