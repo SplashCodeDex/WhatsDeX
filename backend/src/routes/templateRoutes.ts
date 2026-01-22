@@ -1,15 +1,29 @@
 import express from 'express';
-import templateService from '../services/templateService.js';
+import { 
+    getTemplatesController, 
+    createTemplateController, 
+    spinMessageController 
+} from '../controllers/templateController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', async (req: any, res: any) => {
-    try {
-        const templates = await templateService.getTemplates();
-        res.json({ success: true, data: templates });
-    } catch (error: any) {
-        res.status(500).json({ success: false, error: 'Failed to fetch templates' });
-    }
-});
+/**
+ * GET /templates
+ * List all templates for a tenant
+ */
+router.get('/', authenticateToken, getTemplatesController);
+
+/**
+ * POST /templates
+ * Create a new template
+ */
+router.post('/', authenticateToken, createTemplateController);
+
+/**
+ * POST /templates/spin
+ * Rephrase a message while preserving variables
+ */
+router.post('/spin', authenticateToken, spinMessageController);
 
 export default router;
