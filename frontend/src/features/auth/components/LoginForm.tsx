@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Button, PasswordInput, Checkbox } from '@/components/ui';
 import { GoogleIcon } from '@/components/ui/icons';
 import { useAuth, signIn, type LoginInput, getAuthErrorMessage } from '@/features/auth';
 
@@ -77,22 +77,29 @@ export function LoginForm() {
                                 >
                                     Password
                                 </label>
-                                <Link
-                                    href="/forgot-password"
-                                    className="text-xs font-medium text-primary hover:underline"
-                                >
-                                    Forgot password?
-                                </Link>
                             </div>
-                            <input
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            <PasswordInput
                                 id="password"
                                 name="password"
-                                type="password"
                                 autoComplete="current-password"
                                 disabled={isLoading}
                                 required
                             />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <Checkbox
+                                id="rememberMe"
+                                name="rememberMe"
+                                label="Remember me"
+                                disabled={isLoading}
+                            />
+                            <Link
+                                href="/forgot-password"
+                                className="text-xs font-medium text-primary hover:underline hover:text-primary-600 transition-colors"
+                            >
+                                Forgot password?
+                            </Link>
                         </div>
 
                         {error && (

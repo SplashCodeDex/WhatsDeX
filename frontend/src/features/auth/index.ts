@@ -9,10 +9,10 @@
  */
 
 // Server Actions
-export { signIn, signUp, signOut, requestPasswordReset, getSession } from './actions';
+export { signIn, signUp, signOut, requestPasswordReset, resetPassword, getSession } from './actions';
 
 // Components
-export { LoginForm, RegisterForm, AnimatedAuthHero, AuthTransitionLayout } from './components';
+export { LoginForm, ForgotPasswordForm, ResetPasswordForm, RegisterForm, AnimatedAuthHero, AuthTransitionLayout } from './components';
 
 // Hooks
 export { useAuth } from './hooks';

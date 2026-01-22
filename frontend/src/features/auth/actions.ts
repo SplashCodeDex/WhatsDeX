@@ -18,6 +18,7 @@ import {
     loginSchema,
     registerSchema,
     forgotPasswordSchema,
+    resetPasswordSchema,
 } from './schemas';
 import type { AuthResult, AuthUser } from './types';
 
@@ -251,5 +252,61 @@ export async function getSession(): Promise<AuthUser | null> {
         return response.data.user;
     } catch {
         return null;
+    }
+}
+
+/**
+ * Confirm password reset with code
+ */
+export async function resetPassword(
+    formData: FormData
+): Promise<AuthResult> {
+    const rawData = {
+        password: formData.get('password'),
+        confirmPassword: formData.get('confirmPassword'),
+        oobCode: formData.get('oobCode'),
+    };
+
+    const parsed = resetPasswordSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        const firstIssue = parsed.error.issues[0];
+        return {
+            success: false,
+            error: {
+                code: 'validation_error',
+                message: firstIssue?.message ?? 'Invalid input',
+                field: firstIssue?.path[0] as string,
+            },
+        };
+    }
+
+    try {
+        const response = await api.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+            password: parsed.data.password,
+            oobCode: parsed.data.oobCode,
+        });
+
+        if (!response.success) {
+            return {
+                success: false,
+                error: response.error,
+            };
+        }
+
+        return {
+            success: true,
+            data: undefined,
+            message: 'Password reset successfully',
+        };
+    } catch (err) {
+        logger.error('Password reset confirmation error:', { error: err });
+        return {
+            success: false,
+            error: {
+                code: 'network_error',
+                message: 'Unable to reset password. Link may have expired.',
+            },
+        };
     }
 }
