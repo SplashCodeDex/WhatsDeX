@@ -21,23 +21,23 @@ const buttonVariants = cva(
         'active:scale-[0.98]',
         // Icon sizing
         '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
-        'overflow-hidden cursor-pointer',
+        'overflow-hidden shadow-sm hover:shadow-md cursor-pointer',
     ],
     {
         variants: {
             variant: {
                 default: [
-                    'bg-gradient-to-r from-primary-600 to-primary-500 text-white',
-                    'hover:from-primary-700 hover:to-primary-600',
+                    'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/20',
+                    'hover:from-primary-700 hover:to-primary-600 hover:shadow-primary-500/30',
                     'dark:from-primary-500 dark:to-primary-400 dark:hover:from-primary-600 dark:hover:to-primary-500',
                 ],
                 destructive: [
-                    'bg-gradient-to-br from-destructive to-destructive/80 text-white',
-                    'hover:brightness-110 active:brightness-95',
+                    'bg-gradient-to-br from-destructive to-destructive/80 text-white shadow-lg shadow-destructive/20',
+                    'hover:shadow-destructive/40 hover:brightness-110 active:brightness-95',
                 ],
                 outline: [
                     'border border-input bg-background/50 backdrop-blur-md text-foreground',
-                    'hover:bg-muted hover:border-border active:bg-muted/80',
+                    'hover:bg-muted hover:border-border hover:shadow-md active:bg-muted/80',
                 ],
                 secondary: [
                     'bg-muted text-foreground',
