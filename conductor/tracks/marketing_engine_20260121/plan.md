@@ -6,9 +6,9 @@ Establish the data layer and import logic for contacts following Rule 1 (Zod) an
 - [x] Task: Define Data Contracts & Schemas. (c6ded13)
     - [x] Sub-task: Write Tests: Validate `ContactSchema` and `AudienceSchema` in `backend/src/types/contracts.test.ts`.
     - [x] Sub-task: Implement: Define schemas in `backend/src/types/contracts.ts`.
-- [~] Task: Implement `ContactService`.
-    - [ ] Sub-task: Write Tests: Mock Firestore and test `importContacts` (CSV parsing) and `getAudience`.
-    - [ ] Sub-task: Implement: Create `backend/src/services/contactService.ts` with Result Pattern.
+- [x] Task: Implement `ContactService`. (bb43203)
+    - [x] Sub-task: Write Tests: Mock Firestore and test `importContacts` (CSV parsing) and `getAudience`.
+    - [x] Sub-task: Implement: Create `backend/src/services/contactService.ts` with Result Pattern.
 - [ ] Task: Create Contact API Routes.
     - [ ] Sub-task: Write Tests: Test `/api/contacts/import` and `/api/contacts` endpoints.
     - [ ] Sub-task: Implement: Create `backend/src/routes/contactRoutes.ts` and wire to `multiTenantApp.ts`.
