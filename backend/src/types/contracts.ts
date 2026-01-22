@@ -312,3 +312,36 @@ export const WebhookSchema = z.object({
 }).readonly();
 
 export type Webhook = z.infer<typeof WebhookSchema>;
+
+/**
+ * Contact Schema ('tenants/{tenantId}/contacts' subcollection)
+ */
+export const ContactSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(), // De-normalized for easier querying/validation if needed
+  name: z.string(),
+  phone: z.string().min(1, "Phone number is required"),
+  email: z.string().email().optional().or(z.literal('')),
+  attributes: z.record(z.string(), z.any()).optional(),
+  tags: z.array(z.string()).default([]),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema
+}).readonly();
+
+export type Contact = z.infer<typeof ContactSchema>;
+
+/**
+ * Audience Schema ('tenants/{tenantId}/audiences' subcollection)
+ */
+export const AudienceSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  filters: z.record(z.string(), z.any()).default({}), // e.g. { tags: ['vip'] }
+  count: z.number().default(0), // Cached count of matching contacts
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema
+}).readonly();
+
+export type Audience = z.infer<typeof AudienceSchema>;
