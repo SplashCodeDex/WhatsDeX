@@ -9,9 +9,9 @@ Establish the data layer and import logic for contacts following Rule 1 (Zod) an
 - [x] Task: Implement `ContactService`. (bb43203)
     - [x] Sub-task: Write Tests: Mock Firestore and test `importContacts` (CSV parsing) and `getAudience`.
     - [x] Sub-task: Implement: Create `backend/src/services/contactService.ts` with Result Pattern.
-- [ ] Task: Create Contact API Routes.
-    - [ ] Sub-task: Write Tests: Test `/api/contacts/import` and `/api/contacts` endpoints.
-    - [ ] Sub-task: Implement: Create `backend/src/routes/contactRoutes.ts` and wire to `multiTenantApp.ts`.
+- [x] Task: Create Contact API Routes. (d36f528)
+    - [x] Sub-task: Write Tests: Test `/api/contacts/import` and `/api/contacts` endpoints.
+    - [x] Sub-task: Implement: Create `backend/src/routes/contactRoutes.ts` and wire to `multiTenantApp.ts`.
 - [ ] Task: Conductor - User Manual Verification 'Contact & Audience Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Rich Template System & AI Spinning
