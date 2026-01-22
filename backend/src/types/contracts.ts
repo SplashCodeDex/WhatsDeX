@@ -247,6 +247,33 @@ export const SubscriptionSchema = z.object({
 
 export type Subscription = z.infer<typeof SubscriptionSchema>;
 
+
+/**
+ * Contact Schema ('tenants/{tenantId}/contacts' subcollection)
+ */
+export const ContactSchema = z.object({
+  name: z.string().min(1, { message: "Contact name cannot be empty" }),
+  phone: z.string().min(10, { message: "Phone number seems too short" }),
+  email: z.string().email({ message: "Invalid email format" }).optional(),
+  isSubscribed: z.boolean().default(true),
+  createdAt: TimestampSchema.optional(),
+  updatedAt: TimestampSchema.optional(),
+});
+export type Contact = z.infer<typeof ContactSchema>;
+
+/**
+ * Audience Schema ('tenants/{tenantId}/audiences' subcollection)
+ */
+export const AudienceSchema = z.object({
+  name: z.string().min(1, { message: "Audience name cannot be empty" }),
+  description: z.string().optional(),
+  contacts: z.array(z.string()).default([]), // Storing contact IDs
+  createdAt: TimestampSchema.optional(),
+  updatedAt: TimestampSchema.optional(),
+});
+export type Audience = z.infer<typeof AudienceSchema>;
+
+
 /**
  * Campaign Status Enum
  */
