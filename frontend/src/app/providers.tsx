@@ -7,6 +7,7 @@
  * This is a Client Component because providers need client-side context.
  */
 
+import { Toaster } from 'sonner';
 import { QueryProvider } from '@/lib/query';
 
 interface ProvidersProps {
@@ -27,7 +28,13 @@ export function Providers({ children }: ProvidersProps): React.JSX.Element {
         <QueryProvider>
             {/* Add other providers here as needed */}
             {/* <ThemeProvider> */}
-            {/* <ToastProvider> */}
+            <Toaster
+                position="top-right"
+                expand={false}
+                richColors
+                closeButton
+                theme="system"
+            />
             {children}
         </QueryProvider>
     );

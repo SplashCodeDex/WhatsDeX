@@ -7,6 +7,8 @@ import { Particle } from "../utils";
 import { cn } from "@/lib/utils";
 import { StaggeredEnter, StaggeredItem } from "@/components/ui/motion";
 
+import { useAuth } from "../hooks";
+
 interface AuthTransitionLayoutProps {
     children: React.ReactNode;
     particles: Particle[];
@@ -15,6 +17,9 @@ interface AuthTransitionLayoutProps {
 export function AuthTransitionLayout({ children, particles }: AuthTransitionLayoutProps) {
     const pathname = usePathname();
     const isRegister = pathname === "/register";
+
+    // Hydrate auth session on mount
+    useAuth();
 
     return (
         <div className="relative flex min-h-screen w-full overflow-hidden bg-background perspective-[2000px]">

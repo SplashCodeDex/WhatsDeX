@@ -1,53 +1,81 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button, Input, PasswordInput, Checkbox } from '@/components/ui';
+import { StaggeredEnter, StaggeredItem } from '@/components/ui/motion';
 import { GoogleIcon } from '@/components/ui/icons';
-import { useAuth, signIn, type LoginInput, getAuthErrorMessage } from '@/features/auth';
+import {
+    signIn,
+    loginSchema,
+    type LoginInput,
+    getAuthErrorMessage,
+    useAuthStore,
+} from '@/features/auth';
 
 export function LoginForm() {
     const router = useRouter();
-    const { user } = useAuth();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const { setLoading, isLoading } = useAuthStore();
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        setIsLoading(true);
-        setError(null);
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+            rememberMe: false,
+        },
+    });
 
-        const formData = new FormData(event.currentTarget);
+    async function onSubmit(data: any) {
+        setLoading(true);
+        const formData = new FormData();
+        formData.append('email', data.email);
+        formData.append('password', data.password);
+        formData.append('rememberMe', String(data.rememberMe));
+
         const result = await signIn(formData);
 
         if (result.success) {
+            toast.success('Successfully signed in!', {
+                description: 'Redirecting to your dashboard...',
+            });
             import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
             router.push('/dashboard');
         } else {
             const mappedError = getAuthErrorMessage(result.error.code);
-            if (mappedError === 'An unexpected error occurred' && result.error.message) {
-                setError(result.error.message);
-            } else {
-                setError(mappedError);
-            }
-            setIsLoading(false);
+            const errorMessage = mappedError === 'An unexpected error occurred' && result.error.message
+                ? result.error.message
+                : mappedError;
+
+            toast.error('Authentication failed', {
+                description: errorMessage,
+            });
+            setLoading(false);
         }
     }
 
     return (
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-            <div className="flex flex-col space-y-2 text-center">
-                <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+        <StaggeredEnter className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+            <StaggeredItem className="flex flex-col space-y-2 text-center">
+                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+                    Welcome back
+                </h1>
                 <p className="text-sm text-muted-foreground">
                     Enter your email to sign in to your account
                 </p>
-            </div>
+            </StaggeredItem>
 
-            <div className="grid gap-6">
-                <form onSubmit={handleSubmit}>
+            <StaggeredItem className="grid gap-6">
+                <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="grid gap-4">
                         <div className="grid gap-2">
                             <label
@@ -58,15 +86,18 @@ export function LoginForm() {
                             </label>
                             <Input
                                 id="email"
-                                name="email"
                                 placeholder="name@example.com"
                                 type="email"
                                 autoCapitalize="none"
                                 autoComplete="email"
                                 autoCorrect="off"
                                 disabled={isLoading}
-                                required
+                                error={!!errors.email}
+                                {...register('email')}
                             />
+                            {errors.email && (
+                                <span className="text-xs text-destructive">{errors.email.message}</span>
+                            )}
                         </div>
                         <div className="grid gap-2">
                             <div className="flex items-center justify-between">
@@ -79,19 +110,22 @@ export function LoginForm() {
                             </div>
                             <PasswordInput
                                 id="password"
-                                name="password"
                                 autoComplete="current-password"
                                 disabled={isLoading}
-                                required
+                                error={!!errors.password}
+                                {...register('password')}
                             />
+                            {errors.password && (
+                                <span className="text-xs text-destructive">{errors.password.message}</span>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-between">
                             <Checkbox
                                 id="rememberMe"
-                                name="rememberMe"
                                 label="Remember me"
                                 disabled={isLoading}
+                                {...register('rememberMe')}
                             />
                             <Link
                                 href="/forgot-password"
@@ -101,13 +135,7 @@ export function LoginForm() {
                             </Link>
                         </div>
 
-                        {error && (
-                            <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                                {error}
-                            </div>
-                        )}
-
-                        <Button disabled={isLoading}>
+                        <Button disabled={isLoading} className="w-full">
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Sign In
                         </Button>
@@ -125,20 +153,20 @@ export function LoginForm() {
                     </div>
                 </div>
 
-                <Button variant="outline" type="button" disabled={isLoading}>
+                <Button variant="outline" type="button" disabled={isLoading} className="w-full">
                     <GoogleIcon className="mr-2 h-4 w-4" />
                     Google
                 </Button>
-            </div>
+            </StaggeredItem>
 
-            <p className="px-8 text-center text-sm text-muted-foreground">
+            <StaggeredItem className="px-8 text-center text-sm text-muted-foreground">
                 <Link
                     href="/register"
-                    className="underline underline-offset-4 hover:text-primary"
+                    className="underline underline-offset-4 hover:text-primary decoration-primary-500/30 transition-all font-medium"
                 >
                     Don&apos;t have an account? Sign Up
                 </Link>
-            </p>
-        </div>
+            </StaggeredItem>
+        </StaggeredEnter>
     );
 }

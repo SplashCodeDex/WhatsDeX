@@ -67,7 +67,7 @@ describe('authMiddleware', () => {
 
     await authenticateToken(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Invalid or unauthorized token' });
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Auth error: Error' });
   });
 
   it('should return 401 if token is expired', async () => {

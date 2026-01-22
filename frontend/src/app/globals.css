@@ -150,297 +150,11 @@
   --animate-scale-in: scale-in var(--animate-duration-normal) var(--animate-ease-spring);
   --animate-spin: spin 1s linear infinite;
   --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
 
-/* ═══════════════════════════════════════════════════════════════════════════
- * DARK MODE OVERRIDES
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background: oklch(12% 0.006 286);
-    --color-foreground: oklch(98% 0 0);
-    --color-card: oklch(16% 0.006 286);
-    --color-card-foreground: oklch(98% 0 0);
-    --color-popover: oklch(14% 0.006 286);
-    --color-popover-foreground: oklch(98% 0 0);
-    --color-muted: oklch(22% 0.006 286);
-    --color-muted-foreground: oklch(65% 0.014 286);
-    --color-border: oklch(27% 0.006 286);
-    --color-input: oklch(27% 0.006 286);
-    --color-ring: var(--color-primary-500);
-
-    /* Base Semantic Overrides for Dark Mode */
-    --color-primary: var(--color-primary-500);
-    --color-primary-foreground: oklch(100% 0 0);
-
-    /* Adjusted shadows for dark mode */
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- * KEYFRAME DEFINITIONS
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes slide-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slide-in-down {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- * BASE STYLES
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-*,
-*::before,
-*::after {
-  border-color: var(--color-border);
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-
-  /* Global Scrollbar Styling */
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-primary-200) transparent;
-}
-
-/* Dark mode scrollbar */
-@media (prefers-color-scheme: dark) {
-  body {
-    scrollbar-color: var(--color-primary-900) var(--color-background);
-  }
-}
-
-/* Webkit Scrollbar Styling (Chrome, Safari, Edge) */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--color-primary-200);
-  border-radius: var(--radius-full);
-  border: 2px solid var(--color-background); /* Creates padding effect */
-}
-
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb {
-    background-color: var(--color-primary-800);
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-primary-700);
-  }
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-primary-300);
-}
-
-/* Selection Styling */
-::selection {
-  background-color: var(--color-primary-200);
-  color: var(--color-primary-900);
-}
-
-@media (prefers-color-scheme: dark) {
-  ::selection {
-    background-color: var(--color-primary-800);
-    color: var(--color-primary-50);
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- * ACCESSIBILITY
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-:focus-visible {
-  outline: 2px solid var(--color-ring);
-  outline-offset: 2px;
-}
-
-/* Skip link for keyboard navigation */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--color-primary-600);
-  color: white;
-  padding: 8px 16px;
-  z-index: 100;
-  transition: top var(--animate-duration-fast) var(--animate-ease-out);
-}
-
-.skip-link:focus {
-  top: 0;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- * REDUCED MOTION
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- * UTILITY CLASSES
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Skeleton loading animation */
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--color-muted) 25%,
-    var(--color-muted-foreground) 50%,
-    var(--color-muted) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-/* Hide scrollbar but keep functionality */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Custom scrollbar styling */
-.scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: var(--radius-full);
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-muted-foreground);
-}
-
-/*
- ---break---
- */
-
-@theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  /* ═══════════════════════════════════════════════════════════════════════
+   * SHADCN COMPONENT COUPLING
+   * Mapping shadcn variables to our premium tokens
+   * ═══════════════════════════════════════════════════════════════════════ */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -456,104 +170,60 @@ body {
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/*
- ---break---
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+ * THEME DEFINITIONS (RSC Compatible)
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(100% 0 0);
+  --foreground: oklch(14% 0.004 286);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(14% 0.004 286);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(14% 0.004 286);
+  --primary: var(--color-primary-600);
+  --primary-foreground: oklch(100% 0 0);
+  --secondary: oklch(96% 0.001 286);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(96% 0.001 286);
+  --muted-foreground: oklch(45% 0.014 286);
+  --accent: var(--color-accent-500);
+  --accent-foreground: oklch(100% 0 0);
+  --destructive: var(--color-error);
+  --destructive-foreground: var(--color-error-foreground);
+  --border: oklch(91% 0.002 286);
+  --input: oklch(91% 0.002 286);
+  --ring: var(--color-primary-600);
+  --radius: 0.75rem;
 }
-
-/*
- ---break---
- */
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(12% 0.006 286);
+  --foreground: oklch(98% 0 0);
+  --card: oklch(16% 0.006 286);
+  --card-foreground: oklch(98% 0 0);
+  --popover: oklch(14% 0.006 286);
+  --popover-foreground: oklch(98% 0 0);
+  --primary: var(--color-primary-500);
+  --primary-foreground: oklch(100% 0 0);
+  --secondary: oklch(22% 0.006 286);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(22% 0.006 286);
+  --muted-foreground: oklch(65% 0.014 286);
+  --accent: var(--color-accent-500);
+  --accent-foreground: oklch(100% 0 0);
+  --destructive: var(--color-error);
+  --destructive-foreground: var(--color-error-foreground);
+  --border: oklch(27% 0.006 286);
+  --input: oklch(27% 0.006 286);
+  --ring: var(--color-primary-500);
 }
-
-/*
- ---break---
- */
 
 @layer base {
   * {
@@ -562,4 +232,31 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ACCESSIBILITY
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Skip Link - Hidden by default, slides down on focus */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.75rem 1.5rem;
+  z-index: 9999;
+  transition: all var(--animate-duration-normal) var(--animate-ease-spring);
+  border-bottom-right-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-xl);
+  outline: none;
+}
+
+.skip-link:focus {
+  top: 0;
 }

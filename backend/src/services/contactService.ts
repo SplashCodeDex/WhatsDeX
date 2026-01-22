@@ -41,9 +41,6 @@ export class ContactService {
             });
             
             // Map common fields to schema
-            // We use 'name', 'phone', 'email' if they exist in headers.
-            // Also support 'tags' (pipe separated)
-            
             const contactData = {
                 id: `cont_${crypto.randomUUID()}`,
                 tenantId,
@@ -51,25 +48,14 @@ export class ContactService {
                 phone: rawData.phone || rawData.phoneNumber || '',
                 email: rawData.email || '',
                 tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
-                attributes: rawData, // Store all parsed columns as attributes for template variable extraction
+                attributes: rawData,
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
 
             const validation = ContactSchema.safeParse(contactData);
             if (!validation.success) {
-                // Debug log
-                // console.log('Validation failed for:', contactData);
-                // console.log('Validation object:', validation);
-                // console.log('Validation error:', validation.error);
-                
-                if (!validation.error || !validation.error.errors) {
-                     errors.push(`Row ${index + 2}: Unknown validation error`);
-                     return;
-                }
-
-                // Formatting Zod errors for user
-                const msg = validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+                const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
                 errors.push(`Row ${index + 2}: ${msg}`);
                 return;
             }
@@ -91,7 +77,7 @@ export class ContactService {
   }
 
   public async getAudience(tenantId: string): Promise<Result<any[]>> {
-      // Implementation pending - just a placeholder for now to satisfy potential interface
+      // Implementation pending
       return { success: true, data: [] };
   }
 }

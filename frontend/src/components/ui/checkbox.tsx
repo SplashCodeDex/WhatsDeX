@@ -1,50 +1,131 @@
 'use client';
 
 import * as React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 
 export interface CheckboxProps
     extends React.InputHTMLAttributes<HTMLInputElement> {
-    label?: string;
+    label?: React.ReactNode;
+    error?: boolean;
     onCheckedChange?: (checked: boolean) => void;
 }
 
 /**
- * Custom Checkbox component
- * Fully theme-aware and accessible, replaces native checkbox
+ * Premium Checkbox component
+ * Features glassmorphism, Framer Motion animations, and path drawing effects.
  */
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-    ({ className, label, onCheckedChange, onChange, ...props }, ref) => {
+    ({ className, label, error, onCheckedChange, onChange, checked: controlledChecked, defaultChecked, ...props }, ref) => {
+        const [internalChecked, setInternalChecked] = React.useState(defaultChecked || false);
+        const isChecked = controlledChecked !== undefined ? controlledChecked : internalChecked;
+
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (controlledChecked === undefined) {
+                setInternalChecked(e.target.checked);
+            }
             onCheckedChange?.(e.target.checked);
             onChange?.(e);
         };
 
         return (
-            <label className="group flex cursor-pointer items-center space-x-2">
-                <div className="relative flex items-center">
+            <label className="group flex cursor-pointer items-center space-x-3 select-none">
+                <div className="relative flex items-center justify-center">
                     <input
                         type="checkbox"
                         className="peer sr-only"
                         ref={ref}
+                        checked={isChecked}
                         onChange={handleChange}
                         {...props}
                     />
-                    <div
+
+                    {/* Checkbox Box with Glassmorphism */}
+                    <motion.div
+                        initial={false}
+                        animate={{
+                            scale: isChecked ? 1 : 0.95,
+                            backgroundColor: isChecked ? 'var(--color-primary)' : 'rgba(255, 255, 255, 0.03)',
+                            borderColor: isChecked
+                                ? 'var(--color-primary)'
+                                : error
+                                    ? 'var(--color-destructive)'
+                                    : 'rgba(255, 255, 255, 0.15)',
+                        }}
+                        whileHover={{
+                            scale: 1.05,
+                            borderColor: isChecked
+                                ? 'var(--color-primary)'
+                                : error
+                                    ? 'var(--color-destructive)'
+                                    : 'rgba(255, 255, 255, 0.3)'
+                        }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                         className={cn(
-                            "box-border h-4 w-4 rounded-sm border border-primary text-primary-foreground shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                            "peer-checked:bg-gradient-to-r peer-checked:from-primary-600 peer-checked:to-primary-500 peer-checked:border-primary-600",
-                            "transition-all duration-200 ease-in-out",
-                            "flex items-center justify-center", // Center the icon
+                            "relative flex h-5 w-5 items-center justify-center rounded-md border shadow-lg backdrop-blur-md transition-shadow",
+                            "peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
+                            "disabled:cursor-not-allowed disabled:opacity-50",
                             className
                         )}
                     >
-                        <Check className="h-3 w-3 opacity-0 transition-opacity duration-200 peer-checked:opacity-100" />
-                    </div>
+                        <AnimatePresence>
+                            {isChecked && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.5 }}
+                                    transition={{ duration: 0.15 }}
+                                >
+                                    <svg
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 12 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="text-primary-foreground"
+                                    >
+                                        <motion.path
+                                            d="M2 6L5 9L10 3"
+                                            stroke="currentColor"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            initial={{ pathLength: 0 }}
+                                            animate={{ pathLength: 1 }}
+                                            transition={{
+                                                type: 'spring',
+                                                stiffness: 300,
+                                                damping: 20,
+                                            }}
+                                        />
+                                    </svg>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+
+                    {/* Glow effect on checked state */}
+                    <AnimatePresence>
+                        {isChecked && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 0.4, scale: 1.2 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                className="absolute -z-10 h-full w-full rounded-full bg-primary blur-md"
+                            />
+                        )}
+                    </AnimatePresence>
                 </div>
+
                 {label && (
-                    <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <span className={cn(
+                        "text-sm font-medium transition-colors duration-200",
+                        isChecked ? "text-foreground" : "text-muted-foreground",
+                        "group-hover:text-foreground",
+                        "peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    )}>
                         {label}
                     </span>
                 )}

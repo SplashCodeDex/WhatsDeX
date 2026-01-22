@@ -30,7 +30,7 @@ type AuthStore = AuthStoreState & AuthStoreActions;
 
 const initialState: AuthStoreState = {
     user: null,
-    isLoading: true,
+    isLoading: false,
     isAuthenticated: false,
     error: null,
 };
