@@ -28,7 +28,7 @@ Build the template management system with integrated AI personalization.
     - [x] Sub-task: Implement: Create `backend/src/routes/templateRoutes.ts`.
 - [x] Task: Conductor - User Manual Verification 'Rich Template System & AI Spinning' (Protocol in workflow.md) (01931ee)
 
-## Phase 3: Broadcast Engine & Hybrid Distribution
+## Phase 3: Broadcast Engine & Hybrid Distribution [checkpoint: aeead14]
 The core execution engine using BullMQ and multi-bot pooling.
 
 - [x] Task: Define `Campaign` Logic & Queue. (93c5965)
@@ -40,7 +40,7 @@ The core execution engine using BullMQ and multi-bot pooling.
 - [x] Task: Implement Intelligent Throttling. (f70d722)
     - [x] Sub-task: Write Tests: Verify randomized delays and rate-limiting enforcement.
     - [x] Sub-task: Implement: Add throttling middleware to the broadcast worker.
-- [ ] Task: Conductor - User Manual Verification 'Broadcast Engine & Hybrid Distribution' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Broadcast Engine & Hybrid Distribution' (Protocol in workflow.md) (aeead14)
 
 ## Phase 4: Real-time Monitoring & Dashboard UI
 WebSocket integration and the multi-step campaign wizard.
