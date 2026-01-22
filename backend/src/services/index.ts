@@ -22,7 +22,6 @@ export { default as MultiTenantBotService } from './multiTenantBotService.js';
 
 // Payment/Subscription
 export { default as StripeService } from './stripeService.js';
-export { default as SubscriptionService } from './subscription.js';
 
 // Utility Services
 export { default as RateLimiter } from './rateLimiter.js';
@@ -37,7 +36,6 @@ export { default as AuditService } from './auditService.js';
 
 // Content Services
 export { default as StickerService } from './stickerService.js';
-export { default as TextToSpeechService } from './textToSpeechService.js';
 export { default as ContentModeration } from './contentModeration.js';
 
 // Auth

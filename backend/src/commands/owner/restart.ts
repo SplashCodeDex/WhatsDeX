@@ -4,30 +4,32 @@ import process from 'node:process';
 import util from 'node:util';
 
 export default {
-  name: 'restart',
-  aliases: ['r'],
-  category: 'owner',
-  permissions: {
-    owner: true,
-  },
-  code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
-    if (!process.env.PM2_HOME)
-      return await ctx.reply(
-        formatter.quote('❎ Bot is not running under PM2! Manual restart required.')
-      );
+    name: 'restart',
+    aliases: ['r'],
+    category: 'owner',
+    description: 'Restart the bot process (PM2 required).',
+    permissions: {
+        owner: true,
+    },
+    code: async (ctx: MessageContext) => {
+        const { formatter, tools, config, database: db } = ctx.bot.context;
+        if (!process.env.PM2_HOME)
+            return await ctx.reply(
+                formatter.quote('❎ Bot is not running under PM2! Manual restart required.')
+            );
 
-    try {
-      const waitMsg = await ctx.reply(config.msg.wait);
-      await db.set('bot.restart', {
-        jid: ctx.id,
-        key: waitMsg.key,
-        timestamp: Date.now(),
-      });
+        try {
+            const waitMsg = await ctx.reply(config.msg.wait);
+            await db.set('bot.restart', {
+                jid: ctx.id,
+                key: waitMsg.key,
+                timestamp: Date.now(),
+            });
 
-      await util.promisify(exec)('pm2 restart $(basename $(pwd))'); // Hanya berfungsi saat menggunakan PM2
-    } catch (error: any) {
-      await tools.cmd.handleError(ctx, error);
-    }
-  },
+            // Restarts the PM2 process. Assumes the process name matches the directory name or is otherwise identifiable.
+            await util.promisify(exec)('pm2 restart all'); 
+        } catch (error: any) {
+            await tools.cmd.handleError(ctx, error);
+        }
+    },
 };

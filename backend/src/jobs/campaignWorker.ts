@@ -56,7 +56,7 @@ class CampaignWorker {
         const { id, targetId } = { ...campaign, targetId: campaign.audience.targetId };
 
         // 1. Fetch Latest Campaign & Template
-        const currentCampaign = await firebaseService.getDoc<Campaign>('campaigns', id, tenantId);
+        const currentCampaign = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
         if (!currentCampaign) throw new Error('Campaign not found');
 
         const templateResult = await TemplateService.getInstance().getTemplate(tenantId, currentCampaign.templateId);
@@ -87,7 +87,7 @@ class CampaignWorker {
             const contact = targets[i];
             
             // Check for Pause/Cancel
-            const statusCheck = await firebaseService.getDoc<Campaign>('campaigns', id, tenantId);
+            const statusCheck = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
             if (!statusCheck || statusCheck.status === 'paused' || statusCheck.status === 'cancelled') {
                 return;
             }
@@ -131,10 +131,10 @@ class CampaignWorker {
     private async loadTargets(tenantId: string, audience: Campaign['audience']): Promise<Contact[]> {
         if (audience.type === 'audience') {
             // Load from Audience subcollection
-            const aud = await firebaseService.getDoc<Audience>('audiences', audience.targetId, tenantId);
+            const aud = await firebaseService.getDoc<'tenants/{tenantId}/audiences'>('audiences', audience.targetId, tenantId);
             if (!aud) return [];
             // For now, simplify: fetch ALL contacts and filter. In 2026 production, this would be a Firestore Query.
-            const allContacts = await firebaseService.getCollection<Contact>('contacts', tenantId);
+            const allContacts = await firebaseService.getCollection<'tenants/{tenantId}/contacts'>('contacts', tenantId);
             // Apply aud.filters (Basic tag filter implementation)
             if (aud.filters && aud.filters.tags) {
                 return allContacts.filter(c => c.tags.some(t => aud.filters.tags.includes(t)));
@@ -146,7 +146,7 @@ class CampaignWorker {
     }
 
     private async getAvailableBots(tenantId: string, distribution: Campaign['distribution']) {
-        const allBots = await firebaseService.getCollection<any>('bots', tenantId);
+        const allBots = await firebaseService.getCollection<'tenants/{tenantId}/bots'>('bots', tenantId);
         const activeBots = allBots.filter(b => b.status === 'connected');
 
         if (distribution.type === 'single' && distribution.botId) {
@@ -180,15 +180,15 @@ class CampaignWorker {
     }
 
     private async updateCampaignStats(tenantId: string, campaignId: string, stats: Partial<Campaign['stats']>): Promise<void> {
-        await firebaseService.setDoc<Campaign>('campaigns', campaignId, { stats: stats as any, updatedAt: new Date() }, tenantId, true);
+        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, { stats: stats as any, updatedAt: new Date() }, tenantId, true);
     }
 
     private async updateCampaignStatus(tenantId: string, campaignId: string, status: CampaignStatus): Promise<void> {
-        await firebaseService.setDoc<Campaign>('campaigns', campaignId, { status, updatedAt: new Date() }, tenantId, true);
+        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, { status, updatedAt: new Date() }, tenantId, true);
     }
 
     private async finalizeCampaign(tenantId: string, id: string, sent: number, failed: number, total: number) {
-        await firebaseService.setDoc<Campaign>('campaigns', id, {
+        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, {
             status: 'completed',
             stats: { sent, failed, pending: 0, total },
             updatedAt: new Date()

@@ -88,7 +88,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <Comp
                 className={cn(buttonVariants({ variant, size, className }))}
                 ref={ref}
-                disabled={disabled ?? isLoading}
+                disabled={disabled || isLoading}
                 {...(asChild ? props : {
                     whileHover: { scale: 1.01 },
                     whileTap: { scale: 0.98 },

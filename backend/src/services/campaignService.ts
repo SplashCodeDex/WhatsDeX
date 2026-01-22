@@ -42,7 +42,7 @@ export class CampaignService {
                 return { success: false, error: new Error(validation.error.issues[0].message) };
             }
 
-            await firebaseService.setDoc('campaigns', campaignId, campaign, tenantId);
+            await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, campaign, tenantId);
 
             // If immediate, start it
             if (campaign.schedule.type === 'immediate') {
@@ -62,7 +62,7 @@ export class CampaignService {
      */
     async getCampaigns(tenantId: string): Promise<Result<Campaign[]>> {
         try {
-            const campaigns = await firebaseService.getCollection<Campaign>('campaigns', tenantId);
+            const campaigns = await firebaseService.getCollection<'tenants/{tenantId}/campaigns'>('campaigns', tenantId);
             return { success: true, data: campaigns };
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
@@ -76,7 +76,7 @@ export class CampaignService {
      */
     async startCampaign(tenantId: string, campaignId: string): Promise<Result<void>> {
         try {
-            const campaign = await firebaseService.getDoc<Campaign>('campaigns', campaignId, tenantId);
+            const campaign = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
             if (!campaign) return { success: false, error: new Error('Campaign not found') };
 
             if (campaign.status === 'sending' || campaign.status === 'completed') {
@@ -105,6 +105,35 @@ export class CampaignService {
     }
 
     /**
+     * Resume a campaign
+     */
+    async resumeCampaign(tenantId: string, campaignId: string): Promise<Result<void>> {
+        try {
+            const campaign = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
+            if (!campaign) return { success: false, error: new Error('Campaign not found') };
+
+            if (campaign.status !== 'paused') {
+                return { success: false, error: new Error(`Campaign is not paused (current status: ${campaign.status})`) };
+            }
+
+            // Update status to pending (or sending if immediate)
+            await this.updateCampaignStatus(tenantId, campaignId, 'pending');
+
+            // Re-add to queue (or signal worker)
+            // Note: If campaign was partially done, worker should handle "resume" logic by checking stats/state.
+            // For now, we just add it back to queue, assuming worker is idempotent or handles processed items.
+            // But since queue might be empty, we re-add.
+            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'pending' }, { delay: 0 });
+
+            return { success: true, data: undefined };
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error(`CampaignService.resumeCampaign error [${tenantId}/${campaignId}]:`, err);
+            return { success: false, error: err };
+        }
+    }
+
+    /**
      * Pause a campaign execution
      */
     async pauseCampaign(tenantId: string, campaignId: string): Promise<Result<void>> {
@@ -118,8 +147,30 @@ export class CampaignService {
         }
     }
 
+    /**
+     * Duplicate a campaign
+     */
+    async duplicateCampaign(tenantId: string, campaignId: string): Promise<Result<Campaign>> {
+        try {
+            const campaign = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, tenantId);
+            if (!campaign) return { success: false, error: new Error('Campaign not found') };
+
+            const { id, createdAt, updatedAt, stats, status, ...data } = campaign;
+            const newCampaignData: Omit<Campaign, 'id' | 'tenantId' | 'createdAt' | 'updatedAt' | 'stats' | 'status'> = {
+                ...data,
+                name: `${campaign.name} (Copy)`
+            };
+
+            return await this.createCampaign(tenantId, newCampaignData);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error(`CampaignService.duplicateCampaign error [${tenantId}/${campaignId}]:`, err);
+            return { success: false, error: err };
+        }
+    }
+
     private async updateCampaignStatus(tenantId: string, campaignId: string, status: CampaignStatus): Promise<void> {
-        await firebaseService.setDoc<Campaign>(
+        await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>(
             'campaigns',
             campaignId,
             { status, updatedAt: new Date() },

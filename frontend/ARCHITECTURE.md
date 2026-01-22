@@ -201,35 +201,24 @@ if (result.success) {
 
 ## Component Architecture
 
-### Atomic Design System
+### 1. Atomic Design System
+...
+### 2. UI Patterns & Best Practices
 
-Components in `components/ui/` follow these rules:
+To ensure a premium and consistent UX, follow these patterns:
 
-1. **Pure**: No side effects, no data fetching
-2. **Stateless**: State managed by parent or context
-3. **Composable**: Build complex UIs by composition
-4. **Accessible**: WCAG 2.1 AA compliant
+#### Forms
+- **Always** use primitives from `@/components/ui/form` (`<Form>`, `<FormField>`, etc.).
+- **Always** include a `<FormError>` for root-level/server errors above the form fields.
+- **Prefer** self-contained validation logic via Zod schemas in `features/*/schemas.ts`.
 
-```tsx
-// components/ui/button.tsx
-const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-lg font-medium transition-all',
-  {
-    variants: {
-      variant: {
-        default: 'bg-primary-600 text-white hover:bg-primary-700',
-        outline: 'border border-input bg-background hover:bg-muted',
-        ghost: 'hover:bg-muted',
-      },
-      size: {
-        sm: 'h-8 px-3 text-xs',
-        default: 'h-10 px-4 text-sm',
-        lg: 'h-12 px-6 text-base',
-      },
-    },
-  }
-);
-```
+#### Buttons
+- **Always** use the `isLoading` prop for async actions instead of manual loading spinners.
+- **Ensure** buttons have a `variant` that matches their intent (e.g., `destructive` for delete).
+
+#### Feedback & States
+- **Toasts**: Use `sonner` for non-blocking feedback (success, warnings).
+- **Empty States**: Use consistent `EmptyState` components (to be implemented) for lists.
 
 ---
 

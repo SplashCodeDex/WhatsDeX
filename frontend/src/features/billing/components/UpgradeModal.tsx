@@ -19,11 +19,11 @@ interface UpgradeModalProps {
   description?: string;
 }
 
-export function UpgradeModal({ 
-  isOpen, 
-  onClose, 
-  title = "Upgrade to Pro", 
-  description = "You've reached the limit of your current plan. Upgrade to unlock more bots and features." 
+export function UpgradeModal({
+  isOpen,
+  onClose,
+  title = "Upgrade to Pro",
+  description = "You've reached the limit of your current plan. Upgrade to unlock more bots and features."
 }: UpgradeModalProps) {
   const router = useRouter();
 
@@ -44,7 +44,7 @@ export function UpgradeModal({
             {description}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="flex flex-col gap-2">
             <Button onClick={handleUpgrade} size="lg" className="w-full font-semibold">

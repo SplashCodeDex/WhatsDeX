@@ -7,7 +7,6 @@
 
 // Logging
 export * from './logger.js';
-export { default as securityLogger } from './securityLogger.js';
 
 // Formatters
 export * from './formatters.js';
@@ -15,14 +14,10 @@ export * from './formatters.js';
 // Managers
 export * from './chatHistoryManager.js';
 export * from './memoryManager.js';
-export * from './processManager.js';
 
 // Utilities
 export * from './rateLimiter.js';
 export * from './performanceMonitor.js';
-export * from './connectionDebugger.js';
-export * from './messageClassifier.js';
-export * from './moduleSystemFixer.js';
 
 // Helpers
 export * from './baileysUtils.js';
@@ -30,10 +25,5 @@ export { createBotContext } from './createBotContext.js';
 export { levenshteinDistance as levenshtein } from './levenshtein.js';
 export * from './security.js';
 
-// Console utilities
-export { default as consoleSuppressor } from './consoleSuppressor.js';
-export { default as consolefy } from './consolefy.js';
-
 // Database/Migration
-export * from './readiness.js';
 export * from './databaseManager.js';

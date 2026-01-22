@@ -2,15 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
 import { createTemplateController, getTemplatesController, spinMessageController } from './templateController.js';
 import { TemplateService } from '../services/templateService.js';
+import { GeminiAI } from '../services/geminiAI.js';
 
 // Hoist mocks
-const { mockTemplateService, mockGeminiAI } = vi.hoisted(() => ({
+const { mockTemplateService } = vi.hoisted(() => ({
     mockTemplateService: {
         createTemplate: vi.fn(),
-        getTemplates: vi.fn()
-    },
-    mockGeminiAI: {
-        spinMessage: vi.fn()
+        getTemplates: vi.fn(),
+        getTemplate: vi.fn()
     }
 }));
 
@@ -21,16 +20,11 @@ vi.mock('../services/templateService.js', () => ({
     }
 }));
 
-vi.mock('../services/geminiAI.js', () => {
-    return {
-        GeminiAI: vi.fn().mockImplementation(function() {
-            return mockGeminiAI;
-        }),
-        default: vi.fn().mockImplementation(function() {
-            return mockGeminiAI;
-        })
-    };
-});
+vi.mock('../services/geminiAI.js', () => ({
+    GeminiAI: {
+        spinMessage: vi.fn()
+    }
+}));
 
 describe('TemplateController', () => {
     let mockReq: Partial<Request>;
@@ -63,11 +57,11 @@ describe('TemplateController', () => {
     describe('spinMessageController', () => {
         it('should spin message', async () => {
             mockReq.body = { content: 'Hello {{name}}' };
-            mockGeminiAI.spinMessage.mockResolvedValue({ success: true, data: 'Hi {{name}}' });
+            vi.mocked(GeminiAI.spinMessage).mockResolvedValue({ success: true, data: 'Hi {{name}}' });
 
             await spinMessageController(mockReq as Request, mockRes as Response);
 
-            expect(mockGeminiAI.spinMessage).toHaveBeenCalledWith('Hello {{name}}', 'tenant-1');
+            expect(GeminiAI.spinMessage).toHaveBeenCalledWith('Hello {{name}}', 'tenant-1');
             expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: 'Hi {{name}}' });
         });
     });

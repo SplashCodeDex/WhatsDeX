@@ -1,12 +1,5 @@
 'use client';
 
-/**
- * Sidebar Component
- *
- * Main navigation sidebar for the dashboard.
- * Features collapsible state, responsive mobile view, and navigation links.
- */
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -18,12 +11,21 @@ import {
     CreditCard,
     LogOut,
     Menu,
-    Palette,
+    ChevronLeft,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth';
+import { useUIStore } from '@/stores/useUIStore';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 
 const NAV_ITEMS = [
     {
@@ -52,11 +54,6 @@ const NAV_ITEMS = [
         icon: CreditCard,
     },
     {
-        title: 'Assets',
-        href: '/dashboard/assets',
-        icon: Palette,
-    },
-    {
         title: 'Settings',
         href: '/dashboard/settings',
         icon: Settings,
@@ -65,63 +62,143 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { signOut } = useAuth();
+    const { user, signOut } = useAuth();
+    const { isSidebarCollapsed, setSidebarCollapsed } = useUIStore();
+
+    const NavContent = (isMobile = false) => (
+        <div className="flex flex-1 flex-col justify-between overflow-y-auto overflow-x-hidden pt-4">
+            <ul className="space-y-1.5 px-3">
+                {NAV_ITEMS.map((item) => {
+                    // Logic fix: Exact match for dashboard, start-with for others
+                    const isActive = item.href === '/dashboard'
+                        ? pathname === '/dashboard'
+                        : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+                    return (
+                        <li key={item.href} className="relative">
+                            <Link
+                                href={item.href}
+                                className={cn(
+                                    'group relative flex h-10 items-center rounded-xl px-3 transition-colors duration-200',
+                                    isActive
+                                        ? 'text-primary'
+                                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                                )}
+                            >
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="active-nav-bg"
+                                        className="absolute inset-0 z-0 bg-primary/10 rounded-xl"
+                                        initial={false}
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 300,
+                                            damping: 30,
+                                        }}
+                                    />
+                                )}
+                                <div className="z-10 flex items-center w-full">
+                                    <item.icon className={cn(
+                                        'h-5 w-5 shrink-0 transition-colors',
+                                        isActive ? 'text-primary shadow-[0_0_10px_rgba(var(--color-primary-500),0.1)]' : 'text-muted-foreground group-hover:text-foreground'
+                                    )} />
+                                    <AnimatePresence mode="wait">
+                                        {(!isSidebarCollapsed || isMobile) && (
+                                            <motion.span
+                                                initial={{ opacity: 0, x: -5 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -5 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="ml-3 font-medium text-sm whitespace-nowrap overflow-hidden"
+                                            >
+                                                {item.title}
+                                            </motion.span>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </Link>
+                        </li>
+                    );
+                })}
+            </ul>
+
+            <div className="mt-auto px-4 py-4 md:hidden">
+                <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-xl"
+                    onClick={() => signOut()}
+                >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                </Button>
+            </div>
+        </div>
+    );
 
     return (
         <>
-            {/* Mobile Menu Button - TODO: Implement Sheet/Drawer for mobile */}
-            <div className="fixed top-4 left-4 z-50 md:hidden">
-                <Button variant="outline" size="icon">
-                    <Menu className="h-4 w-4" />
-                </Button>
+            {/* Mobile Navigation */}
+            <div className="fixed top-4 left-4 z-50 lg:hidden">
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-10 w-10 border border-border/50 rounded-xl bg-background/50 backdrop-blur-md shadow-lg shadow-black/5 hover:bg-background/80">
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[85vw] max-w-80 p-0 border-r border-border/50 bg-background/80 backdrop-blur-3xl shadow-2xl">
+                        <SheetHeader className="p-6 pb-4 border-b border-border/50">
+                            <SheetTitle className="text-2xl font-black bg-gradient-to-br from-primary-600 via-primary-500 to-primary-400 bg-clip-text text-transparent">
+                                WhatsDeX
+                            </SheetTitle>
+                        </SheetHeader>
+                        {NavContent(true)}
+                    </SheetContent>
+                </Sheet>
             </div>
 
             {/* Desktop Sidebar */}
-            <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-border bg-card transition-transform md:translate-x-0 lg:block">
-                <div className="flex h-full flex-col px-3 py-4">
-                    <div className="mb-5 flex items-center pl-2.5">
-                        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
-                            WhatsDeX
-                        </span>
-                    </div>
-
-                    <div className="flex flex-1 flex-col justify-between overflow-y-auto">
-                        <ul className="space-y-2 font-medium">
-                            {NAV_ITEMS.map((item) => {
-                                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                                return (
-                                    <li key={item.href}>
-                                        <Link
-                                            href={item.href}
-                                            className={cn(
-                                                'flex items-center rounded-lg p-2 text-foreground hover:bg-muted group',
-                                                isActive && 'bg-primary/10 text-primary hover:bg-primary/20'
-                                            )}
-                                        >
-                                            <item.icon className={cn(
-                                                'h-5 w-5 transition duration-75 group-hover:text-foreground',
-                                                isActive ? 'text-primary' : 'text-muted-foreground'
-                                            )} />
-                                            <span className="ml-3">{item.title}</span>
-                                        </Link>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-
-                        <div className="border-t border-border pt-4">
-                            <Button
-                                variant="ghost"
-                                className="w-full justify-start text-muted-foreground hover:text-destructive"
-                                onClick={() => signOut()}
+            <motion.aside
+                initial={false}
+                animate={{ width: isSidebarCollapsed ? 80 : 256 }}
+                className={cn(
+                    "fixed left-0 top-0 z-40 hidden h-screen border-r border-border/50 bg-background/50 backdrop-blur-2xl transition-all duration-300 lg:block overflow-hidden shadow-xl shadow-black/5"
+                )}
+            >
+                <div className="flex h-full flex-col">
+                    <div className="flex h-16 items-center justify-between px-6 border-b border-border/50">
+                        <AnimatePresence mode="wait">
+                            {!isSidebarCollapsed && (
+                                <motion.span
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="text-2xl font-black bg-gradient-to-br from-primary-600 via-primary-500 to-primary-400 bg-clip-text text-transparent tracking-tight"
+                                >
+                                    WhatsDeX
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                                "h-8 w-8 rounded-lg hover:bg-primary/10 text-primary transition-all duration-300 shadow-sm border border-border/20 bg-background/30",
+                                isSidebarCollapsed && "mx-auto"
+                            )}
+                            onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
+                        >
+                            <motion.div
+                                animate={{ rotate: isSidebarCollapsed ? 180 : 0 }}
+                                transition={{ type: "spring", stiffness: 200, damping: 20 }}
                             >
-                                <LogOut className="mr-2 h-4 w-4" />
-                                Sign Out
-                            </Button>
-                        </div>
+                                <ChevronLeft className="h-5 w-5" />
+                            </motion.div>
+                        </Button>
                     </div>
+
+                    {NavContent(false)}
                 </div>
-            </aside>
+            </motion.aside>
         </>
     );
 }

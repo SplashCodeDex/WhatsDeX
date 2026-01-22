@@ -34,7 +34,7 @@ export class TemplateService {
         return { success: false, error: new Error(validation.error.issues[0].message) };
       }
 
-      await firebaseService.setDoc('templates', id, template, tenantId);
+      await firebaseService.setDoc<'tenants/{tenantId}/templates'>('templates', id, template, tenantId);
       return { success: true, data: template };
     } catch (error: any) {
       logger.error('Error creating template', error);
@@ -44,7 +44,7 @@ export class TemplateService {
 
   public async getTemplates(tenantId: string): Promise<Result<MessageTemplate[]>> {
     try {
-      const templates = await firebaseService.getCollection<MessageTemplate>('templates', tenantId);
+      const templates = await firebaseService.getCollection<'tenants/{tenantId}/templates'>('templates', tenantId);
       return { success: true, data: templates };
     } catch (error: any) {
       logger.error('Error fetching templates', error);
@@ -54,7 +54,7 @@ export class TemplateService {
 
   public async getTemplate(tenantId: string, templateId: string): Promise<Result<MessageTemplate | null>> {
     try {
-      const template = await firebaseService.getDoc<MessageTemplate>('templates', templateId, tenantId);
+      const template = await firebaseService.getDoc<'tenants/{tenantId}/templates'>('templates', templateId, tenantId);
       return { success: true, data: template };
     } catch (error: any) {
       logger.error('Error fetching template', error);
@@ -64,7 +64,7 @@ export class TemplateService {
 
   public async deleteTemplate(tenantId: string, templateId: string): Promise<Result<void>> {
     try {
-      await firebaseService.deleteDoc('templates', templateId, tenantId);
+      await firebaseService.deleteDoc<'tenants/{tenantId}/templates'>('templates', templateId, tenantId);
       return { success: true, data: undefined };
     } catch (error: any) {
       logger.error('Error deleting template', error);

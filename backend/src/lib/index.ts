@@ -9,15 +9,9 @@
 export { default as cache } from './cache.js';
 export { default as redis } from './redis.js';
 
-// Connection management
-export { default as connectionManager } from './connectionManager.js';
-
 // File utilities
 export { default as exif } from './exif.js';
 export { default as simple } from './simple.js';
 
 // Queue management
 export * as queues from './queues.js';
-
-// Retry utilities
-export * from './retry.js';
