@@ -31,9 +31,9 @@ Build the template management system with integrated AI personalization.
 ## Phase 3: Broadcast Engine & Hybrid Distribution
 The core execution engine using BullMQ and multi-bot pooling.
 
-- [ ] Task: Define `Campaign` Logic & Queue.
-    - [ ] Sub-task: Write Tests: Test campaign state transitions and queue job adding.
-    - [ ] Sub-task: Implement: Create `backend/src/services/campaignService.ts` and `backend/src/jobs/broadcastWorker.ts`.
+- [x] Task: Define `Campaign` Logic & Queue. (93c5965)
+    - [x] Sub-task: Write Tests: Test campaign state transitions and queue job adding.
+    - [x] Sub-task: Implement: Create `backend/src/services/campaignService.ts` and `backend/src/jobs/broadcastWorker.ts`.
 - [ ] Task: Implement Hybrid Distribution (Single vs Pool).
     - [ ] Sub-task: Write Tests: Verify load-balancing logic across multiple bots for Enterprise tier.
     - [ ] Sub-task: Implement: Update `multiTenantBotService` to support bot pooling.
