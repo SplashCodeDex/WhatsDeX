@@ -295,11 +295,11 @@
 
 [data-sonner-toast] [data-title] {
   @apply font-semibold tracking-tight;
-  color: var(--foreground) !important;
+  color: #ffffff !important;
 }
 
 [data-sonner-toast] [data-description] {
-  color: var(--muted-foreground) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 [data-sonner-toast] [data-close-button] {
