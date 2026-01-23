@@ -16,7 +16,8 @@ import {
   WebhookSchema,
   ContactSchema,
   AudienceSchema,
-  TemplateSchema
+  TemplateSchema,
+  AuthSchema
 } from '@/types/contracts.js';
 import { z } from 'zod';
 
@@ -36,6 +37,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/contacts': ContactSchema as any,
   'tenants/{tenantId}/audiences': AudienceSchema as any,
   'tenants/{tenantId}/templates': TemplateSchema as any,
+  'tenants/{tenantId}/bots/{botId}/auth': AuthSchema as any,
 };
 
 export class FirebaseService {
@@ -58,8 +60,21 @@ export class FirebaseService {
     let schemaKey: CollectionKey;
 
     if (tenantId) {
-      path = `tenants/${tenantId}/${collection}`;
-      schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
+      // Special handling for nested subcollections like bots/{botId}/auth
+      if (collection.includes('/')) {
+        const parts = collection.split('/');
+        // Pattern: bots/{botId}/auth
+        if (parts[0] === 'bots' && parts[2] === 'auth') {
+          path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
+          schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+        } else {
+          path = `tenants/${tenantId}/${collection}`;
+          schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
+        }
+      } else {
+        path = `tenants/${tenantId}/${collection}`;
+        schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
+      }
     } else {
       path = collection;
       schemaKey = collection as CollectionKey;

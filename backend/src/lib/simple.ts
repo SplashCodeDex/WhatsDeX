@@ -32,6 +32,7 @@ export const serialize = (bot: any, m: any) => {
     if (M.sender) M.sender = decodeJid(M.sender);
     
     // 2026 Mastermind: Handle LID normalization
+    if (M.sender && isLid(M.sender)) M.sender = decodeJid(M.sender);
     if (M.chat && isLid(M.chat)) M.chat = decodeJid(M.chat);
   }
 
@@ -75,6 +76,7 @@ export const serialize = (bot: any, m: any) => {
       M.quoted.id = M.msg.contextInfo.stanzaId;
       M.quoted.chat = M.quoted.key.remoteJid;
       M.quoted.sender = M.quoted.key.participant;
+      if (M.quoted.sender && isLid(M.quoted.sender)) M.quoted.sender = decodeJid(M.quoted.sender);
       M.quoted.fromMe = M.quoted.key.fromMe;
       M.quoted.text =
         M.quoted.message[type]?.text ||

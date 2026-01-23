@@ -1,5 +1,5 @@
 import { AuthenticationState, AuthenticationCreds, BufferJSON, initAuthCreds, proto } from 'baileys';
-import { firebaseService } from '@/services/FirebaseService.js';
+import { firebaseService } from '../services/FirebaseService.js';
 
 /**
  * Custom Baileys Auth State using Firestore subcollections
@@ -9,19 +9,14 @@ export async function useFirestoreAuthState(tenantId: string, botId: string): Pr
 
   const writeData = async (data: any, id: string) => {
     const serialized = JSON.parse(JSON.stringify(data, BufferJSON.replacer));
-    // Wrap in object to ensure it is a valid Firestore document (cannot be primitive)
-    await (firebaseService as any).setDoc(`bots/${botId}/auth`, id, { value: serialized }, tenantId);
+    await firebaseService.setDoc(`bots/${botId}/auth`, id, { value: serialized }, tenantId);
   };
 
   const readData = async (id: string) => {
     try {
-      const doc = await (firebaseService as any).getDoc(`bots/${botId}/auth`, id, tenantId);
-      if (doc && 'value' in doc) {
+      const doc = await firebaseService.getDoc(`bots/${botId}/auth`, id, tenantId);
+      if (doc && 'value' in (doc as any)) {
         return JSON.parse(JSON.stringify((doc as any).value), BufferJSON.reviver);
-      }
-      // Backward compatibility for existing docs (if any) or handle potential direct saves
-      if (doc) {
-        return JSON.parse(JSON.stringify(doc), BufferJSON.reviver);
       }
       return null;
     } catch (error) {
@@ -30,9 +25,7 @@ export async function useFirestoreAuthState(tenantId: string, botId: string): Pr
   };
 
   const removeData = async (id: string) => {
-    // Note: FirebaseService doesn't have deleteDoc yet, but we'll add it or mock it
-    // For now, setting to empty as placeholder
-    await (firebaseService as any).setDoc(`bots/${botId}/auth`, id, { deleted: true }, tenantId);
+    await firebaseService.deleteDoc(`bots/${botId}/auth`, id, tenantId);
   };
 
   const creds: AuthenticationCreds = await readData('creds') || initAuthCreds();
@@ -67,6 +60,8 @@ export async function useFirestoreAuthState(tenantId: string, botId: string): Pr
         }
       }
     },
-    saveCreds: () => writeData(creds, 'creds')
+    saveCreds: async () => {
+      await writeData(creds, 'creds');
+    }
   };
 }

@@ -371,3 +371,13 @@ export const TemplateSchema = z.object({
 }).readonly();
 
 export type MessageTemplate = z.infer<typeof TemplateSchema>;
+
+/**
+ * Baileys Auth State Schema ('tenants/{tenantId}/bots/{botId}/auth' subcollection)
+ * Stores session credentials and keys
+ */
+export const AuthSchema = z.object({
+  value: z.any()
+});
+
+export type AuthData = z.infer<typeof AuthSchema>;

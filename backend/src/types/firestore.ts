@@ -148,4 +148,5 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/contacts': Contact;
   'tenants/{tenantId}/audiences': Audience;
   'tenants/{tenantId}/templates': MessageTemplate;
+  'tenants/{tenantId}/bots/{botId}/auth': { value: any };
 }
