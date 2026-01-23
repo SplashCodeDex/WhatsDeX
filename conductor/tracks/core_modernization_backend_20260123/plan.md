@@ -11,14 +11,10 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: LID Mapping & Unified Identity' (Protocol in workflow.md) [commit: 3f3ab37]
 
 ## Phase 3: Firestore Auth State Implementation
-- [ ] Task: Context Analysis - Baileys Firestore Auth
+- [~] Task: Context Analysis - Baileys Firestore Auth
     - Analyze existing `backend/src/lib/baileysFirestoreAuth.ts` (if stubbed) or research the required `AuthenticationState` interface for Baileys v7.
-- [ ] Task: TDD - Firestore Auth Provider
-    - Write unit tests for `baileysFirestoreAuth.ts` using a mocked Firestore.
-    - Implement the full `AuthenticationState` lifecycle: `creds.update`, `keys.get`, `keys.set`.
-- [ ] Task: Integration - Switch Bot Session Management
-    - Refactor `multiTenantBotService.ts` to use `baileysFirestoreAuth` instead of `useMultiFileAuthState`.
-    - Update `ConfigManager` to prioritize Firestore sessions.
+- [x] Task: TDD - Firestore Auth Provider [commit: e3a3d4a]
+- [x] Task: Integration - Switch Bot Session Management [commit: 9ab7ae5]
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Firestore Auth State Implementation' (Protocol in workflow.md)
 
 ## Phase 4: Final Cleanup & Decommissioning
