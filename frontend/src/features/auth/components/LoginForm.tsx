@@ -1,68 +1,37 @@
 'use client';
 
+import { useActionState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button, Input, PasswordInput, Checkbox } from '@/components/ui';
 import { StaggeredEnter, StaggeredItem } from '@/components/ui/motion';
 import { GoogleIcon } from '@/components/ui/icons';
-import {
-    signIn,
-    loginSchema,
-    type LoginInput,
-    getAuthErrorMessage,
-    useAuthStore,
-} from '@/features/auth';
+import { signIn } from '../actions';
 
 export function LoginForm() {
     const router = useRouter();
-    const { setLoading, isLoading } = useAuthStore();
+    const [state, formAction, isPending] = useActionState(signIn, null);
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm({
-        resolver: zodResolver(loginSchema),
-        defaultValues: {
-            email: '',
-            password: '',
-            rememberMe: false,
-        },
-    });
-
-    async function onSubmit(data: any) {
-        setLoading(true);
-        const formData = new FormData();
-        formData.append('email', data.email);
-        formData.append('password', data.password);
-        formData.append('rememberMe', String(data.rememberMe));
-
-        const result = await signIn(formData);
-
-        if (result.success) {
+    useEffect(() => {
+        if (state?.success) {
             toast.success('Successfully signed in!', {
                 description: 'Redirecting to your dashboard...',
             });
             import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
             router.push('/dashboard');
-        } else {
-            const mappedError = getAuthErrorMessage(result.error.code);
-            const errorMessage = mappedError === 'An unexpected error occurred' && result.error.message
-                ? result.error.message
-                : mappedError;
-
-            toast.error('Authentication failed', {
-                description: errorMessage,
-            });
-            setLoading(false);
+        } else if (state?.success === false && state?.error) {
+             // If field error exists, it's shown inline. If not, toast.
+             if (!state.error.details?.field) {
+                 toast.error('Authentication failed', {
+                    description: state.error.message
+                 });
+             }
         }
-    }
-
+    }, [state, router]);
+    
     return (
         <StaggeredEnter className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <StaggeredItem className="flex flex-col space-y-2 text-center">
@@ -75,7 +44,7 @@ export function LoginForm() {
             </StaggeredItem>
 
             <StaggeredItem className="grid gap-6">
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <form action={formAction}>
                     <div className="grid gap-4">
                         <div className="grid gap-2">
                             <label
@@ -86,17 +55,16 @@ export function LoginForm() {
                             </label>
                             <Input
                                 id="email"
+                                name="email"
                                 placeholder="name@example.com"
                                 type="email"
                                 autoCapitalize="none"
                                 autoComplete="email"
                                 autoCorrect="off"
-                                disabled={isLoading}
-                                error={!!errors.email}
-                                {...register('email')}
+                                disabled={isPending}
                             />
-                            {errors.email && (
-                                <span className="text-xs text-destructive">{errors.email.message}</span>
+                            {state?.success === false && state.error.details?.field === 'email' && (
+                                <span className="text-xs text-destructive">{state.error.message}</span>
                             )}
                         </div>
                         <div className="grid gap-2">
@@ -110,22 +78,21 @@ export function LoginForm() {
                             </div>
                             <PasswordInput
                                 id="password"
+                                name="password"
                                 autoComplete="current-password"
-                                disabled={isLoading}
-                                error={!!errors.password}
-                                {...register('password')}
+                                disabled={isPending}
                             />
-                            {errors.password && (
-                                <span className="text-xs text-destructive">{errors.password.message}</span>
+                             {state?.success === false && state.error.details?.field === 'password' && (
+                                <span className="text-xs text-destructive">{state.error.message}</span>
                             )}
                         </div>
 
                         <div className="flex items-center justify-between">
                             <Checkbox
                                 id="rememberMe"
+                                name="rememberMe"
                                 label="Remember me"
-                                disabled={isLoading}
-                                {...register('rememberMe')}
+                                disabled={isPending}
                             />
                             <Link
                                 href="/forgot-password"
@@ -134,9 +101,15 @@ export function LoginForm() {
                                 Forgot password?
                             </Link>
                         </div>
+                        
+                        {state?.success === false && !state.error.details?.field && (
+                            <div className="text-sm text-destructive text-center">
+                                {state.error.message}
+                            </div>
+                        )}
 
-                        <Button disabled={isLoading} className="w-full">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button disabled={isPending} className="w-full">
+                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Sign In
                         </Button>
                     </div>
@@ -153,7 +126,7 @@ export function LoginForm() {
                     </div>
                 </div>
 
-                <Button variant="outline" type="button" disabled={isLoading} className="w-full">
+                <Button variant="outline" type="button" disabled={isPending} className="w-full">
                     <GoogleIcon className="mr-2 h-4 w-4" />
                     Google
                 </Button>
