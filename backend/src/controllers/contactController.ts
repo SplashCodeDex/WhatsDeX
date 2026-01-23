@@ -2,14 +2,32 @@ import { Request, Response } from 'express';
 import { db } from '../lib/firebase.js';
 import { z } from 'zod';
 import logger from '../utils/logger.js';
+import { ContactService } from '../services/contactService.js';
 
 export class ContactController {
     /**
-     * Import contacts from CSV (Placeholder)
+     * Import contacts from CSV
      */
     static async importContacts(req: Request, res: Response) {
-        // TODO: Implement CSV parsing and bulk import
-        res.status(501).json({ success: false, error: 'Import functionality not implemented yet' });
+        try {
+            const tenantId = req.user?.tenantId;
+            if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+            const { csvData } = req.body;
+            if (!csvData) return res.status(400).json({ success: false, error: 'CSV data is required' });
+
+            const service = ContactService.getInstance();
+            const result = await service.importContacts(tenantId, csvData);
+
+            if (!result.success) {
+                return res.status(500).json({ success: false, error: result.error.message });
+            }
+
+            res.json({ success: true, data: result.data });
+        } catch (error: any) {
+            logger.error('ContactController.importContacts error', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
     }
 
     /**
@@ -147,6 +165,27 @@ export class ContactController {
             res.json({ success: true, data: { message: 'Contact deleted' } });
         } catch (error: any) {
             logger.error('ContactController.deleteContact error', error);
+        }
+    }
+
+    /**
+     * Get audiences (segments) for a tenant
+     */
+    static async getAudiences(req: Request, res: Response) {
+        try {
+            const tenantId = req.user?.tenantId;
+            if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+            const service = ContactService.getInstance();
+            const result = await service.getAudience(tenantId);
+
+            if (!result.success) {
+                return res.status(500).json({ success: false, error: result.error.message });
+            }
+
+            res.json({ success: true, data: result.data });
+        } catch (error: any) {
+            logger.error('ContactController.getAudiences error', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }

@@ -9,12 +9,15 @@
 ## Phase 2: Auth Feature Refactor
 - [x] Task: Refactor Auth Server Actions [commit: b5fd9d4]
     - Update `features/auth/actions.ts` to return `Result<T>`.
-- [x] Task: TDD - Login Form Refactor [commit: d22bbca]
+- [x] Task: TDD - Login Form Refactor [commit: 7efc6ec]
     - Update/Create tests for `LoginForm.tsx` ensuring it uses `useActionState`.
     - Implement `useActionState` in `LoginForm.tsx` with inline error display.
-- [ ] Task: TDD - Register Form Refactor
+- [x] Task: TDD - Register Form Refactor [commit: 22bf62e]
     - Update/Create tests for `RegisterForm.tsx`.
     - Implement `useActionState` in `RegisterForm.tsx`.
+- [x] Task: TDD - Password Reset Forms Refactor [commit: a031e53]
+    - Refactor `ForgotPasswordForm.tsx` and `ResetPasswordForm.tsx` to use `useActionState`.
+    - Update `requestPasswordReset` and `resetPassword` action signatures.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Auth Feature Refactor' (Protocol in workflow.md)
 
 ## Phase 3: Bot Management Feature Refactor

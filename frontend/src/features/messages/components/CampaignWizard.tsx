@@ -9,13 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-    Users, 
-    MessageSquare, 
-    Zap, 
-    Settings2, 
-    ChevronRight, 
-    ChevronLeft, 
+import {
+    Users,
+    MessageSquare,
+    Zap,
+    Settings2,
+    ChevronRight,
+    ChevronLeft,
     Send,
     Sparkles,
     CheckCircle2,
@@ -23,12 +23,12 @@ import {
     Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { 
-    Select, 
-    SelectContent, 
-    SelectItem, 
-    SelectTrigger, 
-    SelectValue 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +45,16 @@ interface CampaignFormData {
     aiSpinning: boolean;
     minDelay: number;
     maxDelay: number;
+    // Human Path fields
+    batchSize: number;
+    batchPauseMin: number;
+    batchPauseMax: number;
+    workingHoursEnabled: boolean;
+    workingHoursStart: string;
+    workingHoursEnd: string;
+    timezone: string;
+    typingSimulation: boolean;
+    maxTypingDelay: number;
     scheduleType: 'immediate' | 'scheduled';
     scheduledAt: string;
 }
@@ -67,6 +77,15 @@ export function CampaignWizard() {
         aiSpinning: false,
         minDelay: 10,
         maxDelay: 30,
+        batchSize: 20,
+        batchPauseMin: 5,
+        batchPauseMax: 15,
+        workingHoursEnabled: false,
+        workingHoursStart: '08:00',
+        workingHoursEnd: '20:00',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        typingSimulation: true,
+        maxTypingDelay: 5,
         scheduleType: 'immediate',
         scheduledAt: ''
     });
@@ -96,13 +115,22 @@ export function CampaignWizard() {
             templateId: formData.templateId,
             audience: { type: formData.audienceType, targetId: formData.targetId },
             distribution: { type: formData.distributionType, botId: formData.botId },
-            antiBan: { 
-                aiSpinning: formData.aiSpinning, 
-                minDelay: formData.minDelay, 
-                maxDelay: formData.maxDelay 
+            antiBan: {
+                aiSpinning: formData.aiSpinning,
+                minDelay: formData.minDelay,
+                maxDelay: formData.maxDelay,
+                batchSize: formData.batchSize,
+                batchPauseMin: formData.batchPauseMin,
+                batchPauseMax: formData.batchPauseMax,
+                workingHoursEnabled: formData.workingHoursEnabled,
+                workingHoursStart: formData.workingHoursStart,
+                workingHoursEnd: formData.workingHoursEnd,
+                timezone: formData.timezone,
+                typingSimulation: formData.typingSimulation,
+                maxTypingDelay: formData.maxTypingDelay
             },
-            schedule: { 
-                type: formData.scheduleType, 
+            schedule: {
+                type: formData.scheduleType,
                 ...(formData.scheduledAt ? { scheduledAt: new Date(formData.scheduledAt).toISOString() } : {})
             }
         });
@@ -151,7 +179,7 @@ export function CampaignWizard() {
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase text-muted-foreground">Campaign Name</Label>
-                            <Input 
+                            <Input
                                 placeholder="e.g. Anniversary Special Sale"
                                 value={formData.name}
                                 onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -160,8 +188,8 @@ export function CampaignWizard() {
                         </div>
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase text-muted-foreground">Target Audience</Label>
-                            <Select 
-                                value={formData.targetId} 
+                            <Select
+                                value={formData.targetId}
                                 onValueChange={(val: string) => setFormData(prev => ({ ...prev, targetId: val }))}
                             >
                                 <SelectTrigger className="h-12">
@@ -184,8 +212,8 @@ export function CampaignWizard() {
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase text-muted-foreground">Message Template</Label>
-                            <Select 
-                                value={formData.templateId} 
+                            <Select
+                                value={formData.templateId}
                                 onValueChange={(val: string) => setFormData(prev => ({ ...prev, templateId: val }))}
                             >
                                 <SelectTrigger className="h-12">
@@ -210,8 +238,8 @@ export function CampaignWizard() {
                                         <Sparkles className="w-4 h-4" />
                                         AI Message Spinning Enabled
                                     </div>
-                                    <Switch 
-                                        checked={formData.aiSpinning} 
+                                    <Switch
+                                        checked={formData.aiSpinning}
                                         onCheckedChange={(val: boolean) => setFormData(prev => ({ ...prev, aiSpinning: val }))}
                                     />
                                 </div>
@@ -226,7 +254,7 @@ export function CampaignWizard() {
                             <div className="space-y-4">
                                 <Label className="text-xs font-bold uppercase text-muted-foreground">Distribution Strategy</Label>
                                 <div className="grid grid-cols-1 gap-3">
-                                    <div 
+                                    <div
                                         className={cn(
                                             "p-4 rounded-xl border-2 cursor-pointer transition-all",
                                             formData.distributionType === 'single' ? "border-primary bg-primary/10" : "border-border hover:border-border/80"
@@ -243,7 +271,7 @@ export function CampaignWizard() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div 
+                                    <div
                                         className={cn(
                                             "p-4 rounded-xl border-2 cursor-pointer transition-all",
                                             formData.distributionType === 'pool' ? "border-primary bg-primary/10" : "border-border hover:border-border/80"
@@ -271,28 +299,165 @@ export function CampaignWizard() {
                                         <span className="text-xs font-black font-mono">{formData.minDelay}s - {formData.maxDelay}s</span>
                                     </div>
                                     <div className="flex gap-4">
-                                        <Input 
-                                            type="number" 
-                                            value={formData.minDelay} 
+                                        <Input
+                                            type="number"
+                                            value={formData.minDelay}
                                             onChange={e => setFormData(prev => ({ ...prev, minDelay: Number(e.target.value) }))}
                                             className="h-10"
+                                            placeholder="Min"
                                         />
-                                        <Input 
-                                            type="number" 
-                                            value={formData.maxDelay} 
+                                        <Input
+                                            type="number"
+                                            value={formData.maxDelay}
                                             onChange={e => setFormData(prev => ({ ...prev, maxDelay: Number(e.target.value) }))}
                                             className="h-10"
+                                            placeholder="Max"
                                         />
+                                    </div>
+
+                                    <div className="pt-2 border-t border-border/40 mt-2">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-[11px] font-bold uppercase text-muted-foreground flex items-center gap-2">
+                                                <Zap className="w-3 h-3 text-amber-500" />
+                                                Human Path (Batching)
+                                            </span>
+                                            <span className="text-[10px] font-mono bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded">ADVANCED</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3 mt-3">
+                                            <div className="space-y-1.5">
+                                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Batch Size</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={formData.batchSize}
+                                                    onChange={e => setFormData(prev => ({ ...prev, batchSize: Number(e.target.value) }))}
+                                                    className="h-8 text-xs"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Batch Pause (Min)</Label>
+                                                <div className="flex items-center gap-1">
+                                                    <Input
+                                                        type="number"
+                                                        value={formData.batchPauseMin}
+                                                        onChange={e => setFormData(prev => ({ ...prev, batchPauseMin: Number(e.target.value) }))}
+                                                        className="h-8 text-xs px-2"
+                                                    />
+                                                    <span className="text-[10px] text-muted-foreground">-</span>
+                                                    <Input
+                                                        type="number"
+                                                        value={formData.batchPauseMax}
+                                                        onChange={e => setFormData(prev => ({ ...prev, batchPauseMax: Number(e.target.value) }))}
+                                                        className="h-8 text-xs px-2"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                        <Clock className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-sm">Working Hours Constraint</div>
+                                        <div className="text-[10px] text-muted-foreground">Only send messages during specific times to avoid bans</div>
+                                    </div>
+                                </div>
+                                <Switch
+                                    checked={formData.workingHoursEnabled}
+                                    onCheckedChange={(val: boolean) => setFormData(prev => ({ ...prev, workingHoursEnabled: val }))}
+                                />
+                            </div>
+                            {formData.workingHoursEnabled && (
+                                <div className="mt-4 grid grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground text-center block">Timezone</Label>
+                                        <Select
+                                            value={formData.timezone}
+                                            onValueChange={(val: string) => setFormData(prev => ({ ...prev, timezone: val }))}
+                                        >
+                                            <SelectTrigger className="h-9 text-xs">
+                                                <SelectValue placeholder="Select Timezone" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="UTC">UTC (Universal)</SelectItem>
+                                                <SelectItem value="America/New_York">Eastern (ET)</SelectItem>
+                                                <SelectItem value="America/Chicago">Central (CT)</SelectItem>
+                                                <SelectItem value="America/Denver">Mountain (MT)</SelectItem>
+                                                <SelectItem value="America/Los_Angeles">Pacific (PT)</SelectItem>
+                                                <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                                                <SelectItem value="Africa/Lagos">Lagos (WAT)</SelectItem>
+                                                <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground text-center block">Start</Label>
+                                        <Input
+                                            type="time"
+                                            value={formData.workingHoursStart}
+                                            onChange={e => setFormData(prev => ({ ...prev, workingHoursStart: e.target.value }))}
+                                            className="h-9"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground text-center block">End</Label>
+                                        <Input
+                                            type="time"
+                                            value={formData.workingHoursEnd}
+                                            onChange={e => setFormData(prev => ({ ...prev, workingHoursEnd: e.target.value }))}
+                                            className="h-9"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                                        <MessageSquare className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-sm">Typing Simulation</div>
+                                        <div className="text-[10px] text-muted-foreground">Mimics human typing before sending each message</div>
+                                    </div>
+                                </div>
+                                <Switch
+                                    checked={formData.typingSimulation}
+                                    onCheckedChange={(val: boolean) => setFormData(prev => ({ ...prev, typingSimulation: val }))}
+                                />
+                            </div>
+                            {formData.typingSimulation && (
+                                <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2">
+                                    <div className="flex justify-between items-center text-[10px] font-bold uppercase text-muted-foreground mb-1">
+                                        <span>Max Typing Delay (Seconds)</span>
+                                        <span className="text-amber-600 font-mono">{formData.maxTypingDelay}s</span>
+                                    </div>
+                                    <Input
+                                        type="range"
+                                        min="1"
+                                        max="10"
+                                        step="1"
+                                        value={formData.maxTypingDelay}
+                                        onChange={e => setFormData(prev => ({ ...prev, maxTypingDelay: Number(e.target.value) }))}
+                                        className="h-4 accent-amber-500"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
                         {formData.distributionType === 'single' && (
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold uppercase text-muted-foreground">Select Sending Bot</Label>
-                                <Select 
-                                    value={formData.botId} 
+                                <Select
+                                    value={formData.botId}
                                     onValueChange={(val: string) => setFormData(prev => ({ ...prev, botId: val }))}
                                 >
                                     <SelectTrigger className="h-12">
@@ -345,9 +510,9 @@ export function CampaignWizard() {
             </CardContent>
 
             <CardFooter className="border-t border-border/20 py-6 flex justify-between bg-muted/5">
-                <Button 
-                    variant="ghost" 
-                    onClick={handleBack} 
+                <Button
+                    variant="ghost"
+                    onClick={handleBack}
                     disabled={step === 'audience'}
                     className="font-bold uppercase tracking-widest text-[10px]"
                 >
@@ -355,8 +520,8 @@ export function CampaignWizard() {
                 </Button>
 
                 {step !== 'review' ? (
-                    <Button 
-                        onClick={handleNext} 
+                    <Button
+                        onClick={handleNext}
                         className="px-8 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
                         disabled={
                             (step === 'audience' && !formData.targetId) ||
@@ -367,7 +532,7 @@ export function CampaignWizard() {
                         Next Step <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                 ) : (
-                    <Button 
+                    <Button
                         onClick={handleSubmit}
                         disabled={createMutation.isPending}
                         className="px-10 font-bold uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30 h-12"

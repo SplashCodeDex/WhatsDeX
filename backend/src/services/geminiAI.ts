@@ -378,20 +378,27 @@ Be intelligent - understand implied requests, context clues, and natural languag
     }
 
     // 2. Intelligence Layer: Advanced Reasoning
-    const systemPrompt = `You are a high-intelligence AI agent for ${bot.user?.name ?? 'WhatsDeX'}.
+    const personality = bot.config.aiPersonality || 'a professional assistant';
+
+    const systemPrompt = `You are a high-intelligence AI agent.
+Role: ${personality}
+Context: Acting on behalf of ${bot.user?.name ?? 'WhatsDeX'}.
 Current Time: ${new Date().toLocaleString()}
 Work on behalf of the customer. Use the tools provided when necessary.
 ${historicalContext}
-Respond professionally.`;
+Respond appropriately based on your role.`;
+
     const conversationPrompt = `
-You are an intelligent WhatsApp assistant. Respond naturally and helpfully.
+SYSTEM INSTRUCTIONS:
+${systemPrompt}
 
-User Message: "${ctx.body}"
-User Profile: ${JSON.stringify(context.user)}
-Conversation History: ${context.conversation.slice(-10).join(' | ')}
-Current Context: ${context.environment.timeOfDay}, ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][context.environment.dayOfWeek]}
+USER CONTEXT:
+- Message: "${ctx.body}"
+- Profile: ${JSON.stringify(context.user)}
+- History (Recent): ${context.conversation.slice(-10).join(' | ')}
+- Environment: ${context.environment.timeOfDay}, ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][context.environment.dayOfWeek]}
 
-Available Capabilities:
+CAPABILITIES:
 - Download videos/music from YouTube, TikTok, Instagram, etc.
 - Generate images with AI (DALL-E, Animagine, Flux)
 - Search web, GitHub, YouTube
@@ -401,9 +408,9 @@ Available Capabilities:
 - Group management, user profiles
 - And much more...
 
+REMEDIATION:
 If the user asks for something you can help with, offer to do it. Be proactive and helpful.
 If unclear, ask clarifying questions. Keep responses natural and engaging.
-
 Respond in the user's language if they're not using English.
 `;
 
@@ -604,7 +611,7 @@ Message: "${content}"
 `;
 
       const rephrased = await gemini.getChatCompletion(prompt);
-      
+
       // Memoize for 24 hours
       await cacheService.set(cacheKey, rephrased, 3600 * 24);
 

@@ -8,6 +8,25 @@ import { TemplateService } from '../services/templateService.js';
 import { GeminiAI } from '../services/geminiAI.js';
 import logger from '../utils/logger.js';
 import { Timestamp } from 'firebase-admin/firestore';
+import moment from 'moment-timezone';
+
+/**
+ * Gaussian Random Utility
+ * Generates a number with a normal distribution around a mean.
+ */
+function gaussianRandom(min: number, max: number, skew: number = 1): number {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+
+    num = num / 10.0 + 0.5; // Translate to 0 -> 1
+    if (num > 1 || num < 0) num = gaussianRandom(min, max, skew); // resample between 0 and 1 if out of range
+    num = Math.pow(num, skew); // Stretch to fill range
+    num *= max - min; // stretch to fill range
+    num += min; // offset to min
+    return num;
+}
 
 const redisOptions = {
     host: process.env.REDIS_HOST || 'localhost',
@@ -53,11 +72,18 @@ class CampaignWorker {
 
     private async processCampaign(job: Job<CampaignJobData>): Promise<void> {
         const { tenantId, campaign } = job.data;
-        const { id, targetId } = { ...campaign, targetId: campaign.audience.targetId };
+        const { id } = campaign;
 
         // 1. Fetch Latest Campaign & Template
         const currentCampaign = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
         if (!currentCampaign) throw new Error('Campaign not found');
+
+        // Check if finished or paused
+        if (currentCampaign.status === 'completed' || currentCampaign.status === 'cancelled') return;
+        if (currentCampaign.status === 'paused') {
+            logger.info(`Campaign ${id} is paused. Job processed.`);
+            return;
+        }
 
         const templateResult = await TemplateService.getInstance().getTemplate(tenantId, currentCampaign.templateId);
         if (!templateResult.success || !templateResult.data) throw new Error('Template not found');
@@ -70,62 +96,119 @@ class CampaignWorker {
             return;
         }
 
-        // 3. Update Total Stats
-        await this.updateCampaignStats(tenantId, id, { total: targets.length, pending: targets.length });
+        // 3. Update Total Stats if not already set
+        if (!currentCampaign.stats.total) {
+            await this.updateCampaignStats(tenantId, id, { total: targets.length, pending: targets.length });
+        }
 
-        // 4. Distribution Strategy
+        // 4. Working Hours Check (Timezone Aware)
+        if (currentCampaign.antiBan.workingHoursEnabled) {
+            const tz = currentCampaign.antiBan.timezone || 'UTC';
+            const now = moment().tz(tz);
+            const startTimeStr = currentCampaign.antiBan.workingHoursStart;
+            const endTimeStr = currentCampaign.antiBan.workingHoursEnd;
+
+            const start = moment.tz(startTimeStr, 'HH:mm', tz);
+            const end = moment.tz(endTimeStr, 'HH:mm', tz);
+
+            if (now.isBefore(start) || now.isAfter(end)) {
+                logger.info(`Campaign ${id} outside working hours in ${tz}. Current: ${now.format('HH:mm')}. Pausing...`);
+                await this.updateCampaignStatus(tenantId, id, 'paused');
+                // Could ideally auto-calculate delay until start and re-add to queue
+                return;
+            }
+        }
+
+        // 5. Get Active Bots
         const bots = await this.getAvailableBots(tenantId, currentCampaign.distribution);
-        if (bots.length === 0) throw new Error('No active bots available for broadcast');
+        if (bots.length === 0) {
+            logger.warn(`No active bots for campaign ${id}. Job will retry.`);
+            throw new Error('No active bots available');
+        }
 
         let sent = currentCampaign.stats.sent || 0;
         let failed = currentCampaign.stats.failed || 0;
-        const startIndex = sent + failed;
+        const total = targets.length;
+
+        if (sent + failed >= total) {
+            await this.finalizeCampaign(tenantId, id, sent, failed, total);
+            return;
+        }
 
         await this.updateCampaignStatus(tenantId, id, 'sending');
 
-        for (let i = startIndex; i < targets.length; i++) {
+        // Number of messages to process in THIS job segment
+        // If batchSize is configured, use it. Otherwise process a reasonable chunk (e.g. 50)
+        const segmentSize = currentCampaign.antiBan.batchSize > 0 ? currentCampaign.antiBan.batchSize : 50;
+        const endIndex = Math.min(sent + failed + segmentSize, total);
+
+        logger.info(`Campaign ${id}: Processing segment from ${sent + failed} to ${endIndex}`);
+
+        for (let i = sent + failed; i < endIndex; i++) {
             const contact = targets[i];
 
-            // Check for Pause/Cancel
-            const statusCheck = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
-            if (!statusCheck || statusCheck.status === 'paused' || statusCheck.status === 'cancelled') {
-                return;
+            // Internal check inside loop for pause
+            if (i % 5 === 0) {
+                const live = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
+                if (live?.status === 'paused' || live?.status === 'cancelled') return;
             }
 
-            // Round-robin through bot pool
             const bot = bots[i % bots.length];
-
             try {
-                // Prepare Message (Spin + Inject)
                 const content = await this.prepareMessage(tenantId, template, contact, currentCampaign.antiBan.aiSpinning);
+
+                // Typing Simulation
+                let typingDelay = 0;
+                if (currentCampaign.antiBan.typingSimulation) {
+                    typingDelay = Math.floor(gaussianRandom(2, currentCampaign.antiBan.maxTypingDelay || 5) * 1000);
+                }
 
                 const result = await multiTenantBotService.sendMessage(tenantId, bot.id, {
                     to: contact.phone,
                     text: content,
-                    type: 'text'
+                    type: 'text',
+                    typingDelay
                 });
 
-                if (result.success) sent++; else failed++;
+                if (result.success) sent++;
+                else failed++;
 
-                // Progress Reporting
-                if (i % 5 === 0 || i === targets.length - 1) {
-                    await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
-                    socketService.emitProgress(tenantId, id, { sent, failed, total: targets.length, status: 'sending' });
+                // Progress Update (per message or small groups)
+                if (i % 5 === 0 || i === endIndex - 1) {
+                    await this.updateCampaignStats(tenantId, id, { sent, failed, pending: total - (sent + failed) });
+                    socketService.emitProgress(tenantId, id, { sent, failed, total, status: 'sending' });
                 }
 
-                // Intelligent Throttling
-                if (i < targets.length - 1) {
-                    const delay = Math.floor(Math.random() * (currentCampaign.antiBan.maxDelay - currentCampaign.antiBan.minDelay + 1) + currentCampaign.antiBan.minDelay) * 1000;
+                // Inter-message delay (only if not the last item in segment)
+                if (i < endIndex - 1) {
+                    const delay = Math.floor(gaussianRandom(currentCampaign.antiBan.minDelay, currentCampaign.antiBan.maxDelay) * 1000);
                     await new Promise(r => setTimeout(r, delay));
                 }
 
             } catch (err) {
                 failed++;
-                logger.error(`Campaign error for ${contact.phone}:`, err);
+                logger.error(`Campaign ${id} message error for ${contact.phone}:`, err);
             }
         }
 
-        await this.finalizeCampaign(tenantId, id, sent, failed, targets.length);
+        // Segment Finished
+        if (sent + failed < total) {
+            // Schedule the NEXT segment
+            let delayTime = 0;
+            if (currentCampaign.antiBan.batchSize > 0) {
+                // Batch pause (minutes)
+                delayTime = Math.floor(gaussianRandom(currentCampaign.antiBan.batchPauseMin, currentCampaign.antiBan.batchPauseMax) * 60 * 1000);
+                logger.info(`Campaign ${id}: Segment done. Scheduling next segment in ${delayTime / 60000} mins (Batch Pause).`);
+            } else {
+                // Short pause between segments
+                delayTime = Math.floor(gaussianRandom(currentCampaign.antiBan.minDelay, currentCampaign.antiBan.maxDelay) * 1000);
+            }
+
+            // Re-add to queue
+            await this.worker.queue.add('process-campaign', { tenantId, campaign: currentCampaign }, { delay: delayTime });
+        } else {
+            await this.finalizeCampaign(tenantId, id, sent, failed, total);
+        }
     }
 
     private async loadTargets(tenantId: string, audience: Campaign['audience']): Promise<Contact[]> {

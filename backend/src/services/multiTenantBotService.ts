@@ -562,6 +562,7 @@ export class MultiTenantBotService {
     type: 'text' | 'image' | 'video' | 'document';
     url?: string;
     caption?: string;
+    typingDelay?: number;
   }): Promise<Result<any>> {
     try {
       const bot = this.activeBots.get(botId);
@@ -574,6 +575,13 @@ export class MultiTenantBotService {
 
       let result;
       if (payload.type === 'text') {
+        // Human Path: Simulate typing if requested
+        if (payload.typingDelay && payload.typingDelay > 0) {
+          await bot.sendPresenceUpdate?.('composing', jid);
+          await new Promise(r => setTimeout(r, payload.typingDelay));
+          await bot.sendPresenceUpdate?.('paused', jid);
+        }
+
         result = await bot.sendMessage(jid, { text: payload.text });
       } else if (['image', 'video', 'document'].includes(payload.type) && payload.url) {
         // Media message

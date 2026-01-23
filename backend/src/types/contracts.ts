@@ -270,9 +270,20 @@ export const CampaignSchema = z.object({
     botId: z.string().optional(), // Used if type is 'single'
   }),
   antiBan: z.object({
+    uuid: z.string().optional(), // Strategy identifier
     aiSpinning: z.boolean().default(false),
     minDelay: z.number().default(10), // seconds
     maxDelay: z.number().default(30), // seconds
+    // Human Path Enhancements
+    batchSize: z.number().default(0), // 0 means no batch pauses
+    batchPauseMin: z.number().default(5), // minutes
+    batchPauseMax: z.number().default(15), // minutes
+    workingHoursEnabled: z.boolean().default(false),
+    workingHoursStart: z.string().default('08:00'),
+    workingHoursEnd: z.string().default('20:00'),
+    timezone: z.string().default('UTC'), // Timezone for working hours
+    typingSimulation: z.boolean().default(false), // Show typing status before sending
+    maxTypingDelay: z.number().default(5), // max seconds to "type"
   }),
   schedule: z.object({
     type: z.enum(['immediate', 'scheduled']),

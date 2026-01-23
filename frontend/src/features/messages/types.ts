@@ -24,6 +24,15 @@ export interface Campaign {
         aiSpinning: boolean;
         minDelay: number;
         maxDelay: number;
+        batchSize: number;
+        batchPauseMin: number;
+        batchPauseMax: number;
+        workingHoursEnabled: boolean;
+        workingHoursStart: string;
+        workingHoursEnd: string;
+        timezone: string;
+        typingSimulation: boolean;
+        maxTypingDelay: number;
     };
     schedule: {
         type: 'immediate' | 'scheduled';

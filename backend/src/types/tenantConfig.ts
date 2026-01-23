@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 export const TenantSettingsSchema = z.object({
     // Owner Information
-    ownerNumber: z.string().min(10).describe('Primary WhatsApp number for this tenant'),
+    ownerNumber: z.string().min(10).describe('Primary WhatsApp number for this tenant').optional(),
     ownerName: z.string().optional(),
     organization: z.string().optional(),
 
@@ -139,6 +139,7 @@ export const DEFAULT_TENANT_SETTINGS: Partial<TenantSettings> = {
         notifyOnBotDisconnect: true,
         notifyOnErrors: true,
     },
+    ownerNumber: '+1234567890',
 };
 
 export const DEFAULT_BOT_CONFIG: Partial<BotConfig> = {

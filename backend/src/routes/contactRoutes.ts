@@ -33,4 +33,10 @@ router.patch('/:id', ContactController.updateContact);
  */
 router.delete('/:id', ContactController.deleteContact);
 
+/**
+ * GET /contacts/audiences
+ * Get all audiences for a tenant
+ */
+router.get('/audiences', ContactController.getAudiences);
+
 export default router;

@@ -4,6 +4,7 @@ import { Bot, CreditCard, MessageSquare, ShieldCheck, Activity } from 'lucide-re
 
 import { useBots } from '@/features/bots/hooks/useBots';
 import { useSubscription } from '@/features/billing/hooks/useSubscription';
+import { useContacts } from '@/features/contacts/hooks/useContacts';
 
 interface InsightCardProps {
     type: 'dashboard' | 'bots' | 'messages' | 'billing' | 'contacts' | 'settings';
@@ -12,6 +13,7 @@ interface InsightCardProps {
 export function InsightCard({ type }: InsightCardProps) {
     const { data: bots } = useBots();
     const { subscription, limits } = useSubscription();
+    const { data: contacts } = useContacts();
 
     const stats = {
         bots: {
@@ -27,6 +29,10 @@ export function InsightCard({ type }: InsightCardProps) {
         messages: {
             total: bots?.reduce((acc, b) => acc + (b.messageCount || 0), 0) || 0,
             limit: 5000,
+        },
+        contacts: {
+            total: contacts?.length || 0,
+            audiences: 0, // Placeholder for actual audience segments
         }
     };
 
@@ -92,6 +98,31 @@ export function InsightCard({ type }: InsightCardProps) {
                                 <div className="text-xl font-bold">{stats.messages.total.toLocaleString()}</div>
                             </div>
                             <MessageSquare className="h-8 w-8 text-primary/10" />
+                        </div>
+                    </div>
+                );
+            case 'contacts':
+                return (
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-primary" />
+                            <span className="font-semibold text-sm">CRM Insights</span>
+                        </div>
+                        <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
+                            <div className="text-[10px] text-muted-foreground uppercase">Total Contacts</div>
+                            <div className="text-xl font-bold text-primary">{stats.contacts.total.toLocaleString()}</div>
+                        </div>
+                    </div>
+                );
+            case 'settings':
+                return (
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck className="h-4 w-4 text-primary" />
+                            <span className="font-semibold text-sm">Workspace</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                            Manage your instance configurations and team access.
                         </div>
                     </div>
                 );

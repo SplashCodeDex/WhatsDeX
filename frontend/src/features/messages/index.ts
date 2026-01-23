@@ -10,8 +10,10 @@
 export * from './components/CampaignList';
 export * from './components/CampaignWizard';
 export * from './components/CampaignDetail';
+export * from './components/UnifiedInbox';
 export * from './types';
 export * from './hooks/useCampaigns';
+export * from './hooks/useMessageHistory';
 // Components will be added here
 // Hooks
 // Server Actions
