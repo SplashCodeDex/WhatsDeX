@@ -5,15 +5,10 @@
 - [x] Task: Implement Blocking Security Gate [commit: bd6ee30]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: CI/CD Infrastructure Modernization' (Protocol in workflow.md) [commit: 26f7c52]
 
-## Phase 2: LID Mapping & Unified Identity
+## Phase 2: LID Mapping & Unified Identity [checkpoint: 3f3ab37]
 - [x] Task: TDD - LID Mapping Utility [commit: e3a3d4a]
-    - Create `backend/src/lib/identity.test.ts`.
-    - Write tests for converting LIDs to JIDs and handling mixed payloads.
-    - Implement `convertLidToJid` utility in `backend/src/lib/identity.ts`.
 - [x] Task: TDD - Message Wrapper Update [commit: 7720b1c]
-    - Create/update tests for `backend/src/lib/simple.ts` to simulate LID-heavy payloads.
-    - Refactor `simple.ts` to automatically map sender identities.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: LID Mapping & Unified Identity' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: LID Mapping & Unified Identity' (Protocol in workflow.md) [commit: 3f3ab37]
 
 ## Phase 3: Firestore Auth State Implementation
 - [ ] Task: Context Analysis - Baileys Firestore Auth
