@@ -7,7 +7,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Foundation & Standard Type Definitions' (Protocol in workflow.md) [commit: c1d6d52]
 
 ## Phase 2: Auth Feature Refactor
-- [ ] Task: Refactor Auth Server Actions
+- [x] Task: Refactor Auth Server Actions [commit: b5fd9d4]
     - Update `features/auth/actions.ts` to return `Result<T>`.
 - [ ] Task: TDD - Login Form Refactor
     - Update/Create tests for `LoginForm.tsx` ensuring it uses `useActionState`.
