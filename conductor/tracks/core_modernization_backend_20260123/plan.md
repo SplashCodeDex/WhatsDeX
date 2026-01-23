@@ -6,7 +6,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: CI/CD Infrastructure Modernization' (Protocol in workflow.md) [commit: 26f7c52]
 
 ## Phase 2: LID Mapping & Unified Identity
-- [ ] Task: TDD - LID Mapping Utility
+- [x] Task: TDD - LID Mapping Utility [commit: e3a3d4a]
     - Create `backend/src/lib/identity.test.ts`.
     - Write tests for converting LIDs to JIDs and handling mixed payloads.
     - Implement `convertLidToJid` utility in `backend/src/lib/identity.ts`.
