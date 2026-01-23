@@ -10,12 +10,11 @@
 - [x] Task: TDD - Message Wrapper Update [commit: 7720b1c]
 - [x] Task: Conductor - User Manual Verification 'Phase 2: LID Mapping & Unified Identity' (Protocol in workflow.md) [commit: 3f3ab37]
 
-## Phase 3: Firestore Auth State Implementation
-- [~] Task: Context Analysis - Baileys Firestore Auth
-    - Analyze existing `backend/src/lib/baileysFirestoreAuth.ts` (if stubbed) or research the required `AuthenticationState` interface for Baileys v7.
+## Phase 3: Firestore Auth State Implementation [checkpoint: 646ec4e]
+- [x] Task: Context Analysis - Baileys Firestore Auth [commit: fc1366a]
 - [x] Task: TDD - Firestore Auth Provider [commit: e3a3d4a]
 - [x] Task: Integration - Switch Bot Session Management [commit: 9ab7ae5]
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Firestore Auth State Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Firestore Auth State Implementation' (Protocol in workflow.md) [commit: 646ec4e]
 
 ## Phase 4: Final Cleanup & Decommissioning
 - [ ] Task: File-Based Cleanup
