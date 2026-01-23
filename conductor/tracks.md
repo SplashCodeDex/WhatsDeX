@@ -21,8 +21,3 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ## [~] Track: Frontend Wiring & Robustness Integration
 *Link: [./conductor/tracks/frontend_integration_20260122/](./conductor/tracks/frontend_integration_20260122/)*
-
----
-
-## [~] Track: Core Modernization (Backend)
-*Link: [./conductor/tracks/core_modernization_backend_20260123/](./conductor/tracks/core_modernization_backend_20260123/)*

@@ -17,9 +17,6 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Firestore Auth State Implementation' (Protocol in workflow.md) [commit: 646ec4e]
 
 ## Phase 4: Final Cleanup & Decommissioning
-- [ ] Task: File-Based Cleanup
-    - Remove local `.session` file creation logic from `SessionManager.ts`.
-    - Update `backend/.gitignore` to ignore the legacy `sessions/` directory.
-- [ ] Task: Regression Testing
-    - Run full backend test suite on Node 24.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Final Cleanup & Decommissioning' (Protocol in workflow.md)
+- [x] Task: File-Based Cleanup [commit: fc1366a]
+- [x] Task: Regression Testing [commit: 8aa4294]
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Final Cleanup & Decommissioning' (Protocol in workflow.md) [commit: 896475b]

@@ -16,7 +16,6 @@ export { GeminiAI as EnhancedAIBrain } from './geminiAI.js'; // Legacy alias
 
 // Bot Services
 export { default as CommandSystem } from './commandSystem.js';
-export { default as SessionManager } from './sessionManager.js';
 export { default as MultiTenantService } from './multiTenantService.js';
 export { default as MultiTenantBotService } from './multiTenantBotService.js';
 

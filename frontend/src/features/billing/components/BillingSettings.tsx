@@ -35,11 +35,11 @@ export function BillingSettings() {
   if (!subscription) return null;
 
   const isTrialing = subscription.status === 'trialing';
-  
+
   // Calculate trial progress if applicable
   let trialProgress = 0;
   let trialDaysLeft = 0;
-  
+
   if (isTrialing && subscription.trialEndsAt) {
     const start = new Date(subscription.trialEndsAt).getTime() - (7 * 24 * 60 * 60 * 1000); // approx start
     const end = new Date(subscription.trialEndsAt).getTime();
@@ -103,8 +103,8 @@ export function BillingSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => window.open(process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL || '#', '_blank')}
           >
             <CreditCard className="mr-2 h-4 w-4" />

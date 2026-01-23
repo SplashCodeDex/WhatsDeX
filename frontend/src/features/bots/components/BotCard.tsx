@@ -37,7 +37,7 @@ export function BotCard({ bot }: BotCardProps) {
 
     return (
         <>
-            <Card className="overflow-hidden transition-all hover:shadow-md">
+            <Card className="overflow-hidden border-border/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="flex flex-col space-y-1.5">
                         <CardTitle className="text-base font-medium">{bot.name}</CardTitle>
@@ -48,7 +48,7 @@ export function BotCard({ bot }: BotCardProps) {
                     <div className={cn(
                         "h-2.5 w-2.5 rounded-full ring-2 ring-background",
                         bot.status === 'connected' ? "bg-green-500" :
-                            bot.status === 'connecting' ? "bg-yellow-500 animate-pulse" : "bg-red-500"
+                            bot.status === 'connecting' ? "bg-yellow-500" : "bg-red-500"
                     )} title={bot.status} />
                 </CardHeader>
                 <CardContent className="pb-2">

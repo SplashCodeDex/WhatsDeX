@@ -53,7 +53,7 @@ interface StatCardProps {
 
 function StatCard({ title, value, change, trend, icon: Icon, color, bg }: StatCardProps) {
     return (
-        <div className="rounded-xl border border-border/50 bg-card p-6 shadow-sm transition-all hover:shadow-md">
+        <div className="rounded-xl border border-border/50 bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between space-y-0 pb-2">
                 <p className="text-sm font-medium text-muted-foreground">{title}</p>
                 <div className={cn("rounded-full p-2", bg)}>
@@ -160,7 +160,7 @@ export default async function DashboardHomePage() {
                         </p>
                     </div>
                     {/* Empty state until activity feed is wired */}
-                    <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-border p-8 text-center animate-in fade-in-50">
+                    <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-border p-8 text-center">
                         <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
                             <Activity className="h-10 w-10 text-muted-foreground" />
                             <h3 className="mt-4 text-lg font-semibold">No recent activity</h3>
@@ -186,8 +186,8 @@ export default async function DashboardHomePage() {
                                 <span className="font-medium">{dashboardStats?.metrics.cpu ?? 0}%</span>
                             </div>
                             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                                <div 
-                                    className="h-full bg-primary-500 transition-all duration-500" 
+                                <div
+                                    className="h-full bg-primary-500"
                                     style={{ width: `${dashboardStats?.metrics.cpu ?? 0}%` }}
                                 />
                             </div>
@@ -198,8 +198,8 @@ export default async function DashboardHomePage() {
                                 <span className="font-medium">{dashboardStats?.metrics.memory ?? 0} MB</span>
                             </div>
                             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                                <div 
-                                    className="h-full bg-accent-500 transition-all duration-500" 
+                                <div
+                                    className="h-full bg-accent-500"
                                     style={{ width: `${Math.min(100, (dashboardStats?.metrics.memory ?? 0) / 10)}%` }}
                                 />
                             </div>
