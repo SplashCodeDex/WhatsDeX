@@ -181,48 +181,58 @@
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --background: oklch(100% 0 0);
-  --foreground: oklch(14% 0.004 286);
+  --background: oklch(99% 0 0);
+  --foreground: oklch(15% 0.01 280);
   --card: oklch(100% 0 0);
-  --card-foreground: oklch(14% 0.004 286);
+  --card-foreground: oklch(15% 0.01 280);
   --popover: oklch(100% 0 0);
-  --popover-foreground: oklch(14% 0.004 286);
+  --popover-foreground: oklch(15% 0.01 280);
   --primary: var(--color-primary-600);
   --primary-foreground: oklch(100% 0 0);
-  --secondary: oklch(96% 0.001 286);
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(96% 0.001 286);
-  --muted-foreground: oklch(45% 0.014 286);
-  --accent: var(--color-accent-500);
+  --secondary: oklch(97% 0.002 280);
+  --secondary-foreground: oklch(15% 0.01 280);
+  --muted: oklch(97% 0.002 280);
+  --muted-foreground: oklch(45% 0.02 280);
+  --accent: var(--color-accent-600);
   --accent-foreground: oklch(100% 0 0);
   --destructive: var(--color-error);
   --destructive-foreground: var(--color-error-foreground);
-  --border: oklch(91% 0.002 286);
-  --input: oklch(91% 0.002 286);
+  --border: oklch(92% 0.004 280);
+  --input: oklch(92% 0.004 280);
   --ring: var(--color-primary-600);
   --radius: 0.75rem;
+
+  /* Glassmorphism Tokens */
+  --glass-bg: oklch(100% 0 0 / 0.7);
+  --glass-border: oklch(100% 0 0 / 0.1);
+  --glass-blur: 12px;
 }
 
 .dark {
-  --background: oklch(12% 0.006 286);
-  --foreground: oklch(98% 0 0);
-  --card: oklch(16% 0.006 286);
-  --card-foreground: oklch(98% 0 0);
-  --popover: oklch(14% 0.006 286);
-  --popover-foreground: oklch(98% 0 0);
+  --background: oklch(11% 0.01 280);
+  --foreground: oklch(96% 0.01 280);
+  --card: oklch(14% 0.01 280);
+  --card-foreground: oklch(96% 0.01 280);
+  --popover: oklch(12% 0.01 280);
+  --popover-foreground: oklch(96% 0.01 280);
   --primary: var(--color-primary-500);
   --primary-foreground: oklch(100% 0 0);
-  --secondary: oklch(22% 0.006 286);
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(22% 0.006 286);
-  --muted-foreground: oklch(65% 0.014 286);
+  --secondary: oklch(18% 0.01 280);
+  --secondary-foreground: oklch(96% 0.01 280);
+  --muted: oklch(18% 0.01 280);
+  --muted-foreground: oklch(65% 0.02 280);
   --accent: var(--color-accent-500);
   --accent-foreground: oklch(100% 0 0);
   --destructive: var(--color-error);
   --destructive-foreground: var(--color-error-foreground);
-  --border: oklch(27% 0.006 286);
-  --input: oklch(27% 0.006 286);
+  --border: oklch(24% 0.01 280);
+  --input: oklch(24% 0.01 280);
   --ring: var(--color-primary-500);
+
+  /* Glassmorphism Tokens - Dark Mode */
+  --glass-bg: oklch(14% 0.01 280 / 0.7);
+  --glass-border: oklch(100% 0 0 / 0.05);
+  --glass-blur: 16px;
 }
 
 @layer base {
@@ -234,6 +244,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    transition: background-color var(--animate-duration-normal) var(--animate-ease-in-out),
+                color var(--animate-duration-normal) var(--animate-ease-in-out),
+                border-color var(--animate-duration-normal) var(--animate-ease-in-out);
   }
 }
 

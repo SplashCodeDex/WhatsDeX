@@ -1,54 +1,58 @@
-# Google HTML/CSS Style Guide Summary
+# HTML & CSS Style Guide (2026 Edition)
 
-This document summarizes key rules and best practices from the Google HTML/CSS Style Guide.
+> **Stack**: Tailwind CSS v4 | Framer Motion | Lucide Icons
 
-## 1. General Rules
+## 1. Tailwind CSS v4 Philosophy
+We adhere to the "CSS-First" configuration model of Tailwind v4. We do NOT use `tailwind.config.js`.
 
-- **Protocol:** Use HTTPS for all embedded resources.
-- **Indentation:** Indent by 2 spaces. Do not use tabs.
-- **Capitalization:** Use only lowercase for all code (element names, attributes, selectors, properties).
-- **Trailing Whitespace:** Remove all trailing whitespace.
-- **Encoding:** Use UTF-8 (without a BOM). Specify `<meta charset="utf-8">` in HTML.
+### Configuration
+All theme tokens are defined in `@/app/globals.css` using the `@theme` directive and native CSS variables.
 
-## 2. HTML Style Rules
+```css
+@import "tailwindcss";
 
-- **Document Type:** Use `<!doctype html>`.
-- **HTML Validity:** Use valid HTML.
-- **Semantics:** Use HTML elements according to their intended purpose (e.g., use `<p>` for paragraphs, not for spacing).
-- **Multimedia Fallback:** Provide `alt` text for images and transcripts/captions for audio/video.
-- **Separation of Concerns:** Strictly separate structure (HTML), presentation (CSS), and behavior (JavaScript). Link to CSS and JS from external files.
-- **`type` Attributes:** Omit `type` attributes for stylesheets (`<link>`) and scripts (`<script>`).
+@theme {
+  /* Colors - Use OKLCH for 2026 gamut support */
+  --color-primary-500: oklch(58% 0.14 155);
+  --color-primary-600: oklch(50% 0.12 155);
+  
+  /* Layout */
+  --container-2xl: 88rem;
+  
+  /* Animations */
+  --animate-fade-in: fade-in 0.2s ease-out;
+}
+```
 
-## 3. HTML Formatting Rules
+### Usage Rule
+- **Utility First**: Always use utility classes (`flex`, `p-4`, `text-primary-500`).
+- **No arbitrary values**: Avoid `w-[350px]`. If a value is reused, define it in `@theme`.
+- **Sorting**: Classes must be sorted (enforced by Prettier plugin).
 
-- **General:** Use a new line for every block, list, or table element, and indent its children.
-- **Quotation Marks:** Use double quotation marks (`""`) for attribute values.
+## 2. Layout Patterns
 
-## 4. CSS Style Rules
+### Container Strategy
+Use a consistent max-width wrapper for all page content:
+```tsx
+<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  {children}
+</div>
+```
 
-- **CSS Validity:** Use valid CSS.
-- **Class Naming:** Use meaningful, generic names. Separate words with a hyphen (`-`).
-  - **Good:** `.video-player`, `.site-navigation`
-  - **Bad:** `.vid`, `.red-text`
-- **ID Selectors:** Avoid using ID selectors for styling. Prefer class selectors.
-- **Shorthand Properties:** Use shorthand properties where possible (e.g., `padding`, `font`).
-- **`0` and Units:** Omit units for `0` values (e.g., `margin: 0;`).
-- **Leading `0`s:** Always include leading `0`s for decimal values (e.g., `font-size: 0.8em;`).
-- **Hexadecimal Notation:** Use 3-character hex notation where possible (e.g., `#fff`).
-- **`!important`:** Avoid using `!important`.
+### Grid vs Flex
+- Use **Grid** for 2D layouts (cards, dashboard widgets).
+- Use **Flex** for 1D layouts (navbars, row items, stacks).
 
-## 5. CSS Formatting Rules
+## 3. Dark Mode
+- We use the `class` strategy (toggling a `.dark` class on HTML).
+- **Rule**: Every color token must have a dark mode equivalent defined in CSS variables or handled via utility prefixes (`dark:bg-gray-900`).
 
-- **Declaration Order:** Alphabetize declarations within a rule.
-- **Indentation:** Indent all block content.
-- **Semicolons:** Use a semicolon after every declaration.
-- **Spacing:**
-  - Use a space after a property name's colon (`font-weight: bold;`).
-  - Use a space between the last selector and the opening brace (`.foo {`).
-  - Start a new line for each selector and declaration.
-- **Rule Separation:** Separate rules with a new line.
-- **Quotation Marks:** Use single quotes (`''`) for attribute selectors and property values (e.g., `[type='text']`).
+## 4. Animation (Framer Motion)
+- **Do not** use CSS `@keyframes` for complex interactions.
+- **Do** use Framer Motion for exit animations, layout transitions, and gestures.
+- **Constraint**: All animations must respect `prefers-reduced-motion`.
 
-**BE CONSISTENT.** When editing code, match the existing style.
-
-_Source: [Google HTML/CSS Style Guide](https://google.github.io/styleguide/htmlcssguide.html)_
+## 5. Accessibility (A11y)
+- **Focus States**: All interactive elements MUST have a visible focus ring (`focus-visible:ring-2`).
+- **Contrast**: Text color must pass WCAG AA standards.
+- **Hidden Content**: Use `sr-only` for text needed by screen readers but hidden visually.

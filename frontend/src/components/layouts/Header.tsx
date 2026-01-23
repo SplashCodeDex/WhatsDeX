@@ -9,6 +9,7 @@
 
 import { Bell, User, LogOut, Settings as SettingsIcon, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/features/auth';
 import {
     DropdownMenu,
@@ -29,7 +30,9 @@ export function Header() {
                 <h1 className="text-lg font-semibold md:text-xl">Dashboard</h1>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+                <ThemeToggle />
+
                 <Button variant="ghost" size="icon" className="text-muted-foreground">
                     <Bell className="h-5 w-5" />
                     <span className="sr-only">Notifications</span>

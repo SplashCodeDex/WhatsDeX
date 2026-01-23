@@ -181,7 +181,30 @@ features/bots/
 └── index.ts              # Public exports (barrel file)
 ```
 
-### 4. The Result Pattern
+### 4. Partial Prerendering (PPR) Patterns (2026 Standard)
+
+We leverage Next.js 16's stable PPR to mix static shells with dynamic content.
+
+**The Hybrid Pattern:**
+1.  **Static Shell**: The page layout and non-personalized content are static by default.
+2.  **Dynamic Holes**: Personalized components (e.g., `BotList`, `UserProfile`) are wrapped in `<Suspense>`.
+3.  **Strict Isolation**: Never read request headers (cookies, headers) in the root page component. Pass them only to the dynamic components inside Suspense.
+
+```tsx
+// app/(dashboard)/dashboard/page.tsx
+export default function DashboardPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <Suspense fallback={<StatsSkeleton />}>
+        <DashboardStats /> {/* Reads cookies/db */}
+      </Suspense>
+    </div>
+  );
+}
+```
+
+### 5. The Result Pattern
 
 All service methods return a Result type for type-safe error handling:
 
@@ -207,10 +230,21 @@ if (result.success) {
 
 To ensure a premium and consistent UX, follow these patterns:
 
-#### Forms
-- **Always** use primitives from `@/components/ui/form` (`<Form>`, `<FormField>`, etc.).
-- **Always** include a `<FormError>` for root-level/server errors above the form fields.
-- **Prefer** self-contained validation logic via Zod schemas in `features/*/schemas.ts`.
+#### Forms & Mutations (2026 Standard)
+- **Primary Hook**: Use `useActionState` (React 19) for all mutations.
+- **Validation**: Server-side Zod validation returning flat error objects.
+- **Pending State**: Use the `isPending` boolean from `useActionState` for loading UI.
+
+```tsx
+const [state, action, isPending] = useActionState(createBotAction, initialState);
+
+return (
+  <form action={action}>
+    <input name="name" />
+    <Button disabled={isPending}>Create Bot</Button>
+  </form>
+);
+```
 
 #### Buttons
 - **Always** use the `isLoading` prop for async actions instead of manual loading spinners.
@@ -229,7 +263,7 @@ To ensure a premium and consistent UX, follow these patterns:
 | State Type   | Solution          | Example             |
 | ------------ | ----------------- | ------------------- |
 | Server State | Server Components | User data, bot list |
-| Form State   | `useActionState`  | Form validation     |
+| Mutation State | `useActionState` | Form submission, loading, errors |
 | URL State    | `searchParams`    | Filters, pagination |
 | UI State     | Zustand           | Modals, sidebar     |
 | Optimistic   | `useOptimistic`   | Pending mutations   |
@@ -239,7 +273,7 @@ To ensure a premium and consistent UX, follow these patterns:
 1. **No `useEffect` for data fetching** - Use Server Components
 2. **Zustand for client-only UI state** - Modals, toasts, sidebar
 3. **URL for shareable state** - Filters, tabs, pagination
-4. **Server Actions for mutations** - Form submissions, CRUD
+4. **Server Actions + `useActionState`** - All mutations must use this pattern. Manual `useState` for loading is **banned**.
 
 ---
 

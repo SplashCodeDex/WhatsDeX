@@ -10,6 +10,8 @@
 import { Toaster } from 'sonner';
 import { QueryProvider } from '@/lib/query';
 
+import { ThemeProvider } from '@/components/providers/theme-provider';
+
 interface ProvidersProps {
     children: React.ReactNode;
 }
@@ -26,20 +28,20 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps): React.JSX.Element {
     return (
         <QueryProvider>
-            {/* Add other providers here as needed */}
-            {/* <ThemeProvider> */}
-            <Toaster
-                position="top-right"
-                expand={false}
-                richColors={false}
-                closeButton
-                theme="system"
-                toastOptions={{
-                    className: 'group hover:scale-[1.02] transition-transform active:scale-[0.98]',
-                    duration: 4000,
-                }}
-            />
-            {children}
+            <ThemeProvider defaultTheme="system" storageKey="whatsdex-theme">
+                <Toaster
+                    position="top-right"
+                    expand={false}
+                    richColors={false}
+                    closeButton
+                    theme="system"
+                    toastOptions={{
+                        className: 'group hover:scale-[1.02] transition-transform active:scale-[0.98]',
+                        duration: 4000,
+                    }}
+                />
+                {children}
+            </ThemeProvider>
         </QueryProvider>
     );
 }

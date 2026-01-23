@@ -2,13 +2,14 @@
 
 ## 1. Frontend
 
-- **Framework:** Next.js 16.1.2 (App Router, Turbopack, PPR)
-- **Library:** React 19.2.3 (Server Components, Server Actions, React Compiler)
+- **Framework:** Next.js 16.1.2 (App Router, Turbopack, PPR Stable)
+- **Library:** React 19.2.3 (Server Components, Server Actions, React Compiler Enabled)
 - **Language:** TypeScript 5.9.3 (Strict Mode)
-- **Styling:** Tailwind CSS 4.1.18 (Zero Config, CSS-first tokens)
+- **Styling:** Tailwind CSS 4.1.18 (CSS-first `@theme` configuration, Zero Config)
 - **Animations:** Framer Motion 12.26.2 (GPU-accelerated)
 - **State Management:**
-  - **Server State:** Server Components & Actions
+  - **Server State:** Server Components & Actions (Result Pattern)
+  - **Mutation State:** `useActionState` (replacing manual loading states)
   - **Client UI State:** Zustand 5.0.10
   - **URL State:** Next.js Navigation Hooks
 - **Validation:** Zod 4.3.5 (Mandatory for all I/O)
