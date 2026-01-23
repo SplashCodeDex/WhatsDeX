@@ -5,6 +5,7 @@
  */
 
 export * from './api';
+export type { ActionResult } from './api';
 export * from './firebase';
 export * from './billing';
 export * from './tenantConfig';

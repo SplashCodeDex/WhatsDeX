@@ -36,6 +36,11 @@ export interface ApiErrorResponse {
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 /**
+ * Standard Result type for Server Actions (2026 Mastermind Edition)
+ */
+export type ActionResult<T = void> = ApiResponse<T>;
+
+/**
  * Type guard for successful responses
  */
 export function isApiSuccess<T>(

@@ -12,12 +12,10 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 ## [x] Track: Implement plans and billing with Stripe (Starter, Pro, Enterprise tiers) and 7-day free trial.
 *Link: [./conductor/tracks/plans_billing_20260115/](./conductor/tracks/plans_billing_20260115/)*
 
----
 
-## [ ] Track: Backend Internals & Bot Logic
-*Link: [./conductor/tracks/backend_internals_20260122/](./conductor/tracks/backend_internals_20260122/)*
 
 ---
 
-## [~] Track: Frontend Wiring & Robustness Integration
-*Link: [./conductor/tracks/frontend_integration_20260122/](./conductor/tracks/frontend_integration_20260122/)*
+## [~] Track: Mutation & Form Refactor (Frontend)
+
+*Link: [./conductor/tracks/mutation_form_refactor_frontend_20260123/](./conductor/tracks/mutation_form_refactor_frontend_20260123/)*

@@ -1,0 +1,38 @@
+# Implementation Plan - Mutation & Form Refactor (Frontend)
+
+## Phase 1: Foundation & Standard Type Definitions
+- [x] Task: Context Analysis - Current Form States [commit: fc1366a]
+- [x] Task: Standardize Action Result Type [commit: 3f3ab37]
+    - Ensure `Result<T>` is exported from a shared location (e.g., `frontend/src/types/index.ts`).
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Foundation & Standard Type Definitions' (Protocol in workflow.md)
+
+## Phase 2: Auth Feature Refactor
+- [ ] Task: Refactor Auth Server Actions
+    - Update `features/auth/actions.ts` to return `Result<T>`.
+- [ ] Task: TDD - Login Form Refactor
+    - Update/Create tests for `LoginForm.tsx` ensuring it uses `useActionState`.
+    - Implement `useActionState` in `LoginForm.tsx` with inline error display.
+- [ ] Task: TDD - Register Form Refactor
+    - Update/Create tests for `RegisterForm.tsx`.
+    - Implement `useActionState` in `RegisterForm.tsx`.
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: Auth Feature Refactor' (Protocol in workflow.md)
+
+## Phase 3: Bot Management Feature Refactor
+- [ ] Task: Refactor Bot Server Actions
+    - Update `features/bots/actions.ts` to return `Result<T>`.
+- [ ] Task: TDD - Create Bot Form Refactor
+    - Update/Create tests for `CreateBotForm.tsx`.
+    - Implement `useActionState` in `CreateBotForm.tsx`.
+- [ ] Task: TDD - Bot Settings Refactor
+    - Implement `useActionState` for settings updates in `BotSettings.tsx`.
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: Bot Management Feature Refactor' (Protocol in workflow.md)
+
+## Phase 4: Marketing & Billing Feature Refactor
+- [ ] Task: Refactor Campaign/Billing Server Actions
+    - Update relevant `actions.ts` in `features/campaigns` and `features/billing`.
+- [ ] Task: TDD - Form Refactors
+    - Migrate remaining forms to `useActionState`.
+- [ ] Task: Regression Testing & Cleanup
+    - Run full frontend test suite.
+    - Remove unused `useState` and `isLoading` legacy logic.
+- [ ] Task: Conductor - User Manual Verification 'Phase 4: Marketing & Billing Feature Refactor' (Protocol in workflow.md)
