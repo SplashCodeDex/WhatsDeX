@@ -1,0 +1,57 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   WhatsDeX Premium Background System
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    --bg-mesh-1: oklch(58% 0.14 155 / 0.15);
+    --bg-mesh-2: oklch(58% 0.20 285 / 0.1);
+    --bg-mesh-3: oklch(72% 0.19 145 / 0.1);
+  }
+
+  .dark {
+    --bg-mesh-1: oklch(40% 0.12 155 / 0.2);
+    --bg-mesh-2: oklch(40% 0.18 285 / 0.15);
+    --bg-mesh-3: oklch(30% 0.10 145 / 0.15);
+  }
+}
+
+@layer utilities {
+  /* Premium Mesh Background */
+  .bg-mesh-premium {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(at 0% 0%, var(--bg-mesh-1) 0px, transparent 50%),
+      radial-gradient(at 50% 0%, var(--bg-mesh-2) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, var(--bg-mesh-3) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* Glassmorphism Surface */
+  .glass-surface {
+    @apply backdrop-blur-xl bg-background/60 border border-border/50;
+  }
+
+  .glass-surface-strong {
+    @apply backdrop-blur-2xl bg-background/80 border border-border/70;
+  }
+
+  /* Subtle Dots Pattern */
+  .bg-dots {
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Glowing Orbs */
+  .glow-orb {
+    @apply absolute blur-[120px] rounded-full opacity-20 pointer-events-none;
+  }
+
+  .glow-orb-primary {
+    @apply bg-primary w-[500px] h-[500px];
+  }
+
+  .glow-orb-accent {
+    @apply bg-accent w-[400px] h-[400px];
+  }
+}

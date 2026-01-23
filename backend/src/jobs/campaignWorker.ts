@@ -3,7 +3,7 @@ import { Campaign, CampaignStatus, MessageTemplate, Contact, Audience } from '..
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { firebaseService } from '../services/FirebaseService.js';
 import { webhookService } from '../services/webhookService.js';
-import { campaignSocketService } from '../services/campaignSocketService.js';
+import { socketService } from '../services/socketService.js';
 import { TemplateService } from '../services/templateService.js';
 import { GeminiAI } from '../services/geminiAI.js';
 import logger from '../utils/logger.js';
@@ -85,7 +85,7 @@ class CampaignWorker {
 
         for (let i = startIndex; i < targets.length; i++) {
             const contact = targets[i];
-            
+
             // Check for Pause/Cancel
             const statusCheck = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
             if (!statusCheck || statusCheck.status === 'paused' || statusCheck.status === 'cancelled') {
@@ -110,7 +110,7 @@ class CampaignWorker {
                 // Progress Reporting
                 if (i % 5 === 0 || i === targets.length - 1) {
                     await this.updateCampaignStats(tenantId, id, { sent, failed, pending: targets.length - (sent + failed) });
-                    campaignSocketService.emitProgress(tenantId, id, { sent, failed, total: targets.length, status: 'sending' });
+                    socketService.emitProgress(tenantId, id, { sent, failed, total: targets.length, status: 'sending' });
                 }
 
                 // Intelligent Throttling
@@ -159,11 +159,11 @@ class CampaignWorker {
         let content = template.content;
 
         // 1. Inject Variables
-        const vars = { 
-            name: contact.name, 
-            phone: contact.phone, 
-            email: contact.email, 
-            ...(contact.attributes || {}) 
+        const vars = {
+            name: contact.name,
+            phone: contact.phone,
+            email: contact.email,
+            ...(contact.attributes || {})
         };
 
         for (const [key, value] of Object.entries(vars)) {

@@ -23,7 +23,7 @@ import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
 import AuditService from '../services/auditService.js';
-import { campaignSocketService } from '../services/campaignSocketService.js';
+import { socketService } from '../services/socketService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
@@ -61,8 +61,8 @@ export class MultiTenantApp {
       });
       logger.info(`Enterprise Analytics Gateway online at port ${this.port + 1}`);
 
-      // Initialize Campaign WebSockets (Shared Port)
-      campaignSocketService.initialize(this.httpServer);
+      // Initialize Unified WebSockets (Shared Port)
+      socketService.initialize(this.httpServer);
 
       // Initialize services
       await this.initializeServices();

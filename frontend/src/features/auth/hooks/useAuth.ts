@@ -10,9 +10,11 @@
 import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { signInWithCustomToken } from 'firebase/auth';
 import { useAuthStore } from '../store';
 import { type AuthUser } from '../types';
 import { api, API_ENDPOINTS } from '@/lib/api';
+import { getClientAuth } from '@/lib/firebase/client';
 import { ROUTES } from '@/lib/constants';
 import { logger } from '@/lib/logger';
 
@@ -49,6 +51,18 @@ export function useAuth(): UseAuthReturn {
                 // So response.data might be { user: ... }
                 // Let's safe check
                 const userData = (response.data as any).user || response.data;
+
+                // Native Firebase Auth bridge
+                if (userData.firebaseToken) {
+                    try {
+                        const auth = getClientAuth();
+                        await signInWithCustomToken(auth, userData.firebaseToken);
+                        logger.info('Firebase Client Auth successful');
+                    } catch (firebaseAuthError) {
+                        logger.error('Firebase Client Auth failed:', firebaseAuthError);
+                    }
+                }
+
                 setUser(userData);
             } else {
                 setUser(null);

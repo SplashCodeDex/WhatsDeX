@@ -16,3 +16,13 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ## [ ] Track: Backend Internals & Bot Logic
 *Link: [./conductor/tracks/backend_internals_20260122/](./conductor/tracks/backend_internals_20260122/)*
+
+---
+
+## [~] Track: Frontend Wiring & Robustness Integration
+*Link: [./conductor/tracks/frontend_integration_20260122/](./conductor/tracks/frontend_integration_20260122/)*
+
+---
+
+## [ ] Track: 2026 Web Research & Documentation Hunt
+*Link: [./conductor/tracks/research_2026_20260123/](./conductor/tracks/research_2026_20260123/)*

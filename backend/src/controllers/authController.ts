@@ -310,11 +310,15 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
         const tenantDoc = await db.collection('tenants').doc(tenantId).get();
         const tenant = tenantDoc.data() || { id: tenantId, name: 'Unknown', subdomain: 'unknown' };
 
+        // Generate Custom Token for Firebase Client SDK
+        const firebaseToken = await admin.auth().createCustomToken(userId, { tenantId, role: user.role });
+
         res.json({
             success: true,
             data: {
-                user: { id: user.id, name: user.displayName, email: user.email, role: user.role },
+                user: { id: user.id, name: user.displayName, email: user.email, role: user.role, tenantId },
                 tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
+                firebaseToken
             }
         });
     } catch (error: unknown) {

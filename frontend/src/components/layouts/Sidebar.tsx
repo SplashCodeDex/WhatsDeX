@@ -26,37 +26,50 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { InsightCard } from './InsightCard';
 
 const NAV_ITEMS = [
     {
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutDashboard,
+        type: 'messages' as const,
     },
     {
         title: 'My Bots',
         href: '/dashboard/bots',
         icon: Bot,
+        type: 'bots' as const,
     },
     {
         title: 'Messages',
         href: '/dashboard/messages',
         icon: MessageSquare,
+        type: 'messages' as const,
     },
     {
         title: 'Contacts',
         href: '/dashboard/contacts',
         icon: Users,
+        type: 'contacts' as const,
     },
     {
         title: 'Billing',
         href: '/dashboard/billing',
         icon: CreditCard,
+        type: 'billing' as const,
     },
     {
         title: 'Settings',
         href: '/dashboard/settings',
         icon: Settings,
+        type: 'settings' as const,
     },
 ];
 
@@ -66,73 +79,86 @@ export function Sidebar() {
     const { isSidebarCollapsed, setSidebarCollapsed } = useUIStore();
 
     const NavContent = (isMobile = false) => (
-        <div className="flex flex-1 flex-col justify-between overflow-y-auto overflow-x-hidden pt-4">
-            <ul className="space-y-1.5 px-3">
-                {NAV_ITEMS.map((item) => {
-                    // Logic fix: Exact match for dashboard, start-with for others
-                    const isActive = item.href === '/dashboard'
-                        ? pathname === '/dashboard'
-                        : pathname === item.href || pathname.startsWith(`${item.href}/`);
+        <TooltipProvider delayDuration={0}>
+            <div className="flex flex-1 flex-col justify-between overflow-y-auto overflow-x-hidden pt-4">
+                <ul className="space-y-1.5 px-3">
+                    {NAV_ITEMS.map((item) => {
+                        // Logic fix: Exact match for dashboard, start-with for others
+                        const isActive = item.href === '/dashboard'
+                            ? pathname === '/dashboard'
+                            : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-                    return (
-                        <li key={item.href} className="relative">
-                            <Link
-                                href={item.href}
-                                className={cn(
-                                    'group relative flex h-10 items-center rounded-xl px-3 transition-colors duration-200',
-                                    isActive
-                                        ? 'text-primary'
-                                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                                )}
-                            >
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="active-nav-bg"
-                                        className="absolute inset-0 z-0 bg-primary/10 rounded-xl"
-                                        initial={false}
-                                        transition={{
-                                            type: 'spring',
-                                            stiffness: 300,
-                                            damping: 30,
-                                        }}
-                                    />
-                                )}
-                                <div className="z-10 flex items-center w-full">
-                                    <item.icon className={cn(
-                                        'h-5 w-5 shrink-0 transition-colors',
-                                        isActive ? 'text-primary shadow-[0_0_10px_rgba(var(--color-primary-500),0.1)]' : 'text-muted-foreground group-hover:text-foreground'
-                                    )} />
-                                    <AnimatePresence mode="wait">
-                                        {(!isSidebarCollapsed || isMobile) && (
-                                            <motion.span
-                                                initial={{ opacity: 0, x: -5 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                exit={{ opacity: 0, x: -5 }}
-                                                transition={{ duration: 0.15 }}
-                                                className="ml-3 font-medium text-sm whitespace-nowrap overflow-hidden"
-                                            >
-                                                {item.title}
-                                            </motion.span>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            </Link>
-                        </li>
-                    );
-                })}
-            </ul>
+                        return (
+                            <li key={item.href} className="relative">
+                                <Tooltip open={isSidebarCollapsed && !isMobile ? undefined : false}>
+                                    <TooltipTrigger asChild>
+                                        <Link
+                                            href={item.href}
+                                            className={cn(
+                                                'group relative flex h-10 items-center rounded-xl px-3 transition-colors duration-200',
+                                                isActive
+                                                    ? 'text-primary'
+                                                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                                            )}
+                                        >
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="active-nav-bg"
+                                                    className="absolute inset-0 z-0 bg-primary/10 rounded-xl"
+                                                    initial={false}
+                                                    transition={{
+                                                        type: 'spring',
+                                                        stiffness: 300,
+                                                        damping: 30,
+                                                    }}
+                                                />
+                                            )}
+                                            <div className="z-10 flex items-center w-full">
+                                                <item.icon className={cn(
+                                                    'h-5 w-5 shrink-0 transition-colors',
+                                                    isActive ? 'text-primary shadow-[0_0_10px_rgba(var(--color-primary-500),0.1)]' : 'text-muted-foreground group-hover:text-foreground'
+                                                )} />
+                                                <AnimatePresence mode="wait">
+                                                    {(!isSidebarCollapsed || isMobile) && (
+                                                        <motion.span
+                                                            initial={{ opacity: 0, x: -5 }}
+                                                            animate={{ opacity: 1, x: 0 }}
+                                                            exit={{ opacity: 0, x: -5 }}
+                                                            transition={{ duration: 0.15 }}
+                                                            className="ml-3 font-medium text-sm whitespace-nowrap overflow-hidden"
+                                                        >
+                                                            {item.title}
+                                                        </motion.span>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </Link>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        side="right"
+                                        sideOffset={20}
+                                        className="p-3 bg-background/80 backdrop-blur-2xl border-border/50 shadow-2xl rounded-2xl min-w-56"
+                                    >
+                                        <InsightCard type={item.type} />
+                                    </TooltipContent>
+                                </Tooltip>
+                            </li>
+                        );
+                    })}
+                </ul>
 
-            <div className="mt-auto px-4 py-4 md:hidden">
-                <Button
-                    variant="ghost"
-                    className="w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-xl"
-                    onClick={() => signOut()}
-                >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign Out</span>
-                </Button>
+                <div className="mt-auto px-4 py-4 md:hidden">
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-xl"
+                        onClick={() => signOut()}
+                    >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Sign Out</span>
+                    </Button>
+                </div>
             </div>
-        </div>
+        </TooltipProvider>
     );
 
     return (
@@ -159,12 +185,25 @@ export function Sidebar() {
             {/* Desktop Sidebar */}
             <motion.aside
                 initial={false}
-                animate={{ width: isSidebarCollapsed ? 80 : 256 }}
+                animate={{
+                    x: isSidebarCollapsed ? -176 : 0
+                }}
+                transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30
+                }}
                 className={cn(
-                    "fixed left-0 top-0 z-40 hidden h-screen border-r border-border/50 bg-background/50 backdrop-blur-2xl transition-all duration-300 lg:block overflow-hidden shadow-xl shadow-black/5"
+                    "fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-border/50 bg-background/50 backdrop-blur-2xl lg:block overflow-hidden shadow-xl shadow-black/5"
                 )}
             >
-                <div className="flex h-full flex-col">
+                <div
+                    className="flex h-full flex-col"
+                    style={{
+                        marginLeft: isSidebarCollapsed ? 176 : 0,
+                        transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
+                >
                     <div className="flex h-16 items-center justify-between px-6 border-b border-border/50">
                         <AnimatePresence mode="wait">
                             {!isSidebarCollapsed && (
@@ -183,7 +222,7 @@ export function Sidebar() {
                             size="icon"
                             className={cn(
                                 "h-8 w-8 rounded-lg hover:bg-primary/10 text-primary transition-all duration-300 shadow-sm border border-border/20 bg-background/30",
-                                isSidebarCollapsed && "mx-auto"
+                                isSidebarCollapsed && "mr-2"
                             )}
                             onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
                         >

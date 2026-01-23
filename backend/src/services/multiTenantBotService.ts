@@ -6,7 +6,7 @@ import { multiTenantService } from '@/services/multiTenantService.js';
 import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
 import { tenantConfigService } from './tenantConfigService.js';
 import { webhookService } from './webhookService.js';
-import { AuditService } from './index.js';
+import { socketService } from './socketService.js';
 import { BotInstanceSchema, Bot, GlobalContext } from '@/types/index.js';
 import { Campaign, BotInstance, Result, CampaignStatus } from '../types/contracts.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
@@ -33,6 +33,21 @@ export class MultiTenantBotService {
     this.activeBots = new Map();
     this.authSystems = new Map();
     this.qrCodes = new Map();
+  }
+
+  /**
+   * Emit a real-time log to the tenant via WebSocket
+   */
+  private log(tenantId: string, botId: string, message: string, level: 'info' | 'warn' | 'error' | 'success' = 'info') {
+    socketService.emitToTenant(tenantId, 'bot_log', {
+      botId,
+      message,
+      level,
+      timestamp: new Date().toISOString()
+    });
+    // Also mirror to standard logger
+    if (level === 'error') logger.error(`[Bot:${botId}] ${message}`);
+    else logger.info(`[Bot:${botId}] ${message}`);
   }
 
   public static getInstance(): MultiTenantBotService {
@@ -152,6 +167,7 @@ export class MultiTenantBotService {
         logger.info(`Bot ${botId} is CONNECTED`, { tenantId, botId });
         this.qrCodes.delete(botId);
         await this.updateBotStatus(tenantId, botId, 'connected');
+        this.log(tenantId, botId, 'Bot instance connected and ready', 'success');
 
         // Handle Always Online if configured
         if (botConfig?.alwaysOnline) {
@@ -207,6 +223,7 @@ export class MultiTenantBotService {
         if (type === 'notify') {
           for (const message of messages) {
             await this.handleIncomingMessage(tenantId, botId, message);
+            this.log(tenantId, botId, `Incoming message from ${message.key.remoteJid}`, 'info');
           }
         }
       });

@@ -1,18 +1,16 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/features/auth/store';
+import { useSocket } from '@/hooks/useSocket';
 import { Campaign } from '@/features/messages/types';
-import { logger } from '@/lib/logger';
 
 /**
  * Hook to manage campaign WebSocket connection and real-time updates
  */
 export function useCampaignSocket() {
     const queryClient = useQueryClient();
-    const { user } = useAuthStore();
+    const { on } = useSocket();
 
     const handleUpdate = useCallback((data: { campaignId: string, stats: any }) => {
         // Update campaigns list in cache
@@ -33,31 +31,11 @@ export function useCampaignSocket() {
     }, [queryClient]);
 
     useEffect(() => {
-        if (!user?.tenantId) return;
-
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-
-        const socket: Socket = io(backendUrl, {
-            path: '/api/campaigns/socket',
-            // auth: { token }, // Token is handled via cookies
-            transports: ['websocket'],
-            withCredentials: true
-        });
-
-        socket.on('connect', () => {
-            logger.info('Campaign socket connected');
-        });
-
-        socket.on('campaign_update', (data) => {
+        // Listen for campaign updates from the unified socket
+        const cleanup = on('campaign_update', (data) => {
             handleUpdate(data);
         });
 
-        socket.on('connect_error', (err) => {
-            logger.error('Campaign socket connection error:', err.message);
-        });
-
-        return () => {
-            socket.disconnect();
-        };
-    }, [user?.tenantId, handleUpdate]);
+        return cleanup;
+    }, [on, handleUpdate]);
 }

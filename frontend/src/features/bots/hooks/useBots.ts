@@ -7,12 +7,16 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { doc } from 'firebase/firestore';
 
 import { api, API_ENDPOINTS } from '@/lib/api';
+import { getClientFirestore } from '@/lib/firebase/client';
+import { useFirestoreLive } from '@/hooks/useFirestoreLive';
 import { isApiSuccess } from '@/types';
 
 import type { Bot, BotListItem, BotStatus, BotConfig, QRCodeResponse } from '../types';
 import type { CreateBotInput, UpdateBotInput } from '../schemas';
+import { useAuth } from '@/features/auth';
 
 /**
  * Query key factory for bots
@@ -24,6 +28,7 @@ export const botKeys = {
     details: () => [...botKeys.all, 'detail'] as const,
     detail: (id: string) => [...botKeys.details(), id] as const,
     qr: (id: string) => [...botKeys.all, 'qr', id] as const,
+    status: (id: string) => ['bot-status', id] as const,
 };
 
 /**
@@ -198,11 +203,23 @@ export function usePairingCode(botId: string) {
 }
 
 /**
- * Poll for bot status
+ * Poll for bot status (Now using Firestore Snapshots)
  */
 export function useBotStatus(botId: string, enabled: boolean) {
+    const { user } = useAuth();
+    const db = getClientFirestore();
+    const tenantId = user?.tenantId;
+
+    // Build the Firestore reference for the bot
+    const botDocRef = tenantId && botId
+        ? doc(db, 'tenants', tenantId, 'bots', botId)
+        : null;
+
+    // Use our live hook to keep the query key in sync
+    useFirestoreLive(botKeys.status(botId), botDocRef, enabled && !!tenantId);
+
     return useQuery({
-        queryKey: ['bot-status', botId],
+        queryKey: botKeys.status(botId),
         queryFn: async () => {
             const response = await api.get<{ status: string, isActive: boolean, hasQR: boolean }>(API_ENDPOINTS.BOTS.STATUS(botId));
             if (isApiSuccess(response)) {
@@ -211,6 +228,6 @@ export function useBotStatus(botId: string, enabled: boolean) {
             throw new Error(response.error.message);
         },
         enabled: enabled && !!botId,
-        refetchInterval: 2000, // Poll every 2 seconds
+        staleTime: Infinity, // Rely on Firestore for updates
     });
 }
