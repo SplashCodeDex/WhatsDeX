@@ -1,4 +1,5 @@
 import { jidDecode, downloadContentFromMessage, getContentType, proto } from 'baileys';
+import { isLid } from './identity.js';
 
 interface JidDecodeResult {
   user: string;
@@ -29,6 +30,9 @@ export const serialize = (bot: any, m: any) => {
     M.isGroup = M.chat.endsWith('@g.us');
     M.sender = M.fromMe ? bot.user?.id : M.isGroup ? m.key.participant : M.chat;
     if (M.sender) M.sender = decodeJid(M.sender);
+    
+    // 2026 Mastermind: Handle LID normalization
+    if (M.chat && isLid(M.chat)) M.chat = decodeJid(M.chat);
   }
 
   if (m.message) {
