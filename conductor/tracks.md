@@ -24,5 +24,5 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ---
 
-## [~] Track: 2026 Web Research & Documentation Hunt
-*Link: [./conductor/tracks/research_2026_20260123/](./conductor/tracks/research_2026_20260123/)*
+## [~] Track: Core Modernization (Backend)
+*Link: [./conductor/tracks/core_modernization_backend_20260123/](./conductor/tracks/core_modernization_backend_20260123/)*

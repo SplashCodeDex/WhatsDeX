@@ -12,7 +12,7 @@ type Theme = z.infer<typeof themeSchema>;
 
 interface ThemeProviderState {
     theme: Theme;
-    setTheme: (theme: Theme, event?: React.MouseEvent | MouseEvent) => void;
+    setTheme: (theme: Theme) => void;
 }
 
 const initialState: ThemeProviderState = {
@@ -69,25 +69,9 @@ export function ThemeProvider({
     const value = React.useMemo(
         () => ({
             theme,
-            setTheme: (newTheme: Theme, event?: React.MouseEvent | MouseEvent) => {
-                // Feature: Cinematic Dynamic Reveal (2026 Mastermind Edition)
-                if (typeof document !== 'undefined' && 'startViewTransition' in document) {
-                    // Extract coordinates if event is provided, default to center
-                    const x = event ? (event as MouseEvent).clientX : window.innerWidth / 2;
-                    const y = event ? (event as MouseEvent).clientY : window.innerHeight / 2;
-
-                    // Set coordinates as CSS variables for the reveal animation
-                    document.documentElement.style.setProperty('--reveal-x', `${x}px`);
-                    document.documentElement.style.setProperty('--reveal-y', `${y}px`);
-
-                    (document as any).startViewTransition(() => {
-                        localStorage.setItem(storageKey, newTheme);
-                        setTheme(newTheme);
-                    });
-                } else {
-                    localStorage.setItem(storageKey, newTheme);
-                    setTheme(newTheme);
-                }
+            setTheme: (newTheme: Theme) => {
+                localStorage.setItem(storageKey, newTheme);
+                setTheme(newTheme);
             },
         }),
         [theme, storageKey]
