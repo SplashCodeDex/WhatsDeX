@@ -10,7 +10,7 @@
     - Create `backend/src/lib/identity.test.ts`.
     - Write tests for converting LIDs to JIDs and handling mixed payloads.
     - Implement `convertLidToJid` utility in `backend/src/lib/identity.ts`.
-- [ ] Task: TDD - Message Wrapper Update
+- [x] Task: TDD - Message Wrapper Update [commit: 7720b1c]
     - Create/update tests for `backend/src/lib/simple.ts` to simulate LID-heavy payloads.
     - Refactor `simple.ts` to automatically map sender identities.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: LID Mapping & Unified Identity' (Protocol in workflow.md)
