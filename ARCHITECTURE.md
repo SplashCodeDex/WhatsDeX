@@ -52,7 +52,24 @@ graph TB
 
 ---
 
-## 2. Directory Structure
+## 2. AI Intelligence & Agentic Brain
+
+WhatsDeX features a multi-layer intelligence system (GeminiAI) that acts as the "brain" of the bot.
+
+### Intelligence Layers
+1.  **Intent Detection**: Context-aware analysis of user messages to identify multiple goals.
+2.  **Strategic Planning**: Formulates a multi-step workflow to fulfill detected intents using available bot commands as tools.
+3.  **RAG (Retrieval-Augmented Generation)**: Uses vector memory to inject relevant historical context into the reasoning loop.
+4.  **Anti-Ban Engine**: AI-powered message spinning to ensure natural variations in broadcast content.
+
+### Agentic Workflow (2026 Edition)
+- **Reflection**: The brain reviews its own plans before execution.
+- **Memoization**: Expensive AI analysis is cached per tenant/message to minimize latency and cost.
+- **Persistence**: Interaction data is stored in Firestore subcollections for continuous learning.
+
+---
+
+## 3. Directory Structure
 
 The project follows a monorepo-style structure:
 

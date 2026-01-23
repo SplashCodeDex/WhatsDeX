@@ -3,21 +3,23 @@ description: Project Governance - Checklists, Definition of Done, and Violations
 globs: ["**/*"]
 alwaysApply: true
 ---
-# Project Governance
+# Project Governance (2026 Edition)
 
 ## 1. Definition of Done
 A task is considered complete ONLY when:
 1.  [ ] Code is implemented and functional.
-2.  [ ] **Unit Tests** are written and passing (Green Phase).
-3.  [ ] **Linting** passes with zero errors.
-4.  [ ] **Documentation** (comments, README updates) is complete.
-5.  [ ] `plan.md` is updated with the commit hash.
+2.  [ ] **Unit Tests** pass (TDD Green Phase).
+3.  [ ] **Reflection (Self-Critic)**: Agent identifies and fixes at least one edge case or improvement.
+4.  [ ] **Linting & Types** pass zero-error gate.
+5.  [ ] **Documentation** (JSDoc, Architecture, README) updated.
+6.  [ ] `plan.md` updated with commit hash.
 
 ## 2. Pre-Commit Verification
-Before running `/finish-task` or committing:
--   **Check**: Are there any `console.log` leftovers? (Delete them, unless using a Logger).
--   **Check**: Are there commented-out blocks of dead code? (Delete them).
--   **Check**: Did you use the correct file naming convention? (`PascalCase` for Components, `camelCase` for functions).
+Before running `/finish-task`:
+-   **Verify ESM**: Check for `.js` extensions in all new imports.
+-   **Check Zod**: Ensure all new API/DB reads are validated.
+-   **Cleanup**: Delete `console.log` and dead code.
+-   **Naming**: PascalCase for Components, camelCase for functions.
 
 ## 3. Violations Policy
 The following are considered "Severe Violations" of project rules:

@@ -1,12 +1,18 @@
 'use client';
 
 import * as React from 'react';
+import { z } from 'zod';
 
-type Theme = 'dark' | 'light' | 'system';
+/**
+ * Theme Schema (2026 Mastermind Edition)
+ * Rule 1: Every interaction with external data MUST be validated via Zod.
+ */
+const themeSchema = z.enum(['dark', 'light', 'system']);
+type Theme = z.infer<typeof themeSchema>;
 
 interface ThemeProviderState {
     theme: Theme;
-    setTheme: (theme: Theme) => void;
+    setTheme: (theme: Theme, event?: React.MouseEvent | MouseEvent) => void;
 }
 
 const initialState: ThemeProviderState = {
@@ -28,9 +34,20 @@ export function ThemeProvider({
     storageKey = 'whatsdex-theme',
     ...props
 }: ThemeProviderProps) {
-    const [theme, setTheme] = React.useState<Theme>(
-        () => (typeof window !== 'undefined' ? (localStorage.getItem(storageKey) as Theme) : defaultTheme) || defaultTheme
-    );
+    const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+
+    // Rule 1: Validate external data via Zod, but DO NOT do it during initial render to avoid hydration mismatch.
+    React.useEffect(() => {
+        try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored) {
+                const validated = themeSchema.parse(stored);
+                setTheme(validated);
+            }
+        } catch (error) {
+            console.error('[ThemeProvider] Failed to parse stored theme:', error);
+        }
+    }, [storageKey]);
 
     React.useEffect(() => {
         const root = window.document.documentElement;
@@ -52,9 +69,25 @@ export function ThemeProvider({
     const value = React.useMemo(
         () => ({
             theme,
-            setTheme: (theme: Theme) => {
-                localStorage.setItem(storageKey, theme);
-                setTheme(theme);
+            setTheme: (newTheme: Theme, event?: React.MouseEvent | MouseEvent) => {
+                // Feature: Cinematic Dynamic Reveal (2026 Mastermind Edition)
+                if (typeof document !== 'undefined' && 'startViewTransition' in document) {
+                    // Extract coordinates if event is provided, default to center
+                    const x = event ? (event as MouseEvent).clientX : window.innerWidth / 2;
+                    const y = event ? (event as MouseEvent).clientY : window.innerHeight / 2;
+
+                    // Set coordinates as CSS variables for the reveal animation
+                    document.documentElement.style.setProperty('--reveal-x', `${x}px`);
+                    document.documentElement.style.setProperty('--reveal-y', `${y}px`);
+
+                    (document as any).startViewTransition(() => {
+                        localStorage.setItem(storageKey, newTheme);
+                        setTheme(newTheme);
+                    });
+                } else {
+                    localStorage.setItem(storageKey, newTheme);
+                    setTheme(newTheme);
+                }
             },
         }),
         [theme, storageKey]

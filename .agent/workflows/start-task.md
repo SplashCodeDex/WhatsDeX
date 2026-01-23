@@ -8,16 +8,20 @@ description: Start a new task from the plan
 2.  Identify the next unstarted task (first `[ ]` item).
 3.  **Output:** "Starting Task: [Task Name]"
 
-## Step 2: Update Plan status
+## Step 2: Strategic Planning (2026 Mandate)
+1.  Identify dependencies and potential side effects.
+2.  Draft a 3-5 step internal micro-plan for the task.
+3.  **Output:** "Strategic Plan: 1. [Step 1] 2. [Step 2] ..."
+
+## Step 3: Update Plan status
 1.  Edit `plan.md`.
 2.  Change the identified task status from `[ ]` to `[~]`.
 
-## Step 3: Analyze Requirements
-1.  Read the task description and any related "Product Requirements" or "Tech Stack" documents.
-2.  Determine the necessary file changes.
+## Step 4: Analyze Requirements
+1.  Read the task description and related docs (`PROJECT_RULES.md`, `tech-stack.md`).
+2.  Determine necessary file changes.
 
-## Step 4: TDD - Red Phase
-1.  Create a new test file (or add to an existing one) corresponding to the feature.
-2.  Write a test case that defines the expected behavior.
-3.  **Run the test** to confirm it fails.
-4.  **Output:** "Test created and failing as expected. Ready to implement."
+## Step 5: TDD - Red Phase
+1.  Create/update test file.
+2.  **Run test** to confirm failure.
+3.  **Output:** "Test created and failing as expected. Ready to implement."

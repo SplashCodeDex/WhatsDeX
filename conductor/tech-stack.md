@@ -17,15 +17,16 @@
 
 ## 2. Backend
 
-- **Runtime:** Node.js 24+ (Strict ESM)
-- **Framework:** Express 5.2.1
+- **Runtime:** Node.js 24+ (Strict ESM, Permission Model Enabled)
+- **Framework:** Express 5.2.1 (Thin Controllers, Service-Oriented)
 - **Language:** TypeScript 5.9.3
 - **Execution:** `tsx` (TypeScript Execute) - **STRICT: DO NOT use ts-node**
-- **WhatsApp API:** Baileys (@whiskeysockets/baileys) 7.0.0-rc.9
-- **Job Queues:** BullMQ / Bull (Redis backed)
+- **WhatsApp API:** Baileys 7.0.0 (LID Mapping, Custom Auth State persistence)
+- **Job Queues:** BullMQ / BullMQ Pro (Group Isolation for Multi-Tenancy)
 - **Real-time:** WebSockets (Socket.io 4.8.3)
-- **Observability:** OpenTelemetry (Tracing & Metrics)
-- **Logging:** Winston / Pino
+- **Observability:** OpenTelemetry (Tracing & Metrics, Low-overhead auto-instrumentation)
+- **Logging:** Pino (High-performance, JSON structured)
+- **Testing:** Node.js Native Test Runner (`node --test`) & Vitest 4.0
 
 ## 3. Infrastructure & Services
 

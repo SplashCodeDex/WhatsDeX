@@ -25,7 +25,7 @@ export function Header() {
     const { user, signOut } = useAuth();
 
     return (
-        <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/40 bg-[var(--glass-bg)] px-6 backdrop-blur-[var(--glass-blur)] supports-[backdrop-filter]:bg-[var(--glass-bg)] shadow-sm transition-colors duration-500">
             <div className="flex items-center gap-4">
                 <h1 className="text-lg font-semibold md:text-xl">Dashboard</h1>
             </div>

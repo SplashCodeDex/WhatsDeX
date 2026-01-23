@@ -14,7 +14,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
 
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return (
+            <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
+                <div className="h-4 w-4 rounded-full border border-primary/20 animate-pulse" />
+            </Button>
+        );
+    }
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>

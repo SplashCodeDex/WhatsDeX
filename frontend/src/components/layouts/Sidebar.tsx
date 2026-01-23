@@ -194,14 +194,13 @@ export function Sidebar() {
                     damping: 30
                 }}
                 className={cn(
-                    "fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-border/50 bg-background/50 backdrop-blur-2xl lg:block overflow-hidden shadow-xl shadow-black/5"
+                    "fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-border/40 bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] lg:block overflow-hidden shadow-2xl shadow-black/10 transition-colors duration-500"
                 )}
             >
                 <div
                     className="flex h-full flex-col"
                     style={{
-                        marginLeft: isSidebarCollapsed ? 176 : 0,
-                        transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                        marginLeft: isSidebarCollapsed ? "176px" : "0px",
                     }}
                 >
                     <div className="flex h-16 items-center justify-between px-6 border-b border-border/50">

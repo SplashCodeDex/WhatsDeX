@@ -3,25 +3,27 @@ description: Technical Standards - Directory Structure, Imports, and Coding patt
 globs: ["**/*"]
 alwaysApply: true
 ---
-# Technical Standards
+# Technical Standards (2026 Mastermind Edition)
 
-## 1. Directory Structure Authority
-*   **`src/components`**: UI-only. No complex logic.
-*   **`src/features`** or **`src/screens`**: Domain logic connection to UI.
-*   **`src/services`**: External integrations (API, Database).
-*   **`src/lib`**: Pure utility functions with no side effects.
-*   **`src/context`** or **`src/state`**: Global state management.
+## 1. Directory Structure Authority (Hybrid FSD)
+*   **`src/app`**: Route definitions only (Thin Page Pattern).
+*   **`src/features`**: Domain-driven business logic, components, and actions.
+*   **`src/components/ui`**: Atomic, stateless design system primitives.
+*   **`src/services`**: External integrations (API, Database) using Result Pattern.
+*   **`src/lib`**: Pure utility functions and shared infrastructure.
 
-## 2. Import Conventions
--   **Use Aliases**: Always use `@/` aliases (e.g., `import { Button } from '@/components/ui/button'`) instead of relative paths (`../../components/`).
--   **No Barrel File Abuse**: Do not create circular dependencies with `index.ts` files.
+## 2. Import & ESM Conventions
+-   **Strict ESM**: Relative imports MUST include the `.js` extension.
+-   **Use Aliases**: Always use `@/` aliases for internal source paths.
 
 ## 3. Banned Patterns
--   **Hardcoded Secrets**: NEVER hardcode API keys or secrets. Use `.env`.
--   **Hardcoded Colors**: Do not hardcode Hex/RGB values in components. Use config variables (CSS vars or Tailwind config).
--   **"Any" Types**: The `any` type is strictly prohibited in TypeScript. Use `unknown` if necessary, but preferably specific types.
--   **Inline Styles**: Avoid inline styles (`style={{ color: 'red' }}`). Use classes.
+-   **Hardcoded Secrets**: NEVER hardcode API keys. Use `.env`.
+-   **Manual Loading States**: BANNED in frontend forms. Use `useActionState` (React 19).
+-   **"Any" Types**: Strictly prohibited. Use `unknown` + Zod/Narrowing.
+-   **useEffect for Data**: BANNED. Use Server Components or Actions.
 
 ## 4. Integration Standards
--   **Google/Firebase**: When using Gemini or Firebase, follow the official SDK implementation patterns.
--   **Authentication**: Always handle auth states (loading, error, unauthenticated) gracefully.
+-   **Zod-First**: Mandatory validation for all external data (Firestore, API, Env).
+-   **Node.js 24+**: Leverage the stable permission model and native test runner.
+-   **React 19**: Leverage the compiler; manual `useMemo`/`useCallback` are deprecated.
+-   **Firebase**: Use subcollection multi-tenancy pattern for data isolation.

@@ -159,25 +159,24 @@ Before marking any task complete, verify:
 ### Setup
 
 ```bash
-# Example: Commands to set up the development environment (e.g., install dependencies, configure database)
-# e.g., for a Node.js project: npm install
-# e.g., for a Go project: go mod tidy
+# Node.js 24+ Setup
+npm ci --prefer-offline
 ```
 
-### Daily Development
+### CI/CD Workflow (2026 Standard)
 
-```bash
-# Example: Commands for common daily tasks (e.g., start dev server, run tests, lint, format)
-# e.g., for a Node.js project: npm run dev, npm test, npm run lint
-# e.g., for a Go project: go run main.go, go test ./..., go fmt ./...
-```
+Our GitHub Actions workflows MUST follow these standards:
+1.  **Node.js LTS**: Use Node.js 24.x as the primary target.
+2.  **Built-in Caching**: Use `actions/setup-node@v4` with `cache: 'npm'` to optimize dependency installation.
+3.  **Matrix Builds**: Run quality gates (lint, test, typecheck) in parallel across supported Node versions.
+4.  **Security-as-Code**: Mandatory `npm audit` or `snyk test` in every pipeline.
+5.  **Path Filtering**: Only run module-specific CI if files in that module changed.
 
 ### Before Committing
 
 ```bash
-# Example: Commands to run all pre-commit checks (e.g., format, lint, type check, run tests)
-# e.g., for a Node.js project: npm run check
-# e.g., for a Go project: make check (if a Makefile exists)
+# Standard Quality Gate
+npm run check # Runs lint, typecheck, and tests in parallel
 ```
 
 ## Testing Requirements

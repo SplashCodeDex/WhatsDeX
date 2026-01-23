@@ -164,9 +164,16 @@ src/
 | UI State     | Zustand           | Modals, sidebar     |
 | Optimistic   | `useOptimistic`   | Pending mutations   |
 
-### Animation Guidelines (Framer Motion)
+---
+## 9. Agentic Workflow Patterns (2026 Mastermind)
 
-- **GPU-Accelerated Only**: Animate `transform` and `opacity`, never `width`/`height`
-- **Duration Standards**: 150ms (micro), 250ms (normal), 400ms (page transitions)
-- **Accessibility**: Always respect `prefers-reduced-motion`
-- **Use `'use client'`**: Animation components must be Client Components
+**Mandate**: All autonomous agents must follow iterative reasoning and self-correction loops.
+
+### Core Patterns
+1.  **Reflection**: After completing a complex task (e.g., refactoring or feature logic), the agent MUST perform a "Critic" phase to identify flaws in its own implementation before reporting to the user.
+2.  **Tool-Based Verification**: Whenever possible, use specialized tools (linters, test runners, custom scripts) to verify the output of a thought process rather than relying on LLM intuition alone.
+3.  **Dynamic Planning**: For ambiguous requests, the agent MUST generate a multi-step plan, present it to the user, and update the plan dynamically as new information is gathered during tool execution.
+
+### Error Handling & Self-Correction
+- **Generator-Critic Loop**: If a command fails, the agent must analyze the error, hypothesize a fix, and retry WITH a modified approach.
+- **Structured Failure**: If an agent cannot resolve an error after 2 attempts, it MUST halt and provide a structured report of what it tried, what failed, and why it's stuck.
