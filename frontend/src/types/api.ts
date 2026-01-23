@@ -11,6 +11,7 @@
 export interface ApiSuccessResponse<T> {
     success: true;
     data: T;
+    message?: string;
     meta?: {
         total?: number;
         page?: number;

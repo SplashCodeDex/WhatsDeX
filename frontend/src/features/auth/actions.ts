@@ -20,7 +20,8 @@ import {
     forgotPasswordSchema,
     resetPasswordSchema,
 } from './schemas';
-import type { AuthResult, AuthUser } from './types';
+import type { AuthUser } from './types';
+import type { ActionResult } from '@/types/api';
 
 // Session cookie configuration (Must match backend expectation)
 const SESSION_COOKIE_NAME = 'token';
@@ -31,7 +32,7 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 14; // 14 days
  */
 export async function signIn(
     formData: FormData
-): Promise<AuthResult<AuthUser>> {
+): Promise<ActionResult<AuthUser>> {
     // Parse and validate input
     const rawData = {
         email: formData.get('email'),
@@ -48,7 +49,7 @@ export async function signIn(
             error: {
                 code: 'validation_error',
                 message: firstIssue?.message ?? 'Invalid input',
-                field: firstIssue?.path[0] as string,
+                details: { field: firstIssue?.path[0] as string },
             },
         };
     }
@@ -103,7 +104,7 @@ export async function signIn(
  */
 export async function signUp(
     formData: FormData
-): Promise<AuthResult<AuthUser>> {
+): Promise<ActionResult<AuthUser>> {
     // Parse and validate input
     const rawData = {
         firstName: formData.get('firstName'),
@@ -122,7 +123,7 @@ export async function signUp(
             error: {
                 code: 'validation_error',
                 message: firstIssue?.message ?? 'Invalid input',
-                field: firstIssue?.path[0] as string,
+                details: { field: firstIssue?.path[0] as string },
             },
         };
     }
@@ -190,7 +191,7 @@ export async function signOut(): Promise<void> {
  */
 export async function requestPasswordReset(
     formData: FormData
-): Promise<AuthResult> {
+): Promise<ActionResult> {
     const rawData = {
         email: formData.get('email'),
     };
@@ -260,7 +261,7 @@ export async function getSession(): Promise<AuthUser | null> {
  */
 export async function resetPassword(
     formData: FormData
-): Promise<AuthResult> {
+): Promise<ActionResult> {
     const rawData = {
         password: formData.get('password'),
         confirmPassword: formData.get('confirmPassword'),
@@ -276,7 +277,7 @@ export async function resetPassword(
             error: {
                 code: 'validation_error',
                 message: firstIssue?.message ?? 'Invalid input',
-                field: firstIssue?.path[0] as string,
+                details: { field: firstIssue?.path[0] as string },
             },
         };
     }

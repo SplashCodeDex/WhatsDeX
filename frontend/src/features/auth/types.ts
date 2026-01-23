@@ -4,6 +4,7 @@
  * TypeScript types for authentication state and operations.
  */
 
+import type { ActionResult } from '@/types/api';
 import type { User as FirebaseUser } from 'firebase/auth';
 
 /**
@@ -39,25 +40,7 @@ export interface AuthState {
     error: string | null;
 }
 
-/**
- * Auth action results (The Result Pattern)
- */
-export interface AuthSuccess<T = void> {
-    success: true;
-    data: T;
-    message?: string;
-}
-
-export interface AuthError {
-    success: false;
-    error: {
-        code: string;
-        message: string;
-        field?: string;
-    };
-}
-
-export type AuthResult<T = void> = AuthSuccess<T> | AuthError;
+export { ActionResult }; // Re-export for convenience if needed, or just remove AuthResult usages.
 
 /**
  * Firebase auth error codes mapped to user-friendly messages
