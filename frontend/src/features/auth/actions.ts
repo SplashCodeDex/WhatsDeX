@@ -31,6 +31,7 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 14; // 14 days
  * Sign in with email and password
  */
 export async function signIn(
+    prevState: ActionResult<AuthUser> | null,
     formData: FormData
 ): Promise<ActionResult<AuthUser>> {
     // Parse and validate input
@@ -103,6 +104,7 @@ export async function signIn(
  * Register a new account
  */
 export async function signUp(
+    prevState: ActionResult<AuthUser> | null,
     formData: FormData
 ): Promise<ActionResult<AuthUser>> {
     // Parse and validate input

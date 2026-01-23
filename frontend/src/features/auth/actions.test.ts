@@ -50,7 +50,7 @@ describe('Auth Server Actions', () => {
       formData.append('email', 'test@example.com');
       formData.append('password', 'password123');
 
-      const result = await signIn(formData);
+      const result = await signIn(null, formData);
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -69,7 +69,7 @@ describe('Auth Server Actions', () => {
       formData.append('email', 'test@example.com');
       formData.append('password', 'wrongpassword');
 
-      const result = await signIn(formData);
+      const result = await signIn(null, formData);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -83,7 +83,7 @@ describe('Auth Server Actions', () => {
         formData.append('email', 'invalid-email');
         formData.append('password', '123');
   
-        const result = await signIn(formData);
+        const result = await signIn(null, formData);
   
         expect(result.success).toBe(false);
         if (!result.success) {
@@ -111,7 +111,7 @@ describe('Auth Server Actions', () => {
       formData.append('password', 'Password123');
       formData.append('acceptTerms', 'on');
 
-      const result = await signUp(formData);
+      const result = await signUp(null, formData);
 
       expect(result.success).toBe(true);
       if (result.success) {
