@@ -9,7 +9,7 @@
 ## Phase 2: Auth Feature Refactor
 - [x] Task: Refactor Auth Server Actions [commit: b5fd9d4]
     - Update `features/auth/actions.ts` to return `Result<T>`.
-- [ ] Task: TDD - Login Form Refactor
+- [x] Task: TDD - Login Form Refactor [commit: d22bbca]
     - Update/Create tests for `LoginForm.tsx` ensuring it uses `useActionState`.
     - Implement `useActionState` in `LoginForm.tsx` with inline error display.
 - [ ] Task: TDD - Register Form Refactor
