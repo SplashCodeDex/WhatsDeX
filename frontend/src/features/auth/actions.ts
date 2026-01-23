@@ -192,6 +192,7 @@ export async function signOut(): Promise<void> {
  * Request password reset email
  */
 export async function requestPasswordReset(
+    prevState: ActionResult | null,
     formData: FormData
 ): Promise<ActionResult> {
     const rawData = {
@@ -262,6 +263,7 @@ export async function getSession(): Promise<AuthUser | null> {
  * Confirm password reset with code
  */
 export async function resetPassword(
+    prevState: ActionResult | null,
     formData: FormData
 ): Promise<ActionResult> {
     const rawData = {

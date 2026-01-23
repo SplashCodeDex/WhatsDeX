@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useActionState } from 'react';
 import Link from 'next/link';
 import { Loader2, ArrowLeft, MailCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,30 +13,12 @@ import { requestPasswordReset, getAuthErrorMessage } from '@/features/auth';
  * Clean, modern form for password reset requests with premium feedback states.
  */
 export function ForgotPasswordForm() {
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isSuccess, setIsSuccess] = useState(false);
-
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        setIsLoading(true);
-        setError(null);
-
-        const formData = new FormData(event.currentTarget);
-        const result = await requestPasswordReset(formData);
-
-        if (result.success) {
-            setIsSuccess(true);
-        } else {
-            setError(result.error.message || getAuthErrorMessage(result.error.code));
-            setIsLoading(false);
-        }
-    }
+    const [state, formAction, isPending] = useActionState(requestPasswordReset, null);
 
     return (
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <AnimatePresence mode="wait">
-                {!isSuccess ? (
+                {!state?.success ? (
                     <motion.div
                         key="form"
                         initial={{ opacity: 0, x: -20 }}
@@ -53,7 +35,7 @@ export function ForgotPasswordForm() {
                         </div>
 
                         <div className="grid gap-6">
-                            <form onSubmit={handleSubmit}>
+                            <form action={formAction}>
                                 <div className="grid gap-4">
                                     <div className="grid gap-2">
                                         <label
@@ -70,19 +52,19 @@ export function ForgotPasswordForm() {
                                             autoCapitalize="none"
                                             autoComplete="email"
                                             autoCorrect="off"
-                                            disabled={isLoading}
+                                            disabled={isPending}
                                             required
                                         />
                                     </div>
 
-                                    {error && (
+                                    {state?.error && (
                                         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                                            {error}
+                                            {state.error.message || getAuthErrorMessage(state.error.code)}
                                         </div>
                                     )}
 
-                                    <Button disabled={isLoading}>
-                                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    <Button disabled={isPending}>
+                                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Send Reset Link
                                     </Button>
                                 </div>

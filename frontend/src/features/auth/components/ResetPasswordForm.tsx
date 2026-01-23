@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -16,39 +16,19 @@ import { resetPassword, getAuthErrorMessage } from '@/features/auth';
 export function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isSuccess, setIsSuccess] = useState(false);
-
+    
     const oobCode = searchParams.get('oobCode') || searchParams.get('code');
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        setIsLoading(true);
-        setError(null);
+    const [state, formAction, isPending] = useActionState(resetPassword, null);
 
-        if (!oobCode) {
-            setError('Invalid or expired reset link.');
-            setIsLoading(false);
-            return;
-        }
-
-        const formData = new FormData(event.currentTarget);
-        formData.append('oobCode', oobCode);
-
-        const result = await resetPassword(formData);
-
-        if (result.success) {
-            setIsSuccess(true);
-            // Redirect to login after a delay
-            setTimeout(() => {
+    useEffect(() => {
+        if (state?.success) {
+            const timer = setTimeout(() => {
                 router.push('/login');
             }, 3000);
-        } else {
-            setError(result.error.message || getAuthErrorMessage(result.error.code));
-            setIsLoading(false);
+            return () => clearTimeout(timer);
         }
-    }
+    }, [state?.success, router]);
 
     if (!oobCode) {
         return (
@@ -74,7 +54,7 @@ export function ResetPasswordForm() {
     return (
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <AnimatePresence mode="wait">
-                {!isSuccess ? (
+                {!state?.success ? (
                     <motion.div
                         key="form"
                         initial={{ opacity: 0, y: 10 }}
@@ -89,7 +69,8 @@ export function ResetPasswordForm() {
                             </p>
                         </div>
 
-                        <form onSubmit={handleSubmit}>
+                        <form action={formAction}>
+                            <input type="hidden" name="oobCode" value={oobCode} />
                             <div className="grid gap-4">
                                 <div className="grid gap-2">
                                     <label
@@ -101,7 +82,7 @@ export function ResetPasswordForm() {
                                     <PasswordInput
                                         id="password"
                                         name="password"
-                                        disabled={isLoading}
+                                        disabled={isPending}
                                         required
                                         placeholder="••••••••"
                                     />
@@ -117,20 +98,20 @@ export function ResetPasswordForm() {
                                     <PasswordInput
                                         id="confirmPassword"
                                         name="confirmPassword"
-                                        disabled={isLoading}
+                                        disabled={isPending}
                                         required
                                         placeholder="••••••••"
                                     />
                                 </div>
 
-                                {error && (
+                                {state?.error && (
                                     <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                                        {error}
+                                        {state.error.message || getAuthErrorMessage(state.error.code)}
                                     </div>
                                 )}
 
-                                <Button disabled={isLoading}>
-                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                <Button disabled={isPending}>
+                                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Reset Password
                                 </Button>
                             </div>
