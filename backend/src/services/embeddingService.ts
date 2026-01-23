@@ -17,15 +17,19 @@ export class EmbeddingService {
   private readonly model: string;
   private readonly baseDelay: number;
 
-  private constructor(keyManager: ApiKeyManager, initialKey: string) {
+  private constructor(keyManager: ApiKeyManager, initialKey?: string) {
     this.keyManager = keyManager;
-    this.currentKey = initialKey;
-    this.genAI = new GoogleGenerativeAI(this.currentKey);
+    this.currentKey = initialKey || '';
+    this.genAI = this.currentKey ? new GoogleGenerativeAI(this.currentKey) : ({} as GoogleGenerativeAI);
     this.model = 'text-embedding-004';
     this.baseDelay = 1000;
 
     const stats = this.keyManager.getStats();
-    logger.info(`EmbeddingService initialized with ${stats.totalKeys} API keys (${stats.healthyKeys} healthy)`);
+    if (stats.totalKeys > 0) {
+      logger.info(`EmbeddingService initialized with ${stats.totalKeys} API keys (${stats.healthyKeys} healthy)`);
+    } else {
+      logger.info('EmbeddingService initialized in disabled state.');
+    }
   }
 
   /**
@@ -39,15 +43,28 @@ export class EmbeddingService {
 
     const managerResult = ApiKeyManager.getInstance();
     if (!managerResult.success) {
-      return managerResult;
+      return managerResult; // Propagate critical error
     }
 
-    const keyResult = managerResult.data.getKey();
+    const keyManager = managerResult.data;
+
+    // Handle disabled case
+    if (keyManager.getKeyCount() === 0) {
+      EmbeddingService.instance = new EmbeddingService(keyManager);
+      return { success: true, data: EmbeddingService.instance };
+    }
+
+    // Handle enabled case
+    const keyResult = keyManager.getKey();
     if (!keyResult.success) {
-      return keyResult;
+      // This is an unexpected state if keys exist
+      return {
+        success: false,
+        error: new Error('Failed to retrieve key from a non-empty ApiKeyManager'),
+      };
     }
 
-    EmbeddingService.instance = new EmbeddingService(managerResult.data, keyResult.data);
+    EmbeddingService.instance = new EmbeddingService(keyManager, keyResult.data);
     return { success: true, data: EmbeddingService.instance };
   }
 
@@ -82,6 +99,12 @@ export class EmbeddingService {
    * @returns Result containing the embedding vector or an error
    */
   async generateEmbedding(text: string): Promise<Result<number[]>> {
+    if (this.keyManager.getKeyCount() === 0) {
+        return {
+            success: false,
+            error: new Error('EmbeddingService is disabled. GOOGLE_GEMINI_API_KEY is not configured.'),
+        };
+    }
     if (!text) {
       return { success: false, error: new Error('Text is required') };
     }
