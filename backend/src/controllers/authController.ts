@@ -161,11 +161,14 @@ export const signup = async (req: Request, res: Response) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
+        const firebaseToken = await admin.auth().createCustomToken(userId, { tenantId: tenant.id, role: 'owner' });
+
         res.status(201).json({
             success: true,
             data: {
                 token,
-                user: { id: userId, name: displayName, email },
+                firebaseToken,
+                user: { id: userId, name: displayName, email, role: 'owner', tenantId: tenant.id },
                 tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
             }
         });
@@ -233,6 +236,13 @@ export const login = async (req: Request, res: Response) => {
             return res.status(403).json({ success: false, error: 'Account suspended' });
         }
 
+        const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+        if (!tenantDoc.exists) {
+            logger.error('Login: Tenant not found for tenantId', { tenantId, uid });
+            return res.status(404).json({ success: false, error: 'Tenant data not found' });
+        }
+        const tenant = tenantDoc.data()!;
+
         const config = ConfigService.getInstance();
         const jwtSecret = config.get('JWT_SECRET');
 
@@ -241,6 +251,8 @@ export const login = async (req: Request, res: Response) => {
             jwtSecret,
             { expiresIn: '7d' }
         );
+
+        const firebaseToken = await admin.auth().createCustomToken(uid, { tenantId, role });
 
         await auditService.logEvent({
             eventType: 'USER_LOGIN',
@@ -268,8 +280,9 @@ export const login = async (req: Request, res: Response) => {
             success: true,
             data: {
                 token,
-                user: { id: uid, name: user.displayName || 'User', email: user.email, role },
-                tenant: { id: tenantId }
+                firebaseToken,
+                user: { id: uid, name: user.displayName || 'User', email: user.email, role, tenantId },
+                tenant: { id: tenantId, name: tenant.name, subdomain: tenant.subdomain },
             }
         });
 
