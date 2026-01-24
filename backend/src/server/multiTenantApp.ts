@@ -100,16 +100,22 @@ export class MultiTenantApp {
     // CORS
     this.app.use(cors({
       origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-        if (!origin ||
-          origin.includes('localhost') ||
-          origin.endsWith('.whatsdx.com') ||
-          origin === this.config.get('NEXT_PUBLIC_APP_URL')) {
+        if (!origin) {
+          return callback(null, true);
+        }
+        const allowedOrigins = (this.config.get('CORS_ALLOWED_ORIGINS') || '').split(',');
+        const appUrl = this.config.get('NEXT_PUBLIC_APP_URL');
+        if (appUrl && !allowedOrigins.includes(appUrl)) {
+          allowedOrigins.push(appUrl);
+        }
+        const whatsdxRegex = /^https?:\/\/([a-z0-9-]+\.)*whatsdx\.com$/;
+        if (allowedOrigins.includes(origin) || whatsdxRegex.test(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));
         }
       },
-      credentials: true
+      credentials: true,
     }));
 
     // Compression
