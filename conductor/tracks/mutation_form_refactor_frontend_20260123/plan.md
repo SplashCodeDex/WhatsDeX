@@ -23,7 +23,7 @@
 ## Phase 3: Bot Management Feature Refactor
 - [x] Task: Refactor Bot Server Actions [commit: cb66091]
     - Update `features/bots/actions.ts` to return `Result<T>`.
-- [ ] Task: TDD - Create Bot Form Refactor
+- [x] Task: TDD - Create Bot Form Refactor [commit: 118194c]
     - Update/Create tests for `CreateBotForm.tsx`.
     - Implement `useActionState` in `CreateBotForm.tsx`.
 - [ ] Task: TDD - Bot Settings Refactor
