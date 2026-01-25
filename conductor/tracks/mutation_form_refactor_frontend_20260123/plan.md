@@ -30,7 +30,7 @@
     - Implement `useActionState` for settings updates in `BotSettings.tsx`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Bot Management Feature Refactor' (Protocol in workflow.md)
 
-## Phase 4: Marketing & Billing Feature Refactor
+## Phase 4: Marketing & Billing Feature Refactor [checkpoint: 56f1363]
 - [x] Task: Refactor Campaign/Billing Server Actions [commit: 19a30d0]
     - Update relevant `actions.ts` in `features/campaigns` and `features/billing`.
 - [x] Task: TDD - Form Refactors [commit: c6ff46c, 750f6c1]
