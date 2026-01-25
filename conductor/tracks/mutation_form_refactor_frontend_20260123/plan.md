@@ -31,7 +31,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Bot Management Feature Refactor' (Protocol in workflow.md)
 
 ## Phase 4: Marketing & Billing Feature Refactor
-- [ ] Task: Refactor Campaign/Billing Server Actions
+- [x] Task: Refactor Campaign/Billing Server Actions [commit: 19a30d0]
     - Update relevant `actions.ts` in `features/campaigns` and `features/billing`.
 - [ ] Task: TDD - Form Refactors
     - Migrate remaining forms to `useActionState`.
