@@ -35,7 +35,7 @@
     - Update relevant `actions.ts` in `features/campaigns` and `features/billing`.
 - [x] Task: TDD - Form Refactors [commit: c6ff46c, 750f6c1]
     - Migrate remaining forms to `useActionState`.
-- [~] Task: Regression Testing & Cleanup
+- [x] Task: Regression Testing & Cleanup [commit: a95aaf6]
     - Run full frontend test suite.
     - Remove unused `useState` and `isLoading` legacy logic.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Marketing & Billing Feature Refactor' (Protocol in workflow.md)
