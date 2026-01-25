@@ -7,18 +7,29 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Save, Building2, User, Phone, Zap } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Loader2, Save, Building2, Zap } from 'lucide-react';
+import { useState, useEffect, useActionState, startTransition } from 'react';
+import { updateTenantSettings } from '../actions';
+import { toast } from 'sonner';
 
 export function WorkspaceSettings() {
-    const { settings, isLoading, updateSettings, isUpdating } = useSettings();
+    const { settings, isLoading } = useSettings();
     const [formData, setFormData] = useState<any>(null);
+    const [state, dispatch, isPending] = useActionState(updateTenantSettings, null);
 
     useEffect(() => {
         if (settings) {
             setFormData(settings);
         }
     }, [settings]);
+
+    useEffect(() => {
+        if (state?.success) {
+            toast.success('Settings updated successfully');
+        } else if (state?.success === false) {
+            toast.error(state.error.message || 'Failed to update settings');
+        }
+    }, [state]);
 
     if (isLoading || !formData) {
         return (
@@ -29,7 +40,11 @@ export function WorkspaceSettings() {
     }
 
     const handleSave = () => {
-        updateSettings(formData);
+        const payload = new FormData();
+        payload.append('data', JSON.stringify(formData));
+        startTransition(() => {
+            dispatch(payload);
+        });
     };
 
     return (
@@ -41,8 +56,8 @@ export function WorkspaceSettings() {
                         Manage your organization profile, default bot behavior, and notifications.
                     </p>
                 </div>
-                <Button onClick={handleSave} disabled={isUpdating} className="gap-2">
-                    {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                <Button onClick={handleSave} disabled={isPending} className="gap-2">
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     Save Changes
                 </Button>
             </div>
@@ -65,6 +80,7 @@ export function WorkspaceSettings() {
                                 value={formData.organization || ''}
                                 onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
                                 placeholder="Acme Corp"
+                                disabled={isPending}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -75,6 +91,7 @@ export function WorkspaceSettings() {
                                     value={formData.ownerName || ''}
                                     onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                                     placeholder="John Doe"
+                                    disabled={isPending}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -112,6 +129,7 @@ export function WorkspaceSettings() {
                                     ...formData,
                                     notifications: { ...formData.notifications, email: val }
                                 })}
+                                disabled={isPending}
                             />
                         </div>
                         <Separator />
@@ -126,6 +144,7 @@ export function WorkspaceSettings() {
                                     ...formData,
                                     notifications: { ...formData.notifications, notifyOnBotDisconnect: val }
                                 })}
+                                disabled={isPending}
                             />
                         </div>
                         <Separator />
@@ -140,6 +159,7 @@ export function WorkspaceSettings() {
                                     ...formData,
                                     notifications: { ...formData.notifications, notifyOnErrors: val }
                                 })}
+                                disabled={isPending}
                             />
                         </div>
                     </CardContent>
@@ -161,6 +181,7 @@ export function WorkspaceSettings() {
                                     ...formData,
                                     botDefaults: { ...formData.botDefaults, mode: e.target.value }
                                 })}
+                                disabled={isPending}
                             >
                                 <option value="public">Public (Everyone)</option>
                                 <option value="private">Private (Owner Only)</option>
@@ -176,6 +197,7 @@ export function WorkspaceSettings() {
                                     botDefaults: { ...formData.botDefaults, prefix: e.target.value.split(/\s+/) }
                                 })}
                                 placeholder=". ! /"
+                                disabled={isPending}
                             />
                             <p className="text-[10px] text-muted-foreground italic">Space separated prefixes</p>
                         </div>
@@ -190,6 +212,7 @@ export function WorkspaceSettings() {
                                     ...formData,
                                     botDefaults: { ...formData.botDefaults, autoReconnect: val }
                                 })}
+                                disabled={isPending}
                             />
                         </div>
                     </CardContent>
