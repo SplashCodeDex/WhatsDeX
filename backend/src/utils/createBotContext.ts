@@ -57,7 +57,8 @@ const createBotContext = async (
 
   // Implement ctx.group() methods
   const group = (jid = groupId) => ({
-    isAdmin: async (userJid: string) => {
+    isAdmin: async (userJid: string = senderId) => {
+      // @ts-ignore
       if (!jid || !botInstance.tenantId) return false;
       try {
         const memberSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
@@ -69,6 +70,7 @@ const createBotContext = async (
       return false;
     },
     isBotAdmin: async () => {
+      // @ts-ignore
       if (!jid || !botInstance.tenantId) return false;
       const botJid = botInstance.user?.id?.split(':')[0] + '@s.whatsapp.net'; // derive from bot user
       if (!botJid) return false;
@@ -82,6 +84,7 @@ const createBotContext = async (
       return false;
     },
     members: async () => {
+      // @ts-ignore
       if (!jid || !botInstance.tenantId) return [];
       try {
         const membersSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').get();
@@ -128,7 +131,8 @@ const createBotContext = async (
     inviteCode: async () => {
       // @ts-ignore
       if (!jid || !botInstance?.groupInviteCode) return '';
-      return await botInstance.groupInviteCode(jid);
+      const code = await botInstance.groupInviteCode(jid);
+      return code || '';
     },
     pendingMembers: async () => [],
     approvePendingMembers: async (jids: string[]) => null,
@@ -151,7 +155,28 @@ const createBotContext = async (
     membersCanAddMemberMode: async (mode: 'on' | 'off') => {
       // @ts-ignore
       if (!jid || !botInstance?.groupMemberAddMode) return null;
-      return await botInstance.groupMemberAddMode(mode === 'on'); // baileys expects boolean
+      const val = mode === 'on' ? 'all_member_add' : 'admin_add';
+      return await botInstance.groupMemberAddMode(jid, val);
+    },
+    open: async () => {
+      // @ts-ignore
+      if (!jid || !botInstance?.groupSettingUpdate) return null;
+      return await botInstance.groupSettingUpdate(jid, 'not_announcement');
+    },
+    close: async () => {
+      // @ts-ignore
+      if (!jid || !botInstance?.groupSettingUpdate) return null;
+      return await botInstance.groupSettingUpdate(jid, 'announcement');
+    },
+    unlock: async () => {
+      // @ts-ignore
+      if (!jid || !botInstance?.groupSettingUpdate) return null;
+      return await botInstance.groupSettingUpdate(jid, 'unlocked');
+    },
+    lock: async () => {
+      // @ts-ignore
+      if (!jid || !botInstance?.groupSettingUpdate) return null;
+      return await botInstance.groupSettingUpdate(jid, 'locked');
     },
     isOwner: async (userJid: string) => {
       // @ts-ignore
@@ -187,7 +212,7 @@ const createBotContext = async (
   }
 
   // Handle Auto Read if configured
-  if (botInstance.config?.autoRead && rawBaileysMessage.key.remoteJid) {
+  if (botInstance.config?.autoRead && rawBaileysMessage.key?.remoteJid) { // Fixed: safely access key
     botInstance.readMessages([rawBaileysMessage.key]).catch(() => { });
   }
 
@@ -207,7 +232,9 @@ const createBotContext = async (
   // Validate Owner
   // Use tenantSettings.ownerNumber if available
   const ownerNumber = tenantSettings.ownerNumber || 'system';
-  const isOwner = tools.cmd.isOwner([ownerNumber], senderId, rawBaileysMessage.key.id);
+  const isOwner = tools.cmd.isOwner([ownerNumber], senderId, rawBaileysMessage.key?.id || ''); // Fixed: unsafe key access
+
+  // Resolve null mismatch by properly calling the function
   const isAdmin = isGroup ? await group().isAdmin(senderId) : false;
 
   const ctx: MessageContext = {
@@ -244,8 +271,9 @@ const createBotContext = async (
     },
     download: async () => {
       const quotedMsg = rawBaileysMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      // Fixed: Implicit any indexing
       const messageToDownload = quotedMsg ?
-        { [Object.keys(quotedMsg)[0]]: quotedMsg[Object.keys(quotedMsg)[0]] } :
+        { [Object.keys(quotedMsg)[0]]: (quotedMsg as any)[Object.keys(quotedMsg)[0]] } :
         rawBaileysMessage.message;
 
       if (!messageToDownload) throw new Error('No media found to download');

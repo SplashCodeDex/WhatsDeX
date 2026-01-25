@@ -5,6 +5,8 @@ import { Webhook, WebhookSchema, WebhookEvent, Result } from '../types/contracts
 import { Timestamp } from 'firebase-admin/firestore';
 import logger from '../utils/logger.js';
 
+import { tenantConfigService } from './tenantConfigService.js';
+
 export class WebhookService {
     /**
      * Create a new webhook for a tenant
@@ -55,6 +57,10 @@ export class WebhookService {
      */
     async dispatch(tenantId: string, event: WebhookEvent, payload: any): Promise<void> {
         try {
+            // Feature Flag Check
+            const isEnabled = await tenantConfigService.isFeatureEnabled(tenantId, 'webhooksEnabled');
+            if (!isEnabled) return;
+
             const webhooksResult = await this.getWebhooks(tenantId);
             if (!webhooksResult.success) return;
 
