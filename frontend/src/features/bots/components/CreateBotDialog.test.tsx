@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CreateBotDialog } from './CreateBotDialog';
 
 // Mock Hooks and Actions
@@ -33,23 +33,25 @@ vi.mock('@/components/ui/dialog', () => ({
     DialogTrigger: ({ children }: any) => <div>{children}</div>,
 }));
 
-// Mock Button specifically to ensure it's clickable
 vi.mock('@/components/ui/button', () => ({
-    Button: ({ children, onClick, ...props }: any) => (
-        <button onClick={onClick} {...props}>{children}</button>
+    Button: ({ children, onClick, type, ...props }: any) => (
+        <button onClick={onClick} type={type} {...props}>{children}</button>
     ),
 }));
 
 describe('CreateBotDialog', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it('should use createBot server action on submit', async () => {
         const createBotMock = createBot as any;
         createBotMock.mockResolvedValue({ success: true, data: { id: '123' } });
 
-        render(<CreateBotDialog />);
+        const { container } = render(<CreateBotDialog />);
 
-        // Open Dialog (Click Trigger)
-        const buttons = screen.getAllByRole('button', { name: /create bot/i });
-        const trigger = buttons.find(b => b.getAttribute('type') !== 'submit') || buttons[0];
+        // Open Dialog
+        const trigger = screen.getAllByRole('button', { name: /create bot/i })[0];
         fireEvent.click(trigger);
 
         // Fill Name
@@ -57,8 +59,8 @@ describe('CreateBotDialog', () => {
         fireEvent.change(nameInput, { target: { value: 'New Bot' } });
 
         // Submit
-        const submitBtn = buttons.find(b => b.getAttribute('type') === 'submit') || buttons[1];
-        fireEvent.click(submitBtn);
+        const submitBtn = container.querySelector('button[type="submit"]');
+        if (submitBtn) fireEvent.click(submitBtn);
 
         // Verify Server Action call
         await waitFor(() => {
@@ -66,5 +68,60 @@ describe('CreateBotDialog', () => {
             const formData = createBotMock.mock.calls[0][1];
             expect(formData.get('name')).toBe('New Bot');
         });
+    });
+
+    it('should display inline validation error when creation fails', async () => {
+        const createBotMock = createBot as any;
+        createBotMock.mockResolvedValue({
+            success: false,
+            error: {
+                code: 'validation_error',
+                message: 'Invalid input',
+                details: { name: ['Name is required'] }
+            }
+        });
+
+        const { container } = render(<CreateBotDialog />);
+
+        // Open Dialog
+        const trigger = screen.getAllByRole('button', { name: /create bot/i })[0];
+        fireEvent.click(trigger);
+
+        // Fill Name to bypass browser validation if any, though we want server error
+        const nameInput = screen.getByLabelText(/Bot Name/i);
+        fireEvent.change(nameInput, { target: { value: 'Something' } });
+
+        // Submit
+        const submitBtn = container.querySelector('button[type="submit"]');
+        if (submitBtn) fireEvent.click(submitBtn);
+
+        expect(await screen.findByText('Name is required')).toBeDefined();
+    });
+
+    it('should display global error when server fails', async () => {
+        const createBotMock = createBot as any;
+        createBotMock.mockResolvedValue({
+            success: false,
+            error: {
+                code: 'server_error',
+                message: 'Something went wrong'
+            }
+        });
+
+        const { container } = render(<CreateBotDialog />);
+
+        // Open Dialog
+        const trigger = screen.getAllByRole('button', { name: /create bot/i })[0];
+        fireEvent.click(trigger);
+
+        // Fill Name
+        const nameInput = screen.getByLabelText(/Bot Name/i);
+        fireEvent.change(nameInput, { target: { value: 'New Bot' } });
+
+        // Submit
+        const submitBtn = container.querySelector('button[type="submit"]');
+        if (submitBtn) fireEvent.click(submitBtn);
+
+        expect(await screen.findByText('Something went wrong')).toBeDefined();
     });
 });
