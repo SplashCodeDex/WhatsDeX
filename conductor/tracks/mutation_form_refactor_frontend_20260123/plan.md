@@ -6,7 +6,7 @@
     - Ensure `Result<T>` is exported from a shared location (e.g., `frontend/src/types/index.ts`).
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Foundation & Standard Type Definitions' (Protocol in workflow.md) [commit: c1d6d52]
 
-## Phase 2: Auth Feature Refactor
+## Phase 2: Auth Feature Refactor [checkpoint: 4d64ac7]
 - [x] Task: Refactor Auth Server Actions [commit: b5fd9d4]
     - Update `features/auth/actions.ts` to return `Result<T>`.
 - [x] Task: TDD - Login Form Refactor [commit: 7efc6ec]
@@ -18,7 +18,7 @@
 - [x] Task: TDD - Password Reset Forms Refactor [commit: a031e53]
     - Refactor `ForgotPasswordForm.tsx` and `ResetPasswordForm.tsx` to use `useActionState`.
     - Update `requestPasswordReset` and `resetPassword` action signatures.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Auth Feature Refactor' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Auth Feature Refactor' (Protocol in workflow.md) [checkpoint: 4d64ac7]
 
 ## Phase 3: Bot Management Feature Refactor
 - [ ] Task: Refactor Bot Server Actions
