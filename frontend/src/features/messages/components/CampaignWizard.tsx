@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useCreateCampaign } from '../hooks/useCampaigns';
+import React, { useState, useActionState, useEffect, startTransition } from 'react';
 import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
 import { useAudiences } from '../hooks/useAudiences';
 import { useBots } from '@/features/bots/hooks/useBots';
@@ -20,7 +19,8 @@ import {
     Sparkles,
     CheckCircle2,
     Layout,
-    Clock
+    Clock,
+    Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -32,6 +32,8 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { createCampaign } from '../actions';
+import { toast } from 'sonner';
 
 type Step = 'audience' | 'template' | 'distribution' | 'review';
 
@@ -64,8 +66,8 @@ export function CampaignWizard() {
     const { data: audiences } = useAudiences();
     const { data: templates } = useTemplates();
     const { data: bots } = useBots();
-    const createMutation = useCreateCampaign();
-    const spinMutation = useSpinMessage();
+    
+    const [state, dispatch, isPending] = useActionState(createCampaign, null);
 
     const [formData, setFormData] = useState<CampaignFormData>({
         name: '',
@@ -90,6 +92,15 @@ export function CampaignWizard() {
         scheduledAt: ''
     });
 
+    useEffect(() => {
+        if (state?.success) {
+            toast.success('Campaign created successfully');
+            // Navigate or reset here if needed.
+        } else if (state?.success === false) {
+            toast.error(state.error.message || 'Failed to create campaign');
+        }
+    }, [state]);
+
     const steps: { id: Step; label: string; icon: any }[] = [
         { id: 'audience', label: 'Audience', icon: Users },
         { id: 'template', label: 'Template', icon: MessageSquare },
@@ -110,7 +121,7 @@ export function CampaignWizard() {
     };
 
     const handleSubmit = () => {
-        createMutation.mutate({
+        const payload = {
             name: formData.name || `Campaign ${new Date().toLocaleDateString()}`,
             templateId: formData.templateId,
             audience: { type: formData.audienceType, targetId: formData.targetId },
@@ -133,6 +144,12 @@ export function CampaignWizard() {
                 type: formData.scheduleType,
                 ...(formData.scheduledAt ? { scheduledAt: new Date(formData.scheduledAt).toISOString() } : {})
             }
+        };
+
+        const fd = new FormData();
+        fd.append('data', JSON.stringify(payload));
+        startTransition(() => {
+            dispatch(fd);
         });
     };
 
@@ -184,6 +201,7 @@ export function CampaignWizard() {
                                 value={formData.name}
                                 onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                 className="h-12 text-lg font-medium"
+                                disabled={isPending}
                             />
                         </div>
                         <div className="space-y-2">
@@ -191,6 +209,7 @@ export function CampaignWizard() {
                             <Select
                                 value={formData.targetId}
                                 onValueChange={(val: string) => setFormData(prev => ({ ...prev, targetId: val }))}
+                                disabled={isPending}
                             >
                                 <SelectTrigger className="h-12">
                                     <SelectValue placeholder="Select an Audience" />
@@ -215,6 +234,7 @@ export function CampaignWizard() {
                             <Select
                                 value={formData.templateId}
                                 onValueChange={(val: string) => setFormData(prev => ({ ...prev, templateId: val }))}
+                                disabled={isPending}
                             >
                                 <SelectTrigger className="h-12">
                                     <SelectValue placeholder="Choose a template" />
@@ -241,6 +261,7 @@ export function CampaignWizard() {
                                     <Switch
                                         checked={formData.aiSpinning}
                                         onCheckedChange={(val: boolean) => setFormData(prev => ({ ...prev, aiSpinning: val }))}
+                                        disabled={isPending}
                                     />
                                 </div>
                             </div>
@@ -257,7 +278,8 @@ export function CampaignWizard() {
                                     <div
                                         className={cn(
                                             "p-4 rounded-xl border-2 cursor-pointer transition-all",
-                                            formData.distributionType === 'single' ? "border-primary bg-primary/10" : "border-border hover:border-border/80"
+                                            formData.distributionType === 'single' ? "border-primary bg-primary/10" : "border-border hover:border-border/80",
+                                            isPending && "pointer-events-none opacity-50"
                                         )}
                                         onClick={() => setFormData(prev => ({ ...prev, distributionType: 'single' }))}
                                     >
@@ -274,7 +296,8 @@ export function CampaignWizard() {
                                     <div
                                         className={cn(
                                             "p-4 rounded-xl border-2 cursor-pointer transition-all",
-                                            formData.distributionType === 'pool' ? "border-primary bg-primary/10" : "border-border hover:border-border/80"
+                                            formData.distributionType === 'pool' ? "border-primary bg-primary/10" : "border-border hover:border-border/80",
+                                            isPending && "pointer-events-none opacity-50"
                                         )}
                                         onClick={() => setFormData(prev => ({ ...prev, distributionType: 'pool' }))}
                                     >
@@ -305,6 +328,7 @@ export function CampaignWizard() {
                                             onChange={e => setFormData(prev => ({ ...prev, minDelay: Number(e.target.value) }))}
                                             className="h-10"
                                             placeholder="Min"
+                                            disabled={isPending}
                                         />
                                         <Input
                                             type="number"
@@ -312,6 +336,7 @@ export function CampaignWizard() {
                                             onChange={e => setFormData(prev => ({ ...prev, maxDelay: Number(e.target.value) }))}
                                             className="h-10"
                                             placeholder="Max"
+                                            disabled={isPending}
                                         />
                                     </div>
 
@@ -331,6 +356,7 @@ export function CampaignWizard() {
                                                     value={formData.batchSize}
                                                     onChange={e => setFormData(prev => ({ ...prev, batchSize: Number(e.target.value) }))}
                                                     className="h-8 text-xs"
+                                                    disabled={isPending}
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
@@ -341,6 +367,7 @@ export function CampaignWizard() {
                                                         value={formData.batchPauseMin}
                                                         onChange={e => setFormData(prev => ({ ...prev, batchPauseMin: Number(e.target.value) }))}
                                                         className="h-8 text-xs px-2"
+                                                        disabled={isPending}
                                                     />
                                                     <span className="text-[10px] text-muted-foreground">-</span>
                                                     <Input
@@ -348,6 +375,7 @@ export function CampaignWizard() {
                                                         value={formData.batchPauseMax}
                                                         onChange={e => setFormData(prev => ({ ...prev, batchPauseMax: Number(e.target.value) }))}
                                                         className="h-8 text-xs px-2"
+                                                        disabled={isPending}
                                                     />
                                                 </div>
                                             </div>
@@ -371,6 +399,7 @@ export function CampaignWizard() {
                                 <Switch
                                     checked={formData.workingHoursEnabled}
                                     onCheckedChange={(val: boolean) => setFormData(prev => ({ ...prev, workingHoursEnabled: val }))}
+                                    disabled={isPending}
                                 />
                             </div>
                             {formData.workingHoursEnabled && (
@@ -380,6 +409,7 @@ export function CampaignWizard() {
                                         <Select
                                             value={formData.timezone}
                                             onValueChange={(val: string) => setFormData(prev => ({ ...prev, timezone: val }))}
+                                            disabled={isPending}
                                         >
                                             <SelectTrigger className="h-9 text-xs">
                                                 <SelectValue placeholder="Select Timezone" />
@@ -403,6 +433,7 @@ export function CampaignWizard() {
                                             value={formData.workingHoursStart}
                                             onChange={e => setFormData(prev => ({ ...prev, workingHoursStart: e.target.value }))}
                                             className="h-9"
+                                            disabled={isPending}
                                         />
                                     </div>
                                     <div className="space-y-1.5">
@@ -412,6 +443,7 @@ export function CampaignWizard() {
                                             value={formData.workingHoursEnd}
                                             onChange={e => setFormData(prev => ({ ...prev, workingHoursEnd: e.target.value }))}
                                             className="h-9"
+                                            disabled={isPending}
                                         />
                                     </div>
                                 </div>
@@ -432,6 +464,7 @@ export function CampaignWizard() {
                                 <Switch
                                     checked={formData.typingSimulation}
                                     onCheckedChange={(val: boolean) => setFormData(prev => ({ ...prev, typingSimulation: val }))}
+                                    disabled={isPending}
                                 />
                             </div>
                             {formData.typingSimulation && (
@@ -448,6 +481,7 @@ export function CampaignWizard() {
                                         value={formData.maxTypingDelay}
                                         onChange={e => setFormData(prev => ({ ...prev, maxTypingDelay: Number(e.target.value) }))}
                                         className="h-4 accent-amber-500"
+                                        disabled={isPending}
                                     />
                                 </div>
                             )}
@@ -459,6 +493,7 @@ export function CampaignWizard() {
                                 <Select
                                     value={formData.botId}
                                     onValueChange={(val: string) => setFormData(prev => ({ ...prev, botId: val }))}
+                                    disabled={isPending}
                                 >
                                     <SelectTrigger className="h-12">
                                         <SelectValue placeholder="Choose a bot" />
@@ -513,7 +548,7 @@ export function CampaignWizard() {
                 <Button
                     variant="ghost"
                     onClick={handleBack}
-                    disabled={step === 'audience'}
+                    disabled={step === 'audience' || isPending}
                     className="font-bold uppercase tracking-widest text-[10px]"
                 >
                     <ChevronLeft className="w-4 h-4 mr-2" /> Back
@@ -526,7 +561,8 @@ export function CampaignWizard() {
                         disabled={
                             (step === 'audience' && !formData.targetId) ||
                             (step === 'template' && !formData.templateId) ||
-                            (step === 'distribution' && formData.distributionType === 'single' && !formData.botId)
+                            (step === 'distribution' && formData.distributionType === 'single' && !formData.botId) ||
+                            isPending
                         }
                     >
                         Next Step <ChevronRight className="w-4 h-4 ml-2" />
@@ -534,11 +570,11 @@ export function CampaignWizard() {
                 ) : (
                     <Button
                         onClick={handleSubmit}
-                        disabled={createMutation.isPending}
+                        disabled={isPending}
                         className="px-10 font-bold uppercase tracking-widest text-[10px] shadow-xl shadow-primary/30 h-12"
                     >
-                        {createMutation.isPending ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        {isPending ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                             <>Confirm & Launch <Send className="w-4 h-4 ml-2" /></>
                         )}
