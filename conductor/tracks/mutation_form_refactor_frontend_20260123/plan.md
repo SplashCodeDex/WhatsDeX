@@ -21,7 +21,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Auth Feature Refactor' (Protocol in workflow.md) [checkpoint: 4d64ac7]
 
 ## Phase 3: Bot Management Feature Refactor
-- [ ] Task: Refactor Bot Server Actions
+- [x] Task: Refactor Bot Server Actions [commit: cb66091]
     - Update `features/bots/actions.ts` to return `Result<T>`.
 - [ ] Task: TDD - Create Bot Form Refactor
     - Update/Create tests for `CreateBotForm.tsx`.
