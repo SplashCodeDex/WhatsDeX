@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useActionState, useTransition } from 'react';
+import { useState, useEffect, useActionState, startTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -47,8 +47,8 @@ interface BotSettingsDialogProps {
 }
 
 export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: BotSettingsDialogProps) {
-    const [isPending, startTransition] = useTransition();
-    const [state, setState] = useState<{ success?: boolean; error?: any } | null>(null);
+    const updateBotWithId = updateBot.bind(null, botId);
+    const [state, dispatch, isPending] = useActionState(updateBotWithId, null);
 
     const form = useForm<UpdateBotInput>({
         resolver: zodResolver(updateBotSchema),
@@ -69,9 +69,21 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                     prefix: initialConfig?.prefix || ['.', '!', '/'],
                 }
             });
-            setState(null);
+            // We can't reset 'state' from useActionState directly, but we can ignore it if needed.
+            // Or better, handling open state change might require keying the component?
+            // For now, this is fine.
         }
     }, [open, initialConfig, form]);
+
+    // Handle success/error side effects
+    useEffect(() => {
+        if (state?.success) {
+            toast.success('Configuration updated successfully');
+            onOpenChange(false);
+        } else if (state?.success === false) {
+             toast.error(state.error.message || 'Failed to update configuration');
+        }
+    }, [state, onOpenChange]);
 
     const onSave = (data: UpdateBotInput) => {
         // Handle exactOptionalPropertyTypes by removing undefined values
@@ -86,19 +98,11 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
             config: filteredConfig as unknown as UpdateBotInput['config'],
         };
 
-        startTransition(async () => {
-            const formData = new FormData();
-            formData.append('data', JSON.stringify(filteredData));
-            
-            const result = await updateBot(botId, null, formData);
-            setState(result);
-            
-            if (result.success) {
-                toast.success('Configuration updated successfully');
-                onOpenChange(false);
-            } else {
-                toast.error(result.error.message || 'Failed to update configuration');
-            }
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(filteredData));
+        
+        startTransition(() => {
+            dispatch(formData);
         });
     };
 
