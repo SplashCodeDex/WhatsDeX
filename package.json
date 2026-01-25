@@ -20,5 +20,11 @@
   },
   "devDependencies": {
     "lightningcss": "^1.30.2"
+  },
+  "overrides": {
+    "wa-sticker-formatter": {
+      "axios": "^1.7.9",
+      "sharp": "^0.33.5"
+    }
   }
 }

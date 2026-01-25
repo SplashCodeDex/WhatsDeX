@@ -253,7 +253,7 @@ export class TenantConfigService {
     async getOwnerNumber(tenantId: string): Promise<string | null> {
         const result = await this.getTenantSettings(tenantId);
         if (result.success) {
-            return result.data.ownerNumber;
+            return result.data.ownerNumber ?? null;
         }
         return null;
     }

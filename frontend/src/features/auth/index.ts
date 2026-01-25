@@ -37,9 +37,6 @@ export type {
     AuthUser,
     Session,
     AuthState,
-    AuthResult,
-    AuthSuccess,
-    AuthError,
 } from './types';
 
 export { getAuthErrorMessage, firebaseUserToAuthUser } from './types';

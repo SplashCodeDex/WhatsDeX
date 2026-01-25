@@ -36,7 +36,7 @@ export default {
 
       // Fetch owner number from tenant settings
       const tenantResult = await ctx.bot.context.tenantConfigService.getTenantSettings((ctx.bot as any).tenantId);
-      const ownerNumber = tenantResult.success ? tenantResult.data.ownerNumber : 'system';
+      const ownerNumber = (tenantResult.success ? tenantResult.data.ownerNumber : 'system') || 'system';
 
       // Process the input
       const result = await nlpService.processInput(input, {

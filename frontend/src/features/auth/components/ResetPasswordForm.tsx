@@ -16,18 +16,18 @@ import { resetPassword, getAuthErrorMessage } from '@/features/auth';
 export function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    
+
     const oobCode = searchParams.get('oobCode') || searchParams.get('code');
 
     const [state, formAction, isPending] = useActionState(resetPassword, null);
 
     useEffect(() => {
-        if (state?.success) {
-            const timer = setTimeout(() => {
-                router.push('/login');
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
+        if (!state?.success) return;
+
+        const timer = setTimeout(() => {
+            router.push('/login');
+        }, 3000);
+        return () => clearTimeout(timer);
     }, [state?.success, router]);
 
     if (!oobCode) {

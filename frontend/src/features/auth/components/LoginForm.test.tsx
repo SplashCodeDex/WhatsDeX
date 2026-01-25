@@ -24,8 +24,8 @@ vi.mock('../types', () => ({
 
 // Mock motion components
 vi.mock('@/components/ui/motion', () => ({
-  StaggeredEnter: ({ children }: any) => children,
-  StaggeredItem: ({ children }: any) => children,
+  StaggeredEnter: ({ children }: any) => <div>{children}</div>,
+  StaggeredItem: ({ children }: any) => <div>{children}</div>,
 }));
 
 // Mock UI components if necessary (simplifies tree)

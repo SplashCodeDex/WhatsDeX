@@ -25,7 +25,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('framer-motion', () => ({
-    AnimatePresence: ({ children }: any) => children,
+    AnimatePresence: ({ children }: any) => <div>{children}</div>,
     motion: {
         div: ({ children, className }: any) => <div className={className}>{children}</div>,
     }
