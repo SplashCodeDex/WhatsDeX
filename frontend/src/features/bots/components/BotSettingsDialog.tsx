@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useActionState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -34,8 +34,8 @@ import {
 } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Save, Sparkles, Shield, Zap, Settings2, Terminal, Search, Filter } from 'lucide-react';
-import { BotConfig, Command } from '../types';
-import { useUpdateBot } from '../hooks/index';
+import { BotConfig } from '../types';
+import { updateBot } from '../actions';
 import { updateBotSchema, UpdateBotInput } from '../schemas';
 import { toast } from 'sonner';
 
@@ -47,7 +47,8 @@ interface BotSettingsDialogProps {
 }
 
 export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: BotSettingsDialogProps) {
-    const { mutate: updateBot, isPending: isUpdating } = useUpdateBot();
+    const [isPending, startTransition] = useTransition();
+    const [state, setState] = useState<{ success?: boolean; error?: any } | null>(null);
 
     const form = useForm<UpdateBotInput>({
         resolver: zodResolver(updateBotSchema),
@@ -68,12 +69,12 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                     prefix: initialConfig?.prefix || ['.', '!', '/'],
                 }
             });
+            setState(null);
         }
     }, [open, initialConfig, form]);
 
-    const onSave = async (data: UpdateBotInput) => {
+    const onSave = (data: UpdateBotInput) => {
         // Handle exactOptionalPropertyTypes by removing undefined values
-        // This ensures compatibility with strict TypeScript settings
         const filteredConfig = data.config
             ? Object.fromEntries(
                 Object.entries(data.config).filter(([_, v]) => v !== undefined)
@@ -85,18 +86,20 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
             config: filteredConfig as unknown as UpdateBotInput['config'],
         };
 
-        try {
-            // Rule #2: Robust Error Handling (The Result Pattern)
-            // The useUpdateBot hook handles the API call and returns data or throws.
-            // We ensure specific feedback via toast.
-            await updateBot({ id: botId, data: filteredData });
-            toast.success('Configuration updated successfully');
-            onOpenChange(false);
-        } catch (error: any) {
-            // Rule #2: User-Facing Specificity
-            const errorMessage = error?.message || 'Failed to update bot configuration';
-            toast.error(errorMessage);
-        }
+        startTransition(async () => {
+            const formData = new FormData();
+            formData.append('data', JSON.stringify(filteredData));
+            
+            const result = await updateBot(botId, null, formData);
+            setState(result);
+            
+            if (result.success) {
+                toast.success('Configuration updated successfully');
+                onOpenChange(false);
+            } else {
+                toast.error(result.error.message || 'Failed to update configuration');
+            }
+        });
     };
 
     return (
@@ -113,7 +116,11 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSave)} className="space-y-6">
+                    <form 
+                        onSubmit={form.handleSubmit(onSave)} 
+                        className="space-y-6"
+                        aria-label="bot-settings-form"
+                    >
                         <Tabs defaultValue="behavior" className="w-full">
                             <TabsList className="grid w-full grid-cols-4">
                                 <TabsTrigger value="behavior" className="gap-2">
@@ -471,8 +478,8 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isUpdating}>
-                                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                            <Button type="submit" disabled={isPending}>
+                                {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                                 Save Configuration
                             </Button>
                         </DialogFooter>
