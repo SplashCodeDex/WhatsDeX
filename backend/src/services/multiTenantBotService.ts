@@ -330,19 +330,23 @@ export class MultiTenantBotService {
 
       // If not a command, try AI (if enabled for this bot/tenant)
       if (!handledByCommand && context.unifiedAI) {
-        // Create context for AI processing
-        // Create context for AI processing
-        const aiCtx = await createBotContext(bot, message, context);
-        // 2. Process via AI/Brain
-        await context.unifiedAI.processMessage(bot, aiCtx);
+        // Enforce Feature Flag: Check if AI is enabled for this tenant
+        const isAiEnabled = await tenantConfigService.isFeatureEnabled(tenantId, 'aiEnabled');
 
-        // 3. Webhook Dispatch
-        await webhookService.dispatch(tenantId, 'message.received', {
-          botId,
-          sender: aiCtx.sender.jid,
-          message: aiCtx.message?.conversation || aiCtx.message?.extendedTextMessage?.text || '',
-          timestamp: Date.now()
-        });
+        if (isAiEnabled) {
+          // Create context for AI processing
+          const aiCtx = await createBotContext(bot, message, context);
+          // 2. Process via AI/Brain
+          await context.unifiedAI.processMessage(bot, aiCtx);
+
+          // 3. Webhook Dispatch
+          await webhookService.dispatch(tenantId, 'message.received', {
+            botId,
+            sender: aiCtx.sender.jid,
+            message: aiCtx.message?.conversation || aiCtx.message?.extendedTextMessage?.text || '',
+            timestamp: Date.now()
+          });
+        }
       }
 
       // Increment stats

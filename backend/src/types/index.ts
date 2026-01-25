@@ -142,6 +142,11 @@ export interface MessageContext {
     cooldown: any;
     core?: any;
 
+    // Tenant & Permissions
+    tenant: import('./tenantConfig.js').TenantSettings;
+    isOwner: boolean;
+    isAdmin: boolean;
+
     // Group Functions
     group: (jid?: string) => GroupFunctions;
 

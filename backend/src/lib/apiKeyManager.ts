@@ -440,7 +440,12 @@ export function isQuotaError(error: unknown): boolean {
             message.includes('quota') ||
             message.includes('rate limit') ||
             message.includes('resource exhausted') ||
-            message.includes('too many requests')
+            message.includes('too many requests') ||
+            // Treat expired/invalid keys as strictly as quota errors (immediate circuit open)
+            message.includes('expired') ||
+            message.includes('invalid') ||
+            message.includes('400 bad request') ||
+            message.includes('api_key_invalid')
         );
     }
     return false;

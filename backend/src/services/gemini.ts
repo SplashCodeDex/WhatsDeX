@@ -66,12 +66,13 @@ class GeminiService {
   /**
    * Refresh the client with a new key from the rotation pool.
    * Called after marking a key as failed.
+   * @returns {boolean} True if rotation was successful, false if no keys available
    */
-  private refreshClient(): void {
+  private refreshClient(): boolean {
     const keyResult = this.keyManager.getKey();
     if (!keyResult.success) {
       logger.error('[GeminiService] Failed to get new key during rotation:', keyResult.error);
-      return;
+      return false;
     }
 
     if (keyResult.data !== this.currentKey) {
@@ -88,6 +89,7 @@ class GeminiService {
       });
       logger.info(`[GeminiService] Rotated to new API key ...${this.currentKey.slice(-4)}`);
     }
+    return true;
   }
 
   /**
@@ -184,7 +186,9 @@ class GeminiService {
         }
 
         // Rotate to next key
-        this.refreshClient();
+        if (!this.refreshClient()) {
+          throw new Error(`Failed to rotate key: No healthy keys available after error: ${err.message}`);
+        }
 
         // Exponential backoff (shorter for quota errors since we rotated)
         const delay = isQuota ? 500 : baseDelay * 2 ** (attempt - 1);
