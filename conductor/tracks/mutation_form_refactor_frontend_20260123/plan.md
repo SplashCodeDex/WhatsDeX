@@ -26,7 +26,7 @@
 - [x] Task: TDD - Create Bot Form Refactor [commit: 118194c]
     - Update/Create tests for `CreateBotForm.tsx`.
     - Implement `useActionState` in `CreateBotForm.tsx`.
-- [ ] Task: TDD - Bot Settings Refactor
+- [x] Task: TDD - Bot Settings Refactor [commit: 309f8da]
     - Implement `useActionState` for settings updates in `BotSettings.tsx`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Bot Management Feature Refactor' (Protocol in workflow.md)
 
