@@ -3,6 +3,8 @@ import { firebaseService } from './FirebaseService.js';
 import { ContactSchema, Result } from '../types/contracts.js';
 import logger from '../utils/logger.js';
 import crypto from 'crypto';
+import { parse } from 'csv-parse';
+import { Readable } from 'stream';
 
 export class ContactService {
   private static instance: ContactService;
@@ -18,69 +20,73 @@ export class ContactService {
 
   public async importContacts(
     tenantId: string,
-    csvData: string
+    stream: Readable
   ): Promise<Result<{ count: number; errors: string[] }>> {
-    try {
-      const rows = csvData.split(/\r?\n/).filter(line => line.trim() !== '');
-      if (rows.length < 2) {
-        return { success: false, error: new Error("CSV is empty or missing headers") };
-      }
+    return new Promise((resolve, reject) => {
+      const parser = parse({
+        columns: true,
+        trim: true,
+        skip_empty_lines: true
+      });
 
-      const headers = rows[0].split(',').map(h => h.trim());
-      const contacts = rows.slice(1);
       const errors: string[] = [];
       let count = 0;
-
-      // Process in batches of 500 (Firestore limit)
+      let batch = db.batch();
+      let batchSize = 0;
       const BATCH_SIZE = 500;
-      for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
-        const batch = db.batch();
-        const chunk = contacts.slice(i, i + BATCH_SIZE);
 
-        chunk.forEach((rowStr, chunkIndex) => {
-          const index = i + chunkIndex;
-          const values = rowStr.split(',').map(v => v.trim());
+      stream.pipe(parser);
 
-          const rawData: any = {};
-          headers.forEach((header, hi) => {
-            rawData[header] = values[hi] || '';
-          });
+      parser.on('data', async (row: any) => {
+        const rawData = row;
 
-          const contactData = {
-            id: `cont_${crypto.randomUUID()}`,
-            tenantId,
-            name: rawData.name || rawData.fullName || 'Unknown',
-            phone: rawData.phone || rawData.phoneNumber || '',
-            email: rawData.email || '',
-            tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
-            attributes: rawData,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
+        const contactData = {
+          id: `cont_${crypto.randomUUID()}`,
+          tenantId,
+          name: rawData.name || rawData.fullName || 'Unknown',
+          phone: rawData.phone || rawData.phoneNumber || '',
+          email: rawData.email || '',
+          tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
+          attributes: rawData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
 
-          const validation = ContactSchema.safeParse(contactData);
-          if (!validation.success) {
-            const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-            errors.push(`Row ${index + 2}: ${msg}`);
-          } else {
-            const contactRef = db.collection('tenants')
-              .doc(tenantId)
-              .collection('contacts')
-              .doc(contactData.id);
-            batch.set(contactRef, contactData);
-            count++;
+        const validation = ContactSchema.safeParse(contactData);
+        if (!validation.success) {
+          const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+          errors.push(`Row Error: ${msg}`);
+        } else {
+          const contactRef = db.collection('tenants')
+            .doc(tenantId)
+            .collection('contacts')
+            .doc(contactData.id);
+          batch.set(contactRef, contactData);
+          count++;
+          batchSize++;
+
+          if (batchSize >= BATCH_SIZE) {
+            parser.pause();
+            await batch.commit();
+            batch = db.batch();
+            batchSize = 0;
+            parser.resume();
           }
-        });
+        }
+      });
 
-        await batch.commit();
-      }
+      parser.on('end', async () => {
+        if (batchSize > 0) {
+          await batch.commit();
+        }
+        resolve({ success: true, data: { count, errors } });
+      });
 
-      return { success: true, data: { count, errors } };
-
-    } catch (error: any) {
-      logger.error('Error importing contacts', error);
-      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
-    }
+      parser.on('error', (err) => {
+        logger.error('Error parsing CSV', err);
+        reject({ success: false, error: new Error('Error parsing CSV') });
+      });
+    });
   }
 
   public async getAudience(tenantId: string): Promise<Result<any[]>> {
