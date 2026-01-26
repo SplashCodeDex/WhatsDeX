@@ -1,13 +1,23 @@
 import express from 'express';
+import multer from 'multer';
+import os from 'os';
 import { ContactController } from '../controllers/contactController.js';
 
 const router = express.Router();
+const upload = multer({
+    storage: multer.diskStorage({
+        destination: os.tmpdir(),
+    }),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10 MB
+    },
+});
 
 /**
  * POST /contacts/import
  * Import contacts from CSV
  */
-router.post('/import', ContactController.importContacts);
+router.post('/import', upload.single('file'), ContactController.importContacts);
 
 /**
  * GET /contacts

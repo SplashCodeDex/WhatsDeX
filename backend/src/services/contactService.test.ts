@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Readable } from 'stream';
 import { ContactService } from './contactService.js';
 import { db } from '../lib/firebase.js';
 
@@ -40,8 +41,9 @@ describe('ContactService', () => {
     it('should correctly parse CSV, normalize phone numbers, and save contacts', async () => {
       const csvData = `name,phoneNumber,email,tags\n"Doe, John","(123) 456-7890",john@example.com,"vip|lead"\nJane Doe,+1-987-654-3210,jane@example.com,new`;
       const tenantId = 'tenant_123';
+      const stream = Readable.from(csvData);
 
-      const result = await service.importContacts(tenantId, csvData);
+      const result = await service.importContacts(tenantId, stream);
 
       expect(result.success).toBe(true);
       if (!result.success) return;
@@ -75,8 +77,9 @@ describe('ContactService', () => {
     it('should handle invalid CSV rows gracefully', async () => {
       const csvData = `name,phone\nValid User,1234567890\nInvalid User,`;
       const tenantId = 'tenant_456';
+      const stream = Readable.from(csvData);
 
-      const result = await service.importContacts(tenantId, csvData);
+      const result = await service.importContacts(tenantId, stream);
 
       expect(result.success).toBe(true);
       if (!result.success) return;
@@ -88,20 +91,35 @@ describe('ContactService', () => {
       expect(mockBatchCommit).toHaveBeenCalledTimes(1);
     });
 
-    it('should return an error for empty or invalid CSV data', async () => {
-      const tenantId = 'tenant_789';
+    it('should handle empty or header-only CSV data', async () => {
+        const tenantId = 'tenant_789';
 
-      let result = await service.importContacts(tenantId, '');
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.message).toBe("CSV data is empty");
-      }
+        let stream = Readable.from('');
+        let result = await service.importContacts(tenantId, stream);
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.count).toBe(0);
+            expect(result.data.errors).toEqual([]);
+        }
 
-      result = await service.importContacts(tenantId, 'header1,header2');
-      expect(result.success).toBe(false);
-       if (!result.success) {
-        expect(result.error.message).toBe("CSV contains no data rows");
-      }
+        stream = Readable.from('header1,header2');
+        result = await service.importContacts(tenantId, stream);
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.count).toBe(0);
+            expect(result.data.errors).toEqual([]);
+        }
+    });
+
+    it('should reject on database error during batch commit', async () => {
+        const csvData = `name,phone\nTest User,1234567890`;
+        const tenantId = 'tenant_db_error';
+        const stream = Readable.from(csvData);
+        const dbError = new Error('Database commit failed');
+
+        mockBatchCommit.mockRejectedValue(dbError);
+
+        await expect(service.importContacts(tenantId, stream)).rejects.toThrow(dbError);
     });
   });
 });
