@@ -3,6 +3,15 @@ import { firebaseService } from './FirebaseService.js';
 import { ContactSchema, Result } from '../types/contracts.js';
 import logger from '../utils/logger.js';
 import crypto from 'crypto';
+import { parse } from 'csv-parse/sync';
+
+const normalizePhoneNumber = (phone: string): string => {
+  let digits = phone.replace(/\D/g, '');
+  if (digits.includes('@')) {
+    return digits;
+  }
+  return `${digits}@s.whatsapp.net`;
+}
 
 export class ContactService {
   private static instance: ContactService;
@@ -21,36 +30,39 @@ export class ContactService {
     csvData: string
   ): Promise<Result<{ count: number; errors: string[] }>> {
     try {
-      const rows = csvData.split(/\r?\n/).filter(line => line.trim() !== '');
-      if (rows.length < 2) {
-        return { success: false, error: new Error("CSV is empty or missing headers") };
+      if (!csvData || csvData.trim() === '') {
+        return { success: false, error: new Error("CSV data is empty") };
       }
 
-      const headers = rows[0].split(',').map(h => h.trim());
-      const contacts = rows.slice(1);
+      const records = parse(csvData, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+      });
+
+      if (records.length === 0) {
+        return { success: false, error: new Error("CSV contains no data rows") };
+      }
+
       const errors: string[] = [];
       let count = 0;
 
-      // Process in batches of 500 (Firestore limit)
       const BATCH_SIZE = 500;
-      for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
+      for (let i = 0; i < records.length; i += BATCH_SIZE) {
         const batch = db.batch();
-        const chunk = contacts.slice(i, i + BATCH_SIZE);
+        const chunk = records.slice(i, i + BATCH_SIZE);
 
-        chunk.forEach((rowStr, chunkIndex) => {
+        chunk.forEach((record: any, chunkIndex: number) => {
           const index = i + chunkIndex;
-          const values = rowStr.split(',').map(v => v.trim());
 
-          const rawData: any = {};
-          headers.forEach((header, hi) => {
-            rawData[header] = values[hi] || '';
-          });
+          const rawData: any = record;
+          const phone = rawData.phone || rawData.phoneNumber || '';
 
           const contactData = {
             id: `cont_${crypto.randomUUID()}`,
             tenantId,
             name: rawData.name || rawData.fullName || 'Unknown',
-            phone: rawData.phone || rawData.phoneNumber || '',
+            phone: phone ? normalizePhoneNumber(phone) : '',
             email: rawData.email || '',
             tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
             attributes: rawData,
@@ -67,7 +79,7 @@ export class ContactService {
               .doc(tenantId)
               .collection('contacts')
               .doc(contactData.id);
-            batch.set(contactRef, contactData);
+            batch.set(contactRef, validation.data);
             count++;
           }
         });
@@ -79,6 +91,9 @@ export class ContactService {
 
     } catch (error: any) {
       logger.error('Error importing contacts', error);
+      if (error.code === 'CSV_INVALID_COLUMN_NAME') {
+          return { success: false, error: new Error('Invalid CSV headers. Please check for duplicates.')};
+      }
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }
