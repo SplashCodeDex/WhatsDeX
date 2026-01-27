@@ -95,7 +95,7 @@ export const signup = async (req: Request, res: Response) => {
         let subdomain = rawSubdomain;
         if (!subdomain) {
             const baseSlug = displayName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
-            subdomain = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+            subdomain = `${baseSlug}-${crypto.randomBytes(2).toString('hex')}`;
         }
 
         // Check availability
