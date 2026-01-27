@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
-import { importContactsController } from './contactController.js';
+import { ContactController } from './contactController.js';
 import { ContactService } from '../services/contactService.js';
 
 // Mock ContactService
@@ -34,14 +34,14 @@ describe('ContactController', () => {
         };
     });
 
-    describe('importContactsController', () => {
+    describe('importContacts', () => {
         it('should call service and return result', async () => {
             mockContactService.importContacts.mockResolvedValue({
                 success: true,
                 data: { count: 1, errors: [] }
             });
 
-            await importContactsController(mockReq as Request, mockRes as Response);
+            await ContactController.importContacts(mockReq as Request, mockRes as Response);
 
             expect(mockContactService.importContacts).toHaveBeenCalledWith('tenant-1', 'name,phone\nTest,12345');
             expect(mockRes.json).toHaveBeenCalledWith({
@@ -56,7 +56,7 @@ describe('ContactController', () => {
                 error: new Error('Failed')
             });
 
-            await importContactsController(mockReq as Request, mockRes as Response);
+            await ContactController.importContacts(mockReq as Request, mockRes as Response);
 
             expect(mockRes.status).toHaveBeenCalledWith(500);
             expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
@@ -65,7 +65,7 @@ describe('ContactController', () => {
         it('should require csvData', async () => {
              mockReq.body.csvData = undefined;
              
-             await importContactsController(mockReq as Request, mockRes as Response);
+             await ContactController.importContacts(mockReq as Request, mockRes as Response);
              
              expect(mockRes.status).toHaveBeenCalledWith(400);
         });

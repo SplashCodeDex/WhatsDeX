@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { db } from '../lib/firebase.js';
+import { db } from '@/lib/firebase.js';
 import { z } from 'zod';
-import logger from '../utils/logger.js';
-import { ContactService } from '../services/contactService.js';
+import logger from '@/utils/logger.js';
+import { ContactService } from '@/services/contactService.js';
+import { ContactSchema } from '@/types/contracts.js';
 
 export class ContactController {
     /**
@@ -64,32 +65,28 @@ export class ContactController {
             const tenantId = req.user?.tenantId;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-            const contactSchema = z.object({
-                name: z.string().min(1),
-                phoneNumber: z.string().min(5),
-                email: z.string().email().optional().or(z.literal('')),
-                tags: z.array(z.string()).optional(),
-                metadata: z.record(z.string(), z.any()).optional()
-            });
-
-            const payload = contactSchema.parse(req.body);
-
             const contactRef = db.collection('tenants')
                 .doc(tenantId)
                 .collection('contacts')
                 .doc();
 
-            const contact = {
-                ...payload,
+            const body = req.body;
+            const rawData = {
                 id: contactRef.id,
                 tenantId,
+                name: body.name,
+                phone: body.phone || body.phoneNumber,
+                email: body.email || '',
+                tags: body.tags || [],
+                attributes: body.attributes || body.metadata || {},
                 createdAt: new Date(),
-                updatedAt: new Date(),
-                status: 'active'
+                updatedAt: new Date()
             };
 
-            await contactRef.set(contact);
-            res.status(201).json({ success: true, data: contact });
+            const validated = ContactSchema.parse(rawData);
+
+            await contactRef.set(validated);
+            res.status(201).json({ success: true, data: validated });
         } catch (error: any) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ success: false, error: error.issues[0].message });
@@ -112,16 +109,6 @@ export class ContactController {
                 return res.status(400).json({ success: false, error: 'Request body cannot be empty.' });
             }
 
-            const contactSchema = z.object({
-                name: z.string().min(1),
-                phoneNumber: z.string().min(5),
-                email: z.string().email().optional().or(z.literal('')),
-                tags: z.array(z.string()).optional(),
-                metadata: z.record(z.string(), z.any()).optional()
-            });
-
-            const payload = contactSchema.partial().parse(req.body);
-
             const contactRef = db.collection('tenants')
                 .doc(tenantId)
                 .collection('contacts')
@@ -132,10 +119,21 @@ export class ContactController {
                 return res.status(404).json({ success: false, error: 'Contact not found' });
             }
 
-            await contactRef.update({
-                ...payload,
+            // Mapping from legacy field names if provided
+            const body = req.body;
+            const updates: any = {
                 updatedAt: new Date()
-            });
+            };
+
+            if (body.name) updates.name = body.name;
+            if (body.phone || body.phoneNumber) updates.phone = body.phone || body.phoneNumber;
+            if (body.email !== undefined) updates.email = body.email;
+            if (body.tags) updates.tags = body.tags;
+            if (body.attributes || body.metadata) updates.attributes = body.attributes || body.metadata;
+
+            const validated = ContactSchema.partial().parse(updates);
+
+            await contactRef.update(validated);
 
             res.json({ success: true, data: { message: 'Contact updated' } });
         } catch (error: any) {
@@ -165,6 +163,7 @@ export class ContactController {
             res.json({ success: true, data: { message: 'Contact deleted' } });
         } catch (error: any) {
             logger.error('ContactController.deleteContact error', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }
 

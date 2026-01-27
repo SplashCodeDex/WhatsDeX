@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { db, admin } from '../lib/firebase.js';
+import { db, admin } from '@/lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
-import { ConfigService } from '../services/ConfigService.js';
-import auditService from '../services/auditService.js';
-import logger from '../utils/logger.js';
-import { multiTenantService } from '../services/multiTenantService.js';
+import { ConfigService } from '@/services/ConfigService.js';
+import auditService from '@/services/auditService.js';
+import logger from '@/utils/logger.js';
+import { multiTenantService } from '@/services/multiTenantService.js';
 
 interface AuthUserPayload {
     userId: string;
@@ -22,7 +22,8 @@ interface RequestWithUser extends Request {
 }
 
 const signupSchema = z.object({
-    displayName: z.string().min(2),
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
     email: z.string().email(),
     password: z.string().min(8),
     tenantName: z.string().min(2).optional(),
@@ -82,15 +83,19 @@ export const signup = async (req: Request, res: Response) => {
     try {
         logger.info('Signup request received', { email: req.body.email });
         const payload = signupSchema.parse(req.body);
-        let { displayName, email, password, tenantName, subdomain, plan } = payload;
+        const { firstName, lastName, email, password, subdomain: rawSubdomain, plan } = payload;
+        let { tenantName } = payload;
+
+        const displayName = `${firstName} ${lastName}`.trim();
 
         if (!tenantName) {
             tenantName = `${displayName}'s Workspace`;
         }
 
+        let subdomain = rawSubdomain;
         if (!subdomain) {
             const baseSlug = displayName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
-            subdomain = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+            subdomain = `${baseSlug}-${crypto.randomBytes(2).toString('hex')}`;
         }
 
         // Check availability

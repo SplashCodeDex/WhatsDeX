@@ -1,6 +1,7 @@
 import baileys, { DisconnectReason, type WASocket, type BaileysEventMap, proto } from 'baileys';
 const makeWASocket = (baileys as any).default || baileys;
 import logger from '@/utils/logger.js';
+import crypto from 'crypto';
 import { firebaseService } from '@/services/FirebaseService.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
@@ -84,7 +85,7 @@ export class MultiTenantBotService {
         throw new Error('Bot limit exceeded for your current plan.');
       }
 
-      const botId = `bot_${Date.now()}`;
+      const botId = `bot_${crypto.randomUUID()}`;
       // Destructure botData to exclude createdAt and updatedAt before spreading
       const { createdAt, updatedAt, ...restBotData } = botData;
 

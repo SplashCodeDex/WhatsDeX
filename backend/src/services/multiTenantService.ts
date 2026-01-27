@@ -1,5 +1,6 @@
 import { firebaseService } from '@/services/FirebaseService.js';
 import logger from '@/utils/logger.js';
+import crypto from 'crypto';
 import { Tenant, TenantSchema, Result, TenantUser, TenantUserSchema } from '@/types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getPlanLimits } from '@/utils/featureGating.js';
@@ -29,7 +30,7 @@ export class MultiTenantService {
     plan?: string;
   }): Promise<Result<{ tenant: Tenant; user: TenantUser }>> {
     const { userId, email, displayName, tenantName, subdomain, plan: rawPlan = 'starter' } = payload;
-    const tenantId = `tenant-${Date.now()}`;
+    const tenantId = `tenant-${crypto.randomUUID()}`;
     
     // Type-safe plan narrowing
     const plan = (rawPlan.toLowerCase() === 'starter' || rawPlan.toLowerCase() === 'pro' || rawPlan.toLowerCase() === 'enterprise')
