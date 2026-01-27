@@ -14,11 +14,13 @@ export class ContactController {
             const tenantId = req.user?.tenantId;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-            const { csvData } = req.body;
-            if (!csvData) return res.status(400).json({ success: false, error: 'CSV data is required' });
+            const file = req.file;
+            if (!file) {
+                return res.status(400).json({ success: false, error: 'CSV file is required' });
+            }
 
             const service = ContactService.getInstance();
-            const result = await service.importContacts(tenantId, csvData);
+            const result = await service.importContacts(tenantId, file.path);
 
             if (!result.success) {
                 return res.status(500).json({ success: false, error: result.error.message });

@@ -3,7 +3,10 @@ import { firebaseService } from './FirebaseService.js';
 import { ContactSchema, Result } from '../types/contracts.js';
 import logger from '../utils/logger.js';
 import crypto from 'crypto';
-import { parse } from 'csv-parse/sync';
+import { parse } from 'csv-parse';
+import fs from 'fs';
+import { pipeline } from 'stream/promises';
+import { Writable } from 'stream';
 
 const normalizePhoneNumber = (phone: string): string => {
   if (phone.includes('@s.whatsapp.net') || phone.includes('@g.us')) {
@@ -27,37 +30,27 @@ export class ContactService {
 
   public async importContacts(
     tenantId: string,
-    csvData: string
+    filePath: string
   ): Promise<Result<{ count: number; errors: string[] }>> {
-    try {
-      if (!csvData || csvData.trim() === '') {
-        return { success: false, error: new Error("CSV data is empty") };
-      }
+    const errors: string[] = [];
+    let count = 0;
+    const BATCH_SIZE = 500;
+    let batch = db.batch();
+    let recordsInBatch = 0;
 
-      const records = parse(csvData, {
-        columns: true,
-        skip_empty_lines: true,
-        trim: true,
-      });
+    const readStream = fs.createReadStream(filePath);
+    const csvParser = parse({
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    });
 
-      if (records.length === 0) {
-        return { success: false, error: new Error("CSV contains no data rows") };
-      }
-
-      const errors: string[] = [];
-      let count = 0;
-
-      const BATCH_SIZE = 500;
-      for (let i = 0; i < records.length; i += BATCH_SIZE) {
-        const batch = db.batch();
-        const chunk = records.slice(i, i + BATCH_SIZE);
-
-        chunk.forEach((record: any, chunkIndex: number) => {
-          const index = i + chunkIndex;
-
+    const processingStream = new Writable({
+      objectMode: true,
+      async write(record, encoding, callback) {
+        try {
           const rawData: any = record;
           const phone = rawData.phone || rawData.phoneNumber || '';
-
           const contactData = {
             id: `cont_${crypto.randomUUID()}`,
             tenantId,
@@ -69,32 +62,51 @@ export class ContactService {
             createdAt: new Date(),
             updatedAt: new Date()
           };
-
           const validation = ContactSchema.safeParse(contactData);
           if (!validation.success) {
             const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-            errors.push(`Row ${index + 2}: ${msg}`);
+            errors.push(`Row ${count + 2}: ${msg}`);
           } else {
-            const contactRef = db.collection('tenants')
-              .doc(tenantId)
-              .collection('contacts')
-              .doc(contactData.id);
+            const contactRef = db.collection('tenants').doc(tenantId).collection('contacts').doc(contactData.id);
             batch.set(contactRef, validation.data);
+            recordsInBatch++;
             count++;
+            if (recordsInBatch >= BATCH_SIZE) {
+              await batch.commit();
+              batch = db.batch();
+              recordsInBatch = 0;
+            }
           }
-        });
-
-        await batch.commit();
+          callback();
+        } catch (error) {
+          callback(error as Error);
+        }
+      },
+      async final(callback) {
+        try {
+          if (recordsInBatch > 0) {
+            await batch.commit();
+          }
+          callback();
+        } catch (error) {
+          callback(error as Error);
+        }
       }
+    });
 
+    try {
+      await pipeline(readStream, csvParser, processingStream);
       return { success: true, data: { count, errors } };
-
     } catch (error: any) {
-      logger.error('Error importing contacts', error);
+      logger.error('Error in CSV import pipeline', error);
       if (error.code === 'CSV_INVALID_COLUMN_NAME') {
-          return { success: false, error: new Error('Invalid CSV headers. Please check for duplicates.')};
+        return { success: false, error: new Error('Invalid CSV headers. Please check for duplicates.') };
       }
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    } finally {
+      fs.unlink(filePath, (err) => {
+        if (err) logger.error(`Failed to delete temp file: ${filePath}`, err);
+      });
     }
   }
 

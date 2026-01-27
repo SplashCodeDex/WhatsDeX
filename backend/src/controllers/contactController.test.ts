@@ -21,12 +21,13 @@ describe('ContactController', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockReq = {
-            body: {
-                csvData: 'name,phone\nTest,12345'
-            },
+            file: {
+                path: '/tmp/test.csv'
+            } as any,
             user: {
                 tenantId: 'tenant-1'
-            } as any
+            } as any,
+            body: {}
         };
         mockRes = {
             status: vi.fn().mockReturnThis(),
@@ -35,7 +36,7 @@ describe('ContactController', () => {
     });
 
     describe('importContacts', () => {
-        it('should call service and return result', async () => {
+        it('should call service with file path and return result', async () => {
             mockContactService.importContacts.mockResolvedValue({
                 success: true,
                 data: { count: 1, errors: [] }
@@ -43,7 +44,7 @@ describe('ContactController', () => {
 
             await ContactController.importContacts(mockReq as Request, mockRes as Response);
 
-            expect(mockContactService.importContacts).toHaveBeenCalledWith('tenant-1', 'name,phone\nTest,12345');
+            expect(mockContactService.importContacts).toHaveBeenCalledWith('tenant-1', '/tmp/test.csv');
             expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
                 data: { count: 1, errors: [] }
@@ -51,7 +52,7 @@ describe('ContactController', () => {
         });
 
         it('should handle service errors', async () => {
-             mockContactService.importContacts.mockResolvedValue({
+            mockContactService.importContacts.mockResolvedValue({
                 success: false,
                 error: new Error('Failed')
             });
@@ -61,13 +62,14 @@ describe('ContactController', () => {
             expect(mockRes.status).toHaveBeenCalledWith(500);
             expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
         });
-        
-        it('should require csvData', async () => {
-             mockReq.body.csvData = undefined;
-             
-             await ContactController.importContacts(mockReq as Request, mockRes as Response);
-             
-             expect(mockRes.status).toHaveBeenCalledWith(400);
+
+        it('should require a file', async () => {
+            mockReq.file = undefined;
+
+            await ContactController.importContacts(mockReq as Request, mockRes as Response);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({ success: false, error: 'CSV file is required' });
         });
     });
 });
