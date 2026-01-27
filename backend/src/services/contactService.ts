@@ -6,10 +6,10 @@ import crypto from 'crypto';
 import { parse } from 'csv-parse/sync';
 
 const normalizePhoneNumber = (phone: string): string => {
-  let digits = phone.replace(/\D/g, '');
-  if (digits.includes('@')) {
-    return digits;
+  if (phone.includes('@s.whatsapp.net') || phone.includes('@g.us')) {
+    return phone;
   }
+  const digits = phone.replace(/\D/g, '');
   return `${digits}@s.whatsapp.net`;
 }
 

@@ -344,6 +344,7 @@ export const ContactSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   attributes: z.record(z.string(), z.any()).optional(),
   tags: z.array(z.string()).default([]),
+  status: z.enum(['active', 'inactive', 'archived']).default('active'),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema
 }).readonly();
