@@ -29,7 +29,7 @@ export const upload = multer({
         fileSize: 10 * 1024 * 1024 // 10MB limit
     },
     fileFilter: (_req, file, cb) => {
-        if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+        if (file.mimetype === 'text/csv' && file.originalname.toLowerCase().endsWith('.csv')) {
             cb(null, true);
         } else {
             cb(new Error('Only CSV files are allowed'));
