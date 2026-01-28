@@ -1,5 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import { Campaign, CampaignStatus, MessageTemplate, Contact, Audience } from '../types/contracts.js';
+import { Campaign, CampaignStatus, MessageTemplate, Contact } from '../types/contracts.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { firebaseService } from '../services/FirebaseService.js';
 import { webhookService } from '../services/webhookService.js';
@@ -7,7 +7,6 @@ import { socketService } from '../services/socketService.js';
 import { TemplateService } from '../services/templateService.js';
 import { GeminiAI } from '../services/geminiAI.js';
 import logger from '../utils/logger.js';
-import { Timestamp } from 'firebase-admin/firestore';
 import moment from 'moment-timezone';
 
 /**
@@ -51,7 +50,7 @@ class CampaignWorker {
             },
             {
                 connection: redisOptions,
-                concurrency: 2, // Process 2 campaigns at once per instance
+                concurrency: 2,
                 limiter: {
                     max: 10,
                     duration: 1000
@@ -74,11 +73,9 @@ class CampaignWorker {
         const { tenantId, campaign } = job.data;
         const { id } = campaign;
 
-        // 1. Fetch Latest Campaign & Template
         const currentCampaign = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
         if (!currentCampaign) throw new Error('Campaign not found');
 
-        // Check if finished or paused
         if (currentCampaign.status === 'completed' || currentCampaign.status === 'cancelled') return;
         if (currentCampaign.status === 'paused') {
             logger.info(`Campaign ${id} is paused. Job processed.`);
@@ -89,37 +86,29 @@ class CampaignWorker {
         if (!templateResult.success || !templateResult.data) throw new Error('Template not found');
         const template = templateResult.data;
 
-        // 2. Load Targets (Contacts)
         const targets = await this.loadTargets(tenantId, currentCampaign.audience);
         if (targets.length === 0) {
             await this.finalizeCampaign(tenantId, id, 0, 0, 0);
             return;
         }
 
-        // 3. Update Total Stats if not already set
         if (!currentCampaign.stats.total) {
             await this.updateCampaignStats(tenantId, id, { total: targets.length, pending: targets.length });
         }
 
-        // 4. Working Hours Check (Timezone Aware)
         if (currentCampaign.antiBan.workingHoursEnabled) {
             const tz = currentCampaign.antiBan.timezone || 'UTC';
             const now = moment().tz(tz);
-            const startTimeStr = currentCampaign.antiBan.workingHoursStart;
-            const endTimeStr = currentCampaign.antiBan.workingHoursEnd;
-
-            const start = moment.tz(startTimeStr, 'HH:mm', tz);
-            const end = moment.tz(endTimeStr, 'HH:mm', tz);
+            const start = moment.tz(currentCampaign.antiBan.workingHoursStart, 'HH:mm', tz);
+            const end = moment.tz(currentCampaign.antiBan.workingHoursEnd, 'HH:mm', tz);
 
             if (now.isBefore(start) || now.isAfter(end)) {
-                logger.info(`Campaign ${id} outside working hours in ${tz}. Current: ${now.format('HH:mm')}. Pausing...`);
+                logger.info(`Campaign ${id} outside working hours in ${tz}. Pausing...`);
                 await this.updateCampaignStatus(tenantId, id, 'paused');
-                // Could ideally auto-calculate delay until start and re-add to queue
                 return;
             }
         }
 
-        // 5. Get Active Bots
         const bots = await this.getAvailableBots(tenantId, currentCampaign.distribution);
         if (bots.length === 0) {
             logger.warn(`No active bots for campaign ${id}. Job will retry.`);
@@ -137,8 +126,6 @@ class CampaignWorker {
 
         await this.updateCampaignStatus(tenantId, id, 'sending');
 
-        // Number of messages to process in THIS job segment
-        // If batchSize is configured, use it. Otherwise process a reasonable chunk (e.g. 50)
         const segmentSize = currentCampaign.antiBan.batchSize > 0 ? currentCampaign.antiBan.batchSize : 50;
         const endIndex = Math.min(sent + failed + segmentSize, total);
 
@@ -147,7 +134,6 @@ class CampaignWorker {
         for (let i = sent + failed; i < endIndex; i++) {
             const contact = targets[i];
 
-            // Internal check inside loop for pause
             if (i % 5 === 0) {
                 const live = await firebaseService.getDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, tenantId);
                 if (live?.status === 'paused' || live?.status === 'cancelled') return;
@@ -155,9 +141,8 @@ class CampaignWorker {
 
             const bot = bots[i % bots.length];
             try {
-                const content = await this.prepareMessage(tenantId, template, contact, currentCampaign.antiBan.aiSpinning);
+                const content = await this.prepareMessage(template, contact, currentCampaign.antiBan.aiSpinning, tenantId);
 
-                // Typing Simulation
                 let typingDelay = 0;
                 if (currentCampaign.antiBan.typingSimulation) {
                     typingDelay = Math.floor(gaussianRandom(2, currentCampaign.antiBan.maxTypingDelay || 5) * 1000);
@@ -173,13 +158,11 @@ class CampaignWorker {
                 if (result.success) sent++;
                 else failed++;
 
-                // Progress Update (per message or small groups)
                 if (i % 5 === 0 || i === endIndex - 1) {
                     await this.updateCampaignStats(tenantId, id, { sent, failed, pending: total - (sent + failed) });
                     socketService.emitProgress(tenantId, id, { sent, failed, total, status: 'sending' });
                 }
 
-                // Inter-message delay (only if not the last item in segment)
                 if (i < endIndex - 1) {
                     const delay = Math.floor(gaussianRandom(currentCampaign.antiBan.minDelay, currentCampaign.antiBan.maxDelay) * 1000);
                     await new Promise(r => setTimeout(r, delay));
@@ -191,20 +174,14 @@ class CampaignWorker {
             }
         }
 
-        // Segment Finished
         if (sent + failed < total) {
-            // Schedule the NEXT segment
             let delayTime = 0;
             if (currentCampaign.antiBan.batchSize > 0) {
-                // Batch pause (minutes)
                 delayTime = Math.floor(gaussianRandom(currentCampaign.antiBan.batchPauseMin, currentCampaign.antiBan.batchPauseMax) * 60 * 1000);
-                logger.info(`Campaign ${id}: Segment done. Scheduling next segment in ${delayTime / 60000} mins (Batch Pause).`);
             } else {
-                // Short pause between segments
                 delayTime = Math.floor(gaussianRandom(currentCampaign.antiBan.minDelay, currentCampaign.antiBan.maxDelay) * 1000);
             }
 
-            // Re-add to queue
             await this.worker.queue.add('process-campaign', { tenantId, campaign: currentCampaign }, { delay: delayTime });
         } else {
             await this.finalizeCampaign(tenantId, id, sent, failed, total);
@@ -213,12 +190,9 @@ class CampaignWorker {
 
     private async loadTargets(tenantId: string, audience: Campaign['audience']): Promise<Contact[]> {
         if (audience.type === 'audience') {
-            // Load from Audience subcollection
             const aud = await firebaseService.getDoc<'tenants/{tenantId}/audiences'>('audiences', audience.targetId, tenantId);
             if (!aud) return [];
-            // For now, simplify: fetch ALL contacts and filter. In 2026 production, this would be a Firestore Query.
             const allContacts = await firebaseService.getCollection<'tenants/{tenantId}/contacts'>('contacts', tenantId);
-            // Apply aud.filters (Basic tag filter implementation)
             if (aud.filters && aud.filters.tags) {
                 return allContacts.filter(c => c.tags.some(t => aud.filters.tags.includes(t)));
             }
@@ -226,35 +200,28 @@ class CampaignWorker {
         }
 
         if (audience.type === 'groups') {
+            const mapGroupToContact = (g: any): Contact => ({
+                id: g.id,
+                tenantId,
+                name: g.subject,
+                phone: g.id,
+                tags: [],
+                status: 'active',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            } as Contact);
+
             if (audience.targetId === 'all') {
                 const groups = await firebaseService.getCollection<'tenants/{tenantId}/groups'>('groups', tenantId);
-                return groups.map(g => ({
-                    id: g.id,
-                    tenantId,
-                    name: g.subject,
-                    phone: g.id, // JID
-                    tags: [],
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                } as Contact));
+                return groups.map(mapGroupToContact);
             } else {
                 const group = await firebaseService.getDoc<'tenants/{tenantId}/groups'>('groups', audience.targetId, tenantId);
-                if (!group) return [];
-                return [{
-                    id: group.id,
-                    tenantId,
-                    name: group.subject,
-                    phone: group.id, // JID
-                    tags: [],
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                } as Contact];
+                return group ? [mapGroupToContact(group)] : [];
             }
         }
 
         if (audience.type === 'contacts') {
-            const allContacts = await firebaseService.getCollection<'tenants/{tenantId}/contacts'>('contacts', tenantId);
-            return allContacts;
+            return await firebaseService.getCollection<'tenants/{tenantId}/contacts'>('contacts', tenantId);
         }
 
         return [];
@@ -270,14 +237,12 @@ class CampaignWorker {
         return activeBots;
     }
 
-    private async prepareMessage(tenantId: string, template: MessageTemplate, contact: Contact, spin: boolean): Promise<string> {
+    private async prepareMessage(template: MessageTemplate, contact: Contact, spin: boolean, tenantId: string): Promise<string> {
         let content = template.content;
-
-        // 1. Inject Variables
         const vars = {
             name: contact.name,
             phone: contact.phone,
-            email: contact.email,
+            email: contact.email || '',
             ...(contact.attributes || {})
         };
 
@@ -285,7 +250,6 @@ class CampaignWorker {
             content = content.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
         }
 
-        // 2. AI Spinning (Rule 5 Memoized)
         if (spin) {
             const spinResult = await GeminiAI.spinMessage(content, tenantId);
             if (spinResult.success) content = spinResult.data;
