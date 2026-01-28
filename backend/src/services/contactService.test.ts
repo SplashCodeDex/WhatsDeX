@@ -1,6 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ContactService } from './contactService.js';
 import { db } from '../lib/firebase.js';
+import fs from 'fs/promises';
+import { existsSync } from 'fs';
+import path from 'path';
 
 const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
     const mockBatchSet = vi.fn();
@@ -30,18 +33,26 @@ vi.mock('../lib/firebase.js', () => {
 
 describe('ContactService', () => {
   let service: ContactService;
+  const testFilePath = path.join(process.cwd(), 'test-contacts.csv');
 
   beforeEach(() => {
     vi.clearAllMocks();
     service = ContactService.getInstance();
   });
 
+  afterEach(async () => {
+    if (existsSync(testFilePath)) {
+      await fs.unlink(testFilePath).catch(() => {});
+    }
+  });
+
   describe('importContacts', () => {
     it('should correctly parse CSV, normalize phone numbers, and save contacts', async () => {
       const csvData = `name,phoneNumber,email,tags\n"Doe, John","(123) 456-7890",john@example.com,"vip|lead"\nJane Doe,+1-987-654-3210,jane@example.com,new`;
+      await fs.writeFile(testFilePath, csvData);
       const tenantId = 'tenant_123';
 
-      const result = await service.importContacts(tenantId, csvData);
+      const result = await service.importContacts(tenantId, testFilePath);
 
       expect(result.success).toBe(true);
       if (!result.success) return;
@@ -74,9 +85,10 @@ describe('ContactService', () => {
 
     it('should handle invalid CSV rows gracefully', async () => {
       const csvData = `name,phone\nValid User,1234567890\nInvalid User,`;
+      await fs.writeFile(testFilePath, csvData);
       const tenantId = 'tenant_456';
 
-      const result = await service.importContacts(tenantId, csvData);
+      const result = await service.importContacts(tenantId, testFilePath);
 
       expect(result.success).toBe(true);
       if (!result.success) return;
@@ -91,13 +103,15 @@ describe('ContactService', () => {
     it('should return an error for empty or invalid CSV data', async () => {
       const tenantId = 'tenant_789';
 
-      let result = await service.importContacts(tenantId, '');
+      await fs.writeFile(testFilePath, '');
+      let result = await service.importContacts(tenantId, testFilePath);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.message).toBe("CSV data is empty");
+        expect(result.error.message).toBe("CSV contains no data rows");
       }
 
-      result = await service.importContacts(tenantId, 'header1,header2');
+      await fs.writeFile(testFilePath, 'header1,header2');
+      result = await service.importContacts(tenantId, testFilePath);
       expect(result.success).toBe(false);
        if (!result.success) {
         expect(result.error.message).toBe("CSV contains no data rows");

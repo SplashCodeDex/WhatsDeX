@@ -1,5 +1,6 @@
 import express from 'express';
 import { ContactController } from '../controllers/contactController.js';
+import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -7,7 +8,7 @@ const router = express.Router();
  * POST /contacts/import
  * Import contacts from CSV
  */
-router.post('/import', ContactController.importContacts);
+router.post('/import', upload.single('file'), ContactController.importContacts);
 
 /**
  * GET /contacts
