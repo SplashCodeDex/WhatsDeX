@@ -5,14 +5,16 @@ import { ContactService } from '../services/contactService.js';
 import fs from 'fs';
 
 // Mock fs
-vi.mock('fs', async (importOriginal) => {
-    const original: any = await importOriginal();
+vi.mock('fs/promises', async (importOriginal) => {
+    const original = await importOriginal();
     return {
         ...original,
-        unlinkSync: vi.fn(),
-        existsSync: vi.fn().mockReturnValue(true)
+        unlink: vi.fn().mockResolvedValue(undefined),
     };
 });
+vi.mock('fs', () => ({
+    existsSync: vi.fn().mockReturnValue(true),
+}));
 
 // Mock ContactService
 const mockContactService = {
