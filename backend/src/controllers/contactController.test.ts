@@ -2,6 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
 import { ContactController } from './contactController.js';
 import { ContactService } from '../services/contactService.js';
+import fs from 'fs';
+
+// Mock fs
+vi.mock('fs/promises', async (importOriginal) => {
+    const original = await importOriginal();
+    return {
+        ...original,
+        unlink: vi.fn().mockResolvedValue(undefined),
+    };
+});
+vi.mock('fs', () => ({
+    existsSync: vi.fn().mockReturnValue(true),
+}));
 
 // Mock ContactService
 const mockContactService = {
@@ -21,9 +34,9 @@ describe('ContactController', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockReq = {
-            body: {
-                csvData: 'name,phone\nTest,12345'
-            },
+            file: {
+                path: 'test/path.csv'
+            } as any,
             user: {
                 tenantId: 'tenant-1'
             } as any
@@ -43,7 +56,7 @@ describe('ContactController', () => {
 
             await ContactController.importContacts(mockReq as Request, mockRes as Response);
 
-            expect(mockContactService.importContacts).toHaveBeenCalledWith('tenant-1', 'name,phone\nTest,12345');
+            expect(mockContactService.importContacts).toHaveBeenCalledWith('tenant-1', 'test/path.csv');
             expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
                 data: { count: 1, errors: [] }
@@ -62,8 +75,8 @@ describe('ContactController', () => {
             expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
         });
         
-        it('should require csvData', async () => {
-             mockReq.body.csvData = undefined;
+        it('should require file', async () => {
+             mockReq.file = undefined;
              
              await ContactController.importContacts(mockReq as Request, mockRes as Response);
              

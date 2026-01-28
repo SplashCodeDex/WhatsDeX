@@ -224,7 +224,39 @@ class CampaignWorker {
             }
             return allContacts;
         }
-        // Group support TODO
+
+        if (audience.type === 'groups') {
+            if (audience.targetId === 'all') {
+                const groups = await firebaseService.getCollection<'tenants/{tenantId}/groups'>('groups', tenantId);
+                return groups.map(g => ({
+                    id: g.id,
+                    tenantId,
+                    name: g.subject,
+                    phone: g.id, // JID
+                    tags: [],
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                } as Contact));
+            } else {
+                const group = await firebaseService.getDoc<'tenants/{tenantId}/groups'>('groups', audience.targetId, tenantId);
+                if (!group) return [];
+                return [{
+                    id: group.id,
+                    tenantId,
+                    name: group.subject,
+                    phone: group.id, // JID
+                    tags: [],
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                } as Contact];
+            }
+        }
+
+        if (audience.type === 'contacts') {
+            const allContacts = await firebaseService.getCollection<'tenants/{tenantId}/contacts'>('contacts', tenantId);
+            return allContacts;
+        }
+
         return [];
     }
 
