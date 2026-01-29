@@ -158,7 +158,7 @@ export class GeminiAI extends EventEmitter {
   /**
    * Multi-layer intelligence analysis
    */
-  async analyzeWithMultiLayerIntelligence(bot: Bot, message: string, context: any): Promise<AIAnalysis> {
+  async analyzeWithMultiLayerIntelligence(bot: Bot, message: string, context: unknown): Promise<AIAnalysis> {
     const analysis: AIAnalysis = {
       intents: [],
       confidence: 0,
@@ -208,7 +208,7 @@ export class GeminiAI extends EventEmitter {
   /**
    * Detect multiple intents in a single message
    */
-  async detectMultipleIntents(message: string, context: any) {
+  async detectMultipleIntents(message: string, context: any) { // Keep any for JSON.stringify(context.user)
     const prompt = `
 Analyze this message and detect ALL possible intents. The user may want multiple things:
 
@@ -253,7 +253,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Make contextual decisions based on intents and user context
    */
-  async makeContextualDecisions(bot: Bot, intents: any[], context: any) {
+  async makeContextualDecisions(bot: Bot, intents: any[], context: unknown) {
     const decisions = {
       actions: [] as AIAction[],
       confidence: 0,
@@ -449,7 +449,7 @@ Respond in the user's language if they're not using English.
   /**
    * Execute a single action intelligently
    */
-  async executeSingleAction(bot: Bot, action: AIAction, ctx: MessageContext, context: any) {
+  async executeSingleAction(bot: Bot, action: AIAction, ctx: MessageContext, context: unknown) {
     try {
       if (!action.command) throw new Error('Command not specified');
       const command = bot.cmd.get(action.command);
@@ -478,7 +478,7 @@ Respond in the user's language if they're not using English.
   /**
    * Prepare smart context for command execution
    */
-  async prepareSmartContext(action: AIAction, ctx: MessageContext, context: any): Promise<MessageContext> {
+  async prepareSmartContext(action: AIAction, ctx: MessageContext, context: unknown): Promise<MessageContext> {
     const smartCtx = { ...ctx };
 
     // Extract and format arguments intelligently

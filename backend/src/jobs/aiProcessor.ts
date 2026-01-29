@@ -74,6 +74,7 @@ class AIProcessor {
       });
 
       let result;
+      const { targetLanguage } = context || {};
 
       switch (type) {
         case 'text':
@@ -89,7 +90,6 @@ class AIProcessor {
           break;
 
         case 'translation':
-          const { targetLanguage } = context || {};
           if (targetLanguage) {
             result = await this.gemini.getChatCompletion(
               `Translate the following text to ${targetLanguage}: ${prompt}`
