@@ -18,7 +18,14 @@ const { mockGeminiService, mockDb } = vi.hoisted(() => ({
 
 // Mock dependencies
 vi.mock('../lib/firebase.js', () => ({
-  db: mockDb
+  db: mockDb,
+  admin: {
+    firestore: {
+      Timestamp: {
+        now: vi.fn(() => ({ toDate: () => new Date() }))
+      }
+    }
+  }
 }));
 
 vi.mock('../lib/apiKeyManager.js', () => ({

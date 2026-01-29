@@ -60,8 +60,13 @@ export class FirebaseService {
     let schemaKey: CollectionKey;
 
     if (tenantId) {
-      // Special handling for nested subcollections like bots/{botId}/auth
-      if (collection.includes('/')) {
+      // If the collection name already includes the tenant template, resolve it
+      if (collection.startsWith('tenants/{tenantId}/')) {
+        path = collection.replace('{tenantId}', tenantId);
+        schemaKey = collection as CollectionKey;
+      }
+      // Special handling for nested subcollections like bots/{botId}/auth (relative to tenant)
+      else if (collection.includes('/')) {
         const parts = collection.split('/');
         // Pattern: bots/{botId}/auth
         if (parts[0] === 'bots' && parts[2] === 'auth') {

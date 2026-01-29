@@ -1,5 +1,5 @@
-import { db } from '../lib/firebase.js';
-import { Timestamp } from 'firebase-admin/firestore';
+import { db, admin } from '../lib/firebase.js';
+const { Timestamp } = admin.firestore;
 import { memoryService } from './memoryService.js';
 import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';

@@ -107,7 +107,7 @@ export class ContactService {
    */
   public async getAudience(tenantId: string): Promise<Result<any[]>> {
     try {
-      const audiences = await firebaseService.getCollection<'tenants/{tenantId}/audiences'>('audiences', tenantId);
+      const audiences = await firebaseService.getCollection<'tenants/{tenantId}/audiences'>('tenants/{tenantId}/audiences', tenantId);
       return { success: true, data: audiences };
     } catch (error: any) {
       logger.error('Error fetching audience segments', error);

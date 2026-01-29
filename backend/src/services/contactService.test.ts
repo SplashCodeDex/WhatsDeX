@@ -138,7 +138,7 @@ describe('ContactService', () => {
       if (result.success) {
         expect(result.data).toEqual(mockAudiences);
       }
-      expect(firebaseService.getCollection).toHaveBeenCalledWith('audiences', tenantId);
+      expect(firebaseService.getCollection).toHaveBeenCalledWith('tenants/{tenantId}/audiences', tenantId);
     });
   });
 });
