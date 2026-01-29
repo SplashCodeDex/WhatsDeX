@@ -36,7 +36,7 @@ export class ContactService {
     const BATCH_SIZE = 500;
     let currentBatch = db.batch();
     let currentBatchSize = 0;
-    const batchPromises: Promise<any>[] = [];
+    const batchPromises: Promise<void>[] = [];
 
     try {
       const parser = fs.createReadStream(filePath).pipe(parse({
@@ -47,7 +47,7 @@ export class ContactService {
 
       for await (const record of parser) {
         rowIndex++;
-        const rawData: any = record;
+        const rawData = record as Record<string, string>;
         const phone = rawData.phone || rawData.phoneNumber || '';
 
         const contactData = {
@@ -93,9 +93,9 @@ export class ContactService {
       }
 
       return { success: true, data: { count, errors } };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error importing contacts', error);
-      if (error.code === 'CSV_INVALID_COLUMN_NAME') {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'CSV_INVALID_COLUMN_NAME') {
         return { success: false, error: new Error('Invalid CSV headers. Please check for duplicates.') };
       }
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
@@ -105,11 +105,11 @@ export class ContactService {
   /**
    * Get all audience segments for a tenant
    */
-  public async getAudience(tenantId: string): Promise<Result<any[]>> {
+  public async getAudience(tenantId: string): Promise<Result<unknown[]>> {
     try {
       const audiences = await firebaseService.getCollection<'tenants/{tenantId}/audiences'>('tenants/{tenantId}/audiences', tenantId);
       return { success: true, data: audiences };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching audience segments', error);
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
     }

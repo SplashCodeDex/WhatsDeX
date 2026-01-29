@@ -18,18 +18,18 @@ interface AIDecisionEngine {
 interface AIAction {
   type: string;
   command?: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, string | number | boolean | undefined>;
   confidence: number;
   reasoning: string;
-  originalIntent?: any;
+  originalIntent?: unknown;
 }
 
 interface AIAnalysis {
-  intents: any[];
+  intents: unknown[];
   confidence: number;
   actions: AIAction[];
   reasoning: string;
-  toolsNeeded: any[];
+  toolsNeeded: string[];
   responseType: string;
 }
 
@@ -350,10 +350,10 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Execute intelligent response based on analysis
    */
-  async executeIntelligentResponse(bot: Bot, intelligence: AIAnalysis, ctx: MessageContext, context: any): Promise<{ finalResponse: string, actionResults: any[] }> {
+  async executeIntelligentResponse(bot: Bot, intelligence: AIAnalysis, ctx: MessageContext, context: unknown): Promise<{ finalResponse: string, actionResults: unknown[] }> {
     const { actions, confidence } = intelligence;
     let finalResponse = '';
-    const actionResults: any[] = [];
+    const actionResults: unknown[] = [];
 
     if (actions.length === 0 || confidence < this.decisionEngine.confidenceThreshold) {
       // Conversational AI response
@@ -379,7 +379,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Handle conversational AI response with full context
    */
-  async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: any): Promise<string> {
+  async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: AIAnalysis): Promise<string> {
     // 1. Retrieve Historical Context (RAG)
     const jid = ctx.sender.jid;
     const historyResult = await memoryService.retrieveRelevantContext(jid, context.message.text);
@@ -573,7 +573,7 @@ Respond in the user's language if they're not using English.
   /**
    * Learn from user interactions to improve responses
    */
-  async learnFromInteraction(bot: Bot, userId: string, message: string, intelligence: any, ctx: MessageContext, aiResponse: string) {
+  async learnFromInteraction(bot: Bot, userId: string, message: string, intelligence: AIAnalysis, ctx: MessageContext, aiResponse: string) {
     if (!this.decisionEngine.learningEnabled) return;
 
     try {
