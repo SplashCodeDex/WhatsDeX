@@ -1,5 +1,5 @@
-import { db } from '../lib/firebase.js';
-import { Timestamp } from 'firebase-admin/firestore';
+import { db, admin } from '../lib/firebase.js';
+const { Timestamp } = admin.firestore;
 import { memoryService } from './memoryService.js';
 import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
@@ -18,18 +18,18 @@ interface AIDecisionEngine {
 interface AIAction {
   type: string;
   command?: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, string | number | boolean | undefined>;
   confidence: number;
   reasoning: string;
-  originalIntent?: any;
+  originalIntent?: unknown;
 }
 
 interface AIAnalysis {
-  intents: any[];
+  intents: unknown[];
   confidence: number;
   actions: AIAction[];
   reasoning: string;
-  toolsNeeded: any[];
+  toolsNeeded: string[];
   responseType: string;
 }
 
@@ -96,7 +96,7 @@ export class GeminiAI extends EventEmitter {
       const { finalResponse, actionResults } = await this.executeIntelligentResponse(bot, intelligence, ctx, contextForExecution);
 
       // 5. Finalize: Learn and Store Memory
-      await this.learnFromInteraction(bot, userId, message, intelligence, ctx);
+      await this.learnFromInteraction(bot, userId, message, intelligence, ctx, finalResponse);
 
       // Store new interaction in Vector Memory
       await memoryService.storeConversation(userId, message, {
@@ -121,8 +121,22 @@ export class GeminiAI extends EventEmitter {
   async buildEnhancedContext(bot: Bot, userId: string, message: string, ctx: MessageContext) {
     const userProfile = await databaseService.user.get(userId, bot.tenantId);
 
+    // Retrieve persistent learning facts
+    let learnedFacts: string[] = [];
+    try {
+      const learningDoc = await db.collection('tenants')
+        .doc(bot.tenantId)
+        .collection('learning')
+        .doc(userId)
+        .get();
+      learnedFacts = learningDoc.exists ? (learningDoc.data()?.facts || []) : [];
+    } catch (error) {
+      logger.error('Error fetching learned facts:', error);
+    }
+
     return {
       user: userProfile || { id: userId, name: 'Unknown' },
+      learnedFacts,
       conversation: await this.getConversationMemory(userId, bot.tenantId),
       message: {
         text: message,
@@ -144,7 +158,7 @@ export class GeminiAI extends EventEmitter {
   /**
    * Multi-layer intelligence analysis
    */
-  async analyzeWithMultiLayerIntelligence(bot: Bot, message: string, context: any): Promise<AIAnalysis> {
+  async analyzeWithMultiLayerIntelligence(bot: Bot, message: string, context: unknown): Promise<AIAnalysis> {
     const analysis: AIAnalysis = {
       intents: [],
       confidence: 0,
@@ -194,7 +208,7 @@ export class GeminiAI extends EventEmitter {
   /**
    * Detect multiple intents in a single message
    */
-  async detectMultipleIntents(message: string, context: any) {
+  async detectMultipleIntents(message: string, context: any) { // Keep any for JSON.stringify(context.user)
     const prompt = `
 Analyze this message and detect ALL possible intents. The user may want multiple things:
 
@@ -239,7 +253,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Make contextual decisions based on intents and user context
    */
-  async makeContextualDecisions(bot: Bot, intents: any[], context: any) {
+  async makeContextualDecisions(bot: Bot, intents: any[], context: unknown) {
     const decisions = {
       actions: [] as AIAction[],
       confidence: 0,
@@ -336,10 +350,10 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Execute intelligent response based on analysis
    */
-  async executeIntelligentResponse(bot: Bot, intelligence: AIAnalysis, ctx: MessageContext, context: any): Promise<{ finalResponse: string, actionResults: any[] }> {
+  async executeIntelligentResponse(bot: Bot, intelligence: AIAnalysis, ctx: MessageContext, context: unknown): Promise<{ finalResponse: string, actionResults: unknown[] }> {
     const { actions, confidence } = intelligence;
     let finalResponse = '';
-    const actionResults: any[] = [];
+    const actionResults: unknown[] = [];
 
     if (actions.length === 0 || confidence < this.decisionEngine.confidenceThreshold) {
       // Conversational AI response
@@ -365,7 +379,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Handle conversational AI response with full context
    */
-  async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: any): Promise<string> {
+  async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: AIAnalysis): Promise<string> {
     // 1. Retrieve Historical Context (RAG)
     const jid = ctx.sender.jid;
     const historyResult = await memoryService.retrieveRelevantContext(jid, context.message.text);
@@ -380,12 +394,17 @@ Be intelligent - understand implied requests, context clues, and natural languag
     // 2. Intelligence Layer: Advanced Reasoning
     const personality = bot.config.aiPersonality || 'a professional assistant';
 
+    const learnedFactsContext = context.learnedFacts?.length > 0
+      ? "\n[USER FACTS & PREFERENCES]:\n" + context.learnedFacts.map((f: string) => `- ${f}`).join("\n")
+      : "";
+
     const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
 Context: Acting on behalf of ${bot.user?.name ?? 'WhatsDeX'}.
 Current Time: ${new Date().toLocaleString()}
 Work on behalf of the customer. Use the tools provided when necessary.
 ${historicalContext}
+${learnedFactsContext}
 Respond appropriately based on your role.`;
 
     const conversationPrompt = `
@@ -430,7 +449,7 @@ Respond in the user's language if they're not using English.
   /**
    * Execute a single action intelligently
    */
-  async executeSingleAction(bot: Bot, action: AIAction, ctx: MessageContext, context: any) {
+  async executeSingleAction(bot: Bot, action: AIAction, ctx: MessageContext, context: unknown) {
     try {
       if (!action.command) throw new Error('Command not specified');
       const command = bot.cmd.get(action.command);
@@ -459,7 +478,7 @@ Respond in the user's language if they're not using English.
   /**
    * Prepare smart context for command execution
    */
-  async prepareSmartContext(action: AIAction, ctx: MessageContext, context: any): Promise<MessageContext> {
+  async prepareSmartContext(action: AIAction, ctx: MessageContext, context: unknown): Promise<MessageContext> {
     const smartCtx = { ...ctx };
 
     // Extract and format arguments intelligently
@@ -554,14 +573,62 @@ Respond in the user's language if they're not using English.
   /**
    * Learn from user interactions to improve responses
    */
-  async learnFromInteraction(bot: Bot, userId: string, message: string, intelligence: any, ctx: MessageContext) {
+  async learnFromInteraction(bot: Bot, userId: string, message: string, intelligence: AIAnalysis, ctx: MessageContext, aiResponse: string) {
     if (!this.decisionEngine.learningEnabled) return;
 
-    // Track actual success based on execution results
-    const _successMetrics = await this.calculateSuccessMetrics(bot, intelligence, ctx);
+    try {
+      const facts = await this.extractFacts(message, aiResponse);
+      if (facts.length === 0) return;
 
-    // TODO: Implement persistent learning data in Firestore subcollection (tenants/{tenantId}/learning)
-    // For now, we skip in-memory storage to maintain statelessness (Rule 5)
+      const tenantId = bot.tenantId;
+      const learningRef = db.collection('tenants').doc(tenantId).collection('learning').doc(userId);
+
+      await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(learningRef);
+        let existingFacts: string[] = [];
+        if (doc.exists) {
+          existingFacts = doc.data()?.facts || [];
+        }
+
+        const newFacts = facts.filter(f => !existingFacts.some(ef => ef.toLowerCase() === f.toLowerCase()));
+        if (newFacts.length > 0) {
+          transaction.set(learningRef, {
+            facts: [...existingFacts, ...newFacts],
+            updatedAt: Timestamp.now()
+          }, { merge: true });
+          logger.info(`Learned ${newFacts.length} new facts for user ${userId} in tenant ${tenantId}`);
+        }
+      });
+    } catch (error) {
+      logger.error('Error in learnFromInteraction:', error);
+    }
+  }
+
+  /**
+   * Extract facts from interaction using AI
+   */
+  private async extractFacts(message: string, aiResponse: string): Promise<string[]> {
+    const prompt = `
+Extract any new personal facts, preferences, or important information about the user from this interaction.
+Only extract things that are worth remembering for future conversations (e.g. name, location, likes, dislikes, profession, goals).
+Be concise.
+
+User Message: "${message}"
+AI Response: "${aiResponse}"
+
+Return a JSON array of strings, each string being a single fact. If no new facts, return empty array [].
+Example: ["User's name is John", "User lives in New York", "User likes spicy food"]
+`;
+    try {
+      const response = await this.gemini.getChatCompletion(prompt);
+      // Clean up response in case it contains markdown code blocks
+      const jsonContent = response.replace(/```json\n?|\n?```/g, '').trim();
+      const facts = JSON.parse(jsonContent);
+      return Array.isArray(facts) ? facts : [];
+    } catch (e) {
+      logger.warn('Failed to extract facts from interaction', e);
+      return [];
+    }
   }
 
   async getConversationMemory(userId: string, tenantId: string) {

@@ -23,21 +23,21 @@ import { z } from 'zod';
 
 type CollectionKey = keyof FirestoreSchema;
 
-const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
-  'tenants': TenantSchema as any,
-  'tenants/{tenantId}/users': TenantUserSchema as any,
-  'tenants/{tenantId}/bots': BotInstanceSchema as any,
-  'tenants/{tenantId}/members': BotMemberSchema as any,
-  'tenants/{tenantId}/groups': BotGroupSchema as any,
-  'tenants/{tenantId}/subscriptions': SubscriptionSchema as any,
-  'tenants/{tenantId}/moderation': ModerationItemSchema as any,
-  'tenants/{tenantId}/violations': ViolationSchema as any,
-  'tenants/{tenantId}/campaigns': CampaignSchema as any,
-  'tenants/{tenantId}/webhooks': WebhookSchema as any,
-  'tenants/{tenantId}/contacts': ContactSchema as any,
-  'tenants/{tenantId}/audiences': AudienceSchema as any,
-  'tenants/{tenantId}/templates': TemplateSchema as any,
-  'tenants/{tenantId}/bots/{botId}/auth': AuthSchema as any,
+const SchemaMap: Record<CollectionKey, z.ZodSchema> = {
+  'tenants': TenantSchema,
+  'tenants/{tenantId}/users': TenantUserSchema,
+  'tenants/{tenantId}/bots': BotInstanceSchema,
+  'tenants/{tenantId}/members': BotMemberSchema,
+  'tenants/{tenantId}/groups': BotGroupSchema,
+  'tenants/{tenantId}/subscriptions': SubscriptionSchema,
+  'tenants/{tenantId}/moderation': ModerationItemSchema,
+  'tenants/{tenantId}/violations': ViolationSchema,
+  'tenants/{tenantId}/campaigns': CampaignSchema,
+  'tenants/{tenantId}/webhooks': WebhookSchema,
+  'tenants/{tenantId}/contacts': ContactSchema,
+  'tenants/{tenantId}/audiences': AudienceSchema,
+  'tenants/{tenantId}/templates': TemplateSchema,
+  'tenants/{tenantId}/bots/{botId}/auth': AuthSchema,
 };
 
 export class FirebaseService {
@@ -55,13 +55,18 @@ export class FirebaseService {
   /**
    * Resolve a collection name to its full path and schema
    */
-  private getCollectionInfo(collection: string, tenantId?: string) {
+  private getCollectionInfo(collection: string, tenantId?: string): { path: string, schema: z.ZodSchema } {
     let path: string;
     let schemaKey: CollectionKey;
 
     if (tenantId) {
-      // Special handling for nested subcollections like bots/{botId}/auth
-      if (collection.includes('/')) {
+      // If the collection name already includes the tenant template, resolve it
+      if (collection.startsWith('tenants/{tenantId}/')) {
+        path = collection.replace('{tenantId}', tenantId);
+        schemaKey = collection as CollectionKey;
+      }
+      // Special handling for nested subcollections like bots/{botId}/auth (relative to tenant)
+      else if (collection.includes('/')) {
         const parts = collection.split('/');
         // Pattern: bots/{botId}/auth
         if (parts[0] === 'bots' && parts[2] === 'auth') {
@@ -135,11 +140,12 @@ export class FirebaseService {
         // Note: Zod doesn't easily support dynamic partial validation against a deep schema
         // but for our flat-ish documents, it works well enough.
         // We safely check if .partial() exists (e.g. not a preprocessed or readonly schema)
-        if (typeof (schema as any).partial === 'function') {
-          (schema as any).partial().parse(data);
-        } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+        const s = schema as unknown as { partial: () => z.ZodSchema, unwrap: () => { partial: () => z.ZodSchema } };
+        if (typeof s.partial === 'function') {
+          s.partial().parse(data);
+        } else if (typeof s.unwrap === 'function' && typeof s.unwrap().partial === 'function') {
           // Handle Readonly schemas
-          (schema as any).unwrap().partial().parse(data);
+          s.unwrap().partial().parse(data);
         }
       } else {
         schema.parse(data);

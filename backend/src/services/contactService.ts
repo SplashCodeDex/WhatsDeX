@@ -30,24 +30,24 @@ export class ContactService {
     tenantId: string,
     filePath: string
   ): Promise<Result<{ count: number; errors: string[] }>> {
-    return new Promise((resolve) => {
-      const errors: string[] = [];
-      let count = 0;
-      let rowIndex = 0;
-      const BATCH_SIZE = 500;
-      let currentBatch = db.batch();
-      let currentBatchSize = 0;
-      const batchPromises: Promise<any>[] = [];
+    const errors: string[] = [];
+    let count = 0;
+    let rowIndex = 0;
+    const BATCH_SIZE = 500;
+    let currentBatch = db.batch();
+    let currentBatchSize = 0;
+    const batchPromises: Promise<void>[] = [];
 
+    try {
       const parser = fs.createReadStream(filePath).pipe(parse({
         columns: true,
         skip_empty_lines: true,
         trim: true,
       }));
 
-      parser.on('data', (record: any) => {
+      for await (const record of parser) {
         rowIndex++;
-        const rawData: any = record;
+        const rawData = record as Record<string, string>;
         const phone = rawData.phone || rawData.phoneNumber || '';
 
         const contactData = {
@@ -81,46 +81,36 @@ export class ContactService {
             currentBatchSize = 0;
           }
         }
-      });
+      }
 
-      parser.on('error', (error: any) => {
-        logger.error('Error parsing CSV', error);
-        if (error.code === 'CSV_INVALID_COLUMN_NAME') {
-          resolve({ success: false, error: new Error('Invalid CSV headers. Please check for duplicates.') });
-        } else {
-          resolve({ success: false, error: error instanceof Error ? error : new Error(String(error)) });
-        }
-        parser.destroy();
-      });
+      if (currentBatchSize > 0) {
+        batchPromises.push(currentBatch.commit());
+      }
+      await Promise.all(batchPromises);
 
-      parser.on('end', async () => {
-        try {
-          if (currentBatchSize > 0) {
-            batchPromises.push(currentBatch.commit());
-          }
-          await Promise.all(batchPromises);
+      if (rowIndex === 0) {
+        return { success: false, error: new Error("CSV contains no data rows") };
+      }
 
-          if (rowIndex === 0) {
-            resolve({ success: false, error: new Error("CSV contains no data rows") });
-          } else {
-            resolve({ success: true, data: { count, errors } });
-          }
-        } catch (error: any) {
-          logger.error('Error committing batches', error);
-          resolve({ success: false, error: error instanceof Error ? error : new Error(String(error)) });
-        }
-      });
-    });
+      return { success: true, data: { count, errors } };
+    } catch (error: unknown) {
+      logger.error('Error importing contacts', error);
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'CSV_INVALID_COLUMN_NAME') {
+        return { success: false, error: new Error('Invalid CSV headers. Please check for duplicates.') };
+      }
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
   }
 
-  public async getAudience(tenantId: string): Promise<Result<any[]>> {
+  /**
+   * Get all audience segments for a tenant
+   */
+  public async getAudience(tenantId: string): Promise<Result<unknown[]>> {
     try {
-      // Simple implementation: Fetch all contacts for now
-      // In a real scenario, this would apply filters or fetch from 'audiences' collection
-      const contacts = await firebaseService.getCollection('tenants/{tenantId}/contacts' as any, tenantId);
-      return { success: true, data: contacts };
-    } catch (error: any) {
-      logger.error('Error fetching audience', error);
+      const audiences = await firebaseService.getCollection<'tenants/{tenantId}/audiences'>('tenants/{tenantId}/audiences', tenantId);
+      return { success: true, data: audiences };
+    } catch (error: unknown) {
+      logger.error('Error fetching audience segments', error);
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }

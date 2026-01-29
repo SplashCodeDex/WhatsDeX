@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ContactService } from './contactService.js';
 import { db } from '../lib/firebase.js';
+import { firebaseService } from './FirebaseService.js';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
@@ -14,6 +15,12 @@ const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
     }));
     return { mockBatchSet, mockBatchCommit, mockBatch };
 });
+
+vi.mock('./FirebaseService.js', () => ({
+    firebaseService: {
+        getCollection: vi.fn(),
+    }
+}));
 
 vi.mock('../lib/firebase.js', () => {
     const mockDoc = vi.fn(() => ({}));
@@ -116,6 +123,22 @@ describe('ContactService', () => {
        if (!result.success) {
         expect(result.error.message).toBe("CSV contains no data rows");
       }
+    });
+  });
+
+  describe('getAudience', () => {
+    it('should fetch audiences from the correct collection', async () => {
+      const tenantId = 'tenant_123';
+      const mockAudiences = [{ id: 'aud_1', name: 'VIPs' }];
+      vi.mocked(firebaseService.getCollection).mockResolvedValue(mockAudiences);
+
+      const result = await service.getAudience(tenantId);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockAudiences);
+      }
+      expect(firebaseService.getCollection).toHaveBeenCalledWith('tenants/{tenantId}/audiences', tenantId);
     });
   });
 });

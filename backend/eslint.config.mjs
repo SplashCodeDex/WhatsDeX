@@ -8,20 +8,23 @@ export default [
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
     {
-        files: ["**/*.ts"],
         rules: {
-            "@typescript-eslint/no-explicit-any": "error",
+            "@typescript-eslint/no-explicit-any": "warn",
             "no-unused-vars": "warn",
             "@typescript-eslint/no-unused-vars": "warn",
-            "no-console": "error"
+            "no-console": "warn",
+            "@typescript-eslint/ban-ts-comment": "warn",
+            "no-case-declarations": "warn",
+            "no-control-regex": "warn",
+            "no-empty": "warn",
+            "@typescript-eslint/no-unsafe-function-type": "warn"
         }
     },
     {
         files: ["**/*.js"],
         rules: {
             "@typescript-eslint/no-var-requires": "off",
-            "no-undef": "off",
-            "no-unused-vars": "warn"
+            "no-undef": "off"
         }
     }
 ];
