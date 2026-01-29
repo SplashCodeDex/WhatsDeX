@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ContactService } from './contactService.js';
-import { db } from '../lib/firebase.js';
-import fs from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
+import { Readable } from 'stream';
+import fs from 'fs';
 
 const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
     const mockBatchSet = vi.fn();
@@ -15,44 +13,44 @@ const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
     return { mockBatchSet, mockBatchCommit, mockBatch };
 });
 
-vi.mock('../lib/firebase.js', () => {
-    const mockDoc = vi.fn(() => ({}));
-    const mockCollection = vi.fn(() => ({
-        doc: mockDoc,
-    }));
-    const mockDb = {
+vi.mock('../lib/firebase.js', () => ({
+    db: {
         batch: mockBatch,
         collection: vi.fn(() => ({
             doc: vi.fn(() => ({
-                collection: mockCollection,
+                collection: vi.fn(() => ({
+                    doc: vi.fn(() => ({})), // Return a mock doc reference
+                })),
             })),
         })),
-    };
-    return { db: mockDb };
-});
+    }
+}));
+
+// Mock the 'fs' module
+vi.mock('fs', () => ({
+    default: {
+        createReadStream: vi.fn(),
+    }
+}));
+
 
 describe('ContactService', () => {
   let service: ContactService;
-  const testFilePath = path.join(process.cwd(), 'test-contacts.csv');
 
   beforeEach(() => {
     vi.clearAllMocks();
     service = ContactService.getInstance();
   });
 
-  afterEach(async () => {
-    if (existsSync(testFilePath)) {
-      await fs.unlink(testFilePath).catch(() => {});
-    }
-  });
-
   describe('importContacts', () => {
     it('should correctly parse CSV, normalize phone numbers, and save contacts', async () => {
       const csvData = `name,phoneNumber,email,tags\n"Doe, John","(123) 456-7890",john@example.com,"vip|lead"\nJane Doe,+1-987-654-3210,jane@example.com,new`;
-      await fs.writeFile(testFilePath, csvData);
       const tenantId = 'tenant_123';
+      const mockStream = Readable.from(csvData);
+      vi.mocked(fs.createReadStream).mockReturnValue(mockStream as any);
 
-      const result = await service.importContacts(tenantId, testFilePath);
+
+      const result = await service.importContacts(tenantId, 'dummy_path.csv');
 
       expect(result.success).toBe(true);
       if (!result.success) return;
@@ -85,10 +83,11 @@ describe('ContactService', () => {
 
     it('should handle invalid CSV rows gracefully', async () => {
       const csvData = `name,phone\nValid User,1234567890\nInvalid User,`;
-      await fs.writeFile(testFilePath, csvData);
       const tenantId = 'tenant_456';
+      const mockStream = Readable.from(csvData);
+      vi.mocked(fs.createReadStream).mockReturnValue(mockStream as any);
 
-      const result = await service.importContacts(tenantId, testFilePath);
+      const result = await service.importContacts(tenantId, 'dummy_path.csv');
 
       expect(result.success).toBe(true);
       if (!result.success) return;
@@ -103,15 +102,19 @@ describe('ContactService', () => {
     it('should return an error for empty or invalid CSV data', async () => {
       const tenantId = 'tenant_789';
 
-      await fs.writeFile(testFilePath, '');
-      let result = await service.importContacts(tenantId, testFilePath);
+      // Empty CSV
+      let mockStream = Readable.from('');
+      vi.mocked(fs.createReadStream).mockReturnValue(mockStream as any);
+      let result = await service.importContacts(tenantId, 'dummy_path.csv');
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.message).toBe("CSV contains no data rows");
       }
 
-      await fs.writeFile(testFilePath, 'header1,header2');
-      result = await service.importContacts(tenantId, testFilePath);
+      // CSV with only headers
+      mockStream = Readable.from('header1,header2');
+      vi.mocked(fs.createReadStream).mockReturnValue(mockStream as any);
+      result = await service.importContacts(tenantId, 'dummy_path.csv');
       expect(result.success).toBe(false);
        if (!result.success) {
         expect(result.error.message).toBe("CSV contains no data rows");
