@@ -288,6 +288,31 @@ export class GroupService {
             logger.error(`GroupService.syncGroup failed for ${groupJid}`, err);
         }
     }
+
+    /**
+     * Fetch all groups the bot is participating in and sync them to Firestore
+     */
+    async syncAllGroups(bot: Bot): Promise<void> {
+        try {
+            if (!bot.groupFetchAllParticipating) {
+                logger.warn(`Bot ${bot.botId} does not support groupFetchAllParticipating`);
+                return;
+            }
+
+            const groups = await bot.groupFetchAllParticipating();
+            const groupJids = Object.keys(groups);
+
+            logger.info(`Syncing ${groupJids.length} groups for bot ${bot.botId}`);
+
+            for (const jid of groupJids) {
+                await this.syncGroup(bot, jid);
+            }
+
+            logger.info(`Successfully synced all groups for bot ${bot.botId}`);
+        } catch (error) {
+            logger.error(`GroupService.syncAllGroups failed for bot ${bot.botId}`, error);
+        }
+    }
 }
 
 export const groupService = new GroupService();
