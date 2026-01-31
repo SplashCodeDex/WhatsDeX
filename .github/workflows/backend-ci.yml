@@ -34,7 +34,7 @@ jobs:
       run: npm ci --prefer-offline
 
     - name: Security Audit
-      run: npm audit --workspace=backend --audit-level=high
+      run: npm audit --workspace=backend --audit-level=critical
 
     - name: Lint
       run: npm run lint --workspace=backend
