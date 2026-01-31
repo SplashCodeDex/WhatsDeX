@@ -73,6 +73,13 @@ export class MultiTenantBotService {
   }
 
   /**
+   * Get an active bot socket wrapper by ID
+   */
+  public getBotSocket(botId: string): Bot | undefined {
+    return this.activeBots.get(botId);
+  }
+
+  /**
    * Create and start a new bot instance
    */
   async createBotInstance(tenantId: string, botData: Partial<BotInstance>): Promise<Result<BotInstance>> {

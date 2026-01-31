@@ -334,6 +334,28 @@ export const WebhookSchema = z.object({
 export type Webhook = z.infer<typeof WebhookSchema>;
 
 /**
+ * Learning Data Schema ('tenants/{tenantId}/learning/{userId}' subcollection)
+ * Stores facts and preferences learned about a specific user
+ */
+export const LearningSchema = z.object({
+  userId: z.string(), // JID
+  facts: z.array(z.object({
+    id: z.string(),
+    content: z.string(),
+    category: z.string().optional(),
+    confidence: z.number(),
+    sourceMessageId: z.string().optional(),
+    extractedAt: TimestampSchema,
+    updatedAt: TimestampSchema
+  })).default([]),
+  preferences: z.record(z.string(), z.any()).default({}),
+  lastInteraction: TimestampSchema,
+  metadata: z.record(z.string(), z.any()).optional()
+}).readonly();
+
+export type LearningData = z.infer<typeof LearningSchema>;
+
+/**
  * Contact Schema ('tenants/{tenantId}/contacts' subcollection)
  */
 export const ContactSchema = z.object({

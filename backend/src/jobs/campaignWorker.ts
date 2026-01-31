@@ -2,6 +2,7 @@ import { Worker, Job } from 'bullmq';
 import { Campaign, CampaignStatus, MessageTemplate, Contact, Audience } from '../types/contracts.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { firebaseService } from '../services/FirebaseService.js';
+import { groupService } from '../services/groupService.js';
 import { webhookService } from '../services/webhookService.js';
 import { socketService } from '../services/socketService.js';
 import { TemplateService } from '../services/templateService.js';
@@ -226,26 +227,52 @@ class CampaignWorker {
         }
 
         if (audience.type === 'groups') {
+            const bots = await this.getAvailableBots(tenantId, { type: 'pool' } as any); // Get any available bot for sync if needed
+
             if (audience.targetId === 'all') {
-                const groups = await firebaseService.getCollection<'tenants/{tenantId}/groups'>('groups', tenantId);
+                let groups = await firebaseService.getCollection<'tenants/{tenantId}/groups'>('groups', tenantId);
+
+                // 2026 Strategy: Auto-sync if Firestore is empty
+                if (groups.length === 0 && bots.length > 0) {
+                    const activeBot = multiTenantBotService.getBotSocket(bots[0].id);
+                    if (activeBot) {
+                        logger.info(`Auto-syncing groups for tenant ${tenantId}`);
+                        await groupService.syncAllGroups(activeBot);
+                        groups = await firebaseService.getCollection<'tenants/{tenantId}/groups'>('groups', tenantId);
+                    }
+                }
+
                 return groups.map(g => ({
                     id: g.id,
                     tenantId,
-                    name: g.subject,
+                    name: (g as any).subject || (g as any).name || 'Unknown Group',
                     phone: g.id, // JID
                     tags: [],
+                    status: 'active' as const,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 } as Contact));
             } else {
-                const group = await firebaseService.getDoc<'tenants/{tenantId}/groups'>('groups', audience.targetId, tenantId);
+                let group = await firebaseService.getDoc<'tenants/{tenantId}/groups'>('groups', audience.targetId, tenantId);
+
+                // If specific group not in Firestore, sync it
+                if (!group && bots.length > 0) {
+                    const activeBot = multiTenantBotService.getBotSocket(bots[0].id);
+                    if (activeBot) {
+                        logger.info(`Group ${audience.targetId} missing from Firestore. Syncing...`);
+                        await groupService.syncGroup(activeBot, audience.targetId);
+                        group = await firebaseService.getDoc<'tenants/{tenantId}/groups'>('groups', audience.targetId, tenantId);
+                    }
+                }
+
                 if (!group) return [];
                 return [{
                     id: group.id,
                     tenantId,
-                    name: group.subject,
+                    name: (group as any).subject || (group as any).name || 'Unknown Group',
                     phone: group.id, // JID
                     tags: [],
+                    status: 'active' as const,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 } as Contact];
