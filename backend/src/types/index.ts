@@ -1,4 +1,4 @@
-import type { WASocket, proto, AnyMessageContent, MiscMessageGenerationOptions } from 'baileys';
+import type { WASocket, proto } from 'baileys';
 import type { ConfigService } from '../services/ConfigService.js';
 import type { BotConfig } from './tenantConfig.js';
 
@@ -48,6 +48,7 @@ export interface Bot extends Partial<WASocket> {
 export type Middleware = (ctx: MessageContext, next: () => Promise<void>) => any;
 
 declare module 'baileys' {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     export namespace proto {
         interface IWebMessageInfo {
             contentType?: string;
@@ -82,7 +83,7 @@ export interface GroupFunctions {
     updateDescription: (desc: string) => Promise<any>;
     updateSubject: (subject: string) => Promise<any>;
     joinApproval: (mode: 'on' | 'off') => Promise<any>;
-    membersCanAddMemberMode: (mode: 'on' | 'off') => Promise<any>;
+    membersCanAddMemberMode: (mode: 'on' | 'off' | boolean) => Promise<any>;
     isOwner: (jid?: string) => Promise<boolean>;
 }
 

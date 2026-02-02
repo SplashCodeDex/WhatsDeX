@@ -115,13 +115,13 @@ const enhancedLogger: Logger = {
 
   command: (command, userId, success = true, executionTime = null, error = null) => {
     const level = success ? 'info' : 'error';
-    const message = `Command: ${command} | User: ${userId} | Success: ${success}`;
-    const meta = {
+    const messageTxt = `Command: ${command} | User: ${userId} | Success: ${success}`;
+    const metaData = {
       command, userId, success, executionTime,
       error: error instanceof Error ? error.message : error,
       stack: error instanceof Error ? error.stack : undefined,
     };
-    winstonLogger.log(level, message, meta);
+    winstonLogger.log(level, messageTxt, metaData);
   },
 
   userActivity: (userId, action, details) => {
@@ -147,11 +147,11 @@ const enhancedLogger: Logger = {
 
   withContext: (context) => ({
     ...enhancedLogger,
-    error: (message, meta) => enhancedLogger.error(message, { ...context, ...toMeta(meta) }),
-    warn: (message, meta) => enhancedLogger.warn(message, { ...context, ...toMeta(meta) }),
-    info: (message, meta) => enhancedLogger.info(message, { ...context, ...toMeta(meta) }),
-    debug: (message, meta) => enhancedLogger.debug(message, { ...context, ...toMeta(meta) }),
-    trace: (message, meta) => enhancedLogger.debug(message, { ...context, ...toMeta(meta) }),
+    error: (msg, mt) => enhancedLogger.error(msg, { ...context, ...toMeta(mt) }),
+    warn: (msg, mt) => enhancedLogger.warn(msg, { ...context, ...toMeta(mt) }),
+    info: (msg, mt) => enhancedLogger.info(msg, { ...context, ...toMeta(mt) }),
+    debug: (msg, mt) => enhancedLogger.debug(msg, { ...context, ...toMeta(mt) }),
+    trace: (msg, mt) => enhancedLogger.debug(msg, { ...context, ...toMeta(mt) }),
   }),
 
   child: (meta) => enhancedLogger.withContext(toMeta(meta) || {}),
