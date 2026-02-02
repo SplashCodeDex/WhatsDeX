@@ -48,9 +48,8 @@ export interface Bot extends Partial<WASocket> {
 export type Middleware = (ctx: MessageContext, next: () => Promise<void>) => any;
 
 declare module 'baileys' {
-    // eslint-disable-next-line @typescript-eslint/no-namespace
-    export namespace proto {
-        interface IWebMessageInfo {
+    export interface proto {
+        IWebMessageInfo: proto.IWebMessageInfo & {
             contentType?: string;
             media?: any;
             body?: string;
@@ -61,8 +60,8 @@ declare module 'baileys' {
 }
 
 export interface GroupFunctions {
-    isAdmin: (jid?: string) => Promise<boolean>;
-    matchAdmin: (id: string) => Promise<boolean>;
+    isAdmin: (userJid?: string) => Promise<boolean>;
+    matchAdmin: (userJid: string) => Promise<boolean>;
     members: () => Promise<string[]>;
     isBotAdmin: () => Promise<boolean>;
     metadata: () => Promise<any>;
@@ -83,8 +82,8 @@ export interface GroupFunctions {
     updateDescription: (desc: string) => Promise<any>;
     updateSubject: (subject: string) => Promise<any>;
     joinApproval: (mode: 'on' | 'off') => Promise<any>;
-    membersCanAddMemberMode: (mode: 'on' | 'off' | boolean) => Promise<any>;
-    isOwner: (jid?: string) => Promise<boolean>;
+    membersCanAddMemberMode: (mode: any) => Promise<any>;
+    isOwner: (userJid?: string) => Promise<boolean>;
 }
 
 export interface MessageContext {
@@ -108,7 +107,13 @@ export interface MessageContext {
     chat?: {
         id: string;
     };
-    msg: proto.IWebMessageInfo;
+    msg: proto.IWebMessageInfo & {
+        contentType?: string;
+        media?: any;
+        body?: string;
+        content?: string;
+        pushName?: string | null;
+    };
     quoted?: {
         content: string;
         contentType: string;
@@ -136,9 +141,9 @@ export interface MessageContext {
     core?: any;
 
     // Tenant & Permissions
-    tenant?: import('./tenantConfig.js').TenantSettings;
-    isOwner?: boolean;
-    isAdmin?: boolean;
+    tenant: import('./tenantConfig.js').TenantSettings;
+    isOwner: boolean;
+    isAdmin: boolean;
 
     // Group Functions
     group: (jid?: string) => GroupFunctions;
@@ -198,7 +203,7 @@ export interface Logger {
     apiRequest: (method: string, url: string, statusCode: number, responseTime: number, userId?: string | null) => void;
     withContext: (context: Record<string, unknown>) => Logger;
     child: (meta?: unknown) => Logger;
-    [key: string]: unknown;
+    [key: string]: any;
 }
 
 export interface GlobalContext {
@@ -214,8 +219,9 @@ export interface GlobalContext {
     multiTenantBotService: import('../services/multiTenantBotService.js').MultiTenantBotService;
     userService: import('../services/userService.js').UserService;
     tenantConfigService: import('../services/tenantConfigService.js').TenantConfigService;
+    bot?: Bot;
     state?: any;
-    [key: string]: unknown;
+    [key: string]: any;
 }
 
 
