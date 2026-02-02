@@ -66,15 +66,20 @@ const winstonLogger = winston.createLogger({
   ],
 });
 
-// Asynchronously create logs directory if it doesn't exist
-(async () => {
-  try {
-    const logsDir = path.join(process.cwd(), SERVER_CONFIG.LOG_DIR);
-    await fs.promises.mkdir(logsDir, { recursive: true });
-  } catch (error: unknown) {
+// Ensure logs directory exists
+try {
+  const logsDir = path.join(process.cwd(), SERVER_CONFIG.LOG_DIR);
+  if (fs && typeof fs.existsSync === 'function' && !fs.existsSync(logsDir)) {
+    if (typeof fs.mkdirSync === 'function') {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+  }
+} catch (error: unknown) {
+  // Silent fail during tests if fs is weirdly mocked
+  if (process.env.NODE_ENV !== 'test') {
     console.error('❌ Warning: Failed to create logs directory:', error instanceof Error ? error.message : error);
   }
-})();
+}
 
 // Enhanced logger interface
 export interface Logger {

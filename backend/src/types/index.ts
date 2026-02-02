@@ -54,7 +54,6 @@ declare module 'baileys' {
             media?: any;
             body?: string;
             content?: string;
-            pushName?: string | null;
         }
     }
 }
@@ -112,7 +111,6 @@ export interface MessageContext {
         media?: any;
         body?: string;
         content?: string;
-        pushName?: string | null;
     };
     quoted?: {
         content: string;

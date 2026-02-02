@@ -1,44 +1,34 @@
-import { test, describe, beforeEach } from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect, vi } from 'vitest';
 import { useFirestoreAuthState } from './baileysFirestoreAuth.js';
 import { firebaseService } from '../services/FirebaseService.js';
-
-// Mock FirebaseService
-const mockFirebase = {
-  getDoc: async () => null,
-  setDoc: async () => {},
-  deleteDoc: async () => {}
-};
 
 describe('Firestore Auth Provider', () => {
   const tenantId = 'test-tenant';
   const botId = 'test-bot';
 
-  test('should initialize with new creds if none exist', async () => {
+  it('should initialize with new creds if none exist', async () => {
     // Mock getDoc to return null (no creds)
-    const originalGetDoc = firebaseService.getDoc;
-    (firebaseService as any).getDoc = async () => null;
+    const getDocSpy = vi.spyOn(firebaseService, 'getDoc').mockResolvedValue(null);
 
     const { state } = await useFirestoreAuthState(tenantId, botId);
-    assert.ok(state.creds);
-    assert.ok(state.creds.noiseKey);
+    expect(state.creds).toBeDefined();
+    expect(state.creds.noiseKey).toBeDefined();
 
-    firebaseService.getDoc = originalGetDoc;
+    getDocSpy.mockRestore();
   });
 
-  test('should save creds to Firestore', async () => {
+  it('should save creds to Firestore', async () => {
     let savedData: any = null;
-    const originalSetDoc = firebaseService.setDoc;
-    (firebaseService as any).setDoc = async (col: string, id: string, data: any) => {
+    const setDocSpy = vi.spyOn(firebaseService, 'setDoc').mockImplementation(async (_col, id, data) => {
       if (id === 'creds') savedData = data;
-    };
+    });
 
     const { state, saveCreds } = await useFirestoreAuthState(tenantId, botId);
     await saveCreds();
     
-    assert.ok(savedData);
-    assert.ok(savedData.value);
+    expect(savedData).toBeDefined();
+    expect(savedData.value).toBeDefined();
 
-    firebaseService.setDoc = originalSetDoc;
+    setDocSpy.mockRestore();
   });
 });
