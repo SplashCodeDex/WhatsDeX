@@ -1,4 +1,4 @@
-import type { WASocket, proto } from 'baileys';
+import type { WASocket, proto, AnyMessageContent, MiscMessageGenerationOptions } from 'baileys';
 import type { ConfigService } from '../services/ConfigService.js';
 import type { BotConfig } from './tenantConfig.js';
 
@@ -40,24 +40,21 @@ export interface Bot extends Partial<WASocket> {
     decodeJid: (jid: string) => string;
     cmd: Map<string, Command>;
 
-    // onWhatsApp inherited from Partial<WASocket>
-    groupFetchAllParticipating?: () => Promise<{ [id: string]: any }>;
-
     // Middleware
     use: (middleware: Middleware) => void;
     executeMiddleware: (ctx: MessageContext, next: () => Promise<void>) => Promise<void>;
 }
 
-export type Middleware = (ctx: MessageContext, next: () => Promise<void>) => Promise<void> | void;
+export type Middleware = (ctx: MessageContext, next: () => Promise<void>) => any;
 
 declare module 'baileys' {
-    export interface proto {
-        IWebMessageInfo: proto.IWebMessageInfo & {
+    export namespace proto {
+        interface IWebMessageInfo {
             contentType?: string;
             media?: any;
             body?: string;
             content?: string;
-            pushName?: string;
+            pushName?: string | null;
         }
     }
 }
@@ -74,7 +71,7 @@ export interface GroupFunctions {
     close: () => Promise<any>;
     lock: () => Promise<any>;
     unlock: () => Promise<any>;
-    add: (jids: string[]) => Promise<unknown>;
+    add: (jids: string[]) => Promise<any>;
     kick: (jids: string[]) => Promise<any>;
     promote: (jids: string[]) => Promise<any>;
     demote: (jids: string[]) => Promise<any>;
@@ -85,12 +82,12 @@ export interface GroupFunctions {
     updateDescription: (desc: string) => Promise<any>;
     updateSubject: (subject: string) => Promise<any>;
     joinApproval: (mode: 'on' | 'off') => Promise<any>;
-    membersCanAddMemberMode: (mode: 'on' | 'off' | boolean) => Promise<any>;
+    membersCanAddMemberMode: (mode: 'on' | 'off') => Promise<any>;
     isOwner: (jid?: string) => Promise<boolean>;
 }
 
 export interface MessageContext {
-    reply: (text: string | { [key: string]: any; text?: string }, options?: any) => Promise<any>;
+    reply: (content: any, options?: any) => Promise<any>;
     replyReact: (emoji: string) => Promise<any>;
     editMessage?: (key: any, text: string) => Promise<any>;
 
@@ -110,12 +107,7 @@ export interface MessageContext {
     chat?: {
         id: string;
     };
-    msg: proto.IWebMessageInfo & {
-        contentType?: string;
-        media?: any;
-        body?: string;
-        content?: string;
-    };
+    msg: proto.IWebMessageInfo;
     quoted?: {
         content: string;
         contentType: string;
@@ -143,9 +135,9 @@ export interface MessageContext {
     core?: any;
 
     // Tenant & Permissions
-    tenant: import('./tenantConfig.js').TenantSettings;
-    isOwner: boolean;
-    isAdmin: boolean;
+    tenant?: import('./tenantConfig.js').TenantSettings;
+    isOwner?: boolean;
+    isAdmin?: boolean;
 
     // Group Functions
     group: (jid?: string) => GroupFunctions;
@@ -191,21 +183,21 @@ export interface Command {
 
 
 export interface Logger {
-    error: (message: any, meta?: any) => void;
-    warn: (message: any, meta?: any) => void;
-    info: (message: any, meta?: any) => void;
-    debug: (message: any, meta?: any) => void;
-    trace: (message: any, meta?: any) => void;
-    http: (message: any, meta?: any) => void;
-    security: (message: any, userId?: string | null, details?: any) => void;
-    performance: (operation: string, duration: number, metadata?: any) => void;
-    command: (command: string, userId: string, success?: boolean, executionTime?: number | null, error?: any) => void;
-    userActivity: (userId: string, action: string, details?: any) => void;
-    groupActivity: (groupId: string, action: string, userId: string, details?: any) => void;
+    error: (message: unknown, meta?: unknown) => void;
+    warn: (message: unknown, meta?: unknown) => void;
+    info: (message: unknown, meta?: unknown) => void;
+    debug: (message: unknown, meta?: unknown) => void;
+    trace: (message: unknown, meta?: unknown) => void;
+    http: (message: unknown, meta?: unknown) => void;
+    security: (message: string, userId?: string | null, details?: unknown) => void;
+    performance: (operation: string, duration: number, metadata?: unknown) => void;
+    command: (command: string, userId: string, success?: boolean, executionTime?: number | null, error?: unknown) => void;
+    userActivity: (userId: string, action: string, details?: unknown) => void;
+    groupActivity: (groupId: string, action: string, userId: string, details?: unknown) => void;
     apiRequest: (method: string, url: string, statusCode: number, responseTime: number, userId?: string | null) => void;
-    withContext: (context: any) => Logger;
-    child: (meta?: any) => Logger;
-    [key: string]: any;
+    withContext: (context: Record<string, unknown>) => Logger;
+    child: (meta?: unknown) => Logger;
+    [key: string]: unknown;
 }
 
 export interface GlobalContext {
@@ -222,7 +214,7 @@ export interface GlobalContext {
     userService: import('../services/userService.js').UserService;
     tenantConfigService: import('../services/tenantConfigService.js').TenantConfigService;
     state?: any;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 

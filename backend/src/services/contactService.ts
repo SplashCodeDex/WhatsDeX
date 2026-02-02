@@ -1,10 +1,10 @@
 import { db } from '../lib/firebase.js';
 import { firebaseService } from './FirebaseService.js';
-import { ContactSchema, Result } from '../types/contracts.js';
+import { ContactSchema, Result, type Contact } from '../types/contracts.js';
 import logger from '../utils/logger.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { parse } from 'csv-parse';
-import fs from 'fs';
+import fs from 'node:fs';
 
 const normalizePhoneNumber = (phone: string): string => {
   if (phone.includes('@s.whatsapp.net') || phone.includes('@g.us')) {
@@ -26,6 +26,9 @@ export class ContactService {
     return ContactService.instance;
   }
 
+  /**
+   * Import contacts from CSV
+   */
   public async importContacts(
     tenantId: string,
     filePath: string
@@ -47,7 +50,7 @@ export class ContactService {
 
       for await (const record of parser) {
         rowIndex++;
-        const rawData: any = record;
+        const rawData = record as Record<string, string>;
         const phone = rawData.phone || rawData.phoneNumber || '';
 
         const contactData = {
@@ -93,22 +96,90 @@ export class ContactService {
       }
 
       return { success: true, data: { count, errors } };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error parsing CSV', error);
-      if (error.code === 'CSV_INVALID_COLUMN_NAME') {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'CSV_INVALID_COLUMN_NAME') {
         return { success: false, error: new Error('Invalid CSV headers. Please check for duplicates.') };
       }
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
     }
   }
 
+  /**
+   * List contacts for a tenant
+   */
+  public async listContacts(tenantId: string, limit: number = 100): Promise<Result<Contact[]>> {
+    try {
+      const contacts = await firebaseService.getCollection('tenants/{tenantId}/contacts' as any, tenantId) as Contact[];
+      return { success: true, data: contacts.slice(0, limit) };
+    } catch (error: unknown) {
+      logger.error('ContactService.listContacts error', error);
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
+  }
+
+  /**
+   * Create a new contact
+   */
+  public async createContact(tenantId: string, data: Partial<Contact>): Promise<Result<Contact>> {
+    try {
+      const id = data.id || `cont_${crypto.randomUUID()}`;
+      const contactData = {
+        ...data,
+        id,
+        tenantId,
+        createdAt: data.createdAt || new Date(),
+        updatedAt: new Date()
+      };
+
+      const validated = ContactSchema.parse(contactData);
+      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, id, validated, tenantId, false);
+      return { success: true, data: validated };
+    } catch (error: unknown) {
+      logger.error('ContactService.createContact error', error);
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
+  }
+
+  /**
+   * Update a contact
+   */
+  public async updateContact(tenantId: string, contactId: string, updates: Partial<Contact>): Promise<Result<void>> {
+    try {
+      const contactData = {
+        ...updates,
+        updatedAt: new Date()
+      };
+      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, contactId, contactData, tenantId, true);
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      logger.error('ContactService.updateContact error', error);
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
+  }
+
+  /**
+   * Delete a contact
+   */
+  public async deleteContact(tenantId: string, contactId: string): Promise<Result<void>> {
+    try {
+      await firebaseService.deleteDoc('tenants/{tenantId}/contacts' as any, contactId, tenantId);
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      logger.error('ContactService.deleteContact error', error);
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
+  }
+
+  /**
+   * Get audiences for a tenant
+   */
   public async getAudience(tenantId: string): Promise<Result<any[]>> {
     try {
-      // Simple implementation: Fetch all contacts for now
-      // In a real scenario, this would apply filters or fetch from 'audiences' collection
-      const contacts = await firebaseService.getCollection('tenants/{tenantId}/contacts' as any, tenantId);
-      return { success: true, data: contacts };
-    } catch (error: any) {
+      const audiences = await firebaseService.getCollection('tenants/{tenantId}/audiences' as any, tenantId);
+      return { success: true, data: audiences };
+    } catch (error: unknown) {
       logger.error('Error fetching audience', error);
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
     }

@@ -1,5 +1,5 @@
-import { createServer, Server as HttpServer } from 'http';
-import express from 'express';
+import { createServer, Server as HttpServer } from 'node:http';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -22,17 +22,14 @@ import billingRoutes from '../routes/billingRoutes.js';
 import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
-import AuditService from '../services/auditService.js';
 import { socketService } from '../services/socketService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
 export class MultiTenantApp {
-  // ... existing code ...
   private app: express.Application;
   private httpServer: HttpServer;
   private port: number;
-  private activeTenants: Map<string, any>;
   private isInitialized: boolean;
   private config: ConfigService;
 
@@ -41,11 +38,10 @@ export class MultiTenantApp {
     this.app = express();
     this.httpServer = createServer(this.app);
     this.port = this.config.get('PORT');
-    this.activeTenants = new Map();
     this.isInitialized = false;
   }
 
-  async initialize() {
+  async initialize(): Promise<void> {
     try {
       logger.info('Initializing Multi-tenant WhatsDeX SaaS Platform...');
 
@@ -72,15 +68,17 @@ export class MultiTenantApp {
 
       this.isInitialized = true;
       logger.info('Multi-tenant app initialized successfully');
-    } catch (error: any) {
-      logger.error('Failed to initialize multi-tenant app', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Failed to initialize multi-tenant app', {
+        error: error instanceof Error ? error.message : String(error)
+      });
       throw error;
     }
   }
 
-  setupMiddleware() {
+  private setupMiddleware(): void {
     // Request Logging
-    this.app.use((req, res, next) => {
+    this.app.use((req: Request, _res: Response, next: NextFunction) => {
       logger.info(`INCOMING REQUEST: ${req.method} ${req.url}`);
       next();
     });
@@ -97,15 +95,17 @@ export class MultiTenantApp {
       },
     }));
 
-    // CORS
+    // CORS (2026 Strict Mode)
     this.app.use(cors({
       origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        const appUrl = this.config.get('NEXT_PUBLIC_APP_URL');
         if (!origin ||
-          origin.includes('localhost') ||
-          origin.endsWith('.whatsdx.com') ||
-          origin === this.config.get('NEXT_PUBLIC_APP_URL')) {
+            /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+            /^https?:\/\/([^/]+\.)?whatsdx\.com$/.test(origin) ||
+            origin === appUrl) {
           callback(null, true);
         } else {
+          logger.warn(`Blocked CORS request from unauthorized origin: ${origin}`);
           callback(new Error('Not allowed by CORS'));
         }
       },
@@ -113,30 +113,31 @@ export class MultiTenantApp {
     }));
 
     // Compression
-    this.app.use(compression() as any);
+    this.app.use(compression());
 
     // Body parsing
     this.app.use(express.json({
       limit: '10mb',
-      verify: (req: any, res, buf) => {
+      verify: (req: any, _res: Response, buf: Buffer) => {
         req.rawBody = buf;
       }
     }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-    this.app.use(cookieParser() as any);
+    this.app.use(cookieParser());
 
     // Rate limiting
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000,
       max: this.config.get('RATE_LIMIT_MAX'),
       message: {
+        success: false,
         error: 'Too many requests, please try again later.'
       }
     });
-    this.app.use('/api/', limiter as any);
+    this.app.use('/api/', limiter);
 
-    // Request logging
-    this.app.use((req, res, next) => {
+    // Context logging
+    this.app.use((req: Request, _res: Response, next: NextFunction) => {
       logger.info(`${req.method} ${req.path}`, {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
@@ -146,13 +147,13 @@ export class MultiTenantApp {
     });
   }
 
-  setupRoutes() {
+  private setupRoutes(): void {
     // Health check
-    // Health check
-    this.app.get('/api/health', async (req, res) => {
+    this.app.get('/api/health', (_req: Request, res: Response) => {
       res.json({
         status: 'healthy',
         uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
         version: process.env.npm_package_version || '1.0.0'
       });
     });
@@ -182,13 +183,15 @@ export class MultiTenantApp {
     this.app.use('/api/webhooks', authenticateToken, webhookRoutes);
 
     // Tenant management
-    this.app.get('/api/tenants', authenticateToken, async (req, res) => {
+    this.app.get('/api/tenants', authenticateToken, async (_req: Request, res: Response) => {
       try {
         const tenants = await multiTenantService.listTenants();
         res.json({ success: true, data: tenants });
-      } catch (error: any) {
-        logger.error('Failed to get tenants', { error: error.message });
-        res.status(500).json({ error: 'Failed to get tenants' });
+      } catch (error: unknown) {
+        logger.error('Failed to get tenants', {
+          error: error instanceof Error ? error.message : String(error)
+        });
+        res.status(500).json({ success: false, error: 'Failed to get tenants' });
       }
     });
 
@@ -199,8 +202,6 @@ export class MultiTenantApp {
     this.app.use('/api/billing/webhook', stripeWebhookRoutes);
     this.app.use('/api/billing', authenticateToken, billingRoutes);
 
-    // Bot management logic is handled in multiTenantRoutes mapped to /api/internal/bots
-
     // Error handling
     this.app.use(errorHandler);
 
@@ -208,7 +209,7 @@ export class MultiTenantApp {
     this.app.use(notFoundHandler);
   }
 
-  async initializeServices() {
+  private async initializeServices(): Promise<void> {
     try {
       const stripeKey = this.config.get('STRIPE_SECRET_KEY');
       const stripeWebhookSecret = this.config.get('STRIPE_WEBHOOK_SECRET');
@@ -217,22 +218,25 @@ export class MultiTenantApp {
         await stripeService.initialize(stripeKey, stripeWebhookSecret || '');
         logger.info('Stripe service initialized');
       }
-    } catch (error: any) {
-      logger.error('Failed to initialize services', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Failed to initialize services', {
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   }
 
-  async startActiveTenantBots() {
+  private async startActiveTenantBots(): Promise<void> {
     try {
       logger.info('Starting active tenant bots...');
-      // Logic moved to multiTenantBotService
       await multiTenantBotService.startAllBots();
-    } catch (error: any) {
-      logger.error('Failed to start tenant bots', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Failed to start tenant bots', {
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   }
 
-  async start() {
+  async start(): Promise<void> {
     try {
       if (!this.isInitialized) {
         await this.initialize();
@@ -245,13 +249,15 @@ export class MultiTenantApp {
       process.on('SIGTERM', () => this.shutdown());
       process.on('SIGINT', () => this.shutdown());
 
-    } catch (error: any) {
-      logger.error('Failed to start server', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Failed to start server', {
+        error: error instanceof Error ? error.message : String(error)
+      });
       throw error;
     }
   }
 
-  async shutdown() {
+  async shutdown(): Promise<void> {
     logger.info('Shutting down multi-tenant server...');
     try {
       await multiTenantBotService.stopAllBots();
@@ -261,8 +267,10 @@ export class MultiTenantApp {
           process.exit(0);
         });
       }
-    } catch (error: any) {
-      logger.error('Error during shutdown', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Error during shutdown', {
+        error: error instanceof Error ? error.message : String(error)
+      });
       process.exit(1);
     }
   }
