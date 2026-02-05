@@ -25,7 +25,7 @@ export { default as StripeService } from './stripeService.js';
 // Utility Services
 export { default as RateLimiter } from './rateLimiter.js';
 export { default as JobQueue } from './jobQueue.js';
-export { default as MessageQueue } from './messageQueue.js';
+// export { default as MessageQueue } from './messageQueue.js';
 export { default as ErrorHandler } from './errorHandler.js';
 
 // Monitoring

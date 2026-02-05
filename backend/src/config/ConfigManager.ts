@@ -340,7 +340,12 @@ export class ConfigManager {
      */
 
     // Only require JWT_SECRET for auth infrastructure
-    const required: string[] = ['JWT_SECRET'];
+    const required: string[] = [];
+
+    // JWT_SECRET is required in production and development, but optional in tests
+    if (this.environment !== 'test') {
+      required.push('JWT_SECRET');
+    }
 
     // Redis is required in production but optional in development
     if (this.environment === 'production') {

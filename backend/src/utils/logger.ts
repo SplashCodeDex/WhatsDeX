@@ -1,6 +1,6 @@
-import path from 'path';
+import path from 'node:path';
 import winston from 'winston';
-import fs from 'fs';
+import fs from 'node:fs';
 import { SERVER_CONFIG } from '../config/constants.js';
 
 // Define log levels
@@ -66,61 +66,75 @@ const winstonLogger = winston.createLogger({
   ],
 });
 
-// Asynchronously create logs directory if it doesn't exist
-(async () => {
-  try {
-    const logsDir = path.join(process.cwd(), SERVER_CONFIG.LOG_DIR);
-    await fs.promises.mkdir(logsDir, { recursive: true });
-  } catch (error: unknown) {
+// Ensure logs directory exists
+try {
+  const logsDir = path.join(process.cwd(), SERVER_CONFIG.LOG_DIR);
+  if (fs && typeof fs.existsSync === 'function' && !fs.existsSync(logsDir)) {
+    if (typeof fs.mkdirSync === 'function') {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+  }
+} catch (error: unknown) {
+  // Silent fail during tests if fs is weirdly mocked
+  if (process.env.NODE_ENV !== 'test') {
     console.error('❌ Warning: Failed to create logs directory:', error instanceof Error ? error.message : error);
   }
-})();
+}
 
 // Enhanced logger interface
 export interface Logger {
-  error: (message: string, meta?: any) => void;
-  warn: (message: string, meta?: any) => void;
-  info: (message: string, meta?: any) => void;
-  http: (message: string, meta?: any) => void;
-  debug: (message: string, meta?: any) => void;
-  trace: (message: string, meta?: any) => void;
-  command: (command: string, userId: string, success?: boolean, executionTime?: number | null, error?: any) => void;
-  userActivity: (userId: string, action: string, details?: any) => void;
-  groupActivity: (groupId: string, action: string, userId: string, details?: any) => void;
+  error: (message: unknown, meta?: unknown) => void;
+  warn: (message: unknown, meta?: unknown) => void;
+  info: (message: unknown, meta?: unknown) => void;
+  http: (message: unknown, meta?: unknown) => void;
+  debug: (message: unknown, meta?: unknown) => void;
+  trace: (message: unknown, meta?: unknown) => void;
+  command: (command: string, userId: string, success?: boolean, executionTime?: number | null, error?: unknown) => void;
+  userActivity: (userId: string, action: string, details?: unknown) => void;
+  groupActivity: (groupId: string, action: string, userId: string, details?: unknown) => void;
   apiRequest: (method: string, url: string, statusCode: number, responseTime: number, userId?: string | null) => void;
-  performance: (operation: string, duration: number, metadata?: any) => void;
-  security: (event: string, userId?: string | null, details?: any) => void;
-  withContext: (context: any) => Logger;
-  child: (meta?: any) => Logger;
+  performance: (operation: string, duration: number, metadata?: unknown) => void;
+  security: (event: string, userId?: string | null, details?: unknown) => void;
+  withContext: (context: Record<string, unknown>) => Logger;
+  child: (meta?: unknown) => Logger;
   stream: { write: (message: string) => void };
+  [key: string]: unknown;
 }
+
+// Helper to ensure meta is an object for winston
+const toMeta = (meta: unknown): Record<string, unknown> | undefined => {
+  if (meta === null || meta === undefined) return undefined;
+  if (meta instanceof Error) return { error: meta.message, stack: meta.stack };
+  if (typeof meta === 'object') return meta as Record<string, unknown>;
+  return { data: meta };
+};
 
 // Enhanced logger implementation
 const enhancedLogger: Logger = {
-  error: (message, meta = {}) => { winstonLogger.error(message, meta); },
-  warn: (message, meta = {}) => { winstonLogger.warn(message, meta); },
-  info: (message, meta = {}) => { winstonLogger.info(message, meta); },
-  http: (message, meta = {}) => { winstonLogger.http(message, meta); },
-  debug: (message, meta = {}) => { winstonLogger.debug(message, meta); },
-  trace: (message, meta = {}) => { winstonLogger.debug(message, meta); },
+  error: (message, meta) => { winstonLogger.error(String(message), toMeta(meta)); },
+  warn: (message, meta) => { winstonLogger.warn(String(message), toMeta(meta)); },
+  info: (message, meta) => { winstonLogger.info(String(message), toMeta(meta)); },
+  http: (message, meta) => { winstonLogger.http(String(message), toMeta(meta)); },
+  debug: (message, meta) => { winstonLogger.debug(String(message), toMeta(meta)); },
+  trace: (message, meta) => { winstonLogger.debug(String(message), toMeta(meta)); },
 
   command: (command, userId, success = true, executionTime = null, error = null) => {
     const level = success ? 'info' : 'error';
-    const message = `Command: ${command} | User: ${userId} | Success: ${success}`;
-    const meta = {
+    const messageTxt = `Command: ${command} | User: ${userId} | Success: ${success}`;
+    const metaData = {
       command, userId, success, executionTime,
       error: error instanceof Error ? error.message : error,
       stack: error instanceof Error ? error.stack : undefined,
     };
-    winstonLogger.log(level, message, meta);
+    winstonLogger.log(level, messageTxt, metaData);
   },
 
-  userActivity: (userId, action, details = {}) => {
-    winstonLogger.info(`User Activity: ${action} | User: ${userId}`, { userId, action, ...details });
+  userActivity: (userId, action, details) => {
+    winstonLogger.info(`User Activity: ${action} | User: ${userId}`, { userId, action, ...toMeta(details) });
   },
 
-  groupActivity: (groupId, action, userId, details = {}) => {
-    winstonLogger.info(`Group Activity: ${action} | Group: ${groupId} | User: ${userId}`, { groupId, userId, action, ...details });
+  groupActivity: (groupId, action, userId, details) => {
+    winstonLogger.info(`Group Activity: ${action} | Group: ${groupId} | User: ${userId}`, { groupId, userId, action, ...toMeta(details) });
   },
 
   apiRequest: (method, url, statusCode, responseTime, userId = null) => {
@@ -128,24 +142,24 @@ const enhancedLogger: Logger = {
     winstonLogger.log(level, `${method} ${url} ${statusCode} ${responseTime}ms`, { method, url, statusCode, responseTime, userId });
   },
 
-  performance: (operation, duration, metadata = {}) => {
-    winstonLogger.info(`Performance: ${operation} took ${duration}ms`, { operation, duration, ...metadata });
+  performance: (operation, duration, metadata) => {
+    winstonLogger.info(`Performance: ${operation} took ${duration}ms`, { operation, duration, ...toMeta(metadata) });
   },
 
-  security: (event, userId = null, details = {}) => {
-    winstonLogger.warn(`Security Event: ${event}`, { userId, event, ...details });
+  security: (event, userId = null, details) => {
+    winstonLogger.warn(`Security Event: ${event}`, { userId, event, ...toMeta(details) });
   },
 
   withContext: (context) => ({
     ...enhancedLogger,
-    error: (message, meta = {}) => enhancedLogger.error(message, { ...context, ...meta }),
-    warn: (message, meta = {}) => enhancedLogger.warn(message, { ...context, ...meta }),
-    info: (message, meta = {}) => enhancedLogger.info(message, { ...context, ...meta }),
-    debug: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
-    trace: (message, meta = {}) => enhancedLogger.debug(message, { ...context, ...meta }),
+    error: (msg, mt) => enhancedLogger.error(msg, { ...context, ...toMeta(mt) }),
+    warn: (msg, mt) => enhancedLogger.warn(msg, { ...context, ...toMeta(mt) }),
+    info: (msg, mt) => enhancedLogger.info(msg, { ...context, ...toMeta(mt) }),
+    debug: (msg, mt) => enhancedLogger.debug(msg, { ...context, ...toMeta(mt) }),
+    trace: (msg, mt) => enhancedLogger.debug(msg, { ...context, ...toMeta(mt) }),
   }),
 
-  child: (meta = {}) => enhancedLogger.withContext(meta),
+  child: (meta) => enhancedLogger.withContext(toMeta(meta) || {}),
 
   stream: {
     write: (message) => { winstonLogger.http(message.trim()); },

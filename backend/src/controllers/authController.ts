@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import crypto from 'node:crypto';
 import { db, admin } from '@/lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { ConfigService } from '@/services/ConfigService.js';

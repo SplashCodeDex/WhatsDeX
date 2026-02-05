@@ -64,6 +64,7 @@ class IntelligentWorker {
    */
   async createEnhancedContext(messageData: any, botContext: any) {
     if (!this.context) throw new Error('Global context not initialized');
+    if (!this.bot) throw new Error('Bot not initialized');
 
     const ctx = await createBotContext(this.bot, messageData, this.context);
 
