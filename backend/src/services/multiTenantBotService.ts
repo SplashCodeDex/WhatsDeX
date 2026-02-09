@@ -22,6 +22,7 @@ import { moderationMiddleware } from '../middleware/moderation.js';
 import { eventHandler } from './eventHandler.js';
 import AuthSystem from './authSystem.js';
 import { createBotContext } from '../utils/createBotContext.js';
+import { analyticsService } from './analyticsService.js';
 
 export class MultiTenantBotService {
   private static instance: MultiTenantBotService;
@@ -381,6 +382,13 @@ export class MultiTenantBotService {
         true
       );
 
+      // Also track in daily analytics
+      if (field === 'messagesSent') {
+        await analyticsService.trackEvent(tenantId, 'sent');
+      } else if (field === 'messagesReceived') {
+        await analyticsService.trackEvent(tenantId, 'received');
+      }
+
     } catch (err) {
       // Silently fail stat updates
     }
@@ -583,7 +591,7 @@ export class MultiTenantBotService {
       }
 
       // Basic JID formatting
-      const jid = payload.to.includes('@s.whatsapp.net') ? payload.to : `${payload.to}@s.whatsapp.net`;
+      const jid = payload.to.includes('@') ? payload.to : `${payload.to}@s.whatsapp.net`;
 
       let result;
       if (payload.type === 'text') {

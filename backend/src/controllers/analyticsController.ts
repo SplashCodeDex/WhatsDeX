@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { db } from '../lib/firebase.js';
 import logger from '../utils/logger.js';
 import monitoringService from '../services/monitoring.js';
+import { analyticsService } from '../services/analyticsService.js';
 
 export class AnalyticsController {
     /**
@@ -61,7 +62,7 @@ export class AnalyticsController {
     }
 
     /**
-     * Get message analytics (placeholder)
+     * Get message analytics (robust daily stats)
      */
     static async getMessageAnalytics(req: Request, res: Response) {
         try {
@@ -70,30 +71,19 @@ export class AnalyticsController {
                 return res.status(401).json({ success: false, error: 'Authentication required' });
             }
 
-            // Basic aggregation: Get counts for last 7 days
-            const end = new Date();
-            const start = new Date();
-            start.setDate(start.getDate() - 7);
+            const days = parseInt(req.query.days as string) || 7;
+            const stats = await analyticsService.getDailyStats(tenantId, days);
 
-            // Note: In a real production app, we would use a dedicated 'analytics' collection
-            // where we pre-aggregate stats daily to avoid heavy queries.
-            // For now, we return a simulated timestamp structure based on bot stats.
-
-            const botsSnapshot = await db.collection('tenants')
-                .doc(tenantId)
-                .collection('bots')
-                .get();
-
-            const bots = botsSnapshot.docs.map(doc => doc.data());
-            const totalSent = bots.reduce((acc, bot) => acc + (bot.stats?.messagesSent || 0), 0);
-            const totalReceived = bots.reduce((acc, bot) => acc + (bot.stats?.messagesReceived || 0), 0);
+            // Fill in gaps if any (optional, but good for charts)
+            const result = stats.map(s => ({
+                date: s.id,
+                sent: s.sent,
+                received: s.received
+            }));
 
             res.json({
                 success: true,
-                data: [
-                    { date: start.toISOString(), sent: 0, received: 0 },
-                    { date: end.toISOString(), sent: totalSent, received: totalReceived }
-                ]
+                data: result
             });
         } catch (error: any) {
             logger.error('AnalyticsController.getMessageAnalytics error', error);
