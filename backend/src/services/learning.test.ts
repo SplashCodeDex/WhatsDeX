@@ -3,13 +3,32 @@ import { GeminiAI } from './geminiAI.js';
 import { firebaseService } from './FirebaseService.js';
 
 // Hoist mocks
-const { mockGeminiService } = vi.hoisted(() => ({
+const { mockGeminiService, mockDb } = vi.hoisted(() => ({
   mockGeminiService: {
     getChatCompletion: vi.fn(),
+  },
+  mockDb: {
+    collection: vi.fn(() => ({
+      doc: vi.fn(() => ({
+        collection: vi.fn(() => ({
+          where: vi.fn(() => ({
+            orderBy: vi.fn(() => ({
+              limit: vi.fn(() => ({
+                get: vi.fn().mockResolvedValue({ empty: true, docs: [] })
+              }))
+            }))
+          }))
+        }))
+      }))
+    }))
   }
 }));
 
 // Mock dependencies
+vi.mock('../lib/firebase.js', () => ({
+  db: mockDb
+}));
+
 vi.mock('./gemini.js', () => {
   return {
     default: vi.fn().mockImplementation(function() {
