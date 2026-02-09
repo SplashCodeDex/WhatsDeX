@@ -356,6 +356,48 @@ export const LearningSchema = z.object({
 export type LearningData = z.infer<typeof LearningSchema>;
 
 /**
+ * Embedding Schema ('tenants/{tenantId}/embeddings' subcollection)
+ */
+export const EmbeddingSchema = z.object({
+  id: z.string(),
+  userId: z.string(), // JID
+  content: z.string(),
+  embedding: z.array(z.number()),
+  metadata: z.record(z.string(), z.any()).default({}),
+  timestamp: TimestampSchema
+}).readonly();
+
+export type ConversationEmbedding = z.infer<typeof EmbeddingSchema>;
+
+/**
+ * AI Action Schema ('tenants/{tenantId}/actions' subcollection)
+ */
+export const ActionSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  type: z.string(),
+  command: z.string().optional(),
+  parameters: z.record(z.string(), z.any()),
+  confidence: z.number(),
+  reasoning: z.string(),
+  timestamp: TimestampSchema
+}).readonly();
+
+export type AIActionData = z.infer<typeof ActionSchema>;
+
+/**
+ * Analytics Schema ('tenants/{tenantId}/analytics' subcollection)
+ */
+export const AnalyticsSchema = z.object({
+  id: z.string(), // date string e.g. "2026-01-22"
+  sent: z.number().default(0),
+  received: z.number().default(0),
+  updatedAt: TimestampSchema
+}).readonly();
+
+export type AnalyticsData = z.infer<typeof AnalyticsSchema>;
+
+/**
  * Contact Schema ('tenants/{tenantId}/contacts' subcollection)
  */
 export const ContactSchema = z.object({

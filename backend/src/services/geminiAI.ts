@@ -101,7 +101,7 @@ export class GeminiAI extends EventEmitter {
       await this.learnFromInteraction(bot, userId, message, intelligence, ctx);
 
       // Store new interaction in Vector Memory
-      await memoryService.storeConversation(userId, message, {
+      await memoryService.storeConversation(bot.tenantId, userId, message, {
         botId: bot.botId,
         response: finalResponse,
         interactionType: 'human-ai'
@@ -133,14 +133,14 @@ export class GeminiAI extends EventEmitter {
         text: message,
         timestamp: Date.now(),
         isGroup: ctx.isGroup(),
-        groupInfo: ctx.isGroup() ? await this.getGroupContext(ctx.id) : null,
+        groupInfo: ctx.isGroup() ? await this.getGroupContext(ctx.id, bot.tenantId) : null,
         mediaType: this.detectMediaType(ctx),
         sentiment: await this.analyzeSentiment(message)
       },
       environment: {
         timeOfDay: this.getTimeOfDay(),
         dayOfWeek: new Date().getDay(),
-        previousActions: await this.getRecentActions(userId),
+        previousActions: await this.getRecentActions(userId, bot.tenantId),
         activeConversations: await this.getActiveConversations(userId)
       }
     };
@@ -186,7 +186,7 @@ export class GeminiAI extends EventEmitter {
     analysis.confidence = decisions.confidence;
 
     // Layer 3: Tool Selection and Workflow Planning
-    const workflow = await this.planWorkflow(analysis.actions, context);
+    const workflow = await this.planWorkflow(analysis.actions, bot);
     analysis.toolsNeeded = workflow.tools;
     analysis.reasoning = workflow.reasoning;
 
@@ -375,7 +375,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: any): Promise<string> {
     // 1. Retrieve Historical Context (RAG)
     const jid = ctx.sender.jid;
-    const historyResult = await memoryService.retrieveRelevantContext(jid, context.message.text);
+    const historyResult = await memoryService.retrieveRelevantContext(bot.tenantId, jid, context.message.text);
     let historicalContext = '';
 
     if (historyResult.success && historyResult.data?.length > 0) {
@@ -457,6 +457,19 @@ Respond in the user's language if they're not using English.
       if (command.code) {
         await command.code(smartCtx);
       }
+
+      // 3. Track Action in Firestore
+      const actionId = `act_${crypto.randomUUID()}`;
+      await firebaseService.setDoc<'tenants/{tenantId}/actions'>('actions', actionId, {
+        id: actionId,
+        userId: ctx.sender.jid,
+        type: action.type,
+        command: action.command,
+        parameters: action.parameters,
+        confidence: action.confidence,
+        reasoning: action.reasoning,
+        timestamp: new Date()
+      }, bot.tenantId);
 
       // Follow up with AI explanation if helpful
       await this.provideIntelligentFollowUp(bot, action, ctx, context);
@@ -941,15 +954,74 @@ Message: "${content}"
   }
 
   // Restored helper methods
-  async assessContextualRelevance(intent: any, context: any) { return 0.8; }
-  async planWorkflow(actions: any[], context: any) { return { tools: [] as any[], reasoning: '' }; }
-  async selectResponseStrategy(analysis: any, context: any) { return 'conversational'; }
+  async assessContextualRelevance(intent: any, context: any) {
+    // If intent matches learned preferences or facts, increase relevance
+    let relevance = 0.8; // Default
+    const learnedFacts = context.learnedFacts || [];
+    const intentName = (intent.intent || '').toLowerCase();
+
+    for (const fact of learnedFacts) {
+      if (fact.content.toLowerCase().includes(intentName)) {
+        relevance += 0.1;
+      }
+    }
+    return Math.min(relevance, 1.0);
+  }
+
+  async planWorkflow(actions: any[], bot: Bot) {
+    const tools = [];
+    const botTools = this.getCommandsAsTools(bot);
+
+    for (const action of actions) {
+      if (action.type === 'command' && action.command) {
+        if (botTools.has(action.command)) {
+          tools.push(botTools.get(action.command));
+        }
+      }
+    }
+
+    return {
+      tools,
+      reasoning: `Selected ${tools.length} tools based on ${actions.length} detected actions.`
+    };
+  }
+
+  async selectResponseStrategy(analysis: AIAnalysis, context: any) {
+    if (analysis.confidence > 0.8 && analysis.actions.length > 0) {
+      return 'action';
+    }
+    if (analysis.confidence > 0.4 && analysis.confidence <= 0.8) {
+      return 'clarification';
+    }
+    return 'conversational';
+  }
+
   async executeMultipleActions(bot: Bot, actions: any[], ctx: any, context: any) { return []; }
   async provideIntelligentFollowUp(bot: Bot, action: any, ctx: any, context: any) { }
   inferCommandParameters(command: any) { return {}; }
   async getActiveConversations(userId: string) { return []; }
-  async getGroupContext(groupId: string) { return null; }
-  async getRecentActions(userId: string) { return []; }
+  async getGroupContext(groupId: string, tenantId: string) {
+    return await databaseService.getGroup(tenantId, groupId);
+  }
+  async getRecentActions(userId: string, tenantId: string) {
+    try {
+      // Scalable Firestore Query: Filter by userId, Order by timestamp desc, Limit 5
+      const snapshot = await db.collection('tenants')
+        .doc(tenantId)
+        .collection('actions')
+        .where('userId', '==', userId)
+        .orderBy('timestamp', 'desc')
+        .limit(5)
+        .get();
+
+      if (snapshot.empty) return [];
+
+      return snapshot.docs.map(doc => doc.data());
+    } catch (error) {
+      logger.error('Error fetching recent actions:', error);
+      return [];
+    }
+  }
 }
 
 export default GeminiAI;
