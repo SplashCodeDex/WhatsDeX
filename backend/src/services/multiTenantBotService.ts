@@ -361,7 +361,7 @@ export class MultiTenantBotService {
       // Increment stats
       await this.incrementBotStat(tenantId, botId, 'messagesReceived');
       // Track Analytics (Historical)
-      analyticsService.trackMessage(tenantId, 'received').catch(() => {});
+      analyticsService.trackMessage(tenantId, 'received');
 
     } catch (error: unknown) {
       logger.error(`Error processing message for ${botId}:`, error);
