@@ -1,8 +1,10 @@
 
 import { WebSocket, WebSocketServer } from 'ws';
 import logger from '../utils/logger.js';
-import { db } from '../lib/firebase.js';
+import { db, admin } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
+import { firebaseService } from './FirebaseService.js';
+import { Result, AnalyticsData } from '../types/contracts.js';
 
 interface AnalyticsMetrics {
   activeUsers: number;
@@ -53,7 +55,10 @@ class AnalyticsService {
             if (this.clients.get(tenantId)?.size === 0) this.clients.delete(tenantId);
           });
 
-          this.sendToClient(ws, { type: 'welcome', data: await this.getDashboardData(tenantId) });
+          const dashResult = await this.getDashboardData(tenantId);
+          if (dashResult.success) {
+            this.sendToClient(ws, { type: 'welcome', data: dashResult.data });
+          }
         });
         logger.info(`WebSocket server started on port ${config.websocketPort}`);
       }
@@ -78,8 +83,10 @@ class AnalyticsService {
       for (const tenantId of this.clients.keys()) {
         try {
           await this.updateTenantMetrics(tenantId);
-          const dash = await this.getDashboardData(tenantId);
-          this.broadcastToTenant(tenantId, { type: 'dashboard_update', data: dash });
+          const dashResult = await this.getDashboardData(tenantId);
+          if (dashResult.success) {
+            this.broadcastToTenant(tenantId, { type: 'dashboard_update', data: dashResult.data });
+          }
         } catch (e) { logger.error(`Metrics failed for ${tenantId}`, e); }
       }
     }, 30000);
@@ -104,42 +111,92 @@ class AnalyticsService {
     });
   }
 
-  async getDashboardData(tenantId: string) {
-    const tenantMetrics = this.metrics.get(tenantId);
-    const tenantPath = `tenants/${tenantId}`;
-
-    // Recent Activity for this tenant only
-    const recentSnapshot = await db.collection(`${tenantPath}/command_usage`).orderBy('usedAt', 'desc').limit(10).get();
-    const recentActivity = recentSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      timestamp: (doc.data().usedAt as Timestamp).toDate()
-    }));
-
-    return {
-      overview: { ...tenantMetrics },
-      recentActivity,
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  async getMetrics(timeframe = '24h') {
-    // Simplified mock or limited data fetch
-    return { timeframe, summary: { message: "Detailed metrics not implemented in Firestore yet" } };
-  }
-
-  async trackEvent(userId: string, event: string, properties: any = {}) {
+  async getDashboardData(tenantId: string): Promise<Result<any>> {
     try {
-      await db.collection('analytics').add({
-        metric: `event_${event}`,
+      const tenantMetrics = this.metrics.get(tenantId);
+      const tenantPath = `tenants/${tenantId}`;
+
+      // Recent Activity for this tenant only
+      const recentSnapshot = await db.collection(`${tenantPath}/command_usage`).orderBy('usedAt', 'desc').limit(10).get();
+      const recentActivity = recentSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: (doc.data().usedAt as Timestamp).toDate()
+      }));
+
+      return {
+        success: true,
+        data: {
+          overview: { ...tenantMetrics },
+          recentActivity,
+          timestamp: new Date().toISOString()
+        }
+      };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Track daily message statistics
+   */
+  async trackMessage(tenantId: string, type: 'sent' | 'received' | 'error'): Promise<Result<void>> {
+    try {
+      const date = new Date().toISOString().split('T')[0];
+      const field = type === 'sent' ? 'sent' : type === 'received' ? 'received' : 'errors';
+
+      await firebaseService.setDoc<'tenants/{tenantId}/analytics'>(
+        'analytics',
+        date,
+        {
+          date,
+          [field]: admin.firestore.FieldValue.increment(1),
+          updatedAt: new Date()
+        },
+        tenantId,
+        true
+      );
+      return { success: true, data: undefined };
+    } catch (error: any) {
+      logger.error('Failed to track message', error);
+      return { success: false, error };
+    }
+  }
+
+  async getHistoricalMetrics(tenantId: string, days = 7): Promise<Result<AnalyticsData[]>> {
+    try {
+      const metrics = await firebaseService.getCollection<'tenants/{tenantId}/analytics'>(
+        'analytics',
+        tenantId
+      );
+      // Sort and limit in memory for now, or use Firestore queries if supported by getCollection
+      const sorted = metrics
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, days);
+
+      return { success: true, data: sorted };
+    } catch (error: any) {
+      logger.error('Failed to get historical metrics', error);
+      return { success: false, error };
+    }
+  }
+
+  async trackEvent(tenantId: string, userId: string, event: string, properties: any = {}): Promise<Result<void>> {
+    try {
+      // Use tenant-specific collection for events
+      await db.collection(`tenants/${tenantId}/events`).add({
+        userId,
+        event: `event_${event}`,
         value: 1,
         category: 'behavior',
-        metadata: JSON.stringify({ userId, event, ...properties }),
+        properties,
         recordedAt: Timestamp.now()
       });
-      // Broadcast to all tenants? Not safe without tenant context.
-      // For now, we skip broadcasting generic events unless we know the tenant.
-    } catch (error: any) { logger.error('Failed to track event', error); }
+      return { success: true, data: undefined };
+    } catch (error: any) {
+      logger.error('Failed to track event', error);
+      return { success: false, error };
+    }
   }
 
   private sendToClient(ws: WebSocket, message: any) {
@@ -148,16 +205,14 @@ class AnalyticsService {
     }
   }
 
-  // Create method for generic analytics (used by mediaProcessor)
+  // Legacy wrapper
   async create(data: { data: any }) {
-    // Wrapper to match Prisma signature mostly used by mediaProcessor
-    // Input: { data: { metric, value, category, metadata } }
     try {
-      await db.collection('analytics').add({
+      await db.collection('analytics_legacy').add({
         ...data.data,
         recordedAt: Timestamp.now()
       });
-    } catch (e) { logger.error('Failed to create analytics entry', e); }
+    } catch (e) { logger.error('Failed to create legacy analytics entry', e); }
   }
 }
 

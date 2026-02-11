@@ -1,5 +1,3 @@
-import { db } from '../lib/firebase.js';
-import { Timestamp } from 'firebase-admin/firestore';
 import { memoryService } from './memoryService.js';
 import { firebaseService } from './FirebaseService.js';
 import crypto from 'crypto';
@@ -633,8 +631,8 @@ Only include NEW or UPDATED information. If nothing significant is found, return
 
     try {
       const response = await this.gemini.getChatCompletion(prompt);
-      // More robust JSON extraction
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      // More robust JSON extraction (2026 Recommended cleaning)
+      const jsonMatch = response.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
       const cleanedResponse = jsonMatch ? jsonMatch[0] : response;
       return JSON.parse(cleanedResponse);
     } catch (error) {

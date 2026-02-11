@@ -26,6 +26,13 @@ vi.mock('../lib/firebase.js', () => ({
     }
 }));
 
+vi.mock('./FirebaseService.js', () => ({
+    firebaseService: {
+        getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
+        setDoc: vi.fn().mockResolvedValue(undefined),
+    }
+}));
+
 // Mock the 'fs' module
 vi.mock('fs', () => ({
     default: {
@@ -49,6 +56,7 @@ describe('ContactService', () => {
       const mockStream = Readable.from(csvData);
       vi.mocked(fs.createReadStream).mockReturnValue(mockStream as any);
 
+      const { firebaseService } = await import('./FirebaseService.js');
 
       const result = await service.importContacts(tenantId, 'dummy_path.csv');
 
@@ -78,6 +86,16 @@ describe('ContactService', () => {
           email: 'jane@example.com',
           tags: ['new'],
         })
+      );
+
+      // Verify bot stats update
+      expect(firebaseService.getCollection).toHaveBeenCalledWith('bots', tenantId);
+      expect(firebaseService.setDoc).toHaveBeenCalledWith(
+          'bots',
+          'bot_1',
+          expect.objectContaining({ 'stats.contactsCount': expect.anything() }),
+          tenantId,
+          true
       );
     });
 

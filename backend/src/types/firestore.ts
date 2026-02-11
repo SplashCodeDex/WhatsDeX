@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { ModerationItem, Violation, Campaign, Webhook, Contact, Audience, MessageTemplate, LearningData } from './contracts.js';
+import { ModerationItem, Violation, Campaign, Webhook, Contact, Audience, MessageTemplate, LearningData, AnalyticsData } from './contracts.js';
 
 /**
  * Root 'tenants' collection document
@@ -150,4 +150,5 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/templates': MessageTemplate;
   'tenants/{tenantId}/bots/{botId}/auth': { value: any };
   'tenants/{tenantId}/learning': LearningData;
+  'tenants/{tenantId}/analytics': AnalyticsData;
 }

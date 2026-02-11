@@ -39,7 +39,9 @@ describe('ContactController', () => {
             } as any,
             user: {
                 tenantId: 'tenant-1'
-            } as any
+            } as any,
+            query: {},
+            body: {}
         };
         mockRes = {
             status: vi.fn().mockReturnThis(),
@@ -56,7 +58,7 @@ describe('ContactController', () => {
 
             await ContactController.importContacts(mockReq as Request, mockRes as Response);
 
-            expect(mockContactService.importContacts).toHaveBeenCalledWith('tenant-1', 'test/path.csv');
+            expect(mockContactService.importContacts).toHaveBeenCalledWith('tenant-1', 'test/path.csv', undefined);
             expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
                 data: { count: 1, errors: [] }
