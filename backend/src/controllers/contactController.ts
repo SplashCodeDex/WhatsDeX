@@ -23,7 +23,8 @@ export class ContactController {
             }
 
             const service = ContactService.getInstance();
-            const result = await service.importContacts(tenantId, filePath);
+            const botId = req.query.botId as string || req.body.botId as string;
+            const result = await service.importContacts(tenantId, filePath, botId);
 
             if (!result.success) {
                 return res.status(500).json({ success: false, error: result.error.message });

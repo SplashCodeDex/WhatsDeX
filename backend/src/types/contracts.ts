@@ -415,3 +415,17 @@ export const AuthSchema = z.object({
 });
 
 export type AuthData = z.infer<typeof AuthSchema>;
+
+/**
+ * Analytics Schema ('tenants/{tenantId}/analytics/{date}' subcollection)
+ * Tracks daily message statistics
+ */
+export const AnalyticsSchema = z.object({
+  date: z.string(), // ISO date string YYYY-MM-DD
+  sent: z.number().default(0),
+  received: z.number().default(0),
+  errors: z.number().default(0),
+  updatedAt: TimestampSchema
+}).readonly();
+
+export type AnalyticsData = z.infer<typeof AnalyticsSchema>;

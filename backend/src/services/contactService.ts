@@ -5,6 +5,7 @@ import logger from '../utils/logger.js';
 import crypto from 'node:crypto';
 import { parse } from 'csv-parse';
 import fs from 'node:fs';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const normalizePhoneNumber = (phone: string): string => {
   if (phone.includes('@s.whatsapp.net') || phone.includes('@g.us')) {
@@ -31,7 +32,8 @@ export class ContactService {
    */
   public async importContacts(
     tenantId: string,
-    filePath: string
+    filePath: string,
+    botId?: string
   ): Promise<Result<{ count: number; errors: string[] }>> {
     const errors: string[] = [];
     let count = 0;
@@ -90,6 +92,37 @@ export class ContactService {
         batchPromises.push(currentBatch.commit());
       }
       await Promise.all(batchPromises);
+
+      // Update bot statistics (contactsCount)
+      if (count > 0) {
+        try {
+          if (botId) {
+            // Update specific bot
+            await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
+              'bots',
+              botId,
+              { 'stats.contactsCount': FieldValue.increment(count) } as any,
+              tenantId,
+              true
+            );
+          } else {
+            // Update all bots for this tenant to reflect new total
+            const bots = await firebaseService.getCollection<'tenants/{tenantId}/bots'>('bots', tenantId);
+            const statsPromises = bots.map(bot =>
+              firebaseService.setDoc<'tenants/{tenantId}/bots'>(
+                'bots',
+                bot.id,
+                { 'stats.contactsCount': FieldValue.increment(count) } as any,
+                tenantId,
+                true
+              )
+            );
+            await Promise.all(statsPromises);
+          }
+        } catch (statsError) {
+          logger.error('Failed to update bot stats after import', statsError);
+        }
+      }
 
       if (rowIndex === 0) {
         return { success: false, error: new Error("CSV contains no data rows") };

@@ -8,6 +8,7 @@ import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
 import { tenantConfigService } from './tenantConfigService.js';
 import { webhookService } from './webhookService.js';
 import { socketService } from './socketService.js';
+import analyticsService from './analytics.js';
 import { BotInstanceSchema, Bot, GlobalContext } from '@/types/index.js';
 import { Campaign, BotInstance, Result, CampaignStatus } from '../types/contracts.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
@@ -359,6 +360,8 @@ export class MultiTenantBotService {
 
       // Increment stats
       await this.incrementBotStat(tenantId, botId, 'messagesReceived');
+      // Track Analytics (Historical)
+      analyticsService.trackMessage(tenantId, 'received').catch(() => {});
 
     } catch (error: unknown) {
       logger.error(`Error processing message for ${botId}:`, error);
@@ -606,12 +609,18 @@ export class MultiTenantBotService {
       }
 
       await this.incrementBotStat(tenantId, botId, 'messagesSent');
+      // Track Analytics (Historical)
+      analyticsService.trackMessage(tenantId, 'sent').catch(() => {});
+
       return { success: true, data: result };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`sendMessage error [${botId}]:`, err);
       // Increment error stat
       await this.incrementBotStat(tenantId, botId, 'errorsCount');
+      // Track Analytics (Historical)
+      analyticsService.trackMessage(tenantId, 'error').catch(() => {});
+
       return { success: false, error: err };
     }
   }

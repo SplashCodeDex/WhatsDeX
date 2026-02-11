@@ -18,7 +18,8 @@ import {
   AudienceSchema,
   TemplateSchema,
   AuthSchema,
-  LearningSchema
+  LearningSchema,
+  AnalyticsSchema
 } from '@/types/contracts.js';
 import { z } from 'zod';
 
@@ -40,6 +41,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/templates': TemplateSchema as any,
   'tenants/{tenantId}/bots/{botId}/auth': AuthSchema as any,
   'tenants/{tenantId}/learning': LearningSchema as any,
+  'tenants/{tenantId}/analytics': AnalyticsSchema as any,
 };
 
 export class FirebaseService {
