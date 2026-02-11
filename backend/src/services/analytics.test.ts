@@ -72,7 +72,7 @@ describe('AnalyticsService', () => {
       expect(result.success).toBe(true);
       expect(firebaseService.setDoc).toHaveBeenCalledWith(
         'analytics',
-        expect.anything(),
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         expect.objectContaining({
           errors: 'increment_1'
         }),
