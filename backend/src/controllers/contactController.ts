@@ -23,7 +23,7 @@ export class ContactController {
             }
 
             const service = ContactService.getInstance();
-            const botId = req.query.botId as string || req.body.botId as string;
+            const botId = (req.query?.botId as string) || (req.body?.botId as string);
             const result = await service.importContacts(tenantId, filePath, botId);
 
             if (!result.success) {

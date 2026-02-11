@@ -19,6 +19,8 @@ describe('Firestore Auth Provider', () => {
 
   it('should save creds to Firestore', async () => {
     let savedData: any = null;
+    // Mock getDoc to return null (no creds) to avoid hitting real Firestore
+    const getDocSpy = vi.spyOn(firebaseService, 'getDoc').mockResolvedValue(null);
     const setDocSpy = vi.spyOn(firebaseService, 'setDoc').mockImplementation(async (_col, id, data) => {
       if (id === 'creds') savedData = data;
     });
@@ -30,5 +32,6 @@ describe('Firestore Auth Provider', () => {
     expect(savedData.value).toBeDefined();
 
     setDocSpy.mockRestore();
+    getDocSpy.mockRestore();
   });
 });
