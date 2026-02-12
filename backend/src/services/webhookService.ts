@@ -1,5 +1,5 @@
 import axios from 'axios';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { firebaseService } from './FirebaseService.js';
 import { Webhook, WebhookSchema, WebhookEvent, Result } from '../types/contracts.js';
 import { Timestamp } from 'firebase-admin/firestore';

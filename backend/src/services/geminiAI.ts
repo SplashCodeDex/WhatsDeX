@@ -1,9 +1,9 @@
 import { memoryService } from './memoryService.js';
 import { firebaseService } from './FirebaseService.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { Bot, GlobalContext, MessageContext, Result } from '../types/index.js';
 import { databaseService } from './database.js';
 import { cacheService } from './cache.js';

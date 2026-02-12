@@ -5,7 +5,7 @@
 
 import { performance, PerformanceObserver, PerformanceEntry } from 'node:perf_hooks';
 const setImmediate = globalThis.setImmediate || ((fn: any) => setTimeout(fn, 0));
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import logger from './logger.js';
 
 interface Metric {

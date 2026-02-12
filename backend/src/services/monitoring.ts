@@ -1,7 +1,7 @@
 import logger from '../utils/logger.js';
 import { databaseService } from './database.js'; // Use the new service
 import { Bot, GlobalContext, MessageContext } from '../types/index.js';
-import os from 'os';
+import os from 'node:os';
 
 interface Metrics {
   responseTimes: { endpoint: string; responseTime: number; statusCode: number; timestamp: number }[];

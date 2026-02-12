@@ -1,10 +1,10 @@
-import { db } from '../lib/firebase.js';
 import { firebaseService } from './FirebaseService.js';
 import { ContactSchema, Result, type Contact } from '../types/contracts.js';
 import logger from '../utils/logger.js';
 import crypto from 'node:crypto';
 import { parse } from 'csv-parse';
 import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const normalizePhoneNumber = (phone: string): string => {
@@ -39,54 +39,60 @@ export class ContactService {
     let count = 0;
     let rowIndex = 0;
     const BATCH_SIZE = 500;
-    let currentBatch = db.batch();
+    let currentBatch = firebaseService.batch();
     let currentBatchSize = 0;
     const batchPromises: Promise<any>[] = [];
 
     try {
-      const parser = fs.createReadStream(filePath).pipe(parse({
+      // 2026 Best Practice: Using 'pipeline' for robust stream lifecycle management
+      const parser = parse({
         columns: true,
         skip_empty_lines: true,
         trim: true,
-      }));
+      });
 
-      for await (const record of parser) {
-        rowIndex++;
-        const rawData = record as Record<string, string>;
-        const phone = rawData.phone || rawData.phoneNumber || '';
+      const processRows = async (source: AsyncIterable<any>) => {
+        for await (const record of source) {
+          rowIndex++;
+          const rawData = record as Record<string, string>;
+          const phone = rawData.phone || rawData.phoneNumber || '';
 
-        const contactData = {
-          id: `cont_${crypto.randomUUID()}`,
-          tenantId,
-          name: rawData.name || rawData.fullName || 'Unknown',
-          phone: phone ? normalizePhoneNumber(phone) : '',
-          email: rawData.email || '',
-          tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
-          attributes: rawData,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
+          const contactData = {
+            id: `cont_${crypto.randomUUID()}`,
+            tenantId,
+            name: rawData.name || rawData.fullName || 'Unknown',
+            phone: phone ? normalizePhoneNumber(phone) : '',
+            email: rawData.email || '',
+            tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
+            attributes: rawData,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
 
-        const validation = ContactSchema.safeParse(contactData);
-        if (!validation.success) {
-          const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-          errors.push(`Row ${rowIndex + 1}: ${msg}`);
-        } else {
-          const contactRef = db.collection('tenants')
-            .doc(tenantId)
-            .collection('contacts')
-            .doc(contactData.id);
-          currentBatch.set(contactRef, validation.data);
-          count++;
-          currentBatchSize++;
+          const validation = ContactSchema.safeParse(contactData);
+          if (!validation.success) {
+            const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            errors.push(`Row ${rowIndex + 1}: ${msg}`);
+          } else {
+            // Use the validated firebaseService.batch()
+            currentBatch.set('contacts', contactData.id, validation.data as any, tenantId, false);
+            count++;
+            currentBatchSize++;
 
-          if (currentBatchSize >= BATCH_SIZE) {
-            batchPromises.push(currentBatch.commit());
-            currentBatch = db.batch();
-            currentBatchSize = 0;
+            if (currentBatchSize >= BATCH_SIZE) {
+              batchPromises.push(currentBatch.commit());
+              currentBatch = firebaseService.batch();
+              currentBatchSize = 0;
+            }
           }
         }
-      }
+      };
+
+      await pipeline(
+        fs.createReadStream(filePath),
+        parser,
+        processRows
+      );
 
       if (currentBatchSize > 0) {
         batchPromises.push(currentBatch.commit());
@@ -180,11 +186,17 @@ export class ContactService {
    */
   public async updateContact(tenantId: string, contactId: string, updates: Partial<Contact>): Promise<Result<void>> {
     try {
+      // 2026 Best Practice: Mandatory existence check for PATCH operations
+      const existing = await firebaseService.getDoc('contacts', contactId, tenantId);
+      if (!existing) {
+        return { success: false, error: new Error(`Contact not found: ${contactId}`) };
+      }
+
       const contactData = {
         ...updates,
         updatedAt: new Date()
       };
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, contactId, contactData, tenantId, true);
+      await firebaseService.setDoc('contacts', contactId, contactData, tenantId, true);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.updateContact error', error);

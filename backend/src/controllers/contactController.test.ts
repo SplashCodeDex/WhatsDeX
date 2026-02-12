@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
 import { ContactController } from './contactController.js';
 import { ContactService } from '../services/contactService.js';
-import fs from 'fs';
+import fs from 'node:fs';
 
 // Mock fs
 vi.mock('fs/promises', async (importOriginal) => {

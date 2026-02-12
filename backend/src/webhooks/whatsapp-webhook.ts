@@ -1,5 +1,5 @@
 import express from 'express';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { logger } from '../utils/logger.js';
 import { validateWhatsAppSignature } from '../utils/security.js';
 

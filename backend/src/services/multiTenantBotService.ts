@@ -1,7 +1,7 @@
 import baileys, { DisconnectReason, type WASocket, type BaileysEventMap, proto } from 'baileys';
 const makeWASocket = (baileys as any).default || baileys;
 import logger from '@/utils/logger.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { firebaseService } from '@/services/FirebaseService.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
