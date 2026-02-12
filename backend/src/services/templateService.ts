@@ -1,7 +1,7 @@
 import { firebaseService } from './FirebaseService.js';
 import { TemplateSchema, MessageTemplate, Result } from '../types/contracts.js';
 import logger from '../utils/logger.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 export class TemplateService {
   private static instance: TemplateService;

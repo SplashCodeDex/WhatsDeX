@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import logger from '../utils/logger.js';
 import cache from '../lib/cache.js';
 import { ApiKeyManager, isQuotaError } from '../lib/apiKeyManager.js';

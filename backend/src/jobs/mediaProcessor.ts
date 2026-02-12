@@ -1,6 +1,6 @@
-import path from 'path';
+import path from 'node:path';
 import sharp from 'sharp';
-import { promises as fs } from 'fs';
+import { promises as fs } from 'node:fs';
 import logger from '../utils/logger.js';
 import { Job } from 'bull';
 

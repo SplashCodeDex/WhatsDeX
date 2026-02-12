@@ -2,7 +2,7 @@ import { firebaseService } from './FirebaseService.js';
 import { queueService } from './queueService.js';
 import { Campaign, CampaignSchema, CampaignStatus, Result } from '../types/contracts.js';
 import logger from '../utils/logger.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 export class CampaignService {
     private static instance: CampaignService;

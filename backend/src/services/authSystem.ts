@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
 import { makeWASocket, DisconnectReason, type WASocket } from 'baileys';

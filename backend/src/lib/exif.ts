@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import { spawn } from 'child_process';
 
 export const imageToWebp = async (buffer: Buffer) => {

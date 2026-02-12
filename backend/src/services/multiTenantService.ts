@@ -1,6 +1,6 @@
 import { firebaseService } from '@/services/FirebaseService.js';
 import logger from '@/utils/logger.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { Tenant, TenantSchema, Result, TenantUser, TenantUserSchema } from '@/types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getPlanLimits } from '@/utils/featureGating.js';

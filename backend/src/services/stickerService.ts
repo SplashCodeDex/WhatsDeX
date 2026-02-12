@@ -2,9 +2,9 @@
  * Sticker Service - Advanced sticker creation features
  */
 
-import path from 'path';
+import path from 'node:path';
 import axios from 'axios';
-import { promises as fs, writeFileSync } from 'fs';
+import { promises as fs, writeFileSync } from 'node:fs';
 import { spawn } from 'child_process';
 import { writeExif } from '../lib/exif.js';
 import { Result } from '../types/index.js';

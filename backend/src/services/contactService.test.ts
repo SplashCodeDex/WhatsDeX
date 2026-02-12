@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ContactService } from './contactService.js';
-import { Readable } from 'stream';
-import fs from 'fs';
+import { Readable } from 'node:stream';
+import fs from 'node:fs';
 
 const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
     const mockBatchSet = vi.fn();
@@ -30,6 +30,8 @@ vi.mock('./FirebaseService.js', () => ({
     firebaseService: {
         getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
         setDoc: vi.fn().mockResolvedValue(undefined),
+        getDoc: vi.fn(),
+        batch: mockBatch,
     }
 }));
 
@@ -69,23 +71,29 @@ describe('ContactService', () => {
       expect(mockBatchSet).toHaveBeenCalledTimes(2);
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.any(String),
         expect.objectContaining({
           name: 'Doe, John',
           phone: '1234567890@s.whatsapp.net',
           email: 'john@example.com',
           tags: ['vip', 'lead'],
-        })
+        }),
+        tenantId,
+        false
       );
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.any(String),
         expect.objectContaining({
           name: 'Jane Doe',
           phone: '19876543210@s.whatsapp.net',
           email: 'jane@example.com',
           tags: ['new'],
-        })
+        }),
+        tenantId,
+        false
       );
 
       // Verify bot stats update
@@ -137,6 +145,30 @@ describe('ContactService', () => {
        if (!result.success) {
         expect(result.error.message).toBe("CSV contains no data rows");
       }
+    });
+  });
+
+  describe('updateContact', () => {
+    it('should fail if the contact does not exist', async () => {
+      const { firebaseService } = await import('./FirebaseService.js');
+      vi.mocked(firebaseService.getDoc).mockResolvedValue(null);
+
+      const result = await service.updateContact('tenant_1', 'non_existent', { name: 'New Name' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toContain('Contact not found');
+      }
+    });
+
+    it('should succeed if the contact exists', async () => {
+      const { firebaseService } = await import('./FirebaseService.js');
+      vi.mocked(firebaseService.getDoc).mockResolvedValue({ id: 'existing' });
+
+      const result = await service.updateContact('tenant_1', 'existing', { name: 'New Name' });
+
+      expect(result.success).toBe(true);
+      expect(firebaseService.setDoc).toHaveBeenCalled();
     });
   });
 });

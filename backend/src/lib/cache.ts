@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import redisClient from './redis.js';
 import { Result } from '../types/index.js';
 

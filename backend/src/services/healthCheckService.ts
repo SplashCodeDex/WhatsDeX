@@ -2,7 +2,7 @@
  * Comprehensive Health Check & Monitoring Service
  */
 
-import os from 'os';
+import os from 'node:os';
 import { performance } from 'perf_hooks';
 import dbManager from '../utils/databaseManager.js';
 import { RateLimiter } from '../utils/rateLimiter.js';

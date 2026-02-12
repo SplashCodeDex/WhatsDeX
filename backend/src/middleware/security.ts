@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import logger from '../utils/logger.js';
 import auditLogger from '../services/auditService.js';
 

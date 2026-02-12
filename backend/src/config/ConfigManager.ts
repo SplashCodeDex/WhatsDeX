@@ -3,8 +3,8 @@
  * Fixes scattered environment variables and improves config management
  */
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import logger from '../utils/logger.js';
 
 export interface Config {

@@ -10,9 +10,9 @@
 
 import { z } from 'zod';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { writeFileSync, readFileSync, existsSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import logger from '../utils/logger.js';
 import type { Result } from '../types/contracts.js';
 

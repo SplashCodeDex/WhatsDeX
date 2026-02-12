@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 import { ConfigService } from '../services/ConfigService.js';
 import logger from '../utils/logger.js';
 
