@@ -108,6 +108,11 @@ class GeminiService {
    * @param {string} text - The user's input text
    * @returns {Promise<string>} The response text from Gemini
    */
+  /**
+   * Get a chat completion from Google Gemini API with caching and key rotation
+   * @param {string} text - The user's input text
+   * @returns {Promise<string>} The response text from Gemini
+   */
   async getChatCompletion(text: string, correlationId: string | null = null): Promise<string> {
     if (!text) {
       throw new Error('Input text is required.');
@@ -124,20 +129,27 @@ class GeminiService {
       }
     }
 
-    // Max attempts = number of keys + 1 retry per key
-    const maxAttempts = this.keyManager.getKeyCount() + 1;
-    const baseDelay = 1000;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
+    try {
+      return await this.keyManager.execute(async (key, signal) => {
         logger.info('Gemini chat completion request', {
           correlationId,
-          attempt,
           textLength: text.length,
-          keyHint: `...${this.currentKey.slice(-4)}`,
+          keyHint: `...${key.slice(-4)}`,
         });
 
-        const result = await this.model.generateContent(text);
+        // Initialize temporary client with the provided key
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({
+          model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
+          },
+        });
+
+        const result = await model.generateContent(text);
         const response = await result.response;
         const message = response.text();
 
@@ -145,59 +157,29 @@ class GeminiService {
           throw new Error('Empty response from Gemini API');
         }
 
-        // Mark key as successful
-        this.keyManager.markSuccess(this.currentKey);
-
         // Cache the response
         if (this.cache) {
-          await this.cache.set(cacheKey, message, 1800); // Cache for 30 minutes
-          logger.debug('Cached Gemini response', { cacheKey, correlationId });
+          await this.cache.set(cacheKey, message, 1800); // 30 minutes
         }
 
         logger.info('Gemini chat completion success', {
           correlationId,
-          attempt,
           responseLength: message.length,
         });
+
         return message;
-      } catch (error: unknown) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        const isQuota = isQuotaError(error);
-
-        // Mark key as failed
-        this.keyManager.markFailed(this.currentKey, isQuota);
-
-        logger.warn('Gemini chat completion attempt failed', {
-          correlationId,
-          attempt,
-          maxAttempts,
-          error: err.message,
-          isQuotaError: isQuota,
-          retryAfter: attempt < maxAttempts ? baseDelay * 2 ** (attempt - 1) : null,
-        });
-
-        if (attempt === maxAttempts) {
-          logger.error('Gemini chat completion failed after all keys exhausted', {
-            correlationId,
-            error: err.message,
-            text: `${text.substring(0, 100)}...`,
-          });
-          throw new Error(`Failed to get response from Gemini API: ${err.message}`);
-        }
-
-        // Rotate to next key
-        if (!this.refreshClient()) {
-          throw new Error(`Failed to rotate key: No healthy keys available after error: ${err.message}`);
-        }
-
-        // Exponential backoff (shorter for quota errors since we rotated)
-        const delay = isQuota ? 500 : baseDelay * 2 ** (attempt - 1);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
+      }, {
+        maxRetries: this.keyManager.getKeyCount() + 1,
+        timeoutMs: 60000 // 60s timeout for complex AI generations
+      });
+    } catch (error: any) {
+      logger.error('Gemini chat completion failed after all attempts', {
+        correlationId,
+        error: error.message,
+        text: `${text.substring(0, 100)}...`,
+      });
+      throw new Error(`Failed to get response from Gemini API: ${error.message}`);
     }
-
-    // TypeScript requires this, but it's unreachable
-    throw new Error('Unexpected end of retry loop');
   }
 
   /**
@@ -223,15 +205,23 @@ class GeminiService {
       }
     }
 
-    const maxRetries = 3;
-    const baseDelay = 1000;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
+    try {
+      return await this.keyManager.execute(async (key) => {
         logger.info('Gemini chat completion with history request', {
           correlationId,
-          attempt,
           messageCount: messages.length,
+          keyHint: `...${key.slice(-4)}`
+        });
+
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({
+          model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
+          }
         });
 
         // Convert messages to Gemini format
@@ -240,16 +230,7 @@ class GeminiService {
           parts: [{ text: msg.content }],
         }));
 
-        const chat = this.model.startChat({
-          history,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          },
-        });
-
+        const chat = model.startChat({ history });
         const lastMessage = messages[messages.length - 1];
         const result = await chat.sendMessage(lastMessage.content);
         const response = await result.response;
@@ -257,37 +238,22 @@ class GeminiService {
 
         // Cache the response
         if (this.cache) {
-          await this.cache.set(cacheKey, message, 1800); // Cache for 30 minutes
-          logger.debug('Cached Gemini conversation response', { cacheKey, correlationId });
+          await this.cache.set(cacheKey, message, 1800);
         }
 
         logger.info('Gemini chat completion with history success', {
           correlationId,
-          attempt,
           responseLength: message.length,
         });
         return message;
-      } catch (error: any) {
-        logger.warn('Gemini chat completion with history attempt failed', {
-          correlationId,
-          attempt,
-          maxRetries,
-          error: error.message,
-          messageCount: messages.length,
-          retryAfter: attempt < maxRetries ? baseDelay * 2 ** (attempt - 1) : null,
-        });
-
-        if (attempt === maxRetries) {
-          logger.error('Gemini chat completion with history failed after retries', {
-            correlationId,
-            error: error.message,
-            messageCount: messages.length,
-          });
-          throw new Error(`Failed to get response from Gemini API: ${error.message}`);
-        }
-
-        await new Promise(resolve => setTimeout(resolve, baseDelay * 2 ** (attempt - 1)));
-      }
+      }, { maxRetries: 3 });
+    } catch (error: any) {
+      logger.error('Gemini chat completion with history failed after retries', {
+        correlationId,
+        error: error.message,
+        messageCount: messages.length,
+      });
+      throw new Error(`Failed to get response from Gemini API: ${error.message}`);
     }
   }
 
@@ -303,17 +269,10 @@ class GeminiService {
       throw new Error('Messages are required.');
     }
 
-    // Create cache key for tool-based conversations
-    const toolKey = tools
-      ? tools
-        .map(t => t.function?.name)
-        .sort()
-        .join(',')
-      : 'no-tools';
+    const toolKey = tools ? tools.map(t => t.function?.name).sort().join(',') : 'no-tools';
     const conversationKey = `${messages.map(m => `${m.role}:${m.content}`).join('|')}|tools:${toolKey}`;
     const cacheKey = this.generateCacheKey(conversationKey, 'tools');
 
-    // Try to get from cache first
     if (this.cache) {
       const cacheResult = await this.cache.get(cacheKey);
       if (cacheResult.success && cacheResult.data) {
@@ -323,75 +282,73 @@ class GeminiService {
     }
 
     try {
-      logger.debug('Sending chat completion with tools to Gemini', {
-        messageCount: messages.length,
-        toolCount: tools?.length || 0,
-      });
+      return await this.keyManager.execute(async (key) => {
+        logger.debug('Sending chat completion with tools to Gemini', {
+          messageCount: messages.length,
+          toolCount: tools?.length || 0,
+          keyHint: `...${key.slice(-4)}`
+        });
 
-      // Convert tools to Gemini format
-      const geminiTools = tools ? this.convertToolsToGeminiFormat(tools) : [];
-
-      const modelWithTools = this.genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash-exp',
-        tools: geminiTools.length > 0 ? [{ functionDeclarations: geminiTools }] : [],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
-        },
-      });
-
-      // Convert messages to Gemini format
-      const geminiMessages = messages.map(msg => ({
-        role: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      }));
-
-      const chat = modelWithTools.startChat({
-        history: geminiMessages.slice(0, -1),
-      });
-
-      const lastMessage = geminiMessages[geminiMessages.length - 1];
-      const result = await chat.sendMessage(lastMessage.parts[0].text);
-      const response = await result.response;
-
-      // Check for function calls
-      const functionCalls = response.functionCalls();
-      let responseData;
-
-      if (functionCalls && functionCalls.length > 0) {
-        responseData = {
-          finish_reason: 'tool_calls' as const,
-          message: {
-            role: 'assistant',
-            content: response.text(),
-            tool_calls: functionCalls.map(call => ({
-              id: `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              function: {
-                name: call.name,
-                arguments: JSON.stringify(call.args),
-              },
-            })),
+        const genAI = new GoogleGenerativeAI(key);
+        const geminiTools = tools ? this.convertToolsToGeminiFormat(tools) : [];
+        const modelWithTools = genAI.getGenerativeModel({
+          model: 'gemini-2.0-flash-exp',
+          tools: geminiTools.length > 0 ? [{ functionDeclarations: geminiTools }] : [],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
           },
-        };
-      } else {
-        responseData = {
-          finish_reason: 'stop' as const,
-          message: {
-            role: 'assistant',
-            content: response.text(),
-          },
-        };
-      }
+        });
 
-      // Cache the response (shorter TTL for tool responses)
-      if (this.cache) {
-        await this.cache.set(cacheKey, responseData, 900); // Cache for 15 minutes
-        logger.debug('Cached Gemini tools response', { cacheKey });
-      }
+        const geminiMessages = messages.map(msg => ({
+          role: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }],
+        }));
 
-      return responseData;
+        const chat = modelWithTools.startChat({
+          history: geminiMessages.slice(0, -1),
+        });
+
+        const lastMessage = geminiMessages[geminiMessages.length - 1];
+        const result = await chat.sendMessage(lastMessage.parts[0].text);
+        const response = await result.response;
+
+        const functionCalls = response.functionCalls();
+        let responseData;
+
+        if (functionCalls && functionCalls.length > 0) {
+          responseData = {
+            finish_reason: 'tool_calls' as const,
+            message: {
+              role: 'assistant',
+              content: response.text(),
+              tool_calls: functionCalls.map(call => ({
+                id: `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                function: {
+                  name: call.name,
+                  arguments: JSON.stringify(call.args),
+                },
+              })),
+            },
+          };
+        } else {
+          responseData = {
+            finish_reason: 'stop' as const,
+            message: {
+              role: 'assistant',
+              content: response.text(),
+            },
+          };
+        }
+
+        if (this.cache) {
+          await this.cache.set(cacheKey, responseData, 900);
+        }
+
+        return responseData;
+      }, { maxRetries: 3 });
     } catch (error: any) {
       logger.error('Error fetching Gemini completion with tools', {
         error: error.message,

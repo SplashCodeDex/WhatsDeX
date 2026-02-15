@@ -26,5 +26,8 @@
       "axios": "^1.7.9",
       "sharp": "^0.33.5"
     }
+  },
+  "dependencies": {
+    "codedex-api-manager": "file:../MyTemplates"
   }
 }

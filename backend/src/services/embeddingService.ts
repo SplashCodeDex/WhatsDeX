@@ -99,58 +99,35 @@ export class EmbeddingService {
    * @returns Result containing the embedding vector or an error
    */
   async generateEmbedding(text: string): Promise<Result<number[]>> {
-    if (this.keyManager.getKeyCount() === 0) {
-        return {
-            success: false,
-            error: new Error('EmbeddingService is disabled. GOOGLE_GEMINI_API_KEY is not configured.'),
-        };
+    const keyCount = this.keyManager.getKeyCount();
+    if (keyCount === 0) {
+      return {
+        success: false,
+        error: new Error('EmbeddingService is disabled. GOOGLE_GEMINI_API_KEY is not configured.'),
+      };
     }
     if (!text) {
       return { success: false, error: new Error('Text is required') };
     }
 
     const cleanText = text.trim().substring(0, 8000);
-    const maxAttempts = this.keyManager.getKeyCount() + 1;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const embeddingModel = this.genAI.getGenerativeModel({ model: this.model });
-        const result = await embeddingModel.embedContent(cleanText);
-        const embedding = result.embedding.values;
+    try {
+      const data = await this.keyManager.execute(async (key) => {
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({ model: this.model });
+        const result = await model.embedContent(cleanText);
+        return result.embedding.values;
+      }, {
+        maxRetries: keyCount + 1,
+        timeoutMs: 30000 // 30s timeout for embeddings
+      });
 
-        // Mark key as successful
-        this.keyManager.markSuccess(this.currentKey);
-
-        return { success: true, data: embedding };
-      } catch (error: unknown) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        const isQuota = isQuotaError(error);
-
-        // Mark key as failed
-        this.keyManager.markFailed(this.currentKey, isQuota);
-
-        logger.warn(`[EmbeddingService] Attempt ${attempt}/${maxAttempts} failed`, {
-          error: err.message,
-          isQuotaError: isQuota,
-          keyHint: `...${this.currentKey.slice(-4)}`,
-        });
-
-        if (attempt === maxAttempts) {
-          logger.error('[EmbeddingService] All keys exhausted', { error: err.message });
-          return { success: false, error: err };
-        }
-
-        // Rotate to next key
-        this.refreshClient();
-
-        // Exponential backoff (shorter for quota errors)
-        const delay = isQuota ? 300 : this.baseDelay * Math.pow(2, attempt - 1);
-        await new Promise(res => setTimeout(res, delay));
-      }
+      return { success: true, data };
+    } catch (error: any) {
+      logger.error('[EmbeddingService] All keys exhausted or fatal error', { error: error.message });
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
     }
-
-    // Unreachable, but TypeScript requires it
-    return { success: false, error: new Error('Unexpected end of retry loop') };
   }
 }
 
