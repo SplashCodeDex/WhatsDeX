@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ApiKeyManager as UniversalManager, ErrorClassification } from '@splashcodex/api-key-manager';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
@@ -80,7 +81,27 @@ export class ApiKeyManager {
         });
 
         this.wireEvents();
+        this.setupHealthChecks();
         logger.info(`[ApiKeyManager] Initialized Universal Manager with ${apiKeys.length} keys`);
+    }
+
+    /**
+     * Set up proactive health checks for automatic key recovery.
+     */
+    private setupHealthChecks(): void {
+        this.manager.setHealthCheck(async (key) => {
+            try {
+                const genAI = new GoogleGenerativeAI(key);
+                const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+                await model.generateContent('ping');
+                return true;
+            } catch (error) {
+                return false;
+            }
+        });
+
+        // Start checking every 5 minutes
+        this.manager.startHealthChecks(300_000);
     }
 
     /**
