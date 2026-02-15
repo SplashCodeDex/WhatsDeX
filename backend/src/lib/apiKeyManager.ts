@@ -77,12 +77,24 @@ export class ApiKeyManager {
         this.manager = new UniversalManager(apiKeys, {
             storage,
             strategy: undefined, // Default strategy
-            concurrency: 20 // Allow more concurrent calls in backend
+            concurrency: 20, // Allow more concurrent calls in backend
+            semanticCache: {
+                threshold: 0.95, // 95% similarity for cache hits
+                getEmbedding: async (text: string) => {
+                    // Dynamic import to break circular dependency with embeddingService
+                    const { EmbeddingService } = await import('../services/embeddingService.js');
+                    const result = await EmbeddingService.getInstance();
+                    if (!result.success) throw result.error;
+                    const embedResult = await result.data.generateEmbedding(text);
+                    if (!embedResult.success) throw embedResult.error;
+                    return embedResult.data;
+                }
+            }
         });
 
         this.wireEvents();
         this.setupHealthChecks();
-        logger.info(`[ApiKeyManager] Initialized Universal Manager with ${apiKeys.length} keys`);
+        logger.info(`[ApiKeyManager] Initialized Universal Manager with ${apiKeys.length} keys (Semantic Cache Enabled)`);
     }
 
     /**
@@ -122,7 +134,7 @@ export class ApiKeyManager {
      */
     public async execute<T>(
         fn: (key: string, signal?: AbortSignal) => Promise<T>,
-        options?: { maxRetries?: number; timeoutMs?: number; finishReason?: string }
+        options?: { maxRetries?: number; timeoutMs?: number; finishReason?: string; prompt?: string }
     ): Promise<T> {
         return this.manager.execute(fn, options);
     }

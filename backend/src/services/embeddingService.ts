@@ -120,7 +120,8 @@ export class EmbeddingService {
         return result.embedding.values;
       }, {
         maxRetries: keyCount + 1,
-        timeoutMs: 30000 // 30s timeout for embeddings
+        timeoutMs: 30000, // 30s timeout for embeddings
+        prompt: cleanText // ENABLE SEMANTIC CACHE
       });
 
       return { success: true, data };

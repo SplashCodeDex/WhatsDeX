@@ -105,13 +105,6 @@ class GeminiService {
 
   /**
    * Get a chat completion from Google Gemini API with caching and key rotation
-   * @param {string} text - The user's input text
-   * @returns {Promise<string>} The response text from Gemini
-   */
-  /**
-   * Get a chat completion from Google Gemini API with caching and key rotation
-   * @param {string} text - The user's input text
-   * @returns {Promise<string>} The response text from Gemini
    */
   async getChatCompletion(text: string, correlationId: string | null = null): Promise<string> {
     if (!text) {
@@ -120,7 +113,7 @@ class GeminiService {
 
     const cacheKey = this.generateCacheKey(text, 'chat');
 
-    // Try to get from cache first
+    // 1. Layer 1: App-level Cache (Exact Match)
     if (this.cache) {
       const cacheResult = await this.cache.get<string>(cacheKey);
       if (cacheResult.success && cacheResult.data) {
@@ -130,23 +123,15 @@ class GeminiService {
     }
 
     try {
-      return await this.keyManager.execute(async (key, signal) => {
+      const data = await this.keyManager.execute(async (key, signal) => {
         logger.info('Gemini chat completion request', {
           correlationId,
-          textLength: text.length,
           keyHint: `...${key.slice(-4)}`,
         });
 
-        // Initialize temporary client with the provided key
         const genAI = new GoogleGenerativeAI(key);
         const model = genAI.getGenerativeModel({
-          model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          },
+          model: this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
         });
 
         const result = await model.generateContent(text);
@@ -157,26 +142,23 @@ class GeminiService {
           throw new Error('Empty response from Gemini API');
         }
 
-        // Cache the response
+        // Cache the response in App-level cache
         if (this.cache) {
           await this.cache.set(cacheKey, message, 1800); // 30 minutes
         }
 
-        logger.info('Gemini chat completion success', {
-          correlationId,
-          responseLength: message.length,
-        });
-
         return message;
       }, {
-        maxRetries: this.keyManager.getKeyCount() + 1,
-        timeoutMs: 60000 // 60s timeout for complex AI generations
+        maxRetries: 3,
+        timeoutMs: 60000,
+        prompt: text // ENABLE SEMANTIC CACHE (Layer 2)
       });
+
+      return data;
     } catch (error: any) {
-      logger.error('Gemini chat completion failed after all attempts', {
+      logger.error('Gemini chat completion failed', {
         correlationId,
         error: error.message,
-        text: `${text.substring(0, 100)}...`,
       });
       throw new Error(`Failed to get response from Gemini API: ${error.message}`);
     }
@@ -184,8 +166,6 @@ class GeminiService {
 
   /**
    * Get a chat completion with conversation history and caching
-   * @param {Array} messages - Array of message objects with role and content
-   * @returns {Promise<string>} The response text from Gemini
    */
   async getChatCompletionWithHistory(messages: any[], correlationId: string | null = null) {
     if (!messages || messages.length === 0) {
@@ -196,7 +176,7 @@ class GeminiService {
     const conversationKey = messages.map(m => `${m.role}:${m.content}`).join('|');
     const cacheKey = this.generateCacheKey(conversationKey, 'conversation');
 
-    // Try to get from cache first
+    // 1. Layer 1: App-Cache
     if (this.cache) {
       const cacheResult = await this.cache.get<string>(cacheKey);
       if (cacheResult.success && cacheResult.data) {
@@ -215,16 +195,9 @@ class GeminiService {
 
         const genAI = new GoogleGenerativeAI(key);
         const model = genAI.getGenerativeModel({
-          model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          }
+          model: this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
         });
 
-        // Convert messages to Gemini format
         const history = messages.slice(0, -1).map(msg => ({
           role: msg.role === 'user' ? 'user' : 'model',
           parts: [{ text: msg.content }],
@@ -236,22 +209,20 @@ class GeminiService {
         const response = await result.response;
         const message = response.text();
 
-        // Cache the response
+        // Cache in Layer 1
         if (this.cache) {
           await this.cache.set(cacheKey, message, 1800);
         }
 
-        logger.info('Gemini chat completion with history success', {
-          correlationId,
-          responseLength: message.length,
-        });
         return message;
-      }, { maxRetries: 3 });
+      }, {
+        maxRetries: 3,
+        prompt: messages[messages.length - 1].content // ENABLE SEMANTIC CACHE
+      });
     } catch (error: any) {
-      logger.error('Gemini chat completion with history failed after retries', {
+      logger.error('Gemini chat completion with history failed', {
         correlationId,
         error: error.message,
-        messageCount: messages.length,
       });
       throw new Error(`Failed to get response from Gemini API: ${error.message}`);
     }
