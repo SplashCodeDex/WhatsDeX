@@ -255,6 +255,9 @@ export class CommandSystem {
 
     const msgContext: MessageContext = {
       ...messageData,
+      tenant: null as any, // Placeholder, will be set or is optional
+      isOwner: false,
+      isAdmin: false,
       id: jid,
       body: text,
       args: commandInfo.args,

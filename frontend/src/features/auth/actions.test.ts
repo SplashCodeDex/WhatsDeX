@@ -117,6 +117,16 @@ describe('Auth Server Actions', () => {
       if (result.success) {
         expect(result.data).toEqual(mockUser);
       }
+
+      expect(api.post).toHaveBeenCalledWith(
+        API_ENDPOINTS.AUTH.REGISTER,
+        expect.objectContaining({
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'new@example.com',
+          password: 'Password123'
+        })
+      );
     });
   });
 });

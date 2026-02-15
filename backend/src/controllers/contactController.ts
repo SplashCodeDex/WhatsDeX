@@ -1,32 +1,43 @@
 import { Request, Response } from 'express';
-import { db } from '../lib/firebase.js';
 import { z } from 'zod';
-import logger from '../utils/logger.js';
-import { ContactService } from '../services/contactService.js';
+import logger from '@/utils/logger.js';
+import { ContactService } from '@/services/contactService.js';
+import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 
 export class ContactController {
     /**
      * Import contacts from CSV
      */
     static async importContacts(req: Request, res: Response) {
+        const filePath = req.file?.path;
         try {
             const tenantId = req.user?.tenantId;
-            if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+            if (!tenantId) {
+                if (filePath) await fs.unlink(filePath).catch(() => {});
+                return res.status(401).json({ success: false, error: 'Unauthorized' });
+            }
 
-            const { csvData } = req.body;
-            if (!csvData) return res.status(400).json({ success: false, error: 'CSV data is required' });
+            if (!filePath) {
+                return res.status(400).json({ success: false, error: 'CSV file is required' });
+            }
 
             const service = ContactService.getInstance();
-            const result = await service.importContacts(tenantId, csvData);
+            const botId = (req.query?.botId as string) || (req.body?.botId as string);
+            const result = await service.importContacts(tenantId, filePath, botId);
 
             if (!result.success) {
                 return res.status(500).json({ success: false, error: result.error.message });
             }
 
             res.json({ success: true, data: result.data });
-        } catch (error: any) {
+        } catch (error: unknown) {
             logger.error('ContactController.importContacts error', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
+        } finally {
+            if (filePath && existsSync(filePath)) {
+                await fs.unlink(filePath).catch(() => {});
+            }
         }
     }
 
@@ -39,18 +50,15 @@ export class ContactController {
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
             const limit = parseInt(req.query.limit as string) || 100;
-            // TODO: Cursor-based pagination
+            const service = ContactService.getInstance();
+            const result = await service.listContacts(tenantId, limit);
 
-            const snapshot = await db.collection('tenants')
-                .doc(tenantId)
-                .collection('contacts')
-                .orderBy('createdAt', 'desc')
-                .limit(limit)
-                .get();
+            if (!result.success) {
+                return res.status(500).json({ success: false, error: result.error.message });
+            }
 
-            const contacts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            res.json({ success: true, data: contacts });
-        } catch (error: any) {
+            res.json({ success: true, data: result.data });
+        } catch (error: unknown) {
             logger.error('ContactController.listContacts error', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
@@ -64,36 +72,27 @@ export class ContactController {
             const tenantId = req.user?.tenantId;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-            const contactSchema = z.object({
-                name: z.string().min(1),
-                phoneNumber: z.string().min(5),
-                email: z.string().email().optional().or(z.literal('')),
-                tags: z.array(z.string()).optional(),
-                metadata: z.record(z.string(), z.any()).optional()
-            });
-
-            const payload = contactSchema.parse(req.body);
-
-            const contactRef = db.collection('tenants')
-                .doc(tenantId)
-                .collection('contacts')
-                .doc();
-
-            const contact = {
-                ...payload,
-                id: contactRef.id,
-                tenantId,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                status: 'active'
+            const body = req.body;
+            const rawData = {
+                name: body.name,
+                phone: body.phone || body.phoneNumber,
+                email: body.email || '',
+                tags: body.tags || [],
+                attributes: body.attributes || body.metadata || {},
             };
 
-            await contactRef.set(contact);
-            res.status(201).json({ success: true, data: contact });
-        } catch (error: any) {
-            if (error instanceof z.ZodError) {
-                return res.status(400).json({ success: false, error: error.issues[0].message });
+            const service = ContactService.getInstance();
+            const result = await service.createContact(tenantId, rawData);
+
+            if (!result.success) {
+                if (result.error instanceof z.ZodError) {
+                    return res.status(400).json({ success: false, error: result.error.issues[0].message });
+                }
+                return res.status(500).json({ success: false, error: result.error.message });
             }
+
+            res.status(201).json({ success: true, data: result.data });
+        } catch (error: unknown) {
             logger.error('ContactController.createContact error', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
@@ -112,36 +111,26 @@ export class ContactController {
                 return res.status(400).json({ success: false, error: 'Request body cannot be empty.' });
             }
 
-            const contactSchema = z.object({
-                name: z.string().min(1),
-                phoneNumber: z.string().min(5),
-                email: z.string().email().optional().or(z.literal('')),
-                tags: z.array(z.string()).optional(),
-                metadata: z.record(z.string(), z.any()).optional()
-            });
+            const body = req.body;
+            const updates: Record<string, unknown> = {};
+            if (body.name) updates.name = body.name;
+            if (body.phone || body.phoneNumber) updates.phone = body.phone || body.phoneNumber;
+            if (body.email !== undefined) updates.email = body.email;
+            if (body.tags) updates.tags = body.tags;
+            if (body.attributes || body.metadata) updates.attributes = body.attributes || body.metadata;
 
-            const payload = contactSchema.partial().parse(req.body);
+            const service = ContactService.getInstance();
+            const result = await service.updateContact(tenantId, contactId, updates);
 
-            const contactRef = db.collection('tenants')
-                .doc(tenantId)
-                .collection('contacts')
-                .doc(contactId);
-
-            const contactDoc = await contactRef.get();
-            if (!contactDoc.exists) {
-                return res.status(404).json({ success: false, error: 'Contact not found' });
+            if (!result.success) {
+                if (result.error instanceof z.ZodError) {
+                    return res.status(400).json({ success: false, error: result.error.issues[0].message });
+                }
+                return res.status(500).json({ success: false, error: result.error.message });
             }
-
-            await contactRef.update({
-                ...payload,
-                updatedAt: new Date()
-            });
 
             res.json({ success: true, data: { message: 'Contact updated' } });
-        } catch (error: any) {
-            if (error instanceof z.ZodError) {
-                return res.status(400).json({ success: false, error: error.issues[0].message });
-            }
+        } catch (error: unknown) {
             logger.error('ContactController.updateContact error', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
@@ -156,15 +145,17 @@ export class ContactController {
             const contactId = req.params.id as string;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-            await db.collection('tenants')
-                .doc(tenantId)
-                .collection('contacts')
-                .doc(contactId)
-                .delete();
+            const service = ContactService.getInstance();
+            const result = await service.deleteContact(tenantId, contactId);
+
+            if (!result.success) {
+                return res.status(500).json({ success: false, error: result.error.message });
+            }
 
             res.json({ success: true, data: { message: 'Contact deleted' } });
-        } catch (error: any) {
+        } catch (error: unknown) {
             logger.error('ContactController.deleteContact error', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }
 
@@ -184,7 +175,7 @@ export class ContactController {
             }
 
             res.json({ success: true, data: result.data });
-        } catch (error: any) {
+        } catch (error: unknown) {
             logger.error('ContactController.getAudiences error', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }

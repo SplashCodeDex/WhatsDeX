@@ -1,6 +1,6 @@
-import { db } from '../lib/firebase.js';
-import { Timestamp } from 'firebase-admin/firestore';
 import { memoryService } from './memoryService.js';
+import { firebaseService } from './FirebaseService.js';
+import crypto from 'crypto';
 import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
 import { EventEmitter } from 'events';
@@ -120,9 +120,12 @@ export class GeminiAI extends EventEmitter {
    */
   async buildEnhancedContext(bot: Bot, userId: string, message: string, ctx: MessageContext) {
     const userProfile = await databaseService.user.get(userId, bot.tenantId);
+    const learningResult = await this.getPersistentLearning(userId, bot.tenantId);
+    const learnedFacts = learningResult.success && learningResult.data ? learningResult.data.facts : [];
 
     return {
       user: userProfile || { id: userId, name: 'Unknown' },
+      learnedFacts,
       conversation: await this.getConversationMemory(userId, bot.tenantId),
       message: {
         text: message,
@@ -228,7 +231,9 @@ Be intelligent - understand implied requests, context clues, and natural languag
 
     try {
       const response = await this.gemini.getChatCompletion(prompt);
-      const intents = JSON.parse(response);
+      const jsonMatch = response.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+      const cleanedResponse = jsonMatch ? jsonMatch[0] : response;
+      const intents = JSON.parse(cleanedResponse);
       return Array.isArray(intents) ? intents : [intents];
     } catch (error: unknown) {
       logger.warn('Intent detection failed, using fallback', error);
@@ -380,12 +385,17 @@ Be intelligent - understand implied requests, context clues, and natural languag
     // 2. Intelligence Layer: Advanced Reasoning
     const personality = bot.config.aiPersonality || 'a professional assistant';
 
+    const learnedContext = context.learnedFacts?.length > 0
+      ? "\n[WHAT I'VE LEARNED ABOUT THIS USER]:\n" + context.learnedFacts.map((f: any) => `- ${f.content}`).join('\n')
+      : '';
+
     const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
 Context: Acting on behalf of ${bot.user?.name ?? 'WhatsDeX'}.
 Current Time: ${new Date().toLocaleString()}
 Work on behalf of the customer. Use the tools provided when necessary.
 ${historicalContext}
+${learnedContext}
 Respond appropriately based on your role.`;
 
     const conversationPrompt = `
@@ -554,14 +564,90 @@ Respond in the user's language if they're not using English.
   /**
    * Learn from user interactions to improve responses
    */
-  async learnFromInteraction(bot: Bot, userId: string, message: string, intelligence: any, ctx: MessageContext) {
+  async learnFromInteraction(bot: Bot, userId: string, message: string, intelligence: AIAnalysis, _ctx: MessageContext) {
     if (!this.decisionEngine.learningEnabled) return;
 
-    // Track actual success based on execution results
-    const _successMetrics = await this.calculateSuccessMetrics(bot, intelligence, ctx);
+    try {
+      // 1. Extract facts from the current interaction
+      const learned = await this.extractFacts(message, { memory: await this.getPersistentLearning(userId, bot.tenantId) });
 
-    // TODO: Implement persistent learning data in Firestore subcollection (tenants/{tenantId}/learning)
-    // For now, we skip in-memory storage to maintain statelessness (Rule 5)
+      if (learned.facts.length > 0 || Object.keys(learned.preferences).length > 0) {
+        // 2. Load existing learning data
+        const existingResult = await this.getPersistentLearning(userId, bot.tenantId);
+        const existing = existingResult.success && existingResult.data
+          ? existingResult.data
+          : { userId, facts: [], preferences: {}, lastInteraction: new Date() as any };
+
+        // 3. Merge facts
+        const newFacts = learned.facts.map(content => ({
+          id: crypto.randomUUID(),
+          content,
+          confidence: intelligence.confidence,
+          extractedAt: new Date(),
+          updatedAt: new Date()
+        }));
+
+        const mergedFacts = [...existing.facts, ...newFacts];
+        // Keep only last 50 facts to prevent prompt bloat
+        if (mergedFacts.length > 50) mergedFacts.splice(0, mergedFacts.length - 50);
+
+        // 4. Merge preferences
+        const mergedPreferences = { ...existing.preferences, ...learned.preferences };
+
+        // 5. Store in Firestore
+        await firebaseService.setDoc<'tenants/{tenantId}/learning'>('learning', userId, {
+          userId,
+          facts: mergedFacts,
+          preferences: mergedPreferences,
+          lastInteraction: new Date()
+        }, bot.tenantId);
+
+        logger.info(`Agentic Brain learned ${learned.facts.length} new facts for ${userId}`);
+      }
+    } catch (error) {
+      logger.error('Failed to learn from interaction', error);
+    }
+  }
+
+  /**
+   * Extract key facts from user message
+   */
+  async extractFacts(message: string, context: { memory: Result<import('../types/contracts.js').LearningData | null> }): Promise<{ facts: string[], preferences: Record<string, any> }> {
+    const prompt = `
+Analyze the following message and extract any persistent facts or preferences about the user.
+Facts include personal info, interests, important dates, or recurring needs.
+Preferences include how they like to be addressed, preferred languages, or specific bot behavior settings.
+
+Message: "${message}"
+Current Memory: ${JSON.stringify(context.memory || {})}
+
+Return a JSON object:
+{
+  "facts": ["Fact 1", "Fact 2"],
+  "preferences": {"key": "value"}
+}
+Only include NEW or UPDATED information. If nothing significant is found, return empty.
+`;
+
+    try {
+      const response = await this.gemini.getChatCompletion(prompt);
+      // More robust JSON extraction (2026 Recommended cleaning)
+      const jsonMatch = response.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+      const cleanedResponse = jsonMatch ? jsonMatch[0] : response;
+      return JSON.parse(cleanedResponse);
+    } catch (error) {
+      logger.warn('Fact extraction failed', error);
+      return { facts: [], preferences: {} };
+    }
+  }
+
+  async getPersistentLearning(userId: string, tenantId: string): Promise<Result<import('../types/contracts.js').LearningData | null>> {
+    try {
+      const data = await firebaseService.getDoc<'tenants/{tenantId}/learning'>('learning', userId, tenantId);
+      return { success: true, data: data as import('../types/contracts.js').LearningData | null };
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
   }
 
   async getConversationMemory(userId: string, tenantId: string) {

@@ -334,6 +334,28 @@ export const WebhookSchema = z.object({
 export type Webhook = z.infer<typeof WebhookSchema>;
 
 /**
+ * Learning Data Schema ('tenants/{tenantId}/learning/{userId}' subcollection)
+ * Stores facts and preferences learned about a specific user
+ */
+export const LearningSchema = z.object({
+  userId: z.string(), // JID
+  facts: z.array(z.object({
+    id: z.string(),
+    content: z.string(),
+    category: z.string().optional(),
+    confidence: z.number(),
+    sourceMessageId: z.string().optional(),
+    extractedAt: TimestampSchema,
+    updatedAt: TimestampSchema
+  })).default([]),
+  preferences: z.record(z.string(), z.any()).default({}),
+  lastInteraction: TimestampSchema,
+  metadata: z.record(z.string(), z.any()).optional()
+}).readonly();
+
+export type LearningData = z.infer<typeof LearningSchema>;
+
+/**
  * Contact Schema ('tenants/{tenantId}/contacts' subcollection)
  */
 export const ContactSchema = z.object({
@@ -344,6 +366,7 @@ export const ContactSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   attributes: z.record(z.string(), z.any()).optional(),
   tags: z.array(z.string()).default([]),
+  status: z.enum(['active', 'inactive', 'archived']).default('active'),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema
 }).readonly();
@@ -392,3 +415,17 @@ export const AuthSchema = z.object({
 });
 
 export type AuthData = z.infer<typeof AuthSchema>;
+
+/**
+ * Analytics Schema ('tenants/{tenantId}/analytics/{date}' subcollection)
+ * Tracks daily message statistics
+ */
+export const AnalyticsSchema = z.object({
+  date: z.string(), // ISO date string YYYY-MM-DD
+  sent: z.number().default(0),
+  received: z.number().default(0),
+  errors: z.number().default(0),
+  updatedAt: TimestampSchema
+}).readonly();
+
+export type AnalyticsData = z.infer<typeof AnalyticsSchema>;

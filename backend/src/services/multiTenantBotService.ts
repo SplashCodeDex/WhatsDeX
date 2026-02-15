@@ -1,12 +1,14 @@
 import baileys, { DisconnectReason, type WASocket, type BaileysEventMap, proto } from 'baileys';
 const makeWASocket = (baileys as any).default || baileys;
 import logger from '@/utils/logger.js';
+import crypto from 'crypto';
 import { firebaseService } from '@/services/FirebaseService.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
 import { tenantConfigService } from './tenantConfigService.js';
 import { webhookService } from './webhookService.js';
 import { socketService } from './socketService.js';
+import analyticsService from './analytics.js';
 import { BotInstanceSchema, Bot, GlobalContext } from '@/types/index.js';
 import { Campaign, BotInstance, Result, CampaignStatus } from '../types/contracts.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
@@ -72,6 +74,13 @@ export class MultiTenantBotService {
   }
 
   /**
+   * Get an active bot socket wrapper by ID
+   */
+  public getBotSocket(botId: string): Bot | undefined {
+    return this.activeBots.get(botId);
+  }
+
+  /**
    * Create and start a new bot instance
    */
   async createBotInstance(tenantId: string, botData: Partial<BotInstance>): Promise<Result<BotInstance>> {
@@ -84,7 +93,7 @@ export class MultiTenantBotService {
         throw new Error('Bot limit exceeded for your current plan.');
       }
 
-      const botId = `bot_${Date.now()}`;
+      const botId = `bot_${crypto.randomUUID()}`;
       // Destructure botData to exclude createdAt and updatedAt before spreading
       const { createdAt, updatedAt, ...restBotData } = botData;
 
@@ -351,6 +360,8 @@ export class MultiTenantBotService {
 
       // Increment stats
       await this.incrementBotStat(tenantId, botId, 'messagesReceived');
+      // Track Analytics (Historical)
+      analyticsService.trackMessage(tenantId, 'received');
 
     } catch (error: unknown) {
       logger.error(`Error processing message for ${botId}:`, error);
@@ -598,12 +609,18 @@ export class MultiTenantBotService {
       }
 
       await this.incrementBotStat(tenantId, botId, 'messagesSent');
+      // Track Analytics (Historical)
+      analyticsService.trackMessage(tenantId, 'sent').catch(() => {});
+
       return { success: true, data: result };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`sendMessage error [${botId}]:`, err);
       // Increment error stat
       await this.incrementBotStat(tenantId, botId, 'errorsCount');
+      // Track Analytics (Historical)
+      analyticsService.trackMessage(tenantId, 'error').catch(() => {});
+
       return { success: false, error: err };
     }
   }

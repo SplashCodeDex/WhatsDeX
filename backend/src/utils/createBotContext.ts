@@ -14,7 +14,7 @@ const createBotContext = async (
 
   const senderJid = getSender(rawBaileysMessage);
   const senderId = getSender(rawBaileysMessage);
-  const remoteJid = rawBaileysMessage.key.remoteJid || '';
+  const remoteJid = rawBaileysMessage.key?.remoteJid || '';
   const isGroup = remoteJid.endsWith('@g.us');
   const groupJid = getGroup(rawBaileysMessage);
   const groupId = getGroup(rawBaileysMessage);
@@ -178,9 +178,9 @@ const createBotContext = async (
       if (!jid || !botInstance?.groupSettingUpdate) return null;
       return await botInstance.groupSettingUpdate(jid, 'locked');
     },
-    isOwner: async (userJid: string) => {
+    isOwner: async (userJid: string = senderId) => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupMetadata) return false;
+      if (!jid || !botInstance.tenantId || !botInstance.groupMetadata) return false;
       const meta = await botInstance.groupMetadata(jid);
       return meta.owner === userJid;
     },
@@ -212,7 +212,7 @@ const createBotContext = async (
   }
 
   // Handle Auto Read if configured
-  if (botInstance.config?.autoRead && rawBaileysMessage.key?.remoteJid) { // Fixed: safely access key
+  if (botInstance.config?.autoRead && rawBaileysMessage.key?.remoteJid && botInstance.readMessages) { // Fixed: safely access key and method
     botInstance.readMessages([rawBaileysMessage.key]).catch(() => { });
   }
 
