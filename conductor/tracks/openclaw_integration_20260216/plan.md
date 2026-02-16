@@ -16,23 +16,23 @@ Wrap existing Baileys logic to work through the OpenClaw registry.
 - [x] Task: Test - Verify adapter handles Baileys events and routes them to Gemini Brain 39df767
 - [x] Task: Conductor - User Manual Verification 'Phase 2: WhatsApp Adapter' (Protocol in workflow.md) 39df767
 
-## Phase 3: Omnichannel Hub & Data Schema [checkpoint: pending]
+## Phase 3: Omnichannel Hub & Data Schema [checkpoint: 06c681c]
 Prepare the UI and database for multiple platforms.
 
-- [x] Task: Database - Update Firestore schema for `tenants/{id}/bots` to support multi-channel metadata
-- [x] Task: Frontend - Design and implement the `OmnichannelHub` shell (UI components)
-- [x] Task: Frontend - Implement channel connection forms for Telegram and Discord
-- [x] Task: Backend - Create API endpoints for managing channel credentials and statuses
-- [~] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Hub' (Protocol in workflow.md)
+- [x] Task: Database - Update Firestore schema for `tenants/{id}/bots` to support multi-channel metadata 06c681c
+- [x] Task: Frontend - Design and implement the `OmnichannelHub` shell (UI components) 06c681c
+- [x] Task: Frontend - Implement channel connection forms for Telegram and Discord 06c681c
+- [x] Task: Backend - Create API endpoints for managing channel credentials and statuses 06c681c
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Hub' (Protocol in workflow.md) 06c681c
 
-## Phase 4: Multi-Channel Expansion
+## Phase 4: Multi-Channel Expansion [checkpoint: pending]
 Activate Telegram and Discord via OpenClaw bridges.
 
-- [ ] Task: Test - Write unit tests for `TelegramChannelBridge` integration
-- [ ] Task: Implement - Wire OpenClaw Telegram bridge to WhatsDeX Gemini Brain
-- [ ] Task: Test - Write unit tests for `DiscordChannelBridge` integration
-- [ ] Task: Implement - Wire OpenClaw Discord bridge to WhatsDeX Gemini Brain
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Multi-Channel Expansion' (Protocol in workflow.md)
+- [x] Task: Test - Write unit tests for `TelegramChannelBridge` integration
+- [x] Task: Implement - Wire OpenClaw Telegram bridge to WhatsDeX Gemini Brain
+- [x] Task: Test - Write unit tests for `DiscordChannelBridge` integration
+- [x] Task: Implement - Wire OpenClaw Discord bridge to WhatsDeX Gemini Brain
+- [~] Task: Conductor - User Manual Verification 'Phase 4: Multi-Channel Expansion' (Protocol in workflow.md)
 
 ## Phase 5: Skills Platform & Tier Integration
 Integrate the Skills system with Stripe gating and Admin controls.
@@ -41,4 +41,4 @@ Integrate the Skills system with Stripe gating and Admin controls.
 - [ ] Task: Backend - Integrate `SkillsManager` with `billingController.ts` for tier-based gating
 - [ ] Task: Frontend - Build the "Skills Store" UI for tenant self-service toggles
 - [ ] Task: Backend - Implement Admin global kill-switch for skills
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Hub' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 5: Skills Platform' (Protocol in workflow.md)

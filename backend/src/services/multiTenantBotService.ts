@@ -158,7 +158,7 @@ export class MultiTenantBotService {
 
         // Initialize Telegram Adapter
         try {
-          const adapter = new TelegramAdapter(token);
+          const adapter = new TelegramAdapter(tenantId, botId, token);
           await adapter.connect();
           channelManager.registerAdapter(adapter);
 
