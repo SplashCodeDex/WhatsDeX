@@ -2,29 +2,27 @@
   "name": "whatsdex-root",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
   "scripts": {
-    "install:all": "npm install --workspaces",
-    "dev:frontend": "npm run dev -w frontend",
-    "dev:backend": "npm run dev -w backend",
-    "build:frontend": "npm run build -w frontend",
-    "lint:frontend": "npm run lint -w frontend",
-    "lint:backend": "npm run lint -w backend",
-    "test:frontend": "npm run test -w frontend",
-    "test:backend": "npm run test -w backend",
-    "test:all": "npm run test -w backend && npm run test -w frontend",
-    "build:backend": "npm run build -w backend"
+    "install:all": "pnpm install",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:backend": "pnpm --filter backend build",
+    "lint:frontend": "pnpm --filter frontend lint",
+    "lint:backend": "pnpm --filter backend lint",
+    "test:frontend": "pnpm --filter frontend test",
+    "test:backend": "pnpm --filter backend test",
+    "test:all": "pnpm --filter backend test && pnpm --filter frontend test",
+    "typecheck": "pnpm --filter backend typecheck",
+    "test:run": "pnpm --filter backend test:run"
   },
   "devDependencies": {
     "lightningcss": "^1.30.2"
   },
-  "overrides": {
-    "wa-sticker-formatter": {
-      "axios": "^1.7.9",
-      "sharp": "^0.33.5"
+  "pnpm": {
+    "overrides": {
+      "wa-sticker-formatter>axios": "^1.7.9",
+      "wa-sticker-formatter>sharp": "^0.33.5"
     }
   },
   "dependencies": {

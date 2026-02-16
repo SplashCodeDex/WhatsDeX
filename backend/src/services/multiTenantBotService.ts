@@ -22,6 +22,8 @@ import { cooldownMiddleware } from '../middleware/cooldown.js';
 import { moderationMiddleware } from '../middleware/moderation.js';
 import { eventHandler } from './eventHandler.js';
 import AuthSystem from './authSystem.js';
+import { TelegramAdapter } from './channels/telegram/TelegramAdapter.js';
+import { channelManager } from './channels/ChannelManager.js';
 import { createBotContext } from '../utils/createBotContext.js';
 
 export class MultiTenantBotService {
@@ -29,12 +31,14 @@ export class MultiTenantBotService {
   private activeBots: Map<string, Bot>;
   private authSystems: Map<string, AuthSystem>;
   private qrCodes: Map<string, string>;
+  private adapterMap: Map<string, { key: string; tenantId: string }>;
   private globalContext: GlobalContext | null = null;
 
   private constructor() {
     this.activeBots = new Map();
     this.authSystems = new Map();
     this.qrCodes = new Map();
+    this.adapterMap = new Map();
   }
 
   /**
@@ -70,7 +74,7 @@ export class MultiTenantBotService {
   }
 
   public hasActiveBot(id: string): boolean {
-    return this.activeBots.has(id);
+    return this.activeBots.has(id) || this.adapterMap.has(id);
   }
 
   /**
@@ -101,10 +105,10 @@ export class MultiTenantBotService {
         id: botId,
         name: restBotData.name || 'My Bot',
         status: 'disconnected' as const,
-        connectionMetadata: {
+        connectionMetadata: restBotData.connectionMetadata || (restBotData.type === 'whatsapp' || !restBotData.type ? {
           browser: ['WhatsDeX', 'Chrome', '1.0.0'] as [string, string, string],
           platform: 'web'
-        },
+        } : undefined),
         stats: {
           messagesSent: 0,
           messagesReceived: 0,
@@ -136,6 +140,38 @@ export class MultiTenantBotService {
    */
   async startBot(tenantId: string, botId: string): Promise<Result<void>> {
     try {
+      // Fetch Bot Data from Firestore first to determine type
+      const botResult = await this.getBot(tenantId, botId);
+      if (!botResult.success) {
+        return { success: false, error: botResult.error };
+      }
+      const botData = botResult.data;
+
+      if (botData.type === 'telegram') {
+        logger.info(`Starting Telegram Bot ${botId}`, { tenantId });
+        const token = botData.credentials?.token;
+        if (!token) {
+          return { success: false, error: new Error('Missing Telegram Token in credentials') };
+        }
+
+        // Initialize Telegram Adapter
+        try {
+          const adapter = new TelegramAdapter(token);
+          await adapter.connect();
+          channelManager.registerAdapter(adapter);
+
+          this.adapterMap.set(botId, { key: token, tenantId });
+
+          await this.updateBotStatus(tenantId, botId, 'connected');
+          this.log(tenantId, botId, 'Telegram Bot connected', 'success');
+          return { success: true, data: undefined };
+        } catch (error) {
+          logger.error(`Failed to start Telegram Bot ${botId}`, error);
+          await this.updateBotStatus(tenantId, botId, 'error');
+          return { success: false, error: error as Error };
+        }
+      }
+
       if (this.activeBots.has(botId)) {
         logger.info(`Bot ${botId} is already running`, { tenantId, botId });
         return { success: true, data: undefined };
@@ -313,6 +349,17 @@ export class MultiTenantBotService {
    * Stop a bot instance
    */
   async stopBot(botId: string): Promise<Result<void>> {
+    const adapterInfo = this.adapterMap.get(botId);
+    if (adapterInfo) {
+      const adapter = channelManager.getAdapter(adapterInfo.key);
+      if (adapter) {
+        await adapter.disconnect();
+      }
+      this.adapterMap.delete(botId);
+      await this.updateBotStatus(adapterInfo.tenantId, botId, 'disconnected');
+      return { success: true, data: undefined };
+    }
+
     const authSystem = this.authSystems.get(botId);
     if (authSystem) {
       await authSystem.disconnect();
@@ -385,7 +432,7 @@ export class MultiTenantBotService {
       );
 
     } catch (err) {
-      // Silently fail stat updates
+      logger.error(`[MultiTenantBotService] Failed to increment stat ${field} for bot ${botId}:`, err);
     }
   }
 
@@ -435,7 +482,35 @@ export class MultiTenantBotService {
   }
 
   async startAllBots() {
-    // To be implemented: fetch all bots with auto-start enabled and start them
+    logger.info('[MultiTenantBotService] Starting all auto-start bots...');
+
+    try {
+      const tenants = await multiTenantService.listTenants();
+
+      let totalStarted = 0;
+
+      for (const tenant of tenants) {
+        if (tenant.status !== 'active') continue;
+
+        const botsResult = await this.getAllBots(tenant.id);
+        if (!botsResult.success) continue;
+
+        for (const bot of botsResult.data) {
+          // Restart bots that were connected or pending QR, or were explicitly active
+          if (bot.status === 'connected' || bot.status === 'qr_pending' || bot.status === 'connecting') {
+            logger.info(`[MultiTenantBotService] Auto-starting bot ${bot.id} for tenant ${tenant.id}`);
+            this.startBot(tenant.id, bot.id).catch(err => {
+              logger.error(`[MultiTenantBotService] Failed to auto-start bot ${bot.id}:`, err);
+            });
+            totalStarted++;
+          }
+        }
+      }
+
+      logger.info(`[MultiTenantBotService] Successfully queued ${totalStarted} bots for startup.`);
+    } catch (error) {
+      logger.error('[MultiTenantBotService] Failed to start all bots:', error);
+    }
   }
 
   /**
@@ -461,6 +536,7 @@ export class MultiTenantBotService {
 
         return {
           ...bot,
+          type: bot.type || 'whatsapp',
           status,
           createdAt: (bot.createdAt as any)?.toDate?.() || bot.createdAt,
           updatedAt: (bot.updatedAt as any)?.toDate?.() || bot.updatedAt,
@@ -580,6 +656,27 @@ export class MultiTenantBotService {
     typingDelay?: number;
   }): Promise<Result<any>> {
     try {
+      const adapterInfo = this.adapterMap.get(botId);
+      if (adapterInfo) {
+        const adapter = channelManager.getAdapter(adapterInfo.key);
+        if (!adapter) return { success: false, error: new Error('Bot disconnected') };
+
+        if (payload.type !== 'text') {
+          return { success: false, error: new Error('Only text messages supported for this channel currently') };
+        }
+
+        try {
+          await adapter.sendMessage(payload.to, payload.text);
+          await this.incrementBotStat(tenantId, botId, 'messagesSent');
+          analyticsService.trackMessage(tenantId, 'sent').catch(() => { });
+          return { success: true, data: { status: 'sent', timestamp: Date.now() } };
+        } catch (e) {
+          const err = e instanceof Error ? e : new Error(String(e));
+          await this.incrementBotStat(tenantId, botId, 'errorsCount');
+          return { success: false, error: err };
+        }
+      }
+
       const bot = this.activeBots.get(botId);
       if (!bot) {
         return { success: false, error: new Error('Bot is not online') };
@@ -610,7 +707,7 @@ export class MultiTenantBotService {
 
       await this.incrementBotStat(tenantId, botId, 'messagesSent');
       // Track Analytics (Historical)
-      analyticsService.trackMessage(tenantId, 'sent').catch(() => {});
+      analyticsService.trackMessage(tenantId, 'sent').catch(() => { });
 
       return { success: true, data: result };
     } catch (error: unknown) {
@@ -619,7 +716,7 @@ export class MultiTenantBotService {
       // Increment error stat
       await this.incrementBotStat(tenantId, botId, 'errorsCount');
       // Track Analytics (Historical)
-      analyticsService.trackMessage(tenantId, 'error').catch(() => {});
+      analyticsService.trackMessage(tenantId, 'error').catch(() => { });
 
       return { success: false, error: err };
     }

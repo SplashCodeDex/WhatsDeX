@@ -18,6 +18,7 @@ import contactRoutes from '../routes/contactRoutes.js';
 import messageRoutes from '../routes/messageRoutes.js';
 import campaignRoutes from '../routes/campaigns.js';
 import webhookRoutes from '../routes/webhookRoutes.js';
+import telegramWebhookRoutes from '../routes/telegramWebhookRoutes.js';
 import billingRoutes from '../routes/billingRoutes.js';
 import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
@@ -100,9 +101,9 @@ export class MultiTenantApp {
       origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         const appUrl = this.config.get('NEXT_PUBLIC_APP_URL');
         if (!origin ||
-            /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
-            /^https?:\/\/([^/]+\.)?whatsdx\.com$/.test(origin) ||
-            origin === appUrl) {
+          /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+          /^https?:\/\/([^/]+\.)?whatsdx\.com$/.test(origin) ||
+          origin === appUrl) {
           callback(null, true);
         } else {
           logger.warn(`Blocked CORS request from unauthorized origin: ${origin}`);
@@ -181,6 +182,7 @@ export class MultiTenantApp {
 
     // Webhooks routes
     this.app.use('/api/webhooks', authenticateToken, webhookRoutes);
+    this.app.use('/api/telegram', telegramWebhookRoutes);
 
     // Tenant management
     this.app.get('/api/tenants', authenticateToken, async (_req: Request, res: Response) => {

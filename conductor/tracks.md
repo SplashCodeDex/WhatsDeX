@@ -10,4 +10,8 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 ---
 
 ## [x] Track: Implement plans and billing with Stripe (Starter, Pro, Enterprise tiers) and 7-day free trial.
-*Link: [./conductor/tracks/plans_billing_20260115/](./conductor/tracks/plans_billing_20260115/)*
+*Link: [./conductor/tracks/plans_billing_20260115/](./conductor/tracks/plans_billing_20260115/)*        
+---
+
+## [~] Track: WhatsDeX × OpenClaw Omnichannel Integration
+*Link: [./conductor/tracks/openclaw_integration_20260216/](./conductor/tracks/openclaw_integration_20260216/)*

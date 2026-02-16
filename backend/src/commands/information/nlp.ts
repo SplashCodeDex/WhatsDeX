@@ -1,5 +1,6 @@
 import { MessageContext } from '../../types/index.js';
 import NLPProcessorService from '../../services/nlpProcessor.js';
+import { cacheService } from '../../services/cache.js';
 import * as formatter from '../../utils/formatters.js';
 import logger from '../../utils/logger.js';
 
@@ -31,11 +32,17 @@ export default {
       // Note: ctx.author doesn't exist on MessageContext, referring to previous context issues.
       // Assuming userId is ctx.sender.jid based on recent fixes.
       const userId = ctx.sender.jid;
-      const userDb = await ctx.bot.context.database.user.get(userId, ctx.bot.tenantId);
-      const recentCommands: string[] = []; // User schema doesn't have recentCommands yet
+      const tenantId = ctx.bot.tenantId;
+
+      // Fetch user's recent commands from cache for context
+      const historyKey = `nlp:history:${tenantId}:${userId}`;
+      const historyResult = await cacheService.get<string[]>(historyKey);
+      const recentCommands = historyResult.success && historyResult.data ? historyResult.data : [];
+
+      const userDb = await ctx.bot.context.database.user.get(userId, tenantId);
 
       // Fetch owner number from tenant settings
-      const tenantResult = await ctx.bot.context.tenantConfigService.getTenantSettings((ctx.bot as any).tenantId);
+      const tenantResult = await ctx.bot.context.tenantConfigService.getTenantSettings(tenantId);
       const ownerNumber = (tenantResult.success ? tenantResult.data.ownerNumber : 'system') || 'system';
 
       // Process the input
@@ -74,9 +81,12 @@ export default {
 
         response += `\n💭 *Would you like me to execute this command? Reply with "yes" or use the command directly!*`;
       } else {
-        response += `🤔 **No specific command suggestion available.**\n`;
         response += `💡 *Try being more specific or use* ${ctx.used.prefix}menu *to see all commands.*`;
       }
+
+      // Update history (last 5 commands)
+      const updatedHistory = [input, ...recentCommands].slice(0, 5);
+      await cacheService.set(historyKey, updatedHistory, 1800); // 30 mins
 
       await ctx.reply({
         text: response,

@@ -69,27 +69,20 @@ export class GeminiAI extends EventEmitter {
       const tenantId = bot.tenantId;
       const message = ctx.body || '';
 
-      // Rule 5: Check if we have a memoized intent analysis for this exact message
-      const analysisCacheKey = `ai:analysis:${tenantId}:${cacheService.createKey(message)}`;
-      const cachedAnalysis = await cacheService.get<AIAnalysis>(analysisCacheKey);
+      // Rule 5+: Semantic Memoization (Mastermind Edition)
+      // Check for semantically similar previous analysis to save API costs
+      const intelligence: AIAnalysis = await this.gemini.getManager().execute(async () => {
+        logger.info(`Rule 5+: Performing live semantic analysis for ${userId}`);
 
-      let intelligence: AIAnalysis;
-
-      if (cachedAnalysis.success && cachedAnalysis.data) {
-        logger.info(`Rule 5: Using memoized AI analysis for ${userId}`);
-        intelligence = cachedAnalysis.data;
-      } else {
         // Build comprehensive context
         const context = await this.buildEnhancedContext(bot, userId, message, ctx);
 
         // Multi-layer intelligence processing
-        intelligence = await this.analyzeWithMultiLayerIntelligence(bot, message, context);
-
-        // Memoize the analysis for 15 minutes if confidence is high
-        if (intelligence.confidence > 0.8) {
-          await cacheService.set(analysisCacheKey, intelligence, 900);
-        }
-      }
+        return await this.analyzeWithMultiLayerIntelligence(bot, message, context);
+      }, {
+        prompt: message, // Enable Semantic Caching
+        timeoutMs: 120000
+      });
 
       // Execute intelligent response
       const contextForExecution = await this.buildEnhancedContext(bot, userId, message, ctx);

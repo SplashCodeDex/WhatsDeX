@@ -76,10 +76,10 @@ export class ApiKeyManager {
         const storage = new LocalFileStorage();
         this.manager = new UniversalManager(apiKeys, {
             storage,
-            strategy: undefined, // Default strategy
+            strategy: 'latency', // Optimized for performance
             concurrency: 20, // Allow more concurrent calls in backend
             semanticCache: {
-                threshold: 0.95, // 95% similarity for cache hits
+                threshold: 0.92, // 92% similarity for better hit rate
                 getEmbedding: async (text: string) => {
                     // Dynamic import to break circular dependency with embeddingService
                     const { EmbeddingService } = await import('../services/embeddingService.js');

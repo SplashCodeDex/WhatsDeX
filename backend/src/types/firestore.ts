@@ -47,14 +47,18 @@ export interface TenantUserDocument {
 export interface BotInstanceDocument {
   id: string;
   name: string;
+  type?: 'whatsapp' | 'telegram' | 'discord' | 'slack';
   phoneNumber?: string;
+  identifier?: string;
   userId?: string; // Legacy/Owner mapping
   status: 'connected' | 'disconnected' | 'connecting' | 'qr_pending' | 'error';
   lastSeenAt?: Timestamp | Date;
-  connectionMetadata: {
+  connectionMetadata?: {
     browser: [string, string, string]; // e.g. ['WhatsDeX', 'Chrome', '1.0.0']
     platform: string;
   };
+  credentials?: Record<string, any>;
+  webhookUrl?: string;
   stats: {
     messagesSent: number;
     messagesReceived: number;

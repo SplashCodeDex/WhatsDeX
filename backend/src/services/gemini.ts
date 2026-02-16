@@ -64,6 +64,13 @@ class GeminiService {
   }
 
   /**
+   * Expose the key manager for advanced features (semantic caching, stats)
+   */
+  public getManager(): ApiKeyManager {
+    return this.keyManager;
+  }
+
+  /**
    * Refresh the client with a new key from the rotation pool.
    * Called after marking a key as failed.
    * @returns {boolean} True if rotation was successful, false if no keys available
@@ -353,28 +360,35 @@ class GeminiService {
     }
 
     try {
-      logger.debug('Generating conversation summary with Gemini', {
-        messageCount: messagesToSummarize.length,
-      });
+      return await this.keyManager.execute(async (key) => {
+        logger.debug('Generating conversation summary with Gemini', {
+          messageCount: messagesToSummarize.length,
+          keyHint: `...${key.slice(-4)}`
+        });
 
-      const summaryPrompt = `Please provide a concise summary of the following conversation, capturing the key points and main topics discussed:
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({
+          model: this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
+        });
 
-${messagesToSummarize.map(msg => `${msg.role}: ${msg.content}`).join('\n\n')}
+        const summaryPrompt = `Please provide a concise summary of the following conversation, capturing the key points and main topics discussed:\n\n${messagesToSummarize.map(msg => `${msg.role}: ${msg.content}`).join('\n\n')}\n\nSummary:`;
 
-Summary:`;
+        const result = await model.generateContent(summaryPrompt);
+        const response = await result.response;
+        const summary = response.text();
 
-      const result = await this.model.generateContent(summaryPrompt);
-      const response = await result.response;
-      const summary = response.text();
+        // Ensure we have text
+        if (!summary) throw new Error('Empty summary from Gemini');
 
-      // Cache the summary
-      if (this.cache) {
-        await this.cache.set(cacheKey, summary, 3600); // Cache for 1 hour
-        logger.debug('Cached Gemini summary', { cacheKey });
-      }
+        // Cache the summary
+        if (this.cache) {
+          await this.cache.set(cacheKey, summary, 3600); // Cache for 1 hour
+          logger.debug('Cached Gemini summary', { cacheKey });
+        }
 
-      logger.debug('Generated conversation summary', { summaryLength: summary.length });
-      return summary;
+        logger.debug('Generated conversation summary', { summaryLength: summary.length });
+        return summary;
+      }, { maxRetries: 2 });
     } catch (error: any) {
       logger.error('Error generating summary with Gemini', {
         error: error.message,
@@ -406,44 +420,40 @@ Summary:`;
     }
 
     try {
-      logger.debug('Moderating content with Gemini', { contentLength: content.length });
+      return await this.keyManager.execute(async (key) => {
+        logger.debug('Moderating content with Gemini', {
+          contentLength: content.length,
+          keyHint: `...${key.slice(-4)}`
+        });
 
-      const moderationPrompt = `Please analyze the following content and determine if it contains:
-1. Hate speech or discriminatory content
-2. Violent or harmful content
-3. Adult or explicit content
-4. Spam or promotional content
-5. Harassment or bullying
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({
+          model: this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
+        });
 
-Content: "${content}"
+        const moderationPrompt = `Please analyze the following content and determine if it contains:\n1. Hate speech or discriminatory content\n2. Violent or harmful content\n3. Adult or explicit content\n4. Spam or promotional content\n5. Harassment or bullying\n\nContent: "${content}"\n\nProvide a JSON response with:\n- safe: boolean (true if content is safe, false if not)\n- categories: array of violated categories (if any)\n- reason: brief explanation\n\nResponse format: {"safe": true/false, "categories": [], "reason": ""}`;
 
-Provide a JSON response with:
-- safe: boolean (true if content is safe, false if not)
-- categories: array of violated categories (if any)
-- reason: brief explanation
+        const result = await model.generateContent(moderationPrompt);
+        const response = await result.response;
+        const moderationResult = response.text();
 
-Response format: {"safe": true/false, "categories": [], "reason": ""}`;
+        let parsed: any;
+        try {
+          parsed = JSON.parse(moderationResult);
+        } catch (parseError: any) {
+          logger.warn('Failed to parse moderation response, assuming safe', { moderationResult });
+          parsed = { safe: true, categories: [], reason: 'Unable to parse moderation result' };
+        }
 
-      const result = await this.model.generateContent(moderationPrompt);
-      const response = await result.response;
-      const moderationResult = response.text();
+        // Cache the moderation result
+        if (this.cache) {
+          await this.cache.set(cacheKey, parsed, 1800); // Cache for 30 minutes
+          logger.debug('Cached moderation result', { cacheKey });
+        }
 
-      let parsed: any;
-      try {
-        parsed = JSON.parse(moderationResult);
-      } catch (parseError: any) {
-        logger.warn('Failed to parse moderation response, assuming safe', { moderationResult });
-        parsed = { safe: true, categories: [], reason: 'Unable to parse moderation result' };
-      }
-
-      // Cache the moderation result
-      if (this.cache) {
-        await this.cache.set(cacheKey, parsed, 1800); // Cache for 30 minutes
-        logger.debug('Cached moderation result', { cacheKey });
-      }
-
-      logger.debug('Content moderation completed', parsed);
-      return parsed;
+        logger.debug('Content moderation completed', parsed);
+        return parsed;
+      }, { maxRetries: 2 });
     } catch (error: any) {
       logger.error('Error moderating content with Gemini - ALERT: Manual review required', {
         error: error.message,
