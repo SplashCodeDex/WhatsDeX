@@ -23,6 +23,7 @@ import { moderationMiddleware } from '../middleware/moderation.js';
 import { eventHandler } from './eventHandler.js';
 import AuthSystem from './authSystem.js';
 import { TelegramAdapter } from './channels/telegram/TelegramAdapter.js';
+import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
 import { channelManager } from './channels/ChannelManager.js';
 import { createBotContext } from '../utils/createBotContext.js';
 
@@ -148,6 +149,7 @@ export class MultiTenantBotService {
       const botData = botResult.data;
 
       if (botData.type === 'telegram') {
+        // ... existing telegram logic
         logger.info(`Starting Telegram Bot ${botId}`, { tenantId });
         const token = botData.credentials?.token;
         if (!token) {
@@ -172,109 +174,40 @@ export class MultiTenantBotService {
         }
       }
 
-      if (this.activeBots.has(botId)) {
-        logger.info(`Bot ${botId} is already running`, { tenantId, botId });
-        return { success: true, data: undefined };
-      }
+      if (botData.type === 'whatsapp' || !botData.type) {
+        if (this.hasActiveBot(botId)) {
+          logger.info(`Bot ${botId} is already running`, { tenantId, botId });
+          return { success: true, data: undefined };
+        }
 
-      // 2026: Unified Auth Logic
-      const authSystem = new AuthSystem({ bot: {} }, tenantId, botId);
-      this.authSystems.set(botId, authSystem);
-
-      // Fetch Bot Configuration from Firestore
-      const configResult = await tenantConfigService.getBotConfig(tenantId, botId);
-      const botConfig = configResult.success ? configResult.data : undefined;
-
-      // Handle QR updates
-      authSystem.on('qr', async (qr) => {
         try {
-          const qrCodeUrl = await QRCode.toDataURL(qr);
-          this.qrCodes.set(botId, qrCodeUrl);
-        } catch (err) {
-          logger.error(`QR Generation failed for ${botId}`, { tenantId, botId, error: err });
+          const adapter = new WhatsappAdapter(tenantId, botId);
+          
+          adapter.onMessage(async (event) => {
+            // Forward to existing message handling logic
+            // We'll need to adapt handleIncomingMessage to work with adapter event
+            // or just use the raw message for now to maintain compatibility
+            await this.handleIncomingMessage(event.tenantId, event.botId, event.raw);
+            this.log(event.tenantId, event.botId, `Incoming message from ${event.sender}`, 'info');
+          });
+
+          await adapter.connect();
+          channelManager.registerAdapter(adapter);
+          
+          // Store in activeBots for backward compatibility with other services
+          // We need the socket for some legacy calls
+          const socket = (adapter as any).socket;
+          this.activeBots.set(botId, socket);
+
+          await this.updateBotStatus(tenantId, botId, 'connected');
+          this.log(tenantId, botId, 'Whatsapp Bot connected', 'success');
+          return { success: true, data: undefined };
+        } catch (error) {
+          logger.error(`Failed to start Whatsapp Bot ${botId}`, error);
+          await this.updateBotStatus(tenantId, botId, 'error');
+          return { success: false, error: error as Error };
         }
-      });
-
-      // Handle Disconnection
-      authSystem.on('disconnected', async (error) => {
-        this.activeBots.delete(botId);
-        await this.updateBotStatus(tenantId, botId, 'disconnected');
-
-        const statusCode = (error as any)?.output?.statusCode;
-        if (statusCode === DisconnectReason.loggedOut) {
-          this.authSystems.delete(botId);
-          this.qrCodes.delete(botId);
-        }
-      });
-
-      // Handle Connection Success
-      authSystem.on('connected', async () => {
-        logger.info(`Bot ${botId} is CONNECTED`, { tenantId, botId });
-        this.qrCodes.delete(botId);
-        await this.updateBotStatus(tenantId, botId, 'connected');
-        this.log(tenantId, botId, 'Bot instance connected and ready', 'success');
-
-        // Handle Always Online if configured
-        if (botConfig?.alwaysOnline) {
-          const bot = this.activeBots.get(botId);
-          if (bot && bot.sendPresenceUpdate) {
-            await bot.sendPresenceUpdate('available');
-            logger.debug(`Bot ${botId} set to AVAILABLE (Always Online)`);
-          }
-        }
-      });
-
-      // Connect via AuthSystem to get the socket
-      const connectResult = await authSystem.connect();
-      if (!connectResult.success) {
-        return { success: false, error: connectResult.error };
       }
-
-      const socket = connectResult.data as unknown as Bot;
-
-      // Initialize Middleware System for this bot
-      const mwSystem = new MiddlewareSystem();
-
-      // Inject identifying properties
-      socket.tenantId = tenantId;
-      socket.botId = botId;
-      socket.config = botConfig!; // Inject dynamic config
-      socket.context = await this.getContext();
-
-      socket.use = (mw) => mwSystem.use(mw);
-      socket.executeMiddleware = (ctx, next) => mwSystem.execute(ctx, next);
-
-      // Register Default Middleware
-      socket.use(cooldownMiddleware);
-      socket.use(moderationMiddleware);
-      socket.use(permissionMiddleware);
-
-      this.activeBots.set(botId, socket);
-      await this.updateBotStatus(tenantId, botId, 'connecting');
-
-      // Forward connection updates to our handler
-      socket.ev.on('connection.update', async (update) => {
-        await this.handleConnectionUpdate(tenantId, botId, update);
-      });
-
-      // Bind Centralized Event Handler
-      eventHandler.bind(socket);
-
-      // Note: saveCreds is handled internally by AuthSystem -> useFirestoreAuthState now
-      // We don't need to manually bind creds.update here if AuthSystem does it.
-      // Checking AuthSystem... yes, it does: this.client.ev.on('creds.update', saveCreds);
-
-      socket.ev.on('messages.upsert', async ({ messages, type }) => {
-        if (type === 'notify') {
-          for (const message of messages) {
-            await this.handleIncomingMessage(tenantId, botId, message);
-            this.log(tenantId, botId, `Incoming message from ${message.key.remoteJid}`, 'info');
-          }
-        }
-      });
-
-      logger.info(`Bot ${botId} orchestrator started`, { tenantId, botId });
-      return { success: true, data: undefined };
 
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));

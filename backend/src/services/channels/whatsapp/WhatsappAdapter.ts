@@ -1,74 +1,77 @@
-import { type Bot } from "@/types/index.js";
-import { type ChannelAdapter, type ChannelCapabilities, type ChannelId } from "../ChannelAdapter.js";
+import { ChannelAdapter, InboundMessageEvent } from '../ChannelAdapter.js';
+import AuthSystem from '@/services/authSystem.js';
+import logger from '@/utils/logger.js';
 
 /**
- * Adapter for WhatsApp integration using existing WhatsDeX Baileys Bot.
+ * WhatsappAdapter wraps the existing WhatsDeX Baileys/AuthSystem logic
+ * to conform to the ChannelAdapter interface.
  */
 export class WhatsappAdapter implements ChannelAdapter {
-    public readonly id: ChannelId = "whatsapp";
-    public get instanceId(): string {
-        // Return formatted JID of the bot (e.g. phone number)
-        return this.bot.user?.id || "unknown";
-    }
-    public readonly capabilities: ChannelCapabilities = {
-        chatTypes: ["direct", "group"],
-        nativeCommands: true,
-        polls: true,
-        reactions: true,
-        media: true,
-        threads: false, // WhatsApp doesn't have threads in the same way Telegram does (yet)
-    };
+  public readonly id = 'whatsapp';
+  public readonly instanceId: string;
+  private authSystem: AuthSystem;
+  private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
+  private socket: any = null;
 
-    private bot: Bot;
+  constructor(private tenantId: string, private botId: string) {
+    this.instanceId = botId;
+    this.authSystem = new AuthSystem({ bot: {} }, tenantId, botId);
+  }
 
-    constructor(bot: Bot) {
-        this.bot = bot;
-    }
+  public async initialize(): Promise<void> {
+    // Basic init if needed
+  }
 
-    async handleWebhook(req: any, res: any): Promise<void> {
-        // WhatsApp webhooks are handled by MultiTenantBotService -> webhookService
-        // This is a no-op or could forward to them if we unify routes later.
-        console.log("[WhatsappAdapter] handleWebhook called (no-op, handled by legacy service)");
+  public async connect(): Promise<void> {
+    logger.info(`Connecting WhatsappAdapter for bot ${this.botId}`);
+    
+    const connectResult = await this.authSystem.connect();
+    if (!connectResult.success) {
+      throw connectResult.error;
     }
 
-    async connect(): Promise<void> {
-        // WhatsDeX manages connection lifecycle externally via MultiTenantBotService
-        // So this is a no-op or a check
-        if (this.bot.ws?.isOpen) {
-            return;
+    this.socket = connectResult.data;
+
+    // Listen for messages
+    this.socket.ev.on('messages.upsert', async ({ messages, type }: any) => {
+      if (type === 'notify' && this.messageHandler) {
+        for (const message of messages) {
+          await this.messageHandler({
+            tenantId: this.tenantId,
+            channelId: this.id,
+            botId: this.botId,
+            sender: message.key.remoteJid,
+            content: message.message,
+            timestamp: new Date((message.messageTimestamp as number) * 1000),
+            raw: message
+          });
         }
-        // We can't initiate connection here easily as it's tied to AuthSystem
-        console.warn("[WhatsappAdapter] connect() called but connection is managed by MultiTenantBotService");
+      }
+    });
+  }
+
+  public async disconnect(): Promise<void> {
+    await this.authSystem.disconnect();
+    this.socket = null;
+  }
+
+  public async shutdown(): Promise<void> {
+    await this.disconnect();
+  }
+
+  public async sendMessage(target: string, content: any): Promise<void> {
+    if (!this.socket) {
+      throw new Error('Adapter not connected');
     }
 
-    async disconnect(): Promise<void> {
-        // Similarly, explicit disconnect might interfere with MultiTenantBotService
-        console.warn("[WhatsappAdapter] disconnect() called but connection is managed by MultiTenantBotService");
-        // this.bot.end(undefined); // Potential risk
-    }
+    const jid = target.includes('@s.whatsapp.net') ? target : `${target}@s.whatsapp.net`;
+    
+    // Support simple text or full Baileys content object
+    const payload = typeof content === 'string' ? { text: content } : content;
+    await this.socket.sendMessage(jid, payload);
+  }
 
-    async sendMessage(to: string, content: string): Promise<void> {
-        if (!this.bot.sendMessage) {
-            throw new Error("Bot instance does not support sendMessage");
-        }
-
-        // Ensure JID is formatted correctly
-        const jid = to.includes("@s.whatsapp.net") || to.includes("@g.us")
-            ? to
-            : `${to}@s.whatsapp.net`;
-
-        try {
-            await this.bot.sendMessage(jid, { text: content });
-        } catch (error) {
-            console.error(`[WhatsappAdapter] Failed to send message to ${to}:`, error);
-            throw error;
-        }
-    }
-
-    /**
-     * Access the underlying Baileys Bot instance
-     */
-    get client(): Bot {
-        return this.bot;
-    }
+  public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {
+    this.messageHandler = handler;
+  }
 }
