@@ -25,20 +25,20 @@ Prepare the UI and database for multiple platforms.
 - [x] Task: Backend - Create API endpoints for managing channel credentials and statuses 06c681c
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Hub' (Protocol in workflow.md) 06c681c
 
-## Phase 4: Multi-Channel Expansion [checkpoint: pending]
+## Phase 4: Multi-Channel Expansion [checkpoint: 3c9c078]
 Activate Telegram and Discord via OpenClaw bridges.
 
-- [x] Task: Test - Write unit tests for `TelegramChannelBridge` integration
-- [x] Task: Implement - Wire OpenClaw Telegram bridge to WhatsDeX Gemini Brain
-- [x] Task: Test - Write unit tests for `DiscordChannelBridge` integration
-- [x] Task: Implement - Wire OpenClaw Discord bridge to WhatsDeX Gemini Brain
-- [~] Task: Conductor - User Manual Verification 'Phase 4: Multi-Channel Expansion' (Protocol in workflow.md)
+- [x] Task: Test - Write unit tests for `TelegramChannelBridge` integration 3c9c078
+- [x] Task: Implement - Wire OpenClaw Telegram bridge to WhatsDeX Gemini Brain 3c9c078
+- [x] Task: Test - Write unit tests for `DiscordChannelBridge` integration 3c9c078
+- [x] Task: Implement - Wire OpenClaw Discord bridge to WhatsDeX Gemini Brain 3c9c078
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Multi-Channel Expansion' (Protocol in workflow.md) 3c9c078
 
-## Phase 5: Skills Platform & Tier Integration
+## Phase 5: Skills Platform & Tier Integration [checkpoint: pending]
 Integrate the Skills system with Stripe gating and Admin controls.
 
-- [ ] Task: Backend - Implement `SkillsManager` service to wrap OpenClaw skills
-- [ ] Task: Backend - Integrate `SkillsManager` with `billingController.ts` for tier-based gating
-- [ ] Task: Frontend - Build the "Skills Store" UI for tenant self-service toggles
-- [ ] Task: Backend - Implement Admin global kill-switch for skills
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Skills Platform' (Protocol in workflow.md)
+- [x] Task: Backend - Implement `SkillsManager` service to wrap OpenClaw skills
+- [x] Task: Backend - Integrate `SkillsManager` with `billingController.ts` for tier-based gating
+- [x] Task: Frontend - Build the "Skills Store" UI for tenant self-service toggles
+- [x] Task: Backend - Implement Admin global kill-switch for skills
+- [~] Task: Conductor - User Manual Verification 'Phase 5: Skills Platform' (Protocol in workflow.md)
