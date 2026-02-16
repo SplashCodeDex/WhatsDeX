@@ -75,18 +75,18 @@ export const BotInstanceSchema = z.object({
   id: z.string(),
   name: z.string(),
   // Multi-channel fields
-  type: z.enum(['whatsapp', 'telegram', 'discord', 'slack']).default('whatsapp'),
-  phoneNumber: z.string().optional(), // WhatsApp specific
+  type: z.enum(['whatsapp', 'telegram', 'discord', 'slack', 'signal']).default('whatsapp'),
+  phoneNumber: z.string().optional(), // WhatsApp/Signal specific
   identifier: z.string().optional(), // Generic identifier (e.g. username, bot handle)
   userId: z.string().optional(),
   status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error']),
   lastSeenAt: TimestampSchema.optional(),
   connectionMetadata: z.object({
-    browser: z.tuple([z.string(), z.string(), z.string()]),
-    platform: z.string()
+    browser: z.tuple([z.string(), z.string(), z.string()]).optional(),
+    platform: z.string().optional()
   }).optional(),
   credentials: z.record(z.string(), z.any()).optional(), // Store API tokens/keys
-  webhookUrl: z.string().url().optional(), // For platform-specific webhooks
+  webhookUrl: z.string().optional(), // For platform-specific webhooks
   stats: z.object({
     messagesSent: z.number().default(0),
     messagesReceived: z.number().default(0),

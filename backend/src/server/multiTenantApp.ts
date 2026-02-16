@@ -20,6 +20,7 @@ import campaignRoutes from '../routes/campaigns.js';
 import webhookRoutes from '../routes/webhookRoutes.js';
 import telegramWebhookRoutes from '../routes/telegramWebhookRoutes.js';
 import billingRoutes from '../routes/billingRoutes.js';
+import omnichannelRoutes from '../routes/omnichannelRoutes.js';
 import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
@@ -196,6 +197,9 @@ export class MultiTenantApp {
         res.status(500).json({ success: false, error: 'Failed to get tenants' });
       }
     });
+
+    // Omnichannel Routes
+    this.app.use('/api/omnichannel', authenticateToken, omnichannelRoutes);
 
     // Tenant Settings Routes
     this.app.use('/api/tenant', authenticateToken, tenantSettingsRoutes);
