@@ -117,7 +117,7 @@ export class MultiTenantBotService {
       };
 
       const data = BotInstanceSchema.parse(rawData);
-      await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, data, tenantId);
+      await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, data, tenantId, false);
 
       this.startBot(tenantId, botId).catch(err => {
         logger.error(`Initial start failed for bot ${botId}:`, err);
@@ -585,8 +585,8 @@ export class MultiTenantBotService {
         return { success: false, error: new Error('Bot is not online') };
       }
 
-      // Basic JID formatting
-      const jid = payload.to.includes('@s.whatsapp.net') ? payload.to : `${payload.to}@s.whatsapp.net`;
+      // Flexible JID formatting (2026 Standard)
+      const jid = payload.to.includes('@') ? payload.to : `${payload.to}@s.whatsapp.net`;
 
       let result;
       if (payload.type === 'text') {

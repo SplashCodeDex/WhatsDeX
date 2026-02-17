@@ -22,6 +22,7 @@ import {
   AnalyticsSchema
 } from '@/types/contracts.js';
 import { z } from 'zod';
+import admin from 'firebase-admin';
 
 type CollectionKey = keyof FirestoreSchema;
 
@@ -44,6 +45,71 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/analytics': AnalyticsSchema as any,
 };
 
+export class FirebaseBatch {
+  private _batch: admin.firestore.WriteBatch;
+  private service: FirebaseService;
+
+  constructor(batch: admin.firestore.WriteBatch, service: FirebaseService) {
+    this._batch = batch;
+    this.service = service;
+  }
+
+  /**
+   * Add a set/update operation to the batch with validation
+   */
+  public set<K extends CollectionKey>(
+    collection: string,
+    docId: string,
+    data: Partial<FirestoreSchema[K]>,
+    tenantId?: string,
+    merge = true
+  ): this {
+    const { path, schema } = (this.service as any).getCollectionInfo(collection, tenantId);
+
+    // Validation
+    if (merge) {
+      if (typeof (schema as any).partial === 'function') {
+        (schema as any).partial().parse(data);
+      } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+        (schema as any).unwrap().partial().parse(data);
+      }
+    } else {
+      schema.parse(data);
+    }
+
+    const docRef = db.collection(path).doc(docId);
+    this._batch.set(docRef, data, { merge });
+    return this;
+  }
+
+  /**
+   * Add a delete operation to the batch
+   */
+  public delete(
+    collection: string,
+    docId: string,
+    tenantId?: string
+  ): this {
+    const { path } = (this.service as any).getCollectionInfo(collection, tenantId);
+    const docRef = db.collection(path).doc(docId);
+    this._batch.delete(docRef);
+    return this;
+  }
+
+  /**
+   * Commit the batch
+   */
+  public async commit(): Promise<void> {
+    await this._batch.commit();
+  }
+}
+
+export interface CollectionQuery {
+  where?: [string, admin.firestore.WhereFilterOp, any][];
+  orderBy?: { field: string; direction?: 'asc' | 'desc' }[];
+  limit?: number;
+}
+
 export class FirebaseService {
   private static instance: FirebaseService;
 
@@ -57,6 +123,13 @@ export class FirebaseService {
   }
 
   /**
+   * Create a new validated batch
+   */
+  public batch(): FirebaseBatch {
+    return new FirebaseBatch(db.batch(), this);
+  }
+
+  /**
    * Resolve a collection name to its full path and schema
    */
   private getCollectionInfo(collection: string, tenantId?: string) {
@@ -64,20 +137,28 @@ export class FirebaseService {
     let schemaKey: CollectionKey;
 
     if (tenantId) {
-      // Special handling for nested subcollections like bots/{botId}/auth
-      if (collection.includes('/')) {
-        const parts = collection.split('/');
-        // Pattern: bots/{botId}/auth
-        if (parts[0] === 'bots' && parts[2] === 'auth') {
-          path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
-          schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+      // If it already starts with tenants/ or is a template, handle it robustly
+      if (collection.startsWith('tenants/')) {
+        path = collection.replace('{tenantId}', tenantId);
+        // Normalize for SchemaKey
+        schemaKey = collection.replace(/tenants\/[^/]+/, 'tenants/{tenantId}') as CollectionKey;
+      } else {
+        // Logical name or subpath relative to tenant
+        // Special handling for nested subcollections like bots/{botId}/auth
+        if (collection.includes('/')) {
+          const parts = collection.split('/');
+          // Pattern: bots/{botId}/auth
+          if (parts[0] === 'bots' && parts[2] === 'auth') {
+            path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
+            schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+          } else {
+            path = `tenants/${tenantId}/${collection}`;
+            schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
+          }
         } else {
           path = `tenants/${tenantId}/${collection}`;
           schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
         }
-      } else {
-        path = `tenants/${tenantId}/${collection}`;
-        schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
       }
     } else {
       path = collection;
@@ -86,7 +167,7 @@ export class FirebaseService {
 
     const schema = SchemaMap[schemaKey];
     if (!schema) {
-      throw new Error(`No schema defined for collection: ${schemaKey}`);
+      throw new Error(`No schema defined for collection: ${schemaKey} (Resolved from: ${collection}, Tenant: ${tenantId})`);
     }
 
     return { path, schema };
@@ -133,16 +214,10 @@ export class FirebaseService {
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
 
       // Validation (Zero-Trust)
-      // Since data might be Partial, we use a partial schema for validation if merge is true
       if (merge) {
-        // Best effort validation for partial updates
-        // Note: Zod doesn't easily support dynamic partial validation against a deep schema
-        // but for our flat-ish documents, it works well enough.
-        // We safely check if .partial() exists (e.g. not a preprocessed or readonly schema)
         if (typeof (schema as any).partial === 'function') {
           (schema as any).partial().parse(data);
         } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
-          // Handle Readonly schemas
           (schema as any).unwrap().partial().parse(data);
         }
       } else {
@@ -169,9 +244,37 @@ export class FirebaseService {
     collection: string,
     tenantId?: string
   ): Promise<FirestoreSchema[K][]> {
+    return this.getCollectionWithQuery<K>(collection, tenantId);
+  }
+
+  /**
+   * Generic method to get documents with filtering, ordering and limiting
+   */
+  public async getCollectionWithQuery<K extends CollectionKey>(
+    collection: string,
+    tenantId?: string,
+    query?: CollectionQuery
+  ): Promise<FirestoreSchema[K][]> {
     try {
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
-      const colRef = db.collection(path);
+      let colRef: admin.firestore.Query = db.collection(path);
+
+      if (query) {
+        if (query.where) {
+          query.where.forEach(w => {
+            colRef = colRef.where(w[0], w[1], w[2]);
+          });
+        }
+        if (query.orderBy) {
+          query.orderBy.forEach(o => {
+            colRef = colRef.orderBy(o.field, o.direction || 'asc');
+          });
+        }
+        if (query.limit) {
+          colRef = colRef.limit(query.limit);
+        }
+      }
+
       const snapshot = await colRef.get();
 
       return snapshot.docs.map(doc => {
@@ -179,12 +282,12 @@ export class FirebaseService {
           return schema.parse(doc.data()) as FirestoreSchema[K];
         } catch (parsingError) {
           logger.warn(`Firestore parsing error in getCollection [${path}/${doc.id}]:`, parsingError);
-          return doc.data() as FirestoreSchema[K]; // Fallback to raw data in production but log warning
+          return doc.data() as FirestoreSchema[K];
         }
       });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Firestore getCollection error [${collection}] (Tenant: ${tenantId}):`, err);
+      logger.error(`Firestore getCollectionWithQuery error [${collection}] (Tenant: ${tenantId}):`, err);
       throw err;
     }
   }

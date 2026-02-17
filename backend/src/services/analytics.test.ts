@@ -9,6 +9,9 @@ vi.mock('./FirebaseService.js', () => ({
     getCollection: vi.fn().mockResolvedValue([
         { date: '2026-02-09', sent: 10, received: 5, errors: 1 }
     ]),
+    getCollectionWithQuery: vi.fn().mockResolvedValue([
+        { date: '2026-02-09', sent: 10, received: 5, errors: 1 }
+    ]),
   }
 }));
 

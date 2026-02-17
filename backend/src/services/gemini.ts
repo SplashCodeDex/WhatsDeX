@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import crypto from 'crypto';
 import logger from '../utils/logger.js';
-import cache from '../lib/cache.js';
+import { cacheService } from './cache.js';
 import { ApiKeyManager, isQuotaError } from '../lib/apiKeyManager.js';
 import { ConfigService } from './ConfigService.js';
 
@@ -27,7 +27,7 @@ class GeminiService {
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
   private currentKey: string;
-  private cache: typeof cache;
+  private cache: typeof cacheService;
   private config: ConfigService;
 
   constructor() {
@@ -47,7 +47,7 @@ class GeminiService {
 
     this.genAI = new GoogleGenerativeAI(this.currentKey);
     this.model = this.genAI.getGenerativeModel({
-      model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
+      model: this.config.get('GEMINI_MODEL') || 'gemini-2.0-flash',
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -57,7 +57,7 @@ class GeminiService {
     });
 
     // Initialize cache service
-    this.cache = cache;
+    this.cache = cacheService;
 
     const stats = this.keyManager.getStats();
     logger.info(`Gemini service initialized with ${stats.totalKeys} API keys (${stats.healthyKeys} healthy)`);
@@ -79,7 +79,7 @@ class GeminiService {
       this.currentKey = keyResult.data;
       this.genAI = new GoogleGenerativeAI(this.currentKey);
       this.model = this.genAI.getGenerativeModel({
-        model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
+        model: this.config.get('GEMINI_MODEL') || 'gemini-2.0-flash',
         generationConfig: {
           temperature: 0.7,
           topK: 40,
@@ -131,7 +131,7 @@ class GeminiService {
 
         const genAI = new GoogleGenerativeAI(key);
         const model = genAI.getGenerativeModel({
-          model: this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
+          model: this.config.get('GEMINI_MODEL') || 'gemini-2.0-flash',
         });
 
         const result = await model.generateContent(text);
@@ -195,7 +195,7 @@ class GeminiService {
 
         const genAI = new GoogleGenerativeAI(key);
         const model = genAI.getGenerativeModel({
-          model: this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
+          model: this.config.get('GEMINI_MODEL') || 'gemini-2.0-flash',
         });
 
         const history = messages.slice(0, -1).map(msg => ({
@@ -263,7 +263,7 @@ class GeminiService {
         const genAI = new GoogleGenerativeAI(key);
         const geminiTools = tools ? this.convertToolsToGeminiFormat(tools) : [];
         const modelWithTools = genAI.getGenerativeModel({
-          model: 'gemini-2.0-flash-exp',
+          model: this.config.get('GEMINI_MODEL') || 'gemini-2.0-flash',
           tools: geminiTools.length > 0 ? [{ functionDeclarations: geminiTools }] : [],
           generationConfig: {
             temperature: 0.7,
@@ -498,7 +498,7 @@ Response format: {"safe": true/false, "categories": [], "reason": ""}`;
 
       return {
         status: 'healthy',
-        model: 'gemini-2.0-flash-exp',
+        model: this.config.get('GEMINI_MODEL') || 'gemini-2.0-flash',
         responseTime,
         testResponse: text ? 'OK' : 'No response',
         cache: this.cache ? 'enabled' : 'disabled',

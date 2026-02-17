@@ -57,8 +57,7 @@ export class DatabaseService {
      */
     async deleteUser(tenantId: string, jid: string): Promise<Result<void>> {
         try {
-            const docRef = db.collection('tenants').doc(tenantId).collection('members').doc(jid);
-            await docRef.delete();
+            await firebaseService.deleteDoc<'tenants/{tenantId}/members'>('members', jid, tenantId);
             return { success: true, data: undefined };
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
@@ -74,10 +73,6 @@ export class DatabaseService {
         try {
             const data = await firebaseService.getDoc<'tenants/{tenantId}/groups'>('groups', jid, tenantId);
             if (!data) return null;
-
-            // Optional: You might want to parse against BotGroupSchema here too if strict runtime checks are needed
-            // But since BotGroupDocument is looser (metadata: any), we can just return it or cast it
-            // For 2026 Mastermind Compliance, let's parse strict fields where possible, or just return strict Type
             return data;
         } catch (error: unknown) {
             logger.error(`DatabaseService.getGroup error [${tenantId}/${jid}]:`, error);
@@ -109,15 +104,18 @@ export class DatabaseService {
      */
     async getLeaderboard(tenantId: string, limit: number = 10): Promise<BotMember[]> {
         try {
-            const snapshot = await db.collection('tenants')
-                .doc(tenantId)
-                .collection('members')
-                .orderBy('winGame', 'desc')
-                .orderBy('level', 'desc')
-                .limit(limit)
-                .get();
-
-            return snapshot.docs.map(doc => BotMemberSchema.parse({ id: doc.id, ...doc.data() }));
+            const members = await firebaseService.getCollectionWithQuery<'tenants/{tenantId}/members'>(
+                'members',
+                tenantId,
+                {
+                    orderBy: [
+                        { field: 'winGame', direction: 'desc' },
+                        { field: 'level', direction: 'desc' }
+                    ],
+                    limit
+                }
+            );
+            return members;
         } catch (error: unknown) {
             logger.error(`DatabaseService.getLeaderboard error [${tenantId}]:`, error);
             return [];
@@ -129,13 +127,15 @@ export class DatabaseService {
      */
     async checkUsernameTaken(tenantId: string, username: string): Promise<boolean> {
         try {
-            const snapshot = await db.collection('tenants')
-                .doc(tenantId)
-                .collection('members')
-                .where('username', '==', username)
-                .limit(1)
-                .get();
-            return !snapshot.empty;
+            const snapshot = await firebaseService.getCollectionWithQuery<'tenants/{tenantId}/members'>(
+                'members',
+                tenantId,
+                {
+                    where: [['username', '==', username]],
+                    limit: 1
+                }
+            );
+            return snapshot.length > 0;
         } catch (error: unknown) {
             logger.error(`DatabaseService.checkUsernameTaken error [${tenantId}/${username}]:`, error);
             return false;
@@ -145,12 +145,11 @@ export class DatabaseService {
     /**
      * Transfer coins between members (Atomic Transaction)
      */
-    /**
-     * Transfer coins between members (Atomic Transaction)
-     */
     async transferCoins(tenantId: string, senderId: string, receiverId: string, amount: number): Promise<Result<void>> {
         try {
             await db.runTransaction(async (t) => {
+                // Transactions still use direct db access for now as they are complex to wrap generically
+                // but they are scoped by tenantId in the logic.
                 const membersCol = db.collection('tenants').doc(tenantId).collection('members');
                 const senderRef = membersCol.doc(senderId);
                 const receiverRef = membersCol.doc(receiverId);
@@ -212,7 +211,9 @@ export class DatabaseService {
     public chat = {
         clearHistory: async (jid: string, tenantId: string = 'system') => {
             try {
-                await firebaseService.deleteDoc('tenants/{tenantId}/conversation_memory' as any, jid, tenantId);
+                // conversation_memory is NOT in SchemaMap currently, so we use deleteDoc with care
+                // or we add it to SchemaMap. For now, let's keep the existing logic but use logical name.
+                await firebaseService.deleteDoc('conversation_memory' as any, jid, tenantId);
                 logger.info(`Chat history cleared for ${jid} (${tenantId})`);
             } catch (error: any) {
                 logger.error(`DatabaseService.clearHistory failed for ${jid} (${tenantId})`, error);
