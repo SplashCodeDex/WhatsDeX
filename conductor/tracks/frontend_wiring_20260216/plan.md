@@ -16,18 +16,18 @@ Implement the client-side infrastructure to manage live omnichannel data.
 - [x] Task: Frontend - Set up WebSocket listeners in `OmnichannelHub` for live updates 1a5fff6
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Frontend State' (Protocol in workflow.md) 1a5fff6
 
-## Phase 3: Dynamic Hub & Connection Workflow [checkpoint: pending]
+## Phase 3: Dynamic Hub & Connection Workflow [checkpoint: ed82513]
 Wire the UI to the real data and implement the "Instant Feedback" connection flow.
 
-- [x] Task: Frontend - Refactor `OmnichannelHubPage` to use the new store instead of static data
-- [x] Task: Frontend - Implement `ChannelProgressStepper` component for the "connecting" card state
-- [x] Task: Frontend - Wire `ChannelConnectionForm` to trigger bot creation and handle the "Background Connection" transition
-- [~] Task: Conductor - User Manual Verification 'Phase 3: Dynamic Hub' (Protocol in workflow.md)
+- [x] Task: Frontend - Refactor `OmnichannelHubPage` to use the new store instead of static data ed82513
+- [x] Task: Frontend - Implement `ChannelProgressStepper` component for the "connecting" card state ed82513
+- [x] Task: Frontend - Wire `ChannelConnectionForm` to trigger bot creation and handle the "Background Connection" transition ed82513
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Dynamic Hub' (Protocol in workflow.md) ed82513
 
-## Phase 4: Activity Feed & Refinement
+## Phase 4: Activity Feed & Refinement [checkpoint: pending]
 Build the streaming feed and polish the user experience.
 
-- [ ] Task: Frontend - Implement the `ActivityFeed` component with real-time log entries
-- [ ] Task: Frontend - Add platform-based filtering to the activity feed
-- [ ] Task: Frontend - Ensure automatic reconnection logic for the WebSocket stream
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Activity Feed' (Protocol in workflow.md)
+- [x] Task: Frontend - Implement the `ActivityFeed` component with real-time log entries
+- [x] Task: Frontend - Add platform-based filtering to the activity feed
+- [x] Task: Frontend - Ensure automatic reconnection logic for the WebSocket stream
+- [~] Task: Conductor - User Manual Verification 'Phase 4: Activity Feed' (Protocol in workflow.md)

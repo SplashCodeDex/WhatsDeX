@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Send, Hash, Slack, ShieldCheck, Loader2 } from 'lucide-center';
+import { Send, Hash, Slack, ShieldCheck, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';

@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ApiKeyManager as UniversalManager, ErrorClassification } from '@splashcodex/api-key-manager';
+import { ApiKeyManager as UniversalManager, ErrorClassification, LatencyStrategy } from '@splashcodex/api-key-manager';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { tmpdir } from 'os';
@@ -76,7 +76,7 @@ export class ApiKeyManager {
         const storage = new LocalFileStorage();
         this.manager = new UniversalManager(apiKeys, {
             storage,
-            strategy: 'latency', // Optimized for performance
+            strategy: new LatencyStrategy(), // Pick lowest average latency
             concurrency: 20, // Allow more concurrent calls in backend
             semanticCache: {
                 threshold: 0.92, // 92% similarity for better hit rate

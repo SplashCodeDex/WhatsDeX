@@ -22,10 +22,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ChannelConnectionForm } from '@/components/omnichannel/ChannelConnectionForm';
 import { ChannelProgressStepper } from './ChannelProgressStepper';
 import { OmnichannelSocketManager } from './OmnichannelSocketManager';
+import { ActivityFeed } from './ActivityFeed';
+
+// Helper for accessibility
+const VisuallyHidden = ({ children }: { children: React.ReactNode }) => (
+    <span className="absolute w-[1px] h-[1px] p-0 -m-[1px] overflow-hidden clip-[rect(0,0,0,0)] whitespace-nowrap border-0">
+        {children}
+    </span>
+);
 
 const ICON_MAP = {
     whatsapp: MessageSquare,
@@ -125,6 +133,12 @@ export default function OmnichannelHubPage() {
                     
                     <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                         <DialogContent className="sm:max-w-[425px] p-0 border-none bg-transparent">
+                            <VisuallyHidden>
+                                <DialogTitle>Add New Channel</DialogTitle>
+                                <DialogDescription>
+                                    Connect a new messaging platform to your bot.
+                                </DialogDescription>
+                            </VisuallyHidden>
                             <ChannelConnectionForm 
                                 type={selectedPlatform} 
                                 onSuccess={() => setIsAddDialogOpen(false)} 
@@ -184,48 +198,7 @@ export default function OmnichannelHubPage() {
                 </div>
             )}
 
-            <div className="rounded-xl border border-border/50 bg-card p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-lg font-semibold">Channel Activity</h3>
-                        <p className="text-sm text-muted-foreground">Combined real-time stream from all connected platforms.</p>
-                    </div>
-                    <Badge variant="outline" className="font-mono">
-                        <Activity className="mr-1 h-3 w-3 text-green-500 animate-pulse" />
-                        LIVE
-                    </Badge>
-                </div>
-                
-                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                    {activity.length === 0 ? (
-                        <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed text-center">
-                            <p className="text-sm text-muted-foreground">Activity logs will appear here as messages flow through the gateway.</p>
-                        </div>
-                    ) : (
-                        activity.map((event) => (
-                            <div key={event.id} className="flex items-start space-x-3 rounded-lg border border-border/50 bg-muted/20 p-3 text-sm transition-all hover:bg-muted/30">
-                                <div className={cn(
-                                    "mt-0.5 rounded-full p-1",
-                                    event.type === 'inbound' ? "bg-blue-500/10 text-blue-500" :
-                                    event.type === 'outbound' ? "bg-green-500/10 text-green-500" :
-                                    "bg-orange-500/10 text-orange-500"
-                                )}>
-                                    <Activity className="h-3 w-3" />
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                    <div className="flex items-center justify-between">
-                                        <p className="font-medium capitalize text-foreground">{event.channel}</p>
-                                        <time className="text-[10px] text-muted-foreground">
-                                            {new Date(event.timestamp).toLocaleTimeString()}
-                                        </time>
-                                    </div>
-                                    <p className="text-muted-foreground">{event.message}</p>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
+            <ActivityFeed />
         </div>
     );
 }
