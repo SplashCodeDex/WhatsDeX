@@ -75,6 +75,11 @@ export const API_ENDPOINTS = {
 
     // Health
     HEALTH: '/api/health',
+
+    // Omnichannel
+    OMNICHANNEL: {
+        STATUS: '/api/omnichannel/status',
+    },
 } as const;
 
 export type ApiEndpoint = typeof API_ENDPOINTS;

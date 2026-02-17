@@ -34,11 +34,11 @@ Activate Telegram and Discord via OpenClaw bridges.
 - [x] Task: Implement - Wire OpenClaw Discord bridge to WhatsDeX Gemini Brain 3c9c078
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Multi-Channel Expansion' (Protocol in workflow.md) 3c9c078
 
-## Phase 5: Skills Platform & Tier Integration [checkpoint: pending]
+## Phase 5: Skills Platform & Tier Integration [checkpoint: 0df5979]
 Integrate the Skills system with Stripe gating and Admin controls.
 
-- [x] Task: Backend - Implement `SkillsManager` service to wrap OpenClaw skills
-- [x] Task: Backend - Integrate `SkillsManager` with `billingController.ts` for tier-based gating
-- [x] Task: Frontend - Build the "Skills Store" UI for tenant self-service toggles
-- [x] Task: Backend - Implement Admin global kill-switch for skills
-- [~] Task: Conductor - User Manual Verification 'Phase 5: Skills Platform' (Protocol in workflow.md)
+- [x] Task: Backend - Implement `SkillsManager` service to wrap OpenClaw skills 0df5979
+- [x] Task: Backend - Integrate `SkillsManager` with `billingController.ts` for tier-based gating 0df5979
+- [x] Task: Frontend - Build the "Skills Store" UI for tenant self-service toggles 0df5979
+- [x] Task: Backend - Implement Admin global kill-switch for skills 0df5979
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Skills Platform' (Protocol in workflow.md) 0df5979

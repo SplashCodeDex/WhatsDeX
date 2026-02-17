@@ -2,7 +2,7 @@
 
 ## Initial Concept
 
-WhatsDeX is an enterprise-grade, fully functional software product built upon the Baileys Web API to provide a comprehensive WhatsApp bot management and automation platform. The system is designed to enable users (customers) to sign up, manage a personal workspace, and deploy WhatsApp bots that automate messaging, customer support, and marketing campaigns.
+WhatsDeX is an enterprise-grade, omnichannel AI bot management and automation platform. Built upon the OpenClaw engine and Baileys Web API, it enables users to deploy and manage AI-powered bots across WhatsApp, Telegram, Discord, and Slack from a single unified dashboard.
 
 The platform operates on a multi-tenant architecture where each customer's data and bots are isolated within their own workspace. It offers a tiered subscription model (Free vs. Premium), unlocking advanced features such as multiple bots, marketing campaign tools, Google Drive backups, and AI-powered interactions.
 
@@ -23,7 +23,8 @@ The platform operates on a multi-tenant architecture where each customer's data 
 
 ### 2. Bot Management
 
-- **Initialization:** Users can easily link their WhatsApp account by scanning a QR code or entering a pairing code.
+- **Initialization:** Users can easily link their WhatsApp account via QR code, or connect Telegram, Discord, and Slack bots using API tokens.
+- **Omnichannel Hub:** Centralized management for all social messaging platforms in a single, high-fidelity UI.
 - **Multiple Bots:** Premium users can manage up to two (or more) bots per workspace.
 - **Lifecycle Management:** Ability to add, restart, or delete bots as needed.
 
@@ -37,6 +38,7 @@ The platform operates on a multi-tenant architecture where each customer's data 
 ### 4. Advanced Features (Premium)
 
 - **AI Integration:** Leverage Google Gemini for intelligent conversations and content generation.
+- **Skills Platform:** Integrated OpenClaw skills (Web Search, Code Analysis, etc.) gated by subscription tiers.
 - **Backups:** automated backups to Google Drive and other cloud storage providers.
 - **Contact Management:** Import and organize contacts for targeted campaigns.
 - **Analytics:** Detailed tracking of message delivery, response rates, and bot performance.
@@ -49,4 +51,4 @@ The platform operates on a multi-tenant architecture where each customer's data 
 
 ## Vision
 
-To build a "Pixel Perfect", scalable, and reliable SaaS platform that democratizes access to powerful WhatsApp automation tools, adhering to modern engineering standards (Next.js 16, FSD, Strict TypeScript) and providing a seamless user experience from onboarding to advanced automation.
+To build a "Pixel Perfect", scalable, and reliable SaaS platform that democratizes access to powerful omnichannel AI automation tools, adhering to modern engineering standards (Next.js 16, FSD, Strict TypeScript) and providing a seamless user experience from onboarding to advanced automation.

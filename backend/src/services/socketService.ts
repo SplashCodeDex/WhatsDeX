@@ -99,7 +99,7 @@ export class SocketService {
         try {
             const roomName = `tenants:${tenantId}`;
             this.io.to(roomName).emit(event, {
-                ...data,
+                ...(data as any),
                 timestamp: new Date().toISOString()
             });
             return { success: true, data: undefined };
@@ -110,6 +110,20 @@ export class SocketService {
             });
             return { success: false, error: error as Error };
         }
+    }
+
+    /**
+     * Emit granular bot connection progress
+     */
+    public emitBotProgress(tenantId: string, botId: string, step: string, status: 'pending' | 'in_progress' | 'complete' | 'error'): Result<void> {
+        return this.emitToTenant(tenantId, 'bot_progress_update', { botId, step, status });
+    }
+
+    /**
+     * Emit bot activity event (message received, skill triggered, etc.)
+     */
+    public emitActivity(tenantId: string, botId: string, channel: string, type: string, message: string, metadata?: any): Result<void> {
+        return this.emitToTenant(tenantId, 'activity_event', { botId, channel, type, message, metadata });
     }
 
     /**

@@ -4,14 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [x] Track: System Stabilization & Core Wiring (Auth -> Dashboard)
-_Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabilization_20260115/)_
 
----
 
-## [x] Track: Implement plans and billing with Stripe (Starter, Pro, Enterprise tiers) and 7-day free trial.
-*Link: [./conductor/tracks/plans_billing_20260115/](./conductor/tracks/plans_billing_20260115/)*        
----
-
-## [~] Track: WhatsDeX × OpenClaw Omnichannel Integration
-*Link: [./conductor/tracks/openclaw_integration_20260216/](./conductor/tracks/openclaw_integration_20260216/)*
+## [~] Track: Frontend Wiring & Real-time Status
+*Link: [./conductor/tracks/frontend_wiring_20260216/](./conductor/tracks/frontend_wiring_20260216/)*

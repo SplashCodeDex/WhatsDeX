@@ -158,7 +158,19 @@ export class MultiTenantBotService {
 
         // Initialize Telegram Adapter
         try {
+          socketService.emitBotProgress(tenantId, botId, 'Initializing Telegram', 'in_progress');
           const adapter = new TelegramAdapter(tenantId, botId, token);
+          
+          adapter.onMessage(async (event) => {
+            // Forward to existing message handling logic
+            await this.handleIncomingMessage(event.tenantId, event.botId, event.raw);
+            this.log(event.tenantId, event.botId, `Incoming message from ${event.sender}`, 'info');
+            
+            // Emit activity event
+            socketService.emitActivity(event.tenantId, event.botId, event.channelId, 'inbound', `Telegram message from ${event.sender}`);
+          });
+
+          socketService.emitBotProgress(tenantId, botId, 'Connecting to Telegram', 'in_progress');
           await adapter.connect();
           channelManager.registerAdapter(adapter);
 
@@ -166,9 +178,12 @@ export class MultiTenantBotService {
 
           await this.updateBotStatus(tenantId, botId, 'connected');
           this.log(tenantId, botId, 'Telegram Bot connected', 'success');
+          socketService.emitBotProgress(tenantId, botId, 'Bot Connected', 'complete');
+          
           return { success: true, data: undefined };
         } catch (error) {
           logger.error(`Failed to start Telegram Bot ${botId}`, error);
+          socketService.emitBotProgress(tenantId, botId, 'Connection Failed', 'error');
           await this.updateBotStatus(tenantId, botId, 'error');
           return { success: false, error: error as Error };
         }
@@ -181,29 +196,34 @@ export class MultiTenantBotService {
         }
 
         try {
+          socketService.emitBotProgress(tenantId, botId, 'Initializing Adapter', 'in_progress');
           const adapter = new WhatsappAdapter(tenantId, botId);
           
           adapter.onMessage(async (event) => {
             // Forward to existing message handling logic
-            // We'll need to adapt handleIncomingMessage to work with adapter event
-            // or just use the raw message for now to maintain compatibility
             await this.handleIncomingMessage(event.tenantId, event.botId, event.raw);
             this.log(event.tenantId, event.botId, `Incoming message from ${event.sender}`, 'info');
+            
+            // Emit activity event for real-time feed
+            socketService.emitActivity(event.tenantId, event.botId, event.channelId, 'inbound', `Message received from ${event.sender}`);
           });
 
+          socketService.emitBotProgress(tenantId, botId, 'Connecting to WhatsApp', 'in_progress');
           await adapter.connect();
           channelManager.registerAdapter(adapter);
           
-          // Store in activeBots for backward compatibility with other services
-          // We need the socket for some legacy calls
+          // Store in activeBots for backward compatibility
           const socket = (adapter as any).socket;
           this.activeBots.set(botId, socket);
 
           await this.updateBotStatus(tenantId, botId, 'connected');
           this.log(tenantId, botId, 'Whatsapp Bot connected', 'success');
+          socketService.emitBotProgress(tenantId, botId, 'Bot Connected', 'complete');
+          
           return { success: true, data: undefined };
         } catch (error) {
           logger.error(`Failed to start Whatsapp Bot ${botId}`, error);
+          socketService.emitBotProgress(tenantId, botId, 'Connection Failed', 'error');
           await this.updateBotStatus(tenantId, botId, 'error');
           return { success: false, error: error as Error };
         }
@@ -602,6 +622,10 @@ export class MultiTenantBotService {
           await adapter.sendMessage(payload.to, payload.text);
           await this.incrementBotStat(tenantId, botId, 'messagesSent');
           analyticsService.trackMessage(tenantId, 'sent').catch(() => { });
+          
+          // Emit activity event
+          socketService.emitActivity(tenantId, botId, adapter.id, 'outbound', `Response sent to ${payload.to}`);
+          
           return { success: true, data: { status: 'sent', timestamp: Date.now() } };
         } catch (e) {
           const err = e instanceof Error ? e : new Error(String(e));
@@ -641,6 +665,9 @@ export class MultiTenantBotService {
       await this.incrementBotStat(tenantId, botId, 'messagesSent');
       // Track Analytics (Historical)
       analyticsService.trackMessage(tenantId, 'sent').catch(() => { });
+
+      // Emit activity event for real-time feed
+      socketService.emitActivity(tenantId, botId, 'whatsapp', 'outbound', `Response sent to ${jid}`);
 
       return { success: true, data: result };
     } catch (error: unknown) {

@@ -21,7 +21,10 @@
 - **Framework:** Express 5.2.1 (Thin Controllers, Service-Oriented)
 - **Language:** TypeScript 5.9.3
 - **Execution:** `tsx` (TypeScript Execute) - **STRICT: DO NOT use ts-node**
-- **WhatsApp API:** Baileys 7.0.0 (LID Mapping, Custom Auth State persistence)
+- **Omnichannel Engine:** OpenClaw 2026.2.15 (Unified Gateway & Skills Platform)
+- **WhatsApp API:** Baileys 7.0.0 (via OpenClaw Adapter)
+- **Telegram API:** grammY 1.40.0 (via OpenClaw Adapter)
+- **Discord API:** discord.js 14.18.0 (via OpenClaw Adapter)
 - **Job Queues:** BullMQ / BullMQ Pro (Group Isolation for Multi-Tenancy)
 - **Real-time:** WebSockets (Socket.io 4.8.3)
 - **Observability:** OpenTelemetry (Tracing & Metrics, Low-overhead auto-instrumentation)

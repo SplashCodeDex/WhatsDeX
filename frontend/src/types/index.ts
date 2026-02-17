@@ -9,3 +9,4 @@ export type { ActionResult } from './api';
 export * from './firebase';
 export * from './billing';
 export * from './tenantConfig';
+export * from './omnichannel';
