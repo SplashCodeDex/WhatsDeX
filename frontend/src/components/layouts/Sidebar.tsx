@@ -224,7 +224,7 @@ export function Sidebar() {
             <div className="fixed top-4 left-4 z-50 lg:hidden">
                 <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-10 w-10 border border-border/50 rounded-lg bg-background shadow-md hover:bg-muted">
+                        <Button variant="outline" size="icon" className="h-10 w-10 border border-border/50 rounded-xl bg-background shadow-md hover:bg-muted">
                             <Menu className="h-5 w-5" />
                         </Button>
                     </SheetTrigger>
