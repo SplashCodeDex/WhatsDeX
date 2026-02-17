@@ -16,7 +16,11 @@ export function DashboardShell({
     const { isSidebarCollapsed } = useUIStore();
 
     return (
-        <div className="flex h-screen bg-background text-foreground overflow-hidden">
+        <div className="flex h-screen bg-mesh-premium text-foreground overflow-hidden relative">
+            {/* Mastermind Ambient Glow Orbs */}
+            <div className="glow-orb glow-orb-accent -top-24 -right-24 opacity-[0.77] dark:opacity-[0.92] -z-10" />
+            <div className="glow-orb glow-orb-primary -bottom-24 left-1/4 opacity-[0.03] dark:opacity-[0.05] -z-10" />
+
             <Sidebar />
             <main
                 id="main-content"

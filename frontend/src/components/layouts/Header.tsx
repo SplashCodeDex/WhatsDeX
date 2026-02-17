@@ -19,15 +19,41 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function Header() {
     const { user, signOut } = useAuth();
+    const pathname = usePathname();
+
+    // Map routes to human-readable titles
+    const getTitle = (path: string) => {
+        if (path.includes('/dashboard/omnichannel')) return 'Omnichannel Hub';
+        if (path.includes('/dashboard/messages')) return 'Unified Inbox';
+        if (path.includes('/dashboard/contacts')) return 'Contact Directory';
+        if (path.includes('/dashboard/billing')) return 'Subscription & Billing';
+        if (path.includes('/dashboard/settings')) return 'Workspace Settings';
+        if (path === '/dashboard') return 'Dashboard Overview';
+        return 'Dashboard';
+    };
+
+    const title = getTitle(pathname);
 
     return (
         <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between bg-background/50 px-8 backdrop-blur-md transition-all duration-300">
             <div className="flex items-center gap-4">
-                <h1 className="text-lg font-semibold md:text-xl">Dashboard</h1>
+                <AnimatePresence mode="wait">
+                    <motion.h1
+                        key={title}
+                        initial={{ opacity: 0, x: -10, filter: 'blur(10px)' }}
+                        animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, x: 10, filter: 'blur(10px)' }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                        className="text-lg font-bold md:text-xl tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent"
+                    >
+                        {title}
+                    </motion.h1>
+                </AnimatePresence>
             </div>
 
             <div className="flex items-center gap-2">
