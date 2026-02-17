@@ -17,6 +17,7 @@ export interface AuthUser {
     photoURL?: string | null;
     role?: string;
     tenantId?: string | null;
+    planTier?: 'starter' | 'pro' | 'enterprise';
     firebaseToken?: string | null;
     emailVerified?: boolean;
 }

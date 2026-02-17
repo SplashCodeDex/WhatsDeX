@@ -24,10 +24,10 @@ Wire the UI to the real data and implement the "Instant Feedback" connection flo
 - [x] Task: Frontend - Wire `ChannelConnectionForm` to trigger bot creation and handle the "Background Connection" transition ed82513
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Dynamic Hub' (Protocol in workflow.md) ed82513
 
-## Phase 4: Activity Feed & Refinement [checkpoint: pending]
+## Phase 4: Activity Feed & Refinement [checkpoint: 13f4224]
 Build the streaming feed and polish the user experience.
 
-- [x] Task: Frontend - Implement the `ActivityFeed` component with real-time log entries
-- [x] Task: Frontend - Add platform-based filtering to the activity feed
-- [x] Task: Frontend - Ensure automatic reconnection logic for the WebSocket stream
-- [~] Task: Conductor - User Manual Verification 'Phase 4: Activity Feed' (Protocol in workflow.md)
+- [x] Task: Frontend - Implement the `ActivityFeed` component with real-time log entries 13f4224
+- [x] Task: Frontend - Add platform-based filtering to the activity feed 13f4224
+- [x] Task: Frontend - Ensure automatic reconnection logic for the WebSocket stream 13f4224
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Activity Feed' (Protocol in workflow.md) 13f4224

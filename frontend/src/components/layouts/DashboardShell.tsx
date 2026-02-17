@@ -1,9 +1,12 @@
 'use client';
 
-import { Sidebar, Header } from '@/components/layouts';
+import { Sidebar } from './Sidebar';
+import { Header } from './Header';
+import { ScrollToTop } from '../ui/ScrollToTop';
 import { useUIStore } from '@/stores/useUIStore';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { ScrollArea } from '../ui/ScrollArea';
 
 export function DashboardShell({
     children,
@@ -17,19 +20,19 @@ export function DashboardShell({
             <Sidebar />
             <main
                 id="main-content"
-                className="flex flex-1 flex-col w-full h-full pl-20"
-                style={{
-                    transform: isSidebarCollapsed ? 'none' : 'translateX(176px)',
-                    width: isSidebarCollapsed ? '100%' : 'calc(100% - 176px)',
-                    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
+                className={cn(
+                    "flex flex-1 flex-col w-full h-full transition-all duration-300 ease-in-out",
+                    "lg:ml-[256px] lg:w-[calc(100%-256px)]",
+                    isSidebarCollapsed && "lg:ml-[72px] lg:w-[calc(100%-72px)]"
+                )}
             >
                 <Header />
-                <div className="flex-1 overflow-y-auto p-6 md:p-8">
-                    <div className="mx-auto max-w-7xl animate-fade-in space-y-6">
+                <ScrollArea viewportClassName="p-6 md:p-8">
+                    <div className="mx-auto max-w-7xl animate-fade-in space-y-6 pb-24">
                         {children}
                     </div>
-                </div>
+                </ScrollArea>
+                <ScrollToTop />
             </main>
         </div>
     );

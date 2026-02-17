@@ -79,6 +79,52 @@ export const API_ENDPOINTS = {
     // Omnichannel
     OMNICHANNEL: {
         STATUS: '/api/omnichannel/status',
+        CRON: {
+            STATUS: '/api/omnichannel/cron/status',
+            LIST: '/api/omnichannel/cron/jobs',
+            CREATE: '/api/omnichannel/cron/jobs',
+            TOGGLE: (id: string) => `/api/omnichannel/cron/jobs/${id}/toggle` as const,
+            RUN: (id: string) => `/api/omnichannel/cron/jobs/${id}/run` as const,
+            DELETE: (id: string) => `/api/omnichannel/cron/jobs/${id}` as const,
+            RUNS: (id: string) => `/api/omnichannel/cron/jobs/${id}/runs` as const,
+        },
+        SKILLS: {
+            REPORT: '/api/omnichannel/skills/report',
+            TOGGLE: (key: string) => `/api/omnichannel/skills/${key}/toggle` as const,
+            SAVE_KEY: (key: string) => `/api/omnichannel/skills/${key}/key` as const,
+            INSTALL: (key: string) => `/api/omnichannel/skills/${key}/install` as const,
+        },
+        AGENTS: {
+            LIST: '/api/omnichannel/agents',
+            IDENTITY: (id: string) => `/api/omnichannel/agents/${id}/identity` as const,
+            FILES: (id: string) => `/api/omnichannel/agents/${id}/files` as const,
+            CONFIG: (id: string) => `/api/omnichannel/agents/${id}/config` as const,
+        },
+        GATEWAY: {
+            HEALTH: '/api/omnichannel/gateway/health',
+        },
+        USAGE: {
+            TOTALS: '/api/omnichannel/usage/totals',
+            DAILY: '/api/omnichannel/usage/daily',
+            SESSIONS: '/api/omnichannel/usage/sessions',
+            LOGS: (key: string) => `/api/omnichannel/usage/sessions/${key}/logs` as const,
+        },
+        SESSIONS: {
+            LIST: '/api/omnichannel/sessions',
+            DELETE: (key: string) => `/api/omnichannel/sessions/${key}` as const,
+            PATCH: (key: string) => `/api/omnichannel/sessions/${key}` as const,
+        },
+        NODES: {
+            LIST: '/api/omnichannel/nodes',
+            DEVICES: '/api/omnichannel/devices',
+            APPROVE: (id: string) => `/api/omnichannel/devices/${id}/approve` as const,
+            REJECT: (id: string) => `/api/omnichannel/devices/${id}/reject` as const,
+            REVOKE: (id: string) => `/api/omnichannel/devices/${id}/revoke` as const,
+        },
+        LOGS: {
+            LIST: '/api/omnichannel/logs',
+            STREAM: '/api/omnichannel/logs/stream',
+        },
     },
 } as const;
 

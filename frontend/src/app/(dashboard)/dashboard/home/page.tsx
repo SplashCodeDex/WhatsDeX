@@ -12,6 +12,9 @@ import {
 import { cn } from '@/lib/utils';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { isApiSuccess } from '@/types';
+import { GatewayMetrics } from './GatewayMetrics';
+import { ActivityFeed } from '../omnichannel/ActivityFeed';
+import { OmnichannelSocketManager } from '../omnichannel/OmnichannelSocketManager';
 
 export const metadata: Metadata = {
     title: 'Dashboard Overview',
@@ -139,6 +142,8 @@ export default async function DashboardHomePage() {
 
     return (
         <div className="space-y-8">
+            <OmnichannelSocketManager />
+            
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Overview</h2>
                 <p className="text-muted-foreground">
@@ -146,29 +151,20 @@ export default async function DashboardHomePage() {
                 </p>
             </div>
 
-            {/* Stats from Server Component */}
+            {/* Core Stats */}
             <Suspense fallback={<StatsGridSkeleton />}>
                 <StatsGrid />
             </Suspense>
 
+            {/* Gateway Intelligence (OpenClaw) */}
+            <div className="space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Omnichannel Intelligence</h3>
+                <GatewayMetrics />
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <div className="col-span-4 rounded-xl border border-border/50 bg-card p-6 shadow-sm">
-                    <div className="mb-4">
-                        <h3 className="font-semibold leading-none tracking-tight">Recent Activity</h3>
-                        <p className="text-sm text-muted-foreground">
-                            Latest actions performed by your bots.
-                        </p>
-                    </div>
-                    {/* Empty state until activity feed is wired */}
-                    <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed border-border p-8 text-center">
-                        <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-                            <Activity className="h-10 w-10 text-muted-foreground" />
-                            <h3 className="mt-4 text-lg font-semibold">No recent activity</h3>
-                            <p className="mb-4 mt-2 text-sm text-muted-foreground">
-                                Activity logs will appear here once your bots start processing messages.
-                            </p>
-                        </div>
-                    </div>
+                <div className="col-span-4">
+                    <ActivityFeed />
                 </div>
 
                 <div className="col-span-3 rounded-xl border border-border/50 bg-card p-6 shadow-sm">

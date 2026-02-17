@@ -31,10 +31,10 @@ export function CampaignList() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'sending': return <Badge className="bg-primary/20 text-primary border-primary/20 animate-pulse"><Send className="w-3 h-3 mr-1" /> Sending</Badge>;
-            case 'completed': return <Badge className="bg-green-500/20 text-green-500 border-green-500/20"><CheckCircle2 className="w-3 h-3 mr-1" /> Completed</Badge>;
+            case 'completed': return <Badge className="bg-success/20 text-success border-success/20"><CheckCircle2 className="w-3 h-3 mr-1" /> Completed</Badge>;
             case 'draft': return <Badge variant="outline" className="border-border text-muted-foreground">Draft</Badge>;
             case 'error': return <Badge variant="destructive" className="bg-destructive/20 text-destructive border-destructive/20">Error</Badge>;
-            case 'paused': return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-500 border-yellow-500/20"><Pause className="w-3 h-3 mr-1" /> Paused</Badge>;
+            case 'paused': return <Badge variant="secondary" className="bg-warning/20 text-warning border-warning/20"><Pause className="w-3 h-3 mr-1" /> Paused</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;
         }
     };
@@ -77,17 +77,17 @@ export function CampaignList() {
                                 </div>
                                 <Progress value={progress} className="h-2" />
                                 <div className="grid grid-cols-3 gap-2 pt-1">
-                                    <div className="text-center p-1 rounded bg-green-500/5 border border-green-500/10">
+                                    <div className="text-center p-1 rounded bg-success/5 border border-success/10">
                                         <div className="text-[10px] text-muted-foreground uppercase">Sent</div>
-                                        <div className="text-sm font-bold text-green-500">{campaign.stats.sent}</div>
+                                        <div className="text-sm font-bold text-success">{campaign.stats.sent}</div>
                                     </div>
-                                    <div className="text-center p-1 rounded bg-red-500/5 border border-red-500/10">
+                                    <div className="text-center p-1 rounded bg-destructive/5 border border-destructive/10">
                                         <div className="text-[10px] text-muted-foreground uppercase">Failed</div>
-                                        <div className="text-sm font-bold text-red-500">{campaign.stats.failed}</div>
+                                        <div className="text-sm font-bold text-destructive">{campaign.stats.failed}</div>
                                     </div>
-                                    <div className="text-center p-1 rounded bg-blue-500/5 border border-blue-500/10">
+                                    <div className="text-center p-1 rounded bg-primary/5 border border-primary/10">
                                         <div className="text-[10px] text-muted-foreground uppercase">Total</div>
-                                        <div className="text-sm font-bold text-blue-500">{campaign.stats.total}</div>
+                                        <div className="text-sm font-bold text-primary">{campaign.stats.total}</div>
                                     </div>
                                 </div>
                             </div>
@@ -107,7 +107,7 @@ export function CampaignList() {
                                 {campaign.status === 'sending' && (
                                     <Button
                                         size="sm"
-                                        className="h-8 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 border border-yellow-500/20 shadow-none"
+                                        className="h-8 bg-warning/10 text-warning hover:bg-warning/20 border border-warning/20 shadow-none"
                                         onClick={() => pauseMutation.mutate(campaign.id)}
                                         disabled={pauseMutation.isPending}
                                     >
@@ -124,25 +124,25 @@ export function CampaignList() {
                                         <Play className="w-3 h-3 mr-1.5" /> Resume
                                     </Button>
                                 )}
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="h-8 border-border/40 hover:bg-muted/10 group-hover:border-primary/20 transition-all shadow-none"
-                                        asChild
-                                    >
-                                        <Link href={`/dashboard/messages/campaigns/${campaign.id}`}>
-                                            <BarChart3 className="w-3 h-3 mr-1.5" /> Details
-                                        </Link>
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="h-8 border-border/40 hover:bg-muted/10 group-hover:border-primary/20 transition-all shadow-none"
-                                        onClick={() => duplicateMutation.mutate(campaign.id)}
-                                        disabled={duplicateMutation.isPending}
-                                    >
-                                        <Clock className="w-3 h-3 mr-1.5" /> Duplicate
-                                    </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 border-border/40 hover:bg-muted/10 group-hover:border-primary/20 transition-all shadow-none"
+                                    asChild
+                                >
+                                    <Link href={`/dashboard/messages/campaigns/${campaign.id}`}>
+                                        <BarChart3 className="w-3 h-3 mr-1.5" /> Details
+                                    </Link>
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 border-border/40 hover:bg-muted/10 group-hover:border-primary/20 transition-all shadow-none"
+                                    onClick={() => duplicateMutation.mutate(campaign.id)}
+                                    disabled={duplicateMutation.isPending}
+                                >
+                                    <Clock className="w-3 h-3 mr-1.5" /> Duplicate
+                                </Button>
                             </div>
                             <Button
                                 size="sm"

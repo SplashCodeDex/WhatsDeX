@@ -34,18 +34,18 @@
   --color-primary-900: oklch(26% 0.06 155);
   --color-primary-950: oklch(16% 0.04 155);
 
-  /* Accent - Electric violet for highlights */
-  --color-accent-50: oklch(97% 0.02 285);
-  --color-accent-100: oklch(94% 0.04 285);
-  --color-accent-200: oklch(88% 0.08 285);
-  --color-accent-300: oklch(78% 0.14 285);
-  --color-accent-400: oklch(68% 0.18 285);
-  --color-accent-500: oklch(58% 0.20 285);
-  --color-accent-600: oklch(50% 0.18 285);
-  --color-accent-700: oklch(42% 0.16 285);
-  --color-accent-800: oklch(34% 0.12 285);
-  --color-accent-900: oklch(26% 0.08 285);
-  --color-accent-950: oklch(16% 0.04 285);
+  /* Accent - Mastermind Violet (Vibrant & Premium) */
+  --color-accent-50: oklch(96% 0.03 285);
+  --color-accent-100: oklch(92% 0.06 285);
+  --color-accent-200: oklch(84% 0.12 285);
+  --color-accent-300: oklch(74% 0.18 285);
+  --color-accent-400: oklch(64% 0.22 285);
+  --color-accent-500: oklch(56% 0.23 285);
+  --color-accent-600: oklch(48% 0.21 285);
+  --color-accent-700: oklch(40% 0.18 285);
+  --color-accent-800: oklch(32% 0.14 285);
+  --color-accent-900: oklch(24% 0.10 285);
+  --color-accent-950: oklch(14% 0.06 285);
 
   /* Semantic Colors */
   --color-success: oklch(72% 0.19 145);
@@ -56,6 +56,11 @@
   --color-error-foreground: oklch(98% 0.01 27);
   --color-info: oklch(70% 0.14 240);
   --color-info-foreground: oklch(98% 0.01 240);
+
+  /* Glassmorphism Defaults */
+  --glass-bg: oklch(100% 0 0 / 0.05);
+  --glass-blur: 16px;
+  --sidebar-dock-radius: 1.5rem;
 
   /* Neutral Scale (Zinc-based) - Light Mode */
   --color-background: oklch(100% 0 0);
@@ -325,4 +330,57 @@
 
 .skip-link:focus {
   top: 0;
+}
+/* ═══════════════════════════════════════════════════════════════════════════
+ * CUSTOM SCROLLBAR - Premium Mastermind Aesthetic
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+}
+
+.custom-scrollbar.scrollbar-visible {
+  scrollbar-color: var(--accent) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.custom-scrollbar.scrollbar-visible::-webkit-scrollbar-thumb,
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--accent), transparent 85%);
+  border: 1px solid color-mix(in oklch, var(--accent), transparent 95%);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--accent), transparent 60%) !important;
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Hide scrollbars but keep scrolling functionality */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }

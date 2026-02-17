@@ -66,7 +66,7 @@ export function CampaignWizard() {
     const { data: audiences } = useAudiences();
     const { data: templates } = useTemplates();
     const { data: bots } = useBots();
-    
+
     const [state, dispatch, isPending] = useActionState(createCampaign, null);
 
     const [formData, setFormData] = useState<CampaignFormData>({
@@ -343,10 +343,10 @@ export function CampaignWizard() {
                                     <div className="pt-2 border-t border-border/40 mt-2">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-[11px] font-bold uppercase text-muted-foreground flex items-center gap-2">
-                                                <Zap className="w-3 h-3 text-amber-500" />
+                                                <Zap className="w-3 h-3 text-warning" />
                                                 Human Path (Batching)
                                             </span>
-                                            <span className="text-[10px] font-mono bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded">ADVANCED</span>
+                                            <span className="text-[10px] font-mono bg-warning/10 text-warning px-1.5 py-0.5 rounded">ADVANCED</span>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3 mt-3">
                                             <div className="space-y-1.5">
@@ -450,10 +450,10 @@ export function CampaignWizard() {
                             )}
                         </div>
 
-                        <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                        <div className="p-4 rounded-2xl bg-warning/5 border border-warning/20">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                                    <div className="p-2 rounded-lg bg-warning/10 text-warning">
                                         <MessageSquare className="w-4 h-4" />
                                     </div>
                                     <div>
@@ -471,7 +471,7 @@ export function CampaignWizard() {
                                 <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2">
                                     <div className="flex justify-between items-center text-[10px] font-bold uppercase text-muted-foreground mb-1">
                                         <span>Max Typing Delay (Seconds)</span>
-                                        <span className="text-amber-600 font-mono">{formData.maxTypingDelay}s</span>
+                                        <span className="text-warning font-mono">{formData.maxTypingDelay}s</span>
                                     </div>
                                     <Input
                                         type="range"
@@ -480,7 +480,7 @@ export function CampaignWizard() {
                                         step="1"
                                         value={formData.maxTypingDelay}
                                         onChange={e => setFormData(prev => ({ ...prev, maxTypingDelay: Number(e.target.value) }))}
-                                        className="h-4 accent-amber-500"
+                                        className="h-4 accent-warning"
                                         disabled={isPending}
                                     />
                                 </div>

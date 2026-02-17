@@ -24,7 +24,7 @@ The platform operates on a multi-tenant architecture where each customer's data 
 ### 2. Bot Management
 
 - **Initialization:** Users can easily link their WhatsApp account via QR code, or connect Telegram, Discord, and Slack bots using API tokens.
-- **Omnichannel Hub:** Centralized management for all social messaging platforms in a single, high-fidelity UI.
+- **Omnichannel Hub:** Centralized management for all social messaging platforms in a single, high-fidelity UI with real-time status updates and a live activity stream.
 - **Multiple Bots:** Premium users can manage up to two (or more) bots per workspace.
 - **Lifecycle Management:** Ability to add, restart, or delete bots as needed.
 

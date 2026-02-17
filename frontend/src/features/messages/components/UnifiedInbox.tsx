@@ -63,7 +63,7 @@ export function UnifiedInbox() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-1">
-                                <Badge className={msg.status === 'sent' ? 'bg-blue-500/20 text-blue-500' : 'bg-green-500/20 text-green-500'}>
+                                <Badge className={msg.status === 'sent' ? 'bg-primary/20 text-primary' : 'bg-success/20 text-success'}>
                                     {msg.status}
                                 </Badge>
                             </div>

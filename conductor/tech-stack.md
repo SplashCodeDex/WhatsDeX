@@ -26,7 +26,7 @@
 - **Telegram API:** grammY 1.40.0 (via OpenClaw Adapter)
 - **Discord API:** discord.js 14.18.0 (via OpenClaw Adapter)
 - **Job Queues:** BullMQ / BullMQ Pro (Group Isolation for Multi-Tenancy)
-- **Real-time:** WebSockets (Socket.io 4.8.3)
+- **Real-time:** WebSockets (Socket.io 4.8.3 & socket.io-client)
 - **Observability:** OpenTelemetry (Tracing & Metrics, Low-overhead auto-instrumentation)
 - **Logging:** Pino (High-performance, JSON structured)
 - **Testing:** Node.js Native Test Runner (`node --test`) & Vitest 4.0

@@ -1,9 +1,11 @@
 import express, { Request, Response } from 'express';
 import multiTenantBotService from '../services/multiTenantBotService.js';
 import { channelManager } from '../services/channels/ChannelManager.js';
+import { OpenClawGateway } from '../services/openClawGateway.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
+const gateway = OpenClawGateway.getInstance();
 
 /**
  * GET /omnichannel/status
@@ -22,7 +24,6 @@ router.get('/status', async (req: Request, res: Response) => {
     }
 
     const channels = botsResult.data.map(bot => {
-      const adapter = channelManager.getAdapter(bot.id);
       return {
         id: bot.id,
         name: bot.name,
@@ -37,6 +38,54 @@ router.get('/status', async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('Route /omnichannel/status GET error', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /omnichannel/skills/report
+ */
+router.get('/skills/report', async (req: Request, res: Response) => {
+  try {
+    const report = await gateway.getSkillReport();
+    res.json({ success: true, data: report });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch skill report' });
+  }
+});
+
+/**
+ * GET /omnichannel/agents
+ */
+router.get('/agents', async (req: Request, res: Response) => {
+  try {
+    const agents = await gateway.getAgents();
+    res.json({ success: true, data: agents });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch agents' });
+  }
+});
+
+/**
+ * GET /omnichannel/cron/jobs
+ */
+router.get('/cron/jobs', async (req: Request, res: Response) => {
+  try {
+    // Placeholder for now as we need to bridge cron service
+    res.json({ success: true, data: [] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch cron jobs' });
+  }
+});
+
+/**
+ * GET /omnichannel/gateway/health
+ */
+router.get('/gateway/health', async (req: Request, res: Response) => {
+  try {
+    const health = await gateway.getHealth();
+    res.json({ success: true, data: health });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch gateway health' });
   }
 });
 

@@ -70,7 +70,7 @@ function ChannelCard({ channel }: { channel: any }) {
                     </div>
                 </div>
                 <Badge variant={
-                    channel.status === 'connected' ? 'success' :
+                    channel.status === 'connected' ? 'default' :
                     channel.status === 'error' ? 'destructive' :
                     'secondary'
                 } className="capitalize">
