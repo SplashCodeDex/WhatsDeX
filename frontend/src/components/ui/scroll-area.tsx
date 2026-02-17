@@ -8,9 +8,13 @@ import { cn } from "@/lib/utils"
 function ScrollArea({
   className,
   children,
+  viewportClassName,
   showFades = false,
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & { showFades?: boolean }) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
+  showFades?: boolean;
+  viewportClassName?: string;
+}) {
   const [scrollState, setScrollState] = React.useState({
     isAtTop: true,
     isAtBottom: false,
@@ -51,7 +55,7 @@ function ScrollArea({
         ref={viewportRef}
         onScroll={checkScroll}
         data-slot="scroll-area-viewport"
-        className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"
+        className={cn("focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1", viewportClassName)}
         style={{
           maskImage: showFades && scrollState.hasScroll ? `
             linear-gradient(to bottom,

@@ -14,7 +14,7 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ---
 
-## [ ] Track: Unified AI Orchestration
+## [~] Track: Unified AI Orchestration
 *Link: [./conductor/tracks/ai_orchestration_20260217/](./conductor/tracks/ai_orchestration_20260217/)*
 
 

@@ -1,15 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Moon, Sun, Monitor } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function ThemeToggle() {
@@ -27,66 +22,64 @@ export function ThemeToggle() {
             </Button>
         );
     }
+
+    const toggleTheme = () => {
+        setTheme(theme === 'light' ? 'dark' : 'light');
+    };
+
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative focus-visible:ring-offset-0 focus-visible:ring-0 active:scale-95 transition-transform"
-                >
-                    <AnimatePresence mode="wait" initial={false}>
-                        {theme === 'light' && (
-                            <motion.div
-                                key="sun"
-                                initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                                transition={{ duration: 0.2, ease: "easeOut" }}
-                            >
-                                <Sun className="h-[1.2rem] w-[1.2rem] text-primary" />
-                            </motion.div>
-                        )}
-                        {theme === 'dark' && (
-                            <motion.div
-                                key="moon"
-                                initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                                transition={{ duration: 0.2, ease: "easeOut" }}
-                            >
-                                <Moon className="h-[1.2rem] w-[1.2rem] text-primary" />
-                            </motion.div>
-                        )}
-                        {theme === 'system' && (
-                            <motion.div
-                                key="monitor"
-                                initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                                transition={{ duration: 0.2, ease: "easeOut" }}
-                            >
-                                <Monitor className="h-[1.2rem] w-[1.2rem] text-primary" />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                    <span className="sr-only">Toggle theme</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="backdrop-blur-xl bg-background/80 border-border/50">
-                <DropdownMenuItem onClick={() => setTheme('light')} className="gap-2 focus:bg-primary/10">
-                    <Sun className="h-4 w-4" />
-                    <span>Light</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('dark')} className="gap-2 focus:bg-primary/10">
-                    <Moon className="h-4 w-4" />
-                    <span>Dark</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('system')} className="gap-2 focus:bg-primary/10">
-                    <Monitor className="h-4 w-4" />
-                    <span>System</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="relative h-10 w-10 rounded-xl bg-background/50 hover:bg-muted text-muted-foreground shadow-md transition-all duration-300 border border-border/50 overflow-hidden"
+            aria-label="Toggle theme"
+        >
+            <AnimatePresence mode="wait" initial={false}>
+                {theme === 'light' ? (
+                    <motion.div
+                        key="sun"
+                        initial={{ y: 20, opacity: 0, rotate: -45, scale: 0.5 }}
+                        animate={{ y: 0, opacity: 1, rotate: 0, scale: 1 }}
+                        exit={{ y: -20, opacity: 0, rotate: 45, scale: 0.5 }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 20,
+                            duration: 0.3
+                        }}
+                    >
+                        <Sun className="h-5 w-5 text-amber-500 fill-amber-500/20" />
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="moon"
+                        initial={{ y: 20, opacity: 0, rotate: 45, scale: 0.5 }}
+                        animate={{ y: 0, opacity: 1, rotate: 0, scale: 1 }}
+                        exit={{ y: -20, opacity: 0, rotate: -45, scale: 0.5 }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 20,
+                            duration: 0.3
+                        }}
+                    >
+                        <Moon className="h-5 w-5 text-blue-400 fill-blue-400/20" />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Subtle fluent background pulse on toggle */}
+            <motion.div
+                key={theme === 'light' ? 'light-pulse' : 'dark-pulse'}
+                initial={{ scale: 0, opacity: 0.5 }}
+                animate={{ scale: 2, opacity: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className={cn(
+                    "absolute inset-0 rounded-full pointer-events-none",
+                    theme === 'light' ? "bg-amber-400/20" : "bg-blue-400/20"
+                )}
+            />
+        </Button>
     );
 }

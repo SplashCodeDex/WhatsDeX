@@ -48,7 +48,7 @@ export function ScrollToTop() {
                         onClick={scrollToTop}
                         size="icon"
                         className={cn(
-                            "h-12 w-12 rounded-full shadow-2xl",
+                            "h-12 w-12 rounded-xl shadow-2xl",
                             "bg-gradient-to-br from-accent to-primary",
                             "text-primary-foreground",
                             "hover:scale-110 active:scale-95 transition-transform",
@@ -63,7 +63,7 @@ export function ScrollToTop() {
                         <ChevronUp className="h-6 w-6 relative z-10 animate-bounce group-hover:animate-none" />
 
                         {/* Subtle Pulse */}
-                        <span className="absolute inset-0 rounded-full animate-ping bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="absolute inset-0 rounded-xl animate-ping bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </Button>
                 </motion.div>
             )}
