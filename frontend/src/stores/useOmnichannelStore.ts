@@ -100,7 +100,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
             botId,
             channel: 'system',
             type: 'system',
-            message: `${step}: ${status}`,
+            message: `${step}: ${progressStatus}`,
             timestamp: new Date().toISOString()
         });
     }
