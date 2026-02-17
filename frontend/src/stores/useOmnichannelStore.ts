@@ -77,17 +77,21 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     },
 
     handleProgressUpdate: (update) => {
-        const { botId, step, status } = update;
+        const { botId, step, status: progressStatus } = update;
 
         // Map progress status to channel status
         let channelStatus: Channel['status'] = 'connecting';
 
-        if (status === 'complete') channelStatus = 'connected';
-        else if (status === 'error') channelStatus = 'error';
+        if (progressStatus === 'complete') channelStatus = 'connected';
+        else if (progressStatus === 'error') channelStatus = 'error';
 
         set((state) => ({
             channels: state.channels.map((c) =>
-                c.id === botId ? { ...c, status: channelStatus } : c
+                c.id === botId ? {
+                    ...c,
+                    status: channelStatus,
+                    lastProgress: { step, status: progressStatus }
+                } : c
             )
         }));
 

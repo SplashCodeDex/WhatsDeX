@@ -2,7 +2,7 @@
  * Omnichannel Frontend Types
  */
 
-export type ChannelType = 'whatsapp' | 'telegram';
+export type ChannelType = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
 
 export type ChannelStatus =
     | 'connected'
@@ -19,6 +19,10 @@ export interface Channel {
     status: ChannelStatus;
     account: string | null;
     lastActiveAt?: string | Date;
+    lastProgress?: {
+        step: string;
+        status: BotProgressUpdate['status'];
+    };
 }
 
 export interface ActivityEvent {

@@ -69,7 +69,7 @@ describe('useOmnichannelStore', () => {
 
         useOmnichannelStore.getState().updateChannelStatus('bot_1', 'connected');
 
-        expect(useOmnichannelStore.getState().channels[0].status).toBe('connected');
+        expect(useOmnichannelStore.getState().channels[0]!.status).toBe('connected');
     });
 
     it('should add activity events', () => {
@@ -85,8 +85,8 @@ describe('useOmnichannelStore', () => {
 
         const state = useOmnichannelStore.getState();
         expect(state.activity).toHaveLength(1);
-        expect(state.activity[0].message).toBe('Hello');
-        expect(state.activity[0].id).toBeDefined();
+        expect(state.activity[0]!.message).toBe('Hello');
+        expect(state.activity[0]!.id).toBeDefined();
     });
 
     it('should handle progress updates', () => {
@@ -102,8 +102,8 @@ describe('useOmnichannelStore', () => {
         });
 
         const state = useOmnichannelStore.getState();
-        expect(state.channels[0].status).toBe('connected');
+        expect(state.channels[0]!.status).toBe('connected');
         expect(state.activity).toHaveLength(1);
-        expect(state.activity[0].message).toContain('Connecting: complete');
+        expect(state.activity[0]!.message).toContain('Connecting: complete');
     });
 });
