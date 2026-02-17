@@ -38,7 +38,7 @@ import {
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { InsightCard } from './InsightCard';
-import { ScrollArea } from '@/components/ui/ScrollArea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const NAV_GROUPS = [
     {
@@ -243,7 +243,7 @@ export function Sidebar() {
             <aside
                 className={cn(
                     "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] border border-border/40 bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] transition-all duration-300 lg:block overflow-hidden shadow-2xl rounded-[1.5rem]",
-                    isSidebarCollapsed ? "w-[80px]" : "w-64"
+                    isSidebarCollapsed ? "w-[72px]" : "w-64"
                 )}
             >
                 <div className="flex h-full flex-col">

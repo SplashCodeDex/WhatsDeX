@@ -6,7 +6,7 @@ import { ScrollToTop } from '../ui/ScrollToTop';
 import { useUIStore } from '@/stores/useUIStore';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { ScrollArea } from '../ui/ScrollArea';
+import { ScrollArea } from '../ui/scroll-area';
 
 export function DashboardShell({
     children,
