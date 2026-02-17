@@ -1,11 +1,11 @@
 import { MessageContext, GlobalContext } from '../../types/index.js';
 import { z } from 'zod';
-import GeminiService from '../../services/gemini.js';
+import GeminiService, { GeminiToolCall } from '../../services/gemini.js';
 import aiTools from '../../tools/ai-tools.js';
 import chatHistoryManager from '../../utils/chatHistoryManager.js';
 import performanceMonitor from '../../utils/performanceMonitor.js';
 import { RateLimiter } from '../../utils/rateLimiter.js';
-import cache from '../../lib/cache.js';
+import { cacheService as cache } from '../../services/cache.js';
 import redis from '../../lib/redis.js';
 import logger from '../../utils/logger.js';
 
@@ -17,7 +17,7 @@ interface GeminiMessage {
   content: string;
   tool_call_id?: string;
   name?: string;
-  tool_calls?: any[]; // Keep any for now for external library types, or define specific tool call structure
+  tool_calls?: GeminiToolCall[];
 }
 
 export default {

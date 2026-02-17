@@ -3,19 +3,9 @@ import { ContactService } from './contactService.js';
 import { Readable } from 'stream';
 import fs from 'fs';
 
-const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
-    const mockBatchSet = vi.fn();
-    const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
-    const mockBatch = vi.fn(() => ({
-        set: mockBatchSet,
-        commit: mockBatchCommit,
-    }));
-    return { mockBatchSet, mockBatchCommit, mockBatch };
-});
-
 vi.mock('../lib/firebase.js', () => ({
     db: {
-        batch: mockBatch,
+        batch: vi.fn(),
         collection: vi.fn(() => ({
             doc: vi.fn(() => ({
                 collection: vi.fn(() => ({
@@ -29,7 +19,12 @@ vi.mock('../lib/firebase.js', () => ({
 vi.mock('./FirebaseService.js', () => ({
     firebaseService: {
         getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
+        getCollectionWithQuery: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
         setDoc: vi.fn().mockResolvedValue(undefined),
+        batch: vi.fn(() => ({
+            set: vi.fn(),
+            commit: vi.fn().mockResolvedValue(undefined),
+        })),
     }
 }));
 
@@ -65,27 +60,35 @@ describe('ContactService', () => {
 
       expect(result.data.count).toBe(2);
       expect(result.data.errors).toEqual([]);
-      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
-      expect(mockBatchSet).toHaveBeenCalledTimes(2);
 
-      expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+      const batchMock = (firebaseService.batch as any).mock.results[0].value;
+      expect(batchMock.commit).toHaveBeenCalledTimes(1);
+      expect(batchMock.set).toHaveBeenCalledTimes(2);
+
+      expect(batchMock.set).toHaveBeenCalledWith(
+        'contacts',
+        expect.any(String),
         expect.objectContaining({
           name: 'Doe, John',
           phone: '1234567890@s.whatsapp.net',
           email: 'john@example.com',
           tags: ['vip', 'lead'],
-        })
+        }),
+        tenantId,
+        false
       );
 
-      expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+      expect(batchMock.set).toHaveBeenCalledWith(
+        'contacts',
+        expect.any(String),
         expect.objectContaining({
           name: 'Jane Doe',
           phone: '19876543210@s.whatsapp.net',
           email: 'jane@example.com',
           tags: ['new'],
-        })
+        }),
+        tenantId,
+        false
       );
 
       // Verify bot stats update
@@ -105,6 +108,8 @@ describe('ContactService', () => {
       const mockStream = Readable.from(csvData);
       vi.mocked(fs.createReadStream).mockReturnValue(mockStream as any);
 
+      const { firebaseService } = await import('./FirebaseService.js');
+
       const result = await service.importContacts(tenantId, 'dummy_path.csv');
 
       expect(result.success).toBe(true);
@@ -113,8 +118,10 @@ describe('ContactService', () => {
       expect(result.data.count).toBe(1);
       expect(result.data.errors.length).toBe(1);
       expect(result.data.errors[0]).toContain('Row 3: phone: Phone number is required');
-      expect(mockBatchSet).toHaveBeenCalledTimes(1);
-      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+
+      const batchMock = (firebaseService.batch as any).mock.results[0].value;
+      expect(batchMock.set).toHaveBeenCalledTimes(1);
+      expect(batchMock.commit).toHaveBeenCalledTimes(1);
     });
 
     it('should return an error for empty or invalid CSV data', async () => {

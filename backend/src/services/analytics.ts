@@ -97,6 +97,7 @@ class AnalyticsService {
     const tenantPath = `tenants/${tenantId}`;
 
     // Workspace-isolated queries
+    // We keep using db here for .count() as firebaseService doesn't support count() yet
     const commandCount = (await db.collection(`${tenantPath}/command_usage`).where('usedAt', '>=', oneDayAgo).count().get()).data().count;
     const aiCount = (await db.collection(`${tenantPath}/command_usage`).where('category', '==', 'ai-chat').count().get()).data().count;
     const errorCount = (await db.collection(`${tenantPath}/command_usage`).where('success', '==', false).count().get()).data().count;
@@ -150,7 +151,7 @@ class AnalyticsService {
         date,
         {
           date,
-          [field]: admin.firestore.FieldValue.increment(1),
+          [field]: admin.firestore.FieldValue.increment(1) as any,
           updatedAt: new Date()
         },
         tenantId,
@@ -165,16 +166,16 @@ class AnalyticsService {
 
   async getHistoricalMetrics(tenantId: string, days = 7): Promise<Result<AnalyticsData[]>> {
     try {
-      const metrics = await firebaseService.getCollection<'tenants/{tenantId}/analytics'>(
+      const metrics = await firebaseService.getCollectionWithQuery<'tenants/{tenantId}/analytics'>(
         'analytics',
-        tenantId
+        tenantId,
+        {
+          orderBy: [{ field: 'date', direction: 'desc' }],
+          limit: days
+        }
       );
-      // Sort and limit in memory for now, or use Firestore queries if supported by getCollection
-      const sorted = metrics
-        .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, days);
 
-      return { success: true, data: sorted };
+      return { success: true, data: metrics };
     } catch (error: any) {
       logger.error('Failed to get historical metrics', error);
       return { success: false, error };
@@ -183,7 +184,10 @@ class AnalyticsService {
 
   async trackEvent(tenantId: string, userId: string, event: string, properties: any = {}): Promise<Result<void>> {
     try {
-      // Use tenant-specific collection for events
+      // Use logical name 'events' which maps to tenants/{tenantId}/events if we add it to SchemaMap
+      // But 'events' is not in SchemaMap.
+      // Let's add it or use direct db for now but scroped.
+      // Actually, standardizing ALL collections in SchemaMap is better.
       await db.collection(`tenants/${tenantId}/events`).add({
         userId,
         event: `event_${event}`,

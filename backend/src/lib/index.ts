@@ -6,7 +6,7 @@
  */
 
 // Cache utilities
-export { default as cache } from './cache.js';
+export { default as cache } from '../services/cache.js';
 export { default as redis } from './redis.js';
 
 // File utilities

@@ -1,6 +1,7 @@
 import redis from '../lib/redis.js';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
+import crypto from 'node:crypto';
 
 export class CacheService {
   private static instance: CacheService;
@@ -45,7 +46,7 @@ export class CacheService {
 
   createKey(data: any): string {
     const serialized = typeof data === 'string' ? data : JSON.stringify(data);
-    return `cache:${Buffer.from(serialized).toString('base64').substring(0, 32)}`;
+    return crypto.createHash('md5').update(serialized).digest('hex');
   }
 
   async get<T>(key: string): Promise<Result<T | null>> {
@@ -177,6 +178,29 @@ export class CacheService {
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Cache.ttl error [${key}]:`, err);
+      return { success: false, error: err };
+    }
+  }
+
+  /**
+   * Invalidate all keys matching a pattern (e.g., 'gemini:*')
+   * Note: KEYS command can be slow on large datasets; consider SCAN for production
+   */
+  async invalidatePattern(pattern: string): Promise<Result<number>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
+    }
+
+    try {
+      const keys = await this.client.keys(pattern);
+      if (keys.length === 0) {
+        return { success: true, data: 0 };
+      }
+      await this.client.del(...keys);
+      return { success: true, data: keys.length };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.invalidatePattern error [${pattern}]:`, err);
       return { success: false, error: err };
     }
   }

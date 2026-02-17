@@ -39,7 +39,7 @@ export class ContactService {
     let count = 0;
     let rowIndex = 0;
     const BATCH_SIZE = 500;
-    let currentBatch = db.batch();
+    let currentBatch = firebaseService.batch();
     let currentBatchSize = 0;
     const batchPromises: Promise<any>[] = [];
 
@@ -64,7 +64,8 @@ export class ContactService {
           tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
           attributes: rawData,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          status: 'active' as const
         };
 
         const validation = ContactSchema.safeParse(contactData);
@@ -72,17 +73,19 @@ export class ContactService {
           const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
           errors.push(`Row ${rowIndex + 1}: ${msg}`);
         } else {
-          const contactRef = db.collection('tenants')
-            .doc(tenantId)
-            .collection('contacts')
-            .doc(contactData.id);
-          currentBatch.set(contactRef, validation.data);
+          currentBatch.set(
+            'contacts',
+            contactData.id,
+            validation.data,
+            tenantId,
+            false // Not a merge, full set
+          );
           count++;
           currentBatchSize++;
 
           if (currentBatchSize >= BATCH_SIZE) {
             batchPromises.push(currentBatch.commit());
-            currentBatch = db.batch();
+            currentBatch = firebaseService.batch();
             currentBatchSize = 0;
           }
         }
@@ -144,8 +147,12 @@ export class ContactService {
    */
   public async listContacts(tenantId: string, limit: number = 100): Promise<Result<Contact[]>> {
     try {
-      const contacts = await firebaseService.getCollection('tenants/{tenantId}/contacts' as any, tenantId) as Contact[];
-      return { success: true, data: contacts.slice(0, limit) };
+      const contacts = await firebaseService.getCollectionWithQuery<'tenants/{tenantId}/contacts'>(
+        'contacts',
+        tenantId,
+        { limit }
+      );
+      return { success: true, data: contacts };
     } catch (error: unknown) {
       logger.error('ContactService.listContacts error', error);
       return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
@@ -163,11 +170,12 @@ export class ContactService {
         id,
         tenantId,
         createdAt: data.createdAt || new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        status: data.status || 'active'
       };
 
       const validated = ContactSchema.parse(contactData);
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, id, validated, tenantId, false);
+      await firebaseService.setDoc('contacts', id, validated, tenantId, false);
       return { success: true, data: validated };
     } catch (error: unknown) {
       logger.error('ContactService.createContact error', error);
@@ -184,7 +192,7 @@ export class ContactService {
         ...updates,
         updatedAt: new Date()
       };
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, contactId, contactData, tenantId, true);
+      await firebaseService.setDoc('contacts', contactId, contactData, tenantId, true);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.updateContact error', error);
@@ -197,7 +205,7 @@ export class ContactService {
    */
   public async deleteContact(tenantId: string, contactId: string): Promise<Result<void>> {
     try {
-      await firebaseService.deleteDoc('tenants/{tenantId}/contacts' as any, contactId, tenantId);
+      await firebaseService.deleteDoc('contacts', contactId, tenantId);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.deleteContact error', error);
@@ -210,7 +218,7 @@ export class ContactService {
    */
   public async getAudience(tenantId: string): Promise<Result<any[]>> {
     try {
-      const audiences = await firebaseService.getCollection('tenants/{tenantId}/audiences' as any, tenantId);
+      const audiences = await firebaseService.getCollection('audiences', tenantId);
       return { success: true, data: audiences };
     } catch (error: unknown) {
       logger.error('Error fetching audience', error);
