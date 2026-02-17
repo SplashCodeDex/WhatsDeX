@@ -74,9 +74,10 @@ export interface BotMemberDocument {
   username?: string;
   coin: number;
   level: number;
+  xp: number;
   winGame: number;
-  autolevelup?: boolean;
-  banned?: boolean;
+  autolevelup: boolean;
+  banned: boolean;
   afk?: {
     reason: string | null;
     timestamp: number;

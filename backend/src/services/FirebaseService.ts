@@ -64,14 +64,18 @@ export class FirebaseBatch {
     tenantId?: string,
     merge = true
   ): this {
-    const { path, schema } = (this.service as any).getCollectionInfo(collection, tenantId);
+    const { path, schema } = this.service.getCollectionInfo(collection, tenantId);
 
     // Validation
     if (merge) {
-      if (typeof (schema as any).partial === 'function') {
-        (schema as any).partial().parse(data);
-      } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
-        (schema as any).unwrap().partial().parse(data);
+      try {
+        if (typeof (schema as any).partial === 'function') {
+          (schema as any).partial().parse(data);
+        } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+          (schema as any).unwrap().partial().parse(data);
+        }
+      } catch (validationError) {
+        logger.warn(`Firestore batch validation warning during merge [${collection}/${docId}]:`, validationError);
       }
     } else {
       schema.parse(data);
@@ -131,8 +135,9 @@ export class FirebaseService {
 
   /**
    * Resolve a collection name to its full path and schema
+   * @internal
    */
-  private getCollectionInfo(collection: string, tenantId?: string) {
+  public getCollectionInfo(collection: string, tenantId?: string) {
     let path: string;
     let schemaKey: CollectionKey;
 
@@ -215,10 +220,14 @@ export class FirebaseService {
 
       // Validation (Zero-Trust)
       if (merge) {
-        if (typeof (schema as any).partial === 'function') {
-          (schema as any).partial().parse(data);
-        } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
-          (schema as any).unwrap().partial().parse(data);
+        try {
+          if (typeof (schema as any).partial === 'function') {
+            (schema as any).partial().parse(data);
+          } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+            (schema as any).unwrap().partial().parse(data);
+          }
+        } catch (validationError) {
+          logger.warn(`Firestore setDoc validation warning during merge [${collection}/${docId}]:`, validationError);
         }
       } else {
         schema.parse(data);

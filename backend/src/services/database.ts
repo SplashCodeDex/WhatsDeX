@@ -115,7 +115,7 @@ export class DatabaseService {
                     limit
                 }
             );
-            return members;
+            return members as unknown as BotMember[];
         } catch (error: unknown) {
             logger.error(`DatabaseService.getLeaderboard error [${tenantId}]:`, error);
             return [];
