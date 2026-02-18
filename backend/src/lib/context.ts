@@ -13,6 +13,8 @@ import { databaseService } from '../services/database.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { userService } from '../services/userService.js';
 import { tenantConfigService } from '../services/tenantConfigService.js';
+import { WhatsDeXToolBridge } from '../services/WhatsDeXToolBridge.js';
+import { OpenClawSkillBridge } from '../services/OpenClawSkillBridge.js';
 
 /**
  * Initialize and return the fully prepared global context
@@ -47,6 +49,17 @@ async function initializeContext(): Promise<GlobalContext> {
 
     // Load commands eagerly
     await commandSystem.loadCommands();
+
+    // 2026 Edition: Bridge tools for AI
+    logger.info('Bridging tools for Agentic Brain...');
+    
+    // We need a temporary bot mock to extract commands for bridging
+    // since commands are tied to bot instances in WhatsDeX
+    const mockBot = { cmd: commandSystem.getCommands() } as any;
+    WhatsDeXToolBridge.registerCommands(mockBot);
+    
+    // Register OpenClaw Skills
+    await OpenClawSkillBridge.registerSkills();
 
     return context;
 }

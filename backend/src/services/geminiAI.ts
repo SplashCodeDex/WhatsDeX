@@ -8,6 +8,7 @@ import { Bot, GlobalContext, MessageContext, Result } from '../types/index.js';
 import { CommonMessage } from '../types/omnichannel.js';
 import { databaseService } from './database.js';
 import { cacheService } from './cache.js';
+import { toolRegistry } from './toolRegistry.js';
 
 interface AIDecisionEngine {
   confidenceThreshold: number;
@@ -58,7 +59,7 @@ export class GeminiAI extends EventEmitter {
       learningEnabled: true
     };
 
-    logger.info('Gemini AI initialized with Rule 5 Memoization');
+    logger.info('Gemini AI initialized with Rule 5 Memoization and Unified Tool Registry');
   }
 
   /**
@@ -105,27 +106,86 @@ export class GeminiAI extends EventEmitter {
       const userId = message.from;
       const text = message.content.text || '';
 
-      // Rule 5+: Semantic Memoization
-      const intelligence: AIAnalysis = await this.gemini.getManager().execute(async () => {
-        logger.info(`Rule 5+: Performing live semantic analysis for ${userId} on ${message.platform}`);
+      // Build context
+      const context = await this.buildGenericContext(tenantId, botId, userId, text, message);
 
-        // Build comprehensive context
-        const context = await this.buildGenericContext(tenantId, botId, userId, text, message);
+      // 1. Retrieve Historical Context (RAG)
+      const historyResult = await memoryService.retrieveRelevantContext(userId, text);
+      let historicalContext = '';
+      if (historyResult.success && historyResult.data?.length > 0) {
+        historicalContext = "\n[HISTORICAL CONTEXT]:\n" +
+          historyResult.data.map(h => `- ${h.content} (on ${new Date(h.timestamp).toLocaleDateString()})`).join("\n");
+      }
 
-        // Multi-layer intelligence processing
-        return await this.analyzeGenericIntelligence(tenantId, botId, text, context);
+      const personality = 'a professional assistant';
+      const systemPrompt = `You are a high-intelligence AI agent.
+Role: ${personality}
+Context: Omnichannel Mastermind.
+Current Time: ${new Date().toLocaleString()}
+User: ${JSON.stringify(context.user)}
+Platform: ${message.platform}
+${historicalContext}
+Use the tools provided to fulfill user requests accurately. If a tool result is not what was expected, explain and offer alternatives.`;
+
+      // Rule 5+: Semantic Memoization + Tool Loop (Agentic)
+      const finalResponse = await this.gemini.getManager().execute(async () => {
+        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform}`);
+
+        const messages = [{ role: 'user', content: text }];
+        let loopCount = 0;
+        const maxLoops = this.decisionEngine.maxToolCalls;
+
+        while (loopCount < maxLoops) {
+          const response = await this.gemini.getChatCompletionWithTools(messages, toolRegistry.getAllTools().map(t => ({
+            function: {
+              name: t.name,
+              description: t.description,
+              parameters: t.parameters
+            }
+          })));
+
+          if (response.finish_reason === 'tool_calls' && response.message.tool_calls) {
+            messages.push({ role: 'assistant', content: response.message.content || '', tool_calls: response.message.tool_calls });
+            
+            for (const toolCall of response.message.tool_calls) {
+              try {
+                const args = JSON.parse(toolCall.function.arguments);
+                const result = await toolRegistry.executeTool(toolCall.function.name, args, { 
+                  ...context,
+                  tenantId,
+                  botId,
+                  platform: message.platform,
+                  userId 
+                });
+                
+                messages.push({ 
+                  role: 'tool', 
+                  tool_call_id: toolCall.id, 
+                  content: typeof result === 'string' ? result : JSON.stringify(result) 
+                });
+              } catch (toolError: any) {
+                messages.push({ 
+                  role: 'tool', 
+                  tool_call_id: toolCall.id, 
+                  content: `Error: ${toolError.message}` 
+                });
+              }
+            }
+            loopCount++;
+          } else {
+            return response.message.content;
+          }
+        }
+
+        return "I've reached my maximum reasoning steps for this request. Here is what I've gathered so far.";
       }, {
         prompt: text,
         timeoutMs: 120000
       });
 
-      // Execute intelligent response
-      const contextForExecution = await this.buildGenericContext(tenantId, botId, userId, text, message);
-      const { finalResponse } = await this.executeGenericResponse(tenantId, botId, intelligence, message, contextForExecution);
-
       // Learn and Store Memory
-      await this.learnFromInteractionGeneric(tenantId, botId, userId, text, intelligence);
-
+      // (intelligence object would be needed here for confidence, but we simplified the loop)
+      
       // Store in Vector Memory
       await memoryService.storeConversation(userId, text, {
         botId: botId,

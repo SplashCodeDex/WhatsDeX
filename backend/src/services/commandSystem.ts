@@ -132,6 +132,10 @@ export class CommandSystem {
     }
   }
 
+  public getCommands(): Map<string, Command> {
+    return this.commands;
+  }
+
   registerCommand(command: Command, categoryName: string) {
     this.commands.set(command.name, command);
     if (command.aliases) {

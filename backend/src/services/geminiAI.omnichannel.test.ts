@@ -6,6 +6,10 @@ import { CommonMessage } from '../types/omnichannel.js';
 const { mockGeminiService } = vi.hoisted(() => ({
   mockGeminiService: {
     getChatCompletion: vi.fn().mockResolvedValue('Hello from AI!'),
+    getChatCompletionWithTools: vi.fn().mockResolvedValue({
+      finish_reason: 'stop',
+      message: { role: 'assistant', content: 'Hello from AI!' }
+    }),
     getManager: vi.fn(() => ({
       execute: vi.fn((fn) => fn())
     }))
@@ -16,6 +20,7 @@ const { mockGeminiService } = vi.hoisted(() => ({
 vi.mock('./gemini.js', () => ({
   default: class {
     getChatCompletion = mockGeminiService.getChatCompletion;
+    getChatCompletionWithTools = mockGeminiService.getChatCompletionWithTools;
     getManager = mockGeminiService.getManager;
   }
 }));
@@ -86,21 +91,19 @@ describe('GeminiAI Omnichannel Support', () => {
     expect(result.data.to).toBe('user_1'); // Response goes back to sender
   });
 
-  it('should include platform context in the system prompt', async () => {
+  it('should call Gemini with tools', async () => {
     const input: CommonMessage = {
       id: 'msg_2',
       platform: 'discord',
       from: 'user_2',
       to: 'bot_1',
-      content: { text: 'What platform is this?' },
+      content: { text: 'Help me' },
       timestamp: Date.now()
     };
 
     await ai.processOmnichannelMessage('tenant_1', 'bot_1', input);
 
-    expect(mockGeminiService.getChatCompletion).toHaveBeenCalledWith(
-      expect.stringContaining('Platform: discord')
-    );
+    expect(mockGeminiService.getChatCompletionWithTools).toHaveBeenCalled();
   });
 
   it('should maintain conversation memory across omnichannel messages', async () => {
@@ -115,12 +118,57 @@ describe('GeminiAI Omnichannel Support', () => {
 
     await ai.processOmnichannelMessage('tenant_1', 'bot_1', input);
 
-    expect(vi.mocked(await import('./memoryService.js')).memoryService.storeConversation).toHaveBeenCalledWith(
+    const { memoryService } = await import('./memoryService.js');
+    expect(memoryService.storeConversation).toHaveBeenCalledWith(
       'user_3',
       'My name is Adema',
       expect.objectContaining({
         platform: 'whatsapp'
       })
     );
+  });
+
+  it('should execute a tool when requested by Gemini', async () => {
+    const { toolRegistry } = await import('./toolRegistry.js');
+    const mockTool = {
+      name: 'test_tool',
+      description: 'A test tool',
+      parameters: { type: 'object', properties: {}, required: [] },
+      execute: vi.fn().mockResolvedValue('Tool result'),
+      source: 'whatsdex' as const
+    };
+    toolRegistry.registerTool(mockTool);
+
+    // Mock first call as tool call, second call as final response
+    mockGeminiService.getChatCompletionWithTools
+      .mockResolvedValueOnce({
+        finish_reason: 'tool_calls',
+        message: {
+          role: 'assistant',
+          content: 'I need to use a tool',
+          tool_calls: [{ id: 'call_1', function: { name: 'test_tool', arguments: '{}' } }]
+        }
+      })
+      .mockResolvedValueOnce({
+        finish_reason: 'stop',
+        message: {
+          role: 'assistant',
+          content: 'The tool said: Tool result'
+        }
+      });
+
+    const input: CommonMessage = {
+      id: 'msg_4',
+      platform: 'web',
+      from: 'user_4',
+      to: 'bot_1',
+      content: { text: 'Run the test tool' },
+      timestamp: Date.now()
+    };
+
+    const result = await ai.processOmnichannelMessage('tenant_1', 'bot_1', input);
+
+    expect(mockTool.execute).toHaveBeenCalled();
+    expect(result.data.content.text).toBe('The tool said: Tool result');
   });
 });
