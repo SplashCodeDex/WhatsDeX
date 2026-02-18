@@ -1,6 +1,7 @@
 import { Bot } from "grammy";
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
 import { sendMessageTelegram } from "../../../../../openclaw/src/telegram/send.js";
+import { CommonMessage } from "../../../types/omnichannel.js";
 import logger from "@/utils/logger.js";
 
 /**
@@ -78,6 +79,11 @@ export class TelegramAdapter implements ChannelAdapter {
       to: target,
       message: text
     });
+  }
+
+  public async sendCommon(message: CommonMessage): Promise<void> {
+    // Basic implementation for Phase 1
+    await this.sendMessage(message.to, message.content.text || '');
   }
 
   public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {

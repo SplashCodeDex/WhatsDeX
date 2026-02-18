@@ -1,5 +1,6 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
+import { CommonMessage } from "../../../types/omnichannel.js";
 import logger from "@/utils/logger.js";
 
 /**
@@ -77,6 +78,11 @@ export class DiscordAdapter implements ChannelAdapter {
     } else {
       throw new Error(`Invalid Discord channel ID: ${target}`);
     }
+  }
+
+  public async sendCommon(message: CommonMessage): Promise<void> {
+    // Basic implementation for Phase 1
+    await this.sendMessage(message.to, message.content.text || '');
   }
 
   public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {

@@ -1,3 +1,5 @@
+import { CommonMessage } from '../../types/omnichannel';
+
 export type ChannelId = string;
 
 /**
@@ -42,6 +44,12 @@ export interface ChannelAdapter {
    * @param content The message content (text, media, etc.).
    */
   sendMessage(target: string, content: any): Promise<void>;
+
+  /**
+   * Sends a standardized common message through this channel.
+   * @param message The common message object.
+   */
+  sendCommon(message: CommonMessage): Promise<void>;
 
   /**
    * Registers a handler for inbound messages.

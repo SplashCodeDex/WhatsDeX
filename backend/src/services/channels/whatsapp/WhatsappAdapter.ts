@@ -1,3 +1,4 @@
+import { CommonMessage } from '../../../types/omnichannel.js';
 import { ChannelAdapter, InboundMessageEvent } from '../ChannelAdapter.js';
 import AuthSystem from '@/services/authSystem.js';
 import logger from '@/utils/logger.js';
@@ -69,6 +70,12 @@ export class WhatsappAdapter implements ChannelAdapter {
     // Support simple text or full Baileys content object
     const payload = typeof content === 'string' ? { text: content } : content;
     await this.socket.sendMessage(jid, payload);
+  }
+
+  public async sendCommon(message: CommonMessage): Promise<void> {
+    // Basic implementation for Phase 1
+    // In Phase 1.3 we will implement robust formatting
+    await this.sendMessage(message.to, message.content.text || '');
   }
 
   public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {
