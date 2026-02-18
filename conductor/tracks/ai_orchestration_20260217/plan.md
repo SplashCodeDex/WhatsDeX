@@ -11,9 +11,9 @@ Define the universal language the AI and Adapters will use to communicate.
 ## Phase 2: Core AI Decoupling (TDD)
 Refactor the GeminiAI service to be platform-agnostic.
 
-- [ ] Task: Test - Write failing tests for `GeminiAI` ensuring it can process messages from any channel
-- [ ] Task: Implement - Refactor `geminiAI.ts` to remove Baileys-specific dependencies and return `CommonMessage`
-- [ ] Task: Test - Verify AI maintains the correct personality and intent detection across different channel inputs
+- [x] Task: Test - Write failing tests for `GeminiAI` ensuring it can process messages from any channel (f6b0570)
+- [x] Task: Implement - Refactor `geminiAI.ts` to remove Baileys-specific dependencies and return `CommonMessage` (f6b0570)
+- [x] Task: Test - Verify AI maintains the correct personality and intent detection across different channel inputs (f6b0570)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: AI Decoupling' (Protocol in workflow.md)
 
 ## Phase 3: Unified Tool Registry & Bridges
