@@ -5,7 +5,7 @@ Define the universal language the AI and Adapters will use to communicate.
 
 - [x] Task: Backend - Define `CommonMessage` and `CommonAttachment` interfaces in `types/omnichannel.ts` (85d0996)
 - [x] Task: Backend - Update `ChannelAdapter` interface to support `sendCommon(message: CommonMessage)` (7c200c7)
-- [ ] Task: Backend - Implement platform-specific formatting in `WhatsappAdapter` (Text), `TelegramAdapter` (Markdown), and `DiscordAdapter` (Embeds)
+- [x] Task: Backend - Implement platform-specific formatting in `WhatsappAdapter` (Text), `TelegramAdapter` (Markdown), and `DiscordAdapter` (Embeds) (b694b7b)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Common Interface' (Protocol in workflow.md)
 
 ## Phase 2: Core AI Decoupling (TDD)
