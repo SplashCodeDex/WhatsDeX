@@ -1,4 +1,4 @@
-import { loadWorkspaceSkillEntries } from '../../../../openclaw/src/agents/skills/workspace.js';
+import { loadWorkspaceSkillEntries } from '../../../openclaw/src/agents/skills/workspace.js';
 import logger from '@/utils/logger.js';
 
 /**

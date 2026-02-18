@@ -1,8 +1,8 @@
 import { startGatewayServer } from 'openclaw';
-import { loadWorkspaceSkillEntries } from '../../openclaw/src/agents/skills/workspace.js';
-import { resolveDefaultAgentId } from '../../openclaw/src/agents/agent-scope.js';
-import { listGatewayAgents } from '../../openclaw/src/gateway/server-methods/agents.js';
-import { getHealthCache } from '../../openclaw/src/gateway/server/health-state.js';
+import { loadWorkspaceSkillEntries } from '../../../openclaw/src/agents/skills/workspace.js';
+import { resolveDefaultAgentId } from '../../../openclaw/src/agents/agent-scope.js';
+import { listGatewayAgents } from '../../../openclaw/src/gateway/server-methods/agents.js';
+import { getHealthCache } from '../../../openclaw/src/gateway/server/health-state.js';
 
 /**
  * OpenClawGateway is a singleton service that manages the lifecycle
