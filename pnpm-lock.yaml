@@ -142,6 +142,9 @@ importers:
       multer:
         specifier: ^2.0.2
         version: 2.0.2
+      node-cache:
+        specifier: ^5.1.2
+        version: 5.1.2
       openclaw:
         specifier: workspace:*
         version: link:../openclaw
@@ -218,6 +221,9 @@ importers:
       '@types/node':
         specifier: ^25.0.10
         version: 25.2.3
+      '@types/node-cache':
+        specifier: ^4.2.5
+        version: 4.2.5
       '@types/supertest':
         specifier: ^6.0.3
         version: 6.0.3
@@ -4066,6 +4072,10 @@ packages:
   '@types/mysql@2.15.27':
     resolution: {integrity: sha512-YfWiV16IY0OeBfBCk8+hXKmdTKrKlwKN1MNKAPBu5JYxLwBEZl7QzeEpGnlZb3VMGJrrGmB84gXiH+ofs/TezA==}
 
+  '@types/node-cache@4.2.5':
+    resolution: {integrity: sha512-faK2Owokboz53g8ooq2dw3iDJ6/HMTCIa2RvMte5WMTiABy+wA558K+iuyRtlR67Un5q9gEKysSDtqZYbSa0Pg==}
+    deprecated: This is a stub types definition. node-cache provides its own type definitions, so you do not need this installed.
+
   '@types/node@10.17.60':
     resolution: {integrity: sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw==}
 
@@ -4770,6 +4780,10 @@ packages:
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
+
+  clone@2.1.2:
+    resolution: {integrity: sha512-3Pe/CF1Nn94hyhIYpjtiLhdCoEoz0DqQ+988E9gmeEdQZlojxnOb74wctFyuwWQHzqyf9X7C7MG8juUpqBJT8w==}
+    engines: {node: '>=0.8'}
 
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
@@ -6621,6 +6635,10 @@ packages:
 
   node-abort-controller@3.1.1:
     resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==}
+
+  node-cache@5.1.2:
+    resolution: {integrity: sha512-t1QzWwnk4sjLWaQAS8CHgOJ+RAfmHpxFWmc36IWTiWHQfs0w5JDMBS1b1ZxQteo0vVVuWJvIUKHDkkeK7vIGCg==}
+    engines: {node: '>= 8.0.0'}
 
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
@@ -12448,6 +12466,10 @@ snapshots:
     dependencies:
       '@types/node': 25.2.3
 
+  '@types/node-cache@4.2.5':
+    dependencies:
+      node-cache: 5.1.2
+
   '@types/node@10.17.60': {}
 
   '@types/node@22.19.11':
@@ -13252,6 +13274,8 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
+
+  clone@2.1.2: {}
 
   clsx@2.1.1: {}
 
@@ -15403,6 +15427,10 @@ snapshots:
       - babel-plugin-macros
 
   node-abort-controller@3.1.1: {}
+
+  node-cache@5.1.2:
+    dependencies:
+      clone: 2.1.2
 
   node-domexception@1.0.0: {}
 

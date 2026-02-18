@@ -1,17 +1,27 @@
 import redis from '../lib/redis.js';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
+import NodeCache from 'node-cache';
 
 export class CacheService {
   private static instance: CacheService;
   private client: typeof redis;
+  private memoryCache: NodeCache;
   private isConnected: boolean;
+  private useMemoryFallback: boolean;
   private defaultTTL: number;
 
   private constructor() {
     this.client = redis;
     this.isConnected = false;
+    this.useMemoryFallback = true;
     this.defaultTTL = 3600; // 1 hour
+    
+    // Initialize memory cache as fallback
+    this.memoryCache = new NodeCache({
+      stdTTL: this.defaultTTL,
+      checkperiod: 120
+    });
 
     this.setupListeners();
   }
@@ -25,13 +35,16 @@ export class CacheService {
 
   private setupListeners(): void {
     this.client.on('error', (err: Error) => {
-      logger.error('Redis Error:', err);
+      // Don't flood logs with connection errors if we're using fallback
+      if (this.isConnected) {
+        logger.error('Redis Error:', err);
+      }
       this.isConnected = false;
     });
 
     this.client.on('connect', () => {
       this.isConnected = true;
-      logger.info('Redis Connected');
+      logger.info('✅ Redis Connected - Switching to distributed cache');
     });
 
     this.client.on('ready', () => {
@@ -40,6 +53,7 @@ export class CacheService {
 
     this.client.on('end', () => {
       this.isConnected = false;
+      logger.warn('⚠️ Redis Connection Ended - Falling back to memory cache');
     });
   }
 
@@ -50,6 +64,10 @@ export class CacheService {
 
   async get<T>(key: string): Promise<Result<T | null>> {
     if (!this.isConnected) {
+      if (this.useMemoryFallback) {
+        const val = this.memoryCache.get<T>(key);
+        return { success: true, data: val !== undefined ? val : null };
+      }
       return { success: false, error: new Error('Cache not connected') };
     }
 
@@ -71,8 +89,15 @@ export class CacheService {
   }
 
   async set(key: string, value: any, ttlSeconds: number = this.defaultTTL): Promise<Result<void>> {
+    // Always update memory cache if enabled
+    if (this.useMemoryFallback) {
+      this.memoryCache.set(key, value, ttlSeconds);
+    }
+
     if (!this.isConnected) {
-      return { success: false, error: new Error('Cache not connected') };
+      return this.useMemoryFallback 
+        ? { success: true, data: undefined }
+        : { success: false, error: new Error('Cache not connected') };
     }
 
     try {
@@ -87,8 +112,14 @@ export class CacheService {
   }
 
   async delete(key: string): Promise<Result<void>> {
+    if (this.useMemoryFallback) {
+      this.memoryCache.del(key);
+    }
+
     if (!this.isConnected) {
-      return { success: false, error: new Error('Cache not connected') };
+      return this.useMemoryFallback 
+        ? { success: true, data: undefined }
+        : { success: false, error: new Error('Cache not connected') };
     }
 
     try {
@@ -103,6 +134,9 @@ export class CacheService {
 
   async exists(key: string): Promise<Result<boolean>> {
     if (!this.isConnected) {
+      if (this.useMemoryFallback) {
+        return { success: true, data: this.memoryCache.has(key) };
+      }
       return { success: false, error: new Error('Cache not connected') };
     }
 
@@ -117,8 +151,16 @@ export class CacheService {
   }
 
   async mset(keyValuePairs: Record<string, any>, ttlSeconds: number = this.defaultTTL): Promise<Result<void>> {
+    if (this.useMemoryFallback) {
+      for (const [key, value] of Object.entries(keyValuePairs)) {
+        this.memoryCache.set(key, value, ttlSeconds);
+      }
+    }
+
     if (!this.isConnected) {
-      return { success: false, error: new Error('Cache not connected') };
+      return this.useMemoryFallback 
+        ? { success: true, data: undefined }
+        : { success: false, error: new Error('Cache not connected') };
     }
 
     try {
@@ -137,8 +179,18 @@ export class CacheService {
   }
 
   async increment(key: string, amount: number = 1): Promise<Result<number>> {
+    // In-memory increment
+    let newVal = amount;
+    if (this.useMemoryFallback) {
+      const current = this.memoryCache.get<number>(key) || 0;
+      newVal = current + amount;
+      this.memoryCache.set(key, newVal);
+    }
+
     if (!this.isConnected) {
-      return { success: false, error: new Error('Cache not connected') };
+      return this.useMemoryFallback 
+        ? { success: true, data: newVal }
+        : { success: false, error: new Error('Cache not connected') };
     }
 
     try {
@@ -152,8 +204,14 @@ export class CacheService {
   }
 
   async expire(key: string, ttlSeconds: number): Promise<Result<boolean>> {
+    if (this.useMemoryFallback) {
+      this.memoryCache.ttl(key, ttlSeconds);
+    }
+
     if (!this.isConnected) {
-      return { success: false, error: new Error('Cache not connected') };
+      return this.useMemoryFallback 
+        ? { success: true, data: this.memoryCache.has(key) }
+        : { success: false, error: new Error('Cache not connected') };
     }
 
     try {
@@ -168,6 +226,12 @@ export class CacheService {
 
   async ttl(key: string): Promise<Result<number>> {
     if (!this.isConnected) {
+      if (this.useMemoryFallback) {
+        const ttl = this.memoryCache.getTtl(key);
+        if (ttl === undefined) return { success: true, data: -2 };
+        if (ttl === 0) return { success: true, data: -1 };
+        return { success: true, data: Math.round((ttl - Date.now()) / 1000) };
+      }
       return { success: false, error: new Error('Cache not connected') };
     }
 
@@ -185,6 +249,9 @@ export class CacheService {
     if (this.client) {
       await this.client.quit();
       this.isConnected = false;
+    }
+    if (this.memoryCache) {
+      this.memoryCache.close();
     }
   }
 }

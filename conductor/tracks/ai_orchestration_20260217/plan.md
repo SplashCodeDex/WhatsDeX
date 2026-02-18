@@ -19,16 +19,16 @@ Refactor the GeminiAI service to be platform-agnostic.
 ## Phase 3: Unified Tool Registry & Bridges
 Create the technical bridge between WhatsDeX commands and OpenClaw skills.
 
-- [ ] Task: Backend - Implement `ToolRegistry` service to manage available tools for the AI
-- [ ] Task: Backend - Create `WhatsDeXToolBridge` to wrap selected commands (Sticker, Downloader) as AI tools
-- [ ] Task: Backend - Create `OpenClawSkillBridge` to register OpenClaw skills into the registry
-- [ ] Task: Backend - Wire the `ToolRegistry` into Gemini's function-calling loop
+- [x] Task: Backend - Implement `ToolRegistry` service to manage available tools for the AI (b8d7a73)
+- [x] Task: Backend - Create `WhatsDeXToolBridge` to wrap selected commands (Sticker, Downloader) as AI tools (b8d7a73)
+- [x] Task: Backend - Create `OpenClawSkillBridge` to register OpenClaw skills into the registry (b8d7a73)
+- [x] Task: Backend - Wire the `ToolRegistry` into Gemini's function-calling loop (b8d7a73)
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Tool Registry' (Protocol in workflow.md)
 
 ## Phase 4: Scoped Memory & Session Pruning
 Ensure private and optimized conversation history for every channel.
 
-- [ ] Task: Backend - Update `memoryService.ts` to scope context by `(channelId + chatID)`
+- [~] Task: Backend - Update `memoryService.ts` to scope context by `(channelId + chatID)`
 - [ ] Task: Backend - Integrate OpenClaw's session pruning logic to manage context window limits
 - [ ] Task: Test - Write integration tests verifying that WhatsApp context doesn't leak into Telegram sessions
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Scoped Memory' (Protocol in workflow.md)

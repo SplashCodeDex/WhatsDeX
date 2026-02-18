@@ -6,6 +6,7 @@ import { Result } from '../types/index.js';
 
 interface ConversationEmbedding {
   userId: string;
+  scopeId: string; // channelId:chatId
   content: string;
   embedding: number[];
   metadata: Record<string, any>;
@@ -46,15 +47,20 @@ export class MemoryService {
         throw new Error('Failed to generate embedding');
       }
 
+      const platform = metadata.platform || 'unknown';
+      const chatId = metadata.chatId || userId;
+      const scopeId = `${platform}:${chatId}`;
+
       await db.collection('conversation_embeddings').add({
         userId,
+        scopeId,
         content: conversationText,
         embedding: embeddingResult.data,
         metadata,
         timestamp: Timestamp.now()
       });
 
-      logger.info(`Stored conversation embedding for user ${userId}`);
+      logger.info(`Stored conversation embedding for user ${userId} [Scope: ${scopeId}]`);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -64,9 +70,9 @@ export class MemoryService {
   }
 
   /**
-   * Retrieve relevant historical contexts
+   * Retrieve relevant historical contexts scoped by channel/chat
    */
-  async retrieveRelevantContext(userId: string, newText: string): Promise<Result<ConversationContext[]>> {
+  async retrieveRelevantContext(userId: string, newText: string, scope?: { platform: string, chatId: string }): Promise<Result<ConversationContext[]>> {
     try {
       const queryEmbeddingResult = await embeddingService.generateEmbedding(newText);
       if (!queryEmbeddingResult.success || !queryEmbeddingResult.data) {
@@ -74,15 +80,23 @@ export class MemoryService {
       }
       const queryEmbedding = queryEmbeddingResult.data;
 
-      const snapshot = await db.collection('conversation_embeddings')
-        .where('userId', '==', userId)
+      let query: any = db.collection('conversation_embeddings');
+      
+      if (scope) {
+        const scopeId = `${scope.platform}:${scope.chatId}`;
+        query = query.where('scopeId', '==', scopeId);
+      } else {
+        query = query.where('userId', '==', userId);
+      }
+
+      const snapshot = await query
         .orderBy('timestamp', 'desc')
         .limit(100)
         .get();
 
       if (snapshot.empty) return { success: true, data: [] };
 
-      const results = snapshot.docs.map(doc => {
+      const results = snapshot.docs.map((doc: any) => {
         const data = doc.data() as ConversationEmbedding;
         const similarity = this.cosineSimilarity(queryEmbedding, data.embedding);
         return {
@@ -94,8 +108,8 @@ export class MemoryService {
       });
 
       const filtered = results
-        .filter(r => r.similarity > this.similarityThreshold)
-        .sort((a, b) => b.similarity - a.similarity)
+        .filter((r: any) => r.similarity > this.similarityThreshold)
+        .sort((a: any, b: any) => b.similarity - a.similarity)
         .slice(0, this.maxContexts);
 
       return { success: true, data: filtered };

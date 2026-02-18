@@ -81,7 +81,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
             toast.success('Configuration updated successfully');
             onOpenChange(false);
         } else if (state?.success === false) {
-             toast.error(state.error.message || 'Failed to update configuration');
+            toast.error(state.error.message || 'Failed to update configuration');
         }
     }, [state, onOpenChange]);
 
@@ -100,7 +100,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
 
         const formData = new FormData();
         formData.append('data', JSON.stringify(filteredData));
-        
+
         startTransition(() => {
             dispatch(formData);
         });
@@ -120,8 +120,8 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form 
-                        onSubmit={form.handleSubmit(onSave)} 
+                    <form
+                        onSubmit={form.handleSubmit(onSave)}
                         className="space-y-6"
                         aria-label="bot-settings-form"
                     >
@@ -153,7 +153,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Bot Mode</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value || ''}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select mode" />
@@ -200,7 +200,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                                     <p className="text-xs text-muted-foreground">Force "available" status</p>
                                                 </div>
                                                 <FormControl>
-                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                    <Switch checked={!!field.value} onCheckedChange={field.onChange} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -215,7 +215,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                                     <p className="text-xs text-muted-foreground">Reject incoming calls</p>
                                                 </div>
                                                 <FormControl>
-                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                    <Switch checked={!!field.value} onCheckedChange={field.onChange} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -230,7 +230,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                                     <p className="text-xs text-muted-foreground">Blue ticks on messages</p>
                                                 </div>
                                                 <FormControl>
-                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                    <Switch checked={!!field.value} onCheckedChange={field.onChange} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -245,7 +245,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                                     <p className="text-xs text-muted-foreground">Show typing during commands</p>
                                                 </div>
                                                 <FormControl>
-                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                    <Switch checked={!!field.value} onCheckedChange={field.onChange} />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -269,7 +269,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                                 </FormDescription>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch checked={!!field.value} onCheckedChange={field.onChange} />
                                             </FormControl>
                                         </FormItem>
                                     )}
@@ -297,7 +297,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                                 <p className="text-xs text-muted-foreground">Prefix AI replies with [AI]</p>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch checked={!!field.value} onCheckedChange={field.onChange} />
                                             </FormControl>
                                         </FormItem>
                                     )}
@@ -316,7 +316,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                                 <FormDescription>Send automated message when offline.</FormDescription>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch checked={!!field.value} onCheckedChange={field.onChange} />
                                             </FormControl>
                                         </FormItem>
                                     )}
@@ -427,7 +427,7 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                                                     <p className="text-xs text-destructive font-medium">Restricted to Owner</p>
                                                 </div>
                                                 <FormControl>
-                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                    <Switch checked={!!field.value} onCheckedChange={field.onChange} />
                                                 </FormControl>
                                             </FormItem>
                                         )}

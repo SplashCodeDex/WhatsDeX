@@ -38,7 +38,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     whileHover={{ scale: 1.005 }}
                     whileTap={{ scale: 0.995 }}
                     ref={ref}
-                    {...props}
+                    {...(props as any)}
                 />
             </div>
         );

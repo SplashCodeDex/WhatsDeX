@@ -229,6 +229,8 @@ export class MultiTenantBotService {
         }
       }
 
+      return { success: false, error: new Error(`Unsupported bot type: ${botData.type}`) };
+
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Failed to start bot ${botId}`, { tenantId, botId, error: err });

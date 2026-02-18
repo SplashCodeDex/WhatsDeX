@@ -1,4 +1,4 @@
-import { CommonMessage } from '../../types/omnichannel';
+import { CommonMessage } from '../../types/omnichannel.js';
 
 export type ChannelId = string;
 
@@ -50,6 +50,11 @@ export interface ChannelAdapter {
    * @param message The common message object.
    */
   sendCommon(message: CommonMessage): Promise<void>;
+
+  /**
+   * Standardized webhook handler for platforms that use them (Telegram, Discord, etc.).
+   */
+  handleWebhook?: (req: any, res: any) => Promise<void>;
 
   /**
    * Registers a handler for inbound messages.

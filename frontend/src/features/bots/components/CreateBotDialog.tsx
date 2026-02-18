@@ -23,7 +23,7 @@ export function CreateBotDialog() {
     const [open, setOpen] = useState(false);
     const { data: bots } = useBots();
     const { limits, isAtLimit, isLoading: isLoadingPlan } = useSubscription();
-    
+
     const [state, formAction, isPending] = useActionState(createBot, null);
 
     const reachedLimit = bots && !isLoadingPlan ? isAtLimit(bots.length) : false;
@@ -66,16 +66,16 @@ export function CreateBotDialog() {
                                     disabled={isPending}
                                     required
                                 />
-                                {state?.success === false && state.error.details?.name && (
+                                {state?.success === false && !!(state.error as any).details?.name && (
                                     <p className="text-xs text-destructive">
-                                        {Array.isArray(state.error.details.name) 
-                                            ? state.error.details.name[0] 
-                                            : state.error.details.name}
+                                        {(Array.isArray((state.error as any).details.name)
+                                            ? (state.error as any).details.name[0]
+                                            : (state.error as any).details.name) as string}
                                     </p>
                                 )}
                             </div>
                         )}
-                        
+
                         {state?.success === false && !state.error.details?.name && (
                             <p className="text-sm text-destructive text-center font-medium">
                                 {state.error.message}

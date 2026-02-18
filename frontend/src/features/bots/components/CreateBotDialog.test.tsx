@@ -15,11 +15,11 @@ vi.mock('@/features/bots', async (importOriginal) => {
 import { createBot } from '@/features/bots';
 
 vi.mock('@/features/billing', () => ({
-  useSubscription: () => ({
-    limits: { maxBots: 5 },
-    isAtLimit: (count: number) => false,
-    isLoading: false,
-  }),
+    useSubscription: () => ({
+        limits: { maxBots: 5 },
+        isAtLimit: (count: number) => false,
+        isLoading: false,
+    }),
 }));
 
 // Mock UI
@@ -52,7 +52,7 @@ describe('CreateBotDialog', () => {
 
         // Open Dialog
         const trigger = screen.getAllByRole('button', { name: /create bot/i })[0];
-        fireEvent.click(trigger);
+        if (trigger) fireEvent.click(trigger);
 
         // Fill Name
         const nameInput = screen.getByLabelText(/Bot Name/i);
@@ -85,7 +85,7 @@ describe('CreateBotDialog', () => {
 
         // Open Dialog
         const trigger = screen.getAllByRole('button', { name: /create bot/i })[0];
-        fireEvent.click(trigger);
+        if (trigger) fireEvent.click(trigger);
 
         // Fill Name to bypass browser validation if any, though we want server error
         const nameInput = screen.getByLabelText(/Bot Name/i);
@@ -112,7 +112,7 @@ describe('CreateBotDialog', () => {
 
         // Open Dialog
         const trigger = screen.getAllByRole('button', { name: /create bot/i })[0];
-        fireEvent.click(trigger);
+        if (trigger) fireEvent.click(trigger);
 
         // Fill Name
         const nameInput = screen.getByLabelText(/Bot Name/i);

@@ -47,7 +47,7 @@ export interface TenantUserDocument {
 export interface BotInstanceDocument {
   id: string;
   name: string;
-  type?: 'whatsapp' | 'telegram' | 'discord' | 'slack';
+  type?: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
   phoneNumber?: string;
   identifier?: string;
   userId?: string; // Legacy/Owner mapping

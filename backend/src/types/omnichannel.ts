@@ -55,7 +55,7 @@ export const CommonMessageSchema = z.object({
       multipleAnswers: z.boolean().default(false)
     }).optional()
   }),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
   timestamp: z.number().default(() => Date.now()),
   replyTo: z.string().optional()
 });

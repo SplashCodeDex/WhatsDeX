@@ -120,7 +120,7 @@ export function OmnichannelHubContent() {
                         <ChannelCard
                             key={channel.id}
                             {...channel}
-                            account={channel.account || undefined}
+                            account={channel.account || null}
                             icon={config.icon}
                             color={config.color}
                         />

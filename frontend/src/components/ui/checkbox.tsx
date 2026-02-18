@@ -38,7 +38,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         ref={ref}
                         checked={isChecked}
                         onChange={handleChange}
-                        {...props}
+                        {...(props as any)}
                     />
 
                     {/* Checkbox Box with Glassmorphism */}

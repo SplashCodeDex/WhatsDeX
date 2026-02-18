@@ -131,7 +131,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
       const finalResponse = await this.gemini.getManager().execute(async () => {
         logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform}`);
 
-        const messages = [{ role: 'user', content: text }];
+        const messages: any[] = [{ role: 'user', content: text }];
         let loopCount = 0;
         const maxLoops = this.decisionEngine.maxToolCalls;
 

@@ -1,7 +1,8 @@
 import { startGatewayServer } from 'openclaw';
 import { loadWorkspaceSkillEntries } from '../../../openclaw/src/agents/skills/workspace.js';
 import { resolveDefaultAgentId } from '../../../openclaw/src/agents/agent-scope.js';
-import { listGatewayAgents } from '../../../openclaw/src/gateway/server-methods/agents.js';
+import { listAgentsForGateway } from '../../../openclaw/src/gateway/session-utils.js';
+import { loadConfig } from '../../../openclaw/src/config/config.js';
 import { getHealthCache } from '../../../openclaw/src/gateway/server/health-state.js';
 
 /**
@@ -80,11 +81,11 @@ export class OpenClawGateway {
    */
   public async getAgents(): Promise<any> {
     try {
-      const defaultId = await (resolveDefaultAgentId as any)();
-      const agents = await (listGatewayAgents as any)();
+      const cfg = await (loadConfig as any)();
+      const result = await (listAgentsForGateway as any)(cfg);
       return {
-        defaultId,
-        agents: agents || []
+        defaultId: result.defaultId,
+        agents: result.agents || []
       };
     } catch (error) {
       console.error('Failed to load OpenClaw agents:', error);
