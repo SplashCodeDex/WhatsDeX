@@ -5,6 +5,7 @@ import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
 import { EventEmitter } from 'events';
 import { Bot, GlobalContext, MessageContext, Result } from '../types/index.js';
+import { CommonMessage } from '../types/omnichannel.js';
 import { databaseService } from './database.js';
 import { cacheService } from './cache.js';
 
@@ -65,38 +66,26 @@ export class GeminiAI extends EventEmitter {
    */
   async processMessage(bot: Bot, ctx: MessageContext): Promise<Result<void>> {
     try {
-      const userId = ctx.sender.jid;
-      const tenantId = bot.tenantId;
-      const message = ctx.body || '';
+      const commonMsg: CommonMessage = {
+        id: ctx.id,
+        platform: 'whatsapp',
+        from: ctx.sender.jid,
+        to: bot.botId,
+        content: {
+          text: ctx.body || ''
+        },
+        timestamp: Date.now(),
+        metadata: {
+          isGroup: ctx.isGroup(),
+          mediaType: this.detectMediaType(ctx)
+        }
+      };
 
-      // Rule 5+: Semantic Memoization (Mastermind Edition)
-      // Check for semantically similar previous analysis to save API costs
-      const intelligence: AIAnalysis = await this.gemini.getManager().execute(async () => {
-        logger.info(`Rule 5+: Performing live semantic analysis for ${userId}`);
-
-        // Build comprehensive context
-        const context = await this.buildEnhancedContext(bot, userId, message, ctx);
-
-        // Multi-layer intelligence processing
-        return await this.analyzeWithMultiLayerIntelligence(bot, message, context);
-      }, {
-        prompt: message, // Enable Semantic Caching
-        timeoutMs: 120000
-      });
-
-      // Execute intelligent response
-      const contextForExecution = await this.buildEnhancedContext(bot, userId, message, ctx);
-      const { finalResponse, actionResults } = await this.executeIntelligentResponse(bot, intelligence, ctx, contextForExecution);
-
-      // 5. Finalize: Learn and Store Memory
-      await this.learnFromInteraction(bot, userId, message, intelligence, ctx);
-
-      // Store new interaction in Vector Memory
-      await memoryService.storeConversation(userId, message, {
-        botId: bot.botId,
-        response: finalResponse,
-        interactionType: 'human-ai'
-      });
+      const result = await this.processOmnichannelMessage(bot.tenantId, bot.botId, commonMsg);
+      
+      if (result.success && result.data && result.data.content.text) {
+        await ctx.reply(result.data.content.text);
+      }
 
       return { success: true, data: undefined };
 
@@ -109,24 +98,81 @@ export class GeminiAI extends EventEmitter {
   }
 
   /**
-   * Build comprehensive context from all available data
+   * Universal message processing engine - platform agnostic (2026 Edition)
    */
-  async buildEnhancedContext(bot: Bot, userId: string, message: string, ctx: MessageContext) {
-    const userProfile = await databaseService.user.get(userId, bot.tenantId);
-    const learningResult = await this.getPersistentLearning(userId, bot.tenantId);
+  async processOmnichannelMessage(tenantId: string, botId: string, message: CommonMessage): Promise<Result<CommonMessage>> {
+    try {
+      const userId = message.from;
+      const text = message.content.text || '';
+
+      // Rule 5+: Semantic Memoization
+      const intelligence: AIAnalysis = await this.gemini.getManager().execute(async () => {
+        logger.info(`Rule 5+: Performing live semantic analysis for ${userId} on ${message.platform}`);
+
+        // Build comprehensive context
+        const context = await this.buildGenericContext(tenantId, botId, userId, text, message);
+
+        // Multi-layer intelligence processing
+        return await this.analyzeGenericIntelligence(tenantId, botId, text, context);
+      }, {
+        prompt: text,
+        timeoutMs: 120000
+      });
+
+      // Execute intelligent response
+      const contextForExecution = await this.buildGenericContext(tenantId, botId, userId, text, message);
+      const { finalResponse } = await this.executeGenericResponse(tenantId, botId, intelligence, message, contextForExecution);
+
+      // Learn and Store Memory
+      await this.learnFromInteractionGeneric(tenantId, botId, userId, text, intelligence);
+
+      // Store in Vector Memory
+      await memoryService.storeConversation(userId, text, {
+        botId: botId,
+        response: finalResponse,
+        interactionType: 'human-ai',
+        platform: message.platform
+      });
+
+      const responseMsg: CommonMessage = {
+        id: crypto.randomUUID(),
+        platform: message.platform,
+        from: botId,
+        to: userId,
+        content: {
+          text: finalResponse
+        },
+        timestamp: Date.now()
+      };
+
+      return { success: true, data: responseMsg };
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Omnichannel AI Brain processing error:', err);
+      return { success: false, error: err };
+    }
+  }
+
+  /**
+   * Generic context builder
+   */
+  async buildGenericContext(tenantId: string, botId: string, userId: string, text: string, message: CommonMessage) {
+    const userProfile = await databaseService.user.get(userId, tenantId);
+    const learningResult = await this.getPersistentLearning(userId, tenantId);
     const learnedFacts = learningResult.success && learningResult.data ? learningResult.data.facts : [];
 
     return {
       user: userProfile || { id: userId, name: 'Unknown' },
       learnedFacts,
-      conversation: await this.getConversationMemory(userId, bot.tenantId),
+      conversation: await this.getConversationMemory(userId, tenantId),
       message: {
-        text: message,
+        text: text,
         timestamp: Date.now(),
-        isGroup: ctx.isGroup(),
-        groupInfo: ctx.isGroup() ? await this.getGroupContext(ctx.id) : null,
-        mediaType: this.detectMediaType(ctx),
-        sentiment: await this.analyzeSentiment(message)
+        isGroup: message.metadata?.isGroup || false,
+        platform: message.platform,
+        mediaType: message.metadata?.mediaType || 'text',
+        sentiment: await this.analyzeSentiment(text)
       },
       environment: {
         timeOfDay: this.getTimeOfDay(),
@@ -135,6 +181,212 @@ export class GeminiAI extends EventEmitter {
         activeConversations: await this.getActiveConversations(userId)
       }
     };
+  }
+
+  /**
+   * Refactored legacy context builder to use generic one
+   */
+  async buildEnhancedContext(bot: Bot, userId: string, message: string, ctx: MessageContext) {
+    const commonMsg: CommonMessage = {
+      id: ctx.id,
+      platform: 'whatsapp',
+      from: userId,
+      to: bot.botId,
+      content: { text: message },
+      timestamp: Date.now(),
+      metadata: {
+        isGroup: ctx.isGroup(),
+        mediaType: this.detectMediaType(ctx)
+      }
+    };
+    return this.buildGenericContext(bot.tenantId, bot.botId, userId, message, commonMsg);
+  }
+
+  /**
+   * Generic intelligence analysis
+   */
+  async analyzeGenericIntelligence(tenantId: string, botId: string, message: string, context: any): Promise<AIAnalysis> {
+    // Implementation mostly reused from analyzeWithMultiLayerIntelligence
+    const analysis: AIAnalysis = {
+      intents: [],
+      confidence: 0,
+      actions: [],
+      reasoning: '',
+      toolsNeeded: [],
+      responseType: 'conversational'
+    };
+
+    const intents = await this.detectMultipleIntents(message, context);
+
+    if (intents.length > 0 && (await this.assessContextualRelevance(intents[0], context)) < 0.3) {
+      return {
+        intents: [],
+        confidence: 0,
+        actions: [],
+        reasoning: 'Low context relevance',
+        toolsNeeded: [],
+        responseType: 'conversational'
+      };
+    }
+
+    analysis.intents = intents;
+    analysis.confidence = intents.reduce((acc, curr) => Math.max(acc, curr.confidence), 0) *
+      (intents.length > 0 ? await this.assessContextualRelevance(intents[0], context) : 0);
+
+    // Contextual decisions
+    const decisions = await this.makeContextualDecisionsGeneric(tenantId, botId, intents, context);
+    analysis.actions = decisions.actions;
+    analysis.confidence = decisions.confidence;
+
+    const workflow = await this.planWorkflow(analysis.actions, context);
+    analysis.toolsNeeded = workflow.tools;
+    analysis.reasoning = workflow.reasoning;
+
+    analysis.responseType = await this.selectResponseStrategy(analysis, context);
+
+    return analysis;
+  }
+
+  /**
+   * Generic action executor
+   */
+  async executeGenericResponse(tenantId: string, botId: string, intelligence: AIAnalysis, message: CommonMessage, context: any): Promise<{ finalResponse: string, actionResults: any[] }> {
+    const { actions, confidence } = intelligence;
+    let finalResponse = '';
+    const actionResults: any[] = [];
+
+    if (actions.length === 0 || confidence < this.decisionEngine.confidenceThreshold) {
+      finalResponse = await this.handleConversationalResponseGeneric(tenantId, botId, message, context, intelligence);
+      return { finalResponse, actionResults };
+    }
+
+    // High confidence actions
+    if (actions.length === 1) {
+      const result = await this.executeSingleActionGeneric(tenantId, botId, actions[0], message, context);
+      actionResults.push(result);
+      const typedResult = result as unknown as { response?: string };
+      finalResponse = typedResult?.response || "Action completed.";
+    } else {
+      // Multiple actions (stubbed for now)
+      finalResponse = "Multiple actions execution is currently optimized for WhatsApp. Standby for omnichannel roll-out.";
+    }
+    return { finalResponse, actionResults };
+  }
+
+  /**
+   * Generic conversational handler
+   */
+  async handleConversationalResponseGeneric(tenantId: string, botId: string, message: CommonMessage, context: any, _intelligence: any): Promise<string> {
+    const userId = message.from;
+    const historyResult = await memoryService.retrieveRelevantContext(userId, message.content.text || '');
+    let historicalContext = '';
+
+    if (historyResult.success && historyResult.data?.length > 0) {
+      historicalContext = "\n[HISTORICAL CONTEXT]:\n" +
+        historyResult.data.map(h => `- ${h.content} (on ${new Date(h.timestamp).toLocaleDateString()})`).join("\n");
+    }
+
+    // personality should be fetched from botId settings
+    const personality = 'a professional assistant';
+
+    const systemPrompt = `You are a high-intelligence AI agent.
+Role: ${personality}
+Context: Omnichannel Assistant.
+Current Time: ${new Date().toLocaleString()}
+Work on behalf of the customer. Use tools when necessary.
+${historicalContext}
+Respond appropriately.`;
+
+    const conversationPrompt = `
+SYSTEM INSTRUCTIONS:
+${systemPrompt}
+
+USER CONTEXT:
+- Message: "${message.content.text}"
+- Platform: ${message.platform}
+- Profile: ${JSON.stringify(context.user)}
+- History: ${context.conversation.slice(-10).join(' | ')}
+`;
+
+    try {
+      const response = await this.gemini.getChatCompletion(conversationPrompt);
+      return response;
+    } catch (error: unknown) {
+      logger.error('Conversational AI error:', error);
+      return "I'm having some processing difficulties right now. Please try again.";
+    }
+  }
+
+  async makeContextualDecisionsGeneric(tenantId: string, botId: string, intents: any[], context: any) {
+    const decisions = {
+      actions: [] as AIAction[],
+      confidence: 0,
+      reasoning: ''
+    };
+
+    for (const intent of intents) {
+      const relevance = await this.assessContextualRelevance(intent, context);
+      if (relevance > 0.5) {
+        // Here we'd use the ToolRegistry in Phase 3
+        // For now, we'll return a special 'legacy_bridge' action if it's a known command
+        const action = await this.intentToLegacyActionStub(intent);
+        if (action) {
+          decisions.actions.push({
+            ...action,
+            confidence: intent.confidence * relevance,
+            originalIntent: intent
+          });
+        }
+      }
+    }
+
+    decisions.confidence = decisions.actions.length > 0
+      ? decisions.actions.reduce((sum: number, a: any) => sum + a.confidence, 0) / decisions.actions.length
+      : 0;
+
+    return decisions;
+  }
+
+  async intentToLegacyActionStub(intent: any): Promise<AIAction | null> {
+    // Just a placeholder until Phase 3 ToolRegistry
+    return null;
+  }
+
+  async executeSingleActionGeneric(tenantId: string, botId: string, action: AIAction, message: CommonMessage, context: any) {
+    // Placeholder - actions will be handled by ToolRegistry
+    return { response: "Action execution is being wired in Phase 3." };
+  }
+
+  async learnFromInteractionGeneric(tenantId: string, botId: string, userId: string, message: string, intelligence: AIAnalysis) {
+    if (!this.decisionEngine.learningEnabled) return;
+    // Implementation reused from learnFromInteraction but withoutctx
+    const learned = await this.extractFacts(message, { memory: await this.getPersistentLearning(userId, tenantId) });
+    if (learned.facts.length > 0 || Object.keys(learned.preferences).length > 0) {
+      const existingResult = await this.getPersistentLearning(userId, tenantId);
+      const existing = existingResult.success && existingResult.data
+        ? existingResult.data
+        : { userId, facts: [], preferences: {}, lastInteraction: new Date() as any };
+
+      const newFacts = learned.facts.map(content => ({
+        id: crypto.randomUUID(),
+        content,
+        confidence: intelligence.confidence,
+        extractedAt: new Date(),
+        updatedAt: new Date()
+      }));
+
+      const mergedFacts = [...existing.facts, ...newFacts];
+      if (mergedFacts.length > 50) mergedFacts.splice(0, mergedFacts.length - 50);
+
+      const mergedPreferences = { ...existing.preferences, ...learned.preferences };
+
+      await firebaseService.setDoc<'tenants/{tenantId}/learning'>('learning', userId, {
+        userId,
+        facts: mergedFacts,
+        preferences: mergedPreferences,
+        lastInteraction: new Date()
+      }, tenantId);
+    }
   }
 
   /**
