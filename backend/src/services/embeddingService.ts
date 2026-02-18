@@ -121,7 +121,8 @@ export class EmbeddingService {
       }, {
         maxRetries: keyCount + 1,
         timeoutMs: 30000, // 30s timeout for embeddings
-        prompt: cleanText // ENABLE SEMANTIC CACHE
+        // NOTE: Do NOT pass `prompt` here — the semantic cache's getEmbedding
+        // callback calls this method, so passing prompt would cause infinite recursion.
       });
 
       return { success: true, data };

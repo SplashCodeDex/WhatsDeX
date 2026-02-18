@@ -27,7 +27,7 @@
     "@opentelemetry/exporter-prometheus": "^0.210.0",
     "@opentelemetry/sdk-node": "^0.210.0",
     "@opentelemetry/sdk-trace-node": "^2.4.0",
-    "@splashcodex/api-key-manager": "^3.0.0",
+    "@splashcodex/api-key-manager": "^4.0.0",
     "aki-api": "^7.0.1",
     "axios": "^1.13.2",
     "baileys": "^7.0.0-rc.9",
