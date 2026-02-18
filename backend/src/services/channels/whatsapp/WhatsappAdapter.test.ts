@@ -61,6 +61,22 @@ describe('WhatsappAdapter', () => {
     );
   });
 
+  it('should send a common message', async () => {
+    await adapter.connect();
+    await adapter.sendCommon({
+      id: 'msg-1',
+      platform: 'whatsapp',
+      from: 'bot',
+      to: '123456789',
+      content: { text: 'Common message text' },
+      timestamp: Date.now()
+    });
+    expect(mockSocket.sendMessage).toHaveBeenCalledWith(
+      expect.stringContaining('123456789'),
+      expect.objectContaining({ text: 'Common message text' })
+    );
+  });
+
   it('should trigger onMessage handler when message arrives', async () => {
     const handler = vi.fn();
     adapter.onMessage(handler);

@@ -8,6 +8,13 @@ const mockClient = {
   user: { tag: 'test_bot#1234' }
 };
 
+const mockEmbed = {
+  setDescription: vi.fn().mockReturnThis(),
+  setTimestamp: vi.fn().mockReturnThis(),
+  setImage: vi.fn().mockReturnThis(),
+  data: {}
+};
+
 vi.mock('discord.js', () => ({
   Client: class {
     constructor() { return mockClient; }
@@ -16,6 +23,9 @@ vi.mock('discord.js', () => ({
     Guilds: 1,
     GuildMessages: 2,
     MessageContent: 3
+  },
+  EmbedBuilder: class {
+    constructor() { return mockEmbed; }
   }
 }));
 
@@ -37,6 +47,28 @@ describe('DiscordAdapter', () => {
   it('should initialize and connect', async () => {
     await adapter.connect();
     expect(mockClient.login).toHaveBeenCalledWith(token);
+  });
+
+  it('should send a common message as an embed', async () => {
+    const mockSend = vi.fn().mockResolvedValue({ id: 'msg-1' });
+    mockClient.channels = {
+      fetch: vi.fn().mockResolvedValue({ send: mockSend })
+    };
+
+    await adapter.connect();
+    await adapter.sendCommon({
+      id: 'msg-1',
+      platform: 'discord',
+      from: 'bot',
+      to: 'channel-123',
+      content: { text: 'Common message text' },
+      timestamp: Date.now()
+    });
+
+    expect(mockEmbed.setDescription).toHaveBeenCalledWith('Common message text');
+    expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([mockEmbed])
+    }));
   });
 
   it('should trigger onMessage handler', async () => {

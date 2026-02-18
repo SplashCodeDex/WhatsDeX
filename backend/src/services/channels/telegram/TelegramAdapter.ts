@@ -70,20 +70,22 @@ export class TelegramAdapter implements ChannelAdapter {
       throw new Error("TelegramAdapter not connected");
     }
 
-    const text = typeof content === 'string' ? content : content.text;
+    const text = typeof content === "string" ? content : content.text;
 
     // Use OpenClaw's robust send logic
-    await (sendMessageTelegram as any)({
+    // Signature: sendMessageTelegram(to: string, text: string, opts: TelegramSendOpts)
+    await sendMessageTelegram(target, text, {
       token: this.token,
       api: this.bot.api,
-      to: target,
-      message: text
+      textMode: "markdown",
     });
   }
 
   public async sendCommon(message: CommonMessage): Promise<void> {
-    // Basic implementation for Phase 1
-    await this.sendMessage(message.to, message.content.text || '');
+    if (!message.content.text) return;
+
+    // OpenClaw's sendMessageTelegram handles Markdown formatting when textMode: 'markdown' is passed
+    await this.sendMessage(message.to, message.content.text);
   }
 
   public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {

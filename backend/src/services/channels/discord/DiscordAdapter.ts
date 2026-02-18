@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits, EmbedBuilder } from "discord.js";
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
 import { CommonMessage } from "../../../types/omnichannel.js";
 import logger from "@/utils/logger.js";
@@ -81,8 +81,23 @@ export class DiscordAdapter implements ChannelAdapter {
   }
 
   public async sendCommon(message: CommonMessage): Promise<void> {
-    // Basic implementation for Phase 1
-    await this.sendMessage(message.to, message.content.text || '');
+    if (!message.content.text && (!message.content.attachments || message.content.attachments.length === 0)) {
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setDescription(message.content.text || null)
+      .setTimestamp(message.timestamp);
+
+    // If there are attachments, we could add them here
+    if (message.content.attachments && message.content.attachments.length > 0) {
+      const firstImage = message.content.attachments.find(a => a.type === 'image');
+      if (firstImage?.url) {
+        embed.setImage(firstImage.url);
+      }
+    }
+
+    await this.sendMessage(message.to, { embeds: [embed] });
   }
 
   public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {

@@ -16,7 +16,7 @@ vi.mock('grammy', () => ({
   }
 }));
 
-vi.mock('../../../../openclaw/src/telegram/send.js', () => ({
+vi.mock('../../../../../openclaw/src/telegram/send.js', () => ({
   sendMessageTelegram: vi.fn().mockResolvedValue({ message_id: 1 })
 }));
 
@@ -26,7 +26,7 @@ describe('TelegramAdapter', () => {
   const botId = 'bot-tg';
   const token = '123456:ABC-DEF';
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     adapter = new TelegramAdapter(tenantId, botId, token);
   });
@@ -43,6 +43,33 @@ describe('TelegramAdapter', () => {
     await adapter.connect();
     expect(mockBot.init).toHaveBeenCalled();
     expect(mockBot.start).toHaveBeenCalled();
+  });
+
+  it('should send a message', async () => {
+    const { sendMessageTelegram } = await import('../../../../../openclaw/src/telegram/send.js');
+    await adapter.connect();
+    await adapter.sendMessage('chat123', 'hello');
+    expect(sendMessageTelegram).toHaveBeenCalledWith('chat123', 'hello', expect.objectContaining({
+      token,
+      textMode: 'markdown'
+    }));
+  });
+
+  it('should send a common message', async () => {
+    const { sendMessageTelegram } = await import('../../../../../openclaw/src/telegram/send.js');
+    await adapter.connect();
+    await adapter.sendCommon({
+      id: 'msg-1',
+      platform: 'telegram',
+      from: 'bot',
+      to: 'chat123',
+      content: { text: 'Common message text' },
+      timestamp: Date.now()
+    });
+    expect(sendMessageTelegram).toHaveBeenCalledWith('chat123', 'Common message text', expect.objectContaining({
+      token,
+      textMode: 'markdown'
+    }));
   });
 
   it('should trigger onMessage handler when telegram message arrives', async () => {
