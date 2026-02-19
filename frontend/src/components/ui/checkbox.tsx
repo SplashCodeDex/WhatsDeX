@@ -24,12 +24,14 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
         const [isChecked, setIsChecked] = React.useState(controlledChecked !== undefined ? controlledChecked : (defaultChecked || false));
 
-        // Sync with controlled prop
+        // Sync with controlled prop or defaultChecked change (e.g. from server action state)
         React.useEffect(() => {
             if (controlledChecked !== undefined) {
                 setIsChecked(controlledChecked);
+            } else if (defaultChecked !== undefined) {
+                setIsChecked(defaultChecked);
             }
-        }, [controlledChecked]);
+        }, [controlledChecked, defaultChecked]);
 
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const newChecked = e.target.checked;
@@ -59,21 +61,21 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         animate={{
                             scale: isChecked ? 1 : 0.95,
                             backgroundColor: isChecked
-                                ? 'oklch(var(--p))' // Using theme variables for consistency
-                                : 'oklch(var(--m))',
+                                ? 'var(--p)' // Using standard CSS variables
+                                : 'var(--m)',
                             borderColor: isChecked
-                                ? 'oklch(var(--p))'
+                                ? 'var(--p)'
                                 : error
-                                    ? 'oklch(var(--er))'
-                                    : 'oklch(var(--b3))',
+                                    ? 'var(--er)'
+                                    : 'var(--b3)',
                         }}
                         whileHover={{
                             scale: 1.05,
                             borderColor: isChecked
-                                ? 'oklch(var(--p))'
+                                ? 'var(--p)'
                                 : error
-                                    ? 'oklch(var(--er))'
-                                    : 'oklch(var(--bc) / 0.2)'
+                                    ? 'var(--er)'
+                                    : 'rgba(var(--bc), 0.2)'
                         }}
                         whileTap={{ scale: 0.9 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}

@@ -104,6 +104,12 @@ export async function signIn(
             error: {
                 code: 'network_error',
                 message: 'Unable to connect. Please try again.',
+                details: {
+                    fields: { 
+                        email: formData.get('email'), 
+                        rememberMe: formData.get('rememberMe') === 'on' 
+                    }
+                }
             },
         };
     }
@@ -136,11 +142,13 @@ export async function signUp(
                 message: firstIssue?.message ?? 'Invalid input',
                 details: { 
                     field: firstIssue?.path[0] as string,
-                    fields: { firstName, lastName, email, acceptTerms }
+                    fields: rawData
                 },
             },
         };
     }
+
+    const { firstName, lastName, email, password, acceptTerms } = parsed.data;
 
     try {
         // Register with Backend API via centralized client
@@ -191,6 +199,14 @@ export async function signUp(
             error: {
                 code: 'network_error',
                 message: 'Unable to connect to registration service.',
+                details: {
+                    fields: {
+                        firstName: formData.get('firstName'),
+                        lastName: formData.get('lastName'),
+                        email: formData.get('email'),
+                        acceptTerms: formData.get('acceptTerms') === 'on'
+                    }
+                }
             },
         };
     }
@@ -225,6 +241,9 @@ export async function requestPasswordReset(
             error: {
                 code: 'validation_error',
                 message: firstIssue?.message ?? 'Invalid email',
+                details: {
+                    fields: rawData
+                }
             },
         };
     }

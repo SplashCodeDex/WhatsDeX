@@ -90,8 +90,54 @@ describe('Auth Server Actions', () => {
           expect(result.error.code).toBe('validation_error');
           expect(result.error.details).toBeDefined();
           expect(result.error.details?.field).toBeDefined();
+          expect(result.error.details?.fields).toEqual({
+              email: 'invalid-email',
+              password: '123',
+              rememberMe: false
+          });
         }
       });
+
+    it('should preserve fields on api failure', async () => {
+        (api.post as any).mockResolvedValue({
+          success: false,
+          error: { code: 'auth_error', message: 'Invalid credentials' },
+        });
+  
+        const formData = new FormData();
+        formData.append('email', 'test@example.com');
+        formData.append('password', 'wrongpassword');
+        formData.append('rememberMe', 'on');
+  
+        const result = await signIn(null, formData);
+  
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.error.details?.fields).toEqual({
+              email: 'test@example.com',
+              rememberMe: true
+          });
+        }
+    });
+
+    it('should preserve fields on network error', async () => {
+        (api.post as any).mockRejectedValue(new Error('Network failure'));
+  
+        const formData = new FormData();
+        formData.append('email', 'test@example.com');
+        formData.append('password', 'password123');
+  
+        const result = await signIn(null, formData);
+  
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.error.code).toBe('network_error');
+          expect(result.error.details?.fields).toEqual({
+              email: 'test@example.com',
+              rememberMe: false
+          });
+        }
+    });
   });
 
   describe('signUp', () => {
@@ -127,6 +173,79 @@ describe('Auth Server Actions', () => {
           password: 'Password123'
         })
       );
+    });
+
+    it('should preserve fields on validation error', async () => {
+        const formData = new FormData();
+        formData.append('firstName', ''); // INVALID: Empty
+        formData.append('lastName', 'Doe');
+        formData.append('email', 'new@example.com');
+        formData.append('password', 'Password123');
+        formData.append('acceptTerms', 'on');
+
+        const result = await signUp(null, formData);
+
+        expect(result.success).toBe(false);
+        if (!result.success) {
+            expect(result.error.code).toBe('validation_error');
+            expect(result.error.details?.fields).toEqual({
+                firstName: '',
+                lastName: 'Doe',
+                email: 'new@example.com',
+                password: 'Password123',
+                acceptTerms: true
+            });
+        }
+    });
+
+    it('should preserve fields on api failure', async () => {
+        (api.post as any).mockResolvedValue({
+            success: false,
+            error: { code: 'email_exists', message: 'Email already in use' },
+        });
+
+        const formData = new FormData();
+        formData.append('firstName', 'John');
+        formData.append('lastName', 'Doe');
+        formData.append('email', 'existing@example.com');
+        formData.append('password', 'Password123');
+        formData.append('acceptTerms', 'on');
+
+        const result = await signUp(null, formData);
+
+        expect(result.success).toBe(false);
+        if (!result.success) {
+            expect(result.error.details?.fields).toEqual({
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'existing@example.com',
+                acceptTerms: true
+            });
+        }
+    });
+
+    it('should preserve fields on network error', async () => {
+        (api.post as any).mockRejectedValue(new Error('Network failure'));
+
+        const formData = new FormData();
+        formData.append('firstName', 'John');
+        formData.append('lastName', 'Doe');
+        formData.append('email', 'new@example.com');
+        formData.append('password', 'Password123');
+        formData.append('acceptTerms', 'on');
+
+        const result = await signUp(null, formData);
+
+        expect(result.success).toBe(false);
+        if (!result.success) {
+            expect(result.error.code).toBe('network_error');
+            expect(result.error.details?.fields).toEqual({
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'new@example.com',
+                acceptTerms: true
+            });
+        }
     });
   });
 });
