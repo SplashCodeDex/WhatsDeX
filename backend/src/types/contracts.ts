@@ -417,6 +417,23 @@ export const AuthSchema = z.object({
 export type AuthData = z.infer<typeof AuthSchema>;
 
 /**
+ * Command Usage Schema ('tenants/{tenantId}/command_usage' subcollection)
+ */
+export const CommandUsageSchema = z.object({
+  id: z.string(),
+  command: z.string(),
+  userId: z.string(),
+  success: z.boolean(),
+  executionTime: z.number().nullish(),
+  category: z.string().optional(),
+  error: z.string().optional(),
+  usedAt: TimestampSchema,
+  metadata: z.record(z.string(), z.any()).optional()
+}).readonly();
+
+export type CommandUsage = z.infer<typeof CommandUsageSchema>;
+
+/**
  * Analytics Schema ('tenants/{tenantId}/analytics/{date}' subcollection)
  * Tracks daily message statistics
  */
@@ -425,6 +442,8 @@ export const AnalyticsSchema = z.object({
   sent: z.number().default(0),
   received: z.number().default(0),
   errors: z.number().default(0),
+  totalCommands: z.number().default(0),
+  aiRequests: z.number().default(0),
   updatedAt: TimestampSchema
 }).readonly();
 

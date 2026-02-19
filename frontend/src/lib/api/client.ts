@@ -118,10 +118,15 @@ async function apiClient<TData, TBody = unknown>(
     const url = createUrl(endpoint);
     const authToken = await getAuthHeader();
 
+    const isFormData = body instanceof FormData;
+
     const requestHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
         ...headers,
     };
+
+    if (!isFormData) {
+        requestHeaders['Content-Type'] = 'application/json';
+    }
 
     // Only attach Bearer token on Server Side where cookies aren't automatic
     if (authToken) {
@@ -135,7 +140,7 @@ async function apiClient<TData, TBody = unknown>(
     };
 
     if (body !== undefined) {
-        fetchOptions.body = JSON.stringify(body);
+        fetchOptions.body = isFormData ? (body as unknown as BodyInit) : JSON.stringify(body);
     }
 
     if (cache !== undefined) {

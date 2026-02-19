@@ -38,19 +38,17 @@ export function ImportContactsDialog() {
     const handleImport = async () => {
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            const csvData = event.target?.result as string;
-            try {
-                await importMutation.mutateAsync(csvData);
-                setOpen(false);
-                setFile(null);
-                setCsvPreview('');
-            } catch (err) {
-                // Error is handled by mutation state
-            }
-        };
-        reader.readAsText(file);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            await importMutation.mutateAsync(formData);
+            setOpen(false);
+            setFile(null);
+            setCsvPreview('');
+        } catch (err) {
+            // Error is handled by mutation state
+        }
     };
 
     return (

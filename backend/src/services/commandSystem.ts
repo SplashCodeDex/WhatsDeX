@@ -7,6 +7,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
+import crypto from 'node:crypto';
 
 import performanceMonitor from '../utils/performanceMonitor.js';
 import { proto, downloadContentFromMessage, getContentType } from 'baileys';
@@ -202,6 +203,27 @@ export class CommandSystem {
 
         const duration = timer.end();
         this.context.logger.command(command.name, messageData.key?.remoteJid || 'unknown', true, duration);
+
+        // Track command usage in Firestore (Fire-and-forget)
+        import('./FirebaseService.js').then(({ firebaseService }) => {
+          const usageId = crypto.randomUUID();
+          firebaseService.setDoc<'tenants/{tenantId}/command_usage'>(
+            'command_usage',
+            `usage_${usageId}`,
+            {
+              id: usageId,
+              command: command.name,
+              userId: messageData.key?.remoteJid || 'unknown',
+              success: true,
+              executionTime: duration,
+              category: command.category,
+              usedAt: new Date()
+            },
+            bot.tenantId,
+            false
+          ).catch(err => this.context.logger.error('Failed to track command usage in Firestore', err));
+        });
+
         span.setStatus({ code: SpanStatusCode.OK });
         span.end();
         return true;
@@ -210,6 +232,27 @@ export class CommandSystem {
         timer.end();
         const err = error instanceof Error ? error : new Error(String(error));
         this.context.logger.command(command.name, messageData.key?.remoteJid || 'unknown', false, null, err);
+
+        // Track failed command usage in Firestore
+        import('./FirebaseService.js').then(({ firebaseService }) => {
+          const usageId = crypto.randomUUID();
+          firebaseService.setDoc<'tenants/{tenantId}/command_usage'>(
+            'command_usage',
+            `usage_${usageId}`,
+            {
+              id: usageId,
+              command: command.name,
+              userId: messageData.key?.remoteJid || 'unknown',
+              success: false,
+              executionTime: 0,
+              category: command.category,
+              error: err.message,
+              usedAt: new Date()
+            },
+            bot.tenantId,
+            false
+          ).catch(e => this.context.logger.error('Failed to track failed command usage in Firestore', e));
+        });
 
         span.setStatus({
           code: SpanStatusCode.ERROR,
