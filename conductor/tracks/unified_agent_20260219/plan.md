@@ -2,7 +2,7 @@
 
 This plan implements a consolidated "Super-Agent" model, merging legacy bot logic into the OpenClaw-powered Agent orchestration system, with integrated billing enforcement.
 
-## Phase 1: Core Agent Identity & Tiered Creation
+## Phase 1: Core Agent Identity & Tiered Creation [checkpoint: fb295866]
 Focus on the "Brain" and enforcing quantity limits per plan.
 
 - [x] Task: Define Zod schemas for the Unified Agent, Templates, and Billing Context. a0d33996
@@ -11,7 +11,7 @@ Focus on the "Brain" and enforcing quantity limits per plan.
     - [x] Sub-task: Write tests to ensure Starter plan cannot create >1 agent, Pro >5, etc.
     - [x] Sub-task: Implement `useCreateAgent` with Firestore transactional checks against the user's `planTier`.
 - [x] Task: Implement Template Selection UI with "Premium" badges for tier-locked templates. 19a2b65b
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Agent Identity' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Core Agent Identity' (Protocol in workflow.md) fb295866
 
 ## Phase 2: Dynamic Channel Connectivity & Slot Enforcement
 Focus on the "Phone" and limiting the number of active channel connections.
