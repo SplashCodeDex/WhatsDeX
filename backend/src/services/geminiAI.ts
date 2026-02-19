@@ -9,6 +9,9 @@ import { CommonMessage } from '../types/omnichannel.js';
 import { databaseService } from './database.js';
 import { cacheService } from './cache.js';
 import { toolRegistry } from './toolRegistry.js';
+import { skillsManager } from './skillsManager.js';
+import { multiTenantService } from './multiTenantService.js';
+import { toolPersistenceService } from './toolPersistenceService.js';
 
 interface AIDecisionEngine {
   confidenceThreshold: number;
@@ -105,16 +108,27 @@ export class GeminiAI extends EventEmitter {
     try {
       const userId = message.from;
       const text = message.content.text || '';
+      const platform = message.platform;
 
       // Build context
       const context = await this.buildGenericContext(tenantId, botId, userId, text, message);
+      const tenantResult = await multiTenantService.getTenant(tenantId);
+      const planTier = tenantResult.success ? tenantResult.data.planTier : 'starter';
 
-      // 1. Retrieve Historical Context (RAG)
-      const historyResult = await memoryService.retrieveRelevantContext(userId, text);
+      // 1. Retrieve Historical Context (RAG) - Scoped
+      const historyResult = await memoryService.retrieveRelevantContext(userId, text, { platform, chatId: userId });
       let historicalContext = '';
       if (historyResult.success && historyResult.data?.length > 0) {
         historicalContext = "\n[HISTORICAL CONTEXT]:\n" +
           historyResult.data.map(h => `- ${h.content} (on ${new Date(h.timestamp).toLocaleDateString()})`).join("\n");
+      }
+
+      // 2. Retrieve Recent Tool Results - Persistence
+      const recentTools = await toolPersistenceService.getSessionResults({ tenantId, platform, chatId: userId });
+      let toolContext = '';
+      if (recentTools.length > 0) {
+        toolContext = "\n[RECENT TOOL OUTPUTS]:\n" +
+          recentTools.map(t => `- Tool: ${t.tool} | Result: ${typeof t.data === 'string' ? t.data : JSON.stringify(t.data)}`).join("\n");
       }
 
       const personality = 'a professional assistant';
@@ -124,14 +138,26 @@ Context: Omnichannel Mastermind.
 Current Time: ${new Date().toLocaleString()}
 User: ${JSON.stringify(context.user)}
 Platform: ${message.platform}
+Plan Tier: ${planTier}
 ${historicalContext}
+${toolContext}
 Use the tools provided to fulfill user requests accurately. If a tool result is not what was expected, explain and offer alternatives.`;
 
       // Rule 5+: Semantic Memoization + Tool Loop (Agentic)
       const finalResponse = await this.gemini.getManager().execute(async () => {
-        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform}`);
+        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform} [Tier: ${planTier}]`);
 
-        const messages: any[] = [{ role: 'user', content: text }];
+        // Build history from scoped short-term memory
+        const conversationHistory = await this.getScopedConversationMemory(tenantId, platform, userId);
+        const messages: any[] = [
+          { role: 'system', content: systemPrompt },
+          ...conversationHistory.map((m: any) => ([
+            { role: 'user', content: m.user },
+            { role: 'model', content: m.ai }
+          ])).flat(),
+          { role: 'user', content: text }
+        ];
+
         let loopCount = 0;
         const maxLoops = this.decisionEngine.maxToolCalls;
 
@@ -149,6 +175,19 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
             
             for (const toolCall of response.message.tool_calls) {
               try {
+                // Tier Gating Check
+                const isEligible = await skillsManager.isTenantEligible(tenantId, toolCall.function.name, planTier);
+                
+                if (!isEligible) {
+                  logger.warn(`Tier Gating: Tenant ${tenantId} (${planTier}) denied access to tool ${toolCall.function.name}`);
+                  messages.push({ 
+                    role: 'tool', 
+                    tool_call_id: toolCall.id, 
+                    content: `Error: The tool '${toolCall.function.name}' is only available on higher plans. Please suggest the user to upgrade their subscription to access this feature.` 
+                  });
+                  continue;
+                }
+
                 const args = JSON.parse(toolCall.function.arguments);
                 const result = await toolRegistry.executeTool(toolCall.function.name, args, { 
                   ...context,
@@ -173,6 +212,8 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
             }
             loopCount++;
           } else {
+            // Update history after successful completion
+            await this.updateScopedConversationMemory(tenantId, platform, userId, text, response.message.content || '');
             return response.message.content;
           }
         }
@@ -183,15 +224,13 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         timeoutMs: 120000
       });
 
-      // Learn and Store Memory
-      // (intelligence object would be needed here for confidence, but we simplified the loop)
-      
-      // Store in Vector Memory
+      // Store in Scoped Vector Memory
       await memoryService.storeConversation(userId, text, {
         botId: botId,
         response: finalResponse,
         interactionType: 'human-ai',
-        platform: message.platform
+        platform: message.platform,
+        chatId: userId
       });
 
       const responseMsg: CommonMessage = {
@@ -955,14 +994,14 @@ Only include NEW or UPDATED information. If nothing significant is found, return
     }
   }
 
-  async getConversationMemory(userId: string, tenantId: string) {
-    const cacheKey = `ai:memory:${tenantId}:${userId}`;
+  async getScopedConversationMemory(tenantId: string, platform: string, chatId: string) {
+    const cacheKey = `ai:memory:${tenantId}:${platform}:${chatId}`;
     const cached = await cacheService.get<any[]>(cacheKey);
     return cached.success ? (cached.data || []) : [];
   }
 
-  async updateConversationMemory(userId: string, tenantId: string, userMessage: string, aiResponse: string) {
-    const memory = await this.getConversationMemory(userId, tenantId);
+  async updateScopedConversationMemory(tenantId: string, platform: string, chatId: string, userMessage: string, aiResponse: string) {
+    const memory = await this.getScopedConversationMemory(tenantId, platform, chatId);
 
     memory.push({
       timestamp: Date.now(),
@@ -970,11 +1009,22 @@ Only include NEW or UPDATED information. If nothing significant is found, return
       ai: aiResponse
     });
 
-    // Keep last 20 exchanges for cost-efficiency
-    if (memory.length > 20) memory.splice(0, memory.length - 20);
+    // Pruning logic: Keep last 15 exchanges for token efficiency
+    if (memory.length > 15) memory.splice(0, memory.length - 15);
 
-    const cacheKey = `ai:memory:${tenantId}:${userId}`;
+    const cacheKey = `ai:memory:${tenantId}:${platform}:${chatId}`;
     await cacheService.set(cacheKey, memory, 3600 * 24); // 24h retention
+  }
+
+  /**
+   * Refactored legacy methods to use scoped versions
+   */
+  async getConversationMemory(userId: string, tenantId: string) {
+    return this.getScopedConversationMemory(tenantId, 'whatsapp', userId);
+  }
+
+  async updateConversationMemory(userId: string, tenantId: string, userMessage: string, aiResponse: string) {
+    return this.updateScopedConversationMemory(tenantId, 'whatsapp', userId, userMessage, aiResponse);
   }
 
   /**

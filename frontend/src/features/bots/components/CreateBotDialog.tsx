@@ -16,11 +16,19 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { createBot, useBots } from '@/features/bots';
 import { useSubscription } from '@/features/billing';
 
 export function CreateBotDialog() {
     const [open, setOpen] = useState(false);
+    const [botType, setBotType] = useState('whatsapp');
     const { data: bots } = useBots();
     const { limits, isAtLimit, isLoading: isLoadingPlan } = useSubscription();
 
@@ -31,6 +39,7 @@ export function CreateBotDialog() {
     useEffect(() => {
         if (state?.success) {
             setOpen(false);
+            setBotType('whatsapp'); // Reset
             toast.success('Bot created successfully');
         }
     }, [state]);
@@ -45,35 +54,71 @@ export function CreateBotDialog() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form action={formAction}>
+                    <input type="hidden" name="type" value={botType} />
                     <DialogHeader>
                         <DialogTitle>Create New Bot</DialogTitle>
                         <DialogDescription>
                             {reachedLimit
                                 ? `You have reached your limit of ${limits?.maxBots} bots. Upgrade your plan to add more.`
-                                : "Add a new WhatsApp bot instance. You'll be able to scan the QR code to connect it in the next step."
+                                : "Add a new bot instance. Choose the platform and follow the setup instructions."
                             }
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="py-4 space-y-4">
                         {!reachedLimit && (
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Bot Name</Label>
-                                <Input
-                                    id="name"
-                                    name="name"
-                                    placeholder="My Business Bot"
-                                    disabled={isPending}
-                                    required
-                                />
-                                {state?.success === false && !!(state.error as any).details?.name && (
-                                    <p className="text-xs text-destructive">
-                                        {(Array.isArray((state.error as any).details.name)
-                                            ? (state.error as any).details.name[0]
-                                            : (state.error as any).details.name) as string}
-                                    </p>
+                            <>
+                                <div className="space-y-2">
+                                    <Label htmlFor="type">Platform</Label>
+                                    <Select onValueChange={setBotType} value={botType}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select platform" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="whatsapp">WhatsApp (QR Code)</SelectItem>
+                                            <SelectItem value="telegram">Telegram (Bot Token)</SelectItem>
+                                            <SelectItem value="discord">Discord (Bot Token)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">Bot Name</Label>
+                                    <Input
+                                        id="name"
+                                        name="name"
+                                        placeholder="e.g. Support Bot"
+                                        disabled={isPending}
+                                        required
+                                    />
+                                    {state?.success === false && !!(state.error as any).details?.name && (
+                                        <p className="text-xs text-destructive">
+                                            {(Array.isArray((state.error as any).details.name)
+                                                ? (state.error as any).details.name[0]
+                                                : (state.error as any).details.name) as string}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {botType !== 'whatsapp' && (
+                                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                                        <Label htmlFor="token">API Token</Label>
+                                        <Input
+                                            id="token"
+                                            name="token"
+                                            type="password"
+                                            placeholder={botType === 'telegram' ? '123456:ABC-DEF...' : 'MTA...'}
+                                            disabled={isPending}
+                                            required
+                                        />
+                                        <p className="text-[10px] text-muted-foreground">
+                                            {botType === 'telegram' 
+                                                ? "Get this from @BotFather on Telegram." 
+                                                : "Get this from the Discord Developer Portal."}
+                                        </p>
+                                    </div>
                                 )}
-                            </div>
+                            </>
                         )}
 
                         {state?.success === false && !state.error.details?.name && (
@@ -89,8 +134,8 @@ export function CreateBotDialog() {
                                 Upgrade Plan
                             </Button>
                         ) : (
-                            <Button type="submit" isLoading={isPending} disabled={isPending}>
-                                Create Bot
+                            <Button type="submit" isLoading={isPending} disabled={isPending} className="w-full">
+                                Create {botType === 'whatsapp' ? 'WhatsApp' : botType.charAt(0).toUpperCase() + botType.slice(1)} Bot
                             </Button>
                         )}
                     </DialogFooter>

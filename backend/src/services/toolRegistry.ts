@@ -1,6 +1,8 @@
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
 
+import { toolPersistenceService } from './toolPersistenceService.js';
+
 export interface ToolDefinition {
   name: string;
   description: string;
@@ -67,6 +69,21 @@ export class ToolRegistry {
     try {
       logger.info(`Executing tool: ${name} with args:`, args);
       const result = await tool.execute(args, context);
+
+      // Persist result for chaining if context has enough info
+      if (context.tenantId && context.platform && context.userId) {
+        const scope = { 
+          tenantId: context.tenantId, 
+          platform: context.platform, 
+          chatId: context.userId 
+        };
+        await toolPersistenceService.storeResult(scope, name, result);
+        
+        // Ensure the key is registered in the session list
+        const toolKey = `tool:res:${scope.tenantId}:${scope.platform}:${scope.chatId}:${name}`;
+        await toolPersistenceService.registerKey(scope, toolKey);
+      }
+
       return result;
     } catch (error) {
       logger.error(`Error executing tool ${name}:`, error);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Power, QrCode, Smartphone, Trash2, Settings2 } from 'lucide-react';
+import { Power, QrCode, Smartphone, Trash2, Settings2, MessageSquare, Send, Radio } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,13 +13,21 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { BotConnectDialog, BotSettingsDialog } from './index';
-import { useDeleteBot, useDisconnectBot, useBot } from '../hooks/index';
+import { useDeleteBot, useDisconnectBot, useBot, useConnectBot } from '../hooks/index';
 import type { BotListItem } from '../types';
 import { cn } from '@/lib/utils';
 
 interface BotCardProps {
     bot: BotListItem;
 }
+
+const platformIcons: Record<string, any> = {
+    whatsapp: Smartphone,
+    telegram: Send,
+    discord: MessageSquare,
+    slack: MessageSquare,
+    signal: Radio
+};
 
 export function BotCard({ bot }: BotCardProps) {
     const [showQR, setShowQR] = useState(false);
@@ -30,19 +38,30 @@ export function BotCard({ bot }: BotCardProps) {
 
     const { mutate: deleteBot } = useDeleteBot();
     const { mutate: disconnectBot } = useDisconnectBot();
+    const { mutate: connectBot } = useConnectBot();
 
-    const handleQRClick = () => {
-        setShowQR(true);
+    const handleConnectClick = () => {
+        if (bot.type === 'whatsapp' || !bot.type) {
+            setShowQR(true);
+        } else {
+            // For Telegram/Discord, just trigger start
+            connectBot(bot.id);
+        }
     };
+
+    const PlatformIcon = platformIcons[bot.type || 'whatsapp'] || Smartphone;
 
     return (
         <>
             <Card className="overflow-hidden border-border/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="flex flex-col space-y-1.5">
-                        <CardTitle className="text-base font-medium">{bot.name}</CardTitle>
-                        <CardDescription className="text-xs">
-                            {bot.phoneNumber || (bot.status === 'connected' ? 'Connected' : 'Not connected')}
+                        <div className="flex items-center gap-2">
+                            <PlatformIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                            <CardTitle className="text-base font-medium">{bot.name}</CardTitle>
+                        </div>
+                        <CardDescription className="text-xs truncate max-w-[150px]">
+                            {bot.phoneNumber || bot.identifier || (bot.status === 'connected' ? 'Connected' : 'Not connected')}
                         </CardDescription>
                     </div>
                     <div className={cn(
@@ -54,8 +73,9 @@ export function BotCard({ bot }: BotCardProps) {
                 <CardContent className="pb-2">
                     <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <div className="flex items-center">
-                            <Smartphone className="mr-1 h-3 w-3" />
-                            {bot.status === 'connected' ? 'Online' : 'Offline'}
+                            <Badge variant="outline" className="text-[10px] py-0 h-4 capitalize">
+                                {bot.type || 'whatsapp'}
+                            </Badge>
                         </div>
                         <div>
                             {bot.messageCount} msgs
@@ -65,8 +85,8 @@ export function BotCard({ bot }: BotCardProps) {
                 <CardFooter className="flex justify-between pt-2 gap-2">
                     <div className="flex-1 flex gap-2">
                         {bot.status !== 'connected' ? (
-                            <Button variant="outline" size="sm" onClick={handleQRClick} className="flex-1">
-                                <QrCode className="mr-2 h-3 w-3" />
+                            <Button variant="outline" size="sm" onClick={handleConnectClick} className="flex-1">
+                                {(bot.type === 'whatsapp' || !bot.type) ? <QrCode className="mr-2 h-3 w-3" /> : <Power className="mr-2 h-3 w-3" />}
                                 Connect
                             </Button>
                         ) : (
@@ -99,16 +119,19 @@ export function BotCard({ bot }: BotCardProps) {
                 </CardFooter>
             </Card>
 
-            {/* Connect Bot Dialog */}
-            <BotConnectDialog
-                bot={bot}
-                open={showQR}
-                onOpenChange={setShowQR}
-            />
+            {/* Connect Bot Dialog (WhatsApp Only) */}
+            {(bot.type === 'whatsapp' || !bot.type) && (
+                <BotConnectDialog
+                    bot={bot}
+                    open={showQR}
+                    onOpenChange={setShowQR}
+                />
+            )}
 
             {/* Bot Settings Dialog */}
             <BotSettingsDialog
                 botId={bot.id}
+                botType={bot.type}
                 initialConfig={fullBot?.config}
                 open={showSettings}
                 onOpenChange={setShowSettings}

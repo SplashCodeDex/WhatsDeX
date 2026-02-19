@@ -17,6 +17,10 @@ export async function createBot(
     // 1. Validate Input
     const rawData = {
         name: formData.get('name'),
+        type: formData.get('type') || 'whatsapp',
+        credentials: {
+            token: formData.get('token'),
+        },
     };
 
     const parsed = createBotSchema.safeParse(rawData);

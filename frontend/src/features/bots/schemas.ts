@@ -13,6 +13,10 @@ export const createBotSchema = z.object({
         .min(1, 'Bot name is required')
         .max(50, 'Bot name must be less than 50 characters')
         .regex(/^[a-zA-Z0-9\s\-_]+$/, 'Bot name can only contain letters, numbers, spaces, hyphens, and underscores'),
+    type: z.enum(['whatsapp', 'telegram', 'discord', 'slack', 'signal']).default('whatsapp'),
+    credentials: z.object({
+        token: z.string().optional(),
+    }).optional(),
 });
 
 export type CreateBotInput = z.infer<typeof createBotSchema>;
@@ -26,6 +30,10 @@ export const updateBotSchema = z.object({
         .min(1, 'Bot name is required')
         .max(50, 'Bot name must be less than 50 characters')
         .optional(),
+    type: z.enum(['whatsapp', 'telegram', 'discord', 'slack', 'signal']).optional(),
+    credentials: z.object({
+        token: z.string().optional(),
+    }).optional(),
     config: z
         .object({
             // Identity

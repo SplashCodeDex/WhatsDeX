@@ -15,7 +15,9 @@ export type BotStatus = 'connected' | 'disconnected' | 'connecting' | 'qr_pendin
 export interface Bot {
     id: string;
     name: string;
+    type?: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
     phoneNumber: string | null;
+    identifier?: string;
     status: BotStatus;
     lastSeenAt: Date | null;
     createdAt: Date;
@@ -31,6 +33,7 @@ export interface BotConfig {
     // Identity
     name: string;
     phoneNumber?: string;
+    type?: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
 
     // Behavior
     prefix: string[];
@@ -108,7 +111,9 @@ export interface BotStats {
 export interface BotListItem {
     id: string;
     name: string;
+    type?: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
     phoneNumber: string | null;
+    identifier?: string;
     status: BotStatus;
     messageCount: number;
     lastActiveAt: Date | null;

@@ -41,12 +41,13 @@ import { toast } from 'sonner';
 
 interface BotSettingsDialogProps {
     botId: string;
+    botType: string | undefined;
     initialConfig: Partial<BotConfig> | undefined;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: BotSettingsDialogProps) {
+export function BotSettingsDialog({ botId, botType, initialConfig, open, onOpenChange }: BotSettingsDialogProps) {
     const updateBotWithId = updateBot.bind(null, botId);
     const [state, dispatch, isPending] = useActionState(updateBotWithId, null);
 
@@ -56,6 +57,10 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
             config: {
                 ...initialConfig,
                 prefix: initialConfig?.prefix || ['.', '!', '/'],
+            },
+            type: botType as any,
+            credentials: {
+                token: '' // Don't show existing token for security
             }
         }
     });
@@ -67,13 +72,14 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
                 config: {
                     ...initialConfig,
                     prefix: initialConfig?.prefix || ['.', '!', '/'],
+                },
+                type: botType as any,
+                credentials: {
+                    token: ''
                 }
             });
-            // We can't reset 'state' from useActionState directly, but we can ignore it if needed.
-            // Or better, handling open state change might require keying the component?
-            // For now, this is fine.
         }
-    }, [open, initialConfig, form]);
+    }, [open, initialConfig, botType, form]);
 
     // Handle success/error side effects
     useEffect(() => {
@@ -416,6 +422,30 @@ export function BotSettingsDialog({ botId, initialConfig, open, onOpenChange }: 
 
                             {/* Advanced Tab */}
                             <TabsContent value="advanced" className="space-y-4 pt-4">
+                                {botType !== 'whatsapp' && (
+                                    <div className="space-y-4 pb-4 border-b">
+                                        <h4 className="text-sm font-medium flex items-center gap-2">
+                                            <Shield className="w-4 h-4 text-primary" /> Credentials
+                                        </h4>
+                                        <FormField
+                                            control={form.control}
+                                            name="credentials.token"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Update API Token</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="password" placeholder="Enter new token to update..." {...field} />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        Leave empty to keep existing token.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-2 gap-4 border p-4 rounded-lg">
                                     <FormField
                                         control={form.control}
