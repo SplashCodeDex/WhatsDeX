@@ -51,27 +51,29 @@ export class CommandSystem {
     this.categories.clear();
 
     const commandsDir = path.join(__dirname, '..', 'commands');
-
-    this.context.logger.info('🔄 Loading commands...');
+    this.context.logger.info('🔄 Parallelizing command loading...');
 
     try {
       const categories = await fs.readdir(commandsDir, { withFileTypes: true });
 
-      for (const category of categories) {
-        if (!category.isDirectory()) continue;
+      // Parallelize category loading
+      await Promise.all(categories.map(async (category) => {
+        if (!category.isDirectory()) return;
 
         const categoryPath = path.join(commandsDir, category.name);
         const commandFiles = await fs.readdir(categoryPath);
 
         this.categories.set(category.name, []);
 
-        for (const file of commandFiles) {
+        // Parallelize file loading within category
+        await Promise.all(commandFiles.map(async (file) => {
           if ((file.endsWith('.js') || file.endsWith('.ts')) && !file.endsWith('.d.ts')) {
             try {
               const commandPath = path.join(categoryPath, file);
               const command = await this.loadSingleCommand(commandPath, category.name);
 
               if (command) {
+                // Since this is asynchronous, we use a synchronized registration
                 this.registerCommand(command, category.name);
               }
             } catch (error: unknown) {
@@ -79,11 +81,11 @@ export class CommandSystem {
               this.context.logger.error(`  ❌ Error loading ${file}:`, { error: err });
             }
           }
-        }
-      }
+        }));
+      }));
 
       const duration = Date.now() - startTime;
-      this.context.logger.info(`🎉 Loaded ${this.loadedCount} commands in ${duration}ms`);
+      this.context.logger.info(`🎉 High-Speed Load Complete: ${this.loadedCount} commands in ${duration}ms`);
 
     } catch (error: unknown) {
       const err = error instanceof Error ? error.message : String(error);

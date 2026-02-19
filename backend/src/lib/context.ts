@@ -26,16 +26,16 @@ let initializationPromise: Promise<GlobalContext> | null = null;
  * 2026 Mastermind Edition: Singleton implementation with Promise-based guard
  */
 async function initializeContext(): Promise<GlobalContext> {
-    console.log('>>> [MASTERMIND] initializeContext() called');
+    logger.info('>>> [MASTERMIND] initializeContext() called');
     // If initialization is already in progress or completed, return the same promise
     if (initializationPromise) {
-        console.log('>>> [MASTERMIND] initializeContext() returning existing promise');
+        logger.info('>>> [MASTERMIND] initializeContext() returning existing promise');
         return initializationPromise;
     }
 
     // Capture the initialization process in a promise
     initializationPromise = (async () => {
-        console.log('>>> [MASTERMIND] Starting fresh initialization');
+        logger.info('>>> [MASTERMIND] Starting fresh initialization');
         try {
             const config = ConfigService.getInstance();
 
@@ -56,6 +56,7 @@ async function initializeContext(): Promise<GlobalContext> {
                 commandSystem: null as any,
                 unifiedAI: null as any,
             };
+            logger.info('>>> [MASTERMIND] Base context object built.');
 
             // Instantiate systems that depend on context
             const commandSystem = new CommandSystem(context);
@@ -70,6 +71,7 @@ async function initializeContext(): Promise<GlobalContext> {
             // Load commands eagerly
             logger.info('Initializing Command System and loading commands...');
             await commandSystem.loadCommands();
+            logger.info('>>> [MASTERMIND] Command loading finished. Getting mock bot...');
 
             // 2026 Edition: Bridge tools for AI
             logger.info('Bridging tools for Agentic Brain...');
@@ -77,12 +79,19 @@ async function initializeContext(): Promise<GlobalContext> {
             // We need a temporary bot mock to extract commands for bridging
             // since commands are tied to bot instances in WhatsDeX
             const mockBot = { cmd: commandSystem.getCommands() } as any;
+            logger.info(`>>> [MASTERMIND] Mock bot created. Command count: ${mockBot.cmd.size}`);
+
+            logger.info('>>> [MASTERMIND] Bridging WhatsDeX tools...');
             WhatsDeXToolBridge.registerCommands(mockBot);
+            logger.info('>>> [MASTERMIND] WhatsDeX tools bridged successfully.');
 
             // Register OpenClaw Skills
+            logger.info('>>> [MASTERMIND] Registering OpenClaw skills...');
             await OpenClawSkillBridge.registerSkills();
+            logger.info('>>> [MASTERMIND] OpenClaw skills registered.');
 
             logger.info('✅ Global Context initialized successfully');
+            logger.info('>>> [MASTERMIND] Global Context initialized successfully');
             return context;
         } catch (error) {
             logger.error('❌ Failed to initialize Global Context:', error);

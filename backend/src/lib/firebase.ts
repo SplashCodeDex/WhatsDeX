@@ -11,9 +11,7 @@ try {
     if (admin.apps.length === 0) {
         // If we have service account in config/env, use it.
         // Otherwise rely on ADC (Application Default Credentials)
-        const options: any = {
-            credential: admin.credential.applicationDefault()
-        };
+        const options: any = {};
 
         // Check if we have explicit config path in env
         const serviceAccountPath = config.get('FIREBASE_SERVICE_ACCOUNT_PATH');
@@ -21,6 +19,9 @@ try {
             const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
             options.credential = admin.credential.cert(serviceAccount);
             options.projectId = serviceAccount.project_id;
+        } else {
+            // ADC is only used as a fallback and it's handled here to avoid blocking hangs
+            options.credential = admin.credential.applicationDefault();
         }
 
 

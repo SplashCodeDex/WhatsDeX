@@ -173,19 +173,19 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
           if (response.finish_reason === 'tool_calls' && response.message.tool_calls) {
             messages.push({ role: 'assistant', content: response.message.content || '', tool_calls: response.message.tool_calls });
             
-            for (const toolCall of response.message.tool_calls) {
+            // 2026 Optimization: Parallel Tool Execution
+            const toolResults = await Promise.all(response.message.tool_calls.map(async (toolCall) => {
               try {
                 // Tier Gating Check
                 const isEligible = await skillsManager.isTenantEligible(tenantId, toolCall.function.name, planTier);
                 
                 if (!isEligible) {
                   logger.warn(`Tier Gating: Tenant ${tenantId} (${planTier}) denied access to tool ${toolCall.function.name}`);
-                  messages.push({ 
+                  return { 
                     role: 'tool', 
                     tool_call_id: toolCall.id, 
                     content: `Error: The tool '${toolCall.function.name}' is only available on higher plans. Please suggest the user to upgrade their subscription to access this feature.` 
-                  });
-                  continue;
+                  };
                 }
 
                 const args = JSON.parse(toolCall.function.arguments);
@@ -197,19 +197,21 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                   userId 
                 });
                 
-                messages.push({ 
+                return { 
                   role: 'tool', 
                   tool_call_id: toolCall.id, 
                   content: typeof result === 'string' ? result : JSON.stringify(result) 
-                });
+                };
               } catch (toolError: any) {
-                messages.push({ 
+                return { 
                   role: 'tool', 
                   tool_call_id: toolCall.id, 
                   content: `Error: ${toolError.message}` 
-                });
+                };
               }
-            }
+            }));
+
+            messages.push(...toolResults);
             loopCount++;
           } else {
             // Update history after successful completion

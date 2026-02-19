@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/main.js",
+    "predev": "pwsh -Command \"Get-NetTCPConnection -LocalPort 3001,3002 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }\"",
     "dev": "tsx watch src/main.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

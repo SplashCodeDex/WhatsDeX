@@ -43,6 +43,8 @@ export interface Config {
   };
   redis: {
     url: string | undefined;
+    host: string;
+    port: number;
     maxRetriesPerRequest: number;
     retryDelayOnFailover: number;
     family: number;
@@ -194,6 +196,8 @@ export class ConfigManager {
       // Redis Configuration
       redis: {
         url: this.getEnvString('REDIS_URL'),
+        host: this.getEnvString('REDIS_HOST', 'localhost')!,
+        port: this.getEnvNumber('REDIS_PORT', 6379),
         maxRetriesPerRequest: this.getEnvNumber('REDIS_MAX_RETRIES', 3),
         retryDelayOnFailover: this.getEnvNumber('REDIS_RETRY_DELAY', 100),
         family: this.getEnvNumber('REDIS_FAMILY', 4),
@@ -362,6 +366,14 @@ export class ConfigManager {
     // Validate JWT secret strength
     if (this.config.auth.jwtSecret && this.config.auth.jwtSecret.length < 32) {
       logger.warn('⚠️ JWT secret is too short. Use at least 32 characters.');
+    }
+
+    // If REDIS_URL is missing but we have host/port, construct it
+    if (!this.config.redis.url && this.config.redis.host) {
+      const auth = this.config.redis.password ? `:${this.config.redis.password}@` : '';
+      this.config.redis.url = `redis://${auth}${this.config.redis.host}:${this.config.redis.port}`;
+      process.env.REDIS_URL = this.config.redis.url; // Export back to env for validator and other libs
+      logger.info('🔗 Constructed and exported REDIS_URL from host and port configuration');
     }
 
     // Warn about missing optional but recommended vars

@@ -48,24 +48,30 @@ export class MultiTenantApp {
     try {
       logger.info('Initializing Multi-tenant WhatsDeX SaaS Platform...');
 
+      logger.info('>>> [MASTERMIND] Setting up server middleware...');
       // Setup middleware
       this.setupMiddleware();
 
+      logger.info('>>> [MASTERMIND] Setting up server routes...');
       // Setup routes
       this.setupRoutes();
 
+      logger.info('>>> [MASTERMIND] Initializing Analytics Service...');
       // Initialize Analytics (App Port + 1)
       await AnalyticsService.initialize({
         websocketPort: this.port + 1
       });
-      logger.info(`Enterprise Analytics Gateway online at port ${this.port + 1}`);
+      logger.info(`>>> [MASTERMIND] Enterprise Analytics Gateway online at port ${this.port + 1}`);
 
+      logger.info('>>> [MASTERMIND] Initializing Unified WebSockets...');
       // Initialize Unified WebSockets (Shared Port)
       socketService.initialize(this.httpServer);
 
+      logger.info('>>> [MASTERMIND] Initializing additional services...');
       // Initialize services
       await this.initializeServices();
 
+      logger.info('>>> [MASTERMIND] Starting active tenant bots...');
       // Start active tenant bots
       await this.startActiveTenantBots();
 
@@ -252,8 +258,9 @@ export class MultiTenantApp {
         await this.initialize();
       }
 
+      logger.info(`>>> [MASTERMIND] Attempting to listen on port ${this.port}...`);
       this.httpServer.listen(this.port, () => {
-        logger.info(`Multi-tenant WhatsDeX server running on port ${this.port}`);
+        logger.info(`>>> [MASTERMIND] Multi-tenant WhatsDeX server running on port ${this.port}`);
       });
 
       process.on('SIGTERM', () => this.shutdown());

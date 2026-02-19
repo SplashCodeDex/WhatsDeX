@@ -47,6 +47,21 @@ vi.mock('./database.js', () => ({
   }
 }));
 
+vi.mock('./multiTenantService.js', () => ({
+  multiTenantService: {
+    getTenant: vi.fn().mockResolvedValue({
+      success: true,
+      data: { planTier: 'starter' }
+    })
+  }
+}));
+
+vi.mock('./skillsManager.js', () => ({
+  skillsManager: {
+    isTenantEligible: vi.fn().mockResolvedValue(true)
+  }
+}));
+
 vi.mock('./cache.js', () => ({
   cacheService: {
     get: vi.fn().mockResolvedValue({ success: false }),
@@ -170,5 +185,107 @@ describe('GeminiAI Omnichannel Support', () => {
 
     expect(mockTool.execute).toHaveBeenCalled();
     expect(result.data.content.text).toBe('The tool said: Tool result');
+  });
+
+  it('should execute multiple tools in parallel when requested by Gemini', async () => {
+    const { toolRegistry } = await import('./toolRegistry.js');
+    const tool1 = {
+      name: 'tool1',
+      description: 'First tool',
+      parameters: { type: 'object', properties: {}, required: [] },
+      execute: vi.fn().mockResolvedValue('Result 1'),
+      source: 'whatsdex' as const
+    };
+    const tool2 = {
+      name: 'tool2',
+      description: 'Second tool',
+      parameters: { type: 'object', properties: {}, required: [] },
+      execute: vi.fn().mockResolvedValue('Result 2'),
+      source: 'whatsdex' as const
+    };
+    toolRegistry.registerTool(tool1);
+    toolRegistry.registerTool(tool2);
+
+    mockGeminiService.getChatCompletionWithTools
+      .mockResolvedValueOnce({
+        finish_reason: 'tool_calls',
+        message: {
+          role: 'assistant',
+          content: 'I need to use two tools',
+          tool_calls: [
+            { id: 'call_1', function: { name: 'tool1', arguments: '{}' } },
+            { id: 'call_2', function: { name: 'tool2', arguments: '{}' } }
+          ]
+        }
+      })
+      .mockResolvedValueOnce({
+        finish_reason: 'stop',
+        message: {
+          role: 'assistant',
+          content: 'Both tools finished.'
+        }
+      });
+
+    const input: CommonMessage = {
+      id: 'msg_parallel',
+      platform: 'web',
+      from: 'user_parallel',
+      to: 'bot_1',
+      content: { text: 'Run both tools' },
+      timestamp: Date.now()
+    };
+
+    const result = await ai.processOmnichannelMessage('tenant_1', 'bot_1', input);
+
+    expect(tool1.execute).toHaveBeenCalled();
+    expect(tool2.execute).toHaveBeenCalled();
+    expect(result.data.content.text).toBe('Both tools finished.');
+  });
+
+  it('should prompt for upgrade when a tool is gated by tier', async () => {
+    const { multiTenantService } = await import('./multiTenantService.js');
+    const { skillsManager } = await import('./skillsManager.js');
+    
+    // Set plan to starter
+    vi.mocked(multiTenantService.getTenant).mockResolvedValueOnce({
+      success: true,
+      data: { planTier: 'starter' }
+    } as any);
+
+    // Mock tool as ineligible for starter
+    vi.mocked(skillsManager.isTenantEligible).mockResolvedValueOnce(false);
+
+    // Mock Gemini wanting to call a premium tool
+    mockGeminiService.getChatCompletionWithTools
+      .mockResolvedValueOnce({
+        finish_reason: 'tool_calls',
+        message: {
+          role: 'assistant',
+          content: 'I will search the web',
+          tool_calls: [{ id: 'call_prem', function: { name: 'web_search', arguments: '{"query": "news"}' } }]
+        }
+      })
+      .mockResolvedValueOnce({
+        finish_reason: 'stop',
+        message: {
+          role: 'assistant',
+          content: 'You need to upgrade to Pro to use web search.'
+        }
+      });
+
+    const input: CommonMessage = {
+      id: 'msg_tier',
+      platform: 'whatsapp',
+      from: 'user_tier',
+      to: 'bot_1',
+      content: { text: 'Search the web' },
+      timestamp: Date.now()
+    };
+
+    const result = await ai.processOmnichannelMessage('tenant_tier', 'bot_1', input);
+
+    expect(result.success).toBe(true);
+    expect(result.data.content.text).toContain('upgrade');
+    expect(vi.mocked(skillsManager.isTenantEligible)).toHaveBeenCalledWith('tenant_tier', 'web_search', 'starter');
   });
 });

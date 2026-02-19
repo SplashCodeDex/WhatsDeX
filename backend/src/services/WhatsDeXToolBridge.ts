@@ -6,7 +6,7 @@ import logger from '../utils/logger.js';
  * Bridge between WhatsDeX legacy commands and the Unified Tool Registry.
  */
 export class WhatsDeXToolBridge {
-  
+
   /**
    * Registers a subset of high-value WhatsDeX commands as AI tools.
    */
@@ -17,10 +17,15 @@ export class WhatsDeXToolBridge {
       'weather', 'translate', 'joke', 'meme', 'screenshot', 'ocr'
     ];
 
+    console.log(`>>> [MASTERMIND] Bridging ${highValueCommands.length} commands...`);
+
     for (const name of highValueCommands) {
+      console.log(`>>> [MASTERMIND] Bridging command: ${name}`);
       const command = bot.cmd.get(name);
       if (command) {
         this.bridgeCommand(name, command);
+      } else {
+        console.warn(`>>> [MASTERMIND] Command not found: ${name}`);
       }
     }
   }
@@ -44,7 +49,7 @@ export class WhatsDeXToolBridge {
           await command.code(mockCtx);
           return { success: true, message: `Command ${name} executed.` };
         }
-        
+
         return { success: false, error: 'Command has no executable code.' };
       }
     };

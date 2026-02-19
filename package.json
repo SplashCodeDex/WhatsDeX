@@ -22,7 +22,8 @@
   "pnpm": {
     "overrides": {
       "wa-sticker-formatter>axios": "^1.7.9",
-      "wa-sticker-formatter>sharp": "^0.33.5"
+      "wa-sticker-formatter>sharp": "^0.33.5",
+      "punycode": "npm:punycode@^2.3.1"
     }
   },
   "dependencies": {

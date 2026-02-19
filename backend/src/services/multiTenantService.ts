@@ -31,7 +31,7 @@ export class MultiTenantService {
   }): Promise<Result<{ tenant: Tenant; user: TenantUser }>> {
     const { userId, email, displayName, tenantName, subdomain, plan: rawPlan = 'starter' } = payload;
     const tenantId = `tenant-${crypto.randomUUID()}`;
-    
+
     // Type-safe plan narrowing
     const plan = (rawPlan.toLowerCase() === 'starter' || rawPlan.toLowerCase() === 'pro' || rawPlan.toLowerCase() === 'enterprise')
       ? (rawPlan.toLowerCase() as 'starter' | 'pro' | 'enterprise')
@@ -111,7 +111,7 @@ export class MultiTenantService {
       const plan = tenantData.plan || 'starter';
       const limits = getPlanLimits(plan);
       const maxBots = limits.maxBots;
-      
+
       const rawData = {
         id: tenantData.id,
         name: tenantData.name || 'New Workspace',

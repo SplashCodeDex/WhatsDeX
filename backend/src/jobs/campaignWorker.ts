@@ -329,6 +329,15 @@ class CampaignWorker {
         await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>('campaigns', campaignId, { status, updatedAt: new Date() }, tenantId, true);
     }
 
+    private static instance: CampaignWorker;
+
+    public static getInstance() {
+        if (!CampaignWorker.instance) {
+            CampaignWorker.instance = new CampaignWorker();
+        }
+        return CampaignWorker.instance;
+    }
+
     private async finalizeCampaign(tenantId: string, id: string, sent: number, failed: number, total: number) {
         await firebaseService.setDoc<'tenants/{tenantId}/campaigns'>('campaigns', id, {
             status: 'completed',
@@ -340,4 +349,10 @@ class CampaignWorker {
     }
 }
 
-export const campaignWorker = new CampaignWorker();
+// 2026 Edition: Lazy singleton to prevent import-time hangs
+export const getCampaignWorker = () => {
+    return CampaignWorker.getInstance();
+};
+
+// Removed top-level instantiation:
+// export const campaignWorker = new CampaignWorker();

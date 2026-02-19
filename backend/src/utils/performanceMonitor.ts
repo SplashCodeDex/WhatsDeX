@@ -38,8 +38,8 @@ export class PerformanceMonitor extends EventEmitter {
     this.thresholds = {
       slow_operation: 1000,    // 1 second
       very_slow_operation: 5000, // 5 seconds
-      memory_warning: 512,     // 512 MB
-      memory_critical: 1024,   // 1 GB
+      memory_warning: 1536,     // 1.5 GB
+      memory_critical: 2048,   // 2 GB
       cpu_warning: 80,         // 80%
       cpu_critical: 95         // 95%
     };
