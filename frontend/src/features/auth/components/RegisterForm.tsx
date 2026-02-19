@@ -14,6 +14,7 @@ import { signUp } from '../actions';
 export function RegisterForm() {
     const router = useRouter();
     const [state, formAction, isPending] = useActionState(signUp, null);
+    const fields = state?.success === false ? state.error.details?.fields as any : null;
 
     useEffect(() => {
         if (state?.success) {
@@ -62,6 +63,7 @@ export function RegisterForm() {
                                     autoCapitalize="words"
                                     autoComplete="given-name"
                                     disabled={isPending}
+                                    defaultValue={fields?.firstName || ''}
                                 />
                                 {state?.success === false && state.error.details?.field === 'firstName' && (
                                     <span className="text-xs text-destructive">{state.error.message}</span>
@@ -82,6 +84,7 @@ export function RegisterForm() {
                                     autoCapitalize="words"
                                     autoComplete="family-name"
                                     disabled={isPending}
+                                    defaultValue={fields?.lastName || ''}
                                 />
                                 {state?.success === false && state.error.details?.field === 'lastName' && (
                                     <span className="text-xs text-destructive">{state.error.message}</span>
@@ -105,6 +108,7 @@ export function RegisterForm() {
                                 autoComplete="email"
                                 autoCorrect="off"
                                 disabled={isPending}
+                                defaultValue={fields?.email || ''}
                             />
                             {state?.success === false && state.error.details?.field === 'email' && (
                                 <span className="text-xs text-destructive">{state.error.message}</span>
@@ -133,6 +137,7 @@ export function RegisterForm() {
                             <Checkbox
                                 id="acceptTerms"
                                 name="acceptTerms"
+                                defaultChecked={fields?.acceptTerms || false}
                                 label={
                                     <span>
                                         I agree to the{' '}

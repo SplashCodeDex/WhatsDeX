@@ -50,12 +50,15 @@ export async function signIn(
             error: {
                 code: 'validation_error',
                 message: firstIssue?.message ?? 'Invalid input',
-                details: { field: firstIssue?.path[0] as string },
+                details: { 
+                    field: firstIssue?.path[0] as string,
+                    fields: rawData // Return back fields
+                },
             },
         };
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, rememberMe } = parsed.data;
 
     try {
         // Authenticate with Backend API via centralized client
@@ -67,7 +70,13 @@ export async function signIn(
         if (!response.success) {
             return {
                 success: false,
-                error: response.error,
+                error: {
+                    ...response.error,
+                    details: { 
+                        ...response.error.details,
+                        fields: { email, rememberMe } // Return fields on API error too
+                    }
+                },
             };
         }
 
@@ -125,12 +134,13 @@ export async function signUp(
             error: {
                 code: 'validation_error',
                 message: firstIssue?.message ?? 'Invalid input',
-                details: { field: firstIssue?.path[0] as string },
+                details: { 
+                    field: firstIssue?.path[0] as string,
+                    fields: { firstName, lastName, email, acceptTerms }
+                },
             },
         };
     }
-
-    const { firstName, lastName, email, password } = parsed.data;
 
     try {
         // Register with Backend API via centralized client
@@ -147,7 +157,13 @@ export async function signUp(
         if (!response.success) {
             return {
                 success: false,
-                error: response.error,
+                error: {
+                    ...response.error,
+                    details: {
+                        ...response.error.details,
+                        fields: { firstName, lastName, email, acceptTerms }
+                    }
+                },
             };
         }
 

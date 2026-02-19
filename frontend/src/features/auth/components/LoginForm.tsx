@@ -14,6 +14,7 @@ import { signIn } from '../actions';
 export function LoginForm() {
     const router = useRouter();
     const [state, formAction, isPending] = useActionState(signIn, null);
+    const fields = state?.success === false ? state.error.details?.fields as any : null;
 
     useEffect(() => {
         if (state?.success) {
@@ -62,6 +63,7 @@ export function LoginForm() {
                                 autoComplete="email"
                                 autoCorrect="off"
                                 disabled={isPending}
+                                defaultValue={fields?.email || ''}
                             />
                             {state?.success === false && state.error.details?.field === 'email' && (
                                 <span className="text-xs text-destructive">{state.error.message}</span>
@@ -93,6 +95,7 @@ export function LoginForm() {
                                 name="rememberMe"
                                 label="Remember me"
                                 disabled={isPending}
+                                defaultChecked={fields?.rememberMe || false}
                             />
                             <Link
                                 href="/forgot-password"

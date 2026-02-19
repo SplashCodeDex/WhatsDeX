@@ -18,14 +18,25 @@ export interface CheckboxProps
  */
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     ({ className, label, error, onCheckedChange, onChange, checked: controlledChecked, defaultChecked, ...props }, ref) => {
-        const [internalChecked, setInternalChecked] = React.useState(defaultChecked || false);
-        const isChecked = controlledChecked !== undefined ? controlledChecked : internalChecked;
+        // Use a local ref for the input to ensure we can read its state reliably
+        const internalRef = React.useRef<HTMLInputElement>(null);
+        const combinedRef = (ref as React.MutableRefObject<HTMLInputElement>) || internalRef;
+
+        const [isChecked, setIsChecked] = React.useState(controlledChecked !== undefined ? controlledChecked : (defaultChecked || false));
+
+        // Sync with controlled prop
+        React.useEffect(() => {
+            if (controlledChecked !== undefined) {
+                setIsChecked(controlledChecked);
+            }
+        }, [controlledChecked]);
 
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const newChecked = e.target.checked;
             if (controlledChecked === undefined) {
-                setInternalChecked(e.target.checked);
+                setIsChecked(newChecked);
             }
-            onCheckedChange?.(e.target.checked);
+            onCheckedChange?.(newChecked);
             onChange?.(e);
         };
 
@@ -35,8 +46,9 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                     <input
                         type="checkbox"
                         className="peer sr-only"
-                        ref={ref}
-                        checked={isChecked}
+                        ref={combinedRef}
+                        checked={controlledChecked !== undefined ? controlledChecked : undefined}
+                        defaultChecked={controlledChecked === undefined ? defaultChecked : undefined}
                         onChange={handleChange}
                         {...(props as any)}
                     />
@@ -47,21 +59,21 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         animate={{
                             scale: isChecked ? 1 : 0.95,
                             backgroundColor: isChecked
-                                ? 'var(--color-primary)'
-                                : 'var(--color-muted)',
+                                ? 'oklch(var(--p))' // Using theme variables for consistency
+                                : 'oklch(var(--m))',
                             borderColor: isChecked
-                                ? 'var(--color-primary)'
+                                ? 'oklch(var(--p))'
                                 : error
-                                    ? 'var(--color-destructive)'
-                                    : 'var(--color-border)',
+                                    ? 'oklch(var(--er))'
+                                    : 'oklch(var(--b3))',
                         }}
                         whileHover={{
                             scale: 1.05,
                             borderColor: isChecked
-                                ? 'var(--color-primary)'
+                                ? 'oklch(var(--p))'
                                 : error
-                                    ? 'var(--color-destructive)'
-                                    : 'oklch(var(--border) / 0.8)'
+                                    ? 'oklch(var(--er))'
+                                    : 'oklch(var(--bc) / 0.2)'
                         }}
                         whileTap={{ scale: 0.9 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
@@ -79,6 +91,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.5 }}
                                     transition={{ duration: 0.15 }}
+                                    className="flex items-center justify-center"
                                 >
                                     <svg
                                         width="12"
@@ -86,7 +99,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                                         viewBox="0 0 12 12"
                                         fill="none"
                                         xmlns="http://www.w3.org/2000/svg"
-                                        className="text-primary-foreground"
+                                        className="text-white"
                                     >
                                         <motion.path
                                             d="M2 6L5 9L10 3"
