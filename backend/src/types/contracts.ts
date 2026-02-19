@@ -15,7 +15,10 @@ export const TimestampSchema = z.union([
   z.object({
     _seconds: z.number(),
     _nanoseconds: z.number()
-  }).transform(val => new Date(val._seconds * 1000))
+  }).transform(val => new Date(val._seconds * 1000)),
+  z.any().refine(val => val && typeof val === 'object' && 'toDate' in val && typeof val.toDate === 'function', {
+    message: "Invalid Timestamp object"
+  }).transform(val => val.toDate())
 ]);
 
 /**

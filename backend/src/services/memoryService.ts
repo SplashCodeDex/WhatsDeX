@@ -47,7 +47,7 @@ export class MemoryService {
         content: conversationText,
         embedding: embeddingResult.data,
         metadata,
-        timestamp: Timestamp.now()
+        timestamp: new Date()
       }, tenantId);
 
       logger.info(`Stored conversation embedding for user ${userId} in tenant ${tenantId}`);
