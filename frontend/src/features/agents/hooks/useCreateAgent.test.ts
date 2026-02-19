@@ -4,6 +4,7 @@ import { useCreateAgent } from './useCreateAgent';
 import { useAuth } from '@/features/auth';
 import { getClientFirestore } from '@/lib/firebase/client';
 import { runTransaction } from 'firebase/firestore';
+import { type Result } from '@/types/api';
 
 // Mock Auth
 vi.mock('@/features/auth', () => ({
@@ -43,13 +44,13 @@ describe('useCreateAgent', () => {
         (useAuth as any).mockReturnValue({ user: null });
         const { result } = renderHook(() => useCreateAgent());
         
-        let response;
+        let response: Result<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);
         });
         
-        expect(response.success).toBe(false);
-        if (!response.success) {
+        expect(response?.success).toBe(false);
+        if (response && !response.success) {
             expect(response.error.code).toBe('unauthorized');
         }
     });
@@ -58,7 +59,7 @@ describe('useCreateAgent', () => {
         (useAuth as any).mockReturnValue({ user: { ...mockUser, planTier: 'starter' } });
         
         // Mock transaction to show 1 existing agent
-        (runTransaction as any).mockImplementation(async (db, cb) => {
+        (runTransaction as any).mockImplementation(async (_db: any, cb: any) => {
             return cb({
                 get: vi.fn().mockResolvedValue({
                     exists: () => true,
@@ -70,13 +71,13 @@ describe('useCreateAgent', () => {
 
         const { result } = renderHook(() => useCreateAgent());
         
-        let response;
+        let response: Result<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);
         });
 
-        expect(response.success).toBe(false);
-        if (!response.success) {
+        expect(response?.success).toBe(false);
+        if (response && !response.success) {
             expect(response.error.code).toBe('tier_limit_reached');
             expect(response.error.message).toContain('Starter plan');
         }
@@ -86,7 +87,7 @@ describe('useCreateAgent', () => {
         (useAuth as any).mockReturnValue({ user: { ...mockUser, planTier: 'pro' } });
         
         // Mock transaction to show 2 existing agents (limit is 5)
-        (runTransaction as any).mockImplementation(async (db, cb) => {
+        (runTransaction as any).mockImplementation(async (_db: any, cb: any) => {
             return cb({
                 get: vi.fn().mockResolvedValue({
                     exists: () => true,
@@ -99,11 +100,11 @@ describe('useCreateAgent', () => {
 
         const { result } = renderHook(() => useCreateAgent());
         
-        let response;
+        let response: Result<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);
         });
 
-        expect(response.success).toBe(true);
+        expect(response?.success).toBe(true);
     });
 });

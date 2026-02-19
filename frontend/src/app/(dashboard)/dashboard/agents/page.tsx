@@ -13,12 +13,14 @@ import {
     ExternalLink,
     ChevronRight,
     Terminal,
-    Eye
+    Eye,
+    Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { useAuth } from '@/features/auth';
 import { toast } from 'sonner';
@@ -28,6 +30,9 @@ import {
     TabsList,
     TabsTrigger,
 } from '@/components/ui/tabs';
+import { TemplateSelector } from '@/features/agents/components/TemplateSelector';
+import { useCreateAgent } from '@/features/agents/hooks/useCreateAgent';
+import { AgentTemplate } from '@/features/agents/types';
 
 export default function AgentsPage() {
     const { 
@@ -38,14 +43,38 @@ export default function AgentsPage() {
         isLoading 
     } = useOmnichannelStore();
     const { user } = useAuth();
+    const { createAgent, isLoading: isCreating } = useCreateAgent();
     
     const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
         await fetchAgents();
         setIsRefreshing(false);
+    };
+
+    const handleCreateAgent = async (template: AgentTemplate) => {
+        setIsCreateOpen(false);
+        const promise = createAgent({
+            name: template.title,
+            emoji: template.emoji || '🤖',
+            systemPrompt: template.defaultSystemPrompt || '',
+            model: template.suggestedModel || 'gemini-1.5-flash',
+        });
+
+        toast.promise(promise, {
+            loading: 'Creating agent...',
+            success: (result) => {
+                if (result.success) {
+                    handleRefresh();
+                    return `Agent "${template.title}" created successfully!`;
+                }
+                throw new Error(result.error?.message);
+            },
+            error: (err) => err.message || 'Failed to create agent',
+        });
     };
 
     useEffect(() => {
@@ -74,6 +103,10 @@ export default function AgentsPage() {
                     </p>
                 </div>
                 <div className="flex space-x-2">
+                    <Button onClick={() => setIsCreateOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Agent
+                    </Button>
                     <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
                         <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
                     </Button>
@@ -254,9 +287,27 @@ export default function AgentsPage() {
                         <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
                             Pick one of your configured agents from the list to view its workspace, tools, and identity.
                         </p>
+                        <Button onClick={() => setIsCreateOpen(true)} className="mt-4">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create New Agent
+                        </Button>
                     </div>
                 )}
             </div>
+
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogContent className="sm:max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Create New Agent</DialogTitle>
+                        <DialogDescription>
+                            Choose a template to jumpstart your agent's personality and skills.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <TemplateSelector onSelect={handleCreateAgent} />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
