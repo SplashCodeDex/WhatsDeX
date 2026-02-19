@@ -17,51 +17,81 @@ import { WhatsDeXToolBridge } from '../services/WhatsDeXToolBridge.js';
 import { OpenClawSkillBridge } from '../services/OpenClawSkillBridge.js';
 
 /**
+ * Singleton state for context initialization
+ */
+let initializationPromise: Promise<GlobalContext> | null = null;
+
+/**
  * Initialize and return the fully prepared global context
+ * 2026 Mastermind Edition: Singleton implementation with Promise-based guard
  */
 async function initializeContext(): Promise<GlobalContext> {
-    const config = ConfigService.getInstance();
+    console.log('>>> [MASTERMIND] initializeContext() called');
+    // If initialization is already in progress or completed, return the same promise
+    if (initializationPromise) {
+        console.log('>>> [MASTERMIND] initializeContext() returning existing promise');
+        return initializationPromise;
+    }
 
-    // Build the base context object
-    const context: GlobalContext = {
-        config,
-        database: databaseService,
-        databaseService,
-        formatter,
-        state,
-        tools,
-        logger,
-        groupService,
-        multiTenantBotService,
-        userService,
-        tenantConfigService,
-        // These will be initialized below
-        commandSystem: null as any,
-        unifiedAI: null as any,
-    };
+    // Capture the initialization process in a promise
+    initializationPromise = (async () => {
+        console.log('>>> [MASTERMIND] Starting fresh initialization');
+        try {
+            const config = ConfigService.getInstance();
 
-    // Instantiate systems that depend on context
-    const commandSystem = new CommandSystem(context);
-    const unifiedAI = new GeminiAI(context);
+            // Build the base context object
+            const context: GlobalContext = {
+                config,
+                database: databaseService,
+                databaseService,
+                formatter,
+                state,
+                tools,
+                logger,
+                groupService,
+                multiTenantBotService,
+                userService,
+                tenantConfigService,
+                // These will be initialized below
+                commandSystem: null as any,
+                unifiedAI: null as any,
+            };
 
-    context.commandSystem = commandSystem;
-    context.unifiedAI = unifiedAI;
+            // Instantiate systems that depend on context
+            const commandSystem = new CommandSystem(context);
+            const unifiedAI = new GeminiAI(context);
 
-    // Load commands eagerly
-    await commandSystem.loadCommands();
+            context.commandSystem = commandSystem;
+            context.unifiedAI = unifiedAI;
 
-    // 2026 Edition: Bridge tools for AI
-    logger.info('Bridging tools for Agentic Brain...');
-    
-    // We need a temporary bot mock to extract commands for bridging
-    // since commands are tied to bot instances in WhatsDeX
-    const mockBot = { cmd: commandSystem.getCommands() } as any;
-    WhatsDeXToolBridge.registerCommands(mockBot);
-    
-    // Register OpenClaw Skills
-    await OpenClawSkillBridge.registerSkills();
+            // 2026 Edition: Inject context into service to break circular dependency
+            multiTenantBotService.setContext(context);
 
-    return context;
+            // Load commands eagerly
+            logger.info('Initializing Command System and loading commands...');
+            await commandSystem.loadCommands();
+
+            // 2026 Edition: Bridge tools for AI
+            logger.info('Bridging tools for Agentic Brain...');
+
+            // We need a temporary bot mock to extract commands for bridging
+            // since commands are tied to bot instances in WhatsDeX
+            const mockBot = { cmd: commandSystem.getCommands() } as any;
+            WhatsDeXToolBridge.registerCommands(mockBot);
+
+            // Register OpenClaw Skills
+            await OpenClawSkillBridge.registerSkills();
+
+            logger.info('✅ Global Context initialized successfully');
+            return context;
+        } catch (error) {
+            logger.error('❌ Failed to initialize Global Context:', error);
+            initializationPromise = null; // Reset to allow retry on failure
+            throw error;
+        }
+    })();
+
+    return initializationPromise;
 }
 
 export default initializeContext;

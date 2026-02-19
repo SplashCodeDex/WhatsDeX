@@ -99,7 +99,7 @@ export class CommandSystem {
       const absolutePath = path.resolve(commandPath);
       const commandUrl = pathToFileURL(absolutePath).href;
 
-      const commandModule = await import(commandUrl + `?v=${Date.now()}`);
+      const commandModule = await import(commandUrl);
       const command = commandModule.default || commandModule;
 
       if (command) {

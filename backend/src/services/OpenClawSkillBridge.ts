@@ -6,7 +6,7 @@ import logger from '../utils/logger.js';
  * Bridge between OpenClaw skills and the WhatsDeX Unified Tool Registry.
  */
 export class OpenClawSkillBridge {
-  
+
   /**
    * Registers all available OpenClaw tools in the unified registry.
    */
@@ -14,15 +14,22 @@ export class OpenClawSkillBridge {
     try {
       // Create tools with default options
       // In a real scenario, we might want to pass more context
+      logger.info('🔧 Creating OpenClaw tools...');
       const ocTools = createOpenClawTools({
         allowHostBrowserControl: true,
-        sandboxed: false
+        sandboxed: false,
+        config: {
+          plugins: {
+            enabled: false // Disable heavy plugin discovery to prevent port 3001 hang
+          }
+        } as any
       });
+      logger.info(`🛠️ Created ${ocTools.length} OpenClaw tools. Bridging...`);
 
       for (const ocTool of ocTools) {
         this.bridgeOpenClawTool(ocTool);
       }
-      
+
       logger.info(`Successfully bridged ${ocTools.length} OpenClaw tools.`);
     } catch (error) {
       logger.error('Failed to bridge OpenClaw skills:', error);

@@ -14,7 +14,7 @@ import { Campaign, BotInstance, Result, CampaignStatus } from '../types/contract
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 import QRCode from 'qrcode';
-import initializeContext from '@/lib/context.js';
+// import initializeContext from '@/lib/context.js'; // REMOVED to break cycle
 
 import { MiddlewareSystem } from './middlewareSystem.js';
 import { permissionMiddleware } from '../middleware/permissions.js';
@@ -65,11 +65,22 @@ export class MultiTenantBotService {
   }
 
   /**
+   * Set global context (Dependency Injection)
+   * 2026 Edition: Used by initializeContext to break circular dependencies
+   */
+  public setContext(context: GlobalContext) {
+    this.globalContext = context;
+  }
+
+  /**
    * Get or initialize global context
    */
   private async getContext(): Promise<GlobalContext> {
     if (!this.globalContext) {
-      this.globalContext = await initializeContext();
+      // Instead of importing and calling initializeContext (circular),
+      // we wait for it to be injected by the startup flow.
+      // In production, this should never be null during active operations.
+      throw new Error('Global Context not yet initialized in MultiTenantBotService');
     }
     return this.globalContext;
   }
@@ -160,12 +171,12 @@ export class MultiTenantBotService {
         try {
           socketService.emitBotProgress(tenantId, botId, 'Initializing Telegram', 'in_progress');
           const adapter = new TelegramAdapter(tenantId, botId, token);
-          
+
           adapter.onMessage(async (event) => {
             // Forward to existing message handling logic
             await this.handleIncomingMessage(event.tenantId, event.botId, event.raw);
             this.log(event.tenantId, event.botId, `Incoming message from ${event.sender}`, 'info');
-            
+
             // Emit activity event
             socketService.emitActivity(event.tenantId, event.botId, event.channelId, 'inbound', `Telegram message from ${event.sender}`);
           });
@@ -179,7 +190,7 @@ export class MultiTenantBotService {
           await this.updateBotStatus(tenantId, botId, 'connected');
           this.log(tenantId, botId, 'Telegram Bot connected', 'success');
           socketService.emitBotProgress(tenantId, botId, 'Bot Connected', 'complete');
-          
+
           return { success: true, data: undefined };
         } catch (error) {
           logger.error(`Failed to start Telegram Bot ${botId}`, error);
@@ -198,12 +209,12 @@ export class MultiTenantBotService {
         try {
           socketService.emitBotProgress(tenantId, botId, 'Initializing Adapter', 'in_progress');
           const adapter = new WhatsappAdapter(tenantId, botId);
-          
+
           adapter.onMessage(async (event) => {
             // Forward to existing message handling logic
             await this.handleIncomingMessage(event.tenantId, event.botId, event.raw);
             this.log(event.tenantId, event.botId, `Incoming message from ${event.sender}`, 'info');
-            
+
             // Emit activity event for real-time feed
             socketService.emitActivity(event.tenantId, event.botId, event.channelId, 'inbound', `Message received from ${event.sender}`);
           });
@@ -211,7 +222,7 @@ export class MultiTenantBotService {
           socketService.emitBotProgress(tenantId, botId, 'Connecting to WhatsApp', 'in_progress');
           await adapter.connect();
           channelManager.registerAdapter(adapter);
-          
+
           // Store in activeBots for backward compatibility
           const socket = (adapter as any).socket;
           this.activeBots.set(botId, socket);
@@ -219,7 +230,7 @@ export class MultiTenantBotService {
           await this.updateBotStatus(tenantId, botId, 'connected');
           this.log(tenantId, botId, 'Whatsapp Bot connected', 'success');
           socketService.emitBotProgress(tenantId, botId, 'Bot Connected', 'complete');
-          
+
           return { success: true, data: undefined };
         } catch (error) {
           logger.error(`Failed to start Whatsapp Bot ${botId}`, error);
@@ -624,10 +635,10 @@ export class MultiTenantBotService {
           await adapter.sendMessage(payload.to, payload.text);
           await this.incrementBotStat(tenantId, botId, 'messagesSent');
           analyticsService.trackMessage(tenantId, 'sent').catch(() => { });
-          
+
           // Emit activity event
           socketService.emitActivity(tenantId, botId, adapter.id, 'outbound', `Response sent to ${payload.to}`);
-          
+
           return { success: true, data: { status: 'sent', timestamp: Date.now() } };
         } catch (e) {
           const err = e instanceof Error ? e : new Error(String(e));
