@@ -3,6 +3,7 @@ import initializeContext from './lib/context.js';
 import MultiTenantApp from './server/multiTenantApp.js';
 import logger from './utils/logger.js';
 import './jobs/campaignWorker.js'; // Start Campaign Worker
+import './jobs/statsAggregatorJob.js'; // Start Stats Aggregator Job
 
 /**
  * Main entry point for WhatsDeX

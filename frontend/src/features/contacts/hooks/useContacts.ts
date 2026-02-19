@@ -37,8 +37,8 @@ export function useAudiences() {
 export function useImportContacts() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (csvData: string) => {
-            const response = await api.post<ContactImportResult>('/api/contacts/import', { csvData });
+        mutationFn: async (formData: FormData) => {
+            const response = await api.post<ContactImportResult>('/api/contacts/import', formData);
             if (!response.success) {
                 throw new Error(response.error.message);
             }

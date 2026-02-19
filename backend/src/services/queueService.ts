@@ -20,6 +20,7 @@ const redisOptions = {
  */
 class QueueService {
     private campaignQueue: any;
+    private analyticsQueue: any;
 
     constructor() {
         this.campaignQueue = new Queue('campaigns', {
@@ -35,7 +36,41 @@ class QueueService {
             },
         });
 
-        logger.info('QueueService initialized: campaigns');
+        this.analyticsQueue = new Queue('analytics', {
+            connection: redisOptions,
+            defaultJobOptions: {
+                attempts: 3,
+                backoff: {
+                    type: 'exponential',
+                    delay: 5000,
+                },
+                removeOnComplete: true,
+            },
+        });
+
+        // Schedule daily rollup at 01:00 AM
+        this.scheduleDailyRollup();
+
+        logger.info('QueueService initialized: campaigns, analytics');
+    }
+
+    /**
+     * Schedule daily stats rollup
+     */
+    private async scheduleDailyRollup() {
+        try {
+            await this.analyticsQueue.add(
+                'daily-rollup',
+                {},
+                {
+                    repeat: { pattern: '0 1 * * *' },
+                    jobId: 'daily_stats_rollup'
+                }
+            );
+            logger.info('Daily stats rollup scheduled for 01:00 AM');
+        } catch (error) {
+            logger.error('Failed to schedule daily stats rollup', error);
+        }
     }
 
     /**
@@ -63,6 +98,7 @@ class QueueService {
      */
     async close(): Promise<void> {
         await this.campaignQueue.close();
+        await this.analyticsQueue.close();
     }
 }
 
