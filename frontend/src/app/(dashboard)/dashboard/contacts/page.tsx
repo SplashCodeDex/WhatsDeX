@@ -7,9 +7,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function ContactsPage() {
     return (
-        <div className="flex flex-col h-full bg-black">
+        <div className="flex flex-col h-full bg-transparent">
             {/* Header */}
-            <div className="flex items-center justify-between p-8 border-b border-zinc-900 bg-zinc-950/50">
+            <div className="flex items-center justify-between p-8 border-b border-border/50 bg-background/20 backdrop-blur-md">
                 <div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
                         <Users className="w-8 h-8 text-primary" /> Contact Directory

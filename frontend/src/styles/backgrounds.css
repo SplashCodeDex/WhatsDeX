@@ -54,4 +54,8 @@
   .glow-orb-accent {
     @apply bg-accent w-[400px] h-[400px];
   }
+  .glow-orb-pink {
+    background-color: #ec4899; /* pink-500 */
+    @apply w-[600px] h-[600px];
+  }
 }

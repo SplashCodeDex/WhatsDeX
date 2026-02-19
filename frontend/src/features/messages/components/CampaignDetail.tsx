@@ -7,16 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-    ArrowLeft, 
-    Send, 
-    CheckCircle2, 
-    AlertCircle, 
-    Clock, 
-    Pause, 
-    Play, 
-    Users, 
-    Zap, 
+import {
+    ArrowLeft,
+    Send,
+    CheckCircle2,
+    AlertCircle,
+    Clock,
+    Pause,
+    Play,
+    Users,
+    Zap,
     Sparkles,
     BarChart3,
     Activity,
@@ -74,7 +74,7 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1">
-                    <button 
+                    <button
                         onClick={() => router.back()}
                         className="flex items-center text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mb-4"
                     >

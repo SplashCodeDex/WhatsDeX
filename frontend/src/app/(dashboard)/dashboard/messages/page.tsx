@@ -11,7 +11,7 @@ export default function MessagesPage() {
     const [showWizard, setShowWizard] = useState(false);
 
     return (
-        <div className="flex flex-col h-full bg-background transition-colors duration-300">
+        <div className="flex flex-col h-full bg-transparent transition-colors duration-300">
             {/* Header */}
             <div className="flex items-center justify-between p-8 border-b border-border/40 bg-card/30 backdrop-blur-md">
                 <div>

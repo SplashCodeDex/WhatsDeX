@@ -54,11 +54,11 @@ const COLOR_MAP = {
 function ChannelCard({ channel }: { channel: any }) {
     const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
     const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
-    
+
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing';
 
     return (
-        <Card className="overflow-hidden border-border/50 bg-card transition-all hover:shadow-md h-full flex flex-col">
+        <Card className="overflow-hidden border-border/50 bg-card/40 backdrop-blur-md transition-all hover:shadow-md h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center space-x-2">
                     <div className={cn("rounded-lg p-2 text-white", color)}>
@@ -71,17 +71,17 @@ function ChannelCard({ channel }: { channel: any }) {
                 </div>
                 <Badge variant={
                     channel.status === 'connected' ? 'default' :
-                    channel.status === 'error' ? 'destructive' :
-                    'secondary'
+                        channel.status === 'error' ? 'destructive' :
+                            'secondary'
                 } className="capitalize">
                     {channel.status}
                 </Badge>
             </CardHeader>
             <CardContent className="pt-4 flex-1">
                 {isConnecting ? (
-                    <ChannelProgressStepper 
-                        currentStep="Starting Connection" 
-                        status="in_progress" 
+                    <ChannelProgressStepper
+                        currentStep="Starting Connection"
+                        status="in_progress"
                     />
                 ) : (
                     <div className="flex items-center text-sm text-muted-foreground">
@@ -118,7 +118,7 @@ export default function OmnichannelHubPage() {
     return (
         <div className="space-y-8">
             <OmnichannelSocketManager />
-            
+
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-foreground font-foreground">Omnichannel Hub</h2>
@@ -130,7 +130,7 @@ export default function OmnichannelHubPage() {
                     <Button variant="outline" size="icon" onClick={() => fetchChannels()} disabled={isLoading}>
                         <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                     </Button>
-                    
+
                     <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                         <DialogContent className="sm:max-w-[425px] p-0 border-none bg-transparent">
                             <VisuallyHidden>
@@ -139,10 +139,10 @@ export default function OmnichannelHubPage() {
                                     Connect a new messaging platform to your bot.
                                 </DialogDescription>
                             </VisuallyHidden>
-                            <ChannelConnectionForm 
-                                type={selectedPlatform} 
-                                onSuccess={() => setIsAddDialogOpen(false)} 
-                                onCancel={() => setIsAddDialogOpen(false)} 
+                            <ChannelConnectionForm
+                                type={selectedPlatform}
+                                onSuccess={() => setIsAddDialogOpen(false)}
+                                onCancel={() => setIsAddDialogOpen(false)}
                             />
                         </DialogContent>
                     </Dialog>
@@ -150,7 +150,7 @@ export default function OmnichannelHubPage() {
             </div>
 
             {channels.length === 0 && !isLoading ? (
-                <div className="flex h-[300px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-12 text-center bg-card">
+                <div className="flex h-[300px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-12 text-center bg-card/40 backdrop-blur-md">
                     <div className="rounded-full bg-primary/10 p-4 text-primary">
                         <LayoutGrid className="h-8 w-8" />
                     </div>
@@ -174,20 +174,20 @@ export default function OmnichannelHubPage() {
                     {channels.map((channel) => (
                         <ChannelCard key={channel.id} channel={channel} />
                     ))}
-                    
+
                     <div className="flex flex-col gap-4">
-                        <button 
+                        <button
                             onClick={() => { setSelectedSelectedPlatform('telegram'); setIsAddDialogOpen(true); }}
-                            className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card"
+                            className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card/40 backdrop-blur-md"
                         >
                             <div className="rounded-full bg-blue-500/10 p-3 text-blue-500 group-hover:scale-110 transition-transform">
                                 <Send className="h-6 w-6" />
                             </div>
                             <span className="mt-2 font-medium">Add Telegram</span>
                         </button>
-                        <button 
+                        <button
                             onClick={() => { setSelectedSelectedPlatform('discord'); setIsAddDialogOpen(true); }}
-                            className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card"
+                            className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card/40 backdrop-blur-md"
                         >
                             <div className="rounded-full bg-indigo-500/10 p-3 text-indigo-500 group-hover:scale-110 transition-transform">
                                 <Hash className="h-6 w-6" />
