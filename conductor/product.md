@@ -37,8 +37,10 @@ The platform operates on a multi-tenant architecture where each customer's data 
 
 ### 4. Advanced Features (Premium)
 
-- **AI Integration:** Leverage Google Gemini for intelligent conversations and content generation.
+- **AI Integration:** Leverage Google Gemini as a platform-agnostic "Mastermind" capable of autonomous reasoning and tool usage across all channels.
 - **Skills Platform:** Integrated OpenClaw skills (Web Search, Code Analysis, etc.) gated by subscription tiers.
+- **Unified Tool Registry:** A seamless merge of legacy WhatsDeX utility commands and OpenClaw agentic skills, enabling the AI to pick the best tool for the task.
+- **Contextual Memory:** Platform-scoped conversation history ensuring that AI interactions remain private and relevant to each specific chat (e.g., WhatsApp vs Telegram).
 - **Backups:** automated backups to Google Drive and other cloud storage providers.
 - **Contact Management:** Import and organize contacts for targeted campaigns.
 - **Analytics:** Detailed tracking of message delivery, response rates, and bot performance.

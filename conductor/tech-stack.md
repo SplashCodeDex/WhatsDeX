@@ -36,7 +36,7 @@
 - **Database:** Firebase Firestore (Subcollection Multi-Tenancy Pattern)
 - **Authentication:** Firebase Admin / Client SDK 12.8.0
 - **Payments:** Stripe 20.1.2
-- **Caching:** Redis (ioredis 5.9.1)
+- **Caching:** Redis (ioredis 5.9.1) with **Node-Cache** fallback for stabilized development.
 - **AI Integration:** Google Generative AI (Gemini) 0.24.1
 - **File Storage:** Firebase Storage / Google Drive API
 
