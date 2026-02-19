@@ -7,6 +7,7 @@ settings:
 overrides:
   wa-sticker-formatter>axios: ^1.7.9
   wa-sticker-formatter>sharp: ^0.33.5
+  punycode: npm:punycode@^2.3.1
 
 importers:
 
@@ -151,6 +152,9 @@ importers:
       pino:
         specifier: ^10.2.1
         version: 10.3.1
+      punycode:
+        specifier: npm:punycode@^2.3.1
+        version: 2.3.1
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4

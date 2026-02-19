@@ -60,6 +60,7 @@
     "node-cache": "^5.1.2",
     "openclaw": "workspace:*",
     "pino": "^10.2.1",
+    "punycode": "^2.3.1",
     "qrcode": "^1.5.4",
     "rate-limiter-flexible": "^9.0.1",
     "redis": "^5.10.0",
