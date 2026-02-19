@@ -6,7 +6,7 @@ This plan implements a consolidated "Super-Agent" model, merging legacy bot logi
 Focus on the "Brain" and enforcing quantity limits per plan.
 
 - [x] Task: Define Zod schemas for the Unified Agent, Templates, and Billing Context. a0d33996
-- [ ] Task: Implement Template Data Store (Sales, Support, Assistant).
+- [x] Task: Implement Template Data Store (Sales, Support, Assistant). c6a0e01d
 - [ ] Task: Create Tier-Aware Agent Creation Hook (TDD).
     - Sub-task: Write tests to ensure Starter plan cannot create >1 agent, Pro >5, etc.
     - Sub-task: Implement `useCreateAgent` with Firestore transactional checks against the user's `planTier`.
