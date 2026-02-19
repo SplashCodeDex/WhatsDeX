@@ -28,7 +28,7 @@ Create the technical bridge between WhatsDeX commands and OpenClaw skills.
 ## Phase 4: Scoped Memory & Session Pruning
 Ensure private and optimized conversation history for every channel.
 
-- [~] Task: Backend - Update `memoryService.ts` to scope context by `(channelId + chatID)`
-- [ ] Task: Backend - Integrate OpenClaw's session pruning logic to manage context window limits
-- [ ] Task: Test - Write integration tests verifying that WhatsApp context doesn't leak into Telegram sessions
+- [x] Task: Backend - Update `memoryService.ts` to scope context by `(channelId + chatID)` (cce32ef)
+- [x] Task: Backend - Integrate OpenClaw's session pruning logic to manage context window limits (cce32ef)
+- [x] Task: Test - Write integration tests verifying that WhatsApp context doesn't leak into Telegram sessions (cce32ef)
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Scoped Memory' (Protocol in workflow.md)
