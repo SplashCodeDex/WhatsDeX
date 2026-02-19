@@ -242,7 +242,7 @@ export function Sidebar() {
             {/* Desktop Sidebar */}
             <aside
                 className={cn(
-                    "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] transition-all duration-300 lg:block overflow-hidden",
+                    "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] transition-all duration-300 lg:block overflow-hidden rounded-[1.5rem]",
                     isSidebarCollapsed ? "w-[72px]" : "w-64"
                 )}
             >
