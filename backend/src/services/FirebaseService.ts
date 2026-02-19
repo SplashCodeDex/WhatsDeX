@@ -19,7 +19,8 @@ import {
   TemplateSchema,
   AuthSchema,
   LearningSchema,
-  AnalyticsSchema
+  AnalyticsSchema,
+  EmbeddingSchema
 } from '@/types/contracts.js';
 import { z } from 'zod';
 
@@ -42,6 +43,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/bots/{botId}/auth': AuthSchema as any,
   'tenants/{tenantId}/learning': LearningSchema as any,
   'tenants/{tenantId}/analytics': AnalyticsSchema as any,
+  'tenants/{tenantId}/embeddings': EmbeddingSchema as any,
 };
 
 export class FirebaseService {
@@ -206,6 +208,71 @@ export class FirebaseService {
       logger.error(`Firestore deleteDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, err);
       throw err;
     }
+  }
+
+  /**
+   * Returns a batch wrapper for atomic writes with Zod validation
+   */
+  public batch() {
+    const firestoreBatch = db.batch();
+
+    const wrapper = {
+      set: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string,
+        merge = true
+      ) => {
+        const { path, schema } = this.getCollectionInfo(collection, tenantId);
+
+        // Validation (Zero-Trust)
+        if (merge) {
+          if (typeof (schema as any).partial === 'function') {
+            (schema as any).partial().parse(data);
+          } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+            (schema as any).unwrap().partial().parse(data);
+          }
+        } else {
+          schema.parse(data);
+        }
+
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.set(docRef, data, { merge });
+        return wrapper;
+      },
+
+      update: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string
+      ) => {
+        const { path, schema } = this.getCollectionInfo(collection, tenantId);
+
+        // Validation (Zero-Trust)
+        if (typeof (schema as any).partial === 'function') {
+          (schema as any).partial().parse(data);
+        } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+          (schema as any).unwrap().partial().parse(data);
+        }
+
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.update(docRef, data as any);
+        return wrapper;
+      },
+
+      delete: (collection: string, docId: string, tenantId?: string) => {
+        const { path } = this.getCollectionInfo(collection, tenantId);
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.delete(docRef);
+        return wrapper;
+      },
+
+      commit: () => firestoreBatch.commit()
+    };
+
+    return wrapper;
   }
 }
 

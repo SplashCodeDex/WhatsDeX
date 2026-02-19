@@ -30,6 +30,12 @@ vi.mock('./FirebaseService.js', () => ({
     firebaseService: {
         getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
         setDoc: vi.fn().mockResolvedValue(undefined),
+        batch: vi.fn(() => ({
+            set: mockBatchSet,
+            update: vi.fn(),
+            delete: vi.fn(),
+            commit: mockBatchCommit,
+        })),
     }
 }));
 
@@ -69,23 +75,29 @@ describe('ContactService', () => {
       expect(mockBatchSet).toHaveBeenCalledTimes(2);
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.stringMatching(/^cont_/),
         expect.objectContaining({
           name: 'Doe, John',
           phone: '1234567890@s.whatsapp.net',
           email: 'john@example.com',
           tags: ['vip', 'lead'],
-        })
+        }),
+        tenantId,
+        false
       );
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.stringMatching(/^cont_/),
         expect.objectContaining({
           name: 'Jane Doe',
           phone: '19876543210@s.whatsapp.net',
           email: 'jane@example.com',
           tags: ['new'],
-        })
+        }),
+        tenantId,
+        false
       );
 
       // Verify bot stats update

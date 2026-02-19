@@ -3,9 +3,9 @@
  * 2026 Mastermind Edition - Stateless & Multi-Tenant Optimized & Strictly Typed
  */
 
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
 
 import performanceMonitor from '../utils/performanceMonitor.js';

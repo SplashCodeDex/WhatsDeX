@@ -429,3 +429,16 @@ export const AnalyticsSchema = z.object({
 }).readonly();
 
 export type AnalyticsData = z.infer<typeof AnalyticsSchema>;
+
+/**
+ * Embedding Schema ('tenants/{tenantId}/embeddings' subcollection)
+ */
+export const EmbeddingSchema = z.object({
+  userId: z.string(),
+  content: z.string(),
+  embedding: z.array(z.number()),
+  metadata: z.record(z.string(), z.any()).default({}),
+  timestamp: TimestampSchema
+}).readonly();
+
+export type ConversationEmbedding = z.infer<typeof EmbeddingSchema>;

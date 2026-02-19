@@ -1,7 +1,7 @@
 import baileys, { DisconnectReason, type WASocket, type BaileysEventMap, proto } from 'baileys';
 const makeWASocket = (baileys as any).default || baileys;
 import logger from '@/utils/logger.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { firebaseService } from '@/services/FirebaseService.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
@@ -585,8 +585,8 @@ export class MultiTenantBotService {
         return { success: false, error: new Error('Bot is not online') };
       }
 
-      // Basic JID formatting
-      const jid = payload.to.includes('@s.whatsapp.net') ? payload.to : `${payload.to}@s.whatsapp.net`;
+      // Basic JID formatting (2026 Enhanced: Support both individual and group JIDs)
+      const jid = payload.to.includes('@') ? payload.to : `${payload.to}@s.whatsapp.net`;
 
       let result;
       if (payload.type === 'text') {
