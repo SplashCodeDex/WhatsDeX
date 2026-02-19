@@ -1,8 +1,8 @@
 
 import { WebSocket, WebSocketServer } from 'ws';
 import logger from '../utils/logger.js';
-import { db, admin } from '../lib/firebase.js';
-import { Timestamp } from 'firebase-admin/firestore';
+import { db } from '../lib/firebase.js';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { firebaseService } from './FirebaseService.js';
 import { Result, AnalyticsData } from '../types/contracts.js';
 
@@ -150,7 +150,7 @@ class AnalyticsService {
         date,
         {
           date,
-          [field]: admin.firestore.FieldValue.increment(1),
+          [field]: FieldValue.increment(1) as any,
           updatedAt: new Date()
         },
         tenantId,

@@ -1,7 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import analyticsService from './analytics.js';
 import { firebaseService } from './FirebaseService.js';
-import { admin } from '../lib/firebase.js';
+
+vi.mock('firebase-admin/firestore', () => ({
+  Timestamp: {
+    now: vi.fn(() => ({ toDate: () => new Date() })),
+    fromMillis: vi.fn((ms) => ({ toDate: () => new Date(ms) })),
+  },
+  FieldValue: {
+    increment: vi.fn((val) => `increment_${val}`)
+  }
+}));
 
 vi.mock('./FirebaseService.js', () => ({
   firebaseService: {

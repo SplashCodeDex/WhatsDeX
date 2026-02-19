@@ -1,9 +1,9 @@
 import { memoryService } from './memoryService.js';
 import { firebaseService } from './FirebaseService.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { Bot, GlobalContext, MessageContext, Result } from '../types/index.js';
 import { databaseService } from './database.js';
 import { cacheService } from './cache.js';
@@ -98,8 +98,8 @@ export class GeminiAI extends EventEmitter {
       // 5. Finalize: Learn and Store Memory
       await this.learnFromInteraction(bot, userId, message, intelligence, ctx);
 
-      // Store new interaction in Vector Memory
-      await memoryService.storeConversation(userId, message, {
+      // Store new interaction in Vector Memory (Tenant-aware)
+      await memoryService.storeConversation(tenantId, userId, message, {
         botId: bot.botId,
         response: finalResponse,
         interactionType: 'human-ai'
@@ -373,7 +373,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: any): Promise<string> {
     // 1. Retrieve Historical Context (RAG)
     const jid = ctx.sender.jid;
-    const historyResult = await memoryService.retrieveRelevantContext(jid, context.message.text);
+    const historyResult = await memoryService.retrieveRelevantContext(bot.tenantId, jid, context.message.text);
     let historicalContext = '';
 
     if (historyResult.success && historyResult.data?.length > 0) {

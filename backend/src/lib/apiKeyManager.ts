@@ -181,6 +181,13 @@ export class ApiKeyManager {
     }
 
     /**
+     * Resets the singleton instance (primarily for testing).
+     */
+    public static resetInstance(): void {
+        ApiKeyManager.instance = null;
+    }
+
+    /**
      * Get the best available API key.
      */
     public getKey(): Result<string> {

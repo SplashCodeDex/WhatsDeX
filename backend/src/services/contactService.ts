@@ -1,4 +1,3 @@
-import { db } from '../lib/firebase.js';
 import { firebaseService } from './FirebaseService.js';
 import { ContactSchema, Result, type Contact } from '../types/contracts.js';
 import logger from '../utils/logger.js';
@@ -6,6 +5,7 @@ import crypto from 'node:crypto';
 import { parse } from 'csv-parse';
 import fs from 'node:fs';
 import { FieldValue } from 'firebase-admin/firestore';
+import { pipeline } from 'node:stream/promises';
 
 const normalizePhoneNumber = (phone: string): string => {
   if (phone.includes('@s.whatsapp.net') || phone.includes('@g.us')) {
@@ -39,54 +39,56 @@ export class ContactService {
     let count = 0;
     let rowIndex = 0;
     const BATCH_SIZE = 500;
-    let currentBatch = db.batch();
+    let currentBatch = firebaseService.batch();
     let currentBatchSize = 0;
     const batchPromises: Promise<any>[] = [];
 
     try {
-      const parser = fs.createReadStream(filePath).pipe(parse({
+      const stream = fs.createReadStream(filePath);
+      const parser = parse({
         columns: true,
         skip_empty_lines: true,
         trim: true,
-      }));
+      });
 
-      for await (const record of parser) {
-        rowIndex++;
-        const rawData = record as Record<string, string>;
-        const phone = rawData.phone || rawData.phoneNumber || '';
+      const processRecords = async (source: AsyncIterable<any>) => {
+        for await (const record of source) {
+          rowIndex++;
+          const rawData = record as Record<string, string>;
+          const phone = rawData.phone || rawData.phoneNumber || '';
 
-        const contactData = {
-          id: `cont_${crypto.randomUUID()}`,
-          tenantId,
-          name: rawData.name || rawData.fullName || 'Unknown',
-          phone: phone ? normalizePhoneNumber(phone) : '',
-          email: rawData.email || '',
-          tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
-          attributes: rawData,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
+          const contactData = {
+            id: `cont_${crypto.randomUUID()}`,
+            tenantId,
+            name: rawData.name || rawData.fullName || 'Unknown',
+            phone: phone ? normalizePhoneNumber(phone) : '',
+            email: rawData.email || '',
+            tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
+            attributes: rawData,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            status: 'active' as const
+          };
 
-        const validation = ContactSchema.safeParse(contactData);
-        if (!validation.success) {
-          const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-          errors.push(`Row ${rowIndex + 1}: ${msg}`);
-        } else {
-          const contactRef = db.collection('tenants')
-            .doc(tenantId)
-            .collection('contacts')
-            .doc(contactData.id);
-          currentBatch.set(contactRef, validation.data);
-          count++;
-          currentBatchSize++;
+          const validation = ContactSchema.safeParse(contactData);
+          if (!validation.success) {
+            const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            errors.push(`Row ${rowIndex + 1}: ${msg}`);
+          } else {
+            currentBatch.set('contacts', contactData.id, validation.data, tenantId, false);
+            count++;
+            currentBatchSize++;
 
-          if (currentBatchSize >= BATCH_SIZE) {
-            batchPromises.push(currentBatch.commit());
-            currentBatch = db.batch();
-            currentBatchSize = 0;
+            if (currentBatchSize >= BATCH_SIZE) {
+              batchPromises.push(currentBatch.commit());
+              currentBatch = firebaseService.batch();
+              currentBatchSize = 0;
+            }
           }
         }
-      }
+      };
+
+      await pipeline(stream, parser, processRecords);
 
       if (currentBatchSize > 0) {
         batchPromises.push(currentBatch.commit());
@@ -144,7 +146,7 @@ export class ContactService {
    */
   public async listContacts(tenantId: string, limit: number = 100): Promise<Result<Contact[]>> {
     try {
-      const contacts = await firebaseService.getCollection('tenants/{tenantId}/contacts' as any, tenantId) as Contact[];
+      const contacts = await firebaseService.getCollection<'tenants/{tenantId}/contacts'>('contacts', tenantId);
       return { success: true, data: contacts.slice(0, limit) };
     } catch (error: unknown) {
       logger.error('ContactService.listContacts error', error);
@@ -167,7 +169,7 @@ export class ContactService {
       };
 
       const validated = ContactSchema.parse(contactData);
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, id, validated, tenantId, false);
+      await firebaseService.setDoc<'tenants/{tenantId}/contacts'>('contacts', id, validated, tenantId, false);
       return { success: true, data: validated };
     } catch (error: unknown) {
       logger.error('ContactService.createContact error', error);
@@ -184,7 +186,7 @@ export class ContactService {
         ...updates,
         updatedAt: new Date()
       };
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, contactId, contactData, tenantId, true);
+      await firebaseService.setDoc<'tenants/{tenantId}/contacts'>('contacts', contactId, contactData, tenantId, true);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.updateContact error', error);
@@ -197,7 +199,7 @@ export class ContactService {
    */
   public async deleteContact(tenantId: string, contactId: string): Promise<Result<void>> {
     try {
-      await firebaseService.deleteDoc('tenants/{tenantId}/contacts' as any, contactId, tenantId);
+      await firebaseService.deleteDoc<'tenants/{tenantId}/contacts'>('contacts', contactId, tenantId);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.deleteContact error', error);
@@ -210,7 +212,7 @@ export class ContactService {
    */
   public async getAudience(tenantId: string): Promise<Result<any[]>> {
     try {
-      const audiences = await firebaseService.getCollection('tenants/{tenantId}/audiences' as any, tenantId);
+      const audiences = await firebaseService.getCollection<'tenants/{tenantId}/audiences'>('audiences', tenantId);
       return { success: true, data: audiences };
     } catch (error: unknown) {
       logger.error('Error fetching audience', error);

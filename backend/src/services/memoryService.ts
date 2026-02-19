@@ -1,16 +1,10 @@
-import { db } from '../lib/firebase.js';
 import { embeddingService } from './embeddingService.js';
+import { firebaseService } from './FirebaseService.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import logger from '../utils/logger.js';
+import crypto from 'node:crypto';
 import { Result } from '../types/index.js';
-
-interface ConversationEmbedding {
-  userId: string;
-  content: string;
-  embedding: number[];
-  metadata: Record<string, any>;
-  timestamp: Timestamp;
-}
+import { ConversationEmbedding } from '../types/contracts.js';
 
 interface ConversationContext {
   content: string;
@@ -38,23 +32,25 @@ export class MemoryService {
 
   /**
    * Store a conversation snippet with its vector embedding
+   * Tenant-aware subcollection: tenants/{tenantId}/embeddings
    */
-  async storeConversation(userId: string, conversationText: string, metadata: Record<string, any> = {}): Promise<Result<void>> {
+  async storeConversation(tenantId: string, userId: string, conversationText: string, metadata: Record<string, any> = {}): Promise<Result<void>> {
     try {
       const embeddingResult = await embeddingService.generateEmbedding(conversationText);
       if (!embeddingResult.success || !embeddingResult.data) {
         throw new Error('Failed to generate embedding');
       }
 
-      await db.collection('conversation_embeddings').add({
+      const id = `emb_${crypto.randomUUID()}`;
+      await firebaseService.setDoc<'tenants/{tenantId}/embeddings'>('embeddings', id, {
         userId,
         content: conversationText,
         embedding: embeddingResult.data,
         metadata,
-        timestamp: Timestamp.now()
-      });
+        timestamp: new Date()
+      }, tenantId);
 
-      logger.info(`Stored conversation embedding for user ${userId}`);
+      logger.info(`Stored conversation embedding for user ${userId} in tenant ${tenantId}`);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -66,7 +62,7 @@ export class MemoryService {
   /**
    * Retrieve relevant historical contexts
    */
-  async retrieveRelevantContext(userId: string, newText: string): Promise<Result<ConversationContext[]>> {
+  async retrieveRelevantContext(tenantId: string, userId: string, newText: string): Promise<Result<ConversationContext[]>> {
     try {
       const queryEmbeddingResult = await embeddingService.generateEmbedding(newText);
       if (!queryEmbeddingResult.success || !queryEmbeddingResult.data) {
@@ -74,7 +70,12 @@ export class MemoryService {
       }
       const queryEmbedding = queryEmbeddingResult.data;
 
-      const snapshot = await db.collection('conversation_embeddings')
+      // Currently FirebaseService doesn't support complex queries with where/orderBy
+      // We will fallback to using db directly but with tenant-scoped path for now,
+      // or enhance FirebaseService. For now, let's use db with correct path resolution.
+      const path = `tenants/${tenantId}/embeddings`;
+      const { db } = await import('../lib/firebase.js');
+      const snapshot = await db.collection(path)
         .where('userId', '==', userId)
         .orderBy('timestamp', 'desc')
         .limit(100)
@@ -87,7 +88,7 @@ export class MemoryService {
         const similarity = this.cosineSimilarity(queryEmbedding, data.embedding);
         return {
           content: data.content,
-          timestamp: data.timestamp.toDate(),
+          timestamp: (data.timestamp as any).toDate(),
           similarity,
           metadata: data.metadata
         };
@@ -120,9 +121,11 @@ export class MemoryService {
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
-  async getConversationStats(userId: string): Promise<Result<{ total: number; first: Date | null; last: Date | null }>> {
+  async getConversationStats(tenantId: string, userId: string): Promise<Result<{ total: number; first: Date | null; last: Date | null }>> {
     try {
-      const coll = db.collection('conversation_embeddings').where('userId', '==', userId);
+      const { db } = await import('../lib/firebase.js');
+      const path = `tenants/${tenantId}/embeddings`;
+      const coll = db.collection(path).where('userId', '==', userId);
       const snapshot = await coll.count().get();
       const count = snapshot.data().count;
 
@@ -133,8 +136,8 @@ export class MemoryService {
         success: true,
         data: {
           total: count,
-          first: first.empty ? null : (first.docs[0].data().timestamp as Timestamp).toDate(),
-          last: last.empty ? null : (last.docs[0].data().timestamp as Timestamp).toDate()
+          first: first.empty ? null : (first.docs[0].data().timestamp as any).toDate(),
+          last: last.empty ? null : (last.docs[0].data().timestamp as any).toDate()
         }
       };
     } catch (error: unknown) {
@@ -144,10 +147,12 @@ export class MemoryService {
     }
   }
 
-  async cleanupOldConversations(daysToKeep = 30): Promise<Result<number>> {
+  async cleanupOldConversations(tenantId: string, daysToKeep = 30): Promise<Result<number>> {
     try {
+      const { db } = await import('../lib/firebase.js');
+      const path = `tenants/${tenantId}/embeddings`;
       const cutoffDate = Timestamp.fromMillis(Date.now() - daysToKeep * 24 * 60 * 60 * 1000);
-      const snapshot = await db.collection('conversation_embeddings')
+      const snapshot = await db.collection(path)
         .where('timestamp', '<', cutoffDate)
         .get();
 
@@ -155,7 +160,7 @@ export class MemoryService {
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
 
-      logger.info(`Cleaned up old conversations, deleted ${snapshot.size} records`);
+      logger.info(`Cleaned up old conversations for tenant ${tenantId}, deleted ${snapshot.size} records`);
       return { success: true, data: snapshot.size };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
