@@ -4,15 +4,17 @@
 
 @layer base {
   :root {
-    --bg-mesh-1: oklch(58% 0.14 155 / 0.15);
-    --bg-mesh-2: oklch(58% 0.20 285 / 0.1);
-    --bg-mesh-3: oklch(72% 0.19 145 / 0.1);
+    --bg-mesh-1: oklch(83.135% 0.02402 165.944 / 0.471);
+    --bg-mesh-2: oklch(79.483% 0.01976 292.421 / 0.284);
+    --bg-mesh-3: oklch(50.109% 0.1343 147.017 / 0.342);
+    --bg-mesh-green: oklch(55.569% 0.11306 153.467 / 0.441);
   }
 
   .dark {
     --bg-mesh-1: oklch(40% 0.12 155 / 0.2);
-    --bg-mesh-2: oklch(40% 0.18 285 / 0.15);
-    --bg-mesh-3: oklch(30% 0.10 145 / 0.15);
+    --bg-mesh-2: oklch(38.506% 0.20814 280.046 / 0.15);
+    --bg-mesh-3: oklch(46.803% 0.20003 335.037 / 0.15);
+    --bg-mesh-green: oklch(66.237% 0.15234 158.146 / 0.2);
   }
 }
 
@@ -22,8 +24,10 @@
     background-color: var(--background);
     background-image:
       radial-gradient(at 0% 0%, var(--bg-mesh-1) 0px, transparent 50%),
-      radial-gradient(at 50% 0%, var(--bg-mesh-2) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, var(--bg-mesh-3) 0px, transparent 50%);
+      radial-gradient(at 20% 0%, var(--bg-mesh-2) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, var(--bg-mesh-3) 0px, transparent 30%),
+      radial-gradient(at 10% 100%, var(--bg-mesh-2) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, var(--bg-mesh-green) 0px, transparent 50%);
     background-attachment: fixed;
   }
 

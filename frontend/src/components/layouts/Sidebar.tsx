@@ -39,6 +39,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { InsightCard } from './InsightCard';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { LiquidGlassWrapper } from '../effects/LiquidGlassWrapper';
 
 const NAV_ITEMS = [
     { title: 'Overview', href: '/dashboard', icon: LayoutDashboard, type: 'messages' as const },
@@ -108,9 +109,13 @@ export function Sidebar() {
                                         <TooltipContent
                                             side="right"
                                             sideOffset={20}
-                                            className="p-3 bg-card border-border shadow-xl rounded-xl min-w-56 text-foreground"
+                                            className="p-0 bg-transparent border-none shadow-none text-foreground"
                                         >
-                                            <InsightCard type={item.type} />
+                                            <LiquidGlassWrapper className="liquidGlass-popover min-w-56 overflow-visible">
+                                                <div className="p-3">
+                                                    <InsightCard type={item.type} />
+                                                </div>
+                                            </LiquidGlassWrapper>
                                         </TooltipContent>
                                     </Tooltip>
                                 </li>
@@ -157,7 +162,7 @@ export function Sidebar() {
             {/* Desktop Sidebar */}
             <aside
                 className={cn(
-                    "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] transition-all duration-300 lg:block overflow-hidden rounded-[1.5rem]",
+                    "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] transition-all duration-300 lg:block rounded-[1.5rem]",
                     isSidebarCollapsed ? "w-[72px]" : "w-64"
                 )}
             >

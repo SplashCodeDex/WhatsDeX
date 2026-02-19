@@ -324,6 +324,9 @@ importers:
       framer-motion:
         specifier: 12.26.2
         version: 12.26.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      gsap:
+        specifier: ^3.14.2
+        version: 3.14.2
       liquid-glass-react:
         specifier: ^1.1.1
         version: 1.1.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -5699,6 +5702,9 @@ packages:
   grammy@1.40.0:
     resolution: {integrity: sha512-ssuE7fc1AwqlUxHr931OCVW3fU+oFDjHZGgvIedPKXfTdjXvzP19xifvVGCnPtYVUig1Kz+gwxe4A9M5WdkT4Q==}
     engines: {node: ^12.20.0 || >=14.13.1}
+
+  gsap@3.14.2:
+    resolution: {integrity: sha512-P8/mMxVLU7o4+55+1TCnQrPmgjPKnwkzkXOK1asnR9Jg2lna4tEY5qBJjMmAaOBDDZWtlRjBXjLa0w53G/uBLA==}
 
   gtoken@7.1.0:
     resolution: {integrity: sha512-pCcEwRi+TKpMlxAQObHDQ56KawURgyAf6jtIY046fJ5tIv3zDe/LEIubckAO8fj6JnAxLdmWkUfNyulQ2iKdEw==}
@@ -14498,6 +14504,8 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
+
+  gsap@3.14.2: {}
 
   gtoken@7.1.0:
     dependencies:
