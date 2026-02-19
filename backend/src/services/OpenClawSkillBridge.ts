@@ -1,4 +1,5 @@
 import { toolRegistry, ToolDefinition } from './toolRegistry.js';
+// @ts-ignore
 import { createOpenClawTools } from '../../../openclaw/src/agents/openclaw-tools.js';
 import logger from '../utils/logger.js';
 

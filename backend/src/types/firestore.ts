@@ -54,8 +54,8 @@ export interface BotInstanceDocument {
   status: 'connected' | 'disconnected' | 'connecting' | 'qr_pending' | 'error';
   lastSeenAt?: Timestamp | Date;
   connectionMetadata?: {
-    browser: [string, string, string]; // e.g. ['WhatsDeX', 'Chrome', '1.0.0']
-    platform: string;
+    browser?: [string, string, string]; // e.g. ['WhatsDeX', 'Chrome', '1.0.0']
+    platform?: string;
   };
   credentials?: Record<string, any>;
   webhookUrl?: string;

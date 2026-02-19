@@ -133,7 +133,7 @@ export class MultiTenantBotService {
       };
 
       const data = BotInstanceSchema.parse(rawData);
-      await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, data, tenantId);
+      await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, data as any, tenantId);
 
       this.startBot(tenantId, botId).catch(err => {
         logger.error(`Initial start failed for bot ${botId}:`, err);
@@ -392,7 +392,7 @@ export class MultiTenantBotService {
       await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
         'bots',
         botId,
-        updateData,
+        updateData as any,
         tenantId,
         true
       );
@@ -409,7 +409,7 @@ export class MultiTenantBotService {
     await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
       'bots',
       botId,
-      { status, updatedAt: Timestamp.now() },
+      { status, updatedAt: Timestamp.now() } as any,
       tenantId,
       true
     ).catch(err => logger.error(`Failed to update bot status ${botId}:`, err));
@@ -423,7 +423,7 @@ export class MultiTenantBotService {
       await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
         'bots',
         botId,
-        { phoneNumber, updatedAt: Timestamp.now() },
+        { phoneNumber, updatedAt: Timestamp.now() } as any,
         tenantId,
         true
       );
@@ -548,7 +548,7 @@ export class MultiTenantBotService {
         ...data,
         updatedAt: Timestamp.now()
       };
-      await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, updateData, tenantId, true);
+      await firebaseService.setDoc<'tenants/{tenantId}/bots'>('bots', botId, updateData as any, tenantId, true);
 
       const updated = await this.getBot(tenantId, botId);
       if (updated.success) {

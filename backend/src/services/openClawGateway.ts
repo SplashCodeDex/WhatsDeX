@@ -1,8 +1,13 @@
 import { startGatewayServer } from 'openclaw';
+// @ts-ignore
 import { loadWorkspaceSkillEntries } from '../../../openclaw/src/agents/skills/workspace.js';
+// @ts-ignore
 import { resolveDefaultAgentId } from '../../../openclaw/src/agents/agent-scope.js';
+// @ts-ignore
 import { listAgentsForGateway } from '../../../openclaw/src/gateway/session-utils.js';
+// @ts-ignore
 import { loadConfig } from '../../../openclaw/src/config/config.js';
+// @ts-ignore
 import { getHealthCache } from '../../../openclaw/src/gateway/server/health-state.js';
 
 /**

@@ -23,7 +23,10 @@ vi.mock('./analytics.js', () => ({
 
 vi.mock('./socketService.js', () => ({
   socketService: {
-    emitToTenant: vi.fn()
+    emitToTenant: vi.fn(),
+    emitBotProgress: vi.fn(),
+    emitActivity: vi.fn(),
+    emitBotStatus: vi.fn()
   }
 }));
 
@@ -114,6 +117,7 @@ describe('MultiTenantBotService', () => {
     // @ts-ignore - Accessing private instance for testing
     MultiTenantBotService.instance = undefined;
     service = MultiTenantBotService.getInstance();
+    service.setContext(mockContext as any);
   });
 
   it('should start a whatsapp bot using WhatsappAdapter', async () => {

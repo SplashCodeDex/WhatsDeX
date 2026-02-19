@@ -1,5 +1,6 @@
 import { Bot } from "grammy";
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
+// @ts-ignore
 import { sendMessageTelegram } from "../../../../../openclaw/src/telegram/send.js";
 import { CommonMessage } from "../../../types/omnichannel.js";
 import logger from "@/utils/logger.js";
