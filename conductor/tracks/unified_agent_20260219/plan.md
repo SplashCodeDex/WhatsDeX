@@ -10,7 +10,7 @@ Focus on the "Brain" and enforcing quantity limits per plan.
 - [x] Task: Create Tier-Aware Agent Creation Hook (TDD). afdd9511
     - [x] Sub-task: Write tests to ensure Starter plan cannot create >1 agent, Pro >5, etc.
     - [x] Sub-task: Implement `useCreateAgent` with Firestore transactional checks against the user's `planTier`.
-- [ ] Task: Implement Template Selection UI with "Premium" badges for tier-locked templates.
+- [x] Task: Implement Template Selection UI with "Premium" badges for tier-locked templates. 19a2b65b
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Agent Identity' (Protocol in workflow.md)
 
 ## Phase 2: Dynamic Channel Connectivity & Slot Enforcement
