@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 
 import { Providers } from './providers';
+import { LiquidGlassFilters } from '@/components/effects/LiquidGlassFilters';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -74,6 +75,7 @@ export default function RootLayout({
                 />
             </head>
             <body className="min-h-screen bg-background antialiased">
+                <LiquidGlassFilters />
                 {/* Skip link for accessibility */}
                 <a href="#main-content" className="skip-link">
                     Skip to main content

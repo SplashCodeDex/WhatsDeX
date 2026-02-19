@@ -60,27 +60,16 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         initial={false}
                         animate={{
                             scale: isChecked ? 1 : 0.95,
-                            backgroundColor: isChecked
-                                ? 'var(--p)' // Using standard CSS variables
-                                : 'var(--m)',
-                            borderColor: isChecked
-                                ? 'var(--p)'
-                                : error
-                                    ? 'var(--er)'
-                                    : 'var(--b3)',
                         }}
-                        whileHover={{
-                            scale: 1.05,
-                            borderColor: isChecked
-                                ? 'var(--p)'
-                                : error
-                                    ? 'var(--er)'
-                                    : 'rgba(var(--bc), 0.2)'
-                        }}
+                        whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.9 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                         className={cn(
-                            "relative flex h-5 w-5 items-center justify-center rounded-md border backdrop-blur-md transition-shadow",
+                            "relative flex h-5 w-5 items-center justify-center rounded-md border backdrop-blur-md transition-colors duration-200",
+                            isChecked 
+                                ? "bg-primary border-primary text-primary-foreground" 
+                                : "bg-muted/50 border-border",
+                            error && "border-destructive",
                             "peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
                             "disabled:cursor-not-allowed disabled:opacity-50",
                             className

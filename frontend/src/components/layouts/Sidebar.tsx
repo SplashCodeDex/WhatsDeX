@@ -158,7 +158,7 @@ export function Sidebar() {
                                                                 <Link
                                                                     href={item.href}
                                                                     className={cn(
-                                                                        'group relative flex h-11 items-center rounded-2xl px-3 transition-all duration-200',
+                                                                        'group relative flex h-11 items-center rounded-2xl px-3 transition-all duration-200 nav-item-liquid',
                                                                         isSidebarCollapsed && !isMobile && "justify-center px-0",
                                                                         isActive
                                                                             ? group.theme === 'accent'
@@ -242,42 +242,48 @@ export function Sidebar() {
             {/* Desktop Sidebar */}
             <aside
                 className={cn(
-                    "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] border border-border/40 bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] transition-all duration-300 lg:block overflow-hidden shadow-2xl rounded-[1.5rem]",
+                    "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] transition-all duration-300 lg:block overflow-hidden",
                     isSidebarCollapsed ? "w-[72px]" : "w-64"
                 )}
             >
-                <div className="flex h-full flex-col">
-                    <div className={cn(
-                        "flex h-20 items-center justify-between shrink-0 transition-all duration-300",
-                        isSidebarCollapsed ? "px-2" : "px-6"
-                    )}>
-                        {!isSidebarCollapsed && (
-                            <motion.span
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="text-2xl font-black text-primary tracking-tight"
-                            >
-                                WhatsDeX
-                            </motion.span>
-                        )}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                                "h-10 w-10 rounded-full bg-background/50 hover:bg-muted text-muted-foreground shadow-md transition-all duration-300",
-                                isSidebarCollapsed ? "mx-auto" : ""
-                            )}
-                            onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
-                        >
-                            <ChevronLeft className={cn(
-                                "h-5 w-5 transition-transform duration-500",
-                                isSidebarCollapsed && "rotate-180"
-                            )} />
-                        </Button>
-                    </div>
+                <div className="liquidGlass-wrapper h-full w-full sidebar-liquid rounded-[1.5rem]">
+                    <div className="liquidGlass-effect" />
+                    <div className="liquidGlass-tint" />
+                    <div className="liquidGlass-shine" />
 
-                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                        {NavContent(false)}
+                    <div className="liquidGlass-content flex h-full flex-col">
+                        <div className={cn(
+                            "flex h-20 items-center justify-between shrink-0 transition-all duration-300 z-10",
+                            isSidebarCollapsed ? "px-2" : "px-6"
+                        )}>
+                            {!isSidebarCollapsed && (
+                                <motion.span
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="text-2xl font-black text-primary tracking-tight"
+                                >
+                                    WhatsDeX
+                                </motion.span>
+                            )}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn(
+                                    "h-10 w-10 rounded-full bg-background/30 backdrop-blur-sm hover:bg-muted text-muted-foreground shadow-md transition-all duration-300",
+                                    isSidebarCollapsed ? "mx-auto" : ""
+                                )}
+                                onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
+                            >
+                                <ChevronLeft className={cn(
+                                    "h-5 w-5 transition-transform duration-500",
+                                    isSidebarCollapsed && "rotate-180"
+                                )} />
+                            </Button>
+                        </div>
+
+                        <div className="flex-1 flex flex-col min-h-0 overflow-hidden z-10">
+                            {NavContent(false)}
+                        </div>
                     </div>
                 </div>
             </aside>

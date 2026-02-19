@@ -1,0 +1,140 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ * LIQUID GLASS STYLES
+ * Based on Aerolab's liquid glass effect (lucasromerodb)
+ *
+ * CRITICAL: Border-radius MUST be duplicated onto child `> div` layers
+ * so that the glass wrapper and all layers (effect, tint, shine, content)
+ * are affected in the same way. This is the key to the UX feel.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.liquidGlass-wrapper {
+  position: relative;
+  display: flex;
+  font-weight: 600;
+  overflow: hidden;
+  cursor: pointer;
+
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.liquidGlass-effect {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  backdrop-filter: blur(3px);
+  filter: url(#glass-distortion);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.liquidGlass-tint {
+  z-index: 1;
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.liquidGlass-shine {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  box-shadow: inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5),
+    inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.liquidGlass-content {
+  z-index: 3;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SIDEBAR VARIANT (Menu/Dock hybrid)
+ * Padding expands on hover, border-radius propagates to ALL child layers.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.sidebar-liquid {
+  padding: 0.4rem;
+}
+
+/* Propagate border-radius to ALL child layers */
+.sidebar-liquid,
+.sidebar-liquid > div {
+  border-radius: 1.5rem;
+}
+
+.sidebar-liquid:hover {
+  padding: 0.6rem;
+}
+
+.sidebar-liquid:hover,
+.sidebar-liquid:hover > div {
+  border-radius: 1.8rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * CONTROL VARIANT (Buttons, toggles, small UI controls)
+ * For header controls: theme toggle, notification bell, user dropdown, FABs
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.liquidGlass-control {
+  padding: 0.15rem;
+}
+
+/* Propagate border-radius to ALL child layers */
+.liquidGlass-control,
+.liquidGlass-control > div {
+  border-radius: 0.75rem;
+}
+
+.liquidGlass-control:hover {
+  padding: 0.25rem;
+}
+
+.liquidGlass-control:hover,
+.liquidGlass-control:hover > div {
+  border-radius: 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * FAB VARIANT (Floating Action Buttons)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.liquidGlass-fab {
+  padding: 0.2rem;
+}
+
+.liquidGlass-fab,
+.liquidGlass-fab > div {
+  border-radius: 0.75rem;
+}
+
+.liquidGlass-fab:hover {
+  padding: 0.35rem;
+}
+
+.liquidGlass-fab:hover,
+.liquidGlass-fab:hover > div {
+  border-radius: 1.2rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * NAV ITEM SCALING (Dock icon feel)
+ * Items inside the glass containers scale on hover/active
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.nav-item-liquid {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.nav-item-liquid:hover {
+  transform: scale(1.05);
+}
+
+.nav-item-liquid:active {
+  transform: scale(0.95);
+}

@@ -83,6 +83,7 @@ export function LoginForm() {
                                 name="password"
                                 autoComplete="current-password"
                                 disabled={isPending}
+                                key={state ? 'reset' : 'initial'}
                             />
                              {state?.success === false && state.error.details?.field === 'password' && (
                                 <span className="text-xs text-destructive">{state.error.message}</span>

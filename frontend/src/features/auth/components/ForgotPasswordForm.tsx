@@ -14,6 +14,7 @@ import { requestPasswordReset, getAuthErrorMessage } from '@/features/auth';
  */
 export function ForgotPasswordForm() {
     const [state, formAction, isPending] = useActionState(requestPasswordReset, null);
+    const fields = state?.success === false ? state.error.details?.fields as any : null;
 
     return (
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
@@ -54,6 +55,7 @@ export function ForgotPasswordForm() {
                                             autoCorrect="off"
                                             disabled={isPending}
                                             required
+                                            defaultValue={fields?.email || ''}
                                         />
                                     </div>
 

@@ -10,6 +10,7 @@
 import { Bell, User, LogOut, Settings as SettingsIcon, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { useAuth } from '@/features/auth';
 import {
     DropdownMenu,
@@ -27,23 +28,27 @@ export function Header() {
     return (
         <div className="fixed top-4 right-4 md:right-8 z-40 flex items-center gap-2 pointer-events-none">
             <div className="flex items-center gap-2 pointer-events-auto">
-                <ThemeToggle />
+                <LiquidGlassWrapper className="liquidGlass-control">
+                    <ThemeToggle />
+                </LiquidGlassWrapper>
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-xl bg-background/50 hover:bg-muted text-muted-foreground shadow-md transition-all duration-300 border border-border/50"
-                >
-                    <Bell className="h-5 w-5" />
-                    <span className="sr-only">Notifications</span>
-                </Button>
+                <LiquidGlassWrapper className="liquidGlass-control">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none"
+                    >
+                        <Bell className="h-5 w-5" />
+                        <span className="sr-only">Notifications</span>
+                    </Button>
+                </LiquidGlassWrapper>
 
-                <div className="flex items-center gap-3 border-l border-border pl-4">
+                <LiquidGlassWrapper className="liquidGlass-control">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="relative flex items-center gap-3 p-1 pl-4 pr-1.5 h-10 rounded-xl bg-background/50 hover:bg-muted text-muted-foreground shadow-md transition-all duration-300 border border-border/50 group"
+                                className="relative flex items-center gap-3 p-1 pl-4 pr-1.5 h-10 rounded-xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none group"
                             >
                                 <div className="hidden flex-col items-end md:flex">
                                     <span className="text-xs font-semibold text-foreground leading-none">{user?.name || 'User'}</span>
@@ -83,7 +88,7 @@ export function Header() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                </div>
+                </LiquidGlassWrapper>
             </div>
         </div>
     );
