@@ -92,7 +92,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 {...(asChild ? props : {
                     whileHover: { scale: 1.01 },
                     whileTap: { scale: 0.98 },
-                    ...props
+                    ...(props as any)
                 })}
             >
                 {asChild ? (
