@@ -39,7 +39,7 @@ Focus on scalability and enforcing monthly volume limits.
 
 - [x] Task: Implement Cron-based Auto-Posting (TDD) with Tiered Frequency. 95f3a0b0
     - [x] Sub-task: Restrict high-frequency posting (e.g., every 5 mins) to Enterprise users.
-- [ ] Task: Implement Multi-Channel Broadcast Engine with Usage Tracking.
-    - Sub-task: Create `usage_metrics` collection in Firestore to track monthly message volume.
-    - Sub-task: Implement `UsageGuard` to stop broadcasts if the monthly limit is exceeded (Starter vs. Pro vs. Enterprise).
+- [x] Task: Implement Multi-Channel Broadcast Engine with Usage Tracking. 50464035
+    - [x] Sub-task: Create `usage_metrics` collection in Firestore to track monthly message volume.
+    - [x] Sub-task: Implement `UsageGuard` to stop broadcasts if the monthly limit is exceeded (Starter vs. Pro vs. Enterprise).
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Automation' (Protocol in workflow.md)
