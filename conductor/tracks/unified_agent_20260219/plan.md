@@ -34,7 +34,7 @@ Focus on interaction and restricting advanced AI capabilities to higher tiers.
 - [x] Task: Implement Real-time Tool Activity Stream (Socket.io). 445b6d14
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Chat' (Protocol in workflow.md) 896feebe
 
-## Phase 4: Automation, Broadcasts & Usage Caps
+## Phase 4: Automation, Broadcasts & Usage Caps [checkpoint: f4ece444]
 Focus on scalability and enforcing monthly volume limits.
 
 - [x] Task: Implement Cron-based Auto-Posting (TDD) with Tiered Frequency. 95f3a0b0
@@ -42,4 +42,4 @@ Focus on scalability and enforcing monthly volume limits.
 - [x] Task: Implement Multi-Channel Broadcast Engine with Usage Tracking. 50464035
     - [x] Sub-task: Create `usage_metrics` collection in Firestore to track monthly message volume.
     - [x] Sub-task: Implement `UsageGuard` to stop broadcasts if the monthly limit is exceeded (Starter vs. Pro vs. Enterprise).
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Automation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Automation' (Protocol in workflow.md) f4ece444
