@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Activity, MessageSquare, Send, Hash, Slack, Smartphone, Settings } from 'lucide-react';
+import { Activity, MessageSquare, Send, Hash, Slack, Smartphone, Settings, Sparkles, Terminal, CheckCircle2, Brain, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
@@ -13,6 +13,16 @@ const ICON_MAP = {
     discord: Hash,
     slack: Slack,
     signal: Smartphone,
+    system: Settings
+};
+
+const TYPE_ICON_MAP = {
+    inbound: MessageSquare,
+    outbound: Send,
+    skill: Zap,
+    agent_thinking: Brain,
+    tool_start: Terminal,
+    tool_end: CheckCircle2,
     system: Settings
 };
 
@@ -61,26 +71,40 @@ export function ActivityFeed() {
                     </div>
                 ) : (
                     filteredActivity.map((event) => {
-                        const Icon = ICON_MAP[event.channel.toLowerCase() as keyof typeof ICON_MAP] || Activity;
+                        const ChannelIcon = ICON_MAP[event.channel.toLowerCase() as keyof typeof ICON_MAP] || Activity;
+                        const TypeIcon = (TYPE_ICON_MAP as any)[event.type] || Activity;
+                        
                         return (
                             <div key={event.id} className="flex items-start space-x-3 rounded-lg border border-border/50 bg-muted/20 p-3 text-sm transition-all hover:bg-muted/30">
                                 <div className={cn(
                                     "mt-0.5 rounded-full p-1.5",
                                     event.type === 'inbound' ? "bg-blue-500/10 text-blue-500" :
                                     event.type === 'outbound' ? "bg-green-500/10 text-green-500" :
-                                    event.type === 'skill' ? "bg-purple-500/10 text-purple-500" :
+                                    event.type === 'skill' || event.type === 'tool_start' ? "bg-purple-500/10 text-purple-500" :
+                                    event.type === 'agent_thinking' ? "bg-blue-600/10 text-blue-600 animate-pulse" :
+                                    event.type === 'tool_end' ? "bg-emerald-500/10 text-emerald-500" :
                                     "bg-orange-500/10 text-orange-500"
                                 )}>
-                                    <Icon className="h-3.5 w-3.5" />
+                                    <TypeIcon className="h-3.5 w-3.5" />
                                 </div>
                                 <div className="flex-1 space-y-1">
                                     <div className="flex items-center justify-between">
-                                        <p className="font-medium capitalize text-foreground">{event.channel}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-medium capitalize text-foreground">{event.channel}</p>
+                                            <Badge variant="outline" className="text-[8px] h-3.5 px-1 uppercase opacity-70">
+                                                {event.type.replace('_', ' ')}
+                                            </Badge>
+                                        </div>
                                         <time className="text-[10px] text-muted-foreground">
                                             {new Date(event.timestamp).toLocaleTimeString()}
                                         </time>
                                     </div>
-                                    <p className="text-muted-foreground line-clamp-2">{event.message}</p>
+                                    <p className={cn(
+                                        "text-muted-foreground line-clamp-2",
+                                        event.type === 'agent_thinking' && "italic"
+                                    )}>
+                                        {event.message}
+                                    </p>
                                 </div>
                             </div>
                         );

@@ -12,6 +12,7 @@ import { toolRegistry } from './toolRegistry.js';
 import { skillsManager } from './skillsManager.js';
 import { multiTenantService } from './multiTenantService.js';
 import { toolPersistenceService } from './toolPersistenceService.js';
+import { socketService } from './socketService.js';
 
 interface AIDecisionEngine {
   confidenceThreshold: number;
@@ -162,6 +163,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         const maxLoops = this.decisionEngine.maxToolCalls;
 
         while (loopCount < maxLoops) {
+          socketService.emitActivity(tenantId, botId, platform, 'agent_thinking', 'Agent is thinking...');
           const response = await this.gemini.getChatCompletionWithTools(messages, toolRegistry.getAllTools().map(t => ({
             function: {
               name: t.name,
@@ -188,6 +190,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                   };
                 }
 
+                socketService.emitActivity(tenantId, botId, platform, 'tool_start', `Using tool: ${toolCall.function.name}`);
                 const args = JSON.parse(toolCall.function.arguments);
                 const result = await toolRegistry.executeTool(toolCall.function.name, args, { 
                   ...context,
@@ -197,12 +200,14 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                   userId 
                 });
                 
+                socketService.emitActivity(tenantId, botId, platform, 'tool_end', `Tool ${toolCall.function.name} completed.`);
                 return { 
                   role: 'tool', 
                   tool_call_id: toolCall.id, 
                   content: typeof result === 'string' ? result : JSON.stringify(result) 
                 };
               } catch (toolError: any) {
+                socketService.emitActivity(tenantId, botId, platform, 'system', `Tool ${toolCall.function.name} failed.`);
                 return { 
                   role: 'tool', 
                   tool_call_id: toolCall.id, 

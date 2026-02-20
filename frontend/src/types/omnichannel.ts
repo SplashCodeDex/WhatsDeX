@@ -29,7 +29,7 @@ export interface ActivityEvent {
     id: string;
     botId: string;
     channel: string;
-    type: 'inbound' | 'outbound' | 'system' | 'skill';
+    type: 'inbound' | 'outbound' | 'system' | 'skill' | 'agent_thinking' | 'tool_start' | 'tool_end';
     message: string;
     timestamp: string;
     metadata?: Record<string, unknown>;
