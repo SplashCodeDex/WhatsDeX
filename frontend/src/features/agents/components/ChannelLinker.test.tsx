@@ -2,10 +2,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ChannelLinker } from './ChannelLinker';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+import { useAuth } from '@/features/auth';
 
 // Mock the store
 vi.mock('@/stores/useOmnichannelStore', () => ({
     useOmnichannelStore: vi.fn(),
+}));
+
+// Mock Auth
+vi.mock('@/features/auth', () => ({
+    useAuth: vi.fn(),
+}));
+
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+    useRouter: () => ({
+        push: vi.fn(),
+        refresh: vi.fn(),
+    }),
+    usePathname: () => '/',
 }));
 
 describe('ChannelLinker', () => {
@@ -22,6 +37,9 @@ describe('ChannelLinker', () => {
             fetchChannels: vi.fn(),
             isLoading: false,
         });
+        (useAuth as any).mockReturnValue({
+            user: { planTier: 'starter' }
+        });
     });
 
     it('should render the list of available channels', () => {
@@ -34,11 +52,10 @@ describe('ChannelLinker', () => {
     it('should show "Linked" status for the correct channel', () => {
         render(<ChannelLinker agentId={mockAgentId} />);
         
-        expect(screen.getByText(/Linked/i)).toBeDefined();
+        expect(screen.getByText(/Currently Linked to this Brain/i)).toBeDefined();
     });
 
     it('should allow unlinking an agent from a channel', () => {
-        // Implementation details will vary, but we define the expectation here
         expect(true).toBe(true);
     });
 });

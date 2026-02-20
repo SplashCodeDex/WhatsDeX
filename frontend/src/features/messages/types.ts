@@ -20,7 +20,7 @@ export const OmnichannelMessageSchema = z.object({
     timestamp: z.string(),
     createdAt: z.string(),
     updatedAt: z.string(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type OmnichannelMessage = z.infer<typeof OmnichannelMessageSchema>;

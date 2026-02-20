@@ -168,6 +168,7 @@ export interface SkillStatusReport {
 export interface GatewayAgentRow {
   id: string;
   name?: string;
+  skills?: string[];
   identity?: {
     name?: string;
     theme?: string;

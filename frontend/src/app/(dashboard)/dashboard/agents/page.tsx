@@ -31,6 +31,8 @@ import {
     TabsTrigger,
 } from '@/components/ui/tabs';
 import { TemplateSelector } from '@/features/agents/components/TemplateSelector';
+import { ChannelLinker } from '@/features/agents/components/ChannelLinker';
+import { SkillToggle } from '@/features/agents/components/SkillToggle';
 import { useCreateAgent } from '@/features/agents/hooks/useCreateAgent';
 import { AgentTemplate } from '@/features/agents/types';
 
@@ -254,27 +256,25 @@ export default function AgentsPage() {
                                     </TabsContent>
 
                                     <TabsContent value="tools" className="pt-6">
-                                        <div className="flex h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center bg-muted/10">
-                                            <Wrench className="h-8 w-8 text-muted-foreground/30 mb-2" />
-                                            <h5 className="font-medium text-sm">Tool Access Control</h5>
-                                            <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                                                Configure which skills and commands this agent is authorized to use.
-                                            </p>
-                                            <Button variant="link" size="sm" className="mt-2 text-xs" asChild>
-                                                <a href="/dashboard/skills">Visit Skills Store</a>
-                                            </Button>
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-lg font-semibold">Available Intelligence Skills</h3>
+                                                <Badge variant="outline" className="font-mono text-[10px]">
+                                                    {user?.planTier || 'Starter'} Tier
+                                                </Badge>
+                                            </div>
+                                            <SkillToggle 
+                                                enabledSkills={selectedAgent.skills || []} 
+                                                onToggle={(id, enabled) => {
+                                                    toast.info(`${enabled ? 'Enabling' : 'Disabling'} skill: ${id}`);
+                                                    // Wiring to backend will happen in next task
+                                                }} 
+                                            />
                                         </div>
                                     </TabsContent>
 
                                     <TabsContent value="infra" className="pt-6">
-                                        <div className="flex h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center bg-muted/10">
-                                            <Shield className="h-8 w-8 text-muted-foreground/30 mb-2" />
-                                            <h5 className="font-medium text-sm">Deployment & Infrastructure</h5>
-                                            <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                                                Node assignment, token pooling, and execution policy settings.
-                                            </p>
-                                            <Button variant="link" size="sm" className="mt-2 text-xs">Manage Infrastructure</Button>
-                                        </div>
+                                        <ChannelLinker agentId={selectedAgent.id} />
                                     </TabsContent>
                                 </Tabs>
                             </CardContent>

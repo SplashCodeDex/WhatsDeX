@@ -25,14 +25,13 @@ The platform operates on a multi-tenant architecture where each customer's data 
 
 - **Initialization:** Users can easily link their WhatsApp account via QR code, or connect Telegram, Discord, and Slack bots using API tokens.
 - **Omnichannel Hub:** Centralized management for all social messaging platforms in a single, high-fidelity UI with real-time status updates and a live activity stream.
-- **Multiple Bots:** Premium users can manage up to two (or more) bots per workspace.
-- **Lifecycle Management:** Ability to add, restart, or delete bots as needed.
+- **Unified Agent Orchestration:** A consolidated "Brain + Phone" architecture where independent AI personas (Agents) are dynamically deployed across "Connectivity Slots" (WhatsApp, Telegram, etc.).
+- **Lifecycle Management:** Ability to link/unlink agents to slots, swap personalities, or restart sessions without losing agent configuration.
 
 ### 3. Messaging & Automation
 
-- **Unified Inbox:** View and reply to messages directly from the dashboard.
-- **Broadcast/Marketing:** High-performance engine using **BullMQ** for reliable background processing. Supports **Hybrid Distribution** (Single Bot vs Multi-Bot Pooling) and **Intelligent Throttling** with randomized delays to maximize deliverability.
-- **Rich Templates:** Manage media-heavy templates with dynamic variable injection (`{{name}}`, `{{phone}}`) and **AI Message Spinning** (Enterprise only) to prevent account bans.
+- **Omnichannel Unified Inbox:** A single, filtered interface for viewing and managing conversation history across all connected platforms, tracked by channel type and assigned agent.
+- **Broadcast/Marketing:** High-performance engine using **BullMQ** for reliable background processing. Supports **Hybrid Distribution** (Single Bot vs Multi-Bot Pooling) and **Intelligent Throttling** with randomized delays to maximize deliverability.- **Rich Templates:** Manage media-heavy templates with dynamic variable injection (`{{name}}`, `{{phone}}`) and **AI Message Spinning** (Enterprise only) to prevent account bans.
 - **Auto-Replies:** Set up automated responses based on keywords or triggers.
 
 ### 4. Advanced Features (Premium)

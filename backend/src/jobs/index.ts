@@ -30,15 +30,52 @@ class JobRegistry {
 
     try {
       logger.info('Registering job processors...');
-      // Note: In real implementation, the processors should expose public methods matching these calls.
-      // Assuming AIProcessor and MediaProcessor have these methods or will be updated.
-      // For now, removing direct calls to avoid type errors if methods don't exist yet, 
-      // or assuming they are dynamically handled. 
       
-      // Since I can't see aiProcessor.ts / mediaProcessor.ts content fully, I will stub the registration 
-      // logic to compile correctly, assuming the methods exist or will be implemented.
-      
-      // ... registration logic ...
+      // Register AI Processor
+      this.jobQueue.process('ai-processing', async (job: Job) => {
+        const jobName = (job.data as any).jobName || job.name;
+        logger.debug(`Routing AI job: ${jobName}`, { jobId: job.id });
+
+        switch (jobName) {
+          case 'content-generation':
+            return await this.processors.ai.processContentGeneration(job.data, job);
+          case 'batch-analysis':
+            return await this.processors.ai.processBatchAnalysis(job.data, job);
+          case 'content-moderation':
+            return await this.processors.ai.processContentModeration(job.data, job);
+          case 'fine-tuning':
+            return await this.processors.ai.processFineTuningData(job.data, job);
+          case 'performance-analytics':
+            return await this.processors.ai.processPerformanceAnalytics(job.data, job);
+          default:
+            logger.warn(`Unknown AI job name: ${jobName}`);
+            throw new Error(`Unknown AI job name: ${jobName}`);
+        }
+      });
+
+      // Register Media Processor
+      this.jobQueue.process('media-processing', async (job: Job) => {
+        const jobName = (job.data as any).jobName || job.name;
+        logger.debug(`Routing Media job: ${jobName}`, { jobId: job.id });
+
+        switch (jobName) {
+          case 'image-optimization':
+            return await this.processors.media.processImageOptimization(job.data, job);
+          case 'batch-image-processing':
+            return await this.processors.media.processBatchImageProcessing(job.data, job);
+          case 'video-thumbnail':
+            return await this.processors.media.processVideoThumbnail(job.data, job);
+          case 'file-conversion':
+            return await this.processors.media.processFileConversion(job.data, job);
+          case 'media-cleanup':
+            return await this.processors.media.processMediaCleanup(job.data, job);
+          case 'media-analytics':
+            return await this.processors.media.processMediaAnalytics(job.data, job);
+          default:
+            logger.warn(`Unknown Media job name: ${jobName}`);
+            throw new Error(`Unknown Media job name: ${jobName}`);
+        }
+      });
       
       logger.info('All job processors registered successfully');
     } catch (error: unknown) {

@@ -125,6 +125,27 @@ export class JobQueueService {
     }
   }
 
+  /**
+   * Register a processor for a specific queue
+   */
+  public process(queueName: string, handler: (job: Job) => Promise<any>): void {
+    const queue = this.queues.get(queueName);
+    if (!queue) {
+      throw new Error(`Queue '${queueName}' not found. Cannot register processor.`);
+    }
+
+    queue.process(async (job) => {
+      try {
+        return await handler(job);
+      } catch (error: any) {
+        logger.error(`Error in queue '${queueName}' processor:`, error);
+        throw error;
+      }
+    });
+
+    logger.info(`Registered processor for queue '${queueName}'`);
+  }
+
   async clearQueue(queueName: string, state: 'completed' | 'failed' | 'active' | 'waiting' = 'completed'): Promise<Result<number>> {
     try {
       const queue = this.queues.get(queueName);
