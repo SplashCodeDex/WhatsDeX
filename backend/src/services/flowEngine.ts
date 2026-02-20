@@ -68,6 +68,16 @@ export class FlowEngine {
       outboundEdges = outboundEdges.filter(e => e.label === targetLabel);
     }
 
+    // If current node is AI Router, filter edges based on semantic routing
+    if (currentNode?.type === 'ai_router') {
+      const targetLabel = await this.evaluateAIRouting(currentNode, context);
+      if (targetLabel) {
+        outboundEdges = outboundEdges.filter(e => e.label === targetLabel);
+      } else {
+        outboundEdges = []; // No match
+      }
+    }
+
     for (const edge of outboundEdges) {
       const nextNode = flow.nodes.find(n => n.id === edge.target);
       if (!nextNode) continue;
@@ -90,6 +100,10 @@ export class FlowEngine {
 
       case 'ai':
         await this.executeAINode(node, context);
+        break;
+
+      case 'ai_router':
+        // logic handled in executeNodePath
         break;
     }
 
@@ -127,6 +141,40 @@ export class FlowEngine {
     }
 
     return false;
+  }
+
+  private async evaluateAIRouting(node: any, context: any): Promise<string | null> {
+    const { data } = node;
+    const { unifiedAI } = context;
+    const userInput = context.body || '';
+
+    if (!unifiedAI || !data.options) {
+      return null;
+    }
+
+    try {
+      const optionsStr = data.options.map((o: any) => `- ${o.label}: ${o.description}`).join('\n');
+      const prompt = `
+Analyze the following user input and decide which category it belongs to.
+Options:
+${optionsStr}
+
+User Input: "${userInput}"
+
+Return ONLY the label of the best matching category (e.g., "${data.options[0]?.label}"). If no category matches well, return "none".
+`;
+
+      const response = await unifiedAI.gemini.getChatCompletion(prompt);
+      const cleanedResponse = response.trim().toLowerCase();
+
+      // Find exact match in options
+      const match = data.options.find((o: any) => o.label.toLowerCase() === cleanedResponse);
+      return match ? match.label : null;
+
+    } catch (error: any) {
+      logger.error('FlowEngine.evaluateAIRouting error:', error);
+      return null;
+    }
   }
 
   private async executeActionNode(node: any, context: any) {

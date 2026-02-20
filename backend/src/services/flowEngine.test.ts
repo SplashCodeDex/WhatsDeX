@@ -141,4 +141,52 @@ describe('FlowEngine', () => {
     expect(mockProcessMessage).toHaveBeenCalled();
     expect(mockReply).toHaveBeenCalledWith('AI Response');
   });
+
+  it('should handle AI Router nodes (Semantic Routing)', async () => {
+    const mockReply = vi.fn().mockResolvedValue({ success: true });
+    // Mock the specific AI call for routing
+    const mockGetChatCompletion = vi.fn().mockResolvedValue('support');
+    
+    const context: any = {
+      body: 'I need help with my account',
+      reply: mockReply,
+      sender: { jid: 'user1' },
+      unifiedAI: {
+        gemini: {
+          getChatCompletion: mockGetChatCompletion
+        }
+      }
+    };
+
+    const flow: FlowData = {
+      id: 'flow4',
+      name: 'Router Flow',
+      isActive: true,
+      tenantId: 'tenant1',
+      nodes: [
+        { id: 'n1', type: 'trigger', data: { keyword: 'I need help with my account' } },
+        { id: 'n2', type: 'ai_router', data: { 
+          options: [
+            { label: 'sales', description: 'User wants to buy something' },
+            { label: 'support', description: 'User has a technical issue' }
+          ]
+        } },
+        { id: 'n3', type: 'action', data: { message: 'Transferring to Sales...' } },
+        { id: 'n4', type: 'action', data: { message: 'Opening Support Ticket...' } }
+      ],
+      edges: [
+        { id: 'e1', source: 'n1', target: 'n2' },
+        { id: 'e2', source: 'n2', target: 'n3', label: 'sales' },
+        { id: 'e3', source: 'n2', target: 'n4', label: 'support' }
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await engine.executeFlow(flow, context);
+
+    expect(mockGetChatCompletion).toHaveBeenCalled();
+    expect(mockReply).toHaveBeenCalledWith('Opening Support Ticket...');
+    expect(mockReply).not.toHaveBeenCalledWith('Transferring to Sales...');
+  });
 });
