@@ -31,7 +31,7 @@ Focus on interaction and restricting advanced AI capabilities to higher tiers.
 - [x] Task: Implement Skill Gating Logic (TDD). ffc241a4
     - [x] Sub-task: Write tests to ensure "Web Search" and "File Analysis" tools are rejected for Starter users.
     - [x] Sub-task: Update `frontend/src/features/agents/components/SkillToggle.tsx` to show lock icons for premium skills.
-- [ ] Task: Implement Real-time Tool Activity Stream (Socket.io).
+- [x] Task: Implement Real-time Tool Activity Stream (Socket.io). 445b6d14
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Chat' (Protocol in workflow.md)
 
 ## Phase 4: Automation, Broadcasts & Usage Caps
