@@ -4,6 +4,8 @@ import initializeContext from './lib/context.js';
 import MultiTenantApp from './server/multiTenantApp.js';
 import logger from './utils/logger.js';
 import { getCampaignWorker } from './jobs/campaignWorker.js'; // Start Campaign Worker
+import JobRegistry from './jobs/index.js';
+import { jobQueueService } from './services/jobQueue.js';
 
 /**
  * Main entry point for WhatsDeX
@@ -21,6 +23,11 @@ async function main() {
         logger.info('>>> [MASTERMIND] Global Context initialized.');
 
         // 2. Initialize Background Workers
+        logger.info('>>> [MASTERMIND] Initializing Job Registry...');
+        const jobRegistry = new JobRegistry();
+        await jobQueueService.initialize();
+        await jobRegistry.initialize(jobQueueService);
+        
         logger.info('>>> [MASTERMIND] Initializing Campaign Worker...');
         getCampaignWorker();
         logger.info('>>> [MASTERMIND] Campaign Worker call finished.');
