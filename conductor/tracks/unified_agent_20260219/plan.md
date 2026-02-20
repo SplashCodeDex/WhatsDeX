@@ -13,7 +13,7 @@ Focus on the "Brain" and enforcing quantity limits per plan.
 - [x] Task: Implement Template Selection UI with "Premium" badges for tier-locked templates. 19a2b65b
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Core Agent Identity' (Protocol in workflow.md) fb295866
 
-## Phase 2: Dynamic Channel Connectivity & Slot Enforcement
+## Phase 2: Dynamic Channel Connectivity & Slot Enforcement [checkpoint: e5592c0f]
 Focus on the "Phone" and limiting the number of active channel connections.
 
 - [x] Task: Refactor Channel Instance Logic (TDD) for Baileys/Telegram. 63e9b40c
@@ -21,7 +21,7 @@ Focus on the "Phone" and limiting the number of active channel connections.
 - [x] Task: Implement Billing Tier Enforcement for Channel Slots. 2d86637f
     - [x] Sub-task: Write tests for `ChannelSlotGuard` to enforce limits on active connections (e.g., 1 channel for Starter, 3 for Pro).
     - [x] Sub-task: Implement UI alerts/modals suggesting an upgrade when limits are reached.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Dynamic Connectivity' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Dynamic Connectivity' (Protocol in workflow.md) e5592c0f
 
 ## Phase 3: Omnichannel Chat & Skill Gating
 Focus on interaction and restricting advanced AI capabilities to higher tiers.
