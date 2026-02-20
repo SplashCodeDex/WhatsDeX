@@ -22,6 +22,7 @@ import telegramWebhookRoutes from '../routes/telegramWebhookRoutes.js';
 import billingRoutes from '../routes/billingRoutes.js';
 import omnichannelRoutes from '../routes/omnichannelRoutes.js';
 import skillsRoutes from '../routes/skillsRoutes.js';
+import flowRoutes from '../routes/flowRoutes.js';
 import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
@@ -207,6 +208,9 @@ export class MultiTenantApp {
 
     // Omnichannel Routes
     this.app.use('/api/omnichannel', authenticateToken, omnichannelRoutes);
+
+    // Flow Routes
+    this.app.use('/api/flows', authenticateToken, flowRoutes);
 
     // Skills Routes
     this.app.use('/api/skills', authenticateToken, skillsRoutes);

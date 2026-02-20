@@ -46,6 +46,7 @@ const NAV_ITEMS = [
     { title: 'Channels', href: '/dashboard/omnichannel', icon: LayoutGrid, type: 'messages' as const },
     { title: 'Messages', href: '/dashboard/messages', icon: MessageSquare, type: 'messages' as const },
     { title: 'Templates', href: '/dashboard/templates', icon: Layout, type: 'messages' as const },
+    { title: 'Flows', href: '/dashboard/flows', icon: Zap, type: 'messages' as const },
     { title: 'Contacts', href: '/dashboard/contacts', icon: Users, type: 'contacts' as const },
     { title: 'Agents', href: '/dashboard/agents', icon: Bot, type: 'bots' as const },
     { title: 'Skills Store', href: '/dashboard/omnichannel/skills', icon: Send, type: 'bots' as const },
