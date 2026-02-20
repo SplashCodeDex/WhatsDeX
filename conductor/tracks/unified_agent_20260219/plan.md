@@ -23,7 +23,7 @@ Focus on the "Phone" and limiting the number of active channel connections.
     - [x] Sub-task: Implement UI alerts/modals suggesting an upgrade when limits are reached.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Dynamic Connectivity' (Protocol in workflow.md) e5592c0f
 
-## Phase 3: Omnichannel Chat & Skill Gating
+## Phase 3: Omnichannel Chat & Skill Gating [checkpoint: 896feebe]
 Focus on interaction and restricting advanced AI capabilities to higher tiers.
 
 - [x] Task: Standardize Omnichannel Message Schema. d6e65a4e
@@ -32,7 +32,7 @@ Focus on interaction and restricting advanced AI capabilities to higher tiers.
     - [x] Sub-task: Write tests to ensure "Web Search" and "File Analysis" tools are rejected for Starter users.
     - [x] Sub-task: Update `frontend/src/features/agents/components/SkillToggle.tsx` to show lock icons for premium skills.
 - [x] Task: Implement Real-time Tool Activity Stream (Socket.io). 445b6d14
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Chat' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Chat' (Protocol in workflow.md) 896feebe
 
 ## Phase 4: Automation, Broadcasts & Usage Caps
 Focus on scalability and enforcing monthly volume limits.
