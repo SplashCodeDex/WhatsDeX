@@ -58,8 +58,15 @@ export class FlowEngine {
   }
 
   private async executeNodePath(currentNodeId: string, flow: FlowData, context: any) {
-    // Find outbound edges from current node
-    const outboundEdges = flow.edges.filter(e => e.source === currentNodeId);
+    const currentNode = flow.nodes.find(n => n.id === currentNodeId);
+    let outboundEdges = flow.edges.filter(e => e.source === currentNodeId);
+
+    // If current node is logic, filter edges based on condition result
+    if (currentNode?.type === 'logic') {
+      const result = await this.evaluateCondition(currentNode, context);
+      const targetLabel = result ? 'true' : 'false';
+      outboundEdges = outboundEdges.filter(e => e.label === targetLabel);
+    }
 
     for (const edge of outboundEdges) {
       const nextNode = flow.nodes.find(n => n.id === edge.target);
@@ -78,7 +85,7 @@ export class FlowEngine {
         break;
       
       case 'logic':
-        // logic nodes would handle branching, but for MVP we just follow the path
+        // logic nodes logic handled in executeNodePath for branching
         break;
 
       case 'ai':
@@ -86,8 +93,40 @@ export class FlowEngine {
         break;
     }
 
-    // Continue to next nodes in path
-    await this.executeNodePath(node.id, flow, context);
+    // Continue to next nodes in path (if not a logic node, which is handled above)
+    if (node.type !== 'logic') {
+      await this.executeNodePath(node.id, flow, context);
+    } else {
+      // For logic nodes, we already called executeNodePath inside the logic-specific block of executeNodePath's parent call?
+      // Wait, the recursion logic needs to be clean.
+      // If we are IN executeNodePath, we loop edges and call executeNode.
+      // executeNode then calls executeNodePath for children.
+      // So if it's a logic node, executeNode should still call executeNodePath, 
+      // but executeNodePath needs to know it's coming from a logic node.
+      
+      // Let's re-read:
+      // Trigger -> executeNodePath(triggerId) -> loop edges -> executeNode(actionNode) -> executeNodePath(actionNodeId) -> ...
+      
+      // If executeNodePath(logicNodeId) is called:
+      // it evaluates condition, filters edges, then calls executeNode(nextNode).
+      // This is correct.
+      
+      // But wait, executeNode currently calls executeNodePath at the end.
+      // If node is 'logic', executeNode should NOT call executeNodePath again if it's already being handled.
+      // Actually, my proposed change handles it by skipping the call at the end of executeNode for logic nodes.
+      await this.executeNodePath(node.id, flow, context);
+    }
+  }
+
+  private async evaluateCondition(node: any, context: any): Promise<boolean> {
+    const { data } = node;
+    
+    if (data.condition === 'is_premium') {
+      const planTier = context.tenant?.planTier || 'starter';
+      return planTier === 'pro' || planTier === 'enterprise';
+    }
+
+    return false;
   }
 
   private async executeActionNode(node: any, context: any) {

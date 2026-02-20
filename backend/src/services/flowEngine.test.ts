@@ -70,4 +70,39 @@ describe('FlowEngine', () => {
     expect(result).toBe(false);
     expect(mockReply).not.toHaveBeenCalled();
   });
+
+  it('should handle logic nodes with branching (Premium Check)', async () => {
+    const mockReply = vi.fn().mockResolvedValue({ success: true });
+    const context: any = {
+      body: 'status',
+      reply: mockReply,
+      sender: { jid: 'user1' },
+      tenant: { planTier: 'enterprise' }
+    };
+
+    const flow: FlowData = {
+      id: 'flow2',
+      name: 'Logic Flow',
+      isActive: true,
+      tenantId: 'tenant1',
+      nodes: [
+        { id: 'n1', type: 'trigger', data: { keyword: 'status' } },
+        { id: 'n2', type: 'logic', data: { condition: 'is_premium' } },
+        { id: 'n3', type: 'action', data: { message: 'You are a VIP!' } },
+        { id: 'n4', type: 'action', data: { message: 'Standard user.' } }
+      ],
+      edges: [
+        { id: 'e1', source: 'n1', target: 'n2' },
+        { id: 'e2', source: 'n2', target: 'n3', label: 'true' },
+        { id: 'e3', source: 'n2', target: 'n4', label: 'false' }
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await engine.executeFlow(flow, context);
+
+    expect(mockReply).toHaveBeenCalledWith('You are a VIP!');
+    expect(mockReply).not.toHaveBeenCalledWith('Standard user.');
+  });
 });
