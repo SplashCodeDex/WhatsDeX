@@ -2,7 +2,7 @@
 
 This plan outlines the steps to build the visual flow designer and its backend execution engine.
 
-## Phase 1: Frontend Foundation & Canvas [checkpoint: ]
+## Phase 1: Frontend Foundation & Canvas [checkpoint: d799acd]
 Goal: Set up the React Flow environment and basic node structure.
 
 - [x] Task: Install and Configure React Flow. 2ce27bd
