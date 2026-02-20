@@ -26,7 +26,7 @@ Focus on the "Phone" and limiting the number of active channel connections.
 ## Phase 3: Omnichannel Chat & Skill Gating
 Focus on interaction and restricting advanced AI capabilities to higher tiers.
 
-- [ ] Task: Standardize Omnichannel Message Schema.
+- [x] Task: Standardize Omnichannel Message Schema. d6e65a4e
 - [ ] Task: Implement Unified Inbox UI with Channel Filtering.
 - [ ] Task: Implement Skill Gating Logic (TDD).
     - Sub-task: Write tests to ensure "Web Search" and "File Analysis" tools are rejected for Starter users.
