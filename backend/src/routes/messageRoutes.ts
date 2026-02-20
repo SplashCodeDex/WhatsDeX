@@ -15,4 +15,10 @@ router.get('/', MessageController.listMessages);
  */
 router.post('/send', MessageController.sendMessage);
 
+/**
+ * POST /messages/reply
+ * Send a reply to an existing message (OMNICHANNEL)
+ */
+router.post('/reply', MessageController.reply);
+
 export default router;
