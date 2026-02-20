@@ -40,7 +40,8 @@ The platform operates on a multi-tenant architecture where each customer's data 
 - **Skills Platform:** Integrated OpenClaw skills (Web Search, Code Analysis, etc.) gated by subscription tiers.
 - **Unified Tool Registry:** A seamless merge of legacy WhatsDeX utility commands and OpenClaw agentic skills, enabling the AI to pick the best tool for the task.
 - **Contextual Memory:** Platform-scoped conversation history ensuring that AI interactions remain private and relevant to each specific chat (e.g., WhatsApp vs Telegram).
-- **Backups:** automated backups to Google Drive and other cloud storage providers.
+- **AI Persistent Learning:** Agents autonomously learn and recall user-specific facts and preferences across sessions, enabling a personalized "Mastermind" experience.
+- **Backups:** Automated system backups to Google Drive, ensuring user data and configuration safety.
 - **Contact Management:** Import and organize contacts for targeted campaigns.
 - **Analytics:** Detailed tracking of message delivery, response rates, and bot performance.
 
