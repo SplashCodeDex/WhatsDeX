@@ -28,9 +28,9 @@ Focus on interaction and restricting advanced AI capabilities to higher tiers.
 
 - [x] Task: Standardize Omnichannel Message Schema. d6e65a4e
 - [x] Task: Implement Unified Inbox UI with Channel Filtering. e59af74e
-- [ ] Task: Implement Skill Gating Logic (TDD).
-    - Sub-task: Write tests to ensure "Web Search" and "File Analysis" tools are rejected for Starter users.
-    - Sub-task: Update `frontend/src/features/agents/components/SkillToggle.tsx` to show lock icons for premium skills.
+- [x] Task: Implement Skill Gating Logic (TDD). ffc241a4
+    - [x] Sub-task: Write tests to ensure "Web Search" and "File Analysis" tools are rejected for Starter users.
+    - [x] Sub-task: Update `frontend/src/features/agents/components/SkillToggle.tsx` to show lock icons for premium skills.
 - [ ] Task: Implement Real-time Tool Activity Stream (Socket.io).
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Omnichannel Chat' (Protocol in workflow.md)
 
