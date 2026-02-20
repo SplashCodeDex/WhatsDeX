@@ -145,6 +145,7 @@ class AnalyticsService {
       const date = new Date().toISOString().split('T')[0];
       const field = type === 'sent' ? 'sent' : type === 'received' ? 'received' : 'errors';
 
+      // 1. Daily Analytics Roll-up (for charts)
       await firebaseService.setDoc<'tenants/{tenantId}/analytics'>(
         'analytics',
         date,
@@ -156,6 +157,16 @@ class AnalyticsService {
         tenantId,
         true
       );
+
+      // 2. Real-time Tenant Limit Enforcement
+      if (type === 'sent' || type === 'received') {
+        const tenantField = type === 'sent' ? 'totalMessagesSent' : 'totalMessagesReceived';
+        await db.doc(`tenants/${tenantId}`).update({
+          [`stats.${tenantField}`]: admin.firestore.FieldValue.increment(1),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
       return { success: true, data: undefined };
     } catch (error: any) {
       logger.error('Failed to track message', error);

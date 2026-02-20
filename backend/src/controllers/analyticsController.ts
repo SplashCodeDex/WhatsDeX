@@ -100,4 +100,36 @@ export class AnalyticsController {
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }
+
+    /**
+     * Get detailed usage analytics for charts
+     */
+    static async getUsageAnalytics(req: Request, res: Response) {
+        try {
+            const tenantId = req.user?.tenantId;
+            const days = parseInt(req.query.days as string) || 30;
+
+            if (!tenantId) {
+                return res.status(401).json({ success: false, error: 'Authentication required' });
+            }
+
+            const metricsSnapshot = await db.collection('tenants')
+                .doc(tenantId)
+                .collection('analytics')
+                .orderBy('date', 'desc')
+                .limit(days)
+                .get();
+
+            const metrics = metricsSnapshot.docs.map(doc => doc.data());
+
+            res.json({
+                success: true,
+                data: metrics.reverse() // Chronological order for charts
+            });
+
+        } catch (error: any) {
+            logger.error('AnalyticsController.getUsageAnalytics error', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
 }

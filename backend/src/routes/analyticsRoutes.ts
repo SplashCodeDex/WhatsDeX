@@ -11,6 +11,12 @@ const router = express.Router();
 router.get('/dashboard', authenticateToken, AnalyticsController.getDashboardStats);
 
 /**
+ * GET /usage
+ * Returns historical usage analytics for charts
+ */
+router.get('/usage', authenticateToken, AnalyticsController.getUsageAnalytics);
+
+/**
  * GET /messages
  * Analytics for message volume over time
  */

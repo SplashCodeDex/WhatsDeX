@@ -1,6 +1,7 @@
 import { JobQueueService } from '../services/jobQueue.js';
 import AIProcessor from './aiProcessor.js';
 import MediaProcessor from './mediaProcessor.js';
+import { getStatsAggregatorJob } from './statsAggregatorJob.js';
 import logger from '../utils/logger.js';
 import { Job } from 'bull';
 
@@ -76,6 +77,9 @@ class JobRegistry {
             throw new Error(`Unknown Media job name: ${jobName}`);
         }
       });
+      
+      // Initialize BullMQ Workers
+      getStatsAggregatorJob();
       
       logger.info('All job processors registered successfully');
     } catch (error: unknown) {
