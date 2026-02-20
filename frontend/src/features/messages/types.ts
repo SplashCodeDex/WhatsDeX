@@ -1,3 +1,30 @@
+import { z } from 'zod';
+
+/**
+ * Standardized Omnichannel Message Schema
+ * 
+ * Unifies messages from all channels (WhatsApp, Telegram, etc.) 
+ * and identifies which Agent (Brain) handled the interaction.
+ */
+export const OmnichannelMessageSchema = z.object({
+    id: z.string(),
+    channelId: z.string(),
+    channelType: z.enum(['whatsapp', 'telegram', 'discord', 'system']),
+    agentId: z.string().optional().nullable(),
+    remoteJid: z.string(),
+    fromMe: z.boolean(),
+    type: z.enum(['text', 'image', 'video', 'audio', 'document', 'sticker', 'system']),
+    content: z.string(),
+    mediaUrl: z.string().url().optional(),
+    status: z.enum(['pending', 'sent', 'delivered', 'read', 'failed']),
+    timestamp: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    metadata: z.record(z.any()).optional(),
+});
+
+export type OmnichannelMessage = z.infer<typeof OmnichannelMessageSchema>;
+
 export type CampaignStatus = 'draft' | 'pending' | 'sending' | 'completed' | 'paused' | 'error' | 'cancelled';
 
 export interface CampaignStats {
