@@ -22,3 +22,8 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ## [x] Track: Auth Flow Robustness & State Preservation
 *Link: [./conductor/tracks/auth_robustness_20260219/](./conductor/tracks/auth_robustness_20260219/)*    
+
+---
+
+## [x] Track: System-Wide Feature Integration & Infrastructure Fixes
+*Link: [./conductor/tracks/system_integration_20260220/](./conductor/tracks/system_integration_20260220/)*
