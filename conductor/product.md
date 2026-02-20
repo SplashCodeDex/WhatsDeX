@@ -31,7 +31,9 @@ The platform operates on a multi-tenant architecture where each customer's data 
 ### 3. Messaging & Automation
 
 - **Omnichannel Unified Inbox:** A single, filtered interface for viewing and managing conversation history across all connected platforms, tracked by channel type and assigned agent.
-- **Broadcast/Marketing:** High-performance engine using **BullMQ** for reliable background processing. Supports **Hybrid Distribution** (Single Bot vs Multi-Bot Pooling) and **Intelligent Throttling** with randomized delays to maximize deliverability.- **Rich Templates:** Manage media-heavy templates with dynamic variable injection (`{{name}}`, `{{phone}}`) and **AI Message Spinning** (Enterprise only) to prevent account bans.
+- **Broadcast/Marketing:** High-performance engine using **BullMQ** for reliable background processing. Supports **Hybrid Distribution** (Single Bot vs Multi-Bot Pooling) and **Intelligent Throttling** with randomized delays to maximize deliverability.
+- **Visual Automation (FlowBuilder 2.0):** No-code visual editor for designing complex, multi-step conversation logic and platform actions with drag-and-drop nodes.
+- **Rich Templates:** Manage media-heavy templates with dynamic variable injection (`{{name}}`, `{{phone}}`) and **AI Message Spinning** (Enterprise only) to prevent account bans.
 - **Auto-Replies:** Set up automated responses based on keywords or triggers.
 
 ### 4. Advanced Features (Premium)

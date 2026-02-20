@@ -17,21 +17,38 @@ import {
 
 import '@xyflow/react/dist/style.css';
 import { TriggerNode, ActionNode, LogicNode, AINode } from '@/features/flows/components/CustomNodes';
-import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2 } from 'lucide-react';
+import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2, Send } from 'lucide-react';
 import { api } from '@/lib/api/client';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { useTemplates } from '@/features/messages/hooks/useTemplates';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 
 const initialNodes: Node[] = [
   { 
     id: '1', 
     position: { x: 250, y: 50 }, 
-    data: { keyword: 'hello' }, 
+    data: { keyword: 'hello', executing: false }, 
     type: 'trigger' 
   },
   { 
     id: '2', 
     position: { x: 250, y: 250 }, 
-    data: { message: 'Hello! How can I help you today?' }, 
+    data: { message: 'Hello! How can I help you today?', executing: false }, 
     type: 'action' 
   },
 ];
@@ -46,14 +63,38 @@ const nodeTypes = {
 };
 
 function FlowBuilder() {
+  const { data: templates } = useTemplates();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testInput, setTestInput] = useState('');
+  const [testLogs, setTestLogs] = useState<string[]>([]);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  const selectedNode = useMemo(() => nodes.find(n => n.id === selectedNodeId), [nodes, selectedNodeId]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
   );
+
+  const onNodeClick = useCallback((_: any, node: Node) => {
+    setSelectedNodeId(node.id);
+  }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
+
+  const updateNodeData = useCallback((nodeId: string, newData: any) => {
+    setNodes((nds) => nds.map((node) => {
+      if (node.id === nodeId) {
+        return { ...node, data: { ...node.data, ...newData } };
+      }
+      return node;
+    }));
+  }, [setNodes]);
 
   const onSave = useCallback(async () => {
     setIsSaving(true);
@@ -77,6 +118,56 @@ function FlowBuilder() {
     }
   }, [nodes, edges]);
 
+  const runTest = async () => {
+    if (!testInput.trim()) return;
+    
+    setTestLogs([`User: ${testInput}`]);
+    
+    // Find trigger node
+    const trigger = nodes.find(n => n.type === 'trigger' && n.data.keyword?.toLowerCase() === testInput.toLowerCase());
+    
+    if (!trigger) {
+      setTestLogs(prev => [...prev, "System: No matching trigger found."]);
+      return;
+    }
+
+    // Reset all nodes
+    setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, executing: false } })));
+
+    // Execute path
+    let currentNodeId = trigger.id;
+    await executeSimulationStep(currentNodeId);
+  };
+
+  const executeSimulationStep = async (nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    // Highlight node
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, executing: true } } : n));
+    
+    // Log action
+    if (node.type === 'action') {
+      setTestLogs(prev => [...prev, `Bot: ${node.data.message || '(Empty Message)'}`]);
+    } else if (node.type === 'trigger') {
+      setTestLogs(prev => [...prev, `System: Trigger matched [${node.data.keyword}]`]);
+    }
+
+    // Wait for effect
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Find next nodes
+    const outboundEdges = edges.filter(e => e.source === nodeId);
+    for (const edge of outboundEdges) {
+      // Un-highlight current
+      setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, executing: false } } : n));
+      await executeSimulationStep(edge.target);
+    }
+
+    // Final un-highlight
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, executing: false } } : n));
+  };
+
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
@@ -97,7 +188,7 @@ function FlowBuilder() {
         id: `node_${Date.now()}`,
         type,
         position,
-        data: { label: `${type} node` },
+        data: { label: `${type} node`, executing: false },
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -172,7 +263,10 @@ function FlowBuilder() {
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Save Flow
           </button>
-          <button className="w-full py-2.5 bg-muted text-muted-foreground rounded-lg font-bold text-[10px] uppercase tracking-widest border border-border/40 hover:bg-muted/80 transition-all flex items-center justify-center gap-2">
+          <button 
+            className="w-full py-2.5 bg-muted text-muted-foreground rounded-lg font-bold text-[10px] uppercase tracking-widest border border-border/40 hover:bg-muted/80 transition-all flex items-center justify-center gap-2"
+            onClick={() => setIsTesting(true)}
+          >
             <Play className="w-3.5 h-3.5" /> Test Flow
           </button>
         </div>
@@ -186,6 +280,8 @@ function FlowBuilder() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           fitView
           colorMode="dark"
@@ -195,6 +291,146 @@ function FlowBuilder() {
           <Background variant="dots" gap={12} size={1} />
         </ReactFlow>
       </div>
+
+      {/* Properties Panel */}
+      {selectedNode && (
+        <div className="w-80 border border-border/40 rounded-xl bg-card/30 backdrop-blur-md p-4 flex flex-col gap-6 animate-in slide-in-from-right duration-300">
+          <div>
+            <h2 className="text-xs font-black uppercase tracking-tighter text-primary mb-4">Node Properties</h2>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground">Node ID</label>
+                <div className="text-xs font-mono p-2 bg-muted/30 rounded border border-border/20">{selectedNode.id}</div>
+              </div>
+
+              {selectedNode.type === 'trigger' && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">Keyword Match</label>
+                  <Input 
+                    value={selectedNode.data.keyword || ''} 
+                    onChange={(e) => updateNodeData(selectedNode.id, { keyword: e.target.value })}
+                    placeholder="e.g. hello"
+                  />
+                </div>
+              )}
+
+              {selectedNode.type === 'action' && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground">Select Template</label>
+                    <Select 
+                      value={selectedNode.data.templateId || 'none'} 
+                      onValueChange={(val) => {
+                        const tpl = templates?.find(t => t.id === val);
+                        updateNodeData(selectedNode.id, { 
+                          templateId: val === 'none' ? null : val,
+                          templateName: tpl?.name || null
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Template (Use Raw Message)</SelectItem>
+                        {templates?.map(t => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {!selectedNode.data.templateId && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground">Raw Message</label>
+                      <textarea 
+                        className="w-full h-24 p-3 rounded-lg bg-muted/30 border border-border/20 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        value={selectedNode.data.message || ''}
+                        onChange={(e) => updateNodeData(selectedNode.id, { message: e.target.value })}
+                        placeholder="Type your message..."
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {selectedNode.type === 'logic' && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">Condition</label>
+                  <Select 
+                    value={selectedNode.data.condition || 'is_premium'} 
+                    onValueChange={(val) => updateNodeData(selectedNode.id, { condition: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="is_premium">User is Premium</SelectItem>
+                      <SelectItem value="has_tag">User has Tag</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Test Flow Modal */}
+      <Dialog open={isTesting} onOpenChange={setIsTesting}>
+        <DialogContent className="sm:max-w-[500px] border-border/40 bg-card/90 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle>Simulator: Test Your Flow</DialogTitle>
+            <DialogDescription>
+              Type a message to see how your flow handles it in real-time.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-4 py-4">
+            <div className="h-[250px] w-full rounded-xl bg-background/50 border border-border/20 p-4 font-mono text-xs overflow-y-auto space-y-2">
+              {testLogs.length === 0 && <p className="text-muted-foreground italic">No simulation logs yet...</p>}
+              {testLogs.map((log, i) => (
+                <p key={i} className={cn(
+                  log.startsWith('User:') ? "text-primary" : 
+                  log.startsWith('Bot:') ? "text-green-500 font-bold" : 
+                  "text-muted-foreground"
+                )}>
+                  {log}
+                </p>
+              ))}
+            </div>
+            
+            <div className="flex gap-2">
+              <Input 
+                placeholder="Type a message (e.g. 'hello')" 
+                value={testInput}
+                onChange={(e) => setTestInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && runTest()}
+              />
+              <button 
+                onClick={runTest}
+                className="p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <button 
+              onClick={() => {
+                setIsTesting(false);
+                setTestLogs([]);
+                setTestInput('');
+                setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, executing: false } })));
+              }}
+              className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
+            >
+              Close Simulator
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

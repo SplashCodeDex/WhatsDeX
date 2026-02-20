@@ -19,29 +19,29 @@ Goal: Set up the React Flow environment and basic node structure.
 ## Phase 2: Logic Engine & Execution [checkpoint: ]
 Goal: Enable the backend to interpret and run the visual flows.
 
-- [ ] Task: Prototype Logic Engine (TDD).
-    - Sub-task: Write unit tests for an interpreter that navigates a simple Node/Edge JSON.
-    - Sub-task: Implement the `FlowEngine` service in the backend.
-- [ ] Task: Hook Engine into Incoming Messages.
-    - Sub-task: Update the message handling pipeline to check for matching "Trigger" nodes before falling back to default AI.
-- [ ] Task: Implement Basic Node Executors.
-    - Sub-task: Implement 'Send Message' and 'Condition' node logic in the engine.
+- [x] Task: Prototype Logic Engine (TDD). 618e423
+    - [x] Sub-task: Write unit tests for an interpreter that navigates a simple Node/Edge JSON.
+    - [x] Sub-task: Implement the `FlowEngine` service in the backend.
+- [x] Task: Hook Engine into Incoming Messages. 1739157
+    - [x] Sub-task: Update the message handling pipeline to check for matching "Trigger" nodes before falling back to default AI.
+- [x] Task: Implement Basic Node Executors. 812fa46
+    - [x] Sub-task: Implement 'Send Message' and 'Condition' node logic in the engine.
 
-## Phase 3: AI & Hybrid Intelligence [checkpoint: ]
+## Phase 3: AI & Hybrid Intelligence [checkpoint: 8536346]
 Goal: Integrate Gemini into the visual flows.
 
-- [ ] Task: Implement 'Gemini AI' Node.
-    - Sub-task: Add a node that forwards context to `GeminiAI` and returns the generated response.
-- [ ] Task: AI Router Node (TDD).
-    - Sub-task: Implement logic where Gemini decides which edge to follow based on user intent.
-- [ ] Task: State Preservation (Multi-turn Flows).
-    - Sub-task: Use Redis/Firestore to track the user's current position in a flow across multiple messages.
+- [x] Task: Implement 'Gemini AI' Node. 726889a
+    - [x] Sub-task: Add a node that forwards context to `GeminiAI` and returns the generated response.
+- [x] Task: AI Router Node (TDD). bd7645e
+    - [x] Sub-task: Implement logic where Gemini decides which edge to follow based on user intent.
+- [x] Task: State Preservation (Multi-turn Flows). 8536346
+    - [x] Sub-task: Use Redis/Firestore to track the user's current position in a flow across multiple messages.
 
 ## Phase 4: UX Polish & Enterprise Features [checkpoint: ]
 Goal: Finalize the builder for production use.
 
-- [ ] Task: Flow Debugger/Simulator.
-    - Sub-task: Add a "Test Flow" modal to simulate user input and see the path taken.
-- [ ] Task: Template Integration.
-    - Sub-task: Allow nodes to use existing message templates.
-- [ ] Task: Conductor - User Manual Verification 'FlowBuilder 2.0' (Protocol in workflow.md)
+- [x] Task: Flow Debugger/Simulator. d799acd
+    - [x] Sub-task: Add a "Test Flow" modal to simulate user input and see the path taken.
+- [x] Task: Template Integration. d799acd
+    - [x] Sub-task: Allow nodes to use existing message templates.
+- [~] Task: Conductor - User Manual Verification 'FlowBuilder 2.0' (Protocol in workflow.md)

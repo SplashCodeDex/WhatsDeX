@@ -1,6 +1,7 @@
 import logger from '../utils/logger.js';
 import { FlowData } from './flowService.js';
 import { cacheService } from './cache.js';
+import { TemplateService } from './templateService.js';
 
 interface FlowState {
   flowId: string;
@@ -202,6 +203,18 @@ Return ONLY the label of the best matching category (e.g., "${data.options[0]?.l
 
   private async executeActionNode(node: any, context: any) {
     const { data } = node;
+    const tenantId = context.tenantId || context.bot?.tenantId;
+
+    if (data.templateId && tenantId) {
+      const templateService = TemplateService.getInstance();
+      const templateResult = await templateService.getTemplate(tenantId, data.templateId);
+      
+      if (templateResult.success && templateResult.data) {
+        await context.reply(templateResult.data.content);
+        return;
+      }
+    }
+
     if (data.message) {
       await context.reply(data.message);
     }

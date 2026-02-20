@@ -9,14 +9,16 @@ interface BaseNodeProps {
   icon?: React.ReactNode;
   children?: React.ReactNode;
   selected?: boolean;
+  executing?: boolean;
   type: 'trigger' | 'action' | 'logic' | 'ai';
 }
 
-export function BaseNode({ title, icon, children, selected, type }: BaseNodeProps) {
+export function BaseNode({ title, icon, children, selected, executing, type }: BaseNodeProps) {
   return (
     <div className={cn(
       "min-w-[200px] rounded-xl border bg-card/80 backdrop-blur-md shadow-xl transition-all duration-300",
       selected ? "ring-2 ring-primary border-primary" : "border-border/40",
+      executing && "ring-4 ring-primary/50 border-primary shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.4)] scale-[1.05]",
       type === 'trigger' && "border-l-4 border-l-green-500",
       type === 'action' && "border-l-4 border-l-blue-500",
       type === 'logic' && "border-l-4 border-l-amber-500",
