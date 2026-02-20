@@ -1,12 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FlowEngine } from './flowEngine.js';
 import { FlowData } from './flowService.js';
+import { cacheService } from './cache.js';
+
+vi.mock('./cache.js', () => ({
+  cacheService: {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn()
+  }
+}));
 
 describe('FlowEngine', () => {
   let engine: FlowEngine;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (cacheService.get as any).mockResolvedValue({ success: false });
     engine = FlowEngine.getInstance();
   });
 
@@ -188,5 +198,56 @@ describe('FlowEngine', () => {
     expect(mockGetChatCompletion).toHaveBeenCalled();
     expect(mockReply).toHaveBeenCalledWith('Opening Support Ticket...');
     expect(mockReply).not.toHaveBeenCalledWith('Transferring to Sales...');
+  });
+
+  it('should resume a flow from a saved state (Multi-turn)', async () => {
+    const mockReply = vi.fn().mockResolvedValue({ success: true });
+    const context: any = {
+      body: 'I want a pizza',
+      reply: mockReply,
+      sender: { jid: 'user1' },
+      tenantId: 'tenant1'
+    };
+
+    const flow: FlowData = {
+      id: 'flow5',
+      name: 'Pizza Flow',
+      isActive: true,
+      tenantId: 'tenant1',
+      nodes: [
+        { id: 'n1', type: 'trigger', data: { keyword: 'pizza' } },
+        { id: 'n2', type: 'action', data: { message: 'What size would you like?' } },
+        { id: 'n3', type: 'wait_for_input', data: {} },
+        { id: 'n4', type: 'action', data: { message: 'Got it! Preparing your pizza...' } }
+      ],
+      edges: [
+        { id: 'e1', source: 'n1', target: 'n2' },
+        { id: 'e2', source: 'n2', target: 'n3' },
+        { id: 'e3', source: 'n3', target: 'n4' }
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // 1. Initial trigger
+    context.body = 'pizza';
+    await engine.executeFlow(flow, context);
+    expect(mockReply).toHaveBeenCalledWith('What size would you like?');
+    expect(cacheService.set).toHaveBeenCalledWith(expect.stringContaining('user1'), expect.objectContaining({
+      flowId: 'flow5',
+      currentNodeId: 'n3'
+    }), expect.any(Number));
+
+    // 2. Mock state retrieval for resumption
+    (cacheService.get as any).mockResolvedValue({ 
+      success: true, 
+      data: { flowId: 'flow5', currentNodeId: 'n3' } 
+    });
+    
+    // 3. Second message
+    context.body = 'large';
+    await engine.executeFlow(flow, context);
+    expect(mockReply).toHaveBeenCalledWith('Got it! Preparing your pizza...');
+    expect(cacheService.delete).toHaveBeenCalledWith(expect.stringContaining('user1'));
   });
 });

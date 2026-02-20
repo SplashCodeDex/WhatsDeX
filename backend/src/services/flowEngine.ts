@@ -1,5 +1,12 @@
 import logger from '../utils/logger.js';
 import { FlowData } from './flowService.js';
+import { cacheService } from './cache.js';
+
+interface FlowState {
+  flowId: string;
+  currentNodeId: string;
+  expiresAt: number;
+}
 
 /**
  * FlowEngine - 2026 Mastermind Edition
@@ -19,11 +26,27 @@ export class FlowEngine {
 
   /**
    * Execute a flow based on the current context
-   * @returns true if a flow was triggered and executed, false otherwise
+   * @returns true if a flow was triggered or resumed, false otherwise
    */
   async executeFlow(flow: FlowData, context: any): Promise<boolean> {
     try {
-      // 1. Find matching triggers
+      const userId = context.sender?.jid;
+      const stateKey = `flow:state:${userId}`;
+      const stateResult = await cacheService.get<FlowState>(stateKey);
+      
+      // 1. Check for active state (Resumption)
+      if (stateResult.success && stateResult.data && stateResult.data.flowId === flow.id) {
+        logger.info(`Resuming flow '${flow.name}' for user ${userId} from node ${stateResult.data.currentNodeId}`);
+        const currentNodeId = stateResult.data.currentNodeId;
+        
+        // Clear state before resuming (if wait_for_input is reached again, it will be set again)
+        await cacheService.delete(stateKey);
+        
+        await this.executeNodePath(currentNodeId, flow, context);
+        return true;
+      }
+
+      // 2. Find matching triggers (New Execution)
       const triggers = flow.nodes.filter(n => n.type === 'trigger');
       const matchingTrigger = triggers.find(t => this.isTriggerMatch(t, context));
 
@@ -31,9 +54,9 @@ export class FlowEngine {
         return false;
       }
 
-      logger.info(`Flow '${flow.name}' (${flow.id}) triggered for user ${context.sender?.jid}`);
+      logger.info(`Flow '${flow.name}' (${flow.id}) triggered for user ${userId}`);
 
-      // 2. Follow the path from the trigger
+      // 3. Follow the path from the trigger
       await this.executeNodePath(matchingTrigger.id, flow, context);
 
       return true;
@@ -105,31 +128,31 @@ export class FlowEngine {
       case 'ai_router':
         // logic handled in executeNodePath
         break;
+
+      case 'wait_for_input':
+        await this.handleWaitNode(node, flow, context);
+        return; // Stop execution until next message
     }
 
-    // Continue to next nodes in path (if not a logic node, which is handled above)
-    if (node.type !== 'logic') {
+    // Continue to next nodes in path (if not a logic node or wait node)
+    if (node.type !== 'logic' && node.type !== 'wait_for_input') {
       await this.executeNodePath(node.id, flow, context);
-    } else {
-      // For logic nodes, we already called executeNodePath inside the logic-specific block of executeNodePath's parent call?
-      // Wait, the recursion logic needs to be clean.
-      // If we are IN executeNodePath, we loop edges and call executeNode.
-      // executeNode then calls executeNodePath for children.
-      // So if it's a logic node, executeNode should still call executeNodePath, 
-      // but executeNodePath needs to know it's coming from a logic node.
-      
-      // Let's re-read:
-      // Trigger -> executeNodePath(triggerId) -> loop edges -> executeNode(actionNode) -> executeNodePath(actionNodeId) -> ...
-      
-      // If executeNodePath(logicNodeId) is called:
-      // it evaluates condition, filters edges, then calls executeNode(nextNode).
-      // This is correct.
-      
-      // But wait, executeNode currently calls executeNodePath at the end.
-      // If node is 'logic', executeNode should NOT call executeNodePath again if it's already being handled.
-      // Actually, my proposed change handles it by skipping the call at the end of executeNode for logic nodes.
+    } else if (node.type === 'logic') {
       await this.executeNodePath(node.id, flow, context);
     }
+  }
+
+  private async handleWaitNode(node: any, flow: FlowData, context: any) {
+    const userId = context.sender?.jid;
+    const stateKey = `flow:state:${userId}`;
+    const state: FlowState = {
+      flowId: flow.id,
+      currentNodeId: node.id,
+      expiresAt: Date.now() + (1000 * 60 * 15) // 15 minute timeout
+    };
+
+    await cacheService.set(stateKey, state, 60 * 15);
+    logger.debug(`Flow state saved for user ${userId} at node ${node.id}`);
   }
 
   private async evaluateCondition(node: any, context: any): Promise<boolean> {
