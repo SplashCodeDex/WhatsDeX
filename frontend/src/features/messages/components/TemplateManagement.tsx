@@ -131,6 +131,7 @@ export function TemplateManagement() {
                                         className="h-7 w-7"
                                         onClick={() => handleSpin(template.id, template.content)}
                                         disabled={spinningId === template.id}
+                                        aria-label="AI Spin"
                                     >
                                         {spinningId === template.id ? (
                                             <Loader2 className="h-3 w-3 animate-spin" />
