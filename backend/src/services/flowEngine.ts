@@ -89,7 +89,7 @@ export class FlowEngine {
         break;
 
       case 'ai':
-        // placeholder for Phase 3
+        await this.executeAINode(node, context);
         break;
     }
 
@@ -133,6 +133,40 @@ export class FlowEngine {
     const { data } = node;
     if (data.message) {
       await context.reply(data.message);
+    }
+  }
+
+  private async executeAINode(node: any, context: any) {
+    const { data } = node;
+    const { unifiedAI, bot, tenantId } = context;
+
+    if (!unifiedAI) {
+      logger.warn('FlowEngine: unifiedAI not found in context, skipping AI node');
+      return;
+    }
+
+    try {
+      // Forward to Gemini AI
+      const commonMsg = {
+        id: context.id,
+        platform: context.platform || 'whatsapp',
+        from: context.sender?.jid,
+        to: bot?.botId,
+        content: { text: context.body || '' },
+        timestamp: Date.now()
+      };
+
+      const result = await unifiedAI.processOmnichannelMessage(
+        tenantId || bot?.tenantId,
+        bot?.botId,
+        commonMsg
+      );
+
+      if (result.success && result.data?.content?.text) {
+        await context.reply(result.data.content.text);
+      }
+    } catch (error: any) {
+      logger.error('FlowEngine.executeAINode error:', error);
     }
   }
 }

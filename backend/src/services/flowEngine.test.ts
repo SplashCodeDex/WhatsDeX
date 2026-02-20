@@ -105,4 +105,40 @@ describe('FlowEngine', () => {
     expect(mockReply).toHaveBeenCalledWith('You are a VIP!');
     expect(mockReply).not.toHaveBeenCalledWith('Standard user.');
   });
+
+  it('should execute a Gemini AI node', async () => {
+    const mockReply = vi.fn().mockResolvedValue({ success: true });
+    const mockProcessMessage = vi.fn().mockResolvedValue({ success: true, data: { content: { text: 'AI Response' } } });
+    
+    const context: any = {
+      body: 'ask ai',
+      reply: mockReply,
+      sender: { jid: 'user1' },
+      bot: { botId: 'bot1', tenantId: 'tenant1' },
+      unifiedAI: {
+        processOmnichannelMessage: mockProcessMessage
+      }
+    };
+
+    const flow: FlowData = {
+      id: 'flow3',
+      name: 'AI Flow',
+      isActive: true,
+      tenantId: 'tenant1',
+      nodes: [
+        { id: 'n1', type: 'trigger', data: { keyword: 'ask ai' } },
+        { id: 'n2', type: 'ai', data: { prompt: 'Help the user' } }
+      ],
+      edges: [
+        { id: 'e1', source: 'n1', target: 'n2' }
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await engine.executeFlow(flow, context);
+
+    expect(mockProcessMessage).toHaveBeenCalled();
+    expect(mockReply).toHaveBeenCalledWith('AI Response');
+  });
 });
