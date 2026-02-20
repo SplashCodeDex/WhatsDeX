@@ -16,7 +16,7 @@ Focus on the "Brain" and enforcing quantity limits per plan.
 ## Phase 2: Dynamic Channel Connectivity & Slot Enforcement
 Focus on the "Phone" and limiting the number of active channel connections.
 
-- [ ] Task: Refactor Channel Instance Logic (TDD) for Baileys/Telegram.
+- [x] Task: Refactor Channel Instance Logic (TDD) for Baileys/Telegram. 63e9b40c
 - [ ] Task: Implement "Connectivity" Tab in Agent Settings.
 - [ ] Task: Implement Billing Tier Enforcement for Channel Slots.
     - Sub-task: Write tests for `ChannelSlotGuard` to enforce limits on active connections (e.g., 1 channel for Starter, 3 for Pro).
