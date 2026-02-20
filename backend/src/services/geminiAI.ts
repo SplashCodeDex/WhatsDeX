@@ -13,6 +13,7 @@ import { skillsManager } from './skillsManager.js';
 import { multiTenantService } from './multiTenantService.js';
 import { toolPersistenceService } from './toolPersistenceService.js';
 import { socketService } from './socketService.js';
+import { aiAnalyticsService } from './aiAnalytics.js';
 
 interface AIDecisionEngine {
   confidenceThreshold: number;
@@ -106,6 +107,7 @@ export class GeminiAI extends EventEmitter {
    * Universal message processing engine - platform agnostic (2026 Edition)
    */
   async processOmnichannelMessage(tenantId: string, botId: string, message: CommonMessage): Promise<Result<CommonMessage>> {
+    const startTime = Date.now(); // Track request start time for analytics
     try {
       const userId = message.from;
       const text = message.content.text || '';
@@ -132,7 +134,10 @@ export class GeminiAI extends EventEmitter {
           recentTools.map(t => `- Tool: ${t.tool} | Result: ${typeof t.data === 'string' ? t.data : JSON.stringify(t.data)}`).join("\n");
       }
 
-      const personality = 'a professional assistant';
+      // Get bot-specific personality from configuration
+      const botDoc = await databaseService.bot.get(botId, tenantId);
+      const personality = botDoc?.config?.aiPersonality || botDoc?.aiPersonality || 'a professional and helpful assistant';
+      
       const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
 Context: Omnichannel Mastermind.
@@ -231,6 +236,16 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         timeoutMs: 120000
       });
 
+      // Learn from interaction (Persistent Learning)
+      this.learnFromInteractionGeneric(tenantId, botId, userId, text, {
+        intents: [],
+        confidence: 0.9,
+        actions: [],
+        reasoning: 'Automatic learning from conversation',
+        toolsNeeded: [],
+        responseType: 'conversational'
+      }).catch(err => logger.error('Background learning failed:', err));
+
       // Store in Scoped Vector Memory
       await memoryService.storeConversation(userId, text, {
         botId: botId,
@@ -238,6 +253,19 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         interactionType: 'human-ai',
         platform: message.platform,
         chatId: userId
+      });
+
+      // Track AI analytics
+      const responseTime = Date.now() - startTime;
+      await aiAnalyticsService.trackAIRequest({
+        tenantId,
+        userId,
+        requestType: 'chat',
+        success: true,
+        responseTime,
+        confidence: 0.85, // Could be calculated from actual AI confidence
+        toolsUsed: [],
+        timestamp: new Date()
       });
 
       const responseMsg: CommonMessage = {
@@ -256,6 +284,19 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Omnichannel AI Brain processing error:', err);
+      
+      // Track failed AI request
+      const responseTime = Date.now() - startTime;
+      await aiAnalyticsService.trackAIRequest({
+        tenantId,
+        userId: message.from,
+        requestType: 'chat',
+        success: false,
+        responseTime,
+        errorMessage: err.message,
+        timestamp: new Date()
+      });
+      
       return { success: false, error: err };
     }
   }
@@ -392,8 +433,9 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         historyResult.data.map(h => `- ${h.content} (on ${new Date(h.timestamp).toLocaleDateString()})`).join("\n");
     }
 
-    // personality should be fetched from botId settings
-    const personality = 'a professional assistant';
+    // Fetch bot-specific personality from configuration
+    const botDoc = await databaseService.bot.get(botId, tenantId);
+    const personality = botDoc?.config?.aiPersonality || botDoc?.aiPersonality || 'a professional and helpful assistant';
 
     const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
