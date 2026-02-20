@@ -22,6 +22,8 @@ import { cooldownMiddleware } from '../middleware/cooldown.js';
 import { moderationMiddleware } from '../middleware/moderation.js';
 import { eventHandler } from './eventHandler.js';
 import AuthSystem from './authSystem.js';
+import { flowService } from './flowService.js';
+import { flowEngine } from './flowEngine.js';
 import { TelegramAdapter } from './channels/telegram/TelegramAdapter.js';
 import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
 import { channelManager } from './channels/ChannelManager.js';
@@ -350,14 +352,35 @@ export class MultiTenantBotService {
       const commandSystem = context.commandSystem;
       const handledByCommand = await commandSystem.processMessage(bot, message);
 
-      // If not a command, try AI (if enabled for this bot/tenant)
-      if (!handledByCommand && context.unifiedAI) {
+      if (handledByCommand) return;
+
+      // Create context for further processing
+      const aiCtx = await createBotContext(bot, message, context);
+
+      // Process Visual Flows (Phase 2)
+      const flowsResult = await flowService.listActiveFlows(tenantId);
+      if (flowsResult.success && flowsResult.data.length > 0) {
+        for (const flow of flowsResult.data) {
+          const executed = await flowEngine.executeFlow(flow, aiCtx);
+          if (executed) {
+            // Webhook Dispatch
+            await webhookService.dispatch(tenantId, 'flow.executed', {
+              botId,
+              flowId: flow.id,
+              sender: aiCtx.sender.jid,
+              timestamp: Date.now()
+            });
+            return; // Exit early if flow was handled
+          }
+        }
+      }
+
+      // If not a command or flow, try AI (if enabled for this bot/tenant)
+      if (context.unifiedAI) {
         // Enforce Feature Flag: Check if AI is enabled for this tenant
         const isAiEnabled = await tenantConfigService.isFeatureEnabled(tenantId, 'aiEnabled');
 
         if (isAiEnabled) {
-          // Create context for AI processing
-          const aiCtx = await createBotContext(bot, message, context);
           // 2. Process via AI/Brain
           await context.unifiedAI.processMessage(bot, aiCtx);
 

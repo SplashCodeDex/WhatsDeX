@@ -93,6 +93,26 @@ export class FlowService {
     }
   }
 
+  async listActiveFlows(tenantId: string): Promise<Result<FlowData[]>> {
+    try {
+      const snapshot = await db.collection('tenants').doc(tenantId).collection('flows')
+        .where('isActive', '==', true)
+        .get();
+      
+      const flows = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          createdAt: data.createdAt?.toDate?.() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+        } as FlowData;
+      });
+      return { success: true, data: flows };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  }
+
   async deleteFlow(tenantId: string, flowId: string): Promise<Result<void>> {
     try {
       await db.collection('tenants').doc(tenantId).collection('flows').doc(flowId).delete();
