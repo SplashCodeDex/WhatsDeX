@@ -5,7 +5,6 @@
     "moduleResolution": "NodeNext",
     "lib": ["es2022"],
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -15,11 +14,12 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@whatsdex/shared/*": ["../shared/*"]
     },
     "allowJs": false,
     "checkJs": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../shared/**/*"],
   "exclude": ["node_modules", "**/*.test.ts", "../../openclaw/**/*"]
 }

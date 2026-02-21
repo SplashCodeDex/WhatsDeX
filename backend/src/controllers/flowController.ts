@@ -58,7 +58,7 @@ export class FlowController {
       const tenantId = req.user?.tenantId;
       if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-      const flowId = req.params.id;
+      const flowId = req.params.id as string;
       const result = await flowService.getFlow(tenantId, flowId);
 
       if (result.success) {
@@ -77,7 +77,7 @@ export class FlowController {
       const tenantId = req.user?.tenantId;
       if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-      const flowId = req.params.id;
+      const flowId = req.params.id as string;
       const result = await flowService.deleteFlow(tenantId, flowId);
 
       if (result.success) {

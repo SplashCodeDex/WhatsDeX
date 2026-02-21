@@ -59,6 +59,7 @@ export interface BotInstanceDocument {
   };
   credentials?: Record<string, any>;
   webhookUrl?: string;
+  linkedAgentId?: string | null;
   stats: {
     messagesSent: number;
     messagesReceived: number;
@@ -142,6 +143,7 @@ export interface FirestoreSchema {
   tenants: TenantDocument;
   'tenants/{tenantId}/users': TenantUserDocument;
   'tenants/{tenantId}/bots': BotInstanceDocument;
+  'tenants/{tenantId}/slots': BotInstanceDocument;
   'tenants/{tenantId}/members': BotMemberDocument;
   'tenants/{tenantId}/groups': BotGroupDocument;
   'tenants/{tenantId}/subscriptions': SubscriptionDocument;

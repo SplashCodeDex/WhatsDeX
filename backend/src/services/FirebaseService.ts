@@ -29,6 +29,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants': TenantSchema as any,
   'tenants/{tenantId}/users': TenantUserSchema as any,
   'tenants/{tenantId}/bots': BotInstanceSchema as any,
+  'tenants/{tenantId}/slots': BotInstanceSchema as any,
   'tenants/{tenantId}/members': BotMemberSchema as any,
   'tenants/{tenantId}/groups': BotGroupSchema as any,
   'tenants/{tenantId}/subscriptions': SubscriptionSchema as any,
@@ -71,6 +72,9 @@ export class FirebaseService {
         if (parts[0] === 'bots' && parts[2] === 'auth') {
           path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
           schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+        } else if (parts[0] === 'slots') {
+          path = `tenants/${tenantId}/slots`;
+          schemaKey = `tenants/{tenantId}/slots` as CollectionKey;
         } else {
           path = `tenants/${tenantId}/${collection}`;
           schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;

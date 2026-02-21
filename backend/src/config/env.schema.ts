@@ -21,6 +21,9 @@ export const envSchema = z.object({
   AUTH_ADAPTER: z.enum(['default', 'mysql', 'mongodb', 'firebase']).default('default'),
 
   // Firebase
+  FIREBASE_PROJECT_ID: z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
   FIREBASE_TABLE_NAME: z.string().default('whatsdex'),
   FIREBASE_SESSION: z.string().default('state'),
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),

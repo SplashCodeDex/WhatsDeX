@@ -180,14 +180,24 @@ class AuditService {
         createdAt: (doc.data().createdAt as Timestamp).toDate()
       }));
 
-      // NOTE: eventType and riskLevel stats are hard to do efficiently in Firestore without pre-aggregation
-      // We will return empty/mocked stats for those to avoid fetching ALL docs
+      // Calculate event type and risk level distribution from actual data
+      // For better performance, we limit this to recent events (last 1000)
+      const statsSnapshot = await query.orderBy('createdAt', 'desc').limit(1000).get();
       const eventsByType: Record<string, number> = {};
       const eventsByRisk: Record<string, number> = {};
 
+      statsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const eventType = data.eventType || 'unknown';
+        const riskLevel = data.riskLevel || 'low';
+        
+        eventsByType[eventType] = (eventsByType[eventType] || 0) + 1;
+        eventsByRisk[riskLevel] = (eventsByRisk[riskLevel] || 0) + 1;
+      });
+
       return {
         totalEvents,
-        eventsByType, // To be implemented with counters if needed
+        eventsByType,
         eventsByRisk, // To be implemented with counters if needed
         recentEvents,
         timeRange: {

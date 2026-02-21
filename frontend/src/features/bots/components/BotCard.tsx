@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Power, QrCode, Smartphone, Trash2, Settings2, MessageSquare, Send, Radio } from 'lucide-react';
+import * as Icons from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     Card,
     CardContent,
@@ -22,11 +23,11 @@ interface BotCardProps {
 }
 
 const platformIcons: Record<string, any> = {
-    whatsapp: Smartphone,
-    telegram: Send,
-    discord: MessageSquare,
-    slack: MessageSquare,
-    signal: Radio
+    whatsapp: Icons.Smartphone,
+    telegram: Icons.Send,
+    discord: Icons.MessageSquare,
+    slack: Icons.MessageSquare,
+    signal: Icons.Radio
 };
 
 export function BotCard({ bot }: BotCardProps) {
@@ -49,7 +50,7 @@ export function BotCard({ bot }: BotCardProps) {
         }
     };
 
-    const PlatformIcon = platformIcons[bot.type || 'whatsapp'] || Smartphone;
+    const PlatformIcon = platformIcons[bot.type || 'whatsapp'] || Icons.Smartphone;
 
     return (
         <>
@@ -86,12 +87,12 @@ export function BotCard({ bot }: BotCardProps) {
                     <div className="flex-1 flex gap-2">
                         {bot.status !== 'connected' ? (
                             <Button variant="outline" size="sm" onClick={handleConnectClick} className="flex-1">
-                                {(bot.type === 'whatsapp' || !bot.type) ? <QrCode className="mr-2 h-3 w-3" /> : <Power className="mr-2 h-3 w-3" />}
+                                {(bot.type === 'whatsapp' || !bot.type) ? <Icons.QrCode className="mr-2 h-3 w-3" /> : <Icons.Power className="mr-2 h-3 w-3" />}
                                 Connect
                             </Button>
                         ) : (
                             <Button variant="outline" size="sm" onClick={() => disconnectBot(bot.id)} className="flex-1 text-destructive hover:text-destructive">
-                                <Power className="mr-2 h-3 w-3" />
+                                <Icons.Power className="mr-2 h-3 w-3" />
                                 Disconnect
                             </Button>
                         )}
@@ -103,7 +104,7 @@ export function BotCard({ bot }: BotCardProps) {
                             onClick={() => setShowSettings(true)}
                             title="Bot Settings"
                         >
-                            <Settings2 className="h-4 w-4" />
+                            <Icons.Settings2 className="h-4 w-4" />
                         </Button>
                     </div>
 
@@ -114,7 +115,7 @@ export function BotCard({ bot }: BotCardProps) {
                         onClick={() => deleteBot(bot.id)}
                         title="Delete Bot"
                     >
-                        <Trash2 className="h-4 w-4" />
+                        <Icons.Trash2 className="h-4 w-4" />
                     </Button>
                 </CardFooter>
             </Card>

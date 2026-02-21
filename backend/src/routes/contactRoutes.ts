@@ -9,6 +9,9 @@ const router = express.Router();
  * Import contacts from CSV
  */
 router.post('/import', upload.single('file'), ContactController.importContacts);
+router.post('/check-duplicates', ContactController.checkDuplicates);
+router.get('/imports', ContactController.listImportHistory);
+router.post('/imports/:id/undo', ContactController.undoImport);
 
 /**
  * GET /contacts

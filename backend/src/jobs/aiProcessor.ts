@@ -44,6 +44,7 @@ interface PerformanceAnalyticsData {
   timeRange: string;
   userId: string;
   metrics: string[];
+  tenantId?: string; // Required for real analytics
 }
 
 /**
@@ -403,18 +404,25 @@ Generate a JSON training example with the following format:
         metrics: metrics.join(', '),
       });
 
-      // This would analyze AI performance metrics
-      // For now, return mock analytics data
-      const analytics = {
-        totalRequests: 1250,
-        averageResponseTime: 2.3,
-        successRate: 98.5,
-        popularFeatures: ['chat', 'image_generation', 'translation'],
-        userSatisfaction: 4.7,
-        errorRate: 1.5,
+      // Get real analytics from aiAnalyticsService
+      const { aiAnalyticsService } = await import('../services/aiAnalytics.js');
+      
+      // Extract tenantId from userId (assuming format includes tenant info or we need to query)
+      // For now, we'll need tenantId to be part of jobData - this is a requirement
+      const tenantId = (jobData as any).tenantId || 'default';
+      
+      const analyticsResult = await aiAnalyticsService.getPerformanceAnalytics(
+        tenantId,
+        userId,
         timeRange,
-        generatedAt: new Date().toISOString(),
-      };
+        metrics
+      );
+
+      if (!analyticsResult.success) {
+        throw analyticsResult.error;
+      }
+
+      const analytics = analyticsResult.data;
 
       return {
         success: true,

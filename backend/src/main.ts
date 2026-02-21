@@ -6,6 +6,7 @@ import logger from './utils/logger.js';
 import { getCampaignWorker } from './jobs/campaignWorker.js'; // Start Campaign Worker
 import JobRegistry from './jobs/index.js';
 import { jobQueueService } from './services/jobQueue.js';
+import { validateEnvironmentOrThrow } from './utils/validateEnv.js';
 
 /**
  * Main entry point for WhatsDeX
@@ -14,6 +15,11 @@ async function main() {
     logger.info('>>> [MASTERMIND] Starting main()');
     try {
         logger.info('🚀 Starting WhatsDeX...');
+
+        // Validate environment variables before proceeding
+        logger.info('>>> [MASTERMIND] Validating environment variables...');
+        validateEnvironmentOrThrow();
+        logger.info('>>> [MASTERMIND] Environment validation passed.');
 
         // Initialize ConfigService first
         const configService = ConfigService.getInstance();

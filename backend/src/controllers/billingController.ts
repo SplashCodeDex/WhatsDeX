@@ -1,126 +1,203 @@
 import { Request, Response } from 'express';
-import stripeService from '../services/stripeService.js';
-import { db } from '../lib/firebase.js';
+import billingService from '../services/billingService.js';
 import logger from '../utils/logger.js';
-import { ConfigService } from '../services/ConfigService.js';
+import { AppError } from '../types/result.js';
 
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
     const { planId, interval } = req.body;
     const user = (req as any).user;
 
-    if (!planId || !interval) {
-      return res.status(400).json({ success: false, error: 'planId and interval are required' });
-    }
-
-    if (!['starter', 'pro', 'enterprise'].includes(planId)) {
-      return res.status(400).json({ success: false, error: 'Invalid planId' });
-    }
-
-    if (!['month', 'year'].includes(interval)) {
-      return res.status(400).json({ success: false, error: 'Invalid interval' });
-    }
-
-    const tenantId = user.tenantId;
-    const tenantRef = db.collection('tenants').doc(tenantId);
-    const tenantDoc = await tenantRef.get();
-
-    if (!tenantDoc.exists) {
-      return res.status(404).json({ success: false, error: 'Tenant not found' });
-    }
-
-    const tenantData = tenantDoc.data()!;
-    let stripeCustomerId = tenantData.stripeCustomerId;
-
-    const stripe = stripeService.stripe;
-    if (!stripe) {
-      return res.status(503).json({ success: false, error: 'Stripe service not initialized' });
-    }
-
-    // Create Stripe customer if it doesn't exist
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: {
-          tenantId,
-          userId: user.userId,
-        },
-      });
-      stripeCustomerId = customer.id;
-      await tenantRef.update({ stripeCustomerId });
-    }
-
-    // Find the price ID
-    const prices = await stripe.prices.list({
-      active: true,
-      expand: ['data.product'],
-    });
-
-    const price = prices.data.find(
-      (p) => p.metadata.planId === planId && p.metadata.type === interval
+    const result = await billingService.createCheckoutSession(
+      user.tenantId,
+      user.userId,
+      user.email,
+      planId,
+      interval
     );
 
-    if (!price) {
-      logger.error('Stripe price not found', { planId, interval });
-      return res.status(500).json({ success: false, error: 'Price configuration not found in Stripe' });
+    if (result.success) {
+      return res.json({ success: true, data: result.data });
     }
 
-    const config = ConfigService.getInstance();
-    const appUrl = config.get('NEXT_PUBLIC_APP_URL');
-
-    // Create Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: price.id,
-          quantity: 1,
-        },
-      ],
-      subscription_data: {
-        trial_period_days: 7,
-        metadata: {
-          tenantId,
-          userId: user.userId,
-          planId,
-        },
+    const error = result.error as AppError;
+    return res.status(error.statusCode).json({
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+        details: error.details,
       },
-      success_url: `${appUrl}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/dashboard/billing?canceled=true`,
     });
-
-    res.json({ success: true, data: { url: session.url } });
-  } catch (error: any) {
-    logger.error('Error creating checkout session', { error: error.message });
-    res.status(500).json({ success: false, error: 'Failed to create checkout session' });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error('Error creating checkout session', { error: error.message });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to create checkout session',
+        },
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'UNKNOWN_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
   }
 };
 
 export const getSubscription = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const tenantId = user.tenantId;
+    const result = await billingService.getSubscription(user.tenantId);
 
-    const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-    if (!tenantDoc.exists) {
-      return res.status(404).json({ success: false, error: 'Tenant not found' });
+    if (result.success) {
+      return res.json({ success: true, data: result.data });
     }
 
-    const data = tenantDoc.data()!;
-    res.json({
-      success: true,
-      data: {
-        planTier: data.planTier || 'starter',
-        status: data.subscriptionStatus || 'trialing',
-        trialEndsAt: data.trialEndsAt ? (data.trialEndsAt as any).toDate().toISOString() : null,
-        currentPeriodEnd: data.currentPeriodEnd ? (data.currentPeriodEnd as any).toDate().toISOString() : null,
-        cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
-      }
+    const error = result.error as AppError;
+    return res.status(error.statusCode).json({
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
     });
-  } catch (error: any) {
-    logger.error('Error getting subscription', { error: error.message });
-    res.status(500).json({ success: false, error: 'Failed to get subscription info' });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error('Error getting subscription', { error: error.message });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to get subscription info',
+        },
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'UNKNOWN_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+};
+
+export const getInvoices = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const result = await billingService.getInvoices(user.tenantId);
+
+    if (result.success) {
+      return res.json({ success: true, data: result.data });
+    }
+
+    const error = result.error as AppError;
+    return res.status(error.statusCode).json({
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error('Error getting invoices', { error: error.message });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to get invoices',
+        },
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'UNKNOWN_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+};
+
+export const getPaymentMethods = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const result = await billingService.getPaymentMethods(user.tenantId);
+
+    if (result.success) {
+      return res.json({ success: true, data: result.data });
+    }
+
+    const error = result.error as AppError;
+    return res.status(error.statusCode).json({
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error('Error getting payment methods', { error: error.message });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to get payment methods',
+        },
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'UNKNOWN_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+};
+
+export const deletePaymentMethod = async (req: Request, res: Response) => {
+  try {
+    const paymentMethodId = req.params.paymentMethodId as string;
+    const result = await billingService.deletePaymentMethod(paymentMethodId);
+
+    if (result.success) {
+      return res.json({ success: true, data: result.data });
+    }
+
+    const error = result.error as AppError;
+    return res.status(error.statusCode).json({
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error('Error deleting payment method', { error: error.message });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to delete payment method',
+        },
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'UNKNOWN_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
   }
 };

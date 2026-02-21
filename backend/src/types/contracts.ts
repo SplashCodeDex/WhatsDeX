@@ -317,7 +317,8 @@ export const WebhookEventSchema = z.enum([
   'bot.connected',
   'bot.disconnected',
   'bot.error',
-  'campaign.completed'
+  'campaign.completed',
+  'flow.executed'
 ]);
 export type WebhookEvent = z.infer<typeof WebhookEventSchema>;
 

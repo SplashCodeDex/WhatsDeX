@@ -153,15 +153,32 @@ async function apiClient<TData, TBody = unknown>(
     try {
         const response = await fetch(url, fetchOptions);
 
-        const data = await response.json();
+        let data: any;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            if (!response.ok) {
+                return {
+                    success: false,
+                    error: {
+                        code: 'server_error',
+                        message: text || `Server returned ${response.status}: ${response.statusText}`,
+                    },
+                } as ApiErrorResponse;
+            }
+            data = text; // Or handle other types if needed
+        }
 
         if (!response.ok) {
             return {
                 success: false,
                 error: {
-                    code: data.error?.code ?? 'unknown_error',
-                    message: typeof data.error === 'string' ? data.error : (data.error?.message ?? data.message ?? 'An unexpected error occurred'),
-                    details: data.error?.details,
+                    code: data?.error?.code ?? 'unknown_error',
+                    message: typeof data?.error === 'string' ? data.error : (data?.error?.message ?? data?.message ?? 'An unexpected error occurred'),
+                    details: data?.error?.details,
                 },
             } as ApiErrorResponse;
         }
@@ -172,6 +189,8 @@ async function apiClient<TData, TBody = unknown>(
             meta: data.meta,
         } as ApiSuccessResponse<TData>;
     } catch (err) {
+        console.error('[API Client Error]', { endpoint, url, error: err });
+
         if (err instanceof Error) {
             if (err.name === 'AbortError') {
                 return {
@@ -186,7 +205,8 @@ async function apiClient<TData, TBody = unknown>(
                 success: false,
                 error: {
                     code: 'network_error',
-                    message: 'Unable to connect to server',
+                    message: err.message || 'Unable to connect to server',
+                    details: { originalError: err.toString() }
                 },
             };
         }
@@ -194,7 +214,8 @@ async function apiClient<TData, TBody = unknown>(
             success: false,
             error: {
                 code: 'unknown_error',
-                message: 'An unexpected error occurred',
+                message: 'An unexpected error occurred during the request',
+                details: { error: String(err) }
             },
         };
     }

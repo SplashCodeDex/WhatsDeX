@@ -2,15 +2,20 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Rocket, Zap, Shield, Sparkles } from 'lucide-react';
+import { Check, Rocket, Zap, Shield, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { billingApi } from '@/lib/api/billing';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+type PlanId = 'starter' | 'pro' | 'enterprise';
 
 const PLANS = [
   {
-    id: 'starter',
+    id: 'starter' as PlanId,
     name: 'Starter',
     description: 'Perfect for individuals and small projects.',
     monthlyPrice: 9.99,
@@ -23,10 +28,9 @@ const PLANS = [
       'Community Support',
     ],
     icon: Rocket,
-    color: 'primary',
   },
   {
-    id: 'pro',
+    id: 'pro' as PlanId,
     name: 'Pro',
     description: 'Advanced features for growing businesses.',
     monthlyPrice: 19.99,
@@ -40,11 +44,10 @@ const PLANS = [
       'Priority Support',
     ],
     icon: Zap,
-    color: 'accent',
     popular: true,
   },
   {
-    id: 'enterprise',
+    id: 'enterprise' as PlanId,
     name: 'Enterprise',
     description: 'Unlimited power for agencies and organizations.',
     monthlyPrice: 49.99,
@@ -59,12 +62,37 @@ const PLANS = [
       'White-label Options',
     ],
     icon: Shield,
-    color: 'primary',
   },
 ];
 
 export function PricingTable() {
   const [interval, setInterval] = useState<'month' | 'year'>('month');
+  const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
+
+  const handleCheckout = async (planId: PlanId) => {
+    if (planId === 'enterprise') {
+      // For enterprise, redirect to contact/sales
+      toast.info('Please contact our sales team for enterprise pricing');
+      return;
+    }
+
+    try {
+      setLoadingPlan(planId);
+      const response = await billingApi.createCheckoutSession(planId, interval);
+      
+      if (response.url) {
+        // Redirect to Stripe checkout
+        window.location.href = response.url;
+      } else {
+        toast.error('Failed to create checkout session');
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast.error(error.message || 'Failed to start checkout process');
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -105,15 +133,23 @@ export function PricingTable() {
             whileHover={{ y: -8 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className={`relative flex h-full flex-col overflow-hidden border-2 ${plan.popular ? 'border-primary-500 shadow-xl' : 'border-border'}`}>
+            <Card className={cn(
+              "relative flex h-full flex-col overflow-hidden border-2",
+              plan.popular ? 'border-primary shadow-xl' : 'border-border'
+            )}>
               {plan.popular && (
-                <div className="absolute right-0 top-0 rounded-bl-xl bg-primary-500 px-4 py-1 text-xs font-bold text-white shadow-sm">
+                <div className="absolute right-0 top-0 rounded-bl-xl bg-primary px-4 py-1 text-xs font-bold text-primary-foreground shadow-sm">
                   MOST POPULAR
                 </div>
               )}
 
               <CardHeader>
-                <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-${plan.color}-100 text-${plan.color}-600 dark:bg-${plan.color}-900/30 dark:text-${plan.color}-400`}>
+                <div className={cn(
+                  "mb-4 flex h-12 w-12 items-center justify-center rounded-xl",
+                  plan.popular 
+                    ? "bg-accent/10 text-accent" 
+                    : "bg-primary/10 text-primary"
+                )}>
                   <plan.icon size={24} />
                 </div>
                 <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
@@ -146,8 +182,17 @@ export function PricingTable() {
                 <Button
                   className="w-full py-6 text-lg font-semibold"
                   variant={plan.popular ? 'default' : 'outline'}
+                  onClick={() => handleCheckout(plan.id)}
+                  disabled={loadingPlan !== null}
                 >
-                  {plan.id === 'enterprise' ? 'Contact Sales' : 'Start 7-Day Free Trial'}
+                  {loadingPlan === plan.id ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    plan.id === 'enterprise' ? 'Contact Sales' : 'Start 7-Day Free Trial'
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -158,21 +203,21 @@ export function PricingTable() {
       {/* Trust Badge / Features */}
       <div className="mt-20 grid grid-cols-1 gap-8 border-t border-border pt-16 md:grid-cols-3">
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Sparkles size={24} />
           </div>
           <h4 className="mb-2 font-semibold">Try Before You Buy</h4>
           <p className="text-sm text-muted-foreground">7 full days to explore all features risk-free.</p>
         </div>
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Zap size={24} />
           </div>
           <h4 className="mb-2 font-semibold">Instant Activation</h4>
           <p className="text-sm text-muted-foreground">Get started in seconds. No complex setup required.</p>
         </div>
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Shield size={24} />
           </div>
           <h4 className="mb-2 font-semibold">Cancel Anytime</h4>

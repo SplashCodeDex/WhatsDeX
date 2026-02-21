@@ -13,6 +13,7 @@ import {
   Edge,
   Node,
   ReactFlowProvider,
+  BackgroundVariant,
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
@@ -20,6 +21,7 @@ import { TriggerNode, ActionNode, LogicNode, AINode } from '@/features/flows/com
 import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2, Send } from 'lucide-react';
 import { api } from '@/lib/api/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -124,7 +126,7 @@ function FlowBuilder() {
     setTestLogs([`User: ${testInput}`]);
     
     // Find trigger node
-    const trigger = nodes.find(n => n.type === 'trigger' && n.data.keyword?.toLowerCase() === testInput.toLowerCase());
+    const trigger = nodes.find(n => n.type === 'trigger' && (n.data as any).keyword?.toLowerCase() === testInput.toLowerCase());
     
     if (!trigger) {
       setTestLogs(prev => [...prev, "System: No matching trigger found."]);
@@ -148,9 +150,9 @@ function FlowBuilder() {
     
     // Log action
     if (node.type === 'action') {
-      setTestLogs(prev => [...prev, `Bot: ${node.data.message || '(Empty Message)'}`]);
+      setTestLogs(prev => [...prev, `Bot: ${(node.data as any).message || '(Empty Message)'}`]);
     } else if (node.type === 'trigger') {
-      setTestLogs(prev => [...prev, `System: Trigger matched [${node.data.keyword}]`]);
+      setTestLogs(prev => [...prev, `System: Trigger matched [${(node.data as any).keyword}]`]);
     }
 
     // Wait for effect
@@ -288,7 +290,7 @@ function FlowBuilder() {
         >
           <Controls />
           <MiniMap zoomable pannable />
-          <Background variant="dots" gap={12} size={1} />
+          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         </ReactFlow>
       </div>
 
@@ -307,7 +309,7 @@ function FlowBuilder() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">Keyword Match</label>
                   <Input 
-                    value={selectedNode.data.keyword || ''} 
+                    value={(selectedNode.data as any).keyword || ''} 
                     onChange={(e) => updateNodeData(selectedNode.id, { keyword: e.target.value })}
                     placeholder="e.g. hello"
                   />
@@ -319,7 +321,7 @@ function FlowBuilder() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase text-muted-foreground">Select Template</label>
                     <Select 
-                      value={selectedNode.data.templateId || 'none'} 
+                      value={(selectedNode.data as any).templateId || 'none'} 
                       onValueChange={(val) => {
                         const tpl = templates?.find(t => t.id === val);
                         updateNodeData(selectedNode.id, { 
@@ -340,12 +342,12 @@ function FlowBuilder() {
                     </Select>
                   </div>
 
-                  {!selectedNode.data.templateId && (
+                  {!(selectedNode.data as any).templateId && (
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold uppercase text-muted-foreground">Raw Message</label>
                       <textarea 
                         className="w-full h-24 p-3 rounded-lg bg-muted/30 border border-border/20 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                        value={selectedNode.data.message || ''}
+                        value={(selectedNode.data as any).message || ''}
                         onChange={(e) => updateNodeData(selectedNode.id, { message: e.target.value })}
                         placeholder="Type your message..."
                       />
@@ -358,7 +360,7 @@ function FlowBuilder() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase text-muted-foreground">Condition</label>
                   <Select 
-                    value={selectedNode.data.condition || 'is_premium'} 
+                    value={(selectedNode.data as any).condition || 'is_premium'} 
                     onValueChange={(val) => updateNodeData(selectedNode.id, { condition: val })}
                   >
                     <SelectTrigger>

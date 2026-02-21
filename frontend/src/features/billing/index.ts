@@ -11,6 +11,12 @@
 export { useSubscription, billingKeys } from './hooks/useSubscription';
 export type { SubscriptionData } from './hooks/useSubscription';
 
-// Components will be added here
-// Server Actions
-// Types
+// Components
+export { BillingSettings } from './components/BillingSettings';
+export { PricingTable } from './components/PricingTable';
+export { InvoiceHistory } from './components/InvoiceHistory';
+export { PaymentMethods } from './components/PaymentMethods';
+export { UpgradeModal } from './components/UpgradeModal';
+
+// Schemas (Zod validation)
+export * from './schemas';

@@ -48,6 +48,9 @@ export const API_ENDPOINTS = {
         DELETE: (contactId: string) => `/api/contacts/${contactId}` as const,
         IMPORT: '/api/contacts/import',
         EXPORT: '/api/contacts/export',
+        CHECK_DUPLICATES: '/api/contacts/check-duplicates',
+        IMPORT_HISTORY: '/api/contacts/imports',
+        AUDIENCES: '/api/contacts/audiences',
     },
 
     // Analytics

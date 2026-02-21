@@ -1,25 +1,40 @@
 'use client';
 
-import React from 'react';
-import { Users, Info } from 'lucide-react';
-import { ContactsTable, ImportContactsDialog } from '@/features/contacts';
+import React, { useState } from 'react';
+import { Users, Info, Target } from 'lucide-react';
+import { ContactsTable, ImportContactsDialog, ImportHistoryPanel } from '@/features/contacts';
+import { AudienceManager } from '@/features/contacts/components/AudienceManager';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 export default function ContactsPage() {
+    const [showAudienceManager, setShowAudienceManager] = useState(false);
+
     return (
         <div className="flex flex-col h-full bg-transparent">
             {/* Header */}
             <div className="flex items-center justify-between p-8 border-b border-border/50 bg-background/20 backdrop-blur-md">
                 <div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
                         <Users className="w-8 h-8 text-primary" /> Contact Directory
                     </h1>
-                    <p className="text-zinc-400 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Manage your customer database and organize contacts for targeted campaigns.
                     </p>
                 </div>
 
-                <ImportContactsDialog />
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowAudienceManager(true)}
+                        className="gap-2"
+                    >
+                        <Target className="w-4 h-4" />
+                        Audiences
+                    </Button>
+                    <ImportHistoryPanel />
+                    <ImportContactsDialog />
+                </div>
             </div>
 
             <div className="flex-1 overflow-auto p-8">
@@ -36,6 +51,12 @@ export default function ContactsPage() {
                     <ContactsTable />
                 </div>
             </div>
+
+            {/* Audience Manager Dialog */}
+            <AudienceManager 
+                isOpen={showAudienceManager}
+                onClose={() => setShowAudienceManager(false)}
+            />
         </div>
     );
 }

@@ -1,14 +1,4 @@
 import { startGatewayServer } from 'openclaw';
-// @ts-ignore
-import { loadWorkspaceSkillEntries } from '../../../openclaw/src/agents/skills/workspace.js';
-// @ts-ignore
-import { resolveDefaultAgentId } from '../../../openclaw/src/agents/agent-scope.js';
-// @ts-ignore
-import { listAgentsForGateway } from '../../../openclaw/src/gateway/session-utils.js';
-// @ts-ignore
-import { loadConfig } from '../../../openclaw/src/config/config.js';
-// @ts-ignore
-import { getHealthCache } from '../../../openclaw/src/gateway/server/health-state.js';
 
 /**
  * OpenClawGateway is a singleton service that manages the lifecycle
@@ -30,6 +20,18 @@ export class OpenClawGateway {
       OpenClawGateway.instance = new OpenClawGateway();
     }
     return OpenClawGateway.instance;
+  }
+
+  /**
+   * Safe helper to import openclaw internal modules
+   */
+  private async safeImport(path: string): Promise<any> {
+    try {
+      return await import(path);
+    } catch (error: any) {
+      console.error(`Failed to import OpenClaw module [${path}]:`, error.message);
+      return null;
+    }
   }
 
   /**
@@ -69,15 +71,20 @@ export class OpenClawGateway {
    */
   public async getSkillReport(): Promise<any> {
     try {
-      const skills = await (loadWorkspaceSkillEntries as any)();
+      const workspace = await this.safeImport('../../../openclaw/src/agents/skills/workspace.js');
+      if (!workspace || typeof workspace.loadWorkspaceSkillEntries !== 'function') {
+        throw new Error('OpenClaw loadWorkspaceSkillEntries is not available');
+      }
+      
+      const skills = await workspace.loadWorkspaceSkillEntries();
       return {
         workspaceDir: '',
         managedSkillsDir: '',
         skills: skills || []
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load OpenClaw skills:', error);
-      return { skills: [] };
+      return { skills: [], error: error.message };
     }
   }
 
@@ -86,15 +93,32 @@ export class OpenClawGateway {
    */
   public async getAgents(): Promise<any> {
     try {
-      const cfg = await (loadConfig as any)();
-      const result = await (listAgentsForGateway as any)(cfg);
+      console.log('OpenClawGateway: Loading config and session utils...');
+      
+      const configMod = await this.safeImport('../../../openclaw/src/config/config.js');
+      const sessionUtils = await this.safeImport('../../../openclaw/src/gateway/session-utils.js');
+
+      if (!configMod || typeof configMod.loadConfig !== 'function') {
+        throw new Error('OpenClaw loadConfig is not available');
+      }
+
+      if (!sessionUtils || typeof sessionUtils.listAgentsForGateway !== 'function') {
+        throw new Error('OpenClaw listAgentsForGateway is not available');
+      }
+
+      const cfg = await configMod.loadConfig();
+      console.log('OpenClawGateway: Config loaded. Listing agents...');
+
+      const result = await sessionUtils.listAgentsForGateway(cfg);
+      console.log(`OpenClawGateway: Found ${result?.agents?.length || 0} agents.`);
+      
       return {
-        defaultId: result.defaultId,
-        agents: result.agents || []
+        defaultId: result?.defaultId,
+        agents: result?.agents || []
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load OpenClaw agents:', error);
-      return { agents: [] };
+      return { agents: [], error: error.message };
     }
   }
 
@@ -103,13 +127,18 @@ export class OpenClawGateway {
    */
   public async getHealth(): Promise<any> {
     try {
-      const health = await (getHealthCache as any)();
+      const healthState = await this.safeImport('../../../openclaw/src/gateway/server/health-state.js');
+      if (!healthState || typeof healthState.getHealthCache !== 'function') {
+        throw new Error('OpenClaw getHealthCache is not available');
+      }
+
+      const health = await healthState.getHealthCache();
       return {
         ...health,
         uptimeMs: Date.now() - this.startTime
       };
-    } catch (error) {
-      return { status: 'error', uptimeMs: 0 };
+    } catch (error: any) {
+      return { status: 'error', uptimeMs: 0, error: error.message };
     }
   }
 

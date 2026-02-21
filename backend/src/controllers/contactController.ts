@@ -14,7 +14,7 @@ export class ContactController {
         try {
             const tenantId = req.user?.tenantId;
             if (!tenantId) {
-                if (filePath) await fs.unlink(filePath).catch(() => {});
+                if (filePath) await fs.unlink(filePath).catch(() => { });
                 return res.status(401).json({ success: false, error: 'Unauthorized' });
             }
 
@@ -36,7 +36,7 @@ export class ContactController {
             res.status(500).json({ success: false, error: 'Internal server error' });
         } finally {
             if (filePath && existsSync(filePath)) {
-                await fs.unlink(filePath).catch(() => {});
+                await fs.unlink(filePath).catch(() => { });
             }
         }
     }
@@ -155,6 +155,78 @@ export class ContactController {
             res.json({ success: true, data: { message: 'Contact deleted' } });
         } catch (error: unknown) {
             logger.error('ContactController.deleteContact error', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    /**
+     * Check for duplicate contacts by phone number
+     */
+    static async checkDuplicates(req: Request, res: Response) {
+        try {
+            const tenantId = req.user?.tenantId;
+            if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+            const phones = req.body.phones;
+            if (!Array.isArray(phones)) {
+                return res.status(400).json({ success: false, error: 'Phones array is required' });
+            }
+
+            const service = ContactService.getInstance();
+            const result = await service.checkDuplicates(tenantId, phones);
+
+            if (!result.success) {
+                return res.status(500).json({ success: false, error: result.error.message });
+            }
+
+            res.json({ success: true, data: result.data });
+        } catch (error: unknown) {
+            logger.error('ContactController.checkDuplicates error', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    /**
+     * List import history
+     */
+    static async listImportHistory(req: Request, res: Response) {
+        try {
+            const tenantId = req.user?.tenantId;
+            if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+            const service = ContactService.getInstance();
+            const result = await service.listImportHistory(tenantId);
+
+            if (!result.success) {
+                return res.status(500).json({ success: false, error: result.error.message });
+            }
+
+            res.json({ success: true, data: result.data });
+        } catch (error: unknown) {
+            logger.error('ContactController.listImportHistory error', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    /**
+     * Undo a specific import
+     */
+    static async undoImport(req: Request, res: Response) {
+        try {
+            const tenantId = req.user?.tenantId;
+            const importId = req.params.id as string;
+            if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+            const service = ContactService.getInstance();
+            const result = await service.undoImport(tenantId, importId);
+
+            if (!result.success) {
+                return res.status(500).json({ success: false, error: result.error.message });
+            }
+
+            res.json({ success: true, data: { message: 'Import undone successfully' } });
+        } catch (error: unknown) {
+            logger.error('ContactController.undoImport error', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }

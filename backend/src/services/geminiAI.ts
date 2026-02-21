@@ -135,7 +135,8 @@ export class GeminiAI extends EventEmitter {
       }
 
       // Get bot-specific personality from configuration
-      const botDoc = await databaseService.bot.get(botId, tenantId);
+      const botResult = await this.context.multiTenantBotService.getBot(tenantId, botId);
+      const botDoc = botResult.success ? botResult.data as any : null;
       const personality = botDoc?.config?.aiPersonality || botDoc?.aiPersonality || 'a professional and helpful assistant';
       
       const systemPrompt = `You are a high-intelligence AI agent.
@@ -434,7 +435,8 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
     }
 
     // Fetch bot-specific personality from configuration
-    const botDoc = await databaseService.bot.get(botId, tenantId);
+    const botResult = await this.context.multiTenantBotService.getBot(tenantId, botId);
+    const botDoc = botResult.success ? botResult.data as any : null;
     const personality = botDoc?.config?.aiPersonality || botDoc?.aiPersonality || 'a professional and helpful assistant';
 
     const systemPrompt = `You are a high-intelligence AI agent.

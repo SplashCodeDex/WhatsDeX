@@ -58,10 +58,13 @@ router.get('/skills/report', async (req: Request, res: Response) => {
  */
 router.get('/agents', async (req: Request, res: Response) => {
   try {
+    logger.info('GET /omnichannel/agents request received');
     const agents = await gateway.getAgents();
+    logger.info(`GET /omnichannel/agents success: ${Array.isArray(agents.agents) ? agents.agents.length : 0} agents found`);
     res.json({ success: true, data: agents });
-  } catch (error) {
-    res.status(500).json({ success: false, error: 'Failed to fetch agents' });
+  } catch (error: any) {
+    logger.error('GET /omnichannel/agents error', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch agents', details: error.message });
   }
 });
 

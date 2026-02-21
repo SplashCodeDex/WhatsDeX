@@ -37,11 +37,11 @@ Goal: Integrate Gemini into the visual flows.
 - [x] Task: State Preservation (Multi-turn Flows). 8536346
     - [x] Sub-task: Use Redis/Firestore to track the user's current position in a flow across multiple messages.
 
-## Phase 4: UX Polish & Enterprise Features [checkpoint: ]
+## Phase 4: UX Polish & Enterprise Features [checkpoint: e6d1658]
 Goal: Finalize the builder for production use.
 
 - [x] Task: Flow Debugger/Simulator. d799acd
     - [x] Sub-task: Add a "Test Flow" modal to simulate user input and see the path taken.
 - [x] Task: Template Integration. d799acd
     - [x] Sub-task: Allow nodes to use existing message templates.
-- [~] Task: Conductor - User Manual Verification 'FlowBuilder 2.0' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'FlowBuilder 2.0' (Protocol in workflow.md)

@@ -99,6 +99,7 @@ See [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE
 
 **Mandate**: All logic must be verifiable without starting the full bot.
 
+- **Coverage Minimum**: The project targets **80%+ test coverage**. Every new utility, service, or business-logic module MUST ship with co-located tests that meet or exceed this threshold. Run `npm run test:coverage` to verify.
 - **Co-location**: Unit tests (`*.test.ts`) MUST reside next to the source file they test. `__tests__/` is reserved for integration/E2E suites only.
 - **The "Confidence Gate"**: Type-checking (`npm run typecheck`) and unit tests (`npm run test:run`) MUST pass before code is considered "commit-ready".
 - **Mocking Policy**:

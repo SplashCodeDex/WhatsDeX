@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { billingApi } from '@/lib/api/billing';
-import { SubscriptionInfo } from '@/types/billing';
+import { SubscriptionInfoSchema, type SubscriptionInfo } from '../schemas';
 import { toast } from 'sonner';
 
 export function BillingSettings() {
@@ -18,9 +18,16 @@ export function BillingSettings() {
     async function fetchSubscription() {
       try {
         const data = await billingApi.getSubscription();
-        setSubscription(data);
+        // Zod validation: Zero-Trust Data Layer
+        const validatedData = SubscriptionInfoSchema.parse(data);
+        setSubscription(validatedData);
       } catch (error) {
-        toast.error('Failed to load subscription info');
+        console.error('Error fetching subscription:', error);
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error('Failed to load subscription info');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -102,13 +109,21 @@ export function BillingSettings() {
             Update your payment method, view invoices, or change your plan.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex gap-3">
           <Button
             variant="outline"
-            onClick={() => window.open(process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL || '#', '_blank')}
+            onClick={() => {
+              const portalUrl = process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL;
+              if (portalUrl) {
+                window.open(portalUrl, '_blank');
+              } else {
+                // Fallback: Use tabs in the billing page
+                toast.info('Use the tabs above to manage your billing');
+              }
+            }}
           >
             <CreditCard className="mr-2 h-4 w-4" />
-            Open Customer Portal
+            Customer Portal
           </Button>
         </CardContent>
       </Card>

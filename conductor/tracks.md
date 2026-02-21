@@ -22,8 +22,3 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ## [x] Track: Auth Flow Robustness & State Preservation
 *Link: [./conductor/tracks/auth_robustness_20260219/](./conductor/tracks/auth_robustness_20260219/)*    
-
----
-
-## [x] Track: FlowBuilder 2.0 (The Visual Revolution)
-*Link: [./conductor/tracks/flowbuilder_20260220/](./conductor/tracks/flowbuilder_20260220/)*

@@ -2,3 +2,4 @@ packages:
   - frontend
   - backend
   - openclaw
+  - shared

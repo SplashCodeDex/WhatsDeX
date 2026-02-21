@@ -43,18 +43,18 @@ export function Header() {
                     </Button>
                 </LiquidGlassWrapper>
 
-                <LiquidGlassWrapper className="liquidGlass-control">
+                <LiquidGlassWrapper className="liquidGlass-pill">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="relative flex items-center gap-3 p-1 pl-4 pr-1.5 h-10 rounded-xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none group"
+                                className="relative flex items-center gap-3 p-1 pl-4 pr-1.5 h-10 rounded-2xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none group"
                             >
                                 <div className="hidden flex-col items-end md:flex">
                                     <span className="text-xs font-semibold text-foreground leading-none">{user?.name || 'User'}</span>
                                     <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70 group-hover:opacity-100 transition-opacity">{user?.role || 'Pro Plan'}</span>
                                 </div>
-                                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-transform group-hover:scale-105">
+                                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-transform group-hover:scale-105">
                                     <User className="h-3.5 w-3.5" />
                                 </div>
                             </Button>
