@@ -233,7 +233,7 @@ class MediaProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / images.length) * 100);
+        await job.updateProgress(((i + 1) / images.length) * 100);
       }
 
       const successful = results.filter(r => r.success).length;
