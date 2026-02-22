@@ -63,25 +63,46 @@ export class FirebaseService {
     let path: string;
     let schemaKey: CollectionKey;
 
+    // Check if collection is already a full path or a template path
+    const isFullPath = collection.startsWith('tenants/') && !collection.includes('{tenantId}');
+    const isTemplatePath = collection.includes('{tenantId}');
+
     if (tenantId) {
-      // Special handling for nested subcollections like bots/{botId}/auth
-      if (collection.includes('/')) {
-        const parts = collection.split('/');
-        // Pattern: bots/{botId}/auth
-        if (parts[0] === 'bots' && parts[2] === 'auth') {
-          path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
-          schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+      if (isFullPath) {
+        // It's already a full path, use it as is
+        path = collection;
+        // Derive schema key by replacing actual tenantId with placeholder
+        schemaKey = collection.replace(`tenants/${tenantId}`, 'tenants/{tenantId}') as CollectionKey;
+      } else if (isTemplatePath) {
+        // It's a template path, resolve it
+        path = collection.replace('{tenantId}', tenantId);
+        schemaKey = collection as CollectionKey;
+      } else {
+        // It's a logical name (e.g., 'contacts') or a sub-path (e.g., 'bots/bot1/auth')
+        if (collection.includes('/')) {
+          const parts = collection.split('/');
+          // Special handling for nested subcollections like bots/{botId}/auth
+          if (parts[0] === 'bots' && parts[2] === 'auth') {
+            path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
+            schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+          } else {
+            path = `tenants/${tenantId}/${collection}`;
+            schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
+          }
         } else {
           path = `tenants/${tenantId}/${collection}`;
           schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
         }
-      } else {
-        path = `tenants/${tenantId}/${collection}`;
-        schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
       }
     } else {
+      // No tenantId provided, assume collection is either a root collection or a fully resolved path
       path = collection;
-      schemaKey = collection as CollectionKey;
+      if (isFullPath) {
+        // Try to derive schema key from full path
+        schemaKey = collection.replace(/tenants\/[^/]+/, 'tenants/{tenantId}') as CollectionKey;
+      } else {
+        schemaKey = collection as CollectionKey;
+      }
     }
 
     const schema = SchemaMap[schemaKey];

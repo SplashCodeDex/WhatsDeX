@@ -13,6 +13,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 interface RequestConfig<TBody = unknown> {
     method?: HttpMethod;
     body?: TBody | undefined;
+    params?: Record<string, string | number | boolean | undefined>;
     headers?: Record<string, string>;
     cache?: RequestCache;
     next?: NextFetchRequestConfig;
@@ -109,19 +110,25 @@ async function apiClient<TData, TBody = unknown>(
     const {
         method = 'GET',
         body,
+        params,
         headers = {},
         cache,
         next,
         signal,
     } = config;
 
-    const url = createUrl(endpoint);
+    const url = createUrl(endpoint, params);
     const authToken = await getAuthHeader();
 
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+
     const requestHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
         ...headers,
     };
+
+    if (!isFormData) {
+        requestHeaders['Content-Type'] = 'application/json';
+    }
 
     // Only attach Bearer token on Server Side where cookies aren't automatic
     if (authToken) {
@@ -135,7 +142,7 @@ async function apiClient<TData, TBody = unknown>(
     };
 
     if (body !== undefined) {
-        fetchOptions.body = JSON.stringify(body);
+        fetchOptions.body = isFormData ? (body as unknown as FormData) : JSON.stringify(body);
     }
 
     if (cache !== undefined) {
@@ -202,12 +209,7 @@ async function apiClient<TData, TBody = unknown>(
 
 export const api = {
     get<TData>(endpoint: string, params?: Record<string, any>, config?: RequestConfig) {
-        const url = params ? createUrl(endpoint, params).replace(new URL(createUrl(endpoint)).origin, '') : endpoint; // Hacky url fix? No, simpler to just pass endpoint
-        // Actually createUrl builds full URL, but apiClient calls createUrl again.
-        // Let's refactor createUrl usage to be efficient.
-        // If we pass full URL to apiClient, it might duplicate base.
-        // Let's keep it simple: api.get passes filtered params to client
-        return apiClient<TData>(endpoint, { ...config, method: 'GET' });
+        return apiClient<TData>(endpoint, { ...config, method: 'GET', params });
     },
     post<TData, TBody = unknown>(endpoint: string, body?: TBody, config?: RequestConfig<TBody>) {
         return apiClient<TData, TBody>(endpoint, { ...config, method: 'POST', body });

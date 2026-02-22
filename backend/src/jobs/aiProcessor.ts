@@ -1,4 +1,4 @@
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import GeminiService from '../services/gemini.js';
 import logger from '../utils/logger.js';
 
@@ -58,12 +58,11 @@ class AIProcessor {
 
   /**
    * Process AI content generation job
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processContentGeneration(jobData: ContentGenerationData, job: Job): Promise<any> {
-    const { prompt, type, userId, context } = jobData;
+  async processContentGeneration(job: Job<ContentGenerationData>): Promise<any> {
+    const { prompt, type, userId, context } = job.data;
 
     try {
       logger.info('Processing AI content generation', {
@@ -134,12 +133,11 @@ class AIProcessor {
 
   /**
    * Process batch AI analysis job
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processBatchAnalysis(jobData: BatchAnalysisData, job: Job): Promise<any> {
-    const { items, analysisType, userId } = jobData;
+  async processBatchAnalysis(job: Job<BatchAnalysisData>): Promise<any> {
+    const { items, analysisType, userId } = job.data;
 
     try {
       logger.info('Processing batch AI analysis', {
@@ -202,7 +200,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / items.length) * 100);
+        await job.updateProgress(((i + 1) / items.length) * 100);
       }
 
       return {
@@ -227,12 +225,11 @@ class AIProcessor {
 
   /**
    * Process AI content moderation job
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processContentModeration(jobData: ContentModerationData, job: Job): Promise<any> {
-    const { content, userId, context } = jobData;
+  async processContentModeration(job: Job<ContentModerationData>): Promise<any> {
+    const { content, userId, context } = job.data;
 
     try {
       logger.info('Processing AI content moderation', {
@@ -277,12 +274,11 @@ class AIProcessor {
 
   /**
    * Process AI model fine-tuning data preparation
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processFineTuningData(jobData: FineTuningData, job: Job): Promise<any> {
-    const { conversations, userId, modelType } = jobData;
+  async processFineTuningData(job: Job<FineTuningData>): Promise<any> {
+    const { conversations, userId, modelType } = job.data;
 
     try {
       logger.info('Processing AI fine-tuning data', {
@@ -321,7 +317,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / conversations.length) * 100);
+        await job.updateProgress(((i + 1) / conversations.length) * 100);
       }
 
       return {
@@ -388,12 +384,11 @@ Generate a JSON training example with the following format:
 
   /**
    * Process AI performance analytics
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processPerformanceAnalytics(jobData: PerformanceAnalyticsData, job: Job): Promise<any> {
-    const { timeRange, userId, metrics } = jobData;
+  async processPerformanceAnalytics(job: Job<PerformanceAnalyticsData>): Promise<any> {
+    const { timeRange, userId, metrics } = job.data;
 
     try {
       logger.info('Processing AI performance analytics', {

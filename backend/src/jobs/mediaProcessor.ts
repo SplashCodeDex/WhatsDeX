@@ -2,7 +2,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { promises as fs } from 'fs';
 import logger from '../utils/logger.js';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 
 /**
  * Media Processing Job Handlers
@@ -92,12 +92,11 @@ class MediaProcessor {
 
   /**
    * Process image optimization job
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processImageOptimization(jobData: ImageOptimizationData, job: Job): Promise<any> {
-    const { imagePath, options, userId } = jobData;
+  async processImageOptimization(job: Job<ImageOptimizationData>): Promise<any> {
+    const { imagePath, options, userId } = job.data;
 
     try {
       logger.info('Processing image optimization', {
@@ -182,12 +181,11 @@ class MediaProcessor {
 
   /**
    * Process batch image processing job
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processBatchImageProcessing(jobData: BatchImageProcessingData, job: Job): Promise<any> {
-    const { images, options, userId } = jobData;
+  async processBatchImageProcessing(job: Job<BatchImageProcessingData>): Promise<any> {
+    const { images, options, userId } = job.data;
 
     try {
       logger.info('Processing batch image processing', {
@@ -205,11 +203,14 @@ class MediaProcessor {
         try {
           const result = await this.processImageOptimization(
             {
-              imagePath: imageData.path,
-              options: { ...options, ...imageData.options },
-              userId,
-            },
-            { ...job, id: `${job.id}_${i}` } as any
+              ...job,
+              id: `${job.id}_${i}`,
+              data: {
+                imagePath: imageData.path,
+                options: { ...options, ...imageData.options },
+                userId,
+              }
+            } as any
           );
 
           results.push({
@@ -232,7 +233,7 @@ class MediaProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / images.length) * 100);
+        await job.updateProgress(((i + 1) / images.length) * 100);
       }
 
       const successful = results.filter(r => r.success).length;
@@ -258,12 +259,11 @@ class MediaProcessor {
 
   /**
    * Process video thumbnail generation
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processVideoThumbnail(jobData: VideoThumbnailData, job: Job): Promise<any> {
-    const { videoPath, timestamp, size, userId } = jobData;
+  async processVideoThumbnail(job: Job<VideoThumbnailData>): Promise<any> {
+    const { videoPath, timestamp, size, userId } = job.data;
 
     try {
       logger.info('Processing video thumbnail generation', {
@@ -341,12 +341,11 @@ class MediaProcessor {
 
   /**
    * Process file format conversion
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processFileConversion(jobData: FileConversionData, job: Job): Promise<any> {
-    const { inputPath, outputFormat, options, userId } = jobData;
+  async processFileConversion(job: Job<FileConversionData>): Promise<any> {
+    const { inputPath, outputFormat, options, userId } = job.data;
 
     try {
       logger.info('Processing file conversion', {
@@ -409,16 +408,6 @@ class MediaProcessor {
         outputFormat,
         inputSize: inputStats.size,
         outputSize: outputStats.size,
-      };
-
-      return {
-        success: true,
-        inputPath,
-        outputPath,
-        inputFormat: inputExt,
-        outputFormat,
-        inputSize: inputStats.size,
-        outputSize: outputStats.size,
         processingTime,
       };
     } catch (error: any) {
@@ -436,12 +425,11 @@ class MediaProcessor {
 
   /**
    * Process media cleanup job
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processMediaCleanup(jobData: MediaCleanupData, job: Job): Promise<any> {
-    const { olderThan, patterns, userId } = jobData;
+  async processMediaCleanup(job: Job<MediaCleanupData>): Promise<any> {
+    const { olderThan, patterns, userId } = job.data;
 
     try {
       logger.info('Processing media cleanup', {
@@ -526,12 +514,11 @@ class MediaProcessor {
 
   /**
    * Process media analytics job
-   * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
    * @returns {Promise<Object>} Processing result
    */
-  async processMediaAnalytics(jobData: MediaAnalyticsData, job: Job): Promise<any> {
-    const { timeRange, userId } = jobData;
+  async processMediaAnalytics(job: Job<MediaAnalyticsData>): Promise<any> {
+    const { timeRange, userId } = job.data;
 
     try {
       logger.info('Processing media analytics', {
