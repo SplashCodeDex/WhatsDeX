@@ -25,6 +25,8 @@ import AnalyticsService from '../services/analytics.js';
 import { socketService } from '../services/socketService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
+import { jobQueueService } from '../services/jobQueue.js';
+import JobRegistry from '../jobs/index.js';
 
 export class MultiTenantApp {
   private app: express.Application;
@@ -32,6 +34,7 @@ export class MultiTenantApp {
   private port: number;
   private isInitialized: boolean;
   private config: ConfigService;
+  private jobRegistry: JobRegistry;
 
   constructor() {
     this.config = ConfigService.getInstance();
@@ -39,6 +42,7 @@ export class MultiTenantApp {
     this.httpServer = createServer(this.app);
     this.port = this.config.get('PORT');
     this.isInitialized = false;
+    this.jobRegistry = new JobRegistry();
   }
 
   async initialize(): Promise<void> {
@@ -211,6 +215,15 @@ export class MultiTenantApp {
 
   private async initializeServices(): Promise<void> {
     try {
+      // 1. Initialize Job Queues
+      await jobQueueService.initialize();
+      logger.info('Job Queue Service initialized');
+
+      // 2. Initialize Job Processors (Workers)
+      await this.jobRegistry.initialize(jobQueueService);
+      logger.info('Job Registry initialized');
+
+      // 3. Initialize Stripe
       const stripeKey = this.config.get('STRIPE_SECRET_KEY');
       const stripeWebhookSecret = this.config.get('STRIPE_WEBHOOK_SECRET');
 
@@ -260,6 +273,8 @@ export class MultiTenantApp {
   async shutdown(): Promise<void> {
     logger.info('Shutting down multi-tenant server...');
     try {
+      await this.jobRegistry.shutdown();
+      await jobQueueService.closeAllQueues();
       await multiTenantBotService.stopAllBots();
       if (this.httpServer) {
         this.httpServer.close(() => {

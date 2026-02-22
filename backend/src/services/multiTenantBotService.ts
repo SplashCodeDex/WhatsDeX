@@ -585,8 +585,8 @@ export class MultiTenantBotService {
         return { success: false, error: new Error('Bot is not online') };
       }
 
-      // Basic JID formatting
-      const jid = payload.to.includes('@s.whatsapp.net') ? payload.to : `${payload.to}@s.whatsapp.net`;
+      // Basic JID formatting - check for any '@' to support both individual (@s.whatsapp.net) and group (@g.us) JIDs
+      const jid = payload.to.includes('@') ? payload.to : `${payload.to}@s.whatsapp.net`;
 
       let result;
       if (payload.type === 'text') {
