@@ -1,6 +1,6 @@
 # Implementation Plan: Google Login/Signup Functional Implementation
 
-## Phase 1: Environment & Backend Foundation
+## Phase 1: Environment & Backend Foundation [checkpoint: 809f68f6]
 *Goal: Ensure Firebase Admin is correctly configured and initialized for token verification.*
 
 - [x] Task: Verify Firebase Admin Configuration (check service account and env vars)
