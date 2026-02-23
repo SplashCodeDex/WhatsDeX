@@ -1,0 +1,1022 @@
+ spinMessageController    Uses Gemini AI to
+                           rephrase/spin a
+                           message (content
+                           field in body)
+
+
+Problems / TODOs:
+
+ • ⚠️ No updateTemplateController or
+   deleteTemplateController — templates cannot be
+   edited or removed
+ • ⚠️ spinMessageController — result.error is
+   handled with instanceof Error check but then
+   converts non-Error to String(result.error) —
+   this is inconsistent with how other controllers
+   handle errors
+ • ⚠️ No validation schema for createTemplate —
+   req.body is passed raw to the service
+ • ⚠️ TemplateService.getInstance() is called
+   inside each request handler (instead of once at
+   module level) — minor inefficiency but not a
+   bug
+
+──────────────────────────────────────────────────
+         6. src/routes/analyticsRoutes.ts
+
+Purpose: Defines 3 analytics endpoints, all
+protected by authenticateToken.
+
+Routes:
+
+
+  Route            Handler
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  GET /dashboard   AnalyticsController.getDashb…
+  GET /usage       AnalyticsController.getUsage…
+  GET /messages    AnalyticsController.getMessa…
+
+
+Problems / TODOs:
+
+ • ⚠️ authenticateToken is applied per-route
+   instead of at the router level — redundant but
+   harmless (the parent multiTenantApp.ts already
+   wraps /api/analytics with authenticateToken,
+   making these middleware calls double-applied)
+ • No date range filtering params are defined at
+   the route level
+ • No plan-level gating (e.g., advanced analytics
+   might be a premium feature)
+
+──────────────────────────────────────────────────
+        7. src/routes/omnichannelRoutes.ts
+
+Purpose: A comprehensive routing file for the
+omnichannel gateway, covering status/health,
+skills, agents, cron jobs, usage/cost analytics,
+sessions, nodes/devices, and log streaming.
+
+Route Groups:
+
+
+  Group             Routes
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Status/Health     GET /status, GET
+                    /gateway/health
+  Skills            GET /skills/report
+  Agents            GET /agents
+  Cron Jobs         Full CRUD: list, create,
+                    toggle, run, delete, get
+                    runs
+  Usage Analytics   Totals, daily, sessions,
+                    session logs
+  Sessions          List, delete, patch
+  Nodes & Devices   List nodes,
+                    list/approve/reject/revoke
+                    devices
+  Logs              GET /logs, GET /logs/stream
+
+
+Problems / TODOs:
+
+ • 🔐 CRITICAL SECURITY GAP: GET /status, GET
+   /gateway/health, and GET /skills/report use
+   anonymous route handlers with NO authentication
+   middleware — these endpoints are publicly
+   accessible. The parent app mounts this router
+   with authenticateToken, so they ARE protected
+   at the mount level, but there is an
+   inconsistency: some routes use inline handlers
+   while others use OmnichannelController.* —
+   making it unclear which are truly guarded
+ • ⚠️ uptimeMs: Date.now() in /status is wrong — it
+   returns the current Unix timestamp in
+   milliseconds, NOT uptime. Should be
+   process.uptime() * 1000 or Date.now() -
+   startTime
+ • ⚠️ GET /logs/stream — no visible rate limiting
+   or connection cap for SSE/streaming endpoint
+ • No authentication at the individual route level
+   (relies entirely on parent mount)
+
+──────────────────────────────────────────────────
+       8. src/middleware/authMiddleware.ts
+
+Purpose: JWT authentication and role-based
+authorization middleware. Reads tokens from
+Authorization: Bearer <token> header or token
+HttpOnly cookie.
+
+Exported Functions:
+
+
+  Function            Description
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  authenticateToken   Verifies custom JWT,
+                      attaches decoded
+                      UserPayload to req.user
+  authorizeRole       Factory — returns
+                      middleware that checks
+                      req.user.role against an
+                      allowed roles array
+
+
+Global Type Augmentation: Extends Express.Request
+with user?: UserPayload (fields: userId, email,
+tenantId, role, iat, exp)
+
+Patterns & Quality:
+
+ • Dual source support (header + cookie) with
+   source tracking for security logging
+ • TokenExpiredError gets a specific 401 response;
+   other JWT errors get 403
+ • Security events are logged via
+   logger.security()
+
+Problems / TODOs:
+
+ • ⚠️ No token blacklisting or revocation mechanism
+   — a stolen token is valid until expiry (7 days)
+ • ⚠️ No refresh token logic here — works in tandem
+   with the missing refresh endpoint in
+   authController.ts
+ • ⚠️ authorizeRole does not log the allowed roles
+   it accepted, only what was blocked — harder to
+   audit successful privilege escalation
+ • The UserPayload interface is defined locally
+   here AND redefined as AuthUserPayload in
+   authController.ts — duplication risk if fields
+   diverge
+
+──────────────────────────────────────────────────
+       9. src/middleware/planMiddleware.ts
+
+Purpose: Enforces plan-based feature gating at the
+middleware level — checks bot limits and premium
+feature access before requests reach controllers.
+
+Exported Functions:
+
+
+  Function                Description
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  checkBotLimit           Calls
+                          multiTenantService.ca…
+                          — blocks with 403 if
+                          limit reached
+  checkFeatureAccess(f…   Factory — fetches
+                          tenant, calls
+                          hasFeatureAccess(tena…
+                          feature), blocks with
+                          403 + UPGRADE_REQUIRED
+                          code if not permitted
+
+
+Patterns & Quality:
+
+ • Clean factory pattern for checkFeatureAccess
+ • Uses Feature type from featureGating.ts utility
+   — well-typed
+ • Good structured error codes (LIMIT_REACHED,
+   UPGRADE_REQUIRED)
+
+Problems / TODOs:
+
+ • ⚠️ Uses @/ path aliases (@/services/...,
+   @/utils/...) while other files use relative
+   imports (../services/...) — inconsistency that
+   could cause build issues depending on
+   tsconfig.json path alias setup
+ • ⚠️ checkBotLimit throws result.error directly
+   (throw result.error) — if result.error is
+   undefined, this throws undefined, which would
+   be caught by the catch block but produce a
+   misleading log
+ • ⚠️ No caching — checkFeatureAccess does a full
+   Firestore getTenant read on every single
+   request that uses it; high-traffic routes could
+   generate significant Firestore reads
+ • No checkMessageLimit or checkCampaignLimit
+   equivalents — only bots and features are gated
+
+──────────────────────────────────────────────────
+         10. src/server/multiTenantApp.ts
+
+Purpose: The core application server bootstrap
+class. Sets up Express middleware, mounts all
+route groups, initializes services (Analytics,
+WebSockets, Stripe, Bots), and handles graceful
+shutdown.
+
+Exported Class: MultiTenantApp
+
+
+  Method                  Role
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  constructor             Sets up Express app,
+                          HTTP server, reads
+                          port from config
+  initialize()            Orchestrates full
+                          startup: middleware →
+                          routes → Analytics →
+                          WebSocket → services →
+                          bots
+  setupMiddleware()       Helmet, CORS,
+                          compression, body
+                          parsing, cookie
+                          parser, rate limiting,
+                          request logging
+  setupRoutes()           Mounts all 15+ route
+                          groups with their
+                          authentication
+                          wrappers
+  initializeServices()    Initializes Stripe if
+                          key is present
+  startActiveTenantBot…   Calls
+                          multiTenantBotService…
+  start()                 Starts HTTP server,
+                          registers
+                          SIGTERM/SIGINT
+                          handlers
+  shutdown()              Gracefully stops all
+                          bots, closes HTTP
+                          server, exits
+
+
+Route Mounting Overview:
+
+```
+/api/health          → public
+/api/internal        → authenticateToken +
+multiTenantRoutes
+/api/auth            → public (authRoutes)
+/api/templates       → templateRoutes (no auth at
+mount!)
+/api/analytics       → authenticateToken +
+analyticsRoutes
+/api/contacts        → authenticateToken
+/api/messages        → authenticateToken
+/api/campaigns       → authenticateToken
+/api/webhooks        → authenticateToken
+/api/telegram        → public
+(telegramWebhookRoutes)
+/api/omnichannel     → authenticateToken +
+omnichannelRoutes
+/api/flows           → authenticateToken
+/api/skills          → authenticateToken
+/api/tenant          → authenticateToken
+/api/billing/webhook → public (Stripe webhook, raw
+body needed)
+/api/billing         → authenticateToken
+```
+
+Problems / TODOs:
+
+ • 🔐 /api/templates is mounted WITHOUT
+   authenticateToken — templates endpoint is
+   publicly accessible. Every other non-auth,
+   non-webhook route requires auth. This is likely
+   a bug
+ • ⚠️ Analytics service runs on port + 1 — this
+   opens a second port that may not be firewalled
+   or documented in deployment configs
+ • ⚠️ Double authenticateToken on analytics routes:
+   applied at mount (/api/analytics) AND per-route
+   in analyticsRoutes.ts
+ • ⚠️ setupRoutes registers errorHandler BEFORE
+   notFoundHandler — the order is: error handler
+   first, then 404. This is backwards:
+   notFoundHandler should come before errorHandler
+   so unmatched routes fall through to 404 before
+   the error handler catches them. Currently,
+   notFoundHandler registered after errorHandler
+   will never be reached for route-not-found
+   scenarios (Express error handlers are (err,
+   req, res, next) — 4 args — so normal unmatched
+   routes won't hit it, but it's still
+   architecturally wrong and confusing)
+ • ⚠️ request logging middleware fires twice — once
+   before and once inside setupMiddleware (two
+   app.use loggers)
+ • Graceful shutdown does not stop the
+   AnalyticsService WebSocket server or
+   socketService
+ • No UNCAUGHT_EXCEPTION / UNHANDLED_REJECTION
+   handlers at process level
+
+──────────────────────────────────────────────────
+
+         🔥 Cross-Cutting Issues Summary
+
+
+  Priority      Issue            Files Affected
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🔴 Critical   /api/templates   multiTenantApp…
+                mounted with
+                no auth
+  🔴 Critical   deletePayment…   billingControl…
+                has no tenant
+                ownership
+                check
+  🟠 High       uptimeMs:        omnichannelRou…
+                Date.now() is
+                incorrect —
+                returns epoch
+                not uptime
+  🟠 High       Double           multiTenantApp…
+                authenticateT…   +
+                on analytics     analyticsRoute…
+                routes
+  🟠 High       @/ vs ../ path   planMiddleware…
+                alias            vs rest
+                inconsistency
+  🟠 High       No token         authController…
+                refresh/revoc…   +
+                system           authMiddleware…
+  🟡 Medium     No               campaignContro…
+                updateCampaign
+                or
+                getCampaignBy…
+  🟡 Medium     No               templateContro…
+                updateTemplate
+                or
+                deleteTemplate
+  🟡 Medium     Message          messageControl…
+                listing lacks
+                pagination and
+                filtering
+  🟡 Medium     Firestore        planMiddleware…
+                reads on every
+                feature-gated
+                request (no
+                cache)
+  🟡 Medium     UserPayload      authMiddleware…
+                defined in two   +
+                places with      authController…
+                different
+                names
+  🟡 Medium     errorHandler /   multiTenantApp…
+                notFoundHandl…
+                registered in
+                wrong order
+  🟡 Medium     getMe            authController…
+                generates a
+                new Firebase
+                custom token
+                on every call
+  🔵 Low        No email         authController…
+                verification
+                enforcement on
+                login
+  🔵 Low        TemplateServi…   templateContro…
+                called
+                per-request
+  🔵 Low        Shutdown         multiTenantApp…
+                doesn't stop
+                AnalyticsServ…
+                or
+                SocketService
+
+
+──────────────────────────────────────────────────
+What would you like to do next? Here are the most
+logical options:
+
+ 1 Fix the critical security issues — unprotected
+   /api/templates and missing ownership check in
+   deletePaymentMethod
+ 2 Complete missing CRUD operations — add
+   updateCampaign, getCampaignById,
+   updateTemplate, deleteTemplate
+ 3 Implement token refresh — add a
+   /api/auth/refresh endpoint and revocation logic
+ 4 Fix the notFoundHandler/errorHandler ordering
+   and the double auth middleware
+ 5 Add Firestore caching to planMiddleware to
+   reduce read costs at scale
+────────────────────────────────────────────────────
+
+─── Subagent: General Purpose (Explore Config & Typ─
+Here is the comprehensive, deep-dive analysis of
+every file explored:
+
+──────────────────────────────────────────────────
+
+             📁 File-by-File Analysis
+
+──────────────────────────────────────────────────
+             1. src/config/config.ts
+
+Purpose: A thin facade/bridge that assembles and
+re-exports the final application configuration
+object by pulling from ConfigService (a different
+config provider than ConfigManager).
+
+Exported: A default object with keys: bot, msg,
+sticker, api, ai, redis, rateLimits, system,
+connection.
+
+Notable Features:
+
+ • Formatter utility for WhatsApp markdown-style
+   text (bold, italic, monospace, quote)
+ • Sticker metadata hardcoded: 'WhatsDeX Sticker
+   Pack' / 'CodeDeX' — same values appear in
+   tenantConfig.ts and BotConfigSchema, creating
+   triplicated defaults
+ • Rate limit config pulled per-granularity:
+   global, user, command, AI, download, premium
+
+Problems / TODOs:
+
+ • ⚠️ validateEnvironment() function is completely
+   empty — validation is delegated entirely to
+   ConfigService, but the function body stub was
+   left behind (dead code)
+ • ⚠️ Two separate config systems exist: this file
+   uses configService (from ConfigService.ts),
+   while redis.ts and queues.ts use configManager
+   (from ConfigManager.ts) — this is an
+   architectural inconsistency. One should be the
+   single source of truth
+ • ⚠️ Sticker packname and author are hardcoded
+   here instead of coming from tenant config
+
+──────────────────────────────────────────────────
+          2. src/config/ConfigManager.ts
+
+Purpose: A full-featured, singleton environment
+configuration manager that loads, validates,
+merges, and exports all runtime infrastructure
+config from environment variables and optional
+environment-specific JSON files.
+
+Exported: Class ConfigManager, singleton instance
+configManager (default export), and Config
+interface.
+
+Key Features:
+
+ • Strongly typed Config interface covering:
+   system, owner, server, database, redis, auth,
+   rateLimit, bot, ai, payment, monitoring,
+   features, memory
+ • Deep merge of base config with
+   config/{environment}.json overrides
+   (loadEnvironmentConfig)
+ • Typed env helpers: getEnvString, getEnvNumber,
+   getEnvBoolean, getEnvArray
+ • validateConfiguration(): enforces JWT_SECRET
+   (non-test), REDIS_URL (production), warns on
+   recommended vars
+ • Auto-constructs REDIS_URL from host:port and
+   exports back to process.env
+ • getSafeConfig(): strips secrets (JWT, API keys,
+   Stripe) for safe client-facing exposure
+ • Dot-path get(path) and set(path, value) for
+   dynamic nested access
+
+Problems / TODOs:
+
+ • ⚠️ Parallel config system conflict:
+   ConfigManager and ConfigService both exist and
+   serve similar roles. redis.ts and queues.ts use
+   ConfigManager, while config.ts uses
+   ConfigService. This creates split configuration
+   authority — a single service should own this
+ • ⚠️ system.timeZone is hardcoded to
+   'Asia/Jakarta' — this should be tenant-driven
+   or pulled from env
+ • ⚠️ getEnvNumber uses parseInt — floats like
+   GOOGLE_GEMINI_TEMPERATURE: 0.7 will be
+   incorrectly truncated to 0; a parseFloat should
+   be used for that specific field
+ • ⚠️ database section exists in the config (with
+   maxConnections, ssl, etc.) but no database
+   driver (Postgres, MySQL) is configured — only
+   Firebase/Firestore is used; this section
+   appears to be dead/aspirational config
+ • ⚠️ bot.sessionPath and bot.authAdapter.authDir
+   reference filesystem-based session paths, but
+   ARCHITECTURE.md explicitly states: "We do NOT
+   use file-based auth" — contradiction
+
+──────────────────────────────────────────────────
+            3. src/config/constants.ts
+
+Purpose: A minimal server-level constants file.
+
+Exported: SERVER_CONFIG object with: PORT, ENV,
+RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX, LOG_LEVEL,
+LOG_DIR.
+
+Problems / TODOs:
+
+ • ⚠️ This file largely duplicates what
+   ConfigManager.ts already handles (port, env,
+   rate limit, log level). Nothing in the codebase
+   appears to uniquely require this file — it's
+   likely a legacy remnant or was never fully
+   integrated
+ • ⚠️ RATE_LIMIT_MAX: 100 and RATE_LIMIT_WINDOW_MS:
+   900000 (15 min) here differ from
+   ConfigManager's defaults (maxRequests: 100,
+   windowMs: 900000) — they happen to match but
+   are maintained separately, which is fragile
+ • ⚠️ No exports from this file appear to be used
+   in the rest of the codebase (unverified without
+   a full grep, but the file is suspiciously small
+   and isolated)
+
+──────────────────────────────────────────────────
+            4. src/types/contracts.ts
+
+Purpose: The central Zod schema library and
+TypeScript type source for all Firestore data
+models used across the application. This is the
+"single source of truth" for data contracts
+between backend services and Firestore.
+
+Exported Schemas & Types:
+
+
+  Schema          Type            Description
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TenantSchema    Tenant          Root tenant
+                                  document
+  TenantUserSc…   TenantUser      Users within a
+                                  tenant
+  BotInstanceS…   BotInstance     Bot metadata +
+                                  multi-channel
+                                  support
+  ModerationIt…   ModerationIt…   Content
+                                  moderation
+                                  queue
+  ViolationSch…   Violation       User violation
+                                  records
+  CommandSchema   CommandDefin…   Bot command
+                                  definitions
+  BotMemberSch…   BotMember       Bot
+                                  interaction
+                                  member data
+  GroupSchema     GroupData       WhatsApp group
+                                  data
+  BotGroupSche…   BotGroup        Alternate/leg…
+                                  group schema
+  Subscription…   Subscription    Stripe
+                                  subscription
+                                  data
+  CampaignSche…   Campaign        Bulk messaging
+                                  campaigns
+  WebhookSchema   Webhook         Outbound
+                                  webhooks
+  LearningSche…   LearningData    Per-user AI
+                                  learning/facts
+  ContactSchema   Contact         Contacts for
+                                  campaigns
+  AudienceSche…   Audience        Segmented
+                                  contact groups
+  TemplateSche…   MessageTempl…   Message
+                                  templates
+  AuthSchema      AuthData        Baileys auth
+                                  session store
+  AnalyticsSch…   AnalyticsData   Daily
+                                  analytics
+                                  records
+
+
+Also: Result<T, E> — a functional-style error
+handling type (success/failure discriminated
+union), TimestampSchema (handles both JS Date and
+Firestore {_seconds, _nanoseconds} formats).
+
+Problems / TODOs:
+
+ • ⚠️ GroupSchema and BotGroupSchema overlap — even
+   labeled as -- LEGACY? in the file itself.
+   BotGroupSchema should be consolidated into
+   GroupSchema or clearly deprecated/removed
+ • ⚠️ BotInstanceSchema.config: z.any() is a type
+   escape hatch — this should be typed with a
+   proper schema (likely BotConfigSchema from
+   tenantConfig.ts)
+ • ⚠️ AuthSchema.value: z.any() is completely
+   untyped — Baileys auth state has a known
+   structure that could be partially typed
+ • ⚠️ TenantSchema has both plan and planTier
+   fields — they appear to be the same thing,
+   creating redundancy; one is likely a migration
+   artifact
+ • ⚠️ CampaignSchema.antiBan.uuid is described as
+   "Strategy identifier" but is never validated or
+   resolved to a known value — needs an enum or
+   reference
+
+──────────────────────────────────────────────────
+           5. src/types/omnichannel.ts
+
+Purpose: Defines a platform-agnostic messaging
+abstraction layer — a normalized message format
+that can represent messages from WhatsApp,
+Telegram, Discord, Slack, Google Chat, and Web.
+
+Exported Schemas & Types:
+
+
+  Export                  Description
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PlatformSchema /        Enum of supported
+  Platform                platforms
+  AttachmentTypeSchema    Enum: image, video,
+  / AttachmentType        audio, document,
+                          location, contact,
+                          sticker
+  CommonAttachmentSche…   Unified attachment
+  / CommonAttachment      with optional
+                          location/contact
+                          fields
+  CommonMessageSchema /   Normalized
+  CommonMessage           cross-platform message
+
+
+Problems / TODOs:
+
+ • ⚠️ File ends at line 62 — this appears
+   incomplete. A fully functional omnichannel
+   layer would need: platform adapters, a
+   PlatformAdapter interface, routing logic, and
+   reply/send abstractions. The schemas are
+   defined but there are no transformer functions
+   (e.g., WhatsApp message → CommonMessage)
+ • ⚠️ CommonMessageSchema.metadata is
+   z.record(z.string(), z.any()) —
+   platform-specific fields are dumped into an
+   untyped bag; this weakens the abstraction
+ • ⚠️ ARCHITECTURE.md doesn't mention an
+   omnichannel abstraction layer at all, but
+   BotInstanceSchema in contracts.ts supports
+   type: 'whatsapp' | 'telegram' | 'discord' |
+   'slack' | 'signal' — this integration between
+   the two files is unplanned/undocumented
+
+──────────────────────────────────────────────────
+           6. src/types/tenantConfig.ts
+
+Purpose: Defines tenant-level and bot-level
+configuration schemas stored in Firestore (not env
+vars). These are customer-controlled settings
+managed via the dashboard.
+
+Exported:
+
+ • TenantSettingsSchema / TenantSettings — global
+   per-tenant settings
+ • BotConfigSchema / BotConfig — per-bot behavior
+   config
+ • DEFAULT_TENANT_SETTINGS — seeding defaults for
+   new tenants
+ • DEFAULT_BOT_CONFIG — seeding defaults for new
+   bots
+
+Key Features:
+
+ • Feature flags tied to subscription plan:
+   aiEnabled, campaignsEnabled, analyticsEnabled,
+   webhooksEnabled, maxBots
+ • Bot behavior toggles: antiCall, autoRead,
+   autoMention, autoAiLabel, autoTypingCmd,
+   selfMode, alwaysOnline
+ • AI config: aiEnabled, aiPersonality
+
+Problems / TODOs:
+
+ • ⚠️ DEFAULT_TENANT_SETTINGS.ownerNumber is
+   hardcoded to '+1234567890' — this is a
+   placeholder that should never reach production
+   but has no validation guard
+ • ⚠️ BotConfigSchema and ConfigManager's bot
+   section both define prefix, mode, selfMode,
+   cooldownMs, maxCommandsPerMinute — direct
+   duplication across the env-layer config and the
+   Firestore-layer config. The resolution strategy
+   (which wins at runtime) is unclear
+ • ⚠️ BotConfig.status is stored in Firestore
+   ('online' | 'offline' | 'connecting' | 'error')
+   but BotInstanceSchema in contracts.ts uses a
+   different status enum ('connected' |
+   'disconnected' | 'connecting' | 'qr_pending' |
+   'error') — inconsistent status vocabulary
+   between two schemas that describe the same
+   entity
+
+──────────────────────────────────────────────────
+              7. src/lib/firebase.ts
+
+Purpose: Initializes and exports the Firebase
+Admin SDK (Firestore instance) using a
+multi-strategy credential approach.
+
+Exported: admin (Firebase Admin namespace), db
+(Firestore instance).
+
+Key Features:
+
+ • Three credential strategies, in order: service
+   account JSON file path → inline credentials
+   from env vars (FIREBASE_PROJECT_ID,
+   FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) →
+   Application Default Credentials (ADC)
+ • Guards against double-initialization
+   (admin.apps.length === 0)
+ • ignoreUndefinedProperties: true on Firestore
+   settings (avoids write errors for optional
+   fields)
+ • Properly handles the \n → newline conversion
+   for PEM private keys in env vars
+
+Problems / TODOs:
+
+ • ⚠️ Uses ConfigService.getInstance() directly
+   instead of the shared configManager — continues
+   the two-config-system problem
+ • ⚠️ If initialization fails, it throws the error
+   — this will crash the process at module load
+   time with no graceful retry or degraded-mode
+   fallback
+ • ⚠️ No Firestore emulator support wiring for
+   local dev (no check for
+   FIRESTORE_EMULATOR_HOST)
+
+──────────────────────────────────────────────────
+               8. src/lib/redis.ts
+
+Purpose: Creates and exports a singleton ioredis
+Redis client for use across the application.
+
+Exported: redisClient (default export, an ioredis
+Redis instance).
+
+Key Features:
+
+ • Reads host/port/password from
+   configManager.export()
+ • Exponential-style retry: Math.min(times * 50,
+   2000) ms delay, capped at 2 seconds
+ • maxRetriesPerRequest: null set for BullMQ
+   compatibility
+ • Connect/error event listeners with structured
+   logging
+
+Problems / TODOs:
+
+ • ⚠️ Uses configManager (from ConfigManager.ts) —
+   inconsistent with firebase.ts using
+   ConfigService. This splits the config
+   dependency tree
+ • ⚠️ maxRetriesPerRequest: null is correct for
+   BullMQ but the comment says "though this is a
+   general client" — if this client is also used
+   for non-queue operations, null retries may
+   cause hanging promises on Redis errors
+ • ⚠️ No TLS/SSL support options (no tls: {}
+   config) — could be a problem for Redis
+   deployments behind SSL (e.g., Redis Cloud,
+   Upstash)
+ • ⚠️ No reconnection limit — on a catastrophic
+   Redis failure, the client will retry
+   indefinitely
+
+──────────────────────────────────────────────────
+               9. src/lib/queues.ts
+
+Purpose: Creates and exports Bull (v3) job queues
+for background task processing.
+
+Exported: imageGenerationQueue, jobResultsQueue
+(both Queue instances from the bull package).
+
+Key Features:
+
+ • Two active queues: image-generation and
+   job-results
+ • Commented-out videoProcessingQueue skeleton
+   (future expansion)
+ • completed and failed event listeners on both
+   queues for logging
+ • Redis connection shared via configManager
+
+Problems / TODOs:
+
+ • ⚠️ Critical architectural mismatch:
+   ARCHITECTURE.md explicitly says the stack uses
+   BullMQ ("Stack: Node.js 24 | BullMQ"), but this
+   file imports bull (v3, the older package).
+   BullMQ and Bull are not compatible — they use
+   different Redis data structures and APIs. This
+   is a significant inconsistency
+ • ⚠️ The AIProcessor worker and CampaignWorker
+   mentioned in ARCHITECTURE.md are not present —
+   only image-generation and job-results queues
+   exist, neither of which maps to the documented
+   architecture
+ • ⚠️ No dead-letter queue or failed job retention
+   strategy
+ • ⚠️ No queue concurrency, rate limiting, or
+   backoff settings defined
+ • ⚠️ Uses configManager (same as redis.ts) but
+   creates its own separate Redis connection —
+   this means two ioredis connections exist where
+   one (from redis.ts) could be reused
+
+──────────────────────────────────────────────────
+          10. src/services/UsageGuard.ts
+
+Purpose: A singleton billing enforcement guard
+that checks whether a tenant/user has exceeded
+their monthly message limit based on their
+subscription tier.
+
+Exported: Class UsageGuard, singleton usageGuard.
+
+Key Features:
+
+ • Three tiers: starter (1,000/mo), pro
+   (10,000/mo), enterprise (10,000,000/mo)
+ • canSend(tier, currentMonthlyUsage) — returns
+   boolean, logs a warning when limit hit
+ • getMonthlyLimit(tier) — returns the cap for a
+   given tier
+ • Singleton pattern via getInstance()
+
+Problems / TODOs:
+
+ • ⚠️ Stateless by design but incomplete: the
+   service accepts currentMonthlyUsage as a
+   parameter rather than querying it itself. This
+   means every caller must independently
+   fetch/track the usage count from Firestore —
+   there is no centralized usage
+   increment/decrement logic
+ • ⚠️ No incrementUsage() method — how usage is
+   actually tracked and persisted to Firestore is
+   not implemented here
+ • ⚠️ Tier limits are hardcoded constants — they
+   cannot be overridden per-tenant or changed
+   without a code deployment
+ • ⚠️ No grace period, soft-limit warning threshold
+   (e.g., warn at 90%), or overage allowance logic
+ • ⚠️ enterprise: 10_000_000 is effectively
+   unlimited, but there's no explicit unlimited
+   sentinel value or a bypass for enterprise,
+   making the comparison always run unnecessarily
+
+──────────────────────────────────────────────────
+               11. ARCHITECTURE.md
+
+Purpose: High-level system design document
+describing the WhatsDeX backend architecture,
+philosophy, and stack.
+
+Key Content:
+
+ • Design philosophy: Zero-Trust (Zod at all I/O
+   boundaries), Service-Oriented, Event-Driven
+ • Directory structure map for src/
+ • WhatsApp integration via Baileys v7 with
+   Firestore session persistence (no file-based
+   auth)
+ • Background processing via BullMQ workers:
+   CampaignWorker, MediaProcessor, AIProcessor
+ • Security via Node.js 24 permission model
+ • Observability: OpenTelemetry tracing,
+   Prometheus metrics, Pino logging
+
+Problems / TODOs:
+
+ • ⚠️ Stack claim vs. reality: doc says "BullMQ"
+   but queues.ts imports bull (v3) — directly
+   contradictory
+ • ⚠️ Workers mentioned but not found:
+   CampaignWorker, MediaProcessor, AIProcessor are
+   described but no corresponding files appear in
+   src/jobs/ (unverified but likely absent given
+   the queue names in queues.ts don't match)
+ • ⚠️ "We do NOT use file-based auth" — but
+   ConfigManager.ts configures bot.sessionPath and
+   bot.authAdapter.authDir as filesystem paths
+ • ⚠️ Version is listed as 2026-01-23 — likely a
+   typo (should be 2025)
+ • ⚠️ Omnichannel/multi-platform support is visible
+   in the code (omnichannel.ts, BotInstanceSchema)
+   but not documented in the architecture at all
+ • ⚠️ No mention of UsageGuard, billing
+   enforcement, or Stripe integration in the
+   architecture doc — these exist in the codebase
+   but are undocumented
+
+──────────────────────────────────────────────────
+
+         🗺️ Cross-Cutting Problems Summary
+
+
+                                   Files
+  #    Issue           Severity    Affected
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1    Dual config     🔴 High     config.ts,
+       systems                     firebase.ts,
+       (ConfigManag…               redis.ts,
+       vs                          queues.ts
+       ConfigServic…
+       with no clear
+       owner
+  2    Bull v3 used    🔴 High     queues.ts,
+       instead of                  ARCHITECTURE…
+       BullMQ as
+       documented
+  3    Duplicate bot   🟠 Medium   ConfigManage…
+       config across               tenantConfig…
+       ConfigManager
+       +
+       BotConfigSch…
+       with no merge
+       strategy
+  4    Inconsistent    🟠 Medium   tenantConfig…
+       bot status                  contracts.ts
+       enums between
+       BotConfig and
+       BotInstance
+  5    GroupSchema +   🟠 Medium   contracts.ts
+       BotGroupSche…
+       overlap
+       (legacy
+       admitted in
+       comments)
+  6    omnichannel.…   🟠 Medium   omnichannel.…
+       is incomplete
+       — schemas
+       only, no
+       adapter logic
+  7    UsageGuard      🟠 Medium   UsageGuard.ts
+       has no
+       increment
+       logic — just
+       reads, never
+       writes usage
+  8    Empty           🟡 Low      config.ts
+       validateEnvi…
+       function stub
+       left in
+       config.ts
+  9    constants.ts    🟡 Low      constants.ts
+       duplicates
+       what
+       ConfigManager
+       already
+       handles
+  10   getEnvNumber    🟡 Low      ConfigManage…
+       uses parseInt
+       — breaks
+       float values
+       like
+       temperature
+       0.7
+  11   Hardcoded       🟡 Low      ConfigManage…
+       Asia/Jakarta
+       timezone in
+       ConfigManager
+  12   No Redis TLS    🟡 Low      redis.ts
+       support
+  13   contracts.ts    🟡 Low      contracts.ts
+       has plan and
+       planTier
+       duplication
+       on Tenant
+  14   Undocumented    🟡 Low      ARCHITECTURE…
+       features
+       (omnichannel,
+       billing,
+       UsageGuard)
+       in
+       ARCHITECTURE…
+
+
+──────────────────────────────────────────────────
+What would you like to tackle next? Here are a few
+logical directions:
+
+ 1 Fix the dual config system — consolidate
+   ConfigManager and ConfigService into a single
+   authority and update all dependents
+ 2 Migrate queues.ts from Bull v3 to BullMQ —
+   align the code with the architecture doc and
+   add the missing workers
+ 3 Complete UsageGuard — add incrementUsage() with
+   Firestore persistence and soft-limit warnings
+ 4 Resolve schema conflicts — merge BotGroupSchema
+   into GroupSchema, unify bot status enums,
+   remove plan/planTier duplication
+ 5 Deep-dive additional files — explore
+   src/services/ConfigService.ts, src/jobs/, or
+   other unread parts of the codebase

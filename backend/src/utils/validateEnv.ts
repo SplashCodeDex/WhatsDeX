@@ -48,7 +48,7 @@ const envRules: EnvValidationRule[] = [
   {
     name: 'PORT',
     required: false,
-    defaultValue: '3000',
+    defaultValue: '3001',
     validator: (value) => !isNaN(parseInt(value)) && parseInt(value) > 0 && parseInt(value) < 65536,
     description: 'Server port number'
   },

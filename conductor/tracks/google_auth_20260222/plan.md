@@ -13,16 +13,16 @@
 ## Phase 2: Core Auth Logic & Multi-Tenancy (Backend)
 *Goal: Implement the backend logic for verifying tokens and auto-creating workspaces.*
 
-- [ ] Task: TDD - `authSystem.ts` Google Login logic
-    - [ ] Write failing tests in `authSystem.test.ts` for `loginWithGoogle` (Red)
-    - [ ] Implement `loginWithGoogle` in `authSystem.ts` (Green)
-    - [ ] Implement Email Conflict check (Option B) in `authSystem.ts` (Green)
-    - [ ] Refactor and verify (Refactor)
-- [ ] Task: TDD - Workspace Auto-Initialization
-    - [ ] Write failing tests in `multiTenantService.test.ts` for auto-creation (Red)
-    - [ ] Implement `initializePersonalWorkspace` logic in `multiTenantService.ts` (Green)
-    - [ ] Refactor and verify (Refactor)
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Auth Logic & Multi-Tenancy (Backend)' (Protocol in workflow.md)
+- [x] Task: TDD - `authSystem.ts` Google Login logic
+    - [x] Write failing tests in `authSystem.test.ts` for `loginWithGoogle` (Red)
+    - [x] Implement `loginWithGoogle` in `authSystem.ts` (Green)
+    - [x] Implement Email Conflict check (Option B) in `authSystem.ts` (Green)
+    - [x] Refactor and verify (Refactor)
+- [x] Task: TDD - Workspace Auto-Initialization
+    - [x] Write failing tests in `multiTenantService.test.ts` for auto-creation (Red)
+    - [x] Implement `initializePersonalWorkspace` logic in `multiTenantService.ts` (Green)
+    - [x] Refactor and verify (Refactor)
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Core Auth Logic & Multi-Tenancy (Backend)' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Hand-off & Server Actions
 *Goal: Implement the UI button and the Server Action to bridge client and server.*
