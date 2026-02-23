@@ -8,6 +8,7 @@ import { ConfigService } from '@/services/ConfigService.js';
 import auditService from '@/services/auditService.js';
 import logger from '@/utils/logger.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
+import { firebaseService } from '@/services/FirebaseService.js';
 
 interface AuthUserPayload {
     userId: string;
@@ -35,6 +36,10 @@ const signupSchema = z.object({
 const loginSchema = z.object({
     email: z.string().email(),
     password: z.string(),
+});
+
+const googleLoginSchema = z.object({
+    idToken: z.string().min(1),
 });
 
 interface AvailabilityResult {
@@ -77,6 +82,120 @@ export const checkAvailability = async (req: Request, res: Response) => {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('Error in checkAvailability:', err);
         res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+};
+
+export const loginWithGoogle = async (req: Request, res: Response) => {
+    try {
+        const { idToken } = googleLoginSchema.parse(req.body);
+
+        // 1. Verify Google Token
+        const decodedToken = await firebaseService.verifyIdToken(idToken);
+        const { uid, email, name, picture } = decodedToken;
+
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Google account must have an email address' });
+        }
+
+        // 2. Check for User Lookup
+        let lookupDoc = await db.collection('users').doc(uid).get();
+        let tenantId: string;
+        let role: string;
+        let displayName = name || 'User';
+
+        if (!lookupDoc.exists) {
+            // 3. New User - Check for Email Conflict (Option B)
+            const emailConflict = await db.collection('users').where('email', '==', email).limit(1).get();
+            if (!emailConflict.empty) {
+                logger.warn('Google Login: Email conflict detected', { email, uid });
+                return res.status(409).json({
+                    success: false,
+                    error: 'An account with this email already exists. Please sign in with your original method.',
+                    code: 'auth/email-already-in-use'
+                });
+            }
+
+            // 4. Auto-Initialize Workspace
+            const baseSlug = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
+            const subdomain = `${baseSlug}-${crypto.randomBytes(2).toString('hex')}`;
+            const tenantName = `${displayName}'s Workspace`;
+
+            const initResult = await multiTenantService.initializeTenant({
+                userId: uid,
+                email,
+                displayName,
+                tenantName,
+                subdomain,
+                plan: 'starter'
+            });
+
+            if (!initResult.success) {
+                return res.status(500).json({ success: false, error: 'Failed to initialize your workspace' });
+            }
+
+            tenantId = initResult.data.tenant.id;
+            role = 'owner';
+
+            // Set Custom Claims
+            await admin.auth().setCustomUserClaims(uid, { tenantId, role });
+        } else {
+            // 5. Existing User
+            const data = lookupDoc.data()!;
+            tenantId = data.tenantId;
+            role = data.role;
+        }
+
+        // 6. Get Full Data & Set Session
+        const userDoc = await db.collection('tenants').doc(tenantId).collection('users').doc(uid).get();
+        const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+
+        if (!userDoc.exists || !tenantDoc.exists) {
+            return res.status(404).json({ success: false, error: 'Workspace data inconsistent' });
+        }
+
+        const user = userDoc.data()!;
+        const tenant = tenantDoc.data()!;
+
+        const config = ConfigService.getInstance();
+        const jwtSecret = config.get('JWT_SECRET');
+
+        const token = jwt.sign(
+            { userId: uid, tenantId, role, email },
+            jwtSecret,
+            { expiresIn: '7d' }
+        );
+
+        const firebaseToken = await admin.auth().createCustomToken(uid, { tenantId, role });
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        // Update last login
+        db.collection('tenants').doc(tenantId).collection('users').doc(uid).update({
+            lastLogin: Timestamp.now()
+        }).catch(e => logger.error('Failed to update last login', e));
+
+        res.json({
+            success: true,
+            data: {
+                token,
+                firebaseToken,
+                user: { id: uid, name: user.displayName || displayName, email, role, tenantId },
+                tenant: { id: tenantId, name: tenant.name, subdomain: tenant.subdomain },
+            }
+        });
+
+    } catch (error: unknown) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ success: false, error: error.issues[0].message });
+        }
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('Google Login error:', err);
+        res.status(500).json({ success: false, error: 'Authentication failed' });
     }
 };
 

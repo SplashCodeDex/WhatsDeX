@@ -22,3 +22,8 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ## [x] Track: Auth Flow Robustness & State Preservation
 *Link: [./conductor/tracks/auth_robustness_20260219/](./conductor/tracks/auth_robustness_20260219/)*    
+
+---
+
+## [~] Track: Make login/signup with Google functional
+*Link: [./conductor/tracks/google_auth_20260222/](./conductor/tracks/google_auth_20260222/)*

@@ -3,6 +3,9 @@ import { startGatewayServer } from 'openclaw';
 /**
  * OpenClawGateway is a singleton service that manages the lifecycle
  * of the OpenClaw engine within the WhatsDeX backend.
+ *
+ * Serves as the proxy layer between the WhatsDeX REST API and
+ * OpenClaw's internal JSON-RPC-style gateway methods.
  */
 export class OpenClawGateway {
   private static instance: OpenClawGateway;
@@ -23,7 +26,8 @@ export class OpenClawGateway {
   }
 
   /**
-   * Safe helper to import openclaw internal modules
+   * Safe helper to import openclaw internal modules.
+   * Returns null (never throws) if the module is unavailable.
    */
   private async safeImport(path: string): Promise<any> {
     try {
@@ -33,6 +37,21 @@ export class OpenClawGateway {
       return null;
     }
   }
+
+  /**
+   * Helper: loads OpenClaw config (reusable across multiple proxy methods).
+   */
+  private async loadConfig(): Promise<any> {
+    const configMod = await this.safeImport('../../../openclaw/src/config/config.js');
+    if (!configMod || typeof configMod.loadConfig !== 'function') {
+      throw new Error('OpenClaw loadConfig is not available');
+    }
+    return configMod.loadConfig();
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  LIFECYCLE
+  // ═══════════════════════════════════════════════════════
 
   /**
    * Initializes the OpenClaw gateway server.
@@ -52,103 +71,450 @@ export class OpenClawGateway {
     }
   }
 
-  /**
-   * Checks if the gateway is initialized.
-   */
   public isInitialized(): boolean {
     return this.initialized;
   }
 
-  /**
-   * Gets the underlying GatewayServer instance.
-   */
   public getEngine(): any | null {
     return this.server;
   }
 
-  /**
-   * Proxy to load skills from OpenClaw
-   */
+  public async shutdown(): Promise<void> {
+    if (this.server) {
+      this.initialized = false;
+      this.server = null;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  SKILLS
+  // ═══════════════════════════════════════════════════════
+
   public async getSkillReport(): Promise<any> {
     try {
       const workspace = await this.safeImport('../../../openclaw/src/agents/skills/workspace.js');
       if (!workspace || typeof workspace.loadWorkspaceSkillEntries !== 'function') {
         throw new Error('OpenClaw loadWorkspaceSkillEntries is not available');
       }
-      
       const skills = await workspace.loadWorkspaceSkillEntries();
-      return {
-        workspaceDir: '',
-        managedSkillsDir: '',
-        skills: skills || []
-      };
+      return { workspaceDir: '', managedSkillsDir: '', skills: skills || [] };
     } catch (error: any) {
       console.error('Failed to load OpenClaw skills:', error);
       return { skills: [], error: error.message };
     }
   }
 
-  /**
-   * Proxy to list agents from OpenClaw
-   */
+  // ═══════════════════════════════════════════════════════
+  //  AGENTS
+  // ═══════════════════════════════════════════════════════
+
   public async getAgents(): Promise<any> {
     try {
-      console.log('OpenClawGateway: Loading config and session utils...');
-      
-      const configMod = await this.safeImport('../../../openclaw/src/config/config.js');
+      const cfg = await this.loadConfig();
       const sessionUtils = await this.safeImport('../../../openclaw/src/gateway/session-utils.js');
-
-      if (!configMod || typeof configMod.loadConfig !== 'function') {
-        throw new Error('OpenClaw loadConfig is not available');
-      }
-
       if (!sessionUtils || typeof sessionUtils.listAgentsForGateway !== 'function') {
         throw new Error('OpenClaw listAgentsForGateway is not available');
       }
-
-      const cfg = await configMod.loadConfig();
-      console.log('OpenClawGateway: Config loaded. Listing agents...');
-
       const result = await sessionUtils.listAgentsForGateway(cfg);
-      console.log(`OpenClawGateway: Found ${result?.agents?.length || 0} agents.`);
-      
-      return {
-        defaultId: result?.defaultId,
-        agents: result?.agents || []
-      };
+      return { defaultId: result?.defaultId, agents: result?.agents || [] };
     } catch (error: any) {
       console.error('Failed to load OpenClaw agents:', error);
       return { agents: [], error: error.message };
     }
   }
 
-  /**
-   * Proxy to get health snapshot from OpenClaw
-   */
+  // ═══════════════════════════════════════════════════════
+  //  HEALTH
+  // ═══════════════════════════════════════════════════════
+
   public async getHealth(): Promise<any> {
     try {
       const healthState = await this.safeImport('../../../openclaw/src/gateway/server/health-state.js');
       if (!healthState || typeof healthState.getHealthCache !== 'function') {
         throw new Error('OpenClaw getHealthCache is not available');
       }
-
       const health = await healthState.getHealthCache();
-      return {
-        ...health,
-        uptimeMs: Date.now() - this.startTime
-      };
+      return { ...health, uptimeMs: Date.now() - this.startTime };
     } catch (error: any) {
       return { status: 'error', uptimeMs: 0, error: error.message };
     }
   }
 
-  /**
-   * Shuts down the gateway server.
-   */
-  public async shutdown(): Promise<void> {
-    if (this.server) {
-      this.initialized = false;
-      this.server = null;
+  // ═══════════════════════════════════════════════════════
+  //  CRON JOBS
+  // ═══════════════════════════════════════════════════════
+
+  private async getCronModule(): Promise<any> {
+    const cronMod = await this.safeImport('../../../openclaw/src/cron/index.js');
+    if (!cronMod) throw new Error('OpenClaw cron module is not available');
+    return cronMod;
+  }
+
+  public async getCronStatus(): Promise<any> {
+    try {
+      const cron = await this.getCronModule();
+      if (typeof cron.getCronStatus === 'function') {
+        return await cron.getCronStatus();
+      }
+      // Fallback: If the function is not directly exported, construct from list
+      const jobs = await this.listCronJobs();
+      const enabledJobs = (jobs || []).filter((j: any) => j.enabled);
+      const nextWakeAtMs = enabledJobs.reduce((min: number | null, j: any) => {
+        const next = j.state?.nextRunAtMs;
+        if (next == null) return min;
+        return min == null ? next : Math.min(min, next);
+      }, null as number | null);
+      return { enabled: enabledJobs.length > 0, jobs: (jobs || []).length, nextWakeAtMs };
+    } catch (error: any) {
+      console.error('getCronStatus error:', error.message);
+      return { enabled: false, jobs: 0, nextWakeAtMs: null };
+    }
+  }
+
+  public async listCronJobs(): Promise<any[]> {
+    try {
+      const cron = await this.getCronModule();
+      if (typeof cron.listCronJobs === 'function') {
+        return await cron.listCronJobs({ includeDisabled: true });
+      }
+      return [];
+    } catch (error: any) {
+      console.error('listCronJobs error:', error.message);
+      return [];
+    }
+  }
+
+  public async addCronJob(params: any): Promise<any> {
+    const cron = await this.getCronModule();
+    if (typeof cron.addCronJob !== 'function') {
+      throw new Error('OpenClaw addCronJob is not available');
+    }
+    return await cron.addCronJob(params);
+  }
+
+  public async updateCronJob(id: string, patch: any): Promise<any> {
+    const cron = await this.getCronModule();
+    if (typeof cron.updateCronJob !== 'function') {
+      throw new Error('OpenClaw updateCronJob is not available');
+    }
+    return await cron.updateCronJob(id, patch);
+  }
+
+  public async removeCronJob(id: string): Promise<any> {
+    const cron = await this.getCronModule();
+    if (typeof cron.removeCronJob !== 'function') {
+      throw new Error('OpenClaw removeCronJob is not available');
+    }
+    return await cron.removeCronJob(id);
+  }
+
+  public async runCronJob(id: string): Promise<any> {
+    const cron = await this.getCronModule();
+    if (typeof cron.runCronJob !== 'function') {
+      throw new Error('OpenClaw runCronJob is not available');
+    }
+    return await cron.runCronJob(id, 'force');
+  }
+
+  public async getCronRuns(id: string, limit = 50): Promise<any> {
+    try {
+      const runLogMod = await this.safeImport('../../../openclaw/src/cron/run-log.js');
+      if (!runLogMod) throw new Error('OpenClaw run-log module is not available');
+
+      const { readCronRunLogEntries, resolveCronRunLogPath } = runLogMod;
+      const cfg = await this.loadConfig();
+      const logPath = resolveCronRunLogPath({ storePath: cfg.cronStorePath || cfg.storePath, jobId: id });
+      const entries = await readCronRunLogEntries(logPath, { limit, jobId: id });
+      return { entries };
+    } catch (error: any) {
+      console.error('getCronRuns error:', error.message);
+      return { entries: [] };
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  USAGE & COST
+  // ═══════════════════════════════════════════════════════
+
+  private async getUsageModule(): Promise<any> {
+    const usageMod = await this.safeImport('../../../openclaw/src/agents/usage.js');
+    if (!usageMod) throw new Error('OpenClaw usage module is not available');
+    return usageMod;
+  }
+
+  public async getUsageTotals(days = 30): Promise<any> {
+    try {
+      const usage = await this.getUsageModule();
+      if (typeof usage.getUsageTotals === 'function') {
+        return await usage.getUsageTotals({ days });
+      }
+      // Fallback: derive from sessions
+      const sessionsResult = await this.getUsageSessions(days);
+      const sessions = sessionsResult?.sessions || [];
+      return {
+        sessions: sessions.length,
+        messages: sessions.reduce((s: number, e: any) => s + (e.messages || 0), 0),
+        tools: sessions.reduce((s: number, e: any) => s + (e.tools || 0), 0),
+        errors: sessions.reduce((s: number, e: any) => s + (e.errors || 0), 0),
+        tokens: sessions.reduce((s: number, e: any) => s + (e.tokens || 0), 0),
+        cost: sessions.reduce((s: number, e: any) => s + (e.cost || 0), 0),
+      };
+    } catch (error: any) {
+      console.error('getUsageTotals error:', error.message);
+      return { sessions: 0, messages: 0, tools: 0, errors: 0, tokens: 0, cost: 0 };
+    }
+  }
+
+  public async getUsageDaily(days = 30): Promise<any> {
+    try {
+      const usage = await this.getUsageModule();
+      if (typeof usage.getUsageDaily === 'function') {
+        return await usage.getUsageDaily({ days });
+      }
+      return { daily: [] };
+    } catch (error: any) {
+      console.error('getUsageDaily error:', error.message);
+      return { daily: [] };
+    }
+  }
+
+  public async getUsageSessions(days = 30): Promise<any> {
+    try {
+      const usage = await this.getUsageModule();
+      if (typeof usage.getUsageSessions === 'function') {
+        return await usage.getUsageSessions({ days });
+      }
+      return { sessions: [] };
+    } catch (error: any) {
+      console.error('getUsageSessions error:', error.message);
+      return { sessions: [] };
+    }
+  }
+
+  public async getSessionLogs(key: string): Promise<any> {
+    try {
+      const usage = await this.getUsageModule();
+      if (typeof usage.getSessionLogs === 'function') {
+        return await usage.getSessionLogs(key);
+      }
+      return { entries: [] };
+    } catch (error: any) {
+      console.error('getSessionLogs error:', error.message);
+      return { entries: [] };
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  SESSIONS
+  // ═══════════════════════════════════════════════════════
+
+  public async listSessions(): Promise<any> {
+    try {
+      const cfg = await this.loadConfig();
+      const sessionUtils = await this.safeImport('../../../openclaw/src/gateway/session-utils.js');
+      if (!sessionUtils || typeof sessionUtils.loadCombinedSessionStoreForGateway !== 'function') {
+        throw new Error('OpenClaw loadCombinedSessionStoreForGateway is not available');
+      }
+      const store = await sessionUtils.loadCombinedSessionStoreForGateway(cfg);
+      const sessions = Object.entries(store || {}).map(([key, entry]: [string, any]) => ({
+        key,
+        kind: entry?.kind || 'unknown',
+        label: entry?.label,
+        displayName: entry?.displayName,
+        updatedAt: entry?.updatedAt || null,
+        sessionId: entry?.sessionId,
+        model: entry?.model,
+        modelProvider: entry?.modelProvider,
+      }));
+      return { ts: Date.now(), count: sessions.length, sessions };
+    } catch (error: any) {
+      console.error('listSessions error:', error.message);
+      return { ts: Date.now(), count: 0, sessions: [] };
+    }
+  }
+
+  public async deleteSession(key: string): Promise<any> {
+    try {
+      const sessionsPatchMod = await this.safeImport('../../../openclaw/src/gateway/sessions-patch.js');
+      if (sessionsPatchMod && typeof sessionsPatchMod.deleteSession === 'function') {
+        return await sessionsPatchMod.deleteSession(key);
+      }
+      throw new Error('OpenClaw deleteSession is not available');
+    } catch (error: any) {
+      console.error('deleteSession error:', error.message);
+      throw error;
+    }
+  }
+
+  public async patchSession(key: string, patch: any): Promise<any> {
+    try {
+      const sessionsPatchMod = await this.safeImport('../../../openclaw/src/gateway/sessions-patch.js');
+      if (sessionsPatchMod && typeof sessionsPatchMod.applySessionsPatchToStore === 'function') {
+        const cfg = await this.loadConfig();
+        return await sessionsPatchMod.applySessionsPatchToStore(cfg, key, patch);
+      }
+      throw new Error('OpenClaw applySessionsPatchToStore is not available');
+    } catch (error: any) {
+      console.error('patchSession error:', error.message);
+      throw error;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  NODES & DEVICES
+  // ═══════════════════════════════════════════════════════
+
+  public async listNodes(): Promise<any> {
+    try {
+      const nodePairing = await this.safeImport('../../../openclaw/src/infra/node-pairing.js');
+      if (!nodePairing || typeof nodePairing.listNodePairing !== 'function') {
+        throw new Error('OpenClaw listNodePairing is not available');
+      }
+      const list = await nodePairing.listNodePairing();
+      // Filter to node entries only (role-based distinction)
+      const nodes = (list?.paired || []).filter((d: any) =>
+        d.role === 'node' || d.roles?.includes?.('node')
+      );
+      return { nodes, pending: list?.pending || [] };
+    } catch (error: any) {
+      console.error('listNodes error:', error.message);
+      return { nodes: [], pending: [] };
+    }
+  }
+
+  public async listDevices(): Promise<any> {
+    try {
+      const devicePairing = await this.safeImport('../../../openclaw/src/infra/device-pairing.js');
+      if (!devicePairing || typeof devicePairing.listDevicePairing !== 'function') {
+        throw new Error('OpenClaw listDevicePairing is not available');
+      }
+      const list = await devicePairing.listDevicePairing();
+      return { pending: list?.pending || [], paired: list?.paired || [] };
+    } catch (error: any) {
+      console.error('listDevices error:', error.message);
+      return { pending: [], paired: [] };
+    }
+  }
+
+  public async approveDevice(requestId: string): Promise<any> {
+    const devicePairing = await this.safeImport('../../../openclaw/src/infra/device-pairing.js');
+    if (!devicePairing || typeof devicePairing.approveDevicePairing !== 'function') {
+      throw new Error('OpenClaw approveDevicePairing is not available');
+    }
+    const approved = await devicePairing.approveDevicePairing(requestId);
+    if (!approved) throw new Error('Unknown requestId');
+    return { requestId, device: approved.device };
+  }
+
+  public async rejectDevice(requestId: string): Promise<any> {
+    const devicePairing = await this.safeImport('../../../openclaw/src/infra/device-pairing.js');
+    if (!devicePairing || typeof devicePairing.rejectDevicePairing !== 'function') {
+      throw new Error('OpenClaw rejectDevicePairing is not available');
+    }
+    const rejected = await devicePairing.rejectDevicePairing(requestId);
+    if (!rejected) throw new Error('Unknown requestId');
+    return rejected;
+  }
+
+  public async revokeDevice(deviceId: string): Promise<any> {
+    const devicePairing = await this.safeImport('../../../openclaw/src/infra/device-pairing.js');
+    if (!devicePairing || typeof devicePairing.revokeDeviceToken !== 'function') {
+      throw new Error('OpenClaw revokeDeviceToken is not available');
+    }
+    return await devicePairing.revokeDeviceToken({ deviceId, role: 'device' });
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  LOGS
+  // ═══════════════════════════════════════════════════════
+
+  public async getLogs(opts: { limit?: number; level?: string }): Promise<any> {
+    try {
+      const loggingMod = await this.safeImport('../../../openclaw/src/logging.js');
+      if (!loggingMod || typeof loggingMod.getResolvedLoggerSettings !== 'function') {
+        throw new Error('OpenClaw logging module is not available');
+      }
+      const { file: logFile } = loggingMod.getResolvedLoggerSettings();
+
+      const fs = await import('node:fs/promises');
+      const stat = await fs.stat(logFile).catch(() => null);
+      if (!stat) return { lines: [], cursor: 0, size: 0 };
+
+      const limit = Math.min(opts.limit || 100, 5000);
+      const maxBytes = 250_000;
+      const size = stat.size;
+      const start = Math.max(0, size - maxBytes);
+
+      const handle = await fs.open(logFile, 'r');
+      try {
+        const length = Math.max(0, size - start);
+        const buffer = Buffer.alloc(length);
+        const readResult = await handle.read(buffer, 0, length, start);
+        const text = buffer.toString('utf8', 0, readResult.bytesRead);
+        let lines = text.split('\n').filter(Boolean);
+
+        // Parse structured log lines (JSON)
+        const parsed = lines.map((raw: string) => {
+          try { return { ...JSON.parse(raw), raw }; }
+          catch { return { raw, message: raw }; }
+        });
+
+        // Filter by level if requested
+        const filtered = opts.level
+          ? parsed.filter((e: any) => e.level === opts.level)
+          : parsed;
+
+        return { lines: filtered.slice(-limit), cursor: size, size };
+      } finally {
+        await handle.close();
+      }
+    } catch (error: any) {
+      console.error('getLogs error:', error.message);
+      return { lines: [], cursor: 0, size: 0 };
+    }
+  }
+
+  public async streamLogs(onEntry: (entry: any) => void): Promise<(() => void) | null> {
+    try {
+      const loggingMod = await this.safeImport('../../../openclaw/src/logging.js');
+      if (!loggingMod || typeof loggingMod.getResolvedLoggerSettings !== 'function') {
+        throw new Error('OpenClaw logging module is not available');
+      }
+      const { file: logFile } = loggingMod.getResolvedLoggerSettings();
+
+      const { watch } = await import('node:fs');
+      let lastSize = 0;
+      try {
+        const fs = await import('node:fs/promises');
+        const stat = await fs.stat(logFile);
+        lastSize = stat.size;
+      } catch { /* file may not exist yet */ }
+
+      const watcher = watch(logFile, async () => {
+        try {
+          const fs = await import('node:fs/promises');
+          const stat = await fs.stat(logFile);
+          if (stat.size <= lastSize) { lastSize = stat.size; return; }
+          const handle = await fs.open(logFile, 'r');
+          try {
+            const length = stat.size - lastSize;
+            const buffer = Buffer.alloc(length);
+            await handle.read(buffer, 0, length, lastSize);
+            const text = buffer.toString('utf8');
+            const lines = text.split('\n').filter(Boolean);
+            for (const line of lines) {
+              try { onEntry(JSON.parse(line)); }
+              catch { onEntry({ raw: line, message: line }); }
+            }
+          } finally { await handle.close(); }
+          lastSize = stat.size;
+        } catch { /* ignore transient read errors */ }
+      });
+
+      return () => watcher.close();
+    } catch (error: any) {
+      console.error('streamLogs error:', error.message);
+      return null;
     }
   }
 }

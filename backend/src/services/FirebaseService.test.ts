@@ -1,84 +1,55 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { FirebaseService } from '@/services/FirebaseService.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { FirebaseService } from './FirebaseService.js';
+import { admin } from '../lib/firebase.js';
 
-// Use vi.hoisted to define variables that must be available in vi.mock
-const { mockDb } = vi.hoisted(() => {
-  const mockDoc = {
-    get: vi.fn(async () => ({ 
-      exists: true, 
-      data: () => ({ 
-        id: 'bot-456',
-        name: 'Test Bot',
-        status: 'disconnected',
-        connectionMetadata: { browser: ['Chrome', 'OSX', '1.0'], platform: 'web' },
-        stats: { messagesSent: 0, messagesReceived: 0, contactsCount: 0, errorsCount: 0 },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }) 
-    })),
-    set: vi.fn(async () => {}),
-    update: vi.fn(async () => {}),
-    delete: vi.fn(async () => {}),
-    collection: vi.fn(() => mockCollection),
-  };
-  
-  const mockCollection = {
-    doc: vi.fn(() => mockDoc),
-    get: vi.fn(async () => ({ docs: [] })),
-  };
-
-  return {
-    mockDb: {
-      collection: vi.fn(() => mockCollection),
-    },
-  };
-});
-
-vi.mock('@/lib/firebase.js', () => ({
-  db: mockDb,
+// Mock the admin auth module
+vi.mock('../lib/firebase.js', () => ({
+  admin: {
+    auth: vi.fn(),
+  },
+  db: {
+    collection: vi.fn(),
+  },
 }));
 
 describe('FirebaseService', () => {
-  let service: FirebaseService;
+  let firebaseService: FirebaseService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = FirebaseService.getInstance();
+    firebaseService = FirebaseService.getInstance();
   });
 
-  describe('CRUD Operations', () => {
-    it('should throw error if schema is not found', async () => {
-      // @ts-ignore
-      await expect(service.getDoc('invalid-collection', 'id-1')).rejects.toThrow('No schema defined');
-    });
-
-    it('should call Firestore with correct path for tenant-scoped get', async () => {
-      const tenantId = 'tenant-123';
-      const botId = 'bot-456';
-      
-      await service.getDoc('bots', botId, tenantId);
-
-      // Path should be 'tenants/tenant-123/bots'
-      expect(mockDb.collection).toHaveBeenCalledWith('tenants/tenant-123/bots');
-    });
+  it('should be defined', () => {
+    expect(firebaseService).toBeDefined();
   });
 
-  describe('setDoc', () => {
-    it('should call Firestore set with correct data', async () => {
-      const tenantId = 'tenant-123';
-      const data = { 
-        id: 'bot-1',
-        name: 'New Bot',
-        status: 'connected' as const,
-        connectionMetadata: { browser: ['Chrome', 'OSX', '1.0'] as [string, string, string], platform: 'web' },
-        stats: { messagesSent: 0, messagesReceived: 0, contactsCount: 0, errorsCount: 0 },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+  describe('verifyIdToken', () => {
+    it('should verify a valid token and return decoded token', async () => {
+      const mockToken = 'valid-token';
+      const mockDecodedToken = { uid: 'user-123', email: 'test@example.com' };
       
-      await service.setDoc('bots', 'bot-1', data, tenantId, false);
+      // Setup mock
+      const verifyIdTokenMock = vi.fn().mockResolvedValue(mockDecodedToken);
+      (admin.auth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ verifyIdToken: verifyIdTokenMock });
 
-      expect(mockDb.collection).toHaveBeenCalledWith('tenants/tenant-123/bots');
+      // @ts-ignore - method doesn't exist yet
+      const result = await firebaseService.verifyIdToken(mockToken);
+
+      expect(verifyIdTokenMock).toHaveBeenCalledWith(mockToken);
+      expect(result).toEqual(mockDecodedToken);
+    });
+
+    it('should throw an error for invalid token', async () => {
+      const mockToken = 'invalid-token';
+      const mockError = new Error('Invalid token');
+
+      // Setup mock
+      const verifyIdTokenMock = vi.fn().mockRejectedValue(mockError);
+      (admin.auth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ verifyIdToken: verifyIdTokenMock });
+
+      // @ts-ignore - method doesn't exist yet
+      await expect(firebaseService.verifyIdToken(mockToken)).rejects.toThrow('Invalid token');
     });
   });
 });

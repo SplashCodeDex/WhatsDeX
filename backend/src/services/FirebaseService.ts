@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase.js';
+import { db, admin } from '@/lib/firebase.js';
 import logger from '@/utils/logger.js';
 import {
   FirestoreSchema
@@ -55,6 +55,25 @@ export class FirebaseService {
       FirebaseService.instance = new FirebaseService();
     }
     return FirebaseService.instance;
+  }
+
+  /**
+   * Verify a Firebase ID Token (JWT)
+   */
+  public async verifyIdToken(idToken: string): Promise<admin.auth.DecodedIdToken> {
+    try {
+      if (!idToken) {
+        throw new Error('ID Token is required');
+      }
+      return await admin.auth().verifyIdToken(idToken);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Firebase Auth verifyIdToken error:', {
+        message: err.message,
+        stack: err.stack
+      });
+      throw err;
+    }
   }
 
   /**

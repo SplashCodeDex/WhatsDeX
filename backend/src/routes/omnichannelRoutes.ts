@@ -1,95 +1,115 @@
 import express, { Request, Response } from 'express';
-import multiTenantBotService from '../services/multiTenantBotService.js';
-import { channelManager } from '../services/channels/ChannelManager.js';
 import { OpenClawGateway } from '../services/openClawGateway.js';
+import { OmnichannelController } from '../controllers/omnichannelController.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
-const gateway = OpenClawGateway.getInstance();
 
-/**
- * GET /omnichannel/status
- * Get the status of all connected channels for the tenant
- */
-router.get('/status', async (req: Request, res: Response) => {
+// ═══════════════════════════════════════════════════════
+//  STATUS & HEALTH
+// ═══════════════════════════════════════════════════════
+
+router.get('/status', async (_req: Request, res: Response) => {
   try {
-    const tenantId = req.user?.tenantId;
-    if (!tenantId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-
-    const botsResult = await multiTenantBotService.getAllBots(tenantId);
-    if (!botsResult.success) {
-      return res.status(500).json({ success: false, error: botsResult.error.message });
-    }
-
-    const channels = botsResult.data.map(bot => {
-      return {
-        id: bot.id,
-        name: bot.name,
-        type: bot.type,
-        status: bot.status,
-        account: bot.phoneNumber || bot.identifier || null,
-        lastActiveAt: bot.lastSeenAt
-      };
+    const gateway = OpenClawGateway.getInstance();
+    res.json({
+      success: true,
+      data: {
+        gatewayInitialized: gateway.isInitialized(),
+        uptimeMs: Date.now(),
+      }
     });
-
-    res.json({ success: true, data: channels });
-  } catch (error: any) {
-    logger.error('Route /omnichannel/status GET error', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-/**
- * GET /omnichannel/skills/report
- */
-router.get('/skills/report', async (req: Request, res: Response) => {
-  try {
-    const report = await gateway.getSkillReport();
-    res.json({ success: true, data: report });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Failed to fetch skill report' });
+    logger.error('Omnichannel status error', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch status' });
   }
 });
 
-/**
- * GET /omnichannel/agents
- */
-router.get('/agents', async (req: Request, res: Response) => {
+router.get('/gateway/health', async (_req: Request, res: Response) => {
   try {
-    logger.info('GET /omnichannel/agents request received');
-    const agents = await gateway.getAgents();
-    logger.info(`GET /omnichannel/agents success: ${Array.isArray(agents.agents) ? agents.agents.length : 0} agents found`);
-    res.json({ success: true, data: agents });
-  } catch (error: any) {
-    logger.error('GET /omnichannel/agents error', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch agents', details: error.message });
-  }
-});
-
-/**
- * GET /omnichannel/cron/jobs
- */
-router.get('/cron/jobs', async (req: Request, res: Response) => {
-  try {
-    // Placeholder for now as we need to bridge cron service
-    res.json({ success: true, data: [] });
-  } catch (error) {
-    res.status(500).json({ success: false, error: 'Failed to fetch cron jobs' });
-  }
-});
-
-/**
- * GET /omnichannel/gateway/health
- */
-router.get('/gateway/health', async (req: Request, res: Response) => {
-  try {
+    const gateway = OpenClawGateway.getInstance();
     const health = await gateway.getHealth();
     res.json({ success: true, data: health });
   } catch (error) {
+    logger.error('Gateway health error', error);
     res.status(500).json({ success: false, error: 'Failed to fetch gateway health' });
   }
 });
+
+// ═══════════════════════════════════════════════════════
+//  SKILLS
+// ═══════════════════════════════════════════════════════
+
+router.get('/skills/report', async (_req: Request, res: Response) => {
+  try {
+    const gateway = OpenClawGateway.getInstance();
+    const report = await gateway.getSkillReport();
+    res.json({ success: true, data: report });
+  } catch (error) {
+    logger.error('Skills report error', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch skills report' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+//  AGENTS
+// ═══════════════════════════════════════════════════════
+
+router.get('/agents', async (_req: Request, res: Response) => {
+  try {
+    const gateway = OpenClawGateway.getInstance();
+    const result = await gateway.getAgents();
+    res.json({ success: true, data: result });
+  } catch (error) {
+    logger.error('Agents list error', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch agents' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+//  CRON JOBS
+// ═══════════════════════════════════════════════════════
+
+router.get('/cron/status', OmnichannelController.getCronStatus);
+router.get('/cron/jobs', OmnichannelController.listCronJobs);
+router.post('/cron/jobs', OmnichannelController.createCronJob);
+router.patch('/cron/jobs/:id/toggle', OmnichannelController.toggleCronJob);
+router.post('/cron/jobs/:id/run', OmnichannelController.runCronJob);
+router.delete('/cron/jobs/:id', OmnichannelController.deleteCronJob);
+router.get('/cron/jobs/:id/runs', OmnichannelController.getCronRuns);
+
+// ═══════════════════════════════════════════════════════
+//  USAGE & COST ANALYTICS
+// ═══════════════════════════════════════════════════════
+
+router.get('/usage/totals', OmnichannelController.getUsageTotals);
+router.get('/usage/daily', OmnichannelController.getUsageDaily);
+router.get('/usage/sessions', OmnichannelController.getUsageSessions);
+router.get('/usage/sessions/:key/logs', OmnichannelController.getSessionLogs);
+
+// ═══════════════════════════════════════════════════════
+//  SESSIONS
+// ═══════════════════════════════════════════════════════
+
+router.get('/sessions', OmnichannelController.listSessions);
+router.delete('/sessions/:key', OmnichannelController.deleteSession);
+router.patch('/sessions/:key', OmnichannelController.patchSession);
+
+// ═══════════════════════════════════════════════════════
+//  NODES & DEVICES
+// ═══════════════════════════════════════════════════════
+
+router.get('/nodes', OmnichannelController.listNodes);
+router.get('/devices', OmnichannelController.listDevices);
+router.post('/devices/:id/approve', OmnichannelController.approveDevice);
+router.post('/devices/:id/reject', OmnichannelController.rejectDevice);
+router.post('/devices/:id/revoke', OmnichannelController.revokeDevice);
+
+// ═══════════════════════════════════════════════════════
+//  LOGS
+// ═══════════════════════════════════════════════════════
+
+router.get('/logs', OmnichannelController.getLogs);
+router.get('/logs/stream', OmnichannelController.streamLogs);
 
 export default router;

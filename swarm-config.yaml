@@ -1,0 +1,39 @@
+# Antigravity Swarm Configuration for WhatsDeX
+
+presets:
+  arch-analysis:
+    description: "Deep research into project architecture and backend gaps"
+    agents:
+      - name: Oracle
+        role: parallel
+      - name: Librarian
+        role: parallel
+      - name: Quality_Validator
+        role: validator
+
+  feature-implement:
+    description: "End-to-end feature development with verification"
+    agents:
+      - name: Junior
+        role: parallel
+      - name: Frontend
+        role: parallel
+      - name: Quality_Validator
+        role: validator
+
+  security-audit:
+    description: "Security analysis of mission-critical components"
+    agents:
+      - name: Oracle
+        role: parallel
+      - name: Explore
+        role: parallel
+      - name: Momus
+        role: parallel
+      - name: Quality_Validator
+        role: validator
+
+orchestrator:
+  max_parallel: 3
+  heartbeat_interval: 30
+  backend: auto
