@@ -1,11 +1,7 @@
-/**
- * Centralized Configuration Manager
- * Fixes scattered environment variables and improves config management
- */
-
 import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger.js';
+import { envSchema, EnvConfig } from './env.schema.js';
 
 export interface Config {
   system: {
@@ -145,102 +141,112 @@ export class ConfigManager {
   public config: Config;
   private configPath: string;
   private environment: string;
+  private env: EnvConfig;
 
   constructor() {
-    this.config = {} as Config; // Initial empty state, populated dynamically
+    this.config = {} as Config;
     this.configPath = process.env.CONFIG_PATH || './config';
     this.environment = process.env.NODE_ENV || 'development';
+
+    try {
+      this.env = envSchema.parse(process.env);
+      logger.info('✅ Environment variables validated via Zod');
+    } catch (error: any) {
+      logger.error('❌ Environment validation failed:', error.message);
+      // Fallback or rethrow based on environment
+      if (this.environment === 'production') throw error;
+      this.env = envSchema.parse({}); // Use defaults in dev
+    }
 
     this.loadConfiguration();
     this.validateConfiguration();
   }
 
   loadConfiguration() {
-    // Load base configuration
+    // Load base configuration from validated env
     this.config = {
       system: {
-        useServer: true,
-        port: Number(process.env.PORT) || 3000,
-        timeZone: 'Asia/Jakarta',
-        maxListeners: 20,
-        cooldown: 5000,
+        useServer: this.env.USE_SERVER,
+        port: this.env.PORT,
+        timeZone: this.env.TIME_ZONE,
+        maxListeners: this.env.MAX_LISTENERS,
+        cooldown: this.env.BOT_COOLDOWN_MS,
         antiCall: true,
-        selfMode: false,
+        selfMode: this.env.SELF_OWNER,
       },
       owner: {
-        name: this.getEnvString('OWNER_NAME', 'Owner')!,
-        id: this.getEnvString('OWNER_NUMBER', '6281234567890')!,
-        organization: this.getEnvString('OWNER_ORGANIZATION', 'CodeDeX')!,
+        name: process.env.OWNER_NAME || 'Owner',
+        id: process.env.OWNER_NUMBER || '',
+        organization: process.env.OWNER_ORGANIZATION || 'CodeDeX',
       },
       // Server Configuration
       server: {
-        port: this.getEnvNumber('PORT', 3001),
-        host: this.getEnvString('HOST', 'localhost')!,
+        port: this.env.PORT,
+        host: process.env.HOST || 'localhost',
         environment: this.environment,
-        maxRequestSize: this.getEnvString('MAX_REQUEST_SIZE', '50mb')!,
+        maxRequestSize: process.env.MAX_REQUEST_SIZE || '50mb',
         cors: {
-          origins: this.getEnvArray('CORS_ORIGINS', ['http://localhost:3000']),
-          credentials: this.getEnvBoolean('CORS_CREDENTIALS', true)
+          origins: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim()),
+          credentials: true
         }
       },
 
       // Database Configuration
       database: {
-
-        maxConnections: this.getEnvNumber('DB_MAX_CONNECTIONS', 20),
-        connectionTimeout: this.getEnvNumber('DB_CONNECTION_TIMEOUT', 2000),
-        idleTimeout: this.getEnvNumber('DB_IDLE_TIMEOUT', 30000),
-        ssl: this.getEnvBoolean('DB_SSL', false)
+        maxConnections: 20,
+        connectionTimeout: 2000,
+        idleTimeout: 30000,
+        ssl: false
       },
 
       // Redis Configuration
       redis: {
-        url: this.getEnvString('REDIS_URL'),
-        host: this.getEnvString('REDIS_HOST', 'localhost')!,
-        port: this.getEnvNumber('REDIS_PORT', 6379),
-        maxRetriesPerRequest: this.getEnvNumber('REDIS_MAX_RETRIES', 3),
-        retryDelayOnFailover: this.getEnvNumber('REDIS_RETRY_DELAY', 100),
-        family: this.getEnvNumber('REDIS_FAMILY', 4),
-        password: this.getEnvString('REDIS_PASSWORD'),
-        keyPrefix: this.getEnvString('REDIS_KEY_PREFIX', 'whatsdx:')!
+        url: this.env.REDIS_URL,
+        host: this.env.REDIS_HOST,
+        port: this.env.REDIS_PORT,
+        maxRetriesPerRequest: 3,
+        retryDelayOnFailover: 100,
+        family: 4,
+        password: this.env.REDIS_PASSWORD,
+        keyPrefix: 'whatsdx:'
       },
 
       // Authentication & Security
       auth: {
-        jwtSecret: this.getEnvString('JWT_SECRET'),
-        jwtExpires: this.getEnvString('JWT_EXPIRES_IN', '24h')!,
-        refreshSecret: this.getEnvString('JWT_REFRESH_SECRET'),
-        refreshExpires: this.getEnvString('JWT_REFRESH_EXPIRES_IN', '7d')!,
-        sessionSecret: this.getEnvString('SESSION_SECRET'),
-        sessionMaxAge: this.getEnvNumber('SESSION_MAX_AGE', 86400000),
-        bcryptRounds: this.getEnvNumber('BCRYPT_ROUNDS', 12),
-        ownerNumber: this.getEnvString('OWNER_NUMBER'),
-        adminNumbers: this.getEnvArray('ADMIN_NUMBERS', [])
+        jwtSecret: this.env.JWT_SECRET,
+        jwtExpires: '24h',
+        refreshSecret: process.env.JWT_REFRESH_SECRET,
+        refreshExpires: '7d',
+        sessionSecret: process.env.SESSION_SECRET,
+        sessionMaxAge: 86400000,
+        bcryptRounds: 12,
+        ownerNumber: process.env.OWNER_NUMBER,
+        adminNumbers: (process.env.ADMIN_NUMBERS || '').split(',').map(n => n.trim()).filter(Boolean)
       },
 
       // Rate Limiting
       rateLimit: {
-        windowMs: this.getEnvNumber('RATE_LIMIT_WINDOW_MS', 900000), // 15 minutes
-        maxRequests: this.getEnvNumber('RATE_LIMIT_MAX_REQUESTS', 100),
-        skipSuccessfulRequests: this.getEnvBoolean('RATE_LIMIT_SKIP_SUCCESS', false),
-        skipFailedRequests: this.getEnvBoolean('RATE_LIMIT_SKIP_FAILED', false)
+        windowMs: 900000, // 15 minutes
+        maxRequests: this.env.RATE_LIMIT_MAX,
+        skipSuccessfulRequests: false,
+        skipFailedRequests: false
       },
 
       // Bot Configuration
       bot: {
-        name: this.getEnvString('BOT_NAME', 'WhatsDeX')!,
+        name: this.env.BOT_NAME,
         browser: ['WhatsDeX', 'Chrome', '1.0.0'],
-        prefix: this.getEnvArray('BOT_PREFIX', ['.', '!', '/']),
-        mode: this.getEnvString('BOT_MODE', 'public')!, // public, private
-        selfMode: this.getEnvBoolean('BOT_SELF_MODE', false),
-        maxCommandsPerMinute: this.getEnvNumber('BOT_MAX_COMMANDS_PER_MINUTE', 60),
-        cooldownMs: this.getEnvNumber('BOT_COOLDOWN_MS', 10000),
-        maintenance: this.getEnvBoolean('BOT_MAINTENANCE', false),
-        autoReconnect: this.getEnvBoolean('BOT_AUTO_RECONNECT', true),
-        sessionPath: this.getEnvString('BOT_SESSION_PATH', './sessions')!,
+        prefix: this.env.BOT_PREFIX.startsWith('^') ? [this.env.BOT_PREFIX] : this.env.BOT_PREFIX.split(''),
+        mode: 'public',
+        selfMode: this.env.SELF_OWNER,
+        maxCommandsPerMinute: 60,
+        cooldownMs: this.env.BOT_COOLDOWN_MS,
+        maintenance: false,
+        autoReconnect: true,
+        sessionPath: './sessions',
         authAdapter: {
           default: {
-            authDir: this.getEnvString('BOT_AUTH_DIR', './auth')!
+            authDir: './auth'
           }
         }
       },
@@ -248,16 +254,16 @@ export class ConfigManager {
       // AI Services
       ai: {
         google: {
-          apiKey: this.getEnvString('GOOGLE_GEMINI_API_KEY'),
-          model: this.getEnvString('GOOGLE_GEMINI_MODEL', 'gemini-pro')!,
-          maxTokens: this.getEnvNumber('GOOGLE_GEMINI_MAX_TOKENS', 2048),
-          temperature: this.getEnvNumber('GOOGLE_GEMINI_TEMPERATURE', 0.7)
+          apiKey: this.env.GOOGLE_GEMINI_API_KEY,
+          model: this.env.GEMINI_MODEL,
+          maxTokens: this.env.GEMINI_MAX_TOKENS,
+          temperature: this.env.GEMINI_TEMP
         },
 
         summarization: {
-          SUMMARIZE_THRESHOLD: 16,
-          MESSAGES_TO_SUMMARIZE: 10,
-          HISTORY_PRUNE_LENGTH: 6
+          SUMMARIZE_THRESHOLD: this.env.AI_SUMMARIZE_THRESHOLD,
+          MESSAGES_TO_SUMMARIZE: this.env.AI_MESSAGES_TO_SUMMARIZE,
+          HISTORY_PRUNE_LENGTH: this.env.AI_HISTORY_PRUNE_LENGTH
         },
         aiKeywords: []
       },
@@ -265,46 +271,46 @@ export class ConfigManager {
       // Payment Configuration
       payment: {
         stripe: {
-          secretKey: this.getEnvString('STRIPE_SECRET_KEY'),
-          publishableKey: this.getEnvString('STRIPE_PUBLISHABLE_KEY'),
-          webhookSecret: this.getEnvString('STRIPE_WEBHOOK_SECRET'),
-          currency: this.getEnvString('STRIPE_CURRENCY', 'USD')!
+          secretKey: this.env.STRIPE_SECRET_KEY,
+          publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+          webhookSecret: this.env.STRIPE_WEBHOOK_SECRET,
+          currency: 'USD'
         },
         premium: {
-          enabled: this.getEnvBoolean('PREMIUM_ENABLED', true),
-          monthlyPrice: this.getEnvNumber('PREMIUM_PRICE_MONTHLY', 4.99),
-          yearlyPrice: this.getEnvNumber('PREMIUM_PRICE_YEARLY', 49.99),
-          trialDays: this.getEnvNumber('PREMIUM_TRIAL_DAYS', 7)
+          enabled: true,
+          monthlyPrice: 4.99,
+          yearlyPrice: 49.99,
+          trialDays: 7
         }
       },
 
       // Monitoring & Analytics
       monitoring: {
-        enabled: this.getEnvBoolean('ANALYTICS_ENABLED', true),
-        metricsPort: this.getEnvNumber('METRICS_PORT', 9090),
-        healthCheckEnabled: this.getEnvBoolean('HEALTH_CHECK_ENABLED', true),
-        logLevel: this.getEnvString('LOG_LEVEL', 'info')!,
-        sentryDsn: this.getEnvString('SENTRY_DSN'),
-        enablePrometheus: this.getEnvBoolean('ENABLE_PROMETHEUS', false)
+        enabled: true,
+        metricsPort: 9090,
+        healthCheckEnabled: true,
+        logLevel: 'info',
+        sentryDsn: process.env.SENTRY_DSN,
+        enablePrometheus: false
       },
 
       // Feature Flags
       features: {
-        aiCommands: this.getEnvBoolean('FEATURE_AI_COMMANDS', true),
-        downloadCommands: this.getEnvBoolean('FEATURE_DOWNLOAD_COMMANDS', true),
-        gameCommands: this.getEnvBoolean('FEATURE_GAME_COMMANDS', true),
-        moderationCommands: this.getEnvBoolean('FEATURE_MODERATION_COMMANDS', true),
-        analyticsTracking: this.getEnvBoolean('FEATURE_ANALYTICS_TRACKING', true),
-        websocketEnabled: this.getEnvBoolean('FEATURE_WEBSOCKET', true)
+        aiCommands: true,
+        downloadCommands: true,
+        gameCommands: true,
+        moderationCommands: true,
+        analyticsTracking: true,
+        websocketEnabled: true
       },
 
       // Memory Management
       memory: {
-        maxChatHistory: this.getEnvNumber('MAX_CHAT_HISTORY', 50),
-        chatHistoryTTL: this.getEnvNumber('CHAT_HISTORY_TTL', 3600000), // 1 hour
-        cacheMaxSize: this.getEnvNumber('CACHE_MAX_SIZE', 1000),
-        cleanupInterval: this.getEnvNumber('CLEANUP_INTERVAL', 300000), // 5 minutes
-        maxMemoryUsage: this.getEnvNumber('MAX_MEMORY_USAGE', 512) // MB
+        maxChatHistory: 50,
+        chatHistoryTTL: 3600000, // 1 hour
+        cacheMaxSize: 1000,
+        cleanupInterval: 300000, // 5 minutes
+        maxMemoryUsage: 512 // MB
       }
     };
 
@@ -327,90 +333,28 @@ export class ConfigManager {
   }
 
   validateConfiguration() {
-    /**
-     * IMPORTANT: Configuration Hierarchy
-     *
-     * 1. INFRASTRUCTURE (validated here) - Platform operator only
-     *    - JWT_SECRET: Required for authentication
-     *    - REDIS_URL: Optional in development, required in production
-     *
-     * 2. TENANT SETTINGS (Firestore) - Customer controlled
-     *    - ownerNumber, botDefaults, features, etc.
-     *    - Managed via TenantConfigService, NOT env vars
-     *
-     * 3. BOT SETTINGS (Firestore) - Per-bot configuration
-     *    - prefix, mode, aiEnabled, etc.
-     *    - Stored in tenants/{tenantId}/bots/{botId}
-     */
-
     // Only require JWT_SECRET for auth infrastructure
     const required: string[] = [];
 
-    // JWT_SECRET is required in production and development, but optional in tests
     if (this.environment !== 'test') {
-      required.push('JWT_SECRET');
+      if (!this.env.JWT_SECRET || this.env.JWT_SECRET === 'secret') {
+        logger.warn('⚠️ JWT_SECRET is missing or using default value!');
+      }
     }
 
-    // Redis is required in production but optional in development
-    if (this.environment === 'production') {
-      required.push('REDIS_URL');
-    }
-
-    const missing = required.filter(key => !process.env[key]);
-
-    if (missing.length > 0) {
-      logger.error('❌ Missing required environment variables:', { missing });
-      throw new Error(`Missing required configuration: ${missing.join(', ')}`);
-    }
-
-    // Validate JWT secret strength
-    if (this.config.auth.jwtSecret && this.config.auth.jwtSecret.length < 32) {
-      logger.warn('⚠️ JWT secret is too short. Use at least 32 characters.');
+    if (this.environment === 'production' && !this.env.REDIS_URL) {
+      logger.error('❌ REDIS_URL is required in production');
+      throw new Error('REDIS_URL is required in production');
     }
 
     // If REDIS_URL is missing but we have host/port, construct it
     if (!this.config.redis.url && this.config.redis.host) {
       const auth = this.config.redis.password ? `:${this.config.redis.password}@` : '';
       this.config.redis.url = `redis://${auth}${this.config.redis.host}:${this.config.redis.port}`;
-      process.env.REDIS_URL = this.config.redis.url; // Export back to env for validator and other libs
-      logger.info('🔗 Constructed and exported REDIS_URL from host and port configuration');
-    }
-
-    // Warn about missing optional but recommended vars
-    const recommended = ['REDIS_URL', 'GOOGLE_GEMINI_API_KEY'];
-    const missingRecommended = recommended.filter(key => !process.env[key]);
-    if (missingRecommended.length > 0) {
-      logger.warn('⚠️ Missing recommended environment variables:', { missingRecommended });
+      logger.info('🔗 Constructed internal REDIS_URL from host and port configuration');
     }
 
     logger.info('✅ Configuration validation passed');
-  }
-
-  getEnvString(key: string, defaultValue: string | null = null): string | undefined {
-    const value = process.env[key];
-    if (!value && defaultValue === null) {
-      return undefined;
-    }
-    return value || defaultValue!;
-  }
-
-  getEnvNumber(key: string, defaultValue: number): number {
-    const value = process.env[key];
-    if (!value) return defaultValue;
-    const parsed = parseInt(value, 10);
-    return isNaN(parsed) ? defaultValue : parsed;
-  }
-
-  getEnvBoolean(key: string, defaultValue: boolean = false): boolean {
-    const value = process.env[key];
-    if (!value) return defaultValue;
-    return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
-  }
-
-  getEnvArray(key: string, defaultValue: string[] = []): string[] {
-    const value = process.env[key];
-    if (!value) return defaultValue;
-    return value.split(',').map(item => item.trim());
   }
 
   get(path: string): any {
@@ -452,43 +396,27 @@ export class ConfigManager {
     return result;
   }
 
-  // Dynamic configuration updates
-  updateConfig(path: string, value: any) {
-    this.set(path, value);
-    logger.info(`Configuration updated: ${path} = ${value}`);
-  }
-
-  // Export configuration for external use
   export(): Config {
     return JSON.parse(JSON.stringify(this.config));
   }
 
-  // Get safe configuration (without sensitive data)
   getSafeConfig(): Partial<Config> {
     const safe = JSON.parse(JSON.stringify(this.config));
-
-    // Remove sensitive data
     if (safe.auth) {
       delete safe.auth.jwtSecret;
       delete safe.auth.refreshSecret;
       delete safe.auth.sessionSecret;
     }
-    if (safe.ai) {
-      delete safe.ai.google?.apiKey;
-
+    if (safe.ai && safe.ai.google) {
+      delete safe.ai.google.apiKey;
     }
-    if (safe.payment) {
-      delete safe.payment.stripe?.secretKey;
-      delete safe.payment.stripe?.webhookSecret;
+    if (safe.payment && safe.payment.stripe) {
+      delete safe.payment.stripe.secretKey;
+      delete safe.payment.stripe.webhookSecret;
     }
-    if (safe.monitoring) {
-      delete safe.monitoring.sentryDsn;
-    }
-
     return safe;
   }
 }
 
-// Export singleton instance
 const configManager = new ConfigManager();
 export default configManager;

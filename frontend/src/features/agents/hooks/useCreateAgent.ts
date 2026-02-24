@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/features/auth';
 import { getClientFirestore } from '@/lib/firebase/client';
-import { 
-    runTransaction, 
-    doc, 
-    collection, 
+import {
+    runTransaction,
+    doc,
+    collection,
     serverTimestamp,
     type Transaction
 } from 'firebase/firestore';
@@ -43,7 +43,7 @@ export function useCreateAgent() {
         }
 
         const tenantId = user.tenantId || `user_${user.id}`;
-        const tier = user.planTier || 'starter';
+        const tier = user.plan || 'starter';
         const limit = TIER_LIMITS[tier];
 
         setIsLoading(true);
@@ -51,12 +51,12 @@ export function useCreateAgent() {
 
         try {
             const agentId = `agent_${Math.random().toString(36).substring(2, 11)}`;
-            
+
             await runTransaction(db, async (transaction: Transaction) => {
                 // Check current agent count for the tenant
                 const counterRef = doc(db, `tenants/${tenantId}/metadata/counters`);
                 const counterSnap = await transaction.get(counterRef);
-                
+
                 const currentCount = counterSnap.exists() ? counterSnap.data().agentCount || 0 : 0;
 
                 if (currentCount >= limit) {
@@ -70,7 +70,7 @@ export function useCreateAgent() {
                     ...input,
                     id: agentId,
                     tenantId,
-                    planTier: tier,
+                    plan: tier,
                     status: 'active',
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp(),
@@ -87,14 +87,14 @@ export function useCreateAgent() {
             };
         } catch (error: any) {
             logger.error('Failed to create agent:', error);
-            
+
             const isLimitError = error.message.includes('Tier limit reached');
-            
+
             return {
                 success: false,
-                error: { 
-                    code: isLimitError ? 'tier_limit_reached' : 'internal_error', 
-                    message: error.message || 'Failed to create agent' 
+                error: {
+                    code: isLimitError ? 'tier_limit_reached' : 'internal_error',
+                    message: error.message || 'Failed to create agent'
                 }
             };
         } finally {

@@ -51,7 +51,6 @@ describe('MultiTenantService', () => {
                 id: 'tenant-1',
                 name: 'Test Tenant',
                 plan: 'pro',
-                planTier: 'pro',
                 status: 'active',
                 subscriptionStatus: 'active',
                 createdAt: new Date(),
@@ -76,7 +75,6 @@ describe('MultiTenantService', () => {
                 id: 'tenant-1',
                 name: 'Test Tenant',
                 plan: 'starter',
-                planTier: 'starter',
                 status: 'active',
                 subscriptionStatus: 'active',
                 createdAt: new Date(),
@@ -100,13 +98,12 @@ describe('MultiTenantService', () => {
                 id: 'tenant-1',
                 name: 'Test Tenant',
                 plan: 'starter',
-                planTier: 'starter',
                 status: 'active',
                 subscriptionStatus: 'active',
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 // missing settings
-                settings: { }
+                settings: {}
             });
 
             mockFirebaseService.getCollection.mockResolvedValueOnce([

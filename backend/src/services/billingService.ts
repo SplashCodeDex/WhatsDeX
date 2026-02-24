@@ -1,6 +1,6 @@
 /**
  * Billing Service
- * 
+ *
  * Business logic layer using Result pattern for error handling
  */
 
@@ -119,6 +119,9 @@ export class BillingService {
       return success({ url: session.url });
     } catch (error: unknown) {
       if (error instanceof Error) {
+        if (error.name === 'ZodError') {
+          return failure(AppError.badRequest('Validation failed', (error as any).errors));
+        }
         logger.error('Error creating checkout session', { error: error.message });
         return failure(AppError.internal(error.message));
       }
@@ -132,15 +135,15 @@ export class BillingService {
   async getSubscription(tenantId: string): Promise<Result<SubscriptionInfoResponse, AppError>> {
     try {
       const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-      
+
       if (!tenantDoc.exists) {
         return failure(AppError.notFound('Tenant not found'));
       }
 
       const data = tenantDoc.data()!;
-      
+
       const subscriptionInfo: SubscriptionInfoResponse = {
-        planTier: data.planTier || 'starter',
+        plan: data.plan || 'starter',
         status: data.subscriptionStatus || 'trialing',
         trialEndsAt: data.trialEndsAt ? (data.trialEndsAt as any).toDate().toISOString() : null,
         currentPeriodEnd: data.currentPeriodEnd ? (data.currentPeriodEnd as any).toDate().toISOString() : null,
@@ -165,7 +168,7 @@ export class BillingService {
   async getInvoices(tenantId: string): Promise<Result<InvoiceResponse[], AppError>> {
     try {
       const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-      
+
       if (!tenantDoc.exists) {
         return failure(AppError.notFound('Tenant not found'));
       }
@@ -196,7 +199,7 @@ export class BillingService {
           invoiceUrl: invoice.hosted_invoice_url || invoice.invoice_pdf || '',
           description: invoice.lines.data[0]?.description || 'Subscription payment',
         };
-        
+
         // Validate each invoice with Zod
         return InvoiceResponseSchema.parse(invoiceData);
       });
@@ -217,7 +220,7 @@ export class BillingService {
   async getPaymentMethods(tenantId: string): Promise<Result<PaymentMethodResponse[], AppError>> {
     try {
       const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-      
+
       if (!tenantDoc.exists) {
         return failure(AppError.notFound('Tenant not found'));
       }
@@ -251,7 +254,7 @@ export class BillingService {
           expiryYear: pm.card?.exp_year || 2099,
           isDefault: pm.id === defaultPaymentMethodId,
         };
-        
+
         // Validate each payment method with Zod
         return PaymentMethodResponseSchema.parse(methodData);
       });
@@ -269,11 +272,30 @@ export class BillingService {
   /**
    * Delete a payment method
    */
-  async deletePaymentMethod(paymentMethodId: string): Promise<Result<{ message: string }, AppError>> {
+  async deletePaymentMethod(tenantId: string, paymentMethodId: string): Promise<Result<{ message: string }, AppError>> {
     try {
       const stripe = stripeService.stripe;
       if (!stripe) {
         return failure(AppError.serviceUnavailable('Stripe service not initialized'));
+      }
+
+      // Ownership check: Get tenant to get stripeCustomerId
+      const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+      if (!tenantDoc.exists) {
+        return failure(AppError.notFound('Tenant not found'));
+      }
+      const tenantData = tenantDoc.data()!;
+      const stripeCustomerId = tenantData.stripeCustomerId;
+
+      if (!stripeCustomerId) {
+        return failure(AppError.forbidden('Tenant has no associated billing account'));
+      }
+
+      // Retrieve payment method to verify customer ownership
+      const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+      if (paymentMethod.customer !== stripeCustomerId) {
+        logger.warn('Forbidden attempt to delete payment method', { tenantId, paymentMethodId });
+        return failure(AppError.forbidden('You do not have permission to delete this payment method'));
       }
 
       await stripe.paymentMethods.detach(paymentMethodId);

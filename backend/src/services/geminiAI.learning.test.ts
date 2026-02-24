@@ -42,7 +42,7 @@ vi.mock('./gemini.js', () => {
     getChatCompletion: vi.fn(),
   };
   return {
-    default: vi.fn().mockImplementation(function() {
+    default: vi.fn().mockImplementation(function () {
       return mockGemini;
     }),
   };
@@ -63,7 +63,7 @@ describe('GeminiAI.learnFromInteraction', () => {
     vi.clearAllMocks();
     // @ts-ignore
     ai = new GeminiAI({});
-    
+
     // Default mock for extractFacts (it uses gemini.getChatCompletion internally)
     // For TDD, we'll mock the whole AI behavior or just verify calls to dependencies
   });
@@ -72,7 +72,7 @@ describe('GeminiAI.learnFromInteraction', () => {
     const userId = 'user-123';
     const tenantId = 'tenant-456';
     const message = 'I love drinking cold brew coffee in the morning.';
-    
+
     // Mock extractFacts (internal call to AI)
     // We can't easily mock private methods, but extractFacts calls gemini.getChatCompletion
     // So we'll mock that.
@@ -80,7 +80,7 @@ describe('GeminiAI.learnFromInteraction', () => {
       facts: ['User likes cold brew coffee'],
       preferences: { morning_drink: 'cold brew' }
     }));
-    
+
     // @ts-ignore - access private gemini for mocking
     ai.gemini.getChatCompletion = mockChatCompletion;
 
@@ -92,10 +92,10 @@ describe('GeminiAI.learnFromInteraction', () => {
     });
 
     await ai.learnFromInteraction(
-      { tenantId } as any, 
-      userId, 
-      message, 
-      { confidence: 0.9 } as any, 
+      { tenantId } as any,
+      userId,
+      message,
+      { confidence: 0.9 } as any,
       {} as any
     );
 
@@ -127,7 +127,7 @@ describe('GeminiAI.processOmnichannelMessage - Fact Injection', () => {
     const botId = 'bot-789';
     const userId = 'user-123';
     const messageText = 'What should I drink?';
-    
+
     const mockMessage = {
       id: 'msg-1',
       platform: 'whatsapp',
@@ -138,13 +138,13 @@ describe('GeminiAI.processOmnichannelMessage - Fact Injection', () => {
     };
 
     // Mock tenant and learning data
-    (multiTenantService.getTenant as any).mockResolvedValue({ success: true, data: { planTier: 'enterprise' } });
+    (multiTenantService.getTenant as any).mockResolvedValue({ success: true, data: { plan: 'enterprise' } });
     (firebaseService.getDoc as any).mockResolvedValue({
       userId,
       facts: [{ content: 'User likes cold brew coffee' }],
       preferences: { morning_drink: 'cold brew' }
     });
-    
+
     (memoryService.retrieveRelevantContext as any).mockResolvedValue({ success: true, data: [] });
     (databaseService.bot.get as any).mockResolvedValue({ aiPersonality: 'a helpful bot' });
 
@@ -157,7 +157,7 @@ describe('GeminiAI.processOmnichannelMessage - Fact Injection', () => {
     // Verify that the prompt passed to execute contains the learned facts
     // Actually, execute takes a callback. We need to verify what happens inside that callback.
     // In our implementation, buildGenericContext is called first.
-    
+
     expect(firebaseService.getDoc).toHaveBeenCalledWith('learning', userId, tenantId);
   });
 });

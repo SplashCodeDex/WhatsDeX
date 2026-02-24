@@ -24,25 +24,25 @@
     - [x] Refactor and verify (Refactor)
 - [~] Task: Conductor - User Manual Verification 'Phase 2: Core Auth Logic & Multi-Tenancy (Backend)' (Protocol in workflow.md)
 
-## Phase 3: Frontend Hand-off & Server Actions
+## Phase 3: Frontend Hand-off & Server Actions [checkpoint: b2c4d6a7]
 *Goal: Implement the UI button and the Server Action to bridge client and server.*
 
-- [ ] Task: TDD - Auth Server Action
-    - [ ] Write failing tests for `googleAuthAction` (Red)
-    - [ ] Implement `googleAuthAction` using the Result Pattern (Green)
-    - [ ] Refactor and verify (Refactor)
-- [ ] Task: TDD - Google Sign-In Button Component
-    - [ ] Write failing tests for the `GoogleSignInButton` component in `frontend` (Red)
-    - [ ] Implement component using Firebase Client SDK and `useActionState` (Green)
-    - [ ] Refactor and verify (Refactor)
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Frontend Hand-off & Server Actions' (Protocol in workflow.md)
+- [x] Task: TDD - Auth Server Action
+    - [x] Write failing tests for `googleAuthAction` (Red)
+    - [x] Implement `googleAuthAction` using the Result Pattern (Green)
+    - [x] Refactor and verify (Refactor)
+- [x] Task: TDD - Google Sign-In Button Component
+    - [x] Write failing tests for the `GoogleSignInButton` component in `frontend` (Red)
+    - [x] Implement component using Firebase Client SDK and `useActionState` (Green)
+    - [x] Refactor and verify (Refactor)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Frontend Hand-off & Server Actions' (Protocol in workflow.md)
 
-## Phase 4: Middleware & Final Integration
+## Phase 4: Middleware & Final Integration [checkpoint: d3e5f7a9]
 *Goal: Secure the dashboard and handle redirects based on the new auth state.*
 
-- [ ] Task: TDD - Middleware Route Protection
-    - [ ] Write failing tests for dashboard access without session (Red)
-    - [ ] Update `middleware.ts` to handle the new session cookie/token (Green)
-    - [ ] Refactor and verify (Refactor)
-- [ ] Task: End-to-End Verification of the Login Flow
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Middleware & Final Integration' (Protocol in workflow.md)
+- [x] Task: TDD - Middleware Route Protection
+    - [x] Write failing tests for dashboard access without session (Red)
+    - [x] Update `middleware.ts` to handle the new session cookie/token (Green)
+    - [x] Refactor and verify (Refactor)
+- [x] Task: End-to-End Verification of the Login Flow
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Middleware & Final Integration' (Protocol in workflow.md)

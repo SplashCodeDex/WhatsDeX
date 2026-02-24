@@ -2,7 +2,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { promises as fs } from 'fs';
 import logger from '../utils/logger.js';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 
 /**
  * Media Processing Job Handlers

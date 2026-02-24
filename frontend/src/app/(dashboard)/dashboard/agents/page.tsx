@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-    Bot, 
-    RefreshCw, 
-    User, 
-    Files, 
-    Settings, 
-    Wrench, 
-    Zap, 
-    Shield, 
+import {
+    Bot,
+    RefreshCw,
+    User,
+    Files,
+    Settings,
+    Wrench,
+    Zap,
+    Shield,
     ExternalLink,
     ChevronRight,
     Terminal,
@@ -37,16 +37,16 @@ import { useCreateAgent } from '@/features/agents/hooks/useCreateAgent';
 import { AgentTemplate } from '@/features/agents/types';
 
 export default function AgentsPage() {
-    const { 
-        agentsResult, 
-        agentIdentities, 
-        fetchAgents, 
+    const {
+        agentsResult,
+        agentIdentities,
+        fetchAgents,
         fetchAgentIdentity,
-        isLoading 
+        isLoading
     } = useOmnichannelStore();
     const { user } = useAuth();
     const { createAgent, isLoading: isCreating } = useCreateAgent();
-    
+
     const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -198,7 +198,7 @@ export default function AgentsPage() {
                                         <TabsTrigger value="tools">Tools & Skills</TabsTrigger>
                                         <TabsTrigger value="infra">Infrastructure</TabsTrigger>
                                     </TabsList>
-                                    
+
                                     <TabsContent value="overview" className="space-y-6 pt-6">
                                         <div className="grid gap-4 md:grid-cols-2">
                                             <div className="space-y-4">
@@ -237,7 +237,7 @@ export default function AgentsPage() {
                                                     </div>
                                                     <div className="flex justify-between text-xs">
                                                         <span className="text-muted-foreground">Skill Tier</span>
-                                                        <span className="capitalize">{user?.planTier || 'Starter'}</span>
+                                                        <span className="capitalize">{user?.plan || 'Starter'}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -260,15 +260,15 @@ export default function AgentsPage() {
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-lg font-semibold">Available Intelligence Skills</h3>
                                                 <Badge variant="outline" className="font-mono text-[10px]">
-                                                    {user?.planTier || 'Starter'} Tier
+                                                    {user?.plan || 'Starter'} Tier
                                                 </Badge>
                                             </div>
-                                            <SkillToggle 
-                                                enabledSkills={selectedAgent.skills || []} 
+                                            <SkillToggle
+                                                enabledSkills={selectedAgent.skills || []}
                                                 onToggle={(id, enabled) => {
                                                     toast.info(`${enabled ? 'Enabling' : 'Disabling'} skill: ${id}`);
                                                     // Wiring to backend will happen in next task
-                                                }} 
+                                                }}
                                             />
                                         </div>
                                     </TabsContent>

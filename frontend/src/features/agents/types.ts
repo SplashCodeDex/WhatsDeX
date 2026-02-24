@@ -3,17 +3,17 @@ import { z } from 'zod';
 /**
  * Valid plan tiers for the platform.
  */
-export const PlanTierSchema = z.enum(['starter', 'pro', 'enterprise']);
-export type PlanTier = z.infer<typeof PlanTierSchema>;
+export const PlanSchema = z.enum(['starter', 'pro', 'enterprise']);
+export type PlanTier = z.infer<typeof PlanSchema>;
 
 /**
  * Supported AI models.
  */
 export const AIModelSchema = z.enum([
-    'gemini-1.5-flash', 
-    'gemini-1.5-pro', 
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
     'gemini-2.0-flash',
-    'gpt-4o', 
+    'gpt-4o',
     'claude-3-5-sonnet'
 ]);
 export type AIModel = z.infer<typeof AIModelSchema>;
@@ -28,7 +28,13 @@ export const AgentSchema = z.object({
     systemPrompt: z.string().min(1, 'System prompt is required'),
     model: AIModelSchema,
     skills: z.array(z.string()).default([]),
-    planTier: PlanTierSchema,
+    plan: z.preprocess((val, ctx) => {
+        if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
+        const input = (ctx as any).parent || {};
+        const legacyVal = input.planTier;
+        if (typeof legacyVal === 'string' && ['starter', 'pro', 'enterprise'].includes(legacyVal.toLowerCase())) return legacyVal.toLowerCase();
+        return undefined;
+    }, PlanSchema.default('starter')),
     status: z.enum(['active', 'inactive', 'archived']).default('active'),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -46,7 +52,7 @@ export const AgentTemplateSchema = z.object({
     emoji: z.string(),
     defaultSystemPrompt: z.string(),
     suggestedModel: AIModelSchema,
-    requiredTier: PlanTierSchema,
+    requiredTier: PlanSchema,
 });
 
 export type AgentTemplate = z.infer<typeof AgentTemplateSchema>;
@@ -55,7 +61,7 @@ export type AgentTemplate = z.infer<typeof AgentTemplateSchema>;
  * Billing context for enforcing tier limits.
  */
 export const BillingContextSchema = z.object({
-    planTier: PlanTierSchema,
+    plan: PlanSchema,
     agentCount: z.number().int().min(0),
     agentLimit: z.number().int().min(0),
     channelCount: z.number().int().min(0),

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { 
-    AgentSchema, 
-    AgentTemplateSchema, 
-    BillingContextSchema 
+import {
+    AgentSchema,
+    AgentTemplateSchema,
+    BillingContextSchema
 } from './types';
 
 describe('Agent Schemas', () => {
@@ -15,7 +15,7 @@ describe('Agent Schemas', () => {
                 systemPrompt: 'You are a helpful sales assistant.',
                 model: 'gemini-1.5-pro',
                 skills: ['web_search', 'file_analysis'],
-                planTier: 'pro',
+                plan: 'pro',
                 status: 'active',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -52,7 +52,7 @@ describe('Agent Schemas', () => {
     describe('BillingContextSchema', () => {
         it('should validate valid billing data', () => {
             const validBilling = {
-                planTier: 'starter',
+                plan: 'starter',
                 agentCount: 0,
                 agentLimit: 1,
                 channelCount: 0,
@@ -64,7 +64,7 @@ describe('Agent Schemas', () => {
 
         it('should reject invalid plan tiers', () => {
             const invalidBilling = {
-                planTier: 'super-pro', // Not a valid tier
+                plan: 'super-pro', // Not a valid tier
                 agentCount: 0,
                 agentLimit: 1,
                 channelCount: 0,

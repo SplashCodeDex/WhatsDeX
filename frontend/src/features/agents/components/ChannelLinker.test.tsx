@@ -38,20 +38,20 @@ describe('ChannelLinker', () => {
             isLoading: false,
         });
         (useAuth as any).mockReturnValue({
-            user: { planTier: 'starter' }
+            user: { plan: 'starter' }
         });
     });
 
     it('should render the list of available channels', () => {
         render(<ChannelLinker agentId={mockAgentId} />);
-        
+
         expect(screen.getByText(/whatsapp_1/i)).toBeDefined();
         expect(screen.getByText(/telegram_1/i)).toBeDefined();
     });
 
     it('should show "Linked" status for the correct channel', () => {
         render(<ChannelLinker agentId={mockAgentId} />);
-        
+
         expect(screen.getByText(/Currently Linked to this Brain/i)).toBeDefined();
     });
 

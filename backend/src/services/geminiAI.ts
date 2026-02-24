@@ -88,7 +88,7 @@ export class GeminiAI extends EventEmitter {
       };
 
       const result = await this.processOmnichannelMessage(bot.tenantId, bot.botId, commonMsg);
-      
+
       if (result.success && result.data && result.data.content.text) {
         await ctx.reply(result.data.content.text);
       }
@@ -116,7 +116,7 @@ export class GeminiAI extends EventEmitter {
       // Build context
       const context = await this.buildGenericContext(tenantId, botId, userId, text, message);
       const tenantResult = await multiTenantService.getTenant(tenantId);
-      const planTier = tenantResult.success ? tenantResult.data.planTier : 'starter';
+      const plan = tenantResult.success ? tenantResult.data.plan : 'starter';
 
       // 1. Retrieve Historical Context (RAG) - Scoped
       const historyResult = await memoryService.retrieveRelevantContext(userId, text, { platform, chatId: userId });
@@ -138,21 +138,21 @@ export class GeminiAI extends EventEmitter {
       const botResult = await this.context.multiTenantBotService.getBot(tenantId, botId);
       const botDoc = botResult.success ? botResult.data as any : null;
       const personality = botDoc?.config?.aiPersonality || botDoc?.aiPersonality || 'a professional and helpful assistant';
-      
+
       const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
 Context: Omnichannel Mastermind.
 Current Time: ${new Date().toLocaleString()}
 User: ${JSON.stringify(context.user)}
 Platform: ${message.platform}
-Plan Tier: ${planTier}
+Plan: ${plan}
 ${historicalContext}
 ${toolContext}
 Use the tools provided to fulfill user requests accurately. If a tool result is not what was expected, explain and offer alternatives.`;
 
       // Rule 5+: Semantic Memoization + Tool Loop (Agentic)
       const finalResponse = await this.gemini.getManager().execute(async () => {
-        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform} [Tier: ${planTier}]`);
+        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform} [Plan: ${plan}]`);
 
         // Build history from scoped short-term memory
         const conversationHistory = await this.getScopedConversationMemory(tenantId, platform, userId);
@@ -180,44 +180,44 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
 
           if (response.finish_reason === 'tool_calls' && response.message.tool_calls) {
             messages.push({ role: 'assistant', content: response.message.content || '', tool_calls: response.message.tool_calls });
-            
+
             // 2026 Optimization: Parallel Tool Execution
             const toolResults = await Promise.all(response.message.tool_calls.map(async (toolCall) => {
               try {
                 // Tier Gating Check
-                const isEligible = await skillsManager.isTenantEligible(tenantId, toolCall.function.name, planTier);
-                
+                const isEligible = await skillsManager.isTenantEligible(tenantId, toolCall.function.name, plan);
+
                 if (!isEligible) {
-                  logger.warn(`Tier Gating: Tenant ${tenantId} (${planTier}) denied access to tool ${toolCall.function.name}`);
-                  return { 
-                    role: 'tool', 
-                    tool_call_id: toolCall.id, 
-                    content: `Error: The tool '${toolCall.function.name}' is only available on higher plans. Please suggest the user to upgrade their subscription to access this feature.` 
+                  logger.warn(`Tier Gating: Tenant ${tenantId} (${plan}) denied access to tool ${toolCall.function.name}`);
+                  return {
+                    role: 'tool',
+                    tool_call_id: toolCall.id,
+                    content: `Error: The tool '${toolCall.function.name}' is only available on higher plans. Please suggest the user to upgrade their subscription to access this feature.`
                   };
                 }
 
                 socketService.emitActivity(tenantId, botId, platform, 'tool_start', `Using tool: ${toolCall.function.name}`);
                 const args = JSON.parse(toolCall.function.arguments);
-                const result = await toolRegistry.executeTool(toolCall.function.name, args, { 
+                const result = await toolRegistry.executeTool(toolCall.function.name, args, {
                   ...context,
                   tenantId,
                   botId,
                   platform: message.platform,
-                  userId 
+                  userId
                 });
-                
+
                 socketService.emitActivity(tenantId, botId, platform, 'tool_end', `Tool ${toolCall.function.name} completed.`);
-                return { 
-                  role: 'tool', 
-                  tool_call_id: toolCall.id, 
-                  content: typeof result === 'string' ? result : JSON.stringify(result) 
+                return {
+                  role: 'tool',
+                  tool_call_id: toolCall.id,
+                  content: typeof result === 'string' ? result : JSON.stringify(result)
                 };
               } catch (toolError: any) {
                 socketService.emitActivity(tenantId, botId, platform, 'system', `Tool ${toolCall.function.name} failed.`);
-                return { 
-                  role: 'tool', 
-                  tool_call_id: toolCall.id, 
-                  content: `Error: ${toolError.message}` 
+                return {
+                  role: 'tool',
+                  tool_call_id: toolCall.id,
+                  content: `Error: ${toolError.message}`
                 };
               }
             }));
@@ -285,7 +285,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Omnichannel AI Brain processing error:', err);
-      
+
       // Track failed AI request
       const responseTime = Date.now() - startTime;
       await aiAnalyticsService.trackAIRequest({
@@ -297,7 +297,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         errorMessage: err.message,
         timestamp: new Date()
       });
-      
+
       return { success: false, error: err };
     }
   }

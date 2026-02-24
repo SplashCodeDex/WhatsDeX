@@ -67,7 +67,7 @@ export function BillingSettings() {
             <Rocket className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold capitalize">{subscription.planTier}</div>
+            <div className="text-2xl font-bold capitalize">{subscription.plan}</div>
             <p className="text-xs text-muted-foreground capitalize">
               {subscription.status} Status
             </p>

@@ -1,14 +1,14 @@
 /**
  * Billing Feature Zod Schemas
- * 
+ *
  * Zero-Trust Data Layer: All external data must be validated via Zod
  */
 
 import { z } from 'zod';
 
 // Plan Types
-export const PlanTierSchema = z.enum(['starter', 'pro', 'enterprise']);
-export type PlanTier = z.infer<typeof PlanTierSchema>;
+export const PlanSchema = z.enum(['starter', 'pro', 'enterprise']);
+export type PlanTier = z.infer<typeof PlanSchema>;
 
 export const SubscriptionStatusSchema = z.enum([
   'trialing',
@@ -24,7 +24,13 @@ export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>;
 
 // Subscription Info Schema
 export const SubscriptionInfoSchema = z.object({
-  planTier: PlanTierSchema,
+  plan: z.preprocess((val, ctx) => {
+    if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
+    const input = (ctx as any).parent || {};
+    const legacyVal = input.planTier;
+    if (typeof legacyVal === 'string' && ['starter', 'pro', 'enterprise'].includes(legacyVal.toLowerCase())) return legacyVal.toLowerCase();
+    return undefined;
+  }, PlanSchema.default('starter')),
   status: SubscriptionStatusSchema,
   trialEndsAt: z.string().datetime().nullable(),
   currentPeriodEnd: z.string().datetime().nullable(),
@@ -69,7 +75,7 @@ export const PaymentMethodListSchema = z.array(PaymentMethodSchema);
 
 // Request Schemas
 export const CreateCheckoutSessionRequestSchema = z.object({
-  planId: PlanTierSchema,
+  planId: PlanSchema,
   interval: z.enum(['month', 'year']),
 });
 export type CreateCheckoutSessionRequest = z.infer<typeof CreateCheckoutSessionRequestSchema>;

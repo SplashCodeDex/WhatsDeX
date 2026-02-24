@@ -47,7 +47,6 @@ export class MultiTenantService {
           name: tenantName,
           subdomain: subdomain.toLowerCase(),
           plan: plan.toLowerCase(),
-          planTier: plan.toLowerCase(),
           subscriptionStatus: 'trialing',
           status: 'active',
           ownerId: userId,
@@ -69,7 +68,7 @@ export class MultiTenantService {
           email,
           displayName,
           role: 'owner',
-          planTier: plan.toLowerCase(),
+          plan: plan.toLowerCase(),
           subscriptionStatus: 'trialing',
           trialEndsAt: tenantData.trialEndsAt,
           joinedAt: Timestamp.now(),
@@ -117,7 +116,6 @@ export class MultiTenantService {
         name: tenantData.name || 'New Workspace',
         subdomain: (tenantData.subdomain || tenantData.id).toLowerCase(),
         plan: plan,
-        planTier: plan,
         subscriptionStatus: 'trialing',
         status: 'active',
         ownerId: tenantData.ownerId || '',
@@ -205,7 +203,7 @@ export class MultiTenantService {
     }
 
     const tenant = tenantResult.data;
-    const plan = tenant.planTier || 'starter';
+    const plan = tenant.plan || 'starter';
     const limits = getPlanLimits(plan);
     const maxBots = limits.maxBots;
 

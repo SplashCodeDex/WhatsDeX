@@ -26,7 +26,7 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 describe('useCreateAgent', () => {
-    const mockUser = { id: 'user_123', tenantId: 'tenant_123', planTier: 'starter' };
+    const mockUser = { id: 'user_123', tenantId: 'tenant_123', plan: 'starter' };
     const mockAgentData = {
         name: 'Test Agent',
         emoji: '🤖',
@@ -43,12 +43,12 @@ describe('useCreateAgent', () => {
     it('should fail if user is not authenticated', async () => {
         (useAuth as any).mockReturnValue({ user: null });
         const { result } = renderHook(() => useCreateAgent());
-        
+
         let response: Result<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);
         });
-        
+
         expect(response?.success).toBe(false);
         if (response && !response.success) {
             expect(response.error.code).toBe('unauthorized');
@@ -56,8 +56,8 @@ describe('useCreateAgent', () => {
     });
 
     it('should fail if Starter plan already has 1 agent', async () => {
-        (useAuth as any).mockReturnValue({ user: { ...mockUser, planTier: 'starter' } });
-        
+        (useAuth as any).mockReturnValue({ user: { ...mockUser, plan: 'starter' } });
+
         // Mock transaction to show 1 existing agent
         (runTransaction as any).mockImplementation(async (_db: any, cb: any) => {
             return cb({
@@ -70,7 +70,7 @@ describe('useCreateAgent', () => {
         });
 
         const { result } = renderHook(() => useCreateAgent());
-        
+
         let response: Result<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);
@@ -84,8 +84,8 @@ describe('useCreateAgent', () => {
     });
 
     it('should succeed if Pro plan has < 5 agents', async () => {
-        (useAuth as any).mockReturnValue({ user: { ...mockUser, planTier: 'pro' } });
-        
+        (useAuth as any).mockReturnValue({ user: { ...mockUser, plan: 'pro' } });
+
         // Mock transaction to show 2 existing agents (limit is 5)
         (runTransaction as any).mockImplementation(async (_db: any, cb: any) => {
             return cb({
@@ -99,7 +99,7 @@ describe('useCreateAgent', () => {
         });
 
         const { result } = renderHook(() => useCreateAgent());
-        
+
         let response: Result<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);

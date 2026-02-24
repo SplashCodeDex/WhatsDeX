@@ -9,7 +9,6 @@ export interface TenantDocument {
   name: string;
   subdomain: string;
   plan: 'starter' | 'pro' | 'enterprise';
-  planTier: 'starter' | 'pro' | 'enterprise';
   subscriptionStatus: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'paused';
   status: 'active' | 'suspended' | 'cancelled';
   ownerId: string; // Firebase Auth UID
@@ -33,7 +32,7 @@ export interface TenantUserDocument {
   email: string;
   displayName: string;
   role: 'owner' | 'admin' | 'viewer';
-  planTier: 'starter' | 'pro' | 'enterprise';
+  plan: 'starter' | 'pro' | 'enterprise';
   subscriptionStatus: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'paused';
   trialEndsAt?: Timestamp | Date;
   joinedAt: Timestamp | Date;
@@ -124,7 +123,7 @@ export interface SubscriptionDocument {
   stripeSubscriptionId: string;
   stripeCustomerId: string;
   stripePriceId: string;
-  planTier: 'starter' | 'pro' | 'enterprise';
+  plan: 'starter' | 'pro' | 'enterprise';
   status: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'paused';
   currentPeriodStart: Timestamp | Date;
   currentPeriodEnd: Timestamp | Date;

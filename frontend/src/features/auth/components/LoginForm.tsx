@@ -9,7 +9,10 @@ import { toast } from 'sonner';
 import { Button, Input, PasswordInput, Checkbox } from '@/components/ui';
 import { StaggeredEnter, StaggeredItem } from '@/components/ui/motion';
 import { GoogleIcon } from '@/components/ui/icons';
-import { signIn } from '../actions';
+import { getClientAuth } from '@/lib/firebase/client';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { logger } from '@/lib/logger';
+import { signIn, googleAuthAction } from '../actions';
 
 export function LoginForm() {
     const router = useRouter();
@@ -24,15 +27,45 @@ export function LoginForm() {
             import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
             router.push('/dashboard');
         } else if (state?.success === false && state?.error) {
-             // If field error exists, it's shown inline. If not, toast.
-             if (!state.error.details?.field) {
-                 toast.error('Authentication failed', {
+            // If field error exists, it's shown inline. If not, toast.
+            if (!state.error.details?.field) {
+                toast.error('Authentication failed', {
                     description: state.error.message
-                 });
-             }
+                });
+            }
         }
     }, [state, router]);
-    
+
+    const handleGoogleSignIn = async () => {
+        try {
+            const auth = getClientAuth();
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const idToken = await result.user.getIdToken();
+
+            const actionResult = await googleAuthAction(idToken);
+
+            if (actionResult.success) {
+                toast.success('Signed in with Google!', {
+                    description: 'Redirecting to your dashboard...',
+                });
+                import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
+                router.push('/dashboard');
+            } else {
+                toast.error('Google Sign-In failed', {
+                    description: actionResult.error.message,
+                });
+            }
+        } catch (error: any) {
+            if (error.code !== 'auth/popup-closed-by-user') {
+                toast.error('Google Sign-In error', {
+                    description: 'An unexpected error occurred during Google authentication.',
+                });
+                logger.error('Google Popup Error:', error);
+            }
+        }
+    };
+
     return (
         <StaggeredEnter className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <StaggeredItem className="flex flex-col space-y-2 text-center">
@@ -85,7 +118,7 @@ export function LoginForm() {
                                 disabled={isPending}
                                 key={state ? 'reset' : 'initial'}
                             />
-                             {state?.success === false && state.error.details?.field === 'password' && (
+                            {state?.success === false && state.error.details?.field === 'password' && (
                                 <span className="text-xs text-destructive">{state.error.message}</span>
                             )}
                         </div>
@@ -105,7 +138,7 @@ export function LoginForm() {
                                 Forgot password?
                             </Link>
                         </div>
-                        
+
                         {state?.success === false && !state.error.details?.field && (
                             <div className="text-sm text-destructive text-center">
                                 {state.error.message}
@@ -130,7 +163,13 @@ export function LoginForm() {
                     </div>
                 </div>
 
-                <Button variant="outline" type="button" disabled={isPending} className="w-full">
+                <Button
+                    variant="outline"
+                    type="button"
+                    disabled={isPending}
+                    className="w-full"
+                    onClick={handleGoogleSignIn}
+                >
                     <GoogleIcon className="mr-2 h-4 w-4" />
                     Google
                 </Button>

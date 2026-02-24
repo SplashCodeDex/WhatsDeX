@@ -26,7 +26,7 @@ const TIER_ORDER: Record<PlanTier, number> = {
  */
 export function TemplateSelector({ onSelect, className }: TemplateSelectorProps) {
     const { user } = useAuth();
-    const userTier = user?.planTier || 'starter';
+    const userTier = user?.plan || 'starter';
     const userTierRank = TIER_ORDER[userTier];
 
     return (
@@ -48,10 +48,10 @@ export function TemplateSelector({ onSelect, className }: TemplateSelectorProps)
                             <div className={cn(
                                 "h-1.5 w-full bg-gradient-to-r",
                                 template.requiredTier === 'starter' ? "from-blue-500 to-cyan-400" :
-                                template.requiredTier === 'pro' ? "from-primary-600 to-primary-400" :
-                                "from-purple-600 to-pink-500"
+                                    template.requiredTier === 'pro' ? "from-primary-600 to-primary-400" :
+                                        "from-purple-600 to-pink-500"
                             )} />
-                            
+
                             <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-2xl shadow-inner">

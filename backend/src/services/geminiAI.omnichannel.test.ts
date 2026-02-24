@@ -51,7 +51,7 @@ vi.mock('./multiTenantService.js', () => ({
   multiTenantService: {
     getTenant: vi.fn().mockResolvedValue({
       success: true,
-      data: { planTier: 'starter' }
+      data: { plan: 'starter' }
     })
   }
 }));
@@ -245,11 +245,11 @@ describe('GeminiAI Omnichannel Support', () => {
   it('should prompt for upgrade when a tool is gated by tier', async () => {
     const { multiTenantService } = await import('./multiTenantService.js');
     const { skillsManager } = await import('./skillsManager.js');
-    
+
     // Set plan to starter
     vi.mocked(multiTenantService.getTenant).mockResolvedValueOnce({
       success: true,
-      data: { planTier: 'starter' }
+      data: { plan: 'starter' }
     } as any);
 
     // Mock tool as ineligible for starter

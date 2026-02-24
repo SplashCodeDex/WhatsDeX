@@ -50,65 +50,65 @@ describe('Plan Middleware', () => {
     });
 
     it('should return 401 if tenantId is missing', async () => {
-        req.user = undefined;
-        await checkBotLimit(req as Request, res as Response, next);
-        expect(res.status).toHaveBeenCalledWith(401);
+      req.user = undefined;
+      await checkBotLimit(req as Request, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(401);
     });
 
     it('should return 500 if service fails', async () => {
-        (multiTenantService.canAddBot as any).mockResolvedValue({ success: false, error: new Error('DB Error') });
+      (multiTenantService.canAddBot as any).mockResolvedValue({ success: false, error: new Error('DB Error') });
 
-        await checkBotLimit(req as Request, res as Response, next);
+      await checkBotLimit(req as Request, res as Response, next);
 
-        expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
   describe('checkFeatureAccess', () => {
-      it('should allow access to AI for pro plan', async () => {
-          (multiTenantService.getTenant as any).mockResolvedValue({
-              success: true,
-              data: { planTier: 'pro' }
-          });
-
-          const middleware = checkFeatureAccess('ai');
-          await middleware(req as Request, res as Response, next);
-
-          expect(next).toHaveBeenCalled();
+    it('should allow access to AI for pro plan', async () => {
+      (multiTenantService.getTenant as any).mockResolvedValue({
+        success: true,
+        data: { plan: 'pro' }
       });
 
-      it('should deny access to AI for starter plan', async () => {
-          (multiTenantService.getTenant as any).mockResolvedValue({
-              success: true,
-              data: { planTier: 'starter' }
-          });
+      const middleware = checkFeatureAccess('ai');
+      await middleware(req as Request, res as Response, next);
 
-          const middleware = checkFeatureAccess('ai');
-          await middleware(req as Request, res as Response, next);
+      expect(next).toHaveBeenCalled();
+    });
 
-          expect(res.status).toHaveBeenCalledWith(403);
-          expect(next).not.toHaveBeenCalled();
+    it('should deny access to AI for starter plan', async () => {
+      (multiTenantService.getTenant as any).mockResolvedValue({
+        success: true,
+        data: { plan: 'starter' }
       });
 
-      it('should allow access to backups for all plans', async () => {
-        (multiTenantService.getTenant as any).mockResolvedValue({
-            success: true,
-            data: { planTier: 'starter' }
-        });
+      const middleware = checkFeatureAccess('ai');
+      await middleware(req as Request, res as Response, next);
 
-        const middleware = checkFeatureAccess('backups');
-        await middleware(req as Request, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(next).not.toHaveBeenCalled();
+    });
 
-        expect(next).toHaveBeenCalled();
+    it('should allow access to backups for all plans', async () => {
+      (multiTenantService.getTenant as any).mockResolvedValue({
+        success: true,
+        data: { plan: 'starter' }
       });
 
-      it('should return 500 if tenant fetch fails', async () => {
-          (multiTenantService.getTenant as any).mockResolvedValue({ success: false, error: new Error('DB Error') });
+      const middleware = checkFeatureAccess('backups');
+      await middleware(req as Request, res as Response, next);
 
-          const middleware = checkFeatureAccess('ai');
-          await middleware(req as Request, res as Response, next);
+      expect(next).toHaveBeenCalled();
+    });
 
-          expect(res.status).toHaveBeenCalledWith(500);
-      });
+    it('should return 500 if tenant fetch fails', async () => {
+      (multiTenantService.getTenant as any).mockResolvedValue({ success: false, error: new Error('DB Error') });
+
+      const middleware = checkFeatureAccess('ai');
+      await middleware(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+    });
   });
 });

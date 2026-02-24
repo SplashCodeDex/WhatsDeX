@@ -9,7 +9,7 @@
  */
 
 // Server Actions
-export { signIn, signUp, signOut, requestPasswordReset, resetPassword, getSession } from './actions';
+export { signIn, signUp, googleAuthAction, signOut, requestPasswordReset, resetPassword, getSession } from './actions';
 
 // Components
 export { LoginForm, ForgotPasswordForm, ResetPasswordForm, InteractiveAuthProgressBar, RegisterForm, AnimatedAuthHero, AuthTransitionLayout } from './components';

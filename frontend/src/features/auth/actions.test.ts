@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { signIn, signUp } from './actions';
+import { signIn, signUp, googleAuthAction } from './actions';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { isApiSuccess, isApiError } from '@/types/api';
 
@@ -27,6 +27,7 @@ vi.mock('@/lib/api', () => ({
     AUTH: {
       LOGIN: '/auth/login',
       REGISTER: '/auth/register',
+      GOOGLE: '/auth/google',
     },
   },
 }));
@@ -79,64 +80,64 @@ describe('Auth Server Actions', () => {
     });
 
     it('should return validation error on invalid input', async () => {
-        const formData = new FormData();
-        formData.append('email', 'invalid-email');
-        formData.append('password', '123');
-  
-        const result = await signIn(null, formData);
-  
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.code).toBe('validation_error');
-          expect(result.error.details).toBeDefined();
-          expect(result.error.details?.field).toBeDefined();
-          expect(result.error.details?.fields).toEqual({
-              email: 'invalid-email',
-              password: '123',
-              rememberMe: false
-          });
-        }
-      });
+      const formData = new FormData();
+      formData.append('email', 'invalid-email');
+      formData.append('password', '123');
+
+      const result = await signIn(null, formData);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('validation_error');
+        expect(result.error.details).toBeDefined();
+        expect(result.error.details?.field).toBeDefined();
+        expect(result.error.details?.fields).toEqual({
+          email: 'invalid-email',
+          password: '123',
+          rememberMe: false
+        });
+      }
+    });
 
     it('should preserve fields on api failure', async () => {
-        (api.post as any).mockResolvedValue({
-          success: false,
-          error: { code: 'auth_error', message: 'Invalid credentials' },
+      (api.post as any).mockResolvedValue({
+        success: false,
+        error: { code: 'auth_error', message: 'Invalid credentials' },
+      });
+
+      const formData = new FormData();
+      formData.append('email', 'test@example.com');
+      formData.append('password', 'wrongpassword');
+      formData.append('rememberMe', 'on');
+
+      const result = await signIn(null, formData);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.details?.fields).toEqual({
+          email: 'test@example.com',
+          rememberMe: true
         });
-  
-        const formData = new FormData();
-        formData.append('email', 'test@example.com');
-        formData.append('password', 'wrongpassword');
-        formData.append('rememberMe', 'on');
-  
-        const result = await signIn(null, formData);
-  
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.details?.fields).toEqual({
-              email: 'test@example.com',
-              rememberMe: true
-          });
-        }
+      }
     });
 
     it('should preserve fields on network error', async () => {
-        (api.post as any).mockRejectedValue(new Error('Network failure'));
-  
-        const formData = new FormData();
-        formData.append('email', 'test@example.com');
-        formData.append('password', 'password123');
-  
-        const result = await signIn(null, formData);
-  
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.code).toBe('network_error');
-          expect(result.error.details?.fields).toEqual({
-              email: 'test@example.com',
-              rememberMe: false
-          });
-        }
+      (api.post as any).mockRejectedValue(new Error('Network failure'));
+
+      const formData = new FormData();
+      formData.append('email', 'test@example.com');
+      formData.append('password', 'password123');
+
+      const result = await signIn(null, formData);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('network_error');
+        expect(result.error.details?.fields).toEqual({
+          email: 'test@example.com',
+          rememberMe: false
+        });
+      }
     });
   });
 
@@ -176,76 +177,126 @@ describe('Auth Server Actions', () => {
     });
 
     it('should preserve fields on validation error', async () => {
-        const formData = new FormData();
-        formData.append('firstName', ''); // INVALID: Empty
-        formData.append('lastName', 'Doe');
-        formData.append('email', 'new@example.com');
-        formData.append('password', 'Password123');
-        formData.append('acceptTerms', 'on');
+      const formData = new FormData();
+      formData.append('firstName', ''); // INVALID: Empty
+      formData.append('lastName', 'Doe');
+      formData.append('email', 'new@example.com');
+      formData.append('password', 'Password123');
+      formData.append('acceptTerms', 'on');
 
-        const result = await signUp(null, formData);
+      const result = await signUp(null, formData);
 
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.error.code).toBe('validation_error');
-            expect(result.error.details?.fields).toEqual({
-                firstName: '',
-                lastName: 'Doe',
-                email: 'new@example.com',
-                password: 'Password123',
-                acceptTerms: true
-            });
-        }
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('validation_error');
+        expect(result.error.details?.fields).toEqual({
+          firstName: '',
+          lastName: 'Doe',
+          email: 'new@example.com',
+          password: 'Password123',
+          acceptTerms: true
+        });
+      }
     });
 
     it('should preserve fields on api failure', async () => {
-        (api.post as any).mockResolvedValue({
-            success: false,
-            error: { code: 'email_exists', message: 'Email already in use' },
+      (api.post as any).mockResolvedValue({
+        success: false,
+        error: { code: 'email_exists', message: 'Email already in use' },
+      });
+
+      const formData = new FormData();
+      formData.append('firstName', 'John');
+      formData.append('lastName', 'Doe');
+      formData.append('email', 'existing@example.com');
+      formData.append('password', 'Password123');
+      formData.append('acceptTerms', 'on');
+
+      const result = await signUp(null, formData);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.details?.fields).toEqual({
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'existing@example.com',
+          acceptTerms: true
         });
-
-        const formData = new FormData();
-        formData.append('firstName', 'John');
-        formData.append('lastName', 'Doe');
-        formData.append('email', 'existing@example.com');
-        formData.append('password', 'Password123');
-        formData.append('acceptTerms', 'on');
-
-        const result = await signUp(null, formData);
-
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.error.details?.fields).toEqual({
-                firstName: 'John',
-                lastName: 'Doe',
-                email: 'existing@example.com',
-                acceptTerms: true
-            });
-        }
+      }
     });
 
     it('should preserve fields on network error', async () => {
-        (api.post as any).mockRejectedValue(new Error('Network failure'));
+      (api.post as any).mockRejectedValue(new Error('Network failure'));
 
-        const formData = new FormData();
-        formData.append('firstName', 'John');
-        formData.append('lastName', 'Doe');
-        formData.append('email', 'new@example.com');
-        formData.append('password', 'Password123');
-        formData.append('acceptTerms', 'on');
+      const formData = new FormData();
+      formData.append('firstName', 'John');
+      formData.append('lastName', 'Doe');
+      formData.append('email', 'new@example.com');
+      formData.append('password', 'Password123');
+      formData.append('acceptTerms', 'on');
 
-        const result = await signUp(null, formData);
+      const result = await signUp(null, formData);
 
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.error.code).toBe('network_error');
-            expect(result.error.details?.fields).toEqual({
-                firstName: 'John',
-                lastName: 'Doe',
-                email: 'new@example.com',
-                acceptTerms: true
-            });
-        }
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('network_error');
+        expect(result.error.details?.fields).toEqual({
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'new@example.com',
+          acceptTerms: true
+        });
+      }
+    });
+  });
+
+  describe('googleAuthAction', () => {
+    it('should return success Result on valid Google ID Token', async () => {
+      const mockUser = { id: '1', email: 'test@example.com' };
+      const mockToken = 'mock-session-token';
+
+      (api.post as any).mockResolvedValue({
+        success: true,
+        data: { user: mockUser, token: mockToken },
+      });
+
+      const result = await googleAuthAction('valid-id-token');
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual(mockUser);
+        expect(result.message).toBe('Successfully authenticated with Google');
+      }
+
+      expect(api.post).toHaveBeenCalledWith(
+        API_ENDPOINTS.AUTH.GOOGLE,
+        { idToken: 'valid-id-token' }
+      );
+    });
+
+    it('should return validation error if ID token is missing', async () => {
+      const result = await googleAuthAction('');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('validation_error');
+        expect(result.error.message).toBe('Google ID Token is missing');
+      }
+    });
+
+    it('should return api error on failure', async () => {
+      (api.post as any).mockResolvedValue({
+        success: false,
+        error: { code: 'auth_error', message: 'Token verification failed' },
+      });
+
+      const result = await googleAuthAction('invalid-token');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('auth_error');
+        expect(result.error.message).toBe('Token verification failed');
+      }
     });
   });
 });

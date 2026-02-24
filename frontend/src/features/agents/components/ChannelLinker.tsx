@@ -30,7 +30,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
         fetchChannels();
     }, [fetchChannels]);
 
-    const userTier = user?.planTier || 'starter';
+    const userTier = user?.plan || 'starter';
     const activeLinkedChannels = channels.filter(c => (c as any).linkedAgentId).length;
 
     const handleLink = async (channelId: string) => {
@@ -102,9 +102,9 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                                                     Unlink Agent
                                                 </Button>
                                             ) : (
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
                                                     onClick={() => handleLink(channel.id)}
                                                     disabled={isLinkedToOther}
                                                 >
@@ -140,7 +140,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                             Upgrade Your Plan
                         </DialogTitle>
                         <DialogDescription className="pt-2">
-                            You've reached the active connection limit for your <strong>{userTier}</strong> plan ({getSlotLimit(userTier)} slot). 
+                            You've reached the active connection limit for your <strong>{userTier}</strong> plan ({getSlotLimit(userTier)} slot).
                             Upgrade to Pro or Enterprise to link more agents to more channels simultaneously.
                         </DialogDescription>
                     </DialogHeader>
@@ -159,4 +159,3 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
         </div>
     );
 }
-

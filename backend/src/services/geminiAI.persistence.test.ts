@@ -32,7 +32,7 @@ vi.mock('./memoryService.js', () => ({
 
 vi.mock('./multiTenantService.js', () => ({
   multiTenantService: {
-    getTenant: vi.fn().mockResolvedValue({ success: true, data: { planTier: 'pro' } })
+    getTenant: vi.fn().mockResolvedValue({ success: true, data: { plan: 'pro' } })
   }
 }));
 
@@ -61,7 +61,7 @@ describe('GeminiAI Tool Persistence', () => {
 
   it('should persist tool results and include them in the next call', async () => {
     const { toolRegistry } = await import('./toolRegistry.js');
-    
+
     // 1. Setup a chain of tool calls
     mockGeminiService.getChatCompletionWithTools
       .mockResolvedValueOnce({
@@ -103,7 +103,7 @@ describe('GeminiAI Tool Persistence', () => {
 
     // 3. Verify it was persisted (in the registry's execute method)
     // We check the toolContext in the SECOND call of the loop
-    // But since our loop runs inside one processOmnichannelMessage, 
+    // But since our loop runs inside one processOmnichannelMessage,
     // the systemPrompt is generated ONCE at the start.
     // Chaining across multiple separate messages is what I wanted to test.
 
@@ -132,7 +132,7 @@ describe('GeminiAI Tool Persistence', () => {
     // 5. Verify the system prompt in the second call contained the tool output
     const messagesInLastCall = mockGeminiService.getChatCompletionWithTools.mock.calls[2][0];
     const systemMsg = messagesInLastCall.find((m: any) => m.role === 'system');
-    
+
     expect(systemMsg.content).toContain('RECENT TOOL OUTPUTS');
     expect(systemMsg.content).toContain('youtubevideo');
     expect(systemMsg.content).toContain('https://cdn.com/file.mp4');

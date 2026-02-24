@@ -1,44 +1,38 @@
-import Queue from 'bull';
+import { Queue } from 'bullmq';
 import configManager from '../config/ConfigManager.js';
 import logger from '../utils/logger.js';
 
-
-const config: any = configManager.export();
-
-// Create a reusable connection object
-const redisConnection = {
-  host: config.redis?.host || 'localhost',
-  port: config.redis?.port || 6379,
-  password: config.redis?.password,
+/**
+ * Shared Redis connection options for BullMQ
+ */
+export const redisConnection = {
+  host: configManager.config.redis.host,
+  port: configManager.config.redis.port,
+  password: configManager.config.redis.password,
+  maxRetriesPerRequest: null, // Required by BullMQ
 };
 
-// Create and export the queues
+/**
+ * Image Generation Queue
+ */
 export const imageGenerationQueue = new Queue('image-generation', {
-  redis: redisConnection,
+  connection: redisConnection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 1000,
+    },
+    removeOnComplete: true,
+    removeOnFail: 1000,
+  }
 });
 
+/**
+ * Job Results Queue
+ */
 export const jobResultsQueue = new Queue('job-results', {
-  redis: redisConnection,
+  connection: redisConnection
 });
 
-// You can add more queues here as needed
-// export const videoProcessingQueue = new Queue('video-processing', { redis: redisConnection });
-
-// Add event listeners for logging and debugging (optional but recommended)
-imageGenerationQueue.on('completed', (job, result) => {
-  logger.info(`✅ Job ${job.id} (image-generation) completed successfully.`);
-});
-
-imageGenerationQueue.on('failed', (job, err) => {
-  logger.error(`❌ Job ${job.id} (image-generation) failed with error:`, { error: err.message });
-});
-
-jobResultsQueue.on('completed', (job, result) => {
-  logger.info(`✅ Job ${job.id} (job-results) completed successfully.`);
-});
-
-jobResultsQueue.on('failed', (job, err) => {
-  logger.error(`❌ Job ${job.id} (job-results) failed with error:`, { error: err.message });
-});
-
-logger.info('✅ Bull queues initialized.');
+logger.info('BullMQ Queues initialized with unified Redis connection');

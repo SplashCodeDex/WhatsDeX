@@ -1,20 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { JobQueueService } from './jobQueue.js';
-import Queue from 'bull';
+import { Queue, Worker } from 'bullmq';
 
-// Define the mock queue instance
-const mockQueue = {
-  process: vi.fn(),
-  on: vi.fn(),
-  close: vi.fn(),
-};
-
-// Mock bull
-vi.mock('bull', () => {
+// Mock bullmq
+vi.mock('bullmq', () => {
   return {
-    default: vi.fn().mockImplementation(function() {
-      return mockQueue;
-    })
+    Queue: vi.fn().mockImplementation(() => ({
+      add: vi.fn(),
+      close: vi.fn(),
+    })),
+    Worker: vi.fn().mockImplementation(() => ({
+      on: vi.fn(),
+      close: vi.fn(),
+    })),
   };
 });
 
@@ -26,6 +24,18 @@ vi.mock('../utils/logger.js', () => ({
   },
 }));
 
+vi.mock('../config/ConfigManager.js', () => ({
+  default: {
+    config: {
+      redis: {
+        host: 'localhost',
+        port: 6379,
+        password: '',
+      },
+    },
+  },
+}));
+
 describe('JobQueueService', () => {
   let jobQueueService: JobQueueService;
 
@@ -34,20 +44,22 @@ describe('JobQueueService', () => {
     jobQueueService = new JobQueueService();
   });
 
-  it('should register a processor for a queue', async () => {
+  it('should register a worker for a queue', async () => {
     await jobQueueService.initialize();
-    
+
     const mockHandler = vi.fn();
     jobQueueService.process('ai-processing', mockHandler);
 
-    expect(mockQueue.process).toHaveBeenCalledWith(expect.any(Function));
+    expect(Worker).toHaveBeenCalledWith(
+      'ai-processing',
+      expect.any(Function),
+      expect.objectContaining({ concurrency: 2 })
+    );
   });
 
-  it('should throw error if queue not found during process registration', async () => {
+  it('should initialize queues from config', async () => {
     await jobQueueService.initialize();
-    
-    expect(() => {
-      jobQueueService.process('non-existent-queue', async () => {});
-    }).toThrow(/Queue 'non-existent-queue' not found/);
+    expect(Queue).toHaveBeenCalledWith('ai-processing', expect.any(Object));
+    expect(Queue).toHaveBeenCalledWith('media-processing', expect.any(Object));
   });
 });

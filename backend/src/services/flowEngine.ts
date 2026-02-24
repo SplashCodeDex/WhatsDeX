@@ -16,7 +16,7 @@ interface FlowState {
 export class FlowEngine {
   private static instance: FlowEngine;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): FlowEngine {
     if (!FlowEngine.instance) {
@@ -34,15 +34,15 @@ export class FlowEngine {
       const userId = context.sender?.jid;
       const stateKey = `flow:state:${userId}`;
       const stateResult = await cacheService.get<FlowState>(stateKey);
-      
+
       // 1. Check for active state (Resumption)
       if (stateResult.success && stateResult.data && stateResult.data.flowId === flow.id) {
         logger.info(`Resuming flow '${flow.name}' for user ${userId} from node ${stateResult.data.currentNodeId}`);
         const currentNodeId = stateResult.data.currentNodeId;
-        
+
         // Clear state before resuming (if wait_for_input is reached again, it will be set again)
         await cacheService.delete(stateKey);
-        
+
         await this.executeNodePath(currentNodeId, flow, context);
         return true;
       }
@@ -117,7 +117,7 @@ export class FlowEngine {
       case 'action':
         await this.executeActionNode(node, context);
         break;
-      
+
       case 'logic':
         // logic nodes logic handled in executeNodePath for branching
         break;
@@ -158,10 +158,10 @@ export class FlowEngine {
 
   private async evaluateCondition(node: any, context: any): Promise<boolean> {
     const { data } = node;
-    
+
     if (data.condition === 'is_premium') {
-      const planTier = context.tenant?.planTier || 'starter';
-      return planTier === 'pro' || planTier === 'enterprise';
+      const plan = context.tenant?.plan || 'starter';
+      return plan === 'pro' || plan === 'enterprise';
     }
 
     return false;
@@ -208,7 +208,7 @@ Return ONLY the label of the best matching category (e.g., "${data.options[0]?.l
     if (data.templateId && tenantId) {
       const templateService = TemplateService.getInstance();
       const templateResult = await templateService.getTemplate(tenantId, data.templateId);
-      
+
       if (templateResult.success && templateResult.data) {
         await context.reply(templateResult.data.content);
         return;

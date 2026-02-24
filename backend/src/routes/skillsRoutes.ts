@@ -18,17 +18,17 @@ router.get('/', async (req: Request, res: Response) => {
 
     // Get tenant tier
     const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-    const tier = tenantDoc.data()?.planTier || 'starter';
+    const tier = tenantDoc.data()?.plan || 'starter';
 
     const allSkills = await skillsManager.listAvailableSkills();
-    
+
     const enrichedSkills = await Promise.all(allSkills.map(async (skill) => {
       const isEligible = await skillsManager.isTenantEligible(tenantId, skill.id, tier);
       return {
         ...skill,
         isEligible,
-        requiredTier: ['web-search', 'firecrawl', 'brave-search', 'perplexity'].includes(skill.id) ? 'pro' : 
-                      ['coding-agent', 'custom-hooks'].includes(skill.id) ? 'enterprise' : 'starter'
+        requiredTier: ['web-search', 'firecrawl', 'brave-search', 'perplexity'].includes(skill.id) ? 'pro' :
+          ['coding-agent', 'custom-hooks'].includes(skill.id) ? 'enterprise' : 'starter'
       };
     }));
 

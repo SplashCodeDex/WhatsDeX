@@ -1,4 +1,4 @@
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import GeminiService from '../services/gemini.js';
 import logger from '../utils/logger.js';
 
@@ -406,11 +406,11 @@ Generate a JSON training example with the following format:
 
       // Get real analytics from aiAnalyticsService
       const { aiAnalyticsService } = await import('../services/aiAnalytics.js');
-      
+
       // Extract tenantId from userId (assuming format includes tenant info or we need to query)
       // For now, we'll need tenantId to be part of jobData - this is a requirement
       const tenantId = (jobData as any).tenantId || 'default';
-      
+
       const analyticsResult = await aiAnalyticsService.getPerformanceAnalytics(
         tenantId,
         userId,

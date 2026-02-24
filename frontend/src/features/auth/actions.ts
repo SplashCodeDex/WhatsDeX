@@ -50,7 +50,7 @@ export async function signIn(
             error: {
                 code: 'validation_error',
                 message: firstIssue?.message ?? 'Invalid input',
-                details: { 
+                details: {
                     field: firstIssue?.path[0] as string,
                     fields: rawData // Return back fields
                 },
@@ -72,7 +72,7 @@ export async function signIn(
                 success: false,
                 error: {
                     ...response.error,
-                    details: { 
+                    details: {
                         ...response.error.details,
                         fields: { email, rememberMe } // Return fields on API error too
                     }
@@ -105,9 +105,9 @@ export async function signIn(
                 code: 'network_error',
                 message: 'Unable to connect. Please try again.',
                 details: {
-                    fields: { 
-                        email: formData.get('email'), 
-                        rememberMe: formData.get('rememberMe') === 'on' 
+                    fields: {
+                        email: formData.get('email'),
+                        rememberMe: formData.get('rememberMe') === 'on'
                     }
                 }
             },
@@ -140,7 +140,7 @@ export async function signUp(
             error: {
                 code: 'validation_error',
                 message: firstIssue?.message ?? 'Invalid input',
-                details: { 
+                details: {
                     field: firstIssue?.path[0] as string,
                     fields: rawData
                 },
@@ -207,6 +207,65 @@ export async function signUp(
                         acceptTerms: formData.get('acceptTerms') === 'on'
                     }
                 }
+            },
+        };
+    }
+}
+
+/**
+ * Sign in or sign up with Google
+ */
+export async function googleAuthAction(
+    idToken: string
+): Promise<ActionResult<AuthUser>> {
+    if (!idToken) {
+        return {
+            success: false,
+            error: {
+                code: 'validation_error',
+                message: 'Google ID Token is missing',
+            },
+        };
+    }
+
+    try {
+        // Authenticate with Backend API
+        const response = await api.post<{ user: AuthUser; token: string }>(
+            API_ENDPOINTS.AUTH.GOOGLE,
+            { idToken }
+        );
+
+        if (!response.success) {
+            return {
+                success: false,
+                error: response.error,
+            };
+        }
+
+        const { user, token } = response.data;
+
+        // Set session cookie
+        const cookieStore = await cookies();
+        cookieStore.set(SESSION_COOKIE_NAME, token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: SESSION_MAX_AGE,
+            path: '/',
+        });
+
+        return {
+            success: true,
+            data: user,
+            message: 'Successfully authenticated with Google',
+        };
+    } catch (err) {
+        logger.error('Google Auth error:', { error: err });
+        return {
+            success: false,
+            error: {
+                code: 'network_error',
+                message: 'Unable to connect to authentication service.',
             },
         };
     }

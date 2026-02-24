@@ -13,12 +13,12 @@ describe('TemplateSelector', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useAuth as any).mockReturnValue({ user: { planTier: 'starter' } });
+        (useAuth as any).mockReturnValue({ user: { plan: 'starter' } });
     });
 
     it('should render all templates', () => {
         render(<TemplateSelector onSelect={mockOnSelect} />);
-        
+
         expect(screen.getByText('Support Hero')).toBeDefined();
         expect(screen.getByText('Sales Pro')).toBeDefined();
         expect(screen.getByText('Personal Assistant')).toBeDefined();
@@ -26,7 +26,7 @@ describe('TemplateSelector', () => {
 
     it('should show PRO badge for Sales Pro on starter plan', () => {
         render(<TemplateSelector onSelect={mockOnSelect} />);
-        
+
         // Use getAllByText because multiple elements might contain "PRO" (like descriptions)
         const badges = screen.getAllByText(/PRO/i);
         expect(badges.length).toBeGreaterThan(0);
@@ -34,12 +34,12 @@ describe('TemplateSelector', () => {
 
     it('should call onSelect when a template is clicked', () => {
         render(<TemplateSelector onSelect={mockOnSelect} />);
-        
+
         const supportHero = screen.getByText('Support Hero').closest('button');
         if (supportHero) {
             fireEvent.click(supportHero);
         }
-        
+
         expect(mockOnSelect).toHaveBeenCalledWith(
             expect.objectContaining({ id: 'template_support' })
         );

@@ -9,7 +9,10 @@ import { toast } from 'sonner';
 import { Button, Input, PasswordInput, Checkbox } from '@/components/ui';
 import { StaggeredEnter, StaggeredItem } from '@/components/ui/motion';
 import { GoogleIcon } from '@/components/ui/icons';
-import { signUp } from '../actions';
+import { getClientAuth } from '@/lib/firebase/client';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { logger } from '@/lib/logger';
+import { signUp, googleAuthAction } from '../actions';
 
 export function RegisterForm() {
     const router = useRouter();
@@ -32,6 +35,36 @@ export function RegisterForm() {
             }
         }
     }, [state, router]);
+
+    const handleGoogleSignIn = async () => {
+        try {
+            const auth = getClientAuth();
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const idToken = await result.user.getIdToken();
+
+            const actionResult = await googleAuthAction(idToken);
+
+            if (actionResult.success) {
+                toast.success('Successfully signed in with Google!', {
+                    description: 'Welcome to WhatsDeX! Redirecting...',
+                });
+                import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
+                router.push('/dashboard');
+            } else {
+                toast.error('Google Sign-In failed', {
+                    description: actionResult.error.message,
+                });
+            }
+        } catch (error: any) {
+            if (error.code !== 'auth/popup-closed-by-user') {
+                toast.error('Google Sign-In error', {
+                    description: 'An unexpected error occurred during Google authentication.',
+                });
+                logger.error('Google Popup Error:', error);
+            }
+        }
+    };
 
     return (
         <StaggeredEnter className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
@@ -181,7 +214,13 @@ export function RegisterForm() {
                     </div>
                 </div>
 
-                <Button variant="outline" type="button" disabled={isPending} className="w-full">
+                <Button
+                    variant="outline"
+                    type="button"
+                    disabled={isPending}
+                    className="w-full"
+                    onClick={handleGoogleSignIn}
+                >
                     <GoogleIcon className="mr-2 h-4 w-4" />
                     Google
                 </Button>

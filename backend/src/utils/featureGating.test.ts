@@ -5,7 +5,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 describe('Feature Gating Utility', () => {
   const mockTenant = (overrides: any = {}) => ({
     id: 't1',
-    planTier: 'starter',
+    plan: 'starter',
     subscriptionStatus: 'active',
     ...overrides
   });
@@ -17,20 +17,20 @@ describe('Feature Gating Utility', () => {
     });
 
     it('should allow AI for pro plan', () => {
-      const tenant = mockTenant({ planTier: 'pro' });
+      const tenant = mockTenant({ plan: 'pro' });
       expect(hasFeatureAccess(tenant, 'ai')).toBe(true);
     });
 
     it('should deny AI for starter plan unless enabled', () => {
-      const tenant = mockTenant({ planTier: 'starter' });
+      const tenant = mockTenant({ plan: 'starter' });
       expect(hasFeatureAccess(tenant, 'ai')).toBe(false);
 
-      const tenantEnabled = mockTenant({ planTier: 'starter', settings: { aiEnabled: true } });
+      const tenantEnabled = mockTenant({ plan: 'starter', settings: { aiEnabled: true } });
       expect(hasFeatureAccess(tenantEnabled, 'ai')).toBe(true);
     });
 
     it('should allow backups for all plans', () => {
-      const tenant = mockTenant({ planTier: 'starter' });
+      const tenant = mockTenant({ plan: 'starter' });
       expect(hasFeatureAccess(tenant, 'backups')).toBe(true);
     });
   });
@@ -69,9 +69,9 @@ describe('Feature Gating Utility', () => {
     });
 
     it('should return false if not trialing', () => {
-        const futureDate = new Date(Date.now() + 10000000);
-        const tenant = mockTenant({ subscriptionStatus: 'active', trialEndsAt: futureDate });
-        expect(isTrialActive(tenant)).toBe(false);
+      const futureDate = new Date(Date.now() + 10000000);
+      const tenant = mockTenant({ subscriptionStatus: 'active', trialEndsAt: futureDate });
+      expect(isTrialActive(tenant)).toBe(false);
     });
   });
 });

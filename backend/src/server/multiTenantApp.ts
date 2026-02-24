@@ -174,8 +174,8 @@ export class MultiTenantApp {
     // Public auth routes
     this.app.use('/api/auth', authRoutes);
 
-    // Template routes
-    this.app.use('/api/templates', templateRoutes);
+    // Template routes (Protected)
+    this.app.use('/api/templates', authenticateToken, templateRoutes);
 
     // Analytics routes
     this.app.use('/api/analytics', authenticateToken, analyticsRoutes);
@@ -222,11 +222,11 @@ export class MultiTenantApp {
     this.app.use('/api/billing/webhook', stripeWebhookRoutes);
     this.app.use('/api/billing', authenticateToken, billingRoutes);
 
-    // Error handling
-    this.app.use(errorHandler);
-
     // 404 handler
     this.app.use(notFoundHandler);
+
+    // Error handling (MUST be last)
+    this.app.use(errorHandler);
   }
 
   private async initializeServices(): Promise<void> {

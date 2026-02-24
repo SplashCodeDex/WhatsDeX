@@ -34,7 +34,7 @@ interface SkillToggleProps {
  */
 export function SkillToggle({ enabledSkills, onToggle }: SkillToggleProps) {
     const { user } = useAuth();
-    const userTier = user?.planTier || 'starter';
+    const userTier = user?.plan || 'starter';
 
     return (
         <TooltipProvider>
@@ -44,8 +44,8 @@ export function SkillToggle({ enabledSkills, onToggle }: SkillToggleProps) {
                     const isEnabled = enabledSkills.includes(skill.id);
 
                     return (
-                        <div 
-                            key={skill.id} 
+                        <div
+                            key={skill.id}
                             className={cn(
                                 "flex items-center justify-between space-x-4 rounded-xl border p-4 transition-all",
                                 isAllowed ? "bg-card/50" : "bg-muted/30 opacity-70 grayscale-[0.5]"
@@ -53,7 +53,7 @@ export function SkillToggle({ enabledSkills, onToggle }: SkillToggleProps) {
                         >
                             <div className="flex-1 space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <Label 
+                                    <Label
                                         htmlFor={`skill-${skill.id}`}
                                         className={cn("text-sm font-semibold leading-none", !isAllowed && "text-muted-foreground")}
                                     >

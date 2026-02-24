@@ -5,12 +5,12 @@ import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-    Loader2, 
-    Plus, 
-    MessageSquare, 
-    Edit2, 
-    Trash2, 
+import {
+    Loader2,
+    Plus,
+    MessageSquare,
+    Edit2,
+    Trash2,
     Copy,
     Layout,
     AlertCircle,
@@ -24,7 +24,7 @@ import { useAuth } from '@/features/auth';
 
 /**
  * TemplateManagement Component
- * 
+ *
  * Provides a full UI for managing message templates (CRUD).
  */
 export function TemplateManagement() {
@@ -34,7 +34,7 @@ export function TemplateManagement() {
     const [searchTerm, setSearchText] = useState('');
     const [spinningId, setSpinningId] = useState<string | null>(null);
 
-    const isEnterprise = user?.planTier === 'enterprise';
+    const isEnterprise = user?.plan === 'enterprise';
 
     if (isLoading) {
         return (
@@ -53,7 +53,7 @@ export function TemplateManagement() {
         );
     }
 
-    const filteredTemplates = templates?.filter(t => 
+    const filteredTemplates = templates?.filter(t =>
         t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -90,8 +90,8 @@ export function TemplateManagement() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search templates..." 
+                    <Input
+                        placeholder="Search templates..."
                         className="pl-10 h-10"
                         value={searchTerm}
                         onChange={(e) => setSearchText(e.target.value)}
@@ -125,9 +125,9 @@ export function TemplateManagement() {
                             <div className="relative p-4 rounded-xl bg-muted/30 border border-border/20 text-sm line-clamp-4 min-h-[100px]">
                                 {template.content}
                                 <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button 
-                                        variant="secondary" 
-                                        size="icon" 
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
                                         className="h-7 w-7"
                                         onClick={() => handleSpin(template.id, template.content)}
                                         disabled={spinningId === template.id}
@@ -139,9 +139,9 @@ export function TemplateManagement() {
                                             <Sparkles className="h-3 w-3 text-primary" />
                                         )}
                                     </Button>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
                                         className="h-7 w-7"
                                         onClick={() => handleCopy(template.content)}
                                     >
@@ -179,4 +179,3 @@ export function TemplateManagement() {
         </div>
     );
 }
-

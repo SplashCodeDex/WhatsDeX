@@ -87,7 +87,7 @@ describe('FlowEngine', () => {
       body: 'status',
       reply: mockReply,
       sender: { jid: 'user1' },
-      tenant: { planTier: 'enterprise' }
+      tenant: { plan: 'enterprise' }
     };
 
     const flow: FlowData = {
@@ -119,7 +119,7 @@ describe('FlowEngine', () => {
   it('should execute a Gemini AI node', async () => {
     const mockReply = vi.fn().mockResolvedValue({ success: true });
     const mockProcessMessage = vi.fn().mockResolvedValue({ success: true, data: { content: { text: 'AI Response' } } });
-    
+
     const context: any = {
       body: 'ask ai',
       reply: mockReply,
@@ -156,7 +156,7 @@ describe('FlowEngine', () => {
     const mockReply = vi.fn().mockResolvedValue({ success: true });
     // Mock the specific AI call for routing
     const mockGetChatCompletion = vi.fn().mockResolvedValue('support');
-    
+
     const context: any = {
       body: 'I need help with my account',
       reply: mockReply,
@@ -175,12 +175,14 @@ describe('FlowEngine', () => {
       tenantId: 'tenant1',
       nodes: [
         { id: 'n1', type: 'trigger', data: { keyword: 'I need help with my account' } },
-        { id: 'n2', type: 'ai_router', data: { 
-          options: [
-            { label: 'sales', description: 'User wants to buy something' },
-            { label: 'support', description: 'User has a technical issue' }
-          ]
-        } },
+        {
+          id: 'n2', type: 'ai_router', data: {
+            options: [
+              { label: 'sales', description: 'User wants to buy something' },
+              { label: 'support', description: 'User has a technical issue' }
+            ]
+          }
+        },
         { id: 'n3', type: 'action', data: { message: 'Transferring to Sales...' } },
         { id: 'n4', type: 'action', data: { message: 'Opening Support Ticket...' } }
       ],
@@ -239,11 +241,11 @@ describe('FlowEngine', () => {
     }), expect.any(Number));
 
     // 2. Mock state retrieval for resumption
-    (cacheService.get as any).mockResolvedValue({ 
-      success: true, 
-      data: { flowId: 'flow5', currentNodeId: 'n3' } 
+    (cacheService.get as any).mockResolvedValue({
+      success: true,
+      data: { flowId: 'flow5', currentNodeId: 'n3' }
     });
-    
+
     // 3. Second message
     context.body = 'large';
     await engine.executeFlow(flow, context);

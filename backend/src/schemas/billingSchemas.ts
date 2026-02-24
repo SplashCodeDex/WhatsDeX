@@ -1,14 +1,14 @@
 /**
  * Billing Schemas (Backend)
- * 
+ *
  * Zero-Trust Data Layer: All IO must be validated via Zod
  */
 
 import { z } from 'zod';
 
 // Plan Types
-export const PlanTierSchema = z.enum(['starter', 'pro', 'enterprise']);
-export type PlanTier = z.infer<typeof PlanTierSchema>;
+export const PlanSchema = z.enum(['starter', 'pro', 'enterprise']);
+export type Plan = z.infer<typeof PlanSchema>;
 
 export const SubscriptionStatusSchema = z.enum([
   'trialing',
@@ -24,14 +24,14 @@ export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>;
 
 // Request Schemas
 export const CreateCheckoutSessionRequestSchema = z.object({
-  planId: PlanTierSchema,
+  planId: PlanSchema,
   interval: z.enum(['month', 'year']),
 });
 export type CreateCheckoutSessionRequest = z.infer<typeof CreateCheckoutSessionRequestSchema>;
 
 // Response Schemas
 export const SubscriptionInfoResponseSchema = z.object({
-  planTier: PlanTierSchema,
+  plan: PlanSchema,
   status: SubscriptionStatusSchema,
   trialEndsAt: z.string().nullable(),
   currentPeriodEnd: z.string().nullable(),

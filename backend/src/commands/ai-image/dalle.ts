@@ -14,16 +14,16 @@ export default {
     if (!input)
       return await ctx.reply(
         `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n` +
-          `${formatter.quote(tools.msg.generateCmdExample(ctx.used, 'anime girl with short blue hair'))}\n${formatter.quote(
-            tools.msg.generateNotes([
-              'Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.',
-            ])
-          )}`
+        `${formatter.quote(tools.msg.generateCmdExample(ctx.used, 'anime girl with short blue hair'))}\n${formatter.quote(
+          tools.msg.generateNotes([
+            'Balas atau quote pesan untuk menjadikan teks sebagai input target, jika teks memerlukan baris baru.',
+          ])
+        )}`
       );
 
     try {
-      // Add a job to the image generation queue
-      await imageGenerationQueue.add({
+      // Add a job to the image generation queue (BullMQ signature: add(name, data, options))
+      await imageGenerationQueue.add('generate', {
         input: input,
         userJid: ctx.sender.jid,
         used: ctx.used, // Pass the 'used' context for the reply button

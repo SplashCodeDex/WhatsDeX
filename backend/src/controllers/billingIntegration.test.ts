@@ -24,7 +24,7 @@ vi.mock('../lib/firebase.js', () => ({
     doc: vi.fn().mockReturnThis(),
     get: vi.fn(),
     set: vi.fn(),
-    update: vi.fn(),
+    update: vi.fn().mockResolvedValue({}),
     where: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
   },
@@ -71,9 +71,9 @@ describe('Billing Integration Flow', () => {
       data: [{ id: 'price_123', metadata: { planId: 'pro', type: 'month' } }],
     });
 
-    (stripeService.stripe.checkout.sessions.create as any).mockResolvedValue({ 
-      id: 'cs_123', 
-      url: 'https://stripe.com/checkout' 
+    (stripeService.stripe.checkout.sessions.create as any).mockResolvedValue({
+      id: 'cs_123',
+      url: 'https://stripe.com/checkout'
     });
 
     await createCheckoutSession(mockReq as Request, mockRes as Response);
@@ -94,7 +94,7 @@ describe('Billing Integration Flow', () => {
     (stripeService.stripe.webhooks.constructEvent as any).mockReturnValue({
       id: 'evt_123',
       type: 'checkout.session.completed',
-      data: { 
+      data: {
         object: {
           id: 'cs_123',
           subscription: 'sub_123',
@@ -119,7 +119,7 @@ describe('Billing Integration Flow', () => {
     expect(db.collection).toHaveBeenCalledWith('tenants');
     expect(db.doc).toHaveBeenCalledWith('tenant-123');
     expect(db.update).toHaveBeenCalledWith(expect.objectContaining({
-      planTier: 'pro',
+      plan: 'pro',
       subscriptionStatus: 'trialing',
       stripeSubscriptionId: 'sub_123',
     }));
@@ -130,7 +130,7 @@ describe('Billing Integration Flow', () => {
     expect(db.collection).toHaveBeenCalledWith('subscriptions');
     expect(db.doc).toHaveBeenCalledWith('sub_123');
     expect(db.set).toHaveBeenCalledWith(expect.objectContaining({
-      planTier: 'pro',
+      plan: 'pro',
       status: 'trialing',
       tenantId: 'tenant-123',
     }));

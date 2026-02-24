@@ -167,7 +167,8 @@ export const getPaymentMethods = async (req: Request, res: Response) => {
 export const deletePaymentMethod = async (req: Request, res: Response) => {
   try {
     const paymentMethodId = req.params.paymentMethodId as string;
-    const result = await billingService.deletePaymentMethod(paymentMethodId);
+    const user = (req as any).user;
+    const result = await billingService.deletePaymentMethod(user.tenantId, paymentMethodId);
 
     if (result.success) {
       return res.json({ success: true, data: result.data });

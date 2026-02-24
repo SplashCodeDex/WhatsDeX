@@ -16,7 +16,7 @@ router.get('/status', async (_req: Request, res: Response) => {
       success: true,
       data: {
         gatewayInitialized: gateway.isInitialized(),
-        uptimeMs: Date.now(),
+        uptimeMs: process.uptime() * 1000,
       }
     });
   } catch (error) {

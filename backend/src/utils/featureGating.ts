@@ -14,7 +14,7 @@ export interface PlanLimits {
  * Utility to check if a tenant has access to a specific feature
  */
 export const hasFeatureAccess = (tenant: Tenant, feature: Feature): boolean => {
-  const plan = tenant.planTier || 'starter';
+  const plan = tenant.plan || 'starter';
 
   // Check if trial has expired and status is not active
   if (tenant.subscriptionStatus === 'canceled') return false;
@@ -35,10 +35,10 @@ export const hasFeatureAccess = (tenant: Tenant, feature: Feature): boolean => {
 };
 
 /**
- * Get limits associated with a plan tier
+ * Get limits associated with a plan
  */
-export const getPlanLimits = (planTier: 'starter' | 'pro' | 'enterprise'): PlanLimits => {
-  switch (planTier) {
+export const getPlanLimits = (plan: 'starter' | 'pro' | 'enterprise'): PlanLimits => {
+  switch (plan) {
     case 'enterprise':
       return {
         maxBots: 10,

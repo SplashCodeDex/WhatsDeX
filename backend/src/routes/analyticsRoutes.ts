@@ -8,18 +8,10 @@ const router = express.Router();
  * GET /dashboard
  * Returns aggregated stats for the dashboard
  */
-router.get('/dashboard', authenticateToken, AnalyticsController.getDashboardStats);
-
-/**
- * GET /usage
- * Returns historical usage analytics for charts
- */
-router.get('/usage', authenticateToken, AnalyticsController.getUsageAnalytics);
-
-/**
- * GET /messages
- * Analytics for message volume over time
- */
-router.get('/messages', authenticateToken, AnalyticsController.getMessageAnalytics);
+router.get('/dashboard', AnalyticsController.getDashboardStats);
+// ...
+router.get('/usage', AnalyticsController.getUsageAnalytics);
+// ...
+router.get('/messages', AnalyticsController.getMessageAnalytics);
 
 export default router;

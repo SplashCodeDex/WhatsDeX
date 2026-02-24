@@ -1,4 +1,6 @@
 import logger from '@/utils/logger.js';
+import { db } from '../lib/firebase.js';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 export type PlanTier = 'starter' | 'pro' | 'enterprise';
 
@@ -10,13 +12,13 @@ const TIER_MONTHLY_LIMITS: Record<PlanTier, number> = {
 
 /**
  * Usage Guard Service
- * 
+ *
  * Enforces monthly message volume limits based on the user's billing tier.
  */
 export class UsageGuard {
     private static instance: UsageGuard;
 
-    private constructor() {}
+    private constructor() { }
 
     public static getInstance(): UsageGuard {
         if (!UsageGuard.instance) {
@@ -27,18 +29,36 @@ export class UsageGuard {
 
     /**
      * Determines if a user can send more messages based on their tier and current monthly usage.
-     * @param tier User's billing plan tier
-     * @param currentMonthlyUsage Total messages sent by the user this month
      */
     public canSend(tier: PlanTier, currentMonthlyUsage: number): boolean {
         const limit = TIER_MONTHLY_LIMITS[tier] || TIER_MONTHLY_LIMITS.starter;
-        
+
         if (currentMonthlyUsage >= limit) {
             logger.warn(`Usage limit reached for tier ${tier}. Current: ${currentMonthlyUsage}, Limit: ${limit}`);
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Increments the message usage for a tenant in Firestore.
+     */
+    public async incrementUsage(tenantId: string, amount: number = 1): Promise<void> {
+        const today = new Date().toISOString().split('T')[0];
+        const analyticsRef = db.doc(`tenants/${tenantId}/analytics/${today}`);
+
+        try {
+            await analyticsRef.set({
+                date: today,
+                sent: FieldValue.increment(amount),
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+
+            logger.debug(`Incremented message usage for tenant ${tenantId} by ${amount}`);
+        } catch (error) {
+            logger.error(`Failed to increment usage for tenant ${tenantId}:`, error);
+        }
     }
 
     /**

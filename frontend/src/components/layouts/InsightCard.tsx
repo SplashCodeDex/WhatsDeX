@@ -22,7 +22,7 @@ export function InsightCard({ type }: InsightCardProps) {
             disconnected: bots?.filter(b => b.status !== 'connected').length || 0,
         },
         billing: {
-            plan: subscription?.planTier || 'Starter',
+            plan: subscription?.plan || 'Starter',
             limit: limits?.maxBots || 1,
             status: subscription?.status || 'active',
         },

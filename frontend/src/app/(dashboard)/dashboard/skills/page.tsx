@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-    Zap, 
-    Search, 
-    RefreshCw, 
-    Lock, 
-    CheckCircle2, 
-    Download, 
+import {
+    Zap,
+    Search,
+    RefreshCw,
+    Lock,
+    CheckCircle2,
+    Download,
     Settings2,
     ShieldAlert,
     ExternalLink,
@@ -37,7 +37,7 @@ export default function SkillsStorePage() {
     const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
-    
+
     const [keyDialogOpen, setKeyDialogOpen] = useState(false);
     const [selectedSkillKey, setSelectedSkillKey] = useState<string | null>(null);
     const [apiKey, setApiKey] = useState('');
@@ -52,7 +52,7 @@ export default function SkillsStorePage() {
         handleRefresh();
     }, []);
 
-    const filteredSkills = skillReport?.skills.filter(skill => 
+    const filteredSkills = skillReport?.skills.filter(skill =>
         skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         skill.description.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
@@ -81,7 +81,7 @@ export default function SkillsStorePage() {
         }
     };
 
-    const userTier = user?.planTier || 'starter';
+    const userTier = user?.plan || 'starter';
 
     // Tier gating logic (Pro/Enterprise only skills)
     const isPremiumSkill = (skillId: string) => {
@@ -118,8 +118,8 @@ export default function SkillsStorePage() {
 
             <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input 
-                    placeholder="Search skills (e.g. 'search', 'weather')..." 
+                <Input
+                    placeholder="Search skills (e.g. 'search', 'weather')..."
                     className="pl-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -166,7 +166,7 @@ export default function SkillsStorePage() {
                                     <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
                                         {skill.description}
                                     </p>
-                                    
+
                                     <div className="space-y-2">
                                         {skill.missing.bins.map(bin => (
                                             <div key={bin} className="flex items-center text-[10px] text-destructive">
@@ -187,8 +187,8 @@ export default function SkillsStorePage() {
                                         {accessible ? (
                                             <>
                                                 {isInstalled ? (
-                                                    <Button 
-                                                        variant={skill.disabled ? "default" : "outline"} 
+                                                    <Button
+                                                        variant={skill.disabled ? "default" : "outline"}
                                                         className="flex-1"
                                                         onClick={() => handleToggle(skill.skillKey, skill.disabled)}
                                                     >
@@ -196,8 +196,8 @@ export default function SkillsStorePage() {
                                                     </Button>
                                                 ) : (
                                                     skill.install.length > 0 && skill.install[0] && (
-                                                        <Button 
-                                                            variant="default" 
+                                                        <Button
+                                                            variant="default"
                                                             className="flex-1"
                                                             onClick={() => handleInstall(skill.skillKey, skill.install[0]!.id)}
                                                         >
@@ -207,8 +207,8 @@ export default function SkillsStorePage() {
                                                     )
                                                 )}
                                                 {needsKey && (
-                                                    <Button 
-                                                        variant="ghost" 
+                                                    <Button
+                                                        variant="ghost"
                                                         size="icon"
                                                         onClick={() => { setSelectedSkillKey(skill.skillKey); setKeyDialogOpen(true); }}
                                                         title="Configure API Key"
@@ -224,9 +224,9 @@ export default function SkillsStorePage() {
                                         )}
                                     </div>
                                     {skill.homepage && (
-                                        <a 
-                                            href={skill.homepage} 
-                                            target="_blank" 
+                                        <a
+                                            href={skill.homepage}
+                                            target="_blank"
                                             rel="noreferrer"
                                             className="text-[10px] text-muted-foreground hover:text-primary flex items-center self-center"
                                         >
@@ -251,12 +251,12 @@ export default function SkillsStorePage() {
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
                             <Label htmlFor="apiKey">API Key</Label>
-                            <Input 
-                                id="apiKey" 
-                                type="password" 
-                                placeholder="sk-..." 
-                                value={apiKey} 
-                                onChange={(e) => setApiKey(e.target.value)} 
+                            <Input
+                                id="apiKey"
+                                type="password"
+                                placeholder="sk-..."
+                                value={apiKey}
+                                onChange={(e) => setApiKey(e.target.value)}
                             />
                         </div>
                     </div>

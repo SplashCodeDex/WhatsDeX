@@ -23,9 +23,9 @@ vi.mock('../lib/firebase.js', () => ({
     collection: vi.fn().mockReturnThis(),
     doc: vi.fn().mockReturnThis(),
     get: vi.fn(),
-    set: vi.fn(async () => {}),
+    set: vi.fn(async () => { }),
     update: vi.fn(() => ({
-        catch: vi.fn().mockReturnThis()
+      catch: vi.fn().mockReturnThis()
     })),
     where: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
@@ -101,12 +101,12 @@ describe('StripeWebhookController', () => {
     await handleStripeWebhook(mockReq as Request, mockRes as Response);
 
     expect(mockRes.status).toHaveBeenCalledWith(200);
-    
+
     // Verify Tenant Root update
     expect(db.collection).toHaveBeenCalledWith('tenants');
     expect(db.doc).toHaveBeenCalledWith('tenant-123');
     expect(db.update).toHaveBeenCalledWith(expect.objectContaining({
-      planTier: 'pro',
+      plan: 'pro',
       subscriptionStatus: 'trialing',
     }));
 

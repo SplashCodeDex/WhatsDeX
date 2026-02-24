@@ -10,6 +10,7 @@ import { GeminiAI } from '../services/geminiAI.js';
 import logger from '../utils/logger.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import moment from 'moment-timezone';
+import configManager from '../config/ConfigManager.js';
 
 /**
  * Gaussian Random Utility
@@ -30,9 +31,9 @@ function gaussianRandom(min: number, max: number, skew: number = 1): number {
 }
 
 const redisOptions = {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: Number(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD,
+    host: configManager.config.redis.host,
+    port: configManager.config.redis.port,
+    password: configManager.config.redis.password,
     maxRetriesPerRequest: null,
 };
 

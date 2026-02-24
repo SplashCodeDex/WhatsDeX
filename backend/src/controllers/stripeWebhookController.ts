@@ -91,7 +91,7 @@ const handleCheckoutSessionCompleted = async (session: any) => {
 
   // 1. Update Tenant Root Document
   await db.collection('tenants').doc(tenantId).update({
-    planTier: planId || 'starter',
+    plan: planId || 'starter',
     subscriptionStatus: subscription.status,
     stripeSubscriptionId: subscription.id,
     stripeCustomerId: session.customer as string,
@@ -104,7 +104,7 @@ const handleCheckoutSessionCompleted = async (session: any) => {
     id: subscription.id,
     tenantId,
     userId: userId || null,
-    planTier: planId || 'starter',
+    plan: planId || 'starter',
     status: subscription.status,
     currentPeriodStart: subscription.current_period_start ? Timestamp.fromMillis((subscription as any).current_period_start * 1000) : Timestamp.now(),
     currentPeriodEnd: subscription.current_period_end ? Timestamp.fromMillis((subscription as any).current_period_end * 1000) : Timestamp.now(),
@@ -117,7 +117,7 @@ const handleCheckoutSessionCompleted = async (session: any) => {
   // 3. Sync User Plan Tier if userId is present
   if (userId) {
     await db.collection('tenants').doc(tenantId).collection('users').doc(userId).update({
-      planTier: planId || 'starter',
+      plan: planId || 'starter',
       subscriptionStatus: subscription.status,
       updatedAt: new Date()
     }).catch(e => logger.error('Failed to sync user plan tier', e));
@@ -141,7 +141,7 @@ const handleSubscriptionUpdated = async (subscription: any) => {
 
   // 1. Update Tenant Root
   await db.collection('tenants').doc(targetTenantId).update({
-    planTier: planId || 'starter',
+    plan: planId || 'starter',
     subscriptionStatus: subscription.status,
     trialEndsAt: subscription.trial_end ? Timestamp.fromMillis(subscription.trial_end * 1000) : null,
     updatedAt: new Date(),
@@ -171,7 +171,7 @@ const handleSubscriptionDeleted = async (subscription: any) => {
 
   // 1. Reset Tenant Root
   await tenantDoc.ref.update({
-    planTier: 'starter',
+    plan: 'starter',
     subscriptionStatus: 'canceled',
     updatedAt: new Date(),
   });

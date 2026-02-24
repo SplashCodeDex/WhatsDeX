@@ -3,7 +3,7 @@ import AIProcessor from './aiProcessor.js';
 import MediaProcessor from './mediaProcessor.js';
 import { getStatsAggregatorJob } from './statsAggregatorJob.js';
 import logger from '../utils/logger.js';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 
 interface ProcessorResult {
   success: boolean;
@@ -31,7 +31,7 @@ class JobRegistry {
 
     try {
       logger.info('Registering job processors...');
-      
+
       // Register AI Processor
       this.jobQueue.process('ai-processing', async (job: Job) => {
         const jobName = (job.data as any).jobName || job.name;
@@ -77,10 +77,10 @@ class JobRegistry {
             throw new Error(`Unknown Media job name: ${jobName}`);
         }
       });
-      
+
       // Initialize BullMQ Workers
       getStatsAggregatorJob();
-      
+
       logger.info('All job processors registered successfully');
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));

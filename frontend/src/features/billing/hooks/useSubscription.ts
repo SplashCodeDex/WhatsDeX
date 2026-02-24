@@ -5,7 +5,7 @@ import { api, API_ENDPOINTS } from '@/lib/api';
 import { isApiSuccess } from '@/types';
 
 export interface SubscriptionData {
-  planTier: 'starter' | 'pro' | 'enterprise';
+  plan: 'starter' | 'pro' | 'enterprise';
   status: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'paused';
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
@@ -35,7 +35,7 @@ export function useSubscription() {
     enterprise: { maxBots: 10 },
   };
 
-  const currentLimits = data ? planLimits[data.planTier] : planLimits.starter;
+  const currentLimits = data ? planLimits[data.plan] : planLimits.starter;
 
   return {
     subscription: data,

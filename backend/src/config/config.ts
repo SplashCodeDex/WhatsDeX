@@ -15,13 +15,6 @@ const Formatter: FormatterType = {
   monospace: (text: string) => `\`\`${text}\`\``,
 };
 
-// Environment validation function
-function validateEnvironment() {
-
-}
-
-// Run validation
-validateEnvironment();
 
 // Configuration
 import { configService } from '../services/ConfigService.js';

@@ -25,11 +25,17 @@ export const TenantSchema = z.object({
   id: z.string(),
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   subdomain: z.preprocess((val) => val ?? '', z.string().toLowerCase().optional()),
-  plan: z.preprocess((val) => {
+  plan: z.preprocess((val, ctx) => {
+    // If 'plan' exists and is valid, use it.
     if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
+
+    // Fallback: Check if 'planTier' exists in the original object (accessible via ctx.parent or by handling input as any)
+    const input = (ctx as any).parent || {};
+    const legacyVal = input.planTier;
+    if (typeof legacyVal === 'string' && ['starter', 'pro', 'enterprise'].includes(legacyVal.toLowerCase())) return legacyVal.toLowerCase();
+
     return undefined; // Triggers default('starter')
   }, z.enum(['starter', 'pro', 'enterprise']).default('starter')),
-  planTier: z.enum(['starter', 'pro', 'enterprise']).default('starter'),
   subscriptionStatus: z.enum(['trialing', 'active', 'past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired', 'paused']).default('trialing'),
   status: z.preprocess((val) => {
     if (typeof val === 'string' && ['active', 'suspended', 'cancelled'].includes(val)) return val;
@@ -58,7 +64,13 @@ export const TenantUserSchema = z.object({
   email: z.string().email(),
   displayName: z.string(),
   role: z.enum(['owner', 'admin', 'viewer']),
-  planTier: z.enum(['starter', 'pro', 'enterprise']).default('starter'),
+  plan: z.preprocess((val, ctx) => {
+    if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
+    const input = (ctx as any).parent || {};
+    const legacyVal = input.planTier;
+    if (typeof legacyVal === 'string' && ['starter', 'pro', 'enterprise'].includes(legacyVal.toLowerCase())) return legacyVal.toLowerCase();
+    return undefined;
+  }, z.enum(['starter', 'pro', 'enterprise']).default('starter')),
   subscriptionStatus: z.enum(['trialing', 'active', 'past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired', 'paused']).default('trialing'),
   trialEndsAt: TimestampSchema.nullish(),
   joinedAt: TimestampSchema,
@@ -197,6 +209,8 @@ export const GroupSchema = z.object({
   desc: z.string().optional(),
   participants: z.array(z.string()),
   admins: z.array(z.string()),
+  isBanned: z.boolean().default(false),
+  prefix: z.string().optional(),
   settings: z.object({
     announcement: z.boolean().default(false),
     locked: z.boolean().default(false),
@@ -212,23 +226,7 @@ export const GroupSchema = z.object({
 }).readonly();
 
 export type GroupData = z.infer<typeof GroupSchema>;
-
-/**
- * Bot Group Schema ('tenants/{tenantId}/groups' subcollection) -- LEGACY?
- * Merging with GroupData concept. Keeping consistent naming.
- */
-export const BotGroupSchema = z.object({
-  id: z.string(), // Group JID
-  name: z.string(),
-  isBanned: z.boolean().default(false),
-  prefix: z.string().optional(),
-  welcomeMessage: z.string().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
-  createdAt: TimestampSchema,
-  updatedAt: TimestampSchema
-}).readonly();
-
-export type BotGroup = z.infer<typeof BotGroupSchema>;
+export type BotGroup = GroupData; // Alias for backward compatibility
 
 /**
  * Subscription Schema ('tenants/{tenantId}/subscriptions' subcollection)
@@ -238,7 +236,13 @@ export const SubscriptionSchema = z.object({
   stripeSubscriptionId: z.string(),
   stripeCustomerId: z.string(),
   stripePriceId: z.string(),
-  planTier: z.enum(['starter', 'pro', 'enterprise']),
+  plan: z.preprocess((val, ctx) => {
+    if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
+    const input = (ctx as any).parent || {};
+    const legacyVal = input.planTier;
+    if (typeof legacyVal === 'string' && ['starter', 'pro', 'enterprise'].includes(legacyVal.toLowerCase())) return legacyVal.toLowerCase();
+    return undefined;
+  }, z.enum(['starter', 'pro', 'enterprise']).default('starter')),
   status: z.enum(['trialing', 'active', 'past_due', 'unpaid', 'canceled', 'incomplete', 'incomplete_expired', 'paused']),
   currentPeriodStart: TimestampSchema,
   currentPeriodEnd: TimestampSchema,
