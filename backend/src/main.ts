@@ -33,13 +33,13 @@ async function main() {
         const jobRegistry = new JobRegistry();
         await jobQueueService.initialize();
         await jobRegistry.initialize(jobQueueService);
-        
+
         logger.info('>>> [MASTERMIND] Initializing Campaign Worker...');
         getCampaignWorker();
         logger.info('>>> [MASTERMIND] Campaign Worker call finished.');
 
         // 3. Start Multi-tenant Server
-        if (configService.get('USE_SERVER')) {
+        if (configService.get('system.useServer')) {
             logger.info('>>> [MASTERMIND] USE_SERVER is true. Initializing MultiTenantApp...');
             const app = new MultiTenantApp();
             await app.initialize();

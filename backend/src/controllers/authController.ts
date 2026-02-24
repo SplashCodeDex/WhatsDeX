@@ -170,7 +170,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
@@ -282,7 +282,7 @@ export const signup = async (req: Request, res: Response) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
@@ -397,7 +397,7 @@ export const login = async (req: Request, res: Response) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
@@ -425,7 +425,7 @@ export const logout = (req: Request, res: Response) => {
     res.clearCookie('token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
     });
 
     res.json({ success: true, data: { message: 'Logged out successfully' } });
@@ -461,7 +461,16 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.error('getMe error:', err);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        logger.error('getMe error detail:', {
+            message: err.message,
+            stack: err.stack,
+            userId: req.user?.userId,
+            tenantId: req.user?.tenantId
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve user profile',
+            message: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
     }
 };

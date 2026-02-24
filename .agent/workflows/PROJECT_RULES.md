@@ -108,6 +108,15 @@ See [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE
 - **Zero-Error Policy**: Tests must not only pass but must not emit console warnings (e.g., unhandled rejections).
 - **Critical Path Coverage**: Auth, Payments, and Multi-Tenant routing require mandatory coverage of all logical branches.
 
+### Test Failure Interpretation (The "Question Both Sides" Rule)
+
+**A failing test does NOT always mean the code is broken.** Before changing production code to fix a test, always investigate whether the **test itself** is the problem:
+
+- **Stale Tests**: When a strategy, config, or dependency changes, existing tests may still assert old behavior. The test is the bug, not the code.
+- **Wrong Abstraction**: Tests should verify **contracts** (what), not **implementation details** (how). Example: testing that failover works (contract) rather than that a specific key is returned second (implementation).
+- **Strategy Mismatch**: If code uses `LatencyStrategy` but a test expects `LRU` behavior, **fix the test** — don't change the production strategy to satisfy the test.
+- **Decision Flow**: `Test fails → Verify prod code intent → If prod is correct, update the test → If prod is wrong, fix the prod code.`
+
 ---
 
 ## 8. Frontend Architecture Standards (2026 "Pixel Perfect")

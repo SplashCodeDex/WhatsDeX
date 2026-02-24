@@ -120,7 +120,7 @@ describe('ApiKeyManager', () => {
             }
         });
 
-        it('should prefer least recently used key', async () => {
+        it('should rotate to next key when current key fails', async () => {
             process.env.GOOGLE_GEMINI_API_KEY = '["key1", "key2"]';
 
             const { ApiKeyManager } = await import('./apiKeyManager.js');
@@ -135,16 +135,25 @@ describe('ApiKeyManager', () => {
             const key1Result = manager.getKey();
             expect(key1Result.success).toBe(true);
             if (!key1Result.success) return;
+            const firstKey = key1Result.data;
 
-            // Mark success to keep it healthy
-            manager.markSuccess(key1Result.data);
+            // Mark first key as failed (transient error opens circuit)
+            for (let i = 0; i < 3; i++) {
+                manager.markFailed(firstKey, {
+                    type: 'TRANSIENT',
+                    retryable: true,
+                    cooldownMs: 60_000,
+                    markKeyFailed: true,
+                    markKeyDead: false,
+                });
+            }
 
-            // Get second key - should be different (LRU)
+            // Get second key - should be the OTHER key since first is on cooldown
             const key2Result = manager.getKey();
             expect(key2Result.success).toBe(true);
             if (!key2Result.success) return;
 
-            expect(key2Result.data).not.toBe(key1Result.data);
+            expect(key2Result.data).not.toBe(firstKey);
         });
     });
 

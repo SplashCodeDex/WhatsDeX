@@ -366,9 +366,16 @@ export class ConfigManager {
   }
 
   getNestedValue(obj: any, path: string): any {
-    return path.split('.').reduce((current, key) => {
+    const value = path.split('.').reduce((current, key) => {
       return current && current[key] !== undefined ? current[key] : undefined;
     }, obj);
+
+    // Fallback: If not found in config object, check if it's a flat env key in this.env
+    if (value === undefined && (this.env as any)[path] !== undefined) {
+      return (this.env as any)[path];
+    }
+
+    return value;
   }
 
   setNestedValue(obj: any, path: string, value: any) {

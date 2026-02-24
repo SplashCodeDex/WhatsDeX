@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ApiKeyManager as UniversalManager, ErrorClassification, LatencyStrategy } from '@splashcodex/api-key-manager';
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 import { tmpdir } from 'os';
 import logger from '../utils/logger.js';
@@ -62,6 +62,17 @@ class LocalFileStorage {
             logger.warn('[ApiKeyManager] Failed to write state file:', error);
         }
     }
+
+    static clearState(): void {
+        try {
+            if (existsSync(CONFIG.STATE_FILE)) {
+                unlinkSync(CONFIG.STATE_FILE);
+                logger.info('[ApiKeyManager] Cleared stale key state file for fresh start.');
+            }
+        } catch (error) {
+            logger.warn('[ApiKeyManager] Failed to clear stale state file:', error);
+        }
+    }
 }
 
 // ============================================================================
@@ -73,6 +84,8 @@ export class ApiKeyManager {
     private manager: UniversalManager;
 
     private constructor(apiKeys: string[]) {
+        // Clear stale state so dead keys from a previous session don't block startup.
+        LocalFileStorage.clearState();
         const storage = new LocalFileStorage();
         this.manager = new UniversalManager(apiKeys, {
             storage,

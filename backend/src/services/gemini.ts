@@ -38,23 +38,29 @@ class GeminiService {
     }
     this.keyManager = managerResult.data;
 
-    // Get initial key
+    // Attempt to get an initial key. If none is available (e.g., all keys were
+    // marked dead in a prior session), we defer initialization gracefully.
+    // All actual API calls go through keyManager.execute() which handles
+    // rotation and recovery, so this is safe to defer.
     const keyResult = this.keyManager.getKey();
-    if (!keyResult.success) {
-      throw keyResult.error;
+    if (keyResult.success) {
+      this.currentKey = keyResult.data;
+      this.genAI = new GoogleGenerativeAI(this.currentKey);
+      this.model = this.genAI.getGenerativeModel({
+        model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+      });
+    } else {
+      logger.warn('[GeminiService] No API keys available at startup. AI features will be lazily initialized on first use.');
+      this.currentKey = '';
+      this.genAI = null as any;
+      this.model = null as any;
     }
-    this.currentKey = keyResult.data;
-
-    this.genAI = new GoogleGenerativeAI(this.currentKey);
-    this.model = this.genAI.getGenerativeModel({
-      model: this.config.get('GEMINI_MODEL') || 'gemini-2.5-flash',
-      generationConfig: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-      },
-    });
 
     // Initialize cache service
     this.cache = cache;

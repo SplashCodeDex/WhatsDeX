@@ -145,7 +145,7 @@ export class OpenClawGateway {
   // ═══════════════════════════════════════════════════════
 
   private async getCronModule(): Promise<any> {
-    const cronMod = await this.safeImport('../../../openclaw/src/cron/index.js');
+    const cronMod = await this.safeImport('../../../openclaw/src/cron/service.js');
     if (!cronMod) throw new Error('OpenClaw cron module is not available');
     return cronMod;
   }
@@ -237,7 +237,7 @@ export class OpenClawGateway {
   // ═══════════════════════════════════════════════════════
 
   private async getUsageModule(): Promise<any> {
-    const usageMod = await this.safeImport('../../../openclaw/src/agents/usage.js');
+    const usageMod = await this.safeImport('../../../openclaw/src/infra/session-cost-usage.js');
     if (!usageMod) throw new Error('OpenClaw usage module is not available');
     return usageMod;
   }
@@ -245,33 +245,20 @@ export class OpenClawGateway {
   public async getUsageTotals(days = 30): Promise<any> {
     try {
       const usage = await this.getUsageModule();
-      if (typeof usage.getUsageTotals === 'function') {
-        return await usage.getUsageTotals({ days });
+      if (!usage || typeof usage.loadCostUsageSummary !== 'function') {
+        throw new Error('OpenClaw loadCostUsageSummary is not available');
       }
-      // Fallback: derive from sessions
-      const sessionsResult = await this.getUsageSessions(days);
-      const sessions = sessionsResult?.sessions || [];
-      return {
-        sessions: sessions.length,
-        messages: sessions.reduce((s: number, e: any) => s + (e.messages || 0), 0),
-        tools: sessions.reduce((s: number, e: any) => s + (e.tools || 0), 0),
-        errors: sessions.reduce((s: number, e: any) => s + (e.errors || 0), 0),
-        tokens: sessions.reduce((s: number, e: any) => s + (e.tokens || 0), 0),
-        cost: sessions.reduce((s: number, e: any) => s + (e.cost || 0), 0),
-      };
+      return await usage.loadCostUsageSummary({ days });
     } catch (error: any) {
       console.error('getUsageTotals error:', error.message);
-      return { sessions: 0, messages: 0, tools: 0, errors: 0, tokens: 0, cost: 0 };
+      return { days, totals: {}, daily: [] };
     }
   }
 
   public async getUsageDaily(days = 30): Promise<any> {
     try {
-      const usage = await this.getUsageModule();
-      if (typeof usage.getUsageDaily === 'function') {
-        return await usage.getUsageDaily({ days });
-      }
-      return { daily: [] };
+      const summary = await this.getUsageTotals(days);
+      return { daily: summary?.daily || [] };
     } catch (error: any) {
       console.error('getUsageDaily error:', error.message);
       return { daily: [] };
@@ -281,23 +268,27 @@ export class OpenClawGateway {
   public async getUsageSessions(days = 30): Promise<any> {
     try {
       const usage = await this.getUsageModule();
-      if (typeof usage.getUsageSessions === 'function') {
-        return await usage.getUsageSessions({ days });
+      if (!usage || typeof usage.discoverAllSessions !== 'function') {
+        throw new Error('OpenClaw discoverAllSessions is not available');
       }
-      return { sessions: [] };
+      const sessions = await usage.discoverAllSessions({
+        startMs: Date.now() - days * 24 * 60 * 60 * 1000
+      });
+      return { sessions };
     } catch (error: any) {
       console.error('getUsageSessions error:', error.message);
       return { sessions: [] };
     }
   }
 
-  public async getSessionLogs(key: string): Promise<any> {
+  public async getSessionLogs(sessionId: string): Promise<any> {
     try {
       const usage = await this.getUsageModule();
-      if (typeof usage.getSessionLogs === 'function') {
-        return await usage.getSessionLogs(key);
+      if (!usage || typeof usage.loadSessionCostSummary !== 'function') {
+        throw new Error('OpenClaw loadSessionCostSummary is not available');
       }
-      return { entries: [] };
+      const summary = await usage.loadSessionCostSummary({ sessionId });
+      return summary || { entries: [] };
     } catch (error: any) {
       console.error('getSessionLogs error:', error.message);
       return { entries: [] };
@@ -371,11 +362,10 @@ export class OpenClawGateway {
         throw new Error('OpenClaw listNodePairing is not available');
       }
       const list = await nodePairing.listNodePairing();
-      // Filter to node entries only (role-based distinction)
-      const nodes = (list?.paired || []).filter((d: any) =>
-        d.role === 'node' || d.roles?.includes?.('node')
-      );
-      return { nodes, pending: list?.pending || [] };
+      return {
+        nodes: list?.paired || [],
+        pending: list?.pending || []
+      };
     } catch (error: any) {
       console.error('listNodes error:', error.message);
       return { nodes: [], pending: [] };

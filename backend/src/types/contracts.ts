@@ -227,6 +227,7 @@ export const GroupSchema = z.object({
 
 export type GroupData = z.infer<typeof GroupSchema>;
 export type BotGroup = GroupData; // Alias for backward compatibility
+export const BotGroupSchema = GroupSchema;
 
 /**
  * Subscription Schema ('tenants/{tenantId}/subscriptions' subcollection)

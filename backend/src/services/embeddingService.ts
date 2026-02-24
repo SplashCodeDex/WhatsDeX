@@ -133,18 +133,32 @@ export class EmbeddingService {
   }
 }
 
+let _embeddingServiceInstance: EmbeddingService | null = null;
+
 /**
  * Get the singleton instance, throwing on initialization failure.
  * Use EmbeddingService.getInstance() for Result-pattern access.
  */
-function getEmbeddingService(): EmbeddingService {
-  const result = EmbeddingService.getInstance();
-  if (!result.success) {
-    throw result.error;
+export function getEmbeddingService(): EmbeddingService {
+  if (!_embeddingServiceInstance) {
+    const result = EmbeddingService.getInstance();
+    if (!result.success) {
+      throw result.error;
+    }
+    _embeddingServiceInstance = result.data;
   }
-  return result.data;
+  return _embeddingServiceInstance;
 }
 
-// Lazy initialization - will throw if env var not set
-export const embeddingService = getEmbeddingService();
+// Lazy proxy — the real service is initialized on first property access,
+// not at import time. This prevents crashes during app startup.
+export const embeddingService = new Proxy({} as EmbeddingService, {
+  get(_target, prop: string | symbol) {
+    return (getEmbeddingService() as any)[prop];
+  },
+  set(_target, prop: string | symbol, value: any) {
+    (getEmbeddingService() as any)[prop] = value;
+    return true;
+  },
+});
 export default embeddingService;

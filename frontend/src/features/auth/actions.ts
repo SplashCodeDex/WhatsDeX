@@ -25,7 +25,7 @@ import type { ActionResult } from '@/types/api';
 
 // Session cookie configuration (Must match backend expectation)
 const SESSION_COOKIE_NAME = 'token';
-const SESSION_MAX_AGE = 60 * 60 * 24 * 14; // 14 days
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days (Sync with Backend)
 
 /**
  * Sign in with email and password
