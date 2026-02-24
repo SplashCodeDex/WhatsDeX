@@ -32,18 +32,19 @@ describe('BotSettingsDialog', () => {
         updateBotMock.mockResolvedValue({ success: true, data: {} });
 
         render(
-            <BotSettingsDialog 
-                botId="bot-123" 
-                initialConfig={{ name: 'Test Bot' }} 
-                open={true} 
-                onOpenChange={() => {}} 
+            <BotSettingsDialog
+                botId="bot-123"
+                botType="whatsapp"
+                initialConfig={{ name: 'Test Bot' }}
+                open={true}
+                onOpenChange={() => { }}
             />
         );
 
         // Change something (e.g. prefixes input)
         const prefixInput = screen.getByLabelText(/Prefixes/i);
         fireEvent.change(prefixInput, { target: { value: '.,!' } });
-        
+
         // Submit the form.
         const form = screen.getByRole('form');
         fireEvent.submit(form);

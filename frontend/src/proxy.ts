@@ -1,12 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-const PROTECTED_ROUTES = ['/dashboard'];
-const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 /**
- * Middleware for route protection and session management
+ * Proxy (Next.js 16)
+ *
+ * Provides optimistic authentication redirects.
+ * Deep verification is still handled by Server Components (requireAuth).
  */
-export function middleware(request: NextRequest) {
+
+const PROTECTED_ROUTES = ['/dashboard'];
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password'];
+
+export function proxy(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
     const { pathname } = request.nextUrl;
 
@@ -14,6 +19,7 @@ export function middleware(request: NextRequest) {
     const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
     if (isProtectedRoute && !token) {
         const url = new URL('/login', request.url);
+        // Store the original path to redirect back after login
         url.searchParams.set('from', pathname);
         return NextResponse.redirect(url);
     }
@@ -27,15 +33,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
 }
 
-/**
- * Configure which paths the middleware runs on
- */
 export const config = {
+    // Only run proxy on routes that require auth checks or auth page redirects
     matcher: [
         '/dashboard/:path*',
         '/login',
         '/register',
-        '/forgot-password',
-        '/reset-password'
+        '/forgot-password'
     ],
 };

@@ -25,6 +25,7 @@ import skillsRoutes from '../routes/skillsRoutes.js';
 import flowRoutes from '../routes/flowRoutes.js';
 import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
+import integrationRoutes from '../routes/integrationRoutes.js';
 import AnalyticsService from '../services/analytics.js';
 import { socketService } from '../services/socketService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
@@ -217,6 +218,9 @@ export class MultiTenantApp {
 
     // Tenant Settings Routes
     this.app.use('/api/tenant', authenticateToken, tenantSettingsRoutes);
+
+    // Integations Routes
+    this.app.use('/api/integrations', integrationRoutes);
 
     // Billing routes
     this.app.use('/api/billing/webhook', stripeWebhookRoutes);

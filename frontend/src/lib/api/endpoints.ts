@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
     // Bots (Protected via /api/internal)
     BOTS: {
         LIST: '/api/internal/bots',
+        COMMANDS: '/api/internal/bots/commands',
         GET: (botId: string) => `/api/internal/bots/${botId}` as const,
         CREATE: '/api/internal/bots',
         UPDATE: (botId: string) => `/api/internal/bots/${botId}` as const,

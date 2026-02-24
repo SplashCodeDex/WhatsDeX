@@ -35,7 +35,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Save, Sparkles, Shield, Zap, Settings2, Terminal, Search, Filter } from 'lucide-react';
 import { BotConfig } from '../types';
-import { updateBot } from '../actions';
+import { updateBot, getCommands } from '../actions';
 import { updateBotSchema, UpdateBotInput } from '../schemas';
 import { toast } from 'sonner';
 
@@ -51,6 +51,9 @@ export function BotSettingsDialog({ botId, botType, initialConfig, open, onOpenC
     const updateBotWithId = updateBot.bind(null, botId);
     const [state, dispatch, isPending] = useActionState(updateBotWithId, null);
 
+    // Command Store State
+    const [commandsData, setCommandsData] = useState<Record<string, { name: string; desc: string }[]>>({});
+
     const form = useForm<UpdateBotInput>({
         resolver: zodResolver(updateBotSchema),
         defaultValues: {
@@ -64,6 +67,17 @@ export function BotSettingsDialog({ botId, botType, initialConfig, open, onOpenC
             }
         }
     });
+
+    // Fetch dynamic commands
+    useEffect(() => {
+        if (open) {
+            getCommands().then(res => {
+                if (res.success) {
+                    setCommandsData(res.data);
+                }
+            });
+        }
+    }, [open]);
 
     // Reset form when initialConfig changes or dialog opens
     useEffect(() => {
@@ -379,13 +393,12 @@ export function BotSettingsDialog({ botId, botType, initialConfig, open, onOpenC
                                     </div>
 
                                     <div className="max-h-[400px] overflow-y-auto p-4 space-y-6">
-                                        {/* Since we don't have the full command list from API yet,
-                                            we'll use a curated list of most common ones for now */}
-                                        {['Main', 'Sticker', 'AI', 'Downloader', 'Tool'].map((cat) => (
+                                        {/* Dynamic command list from API */}
+                                        {Object.keys(commandsData).map((cat) => (
                                             <div key={cat} className="space-y-3">
                                                 <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{cat}</h5>
                                                 <div className="grid grid-cols-1 gap-2">
-                                                    {getMockCommands(cat).map((cmd: { name: string; desc: string }) => (
+                                                    {commandsData[cat]?.map((cmd: { name: string; desc: string }) => (
                                                         <FormField
                                                             key={cmd.name}
                                                             control={form.control}
@@ -522,39 +535,4 @@ export function BotSettingsDialog({ botId, botType, initialConfig, open, onOpenC
             </DialogContent>
         </Dialog>
     );
-}
-
-/**
- * Mock command data for the Command Store UI
- * In a real-world scenario, this would be fetched from a global metadata API
- */
-function getMockCommands(category: string) {
-    const commands: Record<string, { name: string; desc: string }[]> = {
-        'Main': [
-            { name: 'menu', desc: 'Display all available commands' },
-            { name: 'ping', desc: 'Check bot responsiveness' },
-            { name: 'uptime', desc: 'Show how long the bot has been running' },
-        ],
-        'Sticker': [
-            { name: 'sticker', desc: 'Convert image/video to sticker' },
-            { name: 'emojimix', desc: 'Combine two emojis into a sticker' },
-        ],
-        'AI': [
-            { name: 'ai', desc: 'Chat with Gemini Pro' },
-            { name: 'imagine', desc: 'Generate images from text' },
-            { name: 'translate', desc: 'AI-powered translation' },
-        ],
-        'Downloader': [
-            { name: 'instagram', desc: 'Download IG reels/posts' },
-            { name: 'tiktok', desc: 'Download TT videos (no watermark)' },
-            { name: 'youtube', desc: 'Download YT audio/video' },
-        ],
-        'Tool': [
-            { name: 'screenshot', desc: 'Take a screenshot of a website' },
-            { name: 'weather', desc: 'Get current weather info' },
-            { name: 'shorten', desc: 'Shorten long URLs' },
-        ]
-    };
-
-    return commands[category] || [];
 }

@@ -62,7 +62,7 @@ export async function updateBot(
     formData: FormData
 ): Promise<Result<Bot>> {
     let rawData: unknown;
-    
+
     // Check for JSON payload first (used for complex config updates)
     const jsonData = formData.get('data');
     if (jsonData && typeof jsonData === 'string') {
@@ -75,9 +75,9 @@ export async function updateBot(
             };
         }
     } else {
-        // Fallback or other handling could go here. 
+        // Fallback or other handling could go here.
         // For now, we expect JSON for the complex schema.
-        rawData = {}; 
+        rawData = {};
     }
 
     const parsed = updateBotSchema.safeParse(rawData);
@@ -167,4 +167,11 @@ export async function disconnectBot(
 
     revalidatePath('/dashboard/bots');
     return { success: true, data: null };
+}
+
+/**
+ * Fetch categorized commands for bots
+ */
+export async function getCommands(): Promise<Result<Record<string, { name: string; desc: string }[]>>> {
+    return await api.get<Record<string, { name: string; desc: string }[]>>(API_ENDPOINTS.BOTS.COMMANDS);
 }

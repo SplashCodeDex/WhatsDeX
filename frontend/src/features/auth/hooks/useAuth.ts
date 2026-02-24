@@ -66,10 +66,14 @@ export function useAuth(): UseAuthReturn {
                 setUser(userData);
             } else {
                 setUser(null);
+                // Redirect on session failure
+                window.location.href = '/login';
             }
         } catch (err) {
             // calculated failure (401 etc)
             setUser(null);
+            // Redirect on session failure
+            window.location.href = '/login';
         } finally {
             setLoading(false);
         }

@@ -56,6 +56,7 @@ export const parseFlag = (args: string | null | undefined, options: FlagOptions)
 
 import logger from '../utils/logger.js';
 import { MessageContext } from '../types/index.js';
+import GeminiService from '../services/gemini.js';
 
 export const isOwner = (owners: string[], senderId: string, ...args: any[]) => {
     return owners.includes(senderId);
@@ -116,7 +117,14 @@ export const getRandomElement = <T>(arr: T[]): T => {
 };
 
 export const translate = async (text: string, lang: string = 'id'): Promise<string> => {
-    // Placeholder for translation - strictly typed
-    // In real implementation, call a translation service
-    return text;
+    try {
+        const geminiService = new GeminiService();
+        const prompt = `Translate the following text to ${lang}. Return ONLY the direct translation, with no extra conversational filler, formatting, or surrounding quotes.\n\nText: ${text}`;
+
+        const response = await geminiService.getChatCompletion(prompt);
+        return response ? response.trim() : text;
+    } catch (error) {
+        logger.error('Translation failed, falling back to original text', { error });
+        return text;
+    }
 };

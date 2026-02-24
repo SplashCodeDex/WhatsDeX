@@ -138,6 +138,21 @@ export class CommandSystem {
     return this.commands;
   }
 
+  public getCategorizedCommands(): Record<string, { name: string; desc: string }[]> {
+    const categorized: Record<string, { name: string; desc: string }[]> = {};
+
+    for (const [category, commandNames] of this.categories.entries()) {
+      categorized[category] = commandNames
+        .map(name => {
+          const cmd = this.commands.get(name);
+          return cmd ? { name: cmd.name, desc: cmd.description } : null;
+        })
+        .filter((cmd): cmd is { name: string; desc: string } => cmd !== null);
+    }
+
+    return categorized;
+  }
+
   registerCommand(command: Command, categoryName: string) {
     this.commands.set(command.name, command);
     if (command.aliases) {

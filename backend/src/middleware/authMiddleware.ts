@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import logger from '../utils/logger.js';
 import { ConfigService } from '../services/ConfigService.js';
+import { cacheService } from '../services/cache.js';
 
 interface UserPayload {
     userId: string;
@@ -38,6 +39,13 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
         const config = ConfigService.getInstance();
         const secret = config.get('JWT_SECRET');
+
+        // Check Blacklist
+        const isBlacklisted = await cacheService.isTokenBlacklisted(token);
+        if (isBlacklisted.success && isBlacklisted.data) {
+            logger.security('Auth Middleware: Blacklisted token', null, { token: token.substring(0, 10) + '...', ip: req.ip });
+            return res.status(401).json({ success: false, error: 'Token has been revoked' });
+        }
 
         // Verify Custom JWT
         try {

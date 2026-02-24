@@ -16,7 +16,7 @@ export class CacheService {
     this.isConnected = false;
     this.useMemoryFallback = true;
     this.defaultTTL = 3600; // 1 hour
-    
+
     // Initialize memory cache as fallback
     this.memoryCache = new NodeCache({
       stdTTL: this.defaultTTL,
@@ -95,7 +95,7 @@ export class CacheService {
     }
 
     if (!this.isConnected) {
-      return this.useMemoryFallback 
+      return this.useMemoryFallback
         ? { success: true, data: undefined }
         : { success: false, error: new Error('Cache not connected') };
     }
@@ -117,7 +117,7 @@ export class CacheService {
     }
 
     if (!this.isConnected) {
-      return this.useMemoryFallback 
+      return this.useMemoryFallback
         ? { success: true, data: undefined }
         : { success: false, error: new Error('Cache not connected') };
     }
@@ -158,7 +158,7 @@ export class CacheService {
     }
 
     if (!this.isConnected) {
-      return this.useMemoryFallback 
+      return this.useMemoryFallback
         ? { success: true, data: undefined }
         : { success: false, error: new Error('Cache not connected') };
     }
@@ -188,7 +188,7 @@ export class CacheService {
     }
 
     if (!this.isConnected) {
-      return this.useMemoryFallback 
+      return this.useMemoryFallback
         ? { success: true, data: newVal }
         : { success: false, error: new Error('Cache not connected') };
     }
@@ -209,7 +209,7 @@ export class CacheService {
     }
 
     if (!this.isConnected) {
-      return this.useMemoryFallback 
+      return this.useMemoryFallback
         ? { success: true, data: this.memoryCache.has(key) }
         : { success: false, error: new Error('Cache not connected') };
     }
@@ -243,6 +243,16 @@ export class CacheService {
       logger.error(`Cache.ttl error [${key}]:`, err);
       return { success: false, error: err };
     }
+  }
+
+  async blacklistToken(token: string, expirySeconds: number): Promise<Result<void>> {
+    const key = `blacklist:${token}`;
+    return this.set(key, 'revoked', expirySeconds);
+  }
+
+  async isTokenBlacklisted(token: string): Promise<Result<boolean>> {
+    const key = `blacklist:${token}`;
+    return this.exists(key);
   }
 
   async disconnect(): Promise<void> {

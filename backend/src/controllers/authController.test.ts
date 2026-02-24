@@ -27,12 +27,14 @@ const createMockDoc = (exists: boolean, data?: any) => ({
 
 vi.mock('@/lib/firebase.js', () => {
   const mockGet = vi.fn();
-  
+
   // Recursive mock function to handle collection().doc().collection().doc()...
   const mockCollection: any = vi.fn(() => ({
     doc: vi.fn(() => ({
       get: mockGet,
+      set: vi.fn().mockResolvedValue({}),
       update: vi.fn().mockResolvedValue({}),
+      delete: vi.fn().mockResolvedValue({}),
       collection: mockCollection, // Allow nested collections
     })),
     where: vi.fn(() => ({
@@ -87,7 +89,7 @@ describe('authController - loginWithGoogle', () => {
     });
 
     const mockGet = (db.collection('any').doc('any').get as any);
-    
+
     // Sequence of gets in loginWithGoogle:
     // 1. lookupDoc = await db.collection('users').doc(uid).get();
     mockGet.mockResolvedValueOnce(createMockDoc(true, { tenantId: 'tenant-123', role: 'owner' }));
@@ -120,7 +122,7 @@ describe('authController - loginWithGoogle', () => {
     mockGet.mockResolvedValueOnce(createMockDoc(false));
     // 2. emailConflict.get() -> empty: true
     mockLimitGet.mockResolvedValueOnce({ empty: true });
-    
+
     (multiTenantService.initializeTenant as any).mockResolvedValue({
       success: true,
       data: {

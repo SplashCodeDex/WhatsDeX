@@ -51,8 +51,17 @@ export function Header() {
                                 className="relative flex items-center gap-3 p-1 pl-4 pr-1.5 h-10 rounded-2xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none group"
                             >
                                 <div className="hidden flex-col items-end md:flex">
-                                    <span className="text-xs font-semibold text-foreground leading-none">{user?.name || 'User'}</span>
-                                    <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70 group-hover:opacity-100 transition-opacity">{user?.role || 'Pro Plan'}</span>
+                                    {isLoading ? (
+                                        <div className="flex flex-col items-end gap-1">
+                                            <div className="h-3 w-20 bg-muted/20 animate-pulse rounded" />
+                                            <div className="h-2 w-12 bg-muted/10 animate-pulse rounded" />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span className="text-xs font-semibold text-foreground leading-none">{user?.name}</span>
+                                            <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70 group-hover:opacity-100 transition-opacity">{user?.role}</span>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-transform group-hover:scale-105">
                                     <User className="h-3.5 w-3.5" />

@@ -1,4 +1,4 @@
-import { Bot } from "grammy";
+import { Bot, webhookCallback } from "grammy";
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
 // @ts-ignore
 import { sendMessageTelegram } from "../../../../../openclaw/src/telegram/send.js";
@@ -31,7 +31,7 @@ export class TelegramAdapter implements ChannelAdapter {
 
     this.bot = new Bot(this.token);
     await this.bot.init();
-    
+
     // Setup message listener
     this.bot.on('message', async (ctx) => {
       if (this.messageHandler) {
@@ -91,5 +91,17 @@ export class TelegramAdapter implements ChannelAdapter {
 
   public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {
     this.messageHandler = handler;
+  }
+
+  public async handleWebhook(req: any, res: any): Promise<void> {
+    if (!this.bot) {
+      logger.error(`[TelegramAdapter] Attempted to handle webhook but bot is not connected for tenant ${this.tenantId}`);
+      res.status(503).send('Service Unavailable');
+      return;
+    }
+
+    // Uses grammY's native Express wrapper to process the raw update
+    const callback = webhookCallback(this.bot, 'express');
+    await callback(req, res);
   }
 }

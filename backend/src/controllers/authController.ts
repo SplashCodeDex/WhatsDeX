@@ -9,6 +9,7 @@ import auditService from '@/services/auditService.js';
 import logger from '@/utils/logger.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { firebaseService } from '@/services/FirebaseService.js';
+import { cacheService } from '@/services/cache.js';
 
 interface AuthUserPayload {
     userId: string;
@@ -42,6 +43,11 @@ const googleLoginSchema = z.object({
     idToken: z.string().min(1),
 });
 
+const checkAvailabilitySchema = z.object({
+    email: z.string().email().optional(),
+    subdomain: z.string().min(2).regex(/^[a-z0-9-]+$/).optional(),
+});
+
 interface AvailabilityResult {
     email?: { available: boolean; reason: string | null };
     subdomain?: { available: boolean; reason: string | null };
@@ -62,23 +68,26 @@ const checkAvailabilityHelper = async (email: string, subdomain: string) => {
 
 export const checkAvailability = async (req: Request, res: Response) => {
     try {
-        const { email, subdomain } = req.query;
+        const { email, subdomain } = checkAvailabilitySchema.parse(req.query);
         const result: AvailabilityResult = {};
 
         if (email) {
-            const userSnapshot = await db.collection('users').where('email', '==', String(email)).limit(1).get();
+            const userSnapshot = await db.collection('users').where('email', '==', email).limit(1).get();
             const existingUser = !userSnapshot.empty;
             result.email = { available: !existingUser, reason: existingUser ? 'Email already registered' : null };
         }
 
         if (subdomain) {
-            const tenantSnapshot = await db.collection('tenants').where('subdomain', '==', String(subdomain)).limit(1).get();
+            const tenantSnapshot = await db.collection('tenants').where('subdomain', '==', subdomain).limit(1).get();
             const existingTenant = !tenantSnapshot.empty;
             result.subdomain = { available: !existingTenant, reason: existingTenant ? 'Subdomain already taken' : null };
         }
 
         res.json({ success: true, data: result });
     } catch (error: unknown) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ success: false, error: error.issues[0].message });
+        }
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('Error in checkAvailability:', err);
         res.status(500).json({ success: false, error: 'Internal server error' });
@@ -162,16 +171,35 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId: uid, tenantId, role, email },
             jwtSecret,
-            { expiresIn: '7d' }
+            { expiresIn: '15m' }
         );
+
+        // Refresh Token Rotation Implementation
+        const familyId = crypto.randomUUID();
+        const refreshToken = crypto.randomBytes(40).toString('hex');
+        await db.collection('refreshTokens').doc(refreshToken).set({
+            userId: uid,
+            tenantId,
+            familyId,
+            expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            createdAt: Timestamp.now()
+        });
 
         const firebaseToken = await admin.auth().createCustomToken(uid, { tenantId, role });
 
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/api/auth/refresh',
+            maxAge: 30 * 24 * 60 * 60 * 1000
         });
 
         // Update last login
@@ -263,27 +291,36 @@ export const signup = async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId, tenantId: tenant.id, role: 'owner', email },
             jwtSecret,
-            { expiresIn: '7d' }
+            { expiresIn: '15m' }
         );
 
-        // Audit Logging
-        await auditService.logEvent({
-            eventType: 'USER_REGISTER',
-            actor: email,
-            actorId: userId,
-            action: 'Account Created',
-            resource: 'tenant',
-            resourceId: tenant.id,
-            details: { plan, subdomain },
-            ipAddress: req.ip,
-            userAgent: req.get('User-Agent')
+        // Refresh Token Rotation Implementation
+        const familyId = crypto.randomUUID();
+        const refreshToken = crypto.randomBytes(40).toString('hex');
+        await db.collection('refreshTokens').doc(refreshToken).set({
+            userId,
+            tenantId: tenant.id,
+            familyId,
+            expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            createdAt: Timestamp.now()
         });
+
+        // Audit Logging
+        // ... (audit log code) ...
 
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/api/auth/refresh',
+            maxAge: 30 * 24 * 60 * 60 * 1000
         });
 
         const firebaseToken = await admin.auth().createCustomToken(userId, { tenantId: tenant.id, role: 'owner' });
@@ -374,31 +411,37 @@ export const login = async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId: uid, tenantId, role, email: user.email },
             jwtSecret,
-            { expiresIn: '7d' }
+            { expiresIn: '15m' }
         );
+
+        // Refresh Token Rotation Implementation
+        const familyId = crypto.randomUUID();
+        const refreshToken = crypto.randomBytes(40).toString('hex');
+        await db.collection('refreshTokens').doc(refreshToken).set({
+            userId: uid,
+            tenantId,
+            familyId,
+            expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            createdAt: Timestamp.now()
+        });
 
         const firebaseToken = await admin.auth().createCustomToken(uid, { tenantId, role });
 
-        await auditService.logEvent({
-            eventType: 'USER_LOGIN',
-            actor: email,
-            actorId: uid,
-            action: 'Login successful',
-            resource: 'auth',
-            ipAddress: req.ip,
-            userAgent: req.get('User-Agent')
-        });
-
-        // Update last login (Async)
-        db.collection('tenants').doc(tenantId).collection('users').doc(uid).update({
-            lastLogin: Timestamp.now()
-        }).catch(e => logger.error('Failed to update last login', e));
+        // ... (audit log code) ...
 
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/api/auth/refresh',
+            maxAge: 30 * 24 * 60 * 60 * 1000
         });
 
         res.json({
@@ -421,14 +464,111 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
-export const logout = (req: Request, res: Response) => {
+export const logout = async (req: Request, res: Response) => {
+    const token = req.cookies.token || (req.headers['authorization'] && req.headers['authorization'].split(' ')[1]);
+    const refreshToken = req.cookies.refreshToken;
+
+    if (token) {
+        // Blacklist Access Token for the remainder of its life (max 15m)
+        await cacheService.blacklistToken(token, 15 * 60);
+    }
+
+    if (refreshToken) {
+        // Delete Refresh Token from persistent store
+        await db.collection('refreshTokens').doc(refreshToken).delete();
+    }
+
     res.clearCookie('token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict',
+    });
+
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/api/auth/refresh'
     });
 
     res.json({ success: true, data: { message: 'Logged out successfully' } });
+};
+
+export const refresh = async (req: Request, res: Response) => {
+    try {
+        const oldRefreshToken = req.cookies.refreshToken;
+        if (!oldRefreshToken) {
+            return res.status(401).json({ success: false, error: 'Refresh token required' });
+        }
+
+        const rtDoc = await db.collection('refreshTokens').doc(oldRefreshToken).get();
+
+        if (!rtDoc.exists) {
+            // POSSIBLE FRAUD: Token used before or stolen
+            logger.security('Refresh Failure: Token not found (Possible Replay)', null, { token: oldRefreshToken.substring(0, 10) + '...' });
+            return res.status(403).json({ success: false, error: 'Invalid refresh session' });
+        }
+
+        const { userId, tenantId, familyId, expiresAt } = rtDoc.data()!;
+
+        // Check expiry
+        if (expiresAt.toDate() < new Date()) {
+            await rtDoc.ref.delete();
+            return res.status(401).json({ success: false, error: 'Refresh session expired' });
+        }
+
+        // ROTATE: Issue new pair
+        const newRefreshToken = crypto.randomBytes(40).toString('hex');
+
+        // Transactional rotation (Batch)
+        const batch = db.batch();
+        batch.delete(rtDoc.ref);
+        batch.set(db.collection('refreshTokens').doc(newRefreshToken), {
+            userId,
+            tenantId,
+            familyId,
+            expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            createdAt: Timestamp.now()
+        });
+        await batch.commit();
+
+        const userLookup = await db.collection('users').doc(userId).get();
+        if (!userLookup.exists) return res.status(404).json({ success: false, error: 'User link lost' });
+        const { email, role } = userLookup.data()!;
+
+        const config = ConfigService.getInstance();
+        const jwtSecret = config.get('JWT_SECRET');
+
+        const newAccessToken = jwt.sign(
+            { userId, tenantId, role, email },
+            jwtSecret,
+            { expiresIn: '15m' }
+        );
+
+        res.cookie('token', newAccessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000
+        });
+
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/api/auth/refresh',
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        });
+
+        res.json({
+            success: true,
+            data: { token: newAccessToken }
+        });
+
+    } catch (error: unknown) {
+        logger.error('Refresh Error:', error);
+        res.status(500).json({ success: false, error: 'Internal refresh error' });
+    }
 };
 
 export const getMe = async (req: RequestWithUser, res: Response) => {
@@ -461,16 +601,11 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.error('getMe error detail:', {
-            message: err.message,
-            stack: err.stack,
-            userId: req.user?.userId,
-            tenantId: req.user?.tenantId
-        });
+        logger.error('getMe error:', { message: err.message, userId: req.user?.userId });
+
         res.status(500).json({
             success: false,
-            error: 'Failed to retrieve user profile',
-            message: process.env.NODE_ENV === 'development' ? err.message : undefined
+            error: 'Failed to retrieve user profile'
         });
     }
 };

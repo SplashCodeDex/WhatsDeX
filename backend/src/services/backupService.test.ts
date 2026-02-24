@@ -20,6 +20,12 @@ vi.mock('../utils/logger.js', () => ({
   },
 }));
 
+vi.mock('./GoogleDriveService.js', () => ({
+  googleDriveService: {
+    uploadFile: vi.fn().mockResolvedValue({ success: true, data: { driveFileId: 'mock-drive-id', size: 1024 } })
+  }
+}));
+
 describe('BackupService', () => {
   let service: BackupService;
 
@@ -28,19 +34,59 @@ describe('BackupService', () => {
     service = BackupService.getInstance();
   });
 
-  it('should run a backup and store metadata', async () => {
+  it('should run a backup and upload to Google Drive for a pro tenant', async () => {
     const tenantId = 'tenant-123';
-    
+
+    // Mock tenant doc fetching
+    (db.get as any).mockResolvedValueOnce({
+      exists: true,
+      data: () => ({ plan: 'pro', googleRefreshToken: 'mock-token' })
+    });
+    // Mock the data scraping (contacts, messages, etc)
+    (db.get as any).mockResolvedValue({
+      docs: []
+    });
+
     const result = await service.runBackup(tenantId, 'database');
 
     expect(result.success).toBe(true);
     expect(db.collection).toHaveBeenCalledWith('tenants');
     expect(db.doc).toHaveBeenCalledWith(tenantId);
-    // expect(db.collection).toHaveBeenCalledWith('backups'); // Called on the result of doc(tenantId)
-    
+
     if (result.success) {
       expect(result.data.status).toBe('completed');
-      expect(result.data.driveFileId).toBeDefined();
+      expect(result.data.driveFileId).toBe('mock-drive-id');
+      expect(result.data.size).toBe(1024);
+    }
+  });
+
+  it('should prevent backups if tenant is on starter plan', async () => {
+    const tenantId = 'tenant-free';
+
+    (db.get as any).mockResolvedValueOnce({
+      exists: true,
+      data: () => ({ plan: 'starter' })
+    });
+
+    const result = await service.runBackup(tenantId, 'database');
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.code).toBe('FORBIDDEN');
+    }
+  });
+
+  it('should prevent backups if Google Drive is not connected', async () => {
+    const tenantId = 'tenant-pro-no-auth';
+
+    (db.get as any).mockResolvedValueOnce({
+      exists: true,
+      data: () => ({ plan: 'pro' }) // No googleRefreshToken
+    });
+
+    const result = await service.runBackup(tenantId, 'database');
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.code).toBe('BAD_REQUEST');
     }
   });
 

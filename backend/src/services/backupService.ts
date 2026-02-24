@@ -2,6 +2,9 @@ import { db } from '../lib/firebase.js';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
+import { googleDriveService } from './GoogleDriveService.js';
+import { AppError, failure, success } from '../types/result.js';
+import { Readable } from 'stream';
 
 export interface BackupMetadata {
   id: string;
@@ -23,7 +26,7 @@ export interface BackupMetadata {
 export class BackupService {
   private static instance: BackupService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): BackupService {
     if (!BackupService.instance) {
@@ -40,7 +43,22 @@ export class BackupService {
     logger.info(`Starting ${type} backup for tenant ${tenantId} [ID: ${backupId}]`);
 
     try {
-      // 1. Initialize backup record
+      // 1. Validate Billing & Auth configuration
+      const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+      if (!tenantDoc.exists) {
+        return failure(AppError.notFound('Tenant not found'));
+      }
+
+      const tenantData = tenantDoc.data()!;
+      if (!['pro', 'enterprise'].includes(tenantData.plan || 'starter')) {
+        return failure(AppError.forbidden('Google Drive backups are restricted to Pro and Enterprise plans.'));
+      }
+
+      if (!tenantData.googleRefreshToken) {
+        return failure(AppError.badRequest('Google Drive integration is not connected. Please authorize in settings.'));
+      }
+
+      // 2. Initialize backup record
       const metadata: BackupMetadata = {
         id: backupId,
         tenantId,
@@ -51,35 +69,57 @@ export class BackupService {
 
       await this.saveMetadata(metadata);
 
-      // 2. Perform backup (Simulated for TDD phase, will wire Google Drive API)
-      // In production, this would:
-      // - Export Firestore data to JSON
-      // - Zip media files if type is 'full' or 'media'
-      // - Upload to user's Google Drive via OAuth token
-      
-      const result = await this.performSimulatedBackup(tenantId, type);
+      // 3. Perform the actual backup
+      // First, get the data buffer/stream
+      let fileStream: Readable;
+      let fileName: string;
+      let mimeType: string;
 
-      // 3. Update record with success
+      if (type === 'media' || type === 'full') {
+        // Zipping media logic goes here when needed
+        // We throw for now until the media archiver is written
+        throw AppError.badRequest('Media/Full backup archiving is currently under construction.');
+      } else {
+        const dbExport = await this.exportTenantDatabase(tenantId);
+        const jsonBuffer = Buffer.from(JSON.stringify(dbExport, null, 2));
+        fileStream = Readable.from(jsonBuffer);
+        fileName = `WhatsDeX_DB_Backup_${tenantId}_${new Date().toISOString().split('T')[0]}.json`;
+        mimeType = 'application/json';
+      }
+
+      // 4. Upload to user's Google Drive via GoogleDriveService
+      const uploadResult = await googleDriveService.uploadFile(
+        tenantData.googleRefreshToken,
+        fileName,
+        mimeType,
+        fileStream
+      );
+
+      if (!uploadResult.success) {
+        throw uploadResult.error;
+      }
+
+      // 5. Update record with success
       metadata.status = 'completed';
       metadata.completedAt = new Date();
-      metadata.driveFileId = result.driveFileId;
-      metadata.size = result.size;
+      metadata.driveFileId = uploadResult.data.driveFileId;
+      metadata.size = uploadResult.data.size;
 
       await this.saveMetadata(metadata);
 
       logger.info(`Backup ${backupId} completed successfully for tenant ${tenantId}`);
-      return { success: true, data: metadata };
+      return success(metadata);
 
     } catch (error: any) {
-      logger.error(`Backup ${backupId} failed for tenant ${tenantId}:`, error);
-      
+      logger.error(`Backup ${backupId} failed for tenant ${tenantId}:`, { error: error.message });
+
       const metadata: Partial<BackupMetadata> = {
         status: 'failed',
-        error: error.message
+        error: error.message || 'Unknown backup error'
       };
       await db.collection('tenants').doc(tenantId).collection('backups').doc(backupId).set(metadata, { merge: true });
 
-      return { success: false, error };
+      return failure(error instanceof AppError ? error : AppError.internal(metadata.error as string));
     }
   }
 
@@ -93,13 +133,19 @@ export class BackupService {
     }, { merge: true });
   }
 
-  private async performSimulatedBackup(tenantId: string, type: string) {
-    // Artificial delay to simulate work
-    await new Promise(r => setTimeout(r, 1000));
-    return {
-      driveFileId: `drive_${Math.random().toString(36).substring(7)}`,
-      size: Math.floor(Math.random() * 1000000) + 50000
-    };
+  private async exportTenantDatabase(tenantId: string): Promise<Record<string, any>> {
+    const backupPayload: Record<string, any> = {};
+    const tenantRef = db.collection('tenants').doc(tenantId);
+
+    // List of targeted subcollections for database backups
+    const collectionsToBackup = ['contacts', 'messages', 'flows', 'campaigns'];
+
+    for (const collectionName of collectionsToBackup) {
+      const snap = await tenantRef.collection(collectionName).get();
+      backupPayload[collectionName] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    return backupPayload;
   }
 
   async listBackups(tenantId: string): Promise<Result<BackupMetadata[]>> {

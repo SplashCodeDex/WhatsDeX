@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import multiTenantService from '../services/multiTenantService.js';
 import multiTenantBotService from '../services/multiTenantBotService.js';
 import logger from '../utils/logger.js';
+import initializeContext from '../lib/context.js';
 
 const router = express.Router();
 
@@ -67,6 +68,26 @@ router.get('/bots', async (req: Request, res: Response) => {
             res.status(500).json({ success: false, error: result.error?.message });
         }
     } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * Get available bot commands grouped by category
+ */
+router.get('/bots/commands', async (req: Request, res: Response) => {
+    try {
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ success: false, error: 'Authentication required' });
+        }
+
+        const context = await initializeContext();
+        const commands = context.commandSystem.getCategorizedCommands();
+
+        res.json({ success: true, data: commands });
+    } catch (error: any) {
+        logger.error('Route /bots/commands GET error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
