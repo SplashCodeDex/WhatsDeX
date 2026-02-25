@@ -17,7 +17,7 @@ The platform operates on a multi-tenant architecture where each customer's data 
 
 ### 1. User & Workspace Management
 
-- **Self-Service Onboarding:** Users can visit the site, sign up, and access a personalized dashboard.
+- **Self-Service Onboarding:** Fast, "one-click" onboarding via Google OAuth or Email/Password, featuring automated workspace provisioning for immediate platform access.
 - **Multi-Tenancy:** Data isolation per customer using a subcollection pattern in Firestore.
 - **Dashboard:** Centralized hub for metrics, bot status, and account settings.
 
