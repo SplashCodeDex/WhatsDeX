@@ -25,5 +25,5 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ---
 
-## [~] Track: Make login/signup with Google functional
+## [x] Track: Make login/signup with Google functional
 *Link: [./conductor/tracks/google_auth_20260222/](./conductor/tracks/google_auth_20260222/)*
