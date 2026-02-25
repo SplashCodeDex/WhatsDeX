@@ -10,7 +10,7 @@
     - [x] Refactor and verify (Refactor)
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Environment & Backend Foundation' (Protocol in workflow.md)
 
-## Phase 2: Core Auth Logic & Multi-Tenancy (Backend)
+## Phase 2: Core Auth Logic & Multi-Tenancy (Backend) [checkpoint: 12997c14]
 *Goal: Implement the backend logic for verifying tokens and auto-creating workspaces.*
 
 - [x] Task: TDD - `authSystem.ts` Google Login logic
@@ -22,7 +22,7 @@
     - [x] Write failing tests in `multiTenantService.test.ts` for auto-creation (Red)
     - [x] Implement `initializePersonalWorkspace` logic in `multiTenantService.ts` (Green)
     - [x] Refactor and verify (Refactor)
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Core Auth Logic & Multi-Tenancy (Backend)' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Core Auth Logic & Multi-Tenancy (Backend)' (Protocol in workflow.md) (12997c1)
 
 ## Phase 3: Frontend Hand-off & Server Actions [checkpoint: b2c4d6a7]
 *Goal: Implement the UI button and the Server Action to bridge client and server.*
