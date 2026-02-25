@@ -8,12 +8,12 @@ describe('Identity Utility (LID Mapping)', () => {
     expect(isLid('group_123@g.us')).toBe(false);
   });
 
-  it('should convert LID to JID if mapping exists', async () => {
-    // This will initially fail as the function is not implemented or returns LID
-    const lid = 'lid_123@s.whatsapp.net';
-    
-    // We'll mock the mapping later, but for now, the utility should at least return the input if no mapping
+  it('should return original string if no bot instance is provided for LID mapping', async () => {
+    const lid = 'lid_123@s.whatsapp.net'; // Normally LIDs are @lid, but this is testing the fallback
+
+    // Without bot, the utility should at least return the input if no mapping
     expect(await convertLidToJid(lid)).toBe(lid);
+    expect(await convertLidToJid('12345@lid')).toBe('12345@lid');
   });
 
   it('should handle undefined/null jids gracefully', async () => {

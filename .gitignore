@@ -143,3 +143,4 @@ backend/backend_typecheck_log.txt
 *.log
 *.txt
 !frontend/src/features/auth/
+openclaw_backup/

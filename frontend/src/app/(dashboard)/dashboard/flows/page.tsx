@@ -18,7 +18,7 @@ import {
 
 import '@xyflow/react/dist/style.css';
 import { TriggerNode, ActionNode, LogicNode, AINode } from '@/features/flows/components/CustomNodes';
-import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2, Send } from 'lucide-react';
+import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2, Send, Lock } from 'lucide-react';
 import { api } from '@/lib/api/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useTemplates } from '@/features/messages/hooks/useTemplates';
+import { useSubscription } from '@/features/billing';
 import {
   Select,
   SelectContent,
@@ -66,6 +68,8 @@ const nodeTypes = {
 
 function FlowBuilder() {
   const { data: templates } = useTemplates();
+  const { subscription, isLoading: isLoadingPlan } = useSubscription();
+
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [isSaving, setIsSaving] = useState(false);
@@ -74,8 +78,11 @@ function FlowBuilder() {
   const [testLogs, setTestLogs] = useState<string[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
+  const isProFeatureOpen = subscription?.plan !== 'starter';
+
   // Load existing flows on mount
   React.useEffect(() => {
+    if (!isProFeatureOpen) return;
     const loadFlows = async () => {
       try {
         const response = await api.get('/api/flows');
