@@ -29,8 +29,7 @@ ${formatter.quote(example)}`);
     }
 
     try {
-      // Mocking URL creation for safety, assuming tool.api structure
-      const apiUrl = `https://api.neko.fun/search/github-search?q=${encodeURIComponent(input)}`;
+      const apiUrl = tools.api.createUrl('neko', '/search/github-search', { q: input });
       const { data } = await axios.get<{ result: GithubResult[] }>(apiUrl);
       const result = data.result;
 

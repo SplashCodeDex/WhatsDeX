@@ -10,6 +10,9 @@ class IntelligentWorker {
   private processor: EnhancedAIBrain | null = null;
   private bot: Bot | null = null;
   private context: GlobalContext | null = null;
+  private messagesProcessed: number = 0;
+  private errorsCount: number = 0;
+  private startedAt: number = Date.now();
 
   constructor() {
     logger.info('Intelligent Worker initialized');
@@ -44,6 +47,7 @@ class IntelligentWorker {
 
       // Process with intelligent system
       await this.processor.processMessage(this.bot, ctx);
+      this.messagesProcessed++;
 
       logger.debug('Message processed intelligently', {
         userId: ctx.sender?.jid,
@@ -51,6 +55,7 @@ class IntelligentWorker {
       });
 
     } catch (error: any) {
+      this.errorsCount++;
       logger.error('Intelligent processing failed:', {
         error: error.message,
         messageData: JSON.stringify(messageData, null, 2).substring(0, 500)
@@ -80,9 +85,22 @@ class IntelligentWorker {
    * Get processing statistics
    */
   getStats() {
-    // EnhancedAIBrain doesn't have getStats yet, adding a basic placeholder
-    return this.processor ? { status: 'active' } : {
-      status: 'not_initialized'
+    const uptimeMs = Date.now() - this.startedAt;
+    const uptimeSec = Math.floor(uptimeMs / 1000);
+    return this.processor ? {
+      status: 'active',
+      messagesProcessed: this.messagesProcessed,
+      errorsCount: this.errorsCount,
+      errorRate: this.messagesProcessed > 0 ? (this.errorsCount / this.messagesProcessed * 100).toFixed(2) + '%' : '0%',
+      uptimeSeconds: uptimeSec,
+      uptime: uptimeSec > 3600 ? `${Math.floor(uptimeSec / 3600)}h ${Math.floor((uptimeSec % 3600) / 60)}m` : `${Math.floor(uptimeSec / 60)}m ${uptimeSec % 60}s`
+    } : {
+      status: 'not_initialized',
+      messagesProcessed: 0,
+      errorsCount: 0,
+      errorRate: '0%',
+      uptimeSeconds: 0,
+      uptime: '0s'
     };
   }
 

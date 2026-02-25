@@ -35,13 +35,8 @@ export default {
       }
       const query = queryCheck.data;
 
-      // API Call
-      // Assuming createUrl is available in tools or imports
-      // const apiUrl = tools.api.createUrl('neko', '/search/google', { q: query });
-      // Mocking API call for type safety if createUrl is not readily available or using axios directly
-      // In a real scenario, use the actual API URL generator
-      const apiUrl = `https://api.neko.fun/search/google?q=${encodeURIComponent(query)}`;
-      
+      const apiUrl = tools.api.createUrl('neko', '/search/google', { q: query });
+
       const { data } = await axios.get<{ result: GoogleResult[] }>(apiUrl);
       const result = data.result;
 

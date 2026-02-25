@@ -5,6 +5,7 @@ import { Bot, CreditCard, MessageSquare, ShieldCheck, Activity } from 'lucide-re
 import { useBots } from '@/features/bots/hooks/useBots';
 import { useSubscription } from '@/features/billing/hooks/useSubscription';
 import { useContacts } from '@/features/contacts/hooks/useContacts';
+import { useAudiences } from '@/features/messages/hooks/useAudiences';
 
 interface InsightCardProps {
     type: 'dashboard' | 'bots' | 'messages' | 'billing' | 'contacts' | 'settings';
@@ -14,6 +15,7 @@ export function InsightCard({ type }: InsightCardProps) {
     const { data: bots } = useBots();
     const { subscription, limits } = useSubscription();
     const { data: contacts } = useContacts();
+    const { data: audiences } = useAudiences();
 
     const stats = {
         bots: {
@@ -32,7 +34,7 @@ export function InsightCard({ type }: InsightCardProps) {
         },
         contacts: {
             total: contacts?.length || 0,
-            audiences: 0, // Placeholder for actual audience segments
+            audiences: audiences?.length || 0,
         }
     };
 

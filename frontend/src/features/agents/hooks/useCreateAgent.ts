@@ -50,7 +50,7 @@ export function useCreateAgent() {
         const db = getClientFirestore();
 
         try {
-            const agentId = `agent_${Math.random().toString(36).substring(2, 11)}`;
+            const agentId = `agent_${crypto.randomUUID().replace(/-/g, '').substring(0, 12)}`;
 
             await runTransaction(db, async (transaction: Transaction) => {
                 // Check current agent count for the tenant

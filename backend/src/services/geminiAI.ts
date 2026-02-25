@@ -477,9 +477,8 @@ USER CONTEXT:
     for (const intent of intents) {
       const relevance = await this.assessContextualRelevance(intent, context);
       if (relevance > 0.5) {
-        // Here we'd use the ToolRegistry in Phase 3
-        // For now, we'll return a special 'legacy_bridge' action if it's a known command
-        const action = await this.intentToLegacyActionStub(intent);
+        // Map the intent to a registered tool from the ToolRegistry
+        const action = await this.intentToActionGeneric(intent);
         if (action) {
           decisions.actions.push({
             ...action,
@@ -497,9 +496,60 @@ USER CONTEXT:
     return decisions;
   }
 
-  async intentToLegacyActionStub(intent: any): Promise<AIAction | null> {
-    // Just a placeholder until Phase 3 ToolRegistry
-    return null;
+  async intentToActionGeneric(intent: any): Promise<AIAction | null> {
+    const intentMapping: Record<string, string> = {
+      // Media & Downloads
+      'download_youtube': 'youtubevideo',
+      'download_video': 'youtubevideo',
+      'download_music': 'youtubeaudio',
+      'download_instagram': 'instagramdl',
+      'download_tiktok': 'tiktokdl',
+      'download_facebook': 'facebookdl',
+
+      // AI & Generation
+      'generate_image': 'dalle',
+      'create_image': 'animagine',
+      'edit_image': 'editimage',
+      'enhance_image': 'upscale',
+      'remove_background': 'removebg',
+
+      // Search & Information
+      'search_web': 'googlesearch',
+      'search_youtube': 'youtubesearch',
+      'search_github': 'githubsearch',
+      'get_weather': 'weather',
+      'translate_text': 'translate',
+
+      // Entertainment
+      'tell_joke': 'joke',
+      'get_meme': 'meme',
+      'play_game': 'tebakgambar',
+      'quiz': 'family100',
+
+      // Utility
+      'convert_media': 'toaudio',
+      'create_sticker': 'emojimix',
+      'screenshot': 'screenshot',
+      'ocr': 'ocr'
+    };
+
+    const commandName = intentMapping[intent.intent] || intent.intent;
+
+    // Check if the mapped command exists in the ToolRegistry
+    const allTools = toolRegistry.getAllTools();
+    const tool = allTools.find(t => t.name === commandName);
+
+    if (!tool) {
+      return null; // Tool not found in unified registry
+    }
+
+    return {
+      type: 'command',
+      command: commandName,
+      parameters: intent.parameters || {},
+      confidence: intent.confidence || 1.0,
+      reasoning: intent.reasoning || 'Mapped via Mastermind ToolRegistry'
+    };
   }
 
   async executeSingleActionGeneric(tenantId: string, botId: string, action: AIAction, message: CommonMessage, context: any) {

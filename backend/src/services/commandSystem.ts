@@ -274,9 +274,13 @@ export class CommandSystem {
       }
     } : undefined;
 
+    // Fetch tenant settings for this bot's tenant
+    const tenantResult = await (bot.context as GlobalContext).tenantConfigService.getTenantSettings(bot.tenantId);
+    const tenantSettings = tenantResult.success ? tenantResult.data : ({} as any);
+
     const msgContext: MessageContext = {
       ...messageData,
-      tenant: null as any, // Placeholder, will be set or is optional
+      tenant: tenantSettings,
       isOwner: false,
       isAdmin: false,
       id: jid,

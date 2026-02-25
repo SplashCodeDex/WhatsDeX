@@ -78,6 +78,9 @@ async function initializeContext(): Promise<GlobalContext> {
 
             // We need a temporary bot mock to extract commands for bridging
             // since commands are tied to bot instances in WhatsDeX
+            // AUDIT-INTENTIONAL(#8): mockBot only provides `cmd` (a Map<string, Command>),
+            // which is the only property WhatsDeXToolBridge.registerCommands() accesses.
+            // A full Bot instance isn't available at boot time (no WhatsApp connection yet).
             const mockBot = { cmd: commandSystem.getCommands() } as any;
             logger.info(`>>> [MASTERMIND] Mock bot created. Command count: ${mockBot.cmd.size}`);
 

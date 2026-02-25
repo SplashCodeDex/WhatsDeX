@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-    Activity, 
-    RefreshCw, 
-    Download, 
-    TrendingUp, 
-    Hash, 
-    AlertCircle, 
-    Coins, 
+import {
+    Activity,
+    RefreshCw,
+    Download,
+    TrendingUp,
+    Hash,
+    AlertCircle,
+    Coins,
     Zap,
     Calendar,
     ArrowUpRight,
@@ -32,16 +32,16 @@ import {
 } from '@/components/ui/table';
 
 export default function UsagePage() {
-    const { 
-        usageTotals, 
-        usageDaily, 
-        usageSessions, 
-        fetchUsageTotals, 
-        fetchUsageDaily, 
+    const {
+        usageTotals,
+        usageDaily,
+        usageSessions,
+        fetchUsageTotals,
+        fetchUsageDaily,
         fetchUsageSessions,
-        isLoading 
+        isLoading
     } = useOmnichannelStore();
-    
+
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -59,7 +59,7 @@ export default function UsagePage() {
         handleRefresh();
     }, []);
 
-    const filteredSessions = usageSessions.filter(s => 
+    const filteredSessions = usageSessions.filter(s =>
         s.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.agent?.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -74,7 +74,31 @@ export default function UsagePage() {
                     </p>
                 </div>
                 <div className="flex space-x-2">
-                    <Button variant="outline" onClick={() => toast.info('CSV Export coming soon')}>
+                    <Button variant="outline" onClick={() => {
+                        if (!usageSessions || usageSessions.length === 0) {
+                            toast.info('No session data to export');
+                            return;
+                        }
+                        const headers = ['Session ID', 'Agent', 'Channel', 'Messages', 'Tokens', 'Cost', 'Last Active'];
+                        const rows = usageSessions.map(s => [
+                            s.key,
+                            s.agent || 'default',
+                            s.channel || 'unknown',
+                            s.messages,
+                            s.tokens,
+                            s.cost.toFixed(4),
+                            new Date(s.updatedAt).toISOString()
+                        ]);
+                        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `usage-export-${new Date().toISOString().split('T')[0]}.csv`;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        toast.success('CSV exported successfully');
+                    }}>
                         <Download className="mr-2 h-4 w-4" />
                         Export
                     </Button>
@@ -172,13 +196,13 @@ export default function UsagePage() {
                         </div>
                         <div className="flex gap-1.5 items-end justify-center h-12">
                             {[40, 70, 45, 90, 65, 80, 50, 30, 85, 60, 75].map((h, i) => (
-                                <div 
-                                    key={i} 
+                                <div
+                                    key={i}
                                     className={cn(
                                         "w-2 rounded-t-sm transition-all duration-500",
                                         i === 8 ? "bg-primary shadow-[0_0_15px_rgba(var(--primary),0.5)]" : "bg-primary/20"
-                                    )} 
-                                    style={{ height: `${h}%` }} 
+                                    )}
+                                    style={{ height: `${h}%` }}
                                 />
                             ))}
                         </div>
@@ -196,8 +220,8 @@ export default function UsagePage() {
                     </div>
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                            placeholder="Filter sessions..." 
+                        <Input
+                            placeholder="Filter sessions..."
                             className="pl-9 h-9 text-xs"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}

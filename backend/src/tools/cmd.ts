@@ -76,6 +76,10 @@ export const handleError = async (ctx: MessageContext, error: unknown, reply: bo
     }
 };
 
+// AUDIT-INTENTIONAL(#20): This builds a WhatsApp quoted-message structure for AI replies.
+// 'META_AI_MOCK' is a sentinel ID so downstream code can distinguish AI-generated quotes
+// from real user quotes. 'status@broadcast' is a standard WhatsApp system JID.
+// This is NOT test/mock data — it's a protocol-level utility.
 export const fakeMetaAiQuotedText = (text: string) => {
     return {
         key: {

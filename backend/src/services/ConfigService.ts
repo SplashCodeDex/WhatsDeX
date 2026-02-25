@@ -9,10 +9,19 @@ import { Job } from 'bullmq';
 export class ConfigService {
   private static instance: ConfigService;
   private config: Config;
+  private _jid: string = '';
 
   private constructor() {
     this.config = configManager.config;
     logger.info('ConfigService initialized as wrapper for ConfigManager');
+  }
+
+  /**
+   * Sets the bot's WhatsApp JID at connection time.
+   */
+  public setJid(jid: string): void {
+    this._jid = jid;
+    logger.info(`ConfigService: Bot JID set to ${jid}`);
   }
 
   public static getInstance(): ConfigService {
@@ -36,8 +45,8 @@ export class ConfigService {
   public get bot() {
     return {
       ...this.config.bot,
-      jid: '', // Placeholder for dynamic JID
-      id: '',   // Alias for jid
+      jid: this._jid,
+      id: this._jid,
       readyAt: new Date(),
       uptime: '0s',
       dbSize: '0B',

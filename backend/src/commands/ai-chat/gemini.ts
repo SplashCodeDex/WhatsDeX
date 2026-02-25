@@ -31,9 +31,9 @@ export default {
 
     // Constants for summarization logic
     const {
-      threshold: SUMMARIZE_THRESHOLD,
-      messagesToSummarize: MESSAGES_TO_SUMMARIZE,
-      historyPruneLength: HISTORY_PRUNE_LENGTH,
+      SUMMARIZE_THRESHOLD,
+      MESSAGES_TO_SUMMARIZE,
+      HISTORY_PRUNE_LENGTH,
     } = config.ai.summarization;
 
     // Start performance monitoring
@@ -147,6 +147,10 @@ export default {
 
               // Create a mock context that satisfies the necessary parts of MessageContext
               // We use 'as any' here sparingly because creating a full mock context is complex
+              // AUDIT-INTENTIONAL(#9): Security sandbox for AI-triggered commands.
+              // isOwner=false prevents AI from executing destructive owner-only commands.
+              // group=undefined blocks group admin actions via prompt injection.
+              // reply() is intercepted to capture output for the AI, not send to chat.
               const mockCtx: Partial<MessageContext> = {
                 ...ctx,
                 args: Array.isArray(argsForCommand) ? argsForCommand.map(String) : [String(argsForCommand)],
@@ -188,7 +192,7 @@ export default {
         const finalMessageContent = finalResponse.message.content;
         messages.push(finalResponse.message);
 
-                await chatHistoryManager.updateChat(tenantId, userId, { history: messages.slice(1), summary: currentSummary });
+        await chatHistoryManager.updateChat(tenantId, userId, { history: messages.slice(1), summary: currentSummary });
 
         // --- Caching Implementation Start ---
         await cache.set(cacheKey, finalMessageContent);
@@ -201,7 +205,7 @@ export default {
       const result = responseMessage.content;
       messages.push(responseMessage);
 
-              await chatHistoryManager.updateChat(tenantId, userId, { history: messages.slice(1), summary: currentSummary });
+      await chatHistoryManager.updateChat(tenantId, userId, { history: messages.slice(1), summary: currentSummary });
 
       // --- Caching Implementation Start ---
       await cache.set(cacheKey, result);
