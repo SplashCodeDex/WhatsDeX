@@ -5,10 +5,10 @@ import crypto from 'crypto';
 import { firebaseService } from '@/services/FirebaseService.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { useFirestoreAuthState } from '@/lib/baileysFirestoreAuth.js';
-import { tenantConfigService } from './tenantConfigService.js';
-import { webhookService } from './webhookService.js';
-import { socketService } from './socketService.js';
-import analyticsService from './analytics.js';
+import { tenantConfigService } from '../services/tenantConfigService.js';
+import { webhookService } from '../services/webhookService.js';
+import { socketService } from '../services/socketService.js';
+import analyticsService from '../services/analytics.js';
 import { BotInstanceSchema, Bot, GlobalContext } from '@/types/index.js';
 import { Campaign, BotInstance, Result, CampaignStatus } from '../types/contracts.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
@@ -16,17 +16,17 @@ import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import QRCode from 'qrcode';
 // import initializeContext from '@/lib/context.js'; // REMOVED to break cycle
 
-import { MiddlewareSystem } from './middlewareSystem.js';
+import { MiddlewareSystem } from '../services/middlewareSystem.js';
 import { permissionMiddleware } from '../middleware/permissions.js';
 import { cooldownMiddleware } from '../middleware/cooldown.js';
 import { moderationMiddleware } from '../middleware/moderation.js';
-import { eventHandler } from './eventHandler.js';
-import AuthSystem from './authSystem.js';
-import { flowService } from './flowService.js';
-import { flowEngine } from './flowEngine.js';
-import { TelegramAdapter } from './channels/telegram/TelegramAdapter.js';
-import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
-import { channelManager } from './channels/ChannelManager.js';
+import { eventHandler } from '../services/eventHandler.js';
+import AuthSystem from '../services/authSystem.js';
+import { flowService } from '../services/flowService.js';
+import { flowEngine } from '../services/flowEngine.js';
+import { TelegramAdapter } from '../services/channels/telegram/TelegramAdapter.js';
+import { WhatsappAdapter } from '../services/channels/whatsapp/WhatsappAdapter.js';
+import { channelManager } from '../services/channels/ChannelManager.js';
 import { createBotContext } from '../utils/createBotContext.js';
 
 export class MultiTenantBotService {

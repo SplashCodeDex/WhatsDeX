@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
 import { MessageController } from './messageController.js';
-import multiTenantBotService from '../services/multiTenantBotService.js';
+import multiTenantBotService from '../archive/multiTenantBotService.js';
 import { db } from '../lib/firebase.js';
 
 // Mock dependencies
-vi.mock('../services/multiTenantBotService.js', () => ({
+vi.mock('../archive/multiTenantBotService.js', () => ({
   default: {
     sendMessage: vi.fn(),
   },

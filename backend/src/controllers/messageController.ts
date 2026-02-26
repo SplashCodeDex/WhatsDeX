@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import logger from '../utils/logger.js';
-import multiTenantBotService from '../services/multiTenantBotService.js';
+import multiTenantBotService from '../archive/multiTenantBotService.js';
 import { db } from '../lib/firebase.js';
 
 // Validation Schemas
