@@ -1,6 +1,7 @@
 import redis from '../lib/redis.js';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
+import crypto from 'node:crypto';
 
 export class CacheService {
   private static instance: CacheService;
@@ -45,7 +46,7 @@ export class CacheService {
 
   createKey(data: any): string {
     const serialized = typeof data === 'string' ? data : JSON.stringify(data);
-    return `cache:${Buffer.from(serialized).toString('base64').substring(0, 32)}`;
+    return `cache:${crypto.createHash('md5').update(serialized).digest('hex')}`;
   }
 
   async get<T>(key: string): Promise<Result<T | null>> {

@@ -3,33 +3,24 @@ import { ContactService } from './contactService.js';
 import { Readable } from 'stream';
 import fs from 'fs';
 
-const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
+const { mockBatchSet, mockBatchUpdate, mockBatchCommit, mockBatch } = vi.hoisted(() => {
     const mockBatchSet = vi.fn();
+    const mockBatchUpdate = vi.fn();
     const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
     const mockBatch = vi.fn(() => ({
         set: mockBatchSet,
+        update: mockBatchUpdate,
         commit: mockBatchCommit,
     }));
-    return { mockBatchSet, mockBatchCommit, mockBatch };
+    return { mockBatchSet, mockBatchUpdate, mockBatchCommit, mockBatch };
 });
-
-vi.mock('../lib/firebase.js', () => ({
-    db: {
-        batch: mockBatch,
-        collection: vi.fn(() => ({
-            doc: vi.fn(() => ({
-                collection: vi.fn(() => ({
-                    doc: vi.fn(() => ({})), // Return a mock doc reference
-                })),
-            })),
-        })),
-    }
-}));
 
 vi.mock('./FirebaseService.js', () => ({
     firebaseService: {
+        batch: mockBatch,
         getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
         setDoc: vi.fn().mockResolvedValue(undefined),
+        updateDoc: vi.fn().mockResolvedValue(undefined),
     }
 }));
 
@@ -65,37 +56,40 @@ describe('ContactService', () => {
 
       expect(result.data.count).toBe(2);
       expect(result.data.errors).toEqual([]);
-      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(2); // One for contacts, one for stats
       expect(mockBatchSet).toHaveBeenCalledTimes(2);
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.stringMatching(/^cont_/),
         expect.objectContaining({
           name: 'Doe, John',
           phone: '1234567890@s.whatsapp.net',
           email: 'john@example.com',
           tags: ['vip', 'lead'],
-        })
+        }),
+        tenantId
       );
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.stringMatching(/^cont_/),
         expect.objectContaining({
           name: 'Jane Doe',
           phone: '19876543210@s.whatsapp.net',
           email: 'jane@example.com',
           tags: ['new'],
-        })
+        }),
+        tenantId
       );
 
       // Verify bot stats update
       expect(firebaseService.getCollection).toHaveBeenCalledWith('bots', tenantId);
-      expect(firebaseService.setDoc).toHaveBeenCalledWith(
+      expect(mockBatchUpdate).toHaveBeenCalledWith(
           'bots',
           'bot_1',
           expect.objectContaining({ 'stats.contactsCount': expect.anything() }),
-          tenantId,
-          true
+          tenantId
       );
     });
 
@@ -114,7 +108,7 @@ describe('ContactService', () => {
       expect(result.data.errors.length).toBe(1);
       expect(result.data.errors[0]).toContain('Row 3: phone: Phone number is required');
       expect(mockBatchSet).toHaveBeenCalledTimes(1);
-      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
+      expect(mockBatchCommit).toHaveBeenCalledTimes(2); // One for contacts, one for stats
     });
 
     it('should return an error for empty or invalid CSV data', async () => {

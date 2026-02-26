@@ -57,6 +57,23 @@ export class FirebaseService {
   }
 
   /**
+   * Validation (Zero-Trust) helper
+   */
+  private validate<K extends CollectionKey>(schema: z.ZodSchema<any>, data: any, isPartial: boolean) {
+    if (isPartial) {
+      // Best effort validation for partial updates
+      if (typeof (schema as any).partial === 'function') {
+        (schema as any).partial().parse(data);
+      } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+        // Handle Readonly schemas
+        (schema as any).unwrap().partial().parse(data);
+      }
+    } else {
+      schema.parse(data);
+    }
+  }
+
+  /**
    * Resolve a collection name to its full path and schema
    */
   private getCollectionInfo(collection: string, tenantId?: string) {
@@ -64,8 +81,13 @@ export class FirebaseService {
     let schemaKey: CollectionKey;
 
     if (tenantId) {
+      // If collection is already a full path or template, handle it
+      if (collection.startsWith('tenants/')) {
+        path = collection.replace('{tenantId}', tenantId);
+        schemaKey = collection as CollectionKey;
+      }
       // Special handling for nested subcollections like bots/{botId}/auth
-      if (collection.includes('/')) {
+      else if (collection.includes('/')) {
         const parts = collection.split('/');
         // Pattern: bots/{botId}/auth
         if (parts[0] === 'bots' && parts[2] === 'auth') {
@@ -133,27 +155,41 @@ export class FirebaseService {
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
 
       // Validation (Zero-Trust)
-      // Since data might be Partial, we use a partial schema for validation if merge is true
-      if (merge) {
-        // Best effort validation for partial updates
-        // Note: Zod doesn't easily support dynamic partial validation against a deep schema
-        // but for our flat-ish documents, it works well enough.
-        // We safely check if .partial() exists (e.g. not a preprocessed or readonly schema)
-        if (typeof (schema as any).partial === 'function') {
-          (schema as any).partial().parse(data);
-        } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
-          // Handle Readonly schemas
-          (schema as any).unwrap().partial().parse(data);
-        }
-      } else {
-        schema.parse(data);
-      }
+      this.validate(schema, data, merge);
 
       const docRef = db.collection(path).doc(docId);
       await docRef.set(data, { merge });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Firestore setDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, {
+        message: err.message,
+        stack: err.stack,
+        data: JSON.stringify(data).substring(0, 500)
+      });
+      throw err;
+    }
+  }
+
+  /**
+   * Generic method to update a document (fails if doc doesn't exist)
+   */
+  public async updateDoc<K extends CollectionKey>(
+    collection: string,
+    docId: string,
+    data: Partial<FirestoreSchema[K]>,
+    tenantId?: string
+  ): Promise<void> {
+    try {
+      const { path, schema } = this.getCollectionInfo(collection, tenantId);
+
+      // Validation (Zero-Trust)
+      this.validate(schema, data, true);
+
+      const docRef = db.collection(path).doc(docId);
+      await docRef.update(data);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore updateDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, {
         message: err.message,
         stack: err.stack,
         data: JSON.stringify(data).substring(0, 500)
@@ -187,6 +223,59 @@ export class FirebaseService {
       logger.error(`Firestore getCollection error [${collection}] (Tenant: ${tenantId}):`, err);
       throw err;
     }
+  }
+
+  /**
+   * Get a validated Firestore WriteBatch wrapper
+   */
+  public batch() {
+    const firestoreBatch = db.batch();
+
+    return {
+      set: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string,
+        merge = true
+      ) => {
+        const { path, schema } = this.getCollectionInfo(collection, tenantId);
+        this.validate(schema, data, merge);
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.set(docRef, data, { merge });
+      },
+
+      update: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string
+      ) => {
+        const { path, schema } = this.getCollectionInfo(collection, tenantId);
+        this.validate(schema, data, true);
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.update(docRef, data);
+      },
+
+      delete: (collection: string, docId: string, tenantId?: string) => {
+        const { path } = this.getCollectionInfo(collection, tenantId);
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.delete(docRef);
+      },
+
+      commit: async () => {
+        try {
+          await firestoreBatch.commit();
+        } catch (error: unknown) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          logger.error('Firestore batch commit error:', {
+            message: err.message,
+            stack: err.stack
+          });
+          throw err;
+        }
+      }
+    };
   }
 
   /**

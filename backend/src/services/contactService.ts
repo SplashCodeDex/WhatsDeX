@@ -1,10 +1,10 @@
-import { db } from '../lib/firebase.js';
 import { firebaseService } from './FirebaseService.js';
 import { ContactSchema, Result, type Contact } from '../types/contracts.js';
 import logger from '../utils/logger.js';
 import crypto from 'node:crypto';
 import { parse } from 'csv-parse';
 import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const normalizePhoneNumber = (phone: string): string => {
@@ -28,7 +28,7 @@ export class ContactService {
   }
 
   /**
-   * Import contacts from CSV
+   * Import contacts from CSV (2026 Streamed Edition)
    */
   public async importContacts(
     tenantId: string,
@@ -39,86 +39,76 @@ export class ContactService {
     let count = 0;
     let rowIndex = 0;
     const BATCH_SIZE = 500;
-    let currentBatch = db.batch();
+    let currentBatch = firebaseService.batch();
     let currentBatchSize = 0;
-    const batchPromises: Promise<any>[] = [];
 
     try {
-      const parser = fs.createReadStream(filePath).pipe(parse({
+      const parser = parse({
         columns: true,
         skip_empty_lines: true,
         trim: true,
-      }));
+      });
 
-      for await (const record of parser) {
-        rowIndex++;
-        const rawData = record as Record<string, string>;
-        const phone = rawData.phone || rawData.phoneNumber || '';
+      const readStream = fs.createReadStream(filePath);
 
-        const contactData = {
-          id: `cont_${crypto.randomUUID()}`,
-          tenantId,
-          name: rawData.name || rawData.fullName || 'Unknown',
-          phone: phone ? normalizePhoneNumber(phone) : '',
-          email: rawData.email || '',
-          tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
-          attributes: rawData,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
+      await pipeline(
+        readStream,
+        parser,
+        async function* (source) {
+          for await (const record of source) {
+            rowIndex++;
+            const rawData = record as Record<string, string>;
+            const phone = rawData.phone || rawData.phoneNumber || '';
 
-        const validation = ContactSchema.safeParse(contactData);
-        if (!validation.success) {
-          const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-          errors.push(`Row ${rowIndex + 1}: ${msg}`);
-        } else {
-          const contactRef = db.collection('tenants')
-            .doc(tenantId)
-            .collection('contacts')
-            .doc(contactData.id);
-          currentBatch.set(contactRef, validation.data);
-          count++;
-          currentBatchSize++;
+            const contactData = {
+              id: `cont_${crypto.randomUUID()}`,
+              tenantId,
+              name: rawData.name || rawData.fullName || 'Unknown',
+              phone: phone ? normalizePhoneNumber(phone) : '',
+              email: rawData.email || '',
+              tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
+              attributes: rawData,
+              status: 'active' as const,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
 
-          if (currentBatchSize >= BATCH_SIZE) {
-            batchPromises.push(currentBatch.commit());
-            currentBatch = db.batch();
-            currentBatchSize = 0;
+            const validation = ContactSchema.safeParse(contactData);
+            if (!validation.success) {
+              const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+              errors.push(`Row ${rowIndex + 1}: ${msg}`);
+            } else {
+              currentBatch.set('contacts', contactData.id, validation.data, tenantId);
+              count++;
+              currentBatchSize++;
+
+              if (currentBatchSize >= BATCH_SIZE) {
+                await currentBatch.commit();
+                currentBatch = firebaseService.batch();
+                currentBatchSize = 0;
+              }
+            }
           }
         }
-      }
+      );
 
       if (currentBatchSize > 0) {
-        batchPromises.push(currentBatch.commit());
+        await currentBatch.commit();
       }
-      await Promise.all(batchPromises);
 
-      // Update bot statistics (contactsCount)
+      // Update bot statistics (contactsCount) using increments via FirebaseService.batch()
       if (count > 0) {
         try {
+          const statsBatch = firebaseService.batch();
           if (botId) {
-            // Update specific bot
-            await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
-              'bots',
-              botId,
-              { 'stats.contactsCount': FieldValue.increment(count) } as any,
-              tenantId,
-              true
-            );
+            statsBatch.update('bots', botId, { 'stats.contactsCount': FieldValue.increment(count) } as any, tenantId);
           } else {
-            // Update all bots for this tenant to reflect new total
-            const bots = await firebaseService.getCollection<'tenants/{tenantId}/bots'>('bots', tenantId);
-            const statsPromises = bots.map(bot =>
-              firebaseService.setDoc<'tenants/{tenantId}/bots'>(
-                'bots',
-                bot.id,
-                { 'stats.contactsCount': FieldValue.increment(count) } as any,
-                tenantId,
-                true
-              )
-            );
-            await Promise.all(statsPromises);
+            const bots = await firebaseService.getCollection('bots', tenantId);
+            bots.forEach(bot => {
+              statsBatch.update('bots', bot.id, { 'stats.contactsCount': FieldValue.increment(count) } as any, tenantId);
+            });
           }
+          await statsBatch.commit();
         } catch (statsError) {
           logger.error('Failed to update bot stats after import', statsError);
         }
@@ -144,7 +134,7 @@ export class ContactService {
    */
   public async listContacts(tenantId: string, limit: number = 100): Promise<Result<Contact[]>> {
     try {
-      const contacts = await firebaseService.getCollection('tenants/{tenantId}/contacts' as any, tenantId) as Contact[];
+      const contacts = await firebaseService.getCollection('contacts', tenantId) as Contact[];
       return { success: true, data: contacts.slice(0, limit) };
     } catch (error: unknown) {
       logger.error('ContactService.listContacts error', error);
@@ -167,7 +157,7 @@ export class ContactService {
       };
 
       const validated = ContactSchema.parse(contactData);
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, id, validated, tenantId, false);
+      await firebaseService.setDoc('contacts', id, validated, tenantId, false);
       return { success: true, data: validated };
     } catch (error: unknown) {
       logger.error('ContactService.createContact error', error);
@@ -184,7 +174,8 @@ export class ContactService {
         ...updates,
         updatedAt: new Date()
       };
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, contactId, contactData, tenantId, true);
+      // updateDoc natively fails if the document doesn't exist
+      await firebaseService.updateDoc('contacts', contactId, contactData, tenantId);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.updateContact error', error);
@@ -197,7 +188,7 @@ export class ContactService {
    */
   public async deleteContact(tenantId: string, contactId: string): Promise<Result<void>> {
     try {
-      await firebaseService.deleteDoc('tenants/{tenantId}/contacts' as any, contactId, tenantId);
+      await firebaseService.deleteDoc('contacts', contactId, tenantId);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.deleteContact error', error);
@@ -210,7 +201,7 @@ export class ContactService {
    */
   public async getAudience(tenantId: string): Promise<Result<any[]>> {
     try {
-      const audiences = await firebaseService.getCollection('tenants/{tenantId}/audiences' as any, tenantId);
+      const audiences = await firebaseService.getCollection('audiences', tenantId);
       return { success: true, data: audiences };
     } catch (error: unknown) {
       logger.error('Error fetching audience', error);
