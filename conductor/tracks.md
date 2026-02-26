@@ -24,3 +24,7 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 *Link: [./conductor/tracks/auth_robustness_20260219/](./conductor/tracks/auth_robustness_20260219/)*    
 
 
+---
+
+- [ ] **Track: Refactor Bot to Channels (Fusion Principle)**
+*Link: [./tracks/bot_to_channels_20260226/](./tracks/bot_to_channels_20260226/)*
