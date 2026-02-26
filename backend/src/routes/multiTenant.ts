@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import multiTenantService from '../services/multiTenantService.js';
-import multiTenantBotService from '../services/multiTenantBotService.js';
+import channelService from '../services/ChannelService.js';
 import logger from '../utils/logger.js';
 import initializeContext from '../lib/context.js';
 
@@ -18,16 +18,16 @@ router.get('/status', (req: Request, res: Response) => {
 });
 
 /**
- * Create a new bot for the authenticated tenant
+ * Create a new channel for the authenticated tenant
  */
-router.post('/bots', async (req: Request, res: Response) => {
+router.post(['/channels', '/bots'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await multiTenantBotService.createBotInstance(tenantId, req.body);
+        const result = await channelService.createChannel(tenantId, req.body);
 
         if (result.success) {
             res.json({ success: true, data: result.data });
@@ -35,35 +35,36 @@ router.post('/bots', async (req: Request, res: Response) => {
             res.status(400).json({ success: false, error: result.error.message });
         }
     } catch (error: any) {
-        logger.error('Route /bots POST error', error);
+        logger.error('Route /channels POST error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
 /**
- * List all bots for the authenticated tenant
+ * List all channels for the authenticated tenant
  */
-router.get('/bots', async (req: Request, res: Response) => {
+router.get(['/channels', '/bots'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        // Implementation for listing bots from Firestore (persistent state)
-        const result = await multiTenantBotService.getAllBots(tenantId);
+        // Implementation for listing channels from Firestore (persistent state)
+        const result = await channelService.getAllChannels(tenantId);
 
         if (result.success) {
-            // Map to frontend BotListItem shape
-            const bots = result.data.map(bot => ({
-                id: bot.id,
-                name: bot.name,
-                phoneNumber: bot.phoneNumber || null,
-                status: bot.status,
-                messageCount: (bot.stats?.messagesSent || 0) + (bot.stats?.messagesReceived || 0),
-                lastActiveAt: bot.updatedAt || null
+            // Map to frontend ChannelListItem shape
+            const channels = result.data.map(chan => ({
+                id: chan.id,
+                name: chan.name,
+                phoneNumber: chan.phoneNumber || null,
+                status: chan.status,
+                messageCount: (chan.stats?.messagesSent || 0) + (chan.stats?.messagesReceived || 0),
+                lastActiveAt: chan.updatedAt || null,
+                assignedAgentId: chan.assignedAgentId || null
             }));
-            res.json({ success: true, data: bots });
+            res.json({ success: true, data: channels });
         } else {
             res.status(500).json({ success: false, error: result.error?.message });
         }
@@ -93,70 +94,70 @@ router.get('/bots/commands', async (req: Request, res: Response) => {
 });
 
 /**
- * Get a single bot by ID
+ * Get a single channel by ID
  */
-router.get('/bots/:botId', async (req: Request, res: Response) => {
+router.get(['/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId;
-        const botId = req.params.botId as string;
+        const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await multiTenantBotService.getBot(tenantId, botId);
+        const result = await channelService.getChannel(tenantId, id);
         if (result.success) {
             res.json({ success: true, data: result.data });
         } else {
-            res.status(404).json({ success: false, error: result.error?.message || 'Bot not found' });
+            res.status(404).json({ success: false, error: result.error?.message || 'Channel not found' });
         }
     } catch (error: any) {
-        logger.error('Route /bots/:botId GET error', error);
+        logger.error('Route /channels/:id GET error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
 /**
- * Update a bot
+ * Update a channel
  */
-router.patch('/bots/:botId', async (req: Request, res: Response) => {
+router.patch(['/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId;
-        const botId = req.params.botId as string;
+        const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await multiTenantBotService.updateBot(tenantId, botId, req.body);
+        const result = await channelService.updateChannel(tenantId, id, req.body);
         if (result.success) {
             res.json({ success: true, data: result.data });
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Update failed' });
         }
     } catch (error: any) {
-        logger.error('Route /bots/:botId PATCH error', error);
+        logger.error('Route /channels/:id PATCH error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
 /**
- * Delete a bot
+ * Delete a channel
  */
-router.delete('/bots/:botId', async (req: Request, res: Response) => {
+router.delete(['/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId;
-        const botId = req.params.botId as string;
+        const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await multiTenantBotService.deleteBot(tenantId, botId);
+        const result = await channelService.deleteChannel(tenantId, id);
         if (result.success) {
-            res.json({ success: true, data: { message: 'Bot deleted successfully' } });
+            res.json({ success: true, data: { message: 'Channel deleted successfully' } });
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Delete failed' });
         }
     } catch (error: any) {
-        logger.error('Route /bots/:botId DELETE error', error);
+        logger.error('Route /channels/:id DELETE error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
