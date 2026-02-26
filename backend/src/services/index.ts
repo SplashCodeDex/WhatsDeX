@@ -19,6 +19,7 @@ export { default as MultiTenantBotService } from '../archive/multiTenantBotServi
 export { default as CommandSystem } from './commandSystem.js';
 export { default as MultiTenantService } from './multiTenantService.js';
 export { default as ChannelService } from './ChannelService.js';
+export { default as ChannelBindingService } from './ChannelBindingService.js';
 
 // Payment/Subscription
 export { default as StripeService } from './stripeService.js';
