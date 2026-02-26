@@ -33,8 +33,8 @@
     - [x] If no Agent is assigned, forward the message to `WebhookService`.
 - [x] **Task: Integrate with GeminiAI** 15050ea
     - [x] Update `GeminiAI.ts` to pull its context and personality based on the new Agent-Channel binding.
-- [~] **Task: Write Tests for Orchestration**
-    - [ ] Verify message routing: User -> Channel -> (Agent exists ? Agent Respond : Webhook Forward).
+- [x] **Task: Write Tests for Orchestration** 9ea7063
+    - [x] Verify message routing: User -> Channel -> (Agent exists ? Agent Respond : Webhook Forward).
 - [ ] **Task: Conductor - User Manual Verification 'Phase 3: Agent-Channel Orchestration' (Protocol in workflow.md)**
 
 ## Phase 4: Final Cleanup & Integration
