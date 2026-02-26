@@ -14,10 +14,10 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Archival & Scaffolding' (Protocol in workflow.md)** c89c5a1
 
 ## Phase 2: WhatsApp Channel Refactor
-- [ ] **Task: Implement WhatsApp Channel Adapter**
-    - [ ] Refactor Baileys connection logic into a dedicated `WhatsappAdapter`.
-    - [ ] Implement standalone connection, QR generation, and state management for WhatsApp channels.
-- [ ] **Task: Write Tests for WhatsApp Connectivity**
+- [x] **Task: Implement WhatsApp Channel Adapter** 9e26e56
+    - [x] Refactor Baileys connection logic into a dedicated `WhatsappAdapter`.
+    - [x] Implement standalone connection, QR generation, and state management for WhatsApp channels.
+- [~] **Task: Write Tests for WhatsApp Connectivity**
     - [ ] Create `backend/src/services/channels/whatsapp/WhatsappAdapter.test.ts`.
     - [ ] Verify connection lifecycle independent of AI Agents.
 - [ ] **Task: Implement Connection Persistence**
