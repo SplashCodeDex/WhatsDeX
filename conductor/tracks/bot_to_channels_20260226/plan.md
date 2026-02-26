@@ -31,9 +31,9 @@
 - [x] **Task: Implement Webhook Mode** f15f132
     - [x] Update the message ingress pipeline to check for an assigned Agent.
     - [x] If no Agent is assigned, forward the message to `WebhookService`.
-- [~] **Task: Integrate with GeminiAI**
-    - [ ] Update `GeminiAI.ts` to pull its context and personality based on the new Agent-Channel binding.
-- [ ] **Task: Write Tests for Orchestration**
+- [x] **Task: Integrate with GeminiAI** 15050ea
+    - [x] Update `GeminiAI.ts` to pull its context and personality based on the new Agent-Channel binding.
+- [~] **Task: Write Tests for Orchestration**
     - [ ] Verify message routing: User -> Channel -> (Agent exists ? Agent Respond : Webhook Forward).
 - [ ] **Task: Conductor - User Manual Verification 'Phase 3: Agent-Channel Orchestration' (Protocol in workflow.md)**
 
