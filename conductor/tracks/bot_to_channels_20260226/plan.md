@@ -5,12 +5,12 @@
     - [ ] Create `backend/src/archive/` directory.
     - [ ] Move `MultiTenantBotService.ts` and related specialized logic to the archive.
     - [ ] Ensure the project still compiles after the move (placeholder replacements if needed).
-- [ ] **Task: Define Unified Channel Schema**
-    - [ ] Update `backend/src/types/contracts.ts` and `firestore.ts` with the new `Channel` and `AgentBinding` definitions.
-    - [ ] Create Zod schemas for the new Channel entities.
-- [ ] **Task: Scaffold ChannelService**
-    - [ ] Create `backend/src/services/ChannelService.ts` to manage the lifecycle of connectivity slots.
-    - [ ] Implement basic CRUD for Channels in Firestore.
+- [x] **Task: Define Unified Channel Schema** b59f3f2913
+    - [x] Update `backend/src/types/contracts.ts` and `firestore.ts` with the new `Channel` and `AgentBinding` definitions.
+    - [x] Create Zod schemas for the new Channel entities.
+- [x] **Task: Scaffold ChannelService** 8feed08
+    - [x] Create `backend/src/services/ChannelService.ts` to manage the lifecycle of connectivity slots.
+    - [x] Implement basic CRUD for Channels in Firestore.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Archival & Scaffolding' (Protocol in workflow.md)**
 
 ## Phase 2: WhatsApp Channel Refactor
