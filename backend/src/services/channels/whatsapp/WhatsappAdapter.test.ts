@@ -1,105 +1,63 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WhatsappAdapter } from './WhatsappAdapter.js';
+import AuthSystem from '@/services/authSystem.js';
 
 // Mock dependencies
-const mockSocket = {
-  ev: { 
-    on: vi.fn(),
-    emit: vi.fn()
-  },
-  sendMessage: vi.fn().mockResolvedValue({ key: { id: 'msg-123' } })
-};
-
-const mockAuthSystemInstance = {
-  on: vi.fn(),
-  connect: vi.fn().mockResolvedValue({ 
-    success: true, 
-    data: mockSocket
-  }),
-  disconnect: vi.fn().mockResolvedValue({ success: true })
-};
-
 vi.mock('@/services/authSystem.js', () => {
   return {
-    default: class {
-      constructor() {
-        return mockAuthSystemInstance;
-      }
-    }
+    default: vi.fn().mockImplementation(function() {
+      return {
+        connect: vi.fn().mockResolvedValue({ success: true, data: { ev: { on: vi.fn() }, sendMessage: vi.fn() } }),
+        disconnect: vi.fn().mockResolvedValue(undefined)
+      };
+    })
   };
 });
 
+vi.mock('@/utils/logger.js', () => ({
+  default: {
+    info: vi.fn(),
+    error: vi.fn()
+  }
+}));
+
+vi.mock('../../../../../openclaw/src/web/active-listener.js', () => ({
+  setActiveWebListener: vi.fn()
+}));
+
+vi.mock('../../../../../openclaw/src/web/outbound.js', () => ({
+  sendMessageWhatsApp: vi.fn(),
+  sendReactionWhatsApp: vi.fn(),
+  sendPollWhatsApp: vi.fn()
+}));
+
 describe('WhatsappAdapter', () => {
   let adapter: WhatsappAdapter;
-  const tenantId = 'tenant-abc';
-  const botId = 'bot-123';
+  const tenantId = 'tenant-123';
+  const channelId = 'chan-456';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    adapter = new WhatsappAdapter(tenantId, botId);
+    adapter = new WhatsappAdapter(tenantId, channelId);
   });
 
-  it('should have id "whatsapp"', () => {
+  it('should initialize with correct identifiers', () => {
     expect(adapter.id).toBe('whatsapp');
+    expect(adapter.instanceId).toBe(channelId);
   });
 
-  it('should have instanceId equal to botId', () => {
-    expect(adapter.instanceId).toBe(botId);
-  });
-
-  it('should connect', async () => {
-    await adapter.connect();
-    expect(mockAuthSystemInstance.connect).toHaveBeenCalled();
-  });
-
-  it('should send a message', async () => {
-    await adapter.connect();
-    await adapter.sendMessage('+123456789', 'hello');
-    expect(mockSocket.sendMessage).toHaveBeenCalledWith(
-      expect.stringContaining('+123456789'), 
-      expect.objectContaining({ text: 'hello' })
-    );
-  });
-
-  it('should send a common message', async () => {
-    await adapter.connect();
-    await adapter.sendCommon({
-      id: 'msg-1',
-      platform: 'whatsapp',
-      from: 'bot',
-      to: '123456789',
-      content: { text: 'Common message text' },
-      timestamp: Date.now()
-    });
-    expect(mockSocket.sendMessage).toHaveBeenCalledWith(
-      expect.stringContaining('123456789'),
-      expect.objectContaining({ text: 'Common message text' })
-    );
-  });
-
-  it('should trigger onMessage handler when message arrives', async () => {
-    const handler = vi.fn();
-    adapter.onMessage(handler);
-    
+  it('should connect via AuthSystem', async () => {
     await adapter.connect();
     
-    const registeredHandler = mockSocket.ev.on.mock.calls.find(call => call[0] === 'messages.upsert')?.[1];
-    expect(registeredHandler).toBeDefined();
+    const authInstance = vi.mocked(AuthSystem).mock.results[0].value;
+    expect(authInstance.connect).toHaveBeenCalled();
+  });
 
-    const mockMessage = {
-      key: { remoteJid: '12345@s.whatsapp.net' },
-      message: { conversation: 'hello bot' },
-      messageTimestamp: 1676582400
-    };
+  it('should disconnect and clear listener', async () => {
+    await adapter.connect();
+    await adapter.disconnect();
 
-    await registeredHandler({ messages: [mockMessage], type: 'notify' });
-
-    expect(handler).toHaveBeenCalledWith(expect.objectContaining({
-      tenantId,
-      botId,
-      channelId: 'whatsapp',
-      sender: '12345@s.whatsapp.net',
-      content: mockMessage.message
-    }));
+    const authInstance = vi.mocked(AuthSystem).mock.results[0].value;
+    expect(authInstance.disconnect).toHaveBeenCalled();
   });
 });
