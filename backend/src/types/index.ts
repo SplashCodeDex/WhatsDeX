@@ -214,7 +214,9 @@ export interface GlobalContext {
     commandSystem: import('../services/commandSystem.js').CommandSystem;
     unifiedAI: import('../services/geminiAI.js').GeminiAI;
     groupService: import('../services/groupService.js').GroupService;
-    multiTenantBotService: import('../archive/multiTenantBotService.js').MultiTenantBotService;
+    channelService: import('../services/ChannelService.js').ChannelService;
+    channelBindingService: import('../services/ChannelBindingService.js').ChannelBindingService;
+    ingressService: import('../services/IngressService.js').IngressService;
     userService: import('../services/userService.js').UserService;
     tenantConfigService: import('../services/tenantConfigService.js').TenantConfigService;
     bot?: Bot;

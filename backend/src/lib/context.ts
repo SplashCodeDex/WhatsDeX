@@ -10,7 +10,9 @@ import { GeminiAI } from '../services/geminiAI.js';
 import { GlobalContext } from '../types/index.js';
 import { groupService } from '../services/groupService.js';
 import { databaseService } from '../services/database.js';
-import { multiTenantBotService } from '../archive/multiTenantBotService.js';
+import { channelService } from '../services/ChannelService.js';
+import { channelBindingService } from '../services/ChannelBindingService.js';
+import { ingressService } from '../services/IngressService.js';
 import { userService } from '../services/userService.js';
 import { tenantConfigService } from '../services/tenantConfigService.js';
 import { WhatsDeXToolBridge } from '../services/WhatsDeXToolBridge.js';
@@ -49,7 +51,9 @@ async function initializeContext(): Promise<GlobalContext> {
                 tools,
                 logger,
                 groupService,
-                multiTenantBotService,
+                channelService,
+                channelBindingService,
+                ingressService,
                 userService,
                 tenantConfigService,
                 // These will be initialized below
@@ -64,9 +68,6 @@ async function initializeContext(): Promise<GlobalContext> {
 
             context.commandSystem = commandSystem;
             context.unifiedAI = unifiedAI;
-
-            // 2026 Edition: Inject context into service to break circular dependency
-            multiTenantBotService.setContext(context);
 
             // Load commands eagerly
             logger.info('Initializing Command System and loading commands...');
