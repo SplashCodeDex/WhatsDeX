@@ -18,6 +18,7 @@ export { GeminiAI as EnhancedAIBrain } from './geminiAI.js'; // Legacy alias
 export { default as MultiTenantBotService } from '../archive/multiTenantBotService.js';
 export { default as CommandSystem } from './commandSystem.js';
 export { default as MultiTenantService } from './multiTenantService.js';
+export { default as ChannelService } from './ChannelService.js';
 
 // Payment/Subscription
 export { default as StripeService } from './stripeService.js';
