@@ -54,7 +54,7 @@ export class ContactService {
       await pipeline(
         readStream,
         parser,
-        async (source) => {
+        async function(source: any) {
           for await (const record of source) {
             rowIndex++;
             const rawData = record as Record<string, string>;
@@ -103,7 +103,7 @@ export class ContactService {
           if (botId) {
             statsBatch.update('bots', botId, { 'stats.contactsCount': FieldValue.increment(count) } as any, tenantId);
           } else {
-            const bots = await firebaseService.getCollection('bots', tenantId);
+            const bots = await firebaseService.getCollection<'tenants/{tenantId}/bots'>('bots', tenantId);
             bots.forEach(bot => {
               statsBatch.update('bots', bot.id, { 'stats.contactsCount': FieldValue.increment(count) } as any, tenantId);
             });

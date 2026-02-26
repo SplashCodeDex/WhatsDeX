@@ -186,7 +186,7 @@ export class FirebaseService {
       this.validate(schema, data, true);
 
       const docRef = db.collection(path).doc(docId);
-      await docRef.update(data);
+      await docRef.update(data as any);
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Firestore updateDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, {
@@ -227,7 +227,7 @@ export class FirebaseService {
         const { path, schema } = this.getCollectionInfo(collection, tenantId);
         this.validate(schema, data, true);
         const docRef = db.collection(path).doc(docId);
-        firestoreBatch.update(docRef, data);
+        firestoreBatch.update(docRef, data as any);
       },
 
       delete: (collection: string, docId: string, tenantId?: string) => {
