@@ -66,14 +66,20 @@ export function useAuth(): UseAuthReturn {
                 setUser(userData);
             } else {
                 setUser(null);
-                // Redirect on session failure
-                window.location.href = '/login';
+                // Redirect on session failure only if not already on auth pages
+                const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/signup';
+                if (!isAuthPage) {
+                    window.location.href = '/login';
+                }
             }
         } catch (err) {
             // calculated failure (401 etc)
             setUser(null);
-            // Redirect on session failure
-            window.location.href = '/login';
+            // Redirect on session failure only if not already on auth pages
+            const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/signup';
+            if (!isAuthPage) {
+                window.location.href = '/login';
+            }
         } finally {
             setLoading(false);
         }

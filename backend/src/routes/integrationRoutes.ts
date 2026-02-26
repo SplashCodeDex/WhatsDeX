@@ -1,6 +1,6 @@
 import express from 'express';
 import { IntegrationController } from '../controllers/integrationController.js';
-import { requireAuth } from '../middleware/authMiddleware.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -8,7 +8,7 @@ const router = express.Router();
  * GET /api/integrations/google/auth-url
  * Returns the URL for tenant to authorize Google Drive
  */
-router.get('/google/auth-url', requireAuth, IntegrationController.getGoogleAuthUrl);
+router.get('/google/auth-url', authenticateToken, IntegrationController.getGoogleAuthUrl);
 
 /**
  * GET /api/integrations/google/callback

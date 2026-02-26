@@ -27,6 +27,6 @@
     }
   },
   "dependencies": {
-    "codedex-api-manager": "file:../MyTemplates"
+    "codedex-api-manager": "this should be installed with the npm package"
   }
 }

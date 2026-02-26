@@ -4,9 +4,9 @@ import AuthSystem from '@/services/authSystem.js';
 import logger from '@/utils/logger.js';
 
 // @ts-ignore
-import { sendMessageWhatsApp, sendReactionWhatsApp, sendPollWhatsApp } from '../../../../openclaw/src/web/outbound.js';
+import { sendMessageWhatsApp, sendReactionWhatsApp, sendPollWhatsApp } from '../../../../../openclaw/src/web/outbound.js';
 // @ts-ignore
-import { setActiveWebListener, type ActiveWebListener, type ActiveWebSendOptions } from '../../../../openclaw/src/web/active-listener.js';
+import { setActiveWebListener, type ActiveWebListener, type ActiveWebSendOptions } from '../../../../../openclaw/src/web/active-listener.js';
 
 /**
  * WhatsappAdapter wraps the existing WhatsDeX Baileys/AuthSystem logic

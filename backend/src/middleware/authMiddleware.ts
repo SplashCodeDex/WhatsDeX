@@ -32,7 +32,12 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.token;
         const source = authHeader ? 'header' : (req.cookies?.token ? 'cookie' : 'none');
 
+        const isMeRoute = req.path === '/me' || req.originalUrl.endsWith('/me');
+
         if (!token) {
+            if (isMeRoute) {
+                return res.status(200).json({ success: true, data: { user: null } });
+            }
             logger.security('Auth Middleware: Missing token', null, { ip: req.ip });
             return res.status(401).json({ success: false, error: 'Access token required' });
         }
@@ -55,6 +60,10 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         } catch (jwtError: unknown) {
             const name = jwtError instanceof Error ? jwtError.name : 'UnknownError';
             const message = jwtError instanceof Error ? jwtError.message : String(jwtError);
+
+            if (isMeRoute) {
+                return res.status(200).json({ success: true, data: { user: null } });
+            }
 
             logger.security('Auth Middleware: Token verification failed', null, {
                 error: message,
