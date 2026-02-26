@@ -199,33 +199,6 @@ export class FirebaseService {
   }
 
   /**
-   * Generic method to get all documents from a collection
-   */
-  public async getCollection<K extends CollectionKey>(
-    collection: string,
-    tenantId?: string
-  ): Promise<FirestoreSchema[K][]> {
-    try {
-      const { path, schema } = this.getCollectionInfo(collection, tenantId);
-      const colRef = db.collection(path);
-      const snapshot = await colRef.get();
-
-      return snapshot.docs.map(doc => {
-        try {
-          return schema.parse(doc.data()) as FirestoreSchema[K];
-        } catch (parsingError) {
-          logger.warn(`Firestore parsing error in getCollection [${path}/${doc.id}]:`, parsingError);
-          return doc.data() as FirestoreSchema[K]; // Fallback to raw data in production but log warning
-        }
-      });
-    } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Firestore getCollection error [${collection}] (Tenant: ${tenantId}):`, err);
-      throw err;
-    }
-  }
-
-  /**
    * Get a validated Firestore WriteBatch wrapper
    */
   public batch() {
@@ -276,6 +249,33 @@ export class FirebaseService {
         }
       }
     };
+  }
+
+  /**
+   * Generic method to get all documents from a collection
+   */
+  public async getCollection<K extends CollectionKey>(
+    collection: string,
+    tenantId?: string
+  ): Promise<FirestoreSchema[K][]> {
+    try {
+      const { path, schema } = this.getCollectionInfo(collection, tenantId);
+      const colRef = db.collection(path);
+      const snapshot = await colRef.get();
+
+      return snapshot.docs.map(doc => {
+        try {
+          return schema.parse(doc.data()) as FirestoreSchema[K];
+        } catch (parsingError) {
+          logger.warn(`Firestore parsing error in getCollection [${path}/${doc.id}]:`, parsingError);
+          return doc.data() as FirestoreSchema[K]; // Fallback to raw data in production but log warning
+        }
+      });
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore getCollection error [${collection}] (Tenant: ${tenantId}):`, err);
+      throw err;
+    }
   }
 
   /**

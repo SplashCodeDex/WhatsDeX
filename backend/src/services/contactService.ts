@@ -54,7 +54,7 @@ export class ContactService {
       await pipeline(
         readStream,
         parser,
-        async function* (source) {
+        async (source) => {
           for await (const record of source) {
             rowIndex++;
             const rawData = record as Record<string, string>;
