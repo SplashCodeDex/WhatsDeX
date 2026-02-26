@@ -140,6 +140,13 @@ export class ApiKeyManager {
     }
 
     /**
+     * Reset the singleton instance (primarily for testing).
+     */
+    public static resetInstance(): void {
+        ApiKeyManager.instance = null;
+    }
+
+    /**
      * Get or create the singleton instance of ApiKeyManager.
      * Reads API keys from GOOGLE_GEMINI_API_KEY environment variable.
      */
