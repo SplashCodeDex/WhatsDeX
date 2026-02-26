@@ -1,7 +1,7 @@
 # Implementation Plan: Refactor Bot to Channels
 
 ## Phase 1: Archival & Scaffolding
-- [ ] **Task: Archive Legacy Bot Logic**
+- [x] **Task: Archive Legacy Bot Logic** 2b55bd9
     - [ ] Create `backend/src/archive/` directory.
     - [ ] Move `MultiTenantBotService.ts` and related specialized logic to the archive.
     - [ ] Ensure the project still compiles after the move (placeholder replacements if needed).
