@@ -17,10 +17,10 @@
 - [x] **Task: Implement WhatsApp Channel Adapter** 9e26e56
     - [x] Refactor Baileys connection logic into a dedicated `WhatsappAdapter`.
     - [x] Implement standalone connection, QR generation, and state management for WhatsApp channels.
-- [~] **Task: Write Tests for WhatsApp Connectivity**
-    - [ ] Create `backend/src/services/channels/whatsapp/WhatsappAdapter.test.ts`.
-    - [ ] Verify connection lifecycle independent of AI Agents.
-- [ ] **Task: Implement Connection Persistence**
+- [x] **Task: Write Tests for WhatsApp Connectivity** a94f41d
+    - [x] Create `backend/src/services/channels/whatsapp/WhatsappAdapter.test.ts`.
+    - [x] Verify connection lifecycle independent of AI Agents.
+- [~] **Task: Implement Connection Persistence**
     - [ ] Ensure channel sessions are correctly stored and recovered using the existing Firestore auth state logic.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: WhatsApp Channel Refactor' (Protocol in workflow.md)**
 
