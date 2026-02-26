@@ -20,8 +20,8 @@
 - [x] **Task: Write Tests for WhatsApp Connectivity** a94f41d
     - [x] Create `backend/src/services/channels/whatsapp/WhatsappAdapter.test.ts`.
     - [x] Verify connection lifecycle independent of AI Agents.
-- [~] **Task: Implement Connection Persistence**
-    - [ ] Ensure channel sessions are correctly stored and recovered using the existing Firestore auth state logic.
+- [x] **Task: Implement Connection Persistence** d49dda2
+    - [x] Ensure channel sessions are correctly stored and recovered using the existing Firestore auth state logic.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: WhatsApp Channel Refactor' (Protocol in workflow.md)**
 
 ## Phase 3: Agent-Channel Orchestration
