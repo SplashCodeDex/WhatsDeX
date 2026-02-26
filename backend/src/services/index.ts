@@ -14,10 +14,10 @@ export { default as CacheService } from './cache.js';
 export { default as GeminiAI } from './geminiAI.js';
 export { GeminiAI as EnhancedAIBrain } from './geminiAI.js'; // Legacy alias
 
-// Bot Services
+// Bot Services (Archived/Deprecated)
+export { default as MultiTenantBotService } from '../archive/multiTenantBotService.js';
 export { default as CommandSystem } from './commandSystem.js';
 export { default as MultiTenantService } from './multiTenantService.js';
-export { default as MultiTenantBotService } from './multiTenantBotService.js';
 
 // Payment/Subscription
 export { default as StripeService } from './stripeService.js';

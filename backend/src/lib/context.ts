@@ -10,7 +10,7 @@ import { GeminiAI } from '../services/geminiAI.js';
 import { GlobalContext } from '../types/index.js';
 import { groupService } from '../services/groupService.js';
 import { databaseService } from '../services/database.js';
-import { multiTenantBotService } from '../services/multiTenantBotService.js';
+import { multiTenantBotService } from '../archive/multiTenantBotService.js';
 import { userService } from '../services/userService.js';
 import { tenantConfigService } from '../services/tenantConfigService.js';
 import { WhatsDeXToolBridge } from '../services/WhatsDeXToolBridge.js';
