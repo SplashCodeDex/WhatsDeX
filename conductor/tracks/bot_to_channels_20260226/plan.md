@@ -28,10 +28,10 @@
 - [x] **Task: Implement ChannelBindingService** 3e9e040
     - [x] Create `backend/src/services/ChannelBindingService.ts` to manage the links between Agents and Channels.
     - [x] Implement logic to resolve the "Active Brain" for a given "Channel Slot".
-- [~] **Task: Implement Webhook Mode**
-    - [ ] Update the message ingress pipeline to check for an assigned Agent.
-    - [ ] If no Agent is assigned, forward the message to `WebhookService`.
-- [ ] **Task: Integrate with GeminiAI**
+- [x] **Task: Implement Webhook Mode** f15f132
+    - [x] Update the message ingress pipeline to check for an assigned Agent.
+    - [x] If no Agent is assigned, forward the message to `WebhookService`.
+- [~] **Task: Integrate with GeminiAI**
     - [ ] Update `GeminiAI.ts` to pull its context and personality based on the new Agent-Channel binding.
 - [ ] **Task: Write Tests for Orchestration**
     - [ ] Verify message routing: User -> Channel -> (Agent exists ? Agent Respond : Webhook Forward).
