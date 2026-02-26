@@ -25,10 +25,10 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: WhatsApp Channel Refactor' (Protocol in workflow.md)** c036708
 
 ## Phase 3: Agent-Channel Orchestration
-- [ ] **Task: Implement ChannelBindingService**
-    - [ ] Create `backend/src/services/ChannelBindingService.ts` to manage the links between Agents and Channels.
-    - [ ] Implement logic to resolve the "Active Brain" for a given "Channel Slot".
-- [ ] **Task: Implement Webhook Mode**
+- [x] **Task: Implement ChannelBindingService** 3e9e040
+    - [x] Create `backend/src/services/ChannelBindingService.ts` to manage the links between Agents and Channels.
+    - [x] Implement logic to resolve the "Active Brain" for a given "Channel Slot".
+- [~] **Task: Implement Webhook Mode**
     - [ ] Update the message ingress pipeline to check for an assigned Agent.
     - [ ] If no Agent is assigned, forward the message to `WebhookService`.
 - [ ] **Task: Integrate with GeminiAI**
