@@ -40,8 +40,8 @@
 ## Phase 4: Final Cleanup & Integration
 - [x] **Task: Update Global Context** f8fc157
     - [x] Refactor `backend/src/lib/context.ts` to remove `multiTenantBotService` and inject `ChannelService` and `ChannelBindingService`.
-- [~] **Task: Retirement of Legacy Routes**
-    - [ ] Remove or redirect `/api/bots` endpoints to the new `/api/channels` equivalents.
-- [ ] **Task: Final System Verification**
+- [x] **Task: Retirement of Legacy Routes** eeffc85
+    - [x] Remove or redirect `/api/bots` endpoints to the new `/api/channels` equivalents.
+- [~] **Task: Final System Verification**
     - [ ] Run full test suite and verify no regressions in OpenClaw skill bridging.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 4: Final Cleanup & Integration' (Protocol in workflow.md)**
