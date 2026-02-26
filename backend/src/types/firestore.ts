@@ -41,24 +41,23 @@ export interface TenantUserDocument {
 }
 
 /**
- * 'tenants/{tenantId}/bots' subcollection document
+ * 'tenants/{tenantId}/channels' subcollection document
  */
-export interface BotInstanceDocument {
+export interface ChannelDocument {
   id: string;
   name: string;
-  type?: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
+  type: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
   phoneNumber?: string;
   identifier?: string;
-  userId?: string; // Legacy/Owner mapping
   status: 'connected' | 'disconnected' | 'connecting' | 'qr_pending' | 'error';
   lastSeenAt?: Timestamp | Date;
   connectionMetadata?: {
-    browser?: [string, string, string]; // e.g. ['WhatsDeX', 'Chrome', '1.0.0']
+    browser?: [string, string, string];
     platform?: string;
   };
   credentials?: Record<string, any>;
   webhookUrl?: string;
-  linkedAgentId?: string | null;
+  assignedAgentId?: string | null;
   stats: {
     messagesSent: number;
     messagesReceived: number;
@@ -69,6 +68,28 @@ export interface BotInstanceDocument {
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
+
+/**
+ * 'tenants/{tenantId}/agents' subcollection document
+ */
+export interface AgentDocument {
+  id: string;
+  name: string;
+  personality?: string;
+  soul?: string;
+  memorySearch: boolean;
+  boundChannels: string[];
+  skills: string[];
+  metadata?: Record<string, unknown>;
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
+}
+
+/**
+ * 'tenants/{tenantId}/bots' subcollection document
+ * @deprecated Use ChannelDocument instead.
+ */
+export type BotInstanceDocument = ChannelDocument;
 
 /**
  * 'tenants/{tenantId}/members' subcollection document (WhatsApp users)
@@ -141,7 +162,9 @@ export interface SubscriptionDocument {
 export interface FirestoreSchema {
   tenants: TenantDocument;
   'tenants/{tenantId}/users': TenantUserDocument;
-  'tenants/{tenantId}/bots': BotInstanceDocument;
+  'tenants/{tenantId}/bots': ChannelDocument;
+  'tenants/{tenantId}/channels': ChannelDocument;
+  'tenants/{tenantId}/agents': AgentDocument;
   'tenants/{tenantId}/slots': BotInstanceDocument;
   'tenants/{tenantId}/members': BotMemberDocument;
   'tenants/{tenantId}/groups': BotGroupDocument;
@@ -154,6 +177,7 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/audiences': Audience;
   'tenants/{tenantId}/templates': MessageTemplate;
   'tenants/{tenantId}/bots/{botId}/auth': { value: any };
+  'tenants/{tenantId}/channels/{channelId}/auth': { value: any };
   'tenants/{tenantId}/learning': LearningData;
   'tenants/{tenantId}/analytics': AnalyticsData;
 }

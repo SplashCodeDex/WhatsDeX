@@ -81,16 +81,16 @@ export const TenantUserSchema = z.object({
 export type TenantUser = z.infer<typeof TenantUserSchema>;
 
 /**
- * Bot Instance Schema ('tenants/{tenantId}/bots' subcollection)
+ * Channel Schema ('tenants/{tenantId}/channels' subcollection)
+ * Replaces legacy 'Bot' entity. Focuses on connectivity.
  */
-export const BotInstanceSchema = z.object({
+export const ChannelSchema = z.object({
   id: z.string(),
   name: z.string(),
   // Multi-channel fields
   type: z.enum(['whatsapp', 'telegram', 'discord', 'slack', 'signal']).default('whatsapp'),
   phoneNumber: z.string().optional(), // WhatsApp/Signal specific
   identifier: z.string().optional(), // Generic identifier (e.g. username, bot handle)
-  userId: z.string().optional(),
   status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error']),
   lastSeenAt: TimestampSchema.optional(),
   connectionMetadata: z.object({
@@ -98,7 +98,8 @@ export const BotInstanceSchema = z.object({
     platform: z.string().optional()
   }).optional(),
   credentials: z.record(z.string(), z.any()).optional(), // Store API tokens/keys
-  webhookUrl: z.string().optional(), // For platform-specific webhooks
+  webhookUrl: z.string().optional(), // For Webhook-Only mode
+  assignedAgentId: z.string().nullish(), // Bidirectional link to Agent
   stats: z.object({
     messagesSent: z.number().default(0),
     messagesReceived: z.number().default(0),
@@ -111,6 +112,36 @@ export const BotInstanceSchema = z.object({
   updatedAt: TimestampSchema
 }).readonly();
 
+export type Channel = z.infer<typeof ChannelSchema>;
+
+/**
+ * Agent Schema ('tenants/{tenantId}/agents' subcollection)
+ * Intelligence layer based on OpenClaw.
+ */
+export const AgentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  personality: z.string().optional(),
+  soul: z.string().optional(), // OpenClaw Soul
+  memorySearch: z.boolean().default(true),
+  boundChannels: z.array(z.string()).default([]), // List of Channel IDs
+  skills: z.array(z.string()).default([]), // OpenClaw skills/tools
+  metadata: z.record(z.string(), z.any()).optional(),
+  createdAt: TimestampSchema,
+  updatedAt: TimestampSchema
+}).readonly();
+
+export type Agent = z.infer<typeof AgentSchema>;
+
+/**
+ * Bot Instance Schema ('tenants/{tenantId}/bots' subcollection)
+ * @deprecated Use ChannelSchema instead.
+ */
+export const BotInstanceSchema = ChannelSchema;
+
+/**
+ * @deprecated Use Channel instead.
+ */
 export type BotInstance = z.infer<typeof BotInstanceSchema>;
 
 /**
