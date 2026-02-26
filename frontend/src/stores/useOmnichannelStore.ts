@@ -121,12 +121,22 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     fetchChannels: async () => {
         set({ isLoading: true, error: null });
         try {
-            const response = await api.get<Channel[]>(API_ENDPOINTS.OMNICHANNEL.STATUS);
+            const response = await api.get<any[]>(API_ENDPOINTS.BOTS.LIST);
 
             if (response.success) {
-                set({ channels: response.data, isLoading: false });
+                // Map the backend BotListItem shape to the frontend Channel shape
+                const data = response.data || [];
+                const mappedChannels: Channel[] = data.map(bot => ({
+                    id: bot.id,
+                    name: bot.name,
+                    type: 'whatsapp', // Default to whatsapp as it's the primary channel type for now
+                    status: bot.status as any,
+                    account: bot.phoneNumber || null,
+                    lastActiveAt: bot.lastActiveAt
+                }));
+                set({ channels: mappedChannels, isLoading: false });
             } else {
-                set({ error: response.error.message, isLoading: false });
+                set({ error: response.error.message || 'Failed to fetch channels', isLoading: false });
             }
         } catch (err) {
             set({

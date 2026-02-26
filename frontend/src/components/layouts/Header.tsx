@@ -50,7 +50,7 @@ export function Header() {
                                 variant="ghost"
                                 className="relative flex items-center gap-3 p-1 pl-4 pr-1.5 h-10 rounded-2xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none group"
                             >
-                                <div className="hidden flex-col items-end md:flex">
+                                <div className="hidden flex-col items-end md:flex max-w-[120px] lg:max-w-[150px]">
                                     {isLoading ? (
                                         <div className="flex flex-col items-end gap-1">
                                             <div className="h-3 w-20 bg-muted/20 animate-pulse rounded" />
@@ -58,8 +58,8 @@ export function Header() {
                                         </div>
                                     ) : (
                                         <>
-                                            <span className="text-xs font-semibold text-foreground leading-none">{user?.name}</span>
-                                            <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70 group-hover:opacity-100 transition-opacity">{user?.role}</span>
+                                            <span className="text-xs font-semibold text-foreground leading-none truncate w-full text-right" title={user?.name}>{user?.name}</span>
+                                            <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70 group-hover:opacity-100 transition-opacity truncate w-full text-right" title={user?.role}>{user?.role}</span>
                                         </>
                                     )}
                                 </div>

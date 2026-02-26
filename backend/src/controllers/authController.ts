@@ -171,7 +171,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId: uid, tenantId, role, email },
             jwtSecret,
-            { expiresIn: '15m' }
+            { expiresIn: '1h' }
         );
 
         // Refresh Token Rotation Implementation
@@ -191,7 +191,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 15 * 60 * 1000
+            maxAge: 60 * 60 * 1000
         });
 
         res.cookie('refreshToken', refreshToken, {
@@ -291,7 +291,7 @@ export const signup = async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId, tenantId: tenant.id, role: 'owner', email },
             jwtSecret,
-            { expiresIn: '15m' }
+            { expiresIn: '1h' }
         );
 
         // Refresh Token Rotation Implementation
@@ -312,7 +312,7 @@ export const signup = async (req: Request, res: Response) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 15 * 60 * 1000
+            maxAge: 60 * 60 * 1000
         });
 
         res.cookie('refreshToken', refreshToken, {
@@ -411,7 +411,7 @@ export const login = async (req: Request, res: Response) => {
         const token = jwt.sign(
             { userId: uid, tenantId, role, email: user.email },
             jwtSecret,
-            { expiresIn: '15m' }
+            { expiresIn: '1h' }
         );
 
         // Refresh Token Rotation Implementation
@@ -433,7 +433,7 @@ export const login = async (req: Request, res: Response) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 15 * 60 * 1000
+            maxAge: 60 * 60 * 1000
         });
 
         res.cookie('refreshToken', refreshToken, {
@@ -542,14 +542,14 @@ export const refresh = async (req: Request, res: Response) => {
         const newAccessToken = jwt.sign(
             { userId, tenantId, role, email },
             jwtSecret,
-            { expiresIn: '15m' }
+            { expiresIn: '1h' }
         );
 
         res.cookie('token', newAccessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 15 * 60 * 1000
+            maxAge: 60 * 60 * 1000
         });
 
         res.cookie('refreshToken', newRefreshToken, {

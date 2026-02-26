@@ -1,4 +1,5 @@
 logger.info('>>> [MASTERMIND] ABSOLUTE START OF MAIN.TS');
+import 'dotenv/config';
 import { ConfigService } from './services/ConfigService.js';
 import initializeContext from './lib/context.js';
 import MultiTenantApp from './server/multiTenantApp.js';

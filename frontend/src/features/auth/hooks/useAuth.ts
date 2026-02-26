@@ -33,31 +33,21 @@ export function useAuth(): UseAuthReturn {
         useAuthStore();
     const router = useRouter();
 
-    const fetchSession = useCallback(async () => {
-        // If we already have a user, don't fetch (unless forced, but simple check first)
-        // Actually, we should verify validity on mount in case cookie expired
+    const verifySession = useCallback(async () => {
         setLoading(true);
         try {
             const response = await api.get<{ user: AuthUser }>(API_ENDPOINTS.AUTH.VERIFY);
             if (response.success && response.data) {
-                // Backend might return wrapped { user: ... } or just user object
-                // authRoutes.ts -> getMe -> res.json({ user: ... })
-                // So response.data is { user: ... }
-                // We need to be careful about the type
-                // Checking backend `authController.ts` would be ideal but from previous context it returns { user }
-
-                // Let's assume response.data IS the user object if the API client unwraps 'data' property
-                // But `getMe` usually returns { user: ... }
-                // So response.data might be { user: ... }
-                // Let's safe check
                 const userData = (response.data as any).user || response.data;
 
                 // Native Firebase Auth bridge
                 if (userData.firebaseToken) {
                     try {
                         const auth = getClientAuth();
-                        await signInWithCustomToken(auth, userData.firebaseToken);
-                        logger.info('Firebase Client Auth successful');
+                        if (!auth.currentUser) {
+                            await signInWithCustomToken(auth, userData.firebaseToken);
+                            logger.info('Firebase Client Auth successful');
+                        }
                     } catch (firebaseAuthError) {
                         logger.error('Firebase Client Auth failed:', firebaseAuthError);
                     }
@@ -66,31 +56,56 @@ export function useAuth(): UseAuthReturn {
                 setUser(userData);
             } else {
                 setUser(null);
-                // Redirect on session failure only if not already on auth pages
-                const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/signup';
+                const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.SIGNUP;
                 if (!isAuthPage) {
-                    window.location.href = '/login';
+                    window.location.href = ROUTES.LOGIN;
                 }
             }
         } catch (err) {
-            // calculated failure (401 etc)
             setUser(null);
-            // Redirect on session failure only if not already on auth pages
-            const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/signup';
+            const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.SIGNUP;
             if (!isAuthPage) {
-                window.location.href = '/login';
+                window.location.href = ROUTES.LOGIN;
             }
         } finally {
             setLoading(false);
         }
     }, [setUser, setLoading]);
 
+    const refreshSession = useCallback(async () => {
+        try {
+            logger.debug('Refreshing session token...');
+            const response = await api.post(API_ENDPOINTS.AUTH.REFRESH);
+            if (response.success) {
+                logger.info('Session refreshed successfully');
+                // Re-verify to update user state if needed
+                await verifySession();
+            } else {
+                logger.warn('Session refresh failed:', response.error);
+            }
+        } catch (err) {
+            logger.error('Error during silent refresh:', err);
+        }
+    }, [verifySession]);
+
     // Initial hydration
     useEffect(() => {
         if (!user) {
-            fetchSession();
+            verifySession();
         }
-    }, [fetchSession, user]); // Only fetch if no user
+    }, [verifySession, user]);
+
+    // Background refresh timer (runs every 45 mins since access token is 1h)
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            const REFRESH_INTERVAL = 45 * 60 * 1000;
+            const timer = setInterval(() => {
+                refreshSession();
+            }, REFRESH_INTERVAL);
+
+            return () => clearInterval(timer);
+        }
+    }, [isAuthenticated, user, refreshSession]);
 
     const signOut = useCallback(async (): Promise<void> => {
         try {
@@ -115,6 +130,6 @@ export function useAuth(): UseAuthReturn {
         error,
         signOut,
         clearError,
-        refreshSession: fetchSession,
+        refreshSession
     };
 }

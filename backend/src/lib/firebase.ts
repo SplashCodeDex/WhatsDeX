@@ -22,7 +22,7 @@ try {
         if (serviceAccountPath) {
             const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
             options.credential = admin.credential.cert(serviceAccount);
-            options.projectId = serviceAccount.project_id;
+            options.projectId = serviceAccount.project_id || projectId;
         } else if (projectId && clientEmail && privateKey) {
             options.credential = admin.credential.cert({
                 projectId,
@@ -33,8 +33,10 @@ try {
         } else {
             // ADC is only used as a fallback and it's handled here to avoid blocking hangs
             options.credential = admin.credential.applicationDefault();
+            if (projectId) {
+                options.projectId = projectId;
+            }
         }
-
 
         admin.initializeApp(options);
         logger.info(`🔥 Firebase Admin Initialized (Project: ${options.projectId || 'ADC'})`);

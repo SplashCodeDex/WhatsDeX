@@ -24,8 +24,16 @@ export async function requireAuth() {
         // Robust JWT Verification
         await jwtVerify(token, JWT_SECRET);
         return token;
-    } catch (error) {
-        console.error('[Session] Token verification failed:', error);
+    } catch (error: any) {
+        // Clear the invalid token to prevent redirect loops in proxy/middleware
+        const cookieStore = await cookies();
+        cookieStore.delete('token');
+
+        if (error?.code === 'ERR_JWT_EXPIRED') {
+            console.warn('[Session] Token expired, redirecting to login...');
+        } else {
+            console.error('[Session] Token verification failed:', error);
+        }
         redirect('/login');
     }
 }
