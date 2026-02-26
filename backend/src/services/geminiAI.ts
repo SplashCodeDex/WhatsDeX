@@ -134,13 +134,15 @@ export class GeminiAI extends EventEmitter {
           recentTools.map(t => `- Tool: ${t.tool} | Result: ${typeof t.data === 'string' ? t.data : JSON.stringify(t.data)}`).join("\n");
       }
 
-      // Get bot-specific personality from configuration
-      const botResult = await this.context.multiTenantBotService.getBot(tenantId, botId);
-      const botDoc = botResult.success ? botResult.data as any : null;
-      const personality = botDoc?.config?.aiPersonality || botDoc?.aiPersonality || 'a professional and helpful assistant';
+      // Get Agent-specific identity from binding (Refactored Phase 3)
+      const { channelBindingService } = await import('./ChannelBindingService.js');
+      const agentResult = await channelBindingService.getActiveAgentForChannel(tenantId, botId);
+      const agent = agentResult.success ? agentResult.data : null;
+      const personality = agent?.personality || agent?.soul || 'a professional and helpful assistant';
 
       const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
+Name: ${agent?.name || 'WhatsDeX AI'}
 Context: Omnichannel Mastermind.
 Current Time: ${new Date().toLocaleString()}
 User: ${JSON.stringify(context.user)}
