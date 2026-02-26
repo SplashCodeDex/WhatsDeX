@@ -1,17 +1,17 @@
 # Implementation Plan: Refactor Bot to Channels
 
-## Phase 1: Archival & Scaffolding
+## Phase 1: Archival & Scaffolding [checkpoint: c89c5a1]
 - [x] **Task: Archive Legacy Bot Logic** 2b55bd9
-    - [ ] Create `backend/src/archive/` directory.
-    - [ ] Move `MultiTenantBotService.ts` and related specialized logic to the archive.
-    - [ ] Ensure the project still compiles after the move (placeholder replacements if needed).
+    - [x] Create `backend/src/archive/` directory.
+    - [x] Move `MultiTenantBotService.ts` and related specialized logic to the archive.
+    - [x] Ensure the project still compiles after the move (placeholder replacements if needed).
 - [x] **Task: Define Unified Channel Schema** b59f3f2913
     - [x] Update `backend/src/types/contracts.ts` and `firestore.ts` with the new `Channel` and `AgentBinding` definitions.
     - [x] Create Zod schemas for the new Channel entities.
 - [x] **Task: Scaffold ChannelService** 8feed08
     - [x] Create `backend/src/services/ChannelService.ts` to manage the lifecycle of connectivity slots.
     - [x] Implement basic CRUD for Channels in Firestore.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Archival & Scaffolding' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Archival & Scaffolding' (Protocol in workflow.md)** c89c5a1
 
 ## Phase 2: WhatsApp Channel Refactor
 - [ ] **Task: Implement WhatsApp Channel Adapter**
