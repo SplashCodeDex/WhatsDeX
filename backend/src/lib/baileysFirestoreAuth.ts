@@ -3,18 +3,20 @@ import { firebaseService } from '../services/FirebaseService.js';
 
 /**
  * Custom Baileys Auth State using Firestore subcollections
- * Structure: tenants/{tenantId}/bots/{botId}/auth/{type}
+ * Structure: tenants/{tenantId}/channels/{channelId}/auth/{type}
  */
-export async function useFirestoreAuthState(tenantId: string, botId: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void> }> {
+export async function useFirestoreAuthState(tenantId: string, channelId: string, collection: 'channels' | 'bots' = 'channels'): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void> }> {
+
+  const path = `${collection}/${channelId}/auth`;
 
   const writeData = async (data: any, id: string) => {
     const serialized = JSON.parse(JSON.stringify(data, BufferJSON.replacer));
-    await firebaseService.setDoc(`bots/${botId}/auth`, id, { value: serialized }, tenantId);
+    await firebaseService.setDoc(path, id, { value: serialized }, tenantId);
   };
 
   const readData = async (id: string) => {
     try {
-      const doc = await firebaseService.getDoc(`bots/${botId}/auth`, id, tenantId);
+      const doc = await firebaseService.getDoc(path, id, tenantId);
       if (doc && 'value' in (doc as any)) {
         return JSON.parse(JSON.stringify((doc as any).value), BufferJSON.reviver);
       }
@@ -25,7 +27,7 @@ export async function useFirestoreAuthState(tenantId: string, botId: string): Pr
   };
 
   const removeData = async (id: string) => {
-    await firebaseService.deleteDoc(`bots/${botId}/auth`, id, tenantId);
+    await firebaseService.deleteDoc(path, id, tenantId);
   };
 
   const creds: AuthenticationCreds = await readData('creds') || initAuthCreds();
