@@ -38,9 +38,9 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 3: Agent-Channel Orchestration' (Protocol in workflow.md)** fd579ac
 
 ## Phase 4: Final Cleanup & Integration
-- [ ] **Task: Update Global Context**
-    - [ ] Refactor `backend/src/lib/context.ts` to remove `multiTenantBotService` and inject `ChannelService` and `ChannelBindingService`.
-- [ ] **Task: Retirement of Legacy Routes**
+- [x] **Task: Update Global Context** f8fc157
+    - [x] Refactor `backend/src/lib/context.ts` to remove `multiTenantBotService` and inject `ChannelService` and `ChannelBindingService`.
+- [~] **Task: Retirement of Legacy Routes**
     - [ ] Remove or redirect `/api/bots` endpoints to the new `/api/channels` equivalents.
 - [ ] **Task: Final System Verification**
     - [ ] Run full test suite and verify no regressions in OpenClaw skill bridging.
