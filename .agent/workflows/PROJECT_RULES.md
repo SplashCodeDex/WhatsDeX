@@ -7,6 +7,22 @@ description: Project coding standards and architectural rules for WhatsDeX
 See [ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/ARCHITECTURE.md) for system overview.
 See [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE.md) for detailed frontend documentation.
 
+## 0. The Fusion Principle (WhatsDeX ⊕ OpenClaw)
+
+**FOUNDATIONAL RULE** — WhatsDeX and OpenClaw are being woven into a **single unified product**. Neither replaces the other. They merge, each contributing its strongest capabilities.
+
+- **WhatsDeX = face + brain** — SaaS frontend, multi-tenant architecture, AI intelligence (intent detection, RAG, anti-ban), dashboard UI, Firestore persistence.
+- **OpenClaw = engine + muscles** — Multi-channel gateway (WhatsApp, Telegram, Discord, Slack, Signal, iMessage), plugin system, agent framework, CLI/TUI developer tools.
+
+### Fusion Rules
+
+1. **Never subtract, always weave** — Don't rip out modules to "clean up." Bridge WhatsDeX services to consume OpenClaw's engine through adapters (e.g., `TelegramAdapter` imports `openclaw/src/telegram/send.js`).
+2. **Best-of-both wins** — When both stacks solve the same problem, pick the stronger implementation and adapt the other side to use it.
+3. **Shared seams, not shared code** — Integrate through well-defined interfaces (`ChannelAdapter`, gateway API), not by merging internal code.
+4. **Respect ownership** — Frontend, multi-tenancy, and AI live in WhatsDeX. Channel engines, gateway, and tooling live in OpenClaw.
+
+---
+
 ## Tech Stack
 
 - **Backend**: Node.js 24+, Express, Baileys (WhatsApp)

@@ -23,7 +23,7 @@ import {
 import Link from 'next/link';
 
 export function Header() {
-    const { user, signOut } = useAuth();
+    const { user, signOut, isLoading } = useAuth();
 
     return (
         <div className="fixed top-4 right-4 md:right-8 z-40 flex items-center gap-2 pointer-events-none">

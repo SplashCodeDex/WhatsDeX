@@ -60,6 +60,16 @@ export interface ChannelAdapter {
    * Registers a handler for inbound messages.
    */
   onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void;
+
+  /**
+   * Sends a reaction to a message.
+   */
+  sendReaction?(chatJid: string, messageId: string, emoji: string): Promise<void>;
+
+  /**
+   * Sends a poll.
+   */
+  sendPoll?(to: string, question: string, options: string[]): Promise<void>;
 }
 
 /**

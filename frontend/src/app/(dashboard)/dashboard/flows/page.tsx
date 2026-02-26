@@ -85,8 +85,8 @@ function FlowBuilder() {
     if (!isProFeatureOpen) return;
     const loadFlows = async () => {
       try {
-        const response = await api.get('/api/flows');
-        if (response.success && response.data && response.data.length > 0) {
+        const response = await api.get('/api/flows') as { success: boolean; data?: any[]; error?: any };
+        if (response.success && Array.isArray(response.data) && response.data.length > 0) {
           // Load the first active flow for now (can be expanded to a flow selector)
           const flow = response.data[0];
           if (flow.nodes && flow.nodes.length > 0) {
@@ -240,6 +240,37 @@ function FlowBuilder() {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
+  if (isLoadingPlan) {
+    return (
+      <div className="flex h-[calc(100vh-120px)] w-full items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!isProFeatureOpen) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-120px)] w-full items-center justify-center bg-card/10 backdrop-blur-sm border border-border/40 rounded-xl p-8 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80 pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center max-w-md mx-auto space-y-6">
+          <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center ring-4 ring-primary/5">
+            <Lock className="w-8 h-8 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black tracking-tight">Pro Feature</h2>
+            <p className="text-muted-foreground">
+              The Agentic Flow Builder is a premium feature. Upgrade your workspace to build automated conversation flows and AI-driven logic.
+            </p>
+          </div>
+          <Button size="lg" className="w-full font-bold shadow-lg shadow-primary/25" onClick={() => window.location.href = '/dashboard/settings?tab=billing'}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Upgrade to Pro
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-120px)] w-full gap-4 overflow-hidden">

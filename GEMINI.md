@@ -1,5 +1,26 @@
 # WhatsDeX AI Agent Knowledge (GEMINI.md)
 
+## The Fusion Principle (WhatsDeX ⊕ OpenClaw)
+
+**WhatsDeX and OpenClaw are being woven into a single unified product.** Neither replaces the other — they merge, each contributing its strongest capabilities.
+
+| WhatsDeX Brings | OpenClaw Brings |
+|-----------------|-----------------|
+| SaaS frontend (Next.js 16, React 19) | Multi-channel engine (WhatsApp, Telegram, Discord, Slack, Signal, iMessage) |
+| Multi-tenant architecture (Firestore subcollections) | Gateway server (Express API, agent protocol) |
+| AI intelligence (intent detection, RAG, anti-ban) | Plugin system & agent framework |
+| Dashboard UI & authentication | CLI/TUI developer tools |
+| Firestore-based auth persistence | File-system auth with backup/resilience |
+| Pairing code support | Rich markdown → WhatsApp formatting |
+
+**Rules for all fusion work:**
+1. **Never subtract, always weave** — Don't rip out OpenClaw modules to "clean up." Instead, bridge WhatsDeX's services to consume OpenClaw's engine (like `TelegramAdapter` already imports from `openclaw/src/telegram/send.js`).
+2. **Best-of-both wins** — When both stacks solve the same problem differently, pick the stronger implementation and adapt the other side to use it.
+3. **WhatsDeX = face + brain, OpenClaw = engine + muscles** — Frontend, multi-tenancy, and AI live in WhatsDeX. Channel engines, gateway, and tooling live in OpenClaw.
+4. **Shared seams, not shared code** — Integration happens through well-defined interfaces (`ChannelAdapter`, gateway API), not by merging internal code.
+
+---
+
 ## Testing Philosophy
 
 ### Test Failure ≠ Broken Code
