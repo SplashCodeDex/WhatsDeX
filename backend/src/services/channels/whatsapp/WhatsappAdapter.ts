@@ -19,9 +19,9 @@ export class WhatsappAdapter implements ChannelAdapter {
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
   private socket: any = null;
 
-  constructor(private tenantId: string, private botId: string) {
-    this.instanceId = botId;
-    this.authSystem = new AuthSystem({ bot: {} }, tenantId, botId);
+  constructor(private tenantId: string, private channelId: string) {
+    this.instanceId = channelId;
+    this.authSystem = new AuthSystem({ bot: {} }, tenantId, channelId);
   }
 
   public async initialize(): Promise<void> {
@@ -29,7 +29,7 @@ export class WhatsappAdapter implements ChannelAdapter {
   }
 
   public async connect(): Promise<void> {
-    logger.info(`Connecting WhatsappAdapter for bot ${this.botId}`);
+    logger.info(`Connecting WhatsappAdapter for channel ${this.channelId}`);
 
     const connectResult = await this.authSystem.connect();
     if (!connectResult.success) {
@@ -81,7 +81,7 @@ export class WhatsappAdapter implements ChannelAdapter {
         await this.socket.sendPresenceUpdate('composing', to);
       },
     };
-    setActiveWebListener(this.botId, listener);
+    setActiveWebListener(this.channelId, listener);
 
     // Listen for messages
     this.socket.ev.on('messages.upsert', async ({ messages, type }: any) => {
@@ -90,7 +90,7 @@ export class WhatsappAdapter implements ChannelAdapter {
           await this.messageHandler({
             tenantId: this.tenantId,
             channelId: this.id,
-            botId: this.botId,
+            botId: this.channelId, // Keep botId in event for backward compat or update interface later
             sender: message.key.remoteJid,
             content: message.message,
             timestamp: new Date((message.messageTimestamp as number) * 1000),
@@ -102,7 +102,7 @@ export class WhatsappAdapter implements ChannelAdapter {
   }
 
   public async disconnect(): Promise<void> {
-    setActiveWebListener(this.botId, null);
+    setActiveWebListener(this.channelId, null);
     await this.authSystem.disconnect();
     this.socket = null;
   }
@@ -124,7 +124,7 @@ export class WhatsappAdapter implements ChannelAdapter {
     // Leverage OpenClaw's rich pipeline
     await sendMessageWhatsApp(jid, text, {
       verbose: false,
-      accountId: this.botId,
+      accountId: this.channelId,
       mediaUrl
     });
   }
@@ -133,7 +133,7 @@ export class WhatsappAdapter implements ChannelAdapter {
     if (!this.socket) throw new Error('Adapter not connected');
     await sendReactionWhatsApp(chatJid, messageId, emoji, {
       verbose: false,
-      accountId: this.botId
+      accountId: this.channelId
     });
   }
 
@@ -142,7 +142,7 @@ export class WhatsappAdapter implements ChannelAdapter {
     const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
     await sendPollWhatsApp(jid, { question, options }, {
       verbose: false,
-      accountId: this.botId
+      accountId: this.channelId
     });
   }
 
