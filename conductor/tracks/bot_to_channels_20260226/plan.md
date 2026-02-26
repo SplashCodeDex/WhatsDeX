@@ -24,7 +24,7 @@
     - [x] Ensure channel sessions are correctly stored and recovered using the existing Firestore auth state logic.
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: WhatsApp Channel Refactor' (Protocol in workflow.md)** c036708
 
-## Phase 3: Agent-Channel Orchestration
+## Phase 3: Agent-Channel Orchestration [checkpoint: fd579ac]
 - [x] **Task: Implement ChannelBindingService** 3e9e040
     - [x] Create `backend/src/services/ChannelBindingService.ts` to manage the links between Agents and Channels.
     - [x] Implement logic to resolve the "Active Brain" for a given "Channel Slot".
@@ -35,7 +35,7 @@
     - [x] Update `GeminiAI.ts` to pull its context and personality based on the new Agent-Channel binding.
 - [x] **Task: Write Tests for Orchestration** 9ea7063
     - [x] Verify message routing: User -> Channel -> (Agent exists ? Agent Respond : Webhook Forward).
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Agent-Channel Orchestration' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Agent-Channel Orchestration' (Protocol in workflow.md)** fd579ac
 
 ## Phase 4: Final Cleanup & Integration
 - [ ] **Task: Update Global Context**
