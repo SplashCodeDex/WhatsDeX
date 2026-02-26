@@ -13,7 +13,7 @@
     - [x] Implement basic CRUD for Channels in Firestore.
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Archival & Scaffolding' (Protocol in workflow.md)** c89c5a1
 
-## Phase 2: WhatsApp Channel Refactor
+## Phase 2: WhatsApp Channel Refactor [checkpoint: c036708]
 - [x] **Task: Implement WhatsApp Channel Adapter** 9e26e56
     - [x] Refactor Baileys connection logic into a dedicated `WhatsappAdapter`.
     - [x] Implement standalone connection, QR generation, and state management for WhatsApp channels.
@@ -22,7 +22,7 @@
     - [x] Verify connection lifecycle independent of AI Agents.
 - [x] **Task: Implement Connection Persistence** d49dda2
     - [x] Ensure channel sessions are correctly stored and recovered using the existing Firestore auth state logic.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: WhatsApp Channel Refactor' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: WhatsApp Channel Refactor' (Protocol in workflow.md)** c036708
 
 ## Phase 3: Agent-Channel Orchestration
 - [ ] **Task: Implement ChannelBindingService**
