@@ -153,7 +153,7 @@ class AnalyticsService {
           date,
           [field]: admin.firestore.FieldValue.increment(1),
           updatedAt: new Date()
-        },
+        } as any,
         tenantId,
         true
       );

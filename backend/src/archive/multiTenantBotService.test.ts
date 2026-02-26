@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MultiTenantBotService } from './multiTenantBotService.js';
-import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
-import { channelManager } from './channels/ChannelManager.js';
+import { WhatsappAdapter } from '../services/channels/whatsapp/WhatsappAdapter.js';
+import { channelManager } from '../services/channels/ChannelManager.js';
 
 const { mockUnifiedAI, mockContext } = vi.hoisted(() => ({
   mockUnifiedAI: { processMessage: vi.fn() },
@@ -64,17 +64,15 @@ const mockAdapterInstance: any = {
   socket: { ev: { on: vi.fn() } }
 };
 
-vi.mock('./channels/whatsapp/WhatsappAdapter.js', () => {
+vi.mock('../services/channels/whatsapp/WhatsappAdapter.js', () => {
   return {
-    WhatsappAdapter: class {
-      constructor() {
-        return mockAdapterInstance;
-      }
-    }
+    WhatsappAdapter: vi.fn().mockImplementation(function() {
+      return mockAdapterInstance;
+    })
   };
 });
 
-vi.mock('./channels/ChannelManager.js', () => {
+vi.mock('../services/channels/ChannelManager.js', () => {
   return {
     channelManager: {
       registerAdapter: vi.fn(),
@@ -85,7 +83,10 @@ vi.mock('./channels/ChannelManager.js', () => {
 
 vi.mock('@/services/FirebaseService.js', () => ({
   firebaseService: {
-    getDoc: vi.fn().mockResolvedValue({ id: 'bot-123', type: 'whatsapp', status: 'disconnected' }),
+    getDoc: vi.fn().mockImplementation((path, id) => {
+      if (id === 'bot-123') return Promise.resolve({ id: 'bot-123', type: 'whatsapp', status: 'disconnected', config: {} });
+      return Promise.resolve(null);
+    }),
     setDoc: vi.fn().mockResolvedValue(undefined),
     getCollection: vi.fn().mockResolvedValue([])
   }

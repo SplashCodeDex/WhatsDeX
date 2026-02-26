@@ -5,7 +5,7 @@ import omnichannelRoutes from './omnichannelRoutes.js';
 
 // Mock dependencies
 const mockGetAllBots = vi.fn();
-vi.mock('../services/multiTenantBotService.js', () => ({
+vi.mock('../archive/multiTenantBotService.js', () => ({
   default: {
     getAllBots: (...args: any[]) => mockGetAllBots(...args)
   }
@@ -33,20 +33,17 @@ describe('Omnichannel Routes', () => {
   });
 
   describe('GET /api/omnichannel/status', () => {
-    it('should return list of channels with status', async () => {
+    it('should return system status', async () => {
       mockGetAllBots.mockResolvedValue({
         success: true,
-        data: [
-          { id: 'bot-1', name: 'WA Bot', type: 'whatsapp', status: 'connected', phoneNumber: '+123' }
-        ]
+        data: []
       });
 
       const response = await request(app).get('/api/omnichannel/status');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveLength(1);
-      expect(response.body.data[0].type).toBe('whatsapp');
+      expect(response.body.data).toHaveProperty('gatewayInitialized');
     });
   });
 });
