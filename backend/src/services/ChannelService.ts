@@ -9,7 +9,7 @@ import crypto from 'crypto';
  * Channel Service
  * 
  * Manages the lifecycle of connectivity slots (formerly 'Bots').
- * Handles Firestore CRUD and basic status management.
+ * Operates within the Agent hierarchy: tenants/T/agents/A/channels/C.
  */
 export class ChannelService {
   private static instance: ChannelService;
@@ -24,11 +24,17 @@ export class ChannelService {
   }
 
   /**
+   * Helper to build the nested collection path
+   */
+  private getPath(agentId: string = 'system_default'): string {
+    return `agents/${agentId}/channels`;
+  }
+
+  /**
    * Create a new channel slot
    */
-  async createChannel(tenantId: string, channelData: Partial<Channel>): Promise<Result<Channel>> {
+  async createChannel(tenantId: string, channelData: Partial<Channel>, agentId: string = 'system_default'): Promise<Result<Channel>> {
     try {
-      // Logic from legacy MultiTenantBotService: check limits
       const canAddResult = await multiTenantService.canAddBot(tenantId);
       if (!canAddResult.success) {
         throw canAddResult.error;
@@ -45,6 +51,7 @@ export class ChannelService {
         name: restData.name || 'New Channel',
         status: 'disconnected' as const,
         type: restData.type || 'whatsapp',
+        assignedAgentId: agentId,
         stats: {
           messagesSent: 0,
           messagesReceived: 0,
@@ -57,9 +64,9 @@ export class ChannelService {
       };
 
       const data = ChannelSchema.parse(rawData);
-      await firebaseService.setDoc<'tenants/{tenantId}/channels'>('channels', channelId, data as any, tenantId);
+      await firebaseService.setDoc(this.getPath(agentId), channelId, data as any, tenantId);
 
-      logger.info(`Channel created: ${channelId} for tenant ${tenantId}`);
+      logger.info(`Channel created: ${channelId} for tenant ${tenantId} under Agent ${agentId}`);
       return { success: true, data };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -71,9 +78,9 @@ export class ChannelService {
   /**
    * Get a single channel by ID
    */
-  async getChannel(tenantId: string, channelId: string): Promise<Result<Channel>> {
+  async getChannel(tenantId: string, channelId: string, agentId: string = 'system_default'): Promise<Result<Channel>> {
     try {
-      const doc = await firebaseService.getDoc<'tenants/{tenantId}/channels'>('channels', channelId, tenantId);
+      const doc = await firebaseService.getDoc(this.getPath(agentId), channelId, tenantId);
       if (!doc) {
         return { success: false, error: new Error(`Channel not found: ${channelId}`) };
       }
@@ -84,11 +91,11 @@ export class ChannelService {
   }
 
   /**
-   * List all channels for a tenant
+   * List all channels for an agent
    */
-  async getAllChannels(tenantId: string): Promise<Result<Channel[]>> {
+  async getChannelsForAgent(tenantId: string, agentId: string): Promise<Result<Channel[]>> {
     try {
-      const docs = await firebaseService.getCollection<'tenants/{tenantId}/channels'>('channels', tenantId);
+      const docs = await firebaseService.getCollection(this.getPath(agentId), tenantId);
       return { success: true, data: docs as Channel[] };
     } catch (error: any) {
       return { success: false, error };
@@ -96,18 +103,17 @@ export class ChannelService {
   }
 
   /**
-   * Update channel metadata or configuration
+   * Update channel metadata
    */
-  async updateChannel(tenantId: string, channelId: string, patch: Partial<Channel>): Promise<Result<Channel>> {
+  async updateChannel(tenantId: string, channelId: string, patch: Partial<Channel>, agentId: string = 'system_default'): Promise<Result<Channel>> {
     try {
       const updateData = {
         ...patch,
         updatedAt: Timestamp.now()
       };
-      await firebaseService.setDoc<'tenants/{tenantId}/channels'>('channels', channelId, updateData as any, tenantId, true);
+      await firebaseService.setDoc(this.getPath(agentId), channelId, updateData as any, tenantId, true);
       
-      const refreshed = await this.getChannel(tenantId, channelId);
-      return refreshed;
+      return await this.getChannel(tenantId, channelId, agentId);
     } catch (error: any) {
       return { success: false, error };
     }
@@ -116,11 +122,10 @@ export class ChannelService {
   /**
    * Delete a channel slot
    */
-  async deleteChannel(tenantId: string, channelId: string): Promise<Result<void>> {
+  async deleteChannel(tenantId: string, channelId: string, agentId: string = 'system_default'): Promise<Result<void>> {
     try {
-      // Note: Actual connection shutdown should be handled by ChannelManager
-      await firebaseService.deleteDoc<'tenants/{tenantId}/channels'>('channels', channelId, tenantId);
-      logger.info(`Channel deleted: ${channelId} from tenant ${tenantId}`);
+      await firebaseService.deleteDoc(this.getPath(agentId), channelId, tenantId);
+      logger.info(`Channel deleted: ${channelId} from tenant ${tenantId} under Agent ${agentId}`);
       return { success: true, data: undefined };
     } catch (error: any) {
       return { success: false, error };
@@ -130,8 +135,8 @@ export class ChannelService {
   /**
    * Update channel connectivity status
    */
-  async updateStatus(tenantId: string, channelId: string, status: Channel['status']): Promise<void> {
-    await this.updateChannel(tenantId, channelId, { status }).catch(err => 
+  async updateStatus(tenantId: string, channelId: string, status: Channel['status'], agentId: string = 'system_default'): Promise<void> {
+    await this.updateChannel(tenantId, channelId, { status }, agentId).catch(err => 
       logger.error(`Failed to update status for channel ${channelId}:`, err)
     );
   }

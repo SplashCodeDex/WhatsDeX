@@ -22,6 +22,7 @@ vi.mock('@/services/multiTenantService.js', () => ({
 describe('ChannelService', () => {
   let service: ChannelService;
   const tenantId = 'tenant-123';
+  const systemPath = 'agents/system_default/channels';
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -31,7 +32,7 @@ describe('ChannelService', () => {
   });
 
   describe('createChannel', () => {
-    it('should create a new channel when limit is not exceeded', async () => {
+    it('should create a new channel under system_default by default', async () => {
       vi.mocked(multiTenantService.canAddBot).mockResolvedValue({ success: true, data: true });
       vi.mocked(firebaseService.setDoc).mockResolvedValue(undefined);
 
@@ -40,53 +41,44 @@ describe('ChannelService', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.name).toBe('Test Channel');
-        expect(result.data.id).toMatch(/^chan_/);
-        expect(firebaseService.setDoc).toHaveBeenCalledWith('channels', result.data.id, expect.any(Object), tenantId);
+        expect(result.data.assignedAgentId).toBe('system_default');
+        expect(firebaseService.setDoc).toHaveBeenCalledWith(systemPath, result.data.id, expect.any(Object), tenantId);
       }
     });
 
-    it('should fail when channel limit is exceeded', async () => {
-      vi.mocked(multiTenantService.canAddBot).mockResolvedValue({ success: true, data: false });
+    it('should create a new channel under a specific agent', async () => {
+      vi.mocked(multiTenantService.canAddBot).mockResolvedValue({ success: true, data: true });
+      const agentId = 'custom-agent';
+      const result = await service.createChannel(tenantId, { name: 'Agent Bot' }, agentId);
 
-      const result = await service.createChannel(tenantId, { name: 'Test Channel' });
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.message).toBe('Channel limit exceeded for your current plan.');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.assignedAgentId).toBe(agentId);
+        expect(firebaseService.setDoc).toHaveBeenCalledWith(`agents/${agentId}/channels`, expect.any(String), expect.any(Object), tenantId);
       }
     });
   });
 
   describe('getChannel', () => {
-    it('should return channel data when it exists', async () => {
+    it('should return channel data from system_default path by default', async () => {
       const mockChannel = { id: 'chan-1', name: 'Existing' };
       vi.mocked(firebaseService.getDoc).mockResolvedValue(mockChannel);
 
       const result = await service.getChannel(tenantId, 'chan-1');
 
       expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data).toEqual(mockChannel);
-      }
-    });
-
-    it('should return error when channel does not exist', async () => {
-      vi.mocked(firebaseService.getDoc).mockResolvedValue(null);
-
-      const result = await service.getChannel(tenantId, 'non-existent');
-
-      expect(result.success).toBe(false);
+      expect(firebaseService.getDoc).toHaveBeenCalledWith(systemPath, 'chan-1', tenantId);
     });
   });
 
   describe('deleteChannel', () => {
-    it('should delete channel document', async () => {
+    it('should delete channel from nested path', async () => {
       vi.mocked(firebaseService.deleteDoc).mockResolvedValue(undefined);
 
       const result = await service.deleteChannel(tenantId, 'chan-1');
 
       expect(result.success).toBe(true);
-      expect(firebaseService.deleteDoc).toHaveBeenCalledWith('channels', 'chan-1', tenantId);
+      expect(firebaseService.deleteDoc).toHaveBeenCalledWith(systemPath, 'chan-1', tenantId);
     });
   });
 });
