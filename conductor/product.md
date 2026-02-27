@@ -25,7 +25,7 @@ The platform operates on a multi-tenant architecture where each customer's data,
 
 - **Connectivity Slots:** Users can easily link their WhatsApp account via QR code, or connect Telegram, Discord, and Slack channels using API tokens.
 - **Webhook Mode:** Support for connectivity-only use cases where incoming messages are forwarded to external webhooks without AI intervention (standard for Free Tier).
-- **Unified Agent Orchestration:** A consolidated "Brain + Phone" architecture where independent AI personas (Agents) are dynamically bound to one or more Channels.
+- **Unified Agent Orchestration:** A consolidated "Brain + Phone" architecture where independent AI personas (Agents) act as the parent for one or more Channels (Connectivity Slots).
 - **Dynamic Binding:** Ability to hot-swap Agents across Channels instantly without disconnecting the underlying platform session.
 
 ### 3. Messaging & Automation
