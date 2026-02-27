@@ -7,9 +7,9 @@
 - [x] **Task: Implement AgentService & System Agent** 96a56fe
     - [x] Create `backend/src/services/AgentService.ts` with logic to ensure `system_default` agent exists for every tenant.
     - [x] Update `ChannelService.ts` to always create channels within an agent's path.
-- [ ] **Task: Write Tests for Hierarchy**
-    - [ ] Create `backend/src/services/AgentService.test.ts`.
-    - [ ] Verify that deleting an agent logically impacts its child channels.
+- [x] **Task: Write Tests for Hierarchy** 1f702d9
+    - [x] Create `backend/src/services/AgentService.test.ts`.
+    - [x] Verify that deleting an agent logically impacts its child channels.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Core Hierarchy Refactor' (Protocol in workflow.md)**
 
 ## Phase 2: Path-Aware OpenClaw Integration
