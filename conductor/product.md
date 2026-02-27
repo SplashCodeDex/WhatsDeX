@@ -2,9 +2,9 @@
 
 ## Initial Concept
 
-WhatsDeX is an enterprise-grade, omnichannel AI bot management and automation platform. Built upon the OpenClaw engine and Baileys Web API, it enables users to deploy and manage AI-powered bots across WhatsApp, Telegram, Discord, and Slack from a single unified dashboard.
+WhatsDeX is an enterprise-grade, omnichannel AI automation platform. Built upon the OpenClaw engine and Baileys Web API, it enables users to manage AI-powered interactions across WhatsApp, Telegram, Discord, and Slack through a unified system of **Channels** and **Agents**.
 
-The platform operates on a multi-tenant architecture where each customer's data and bots are isolated within their own workspace. It offers a tiered subscription model (Free vs. Premium), unlocking advanced features such as multiple bots, marketing campaign tools, Google Drive backups, and AI-powered interactions.
+The platform operates on a multi-tenant architecture where each customer's data, channels, and agents are isolated within their own workspace. It offers a tiered subscription model (Free vs. Premium), unlocking advanced features such as multiple connectivity slots, marketing campaign tools, Google Drive backups, and agentic AI reasoning.
 
 ## Target Audience
 
@@ -21,12 +21,12 @@ The platform operates on a multi-tenant architecture where each customer's data 
 - **Multi-Tenancy:** Data isolation per customer using a subcollection pattern in Firestore.
 - **Dashboard:** Centralized hub for metrics, bot status, and account settings.
 
-### 2. Bot Management
+### 2. Channel Management
 
-- **Initialization:** Users can easily link their WhatsApp account via QR code, or connect Telegram, Discord, and Slack bots using API tokens.
-- **Omnichannel Hub:** Centralized management for all social messaging platforms in a single, high-fidelity UI with real-time status updates and a live activity stream.
-- **Unified Agent Orchestration:** A consolidated "Brain + Phone" architecture where independent AI personas (Agents) are dynamically deployed across "Connectivity Slots" (WhatsApp, Telegram, etc.).
-- **Lifecycle Management:** Ability to link/unlink agents to slots, swap personalities, or restart sessions without losing agent configuration.
+- **Connectivity Slots:** Users can easily link their WhatsApp account via QR code, or connect Telegram, Discord, and Slack channels using API tokens.
+- **Webhook Mode:** Support for connectivity-only use cases where incoming messages are forwarded to external webhooks without AI intervention (standard for Free Tier).
+- **Unified Agent Orchestration:** A consolidated "Brain + Phone" architecture where independent AI personas (Agents) are dynamically bound to one or more Channels.
+- **Dynamic Binding:** Ability to hot-swap Agents across Channels instantly without disconnecting the underlying platform session.
 
 ### 3. Messaging & Automation
 
@@ -44,8 +44,8 @@ The platform operates on a multi-tenant architecture where each customer's data 
 - **Contextual Memory:** Platform-scoped conversation history ensuring that AI interactions remain private and relevant to each specific chat (e.g., WhatsApp vs Telegram).
 - **AI Persistent Learning:** Agents autonomously learn and recall user-specific facts and preferences across sessions, enabling a personalized "Mastermind" experience.
 - **Backups:** Automated system backups to Google Drive, ensuring user data and configuration safety.
-- **Contact Management:** Import and organize contacts for targeted campaigns.
-- **Analytics:** Detailed tracking of message delivery, response rates, and bot performance.
+- **Contact Management:** Import and organize contacts across all channels for targeted campaigns.
+- **Analytics:** Detailed tracking of message delivery, response rates, and channel performance.
 
 ### 5. Infrastructure & Monetization
 
