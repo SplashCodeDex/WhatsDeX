@@ -22,9 +22,3 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ## [x] Track: Auth Flow Robustness & State Preservation
 *Link: [./conductor/tracks/auth_robustness_20260219/](./conductor/tracks/auth_robustness_20260219/)*    
-
-
----
-
-- [x] **Track: Refactor Bot to Channels (Fusion Principle)**
-*Link: [./tracks/bot_to_channels_20260226/](./tracks/bot_to_channels_20260226/)*
