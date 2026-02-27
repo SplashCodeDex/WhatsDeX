@@ -16,8 +16,8 @@
 - [x] **Task: Update OpenClaw Adapter Interface** d60f3b9
     - [x] Modify `ChannelAdapter` and `WhatsappAdapter` to accept `fullPath` during initialization.
     - [x] Update OpenClaw logging to include the Firestore path context.
-- [ ] **Task: Refactor IngressService**
-    - [ ] Update `IngressService.ts` to extract Agent and Tenant IDs directly from the path context provided by the adapter.
+- [x] **Task: Refactor IngressService** 211ee80
+    - [x] Update `IngressService.ts` to extract Agent and Tenant IDs directly from the path context provided by the adapter.
 - [ ] **Task: Write Integration Tests for Path-Awareness**
     - [ ] Verify message routing using the full path from adapter to AI Agent.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Path-Aware OpenClaw Integration' (Protocol in workflow.md)**
