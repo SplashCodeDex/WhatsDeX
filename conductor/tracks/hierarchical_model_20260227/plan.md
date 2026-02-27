@@ -1,9 +1,9 @@
 # Implementation Plan: Hierarchical Agent-Controller Model
 
 ## Phase 1: Core Hierarchy Refactor
-- [ ] **Task: Update Firestore Schema & Path Resolution**
-    - [ ] Update `backend/src/types/firestore.ts` to reflect nested `channels` subcollection.
-    - [ ] Update `backend/src/services/FirebaseService.ts` to support the `tenants/{t}/agents/{a}/channels/{c}` path pattern.
+- [x] **Task: Update Firestore Schema & Path Resolution** 427854d
+    - [x] Update `backend/src/types/firestore.ts` to reflect nested `channels` subcollection.
+    - [x] Update `backend/src/services/FirebaseService.ts` to support the `tenants/{t}/agents/{a}/channels/{c}` path pattern.
 - [ ] **Task: Implement AgentService & System Agent**
     - [ ] Create `backend/src/services/AgentService.ts` with logic to ensure `system_default` agent exists for every tenant.
     - [ ] Update `ChannelService.ts` to always create channels within an agent's path.
