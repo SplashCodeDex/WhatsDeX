@@ -277,6 +277,8 @@ export class FirebaseService {
         }
       }
     };
+
+    return wrapper;
   }
 }
 
