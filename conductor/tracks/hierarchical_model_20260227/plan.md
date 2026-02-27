@@ -18,8 +18,8 @@
     - [x] Update OpenClaw logging to include the Firestore path context.
 - [x] **Task: Refactor IngressService** 211ee80
     - [x] Update `IngressService.ts` to extract Agent and Tenant IDs directly from the path context provided by the adapter.
-- [ ] **Task: Write Integration Tests for Path-Awareness**
-    - [ ] Verify message routing using the full path from adapter to AI Agent.
+- [x] **Task: Write Integration Tests for Path-Awareness** 549d27b
+    - [x] Verify message routing using the full path from adapter to AI Agent.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Path-Aware OpenClaw Integration' (Protocol in workflow.md)**
 
 ## Phase 3: Cascading Deletion & Cleanup
