@@ -33,6 +33,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/bots': BotInstanceSchema as any,
   'tenants/{tenantId}/channels': ChannelSchema as any,
   'tenants/{tenantId}/agents': AgentSchema as any,
+  'tenants/{tenantId}/agents/{agentId}/channels': ChannelSchema as any,
   'tenants/{tenantId}/slots': BotInstanceSchema as any,
   'tenants/{tenantId}/members': BotMemberSchema as any,
   'tenants/{tenantId}/groups': BotGroupSchema as any,
@@ -46,6 +47,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/templates': TemplateSchema as any,
   'tenants/{tenantId}/bots/{botId}/auth': AuthSchema as any,
   'tenants/{tenantId}/channels/{channelId}/auth': AuthSchema as any,
+  'tenants/{tenantId}/agents/{agentId}/channels/{channelId}/auth': AuthSchema as any,
   'tenants/{tenantId}/learning': LearningSchema as any,
   'tenants/{tenantId}/analytics': AnalyticsSchema as any,
 };
@@ -89,11 +91,22 @@ export class FirebaseService {
     let schemaKey: CollectionKey;
 
     if (tenantId) {
-      // Special handling for nested subcollections like bots/{botId}/auth
+      // Special handling for nested subcollections
       if (collection.includes('/')) {
         const parts = collection.split('/');
-        // Pattern: bots/{botId}/auth or channels/{id}/auth
-        if ((parts[0] === 'bots' || parts[0] === 'channels') && parts[2] === 'auth') {
+        
+        // Pattern: agents/{agentId}/channels/{channelId}/auth
+        if (parts[0] === 'agents' && parts[2] === 'channels' && parts[4] === 'auth') {
+          path = `tenants/${tenantId}/agents/${parts[1]}/channels/${parts[3]}/auth`;
+          schemaKey = `tenants/{tenantId}/agents/{agentId}/channels/{channelId}/auth` as CollectionKey;
+        } 
+        // Pattern: agents/{agentId}/channels
+        else if (parts[0] === 'agents' && parts[2] === 'channels') {
+          path = `tenants/${tenantId}/agents/${parts[1]}/channels`;
+          schemaKey = `tenants/{tenantId}/agents/{agentId}/channels` as CollectionKey;
+        }
+        // Pattern: bots/{botId}/auth or channels/{id}/auth (Legacy/Top-level)
+        else if ((parts[0] === 'bots' || parts[0] === 'channels') && parts[2] === 'auth') {
           const type = parts[0];
           path = `tenants/${tenantId}/${type}/${parts[1]}/auth`;
           schemaKey = `tenants/{tenantId}/${type}/{${type === 'bots' ? 'botId' : 'channelId'}}/auth` as CollectionKey;

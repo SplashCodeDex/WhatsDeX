@@ -165,6 +165,8 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/bots': ChannelDocument;
   'tenants/{tenantId}/channels': ChannelDocument;
   'tenants/{tenantId}/agents': AgentDocument;
+  'tenants/{tenantId}/agents/{agentId}/channels': ChannelDocument;
+  'tenants/{tenantId}/agents/{agentId}/channels/{channelId}/auth': { value: any };
   'tenants/{tenantId}/slots': BotInstanceDocument;
   'tenants/{tenantId}/members': BotMemberDocument;
   'tenants/{tenantId}/groups': BotGroupDocument;
