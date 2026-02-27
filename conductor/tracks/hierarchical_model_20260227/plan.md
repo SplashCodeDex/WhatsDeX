@@ -26,9 +26,9 @@
 - [x] **Task: Implement Cascading Shutdown** 535b654
     - [x] Add `shutdownAllChannels(agentId)` to `AgentService`.
     - [x] Integrate with `OpenClawGateway` to ensure live sockets are closed on Agent removal.
-- [x] **Task: Final Cleanup of Flattened Logic** c705026
+- [x] **Task: Final Cleanup of Flattened Logic** b534fde
     - [x] Remove `ChannelBindingService.ts` (obsolete).
     - [x] Refactor any remaining `/api/bots` or `/api/channels` (top-level) controllers to the new hierarchical API structure.
-- [ ] **Task: Write Tests for Cleanup**
-    - [ ] Verify that `AgentService.deleteAgent` successfully shuts down all related connections.
+- [x] **Task: Write Tests for Cleanup** b534fde
+    - [x] Verify that `AgentService.deleteAgent` successfully shuts down all related connections.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 3: Cascading Deletion & Cleanup' (Protocol in workflow.md)**
