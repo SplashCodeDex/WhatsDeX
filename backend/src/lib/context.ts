@@ -11,7 +11,7 @@ import { GlobalContext } from '../types/index.js';
 import { groupService } from '../services/groupService.js';
 import { databaseService } from '../services/database.js';
 import { channelService } from '../services/ChannelService.js';
-import { channelBindingService } from '../services/ChannelBindingService.js';
+import { agentService } from '../services/AgentService.js';
 import { ingressService } from '../services/IngressService.js';
 import { userService } from '../services/userService.js';
 import { tenantConfigService } from '../services/tenantConfigService.js';
@@ -52,7 +52,7 @@ async function initializeContext(): Promise<GlobalContext> {
                 logger,
                 groupService,
                 channelService,
-                channelBindingService,
+                agentService,
                 ingressService,
                 userService,
                 tenantConfigService,

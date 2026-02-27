@@ -1,7 +1,6 @@
 import { proto } from 'baileys';
 import logger from '@/utils/logger.js';
 import { webhookService } from './webhookService.js';
-import { channelBindingService } from './ChannelBindingService.js';
 import { channelService } from './ChannelService.js';
 import { agentService } from './AgentService.js';
 import { createBotContext } from '../utils/createBotContext.js';
@@ -38,18 +37,13 @@ export class IngressService {
 
       let activeAgent: Agent | null = null;
 
-      // 1. Resolve Binding
+      // 1. Resolve Agent from Path
       if (fullPath && fullPath.includes('/agents/')) {
-        // --- HIERARCHICAL MODE ---
         // Path: tenants/{tenantId}/agents/{agentId}/channels/{channelId}
         const parts = fullPath.split('/');
         const agentId = parts[3]; 
         
         const agentResult = await agentService.getAgent(tenantId, agentId);
-        activeAgent = agentResult.success ? agentResult.data : null;
-      } else {
-        // --- LEGACY/FLAT MODE ---
-        const agentResult = await channelBindingService.getActiveAgentForChannel(tenantId, channelId);
         activeAgent = agentResult.success ? agentResult.data : null;
       }
 

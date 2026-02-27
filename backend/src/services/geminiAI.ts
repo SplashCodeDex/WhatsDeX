@@ -134,10 +134,17 @@ export class GeminiAI extends EventEmitter {
           recentTools.map(t => `- Tool: ${t.tool} | Result: ${typeof t.data === 'string' ? t.data : JSON.stringify(t.data)}`).join("\n");
       }
 
-      // Get Agent-specific identity from binding (Refactored Phase 3)
-      const { channelBindingService } = await import('./ChannelBindingService.js');
-      const agentResult = await channelBindingService.getActiveAgentForChannel(tenantId, botId);
-      const agent = agentResult.success ? agentResult.data : null;
+      // Get Agent-specific identity from hierarchy (Refactored Phase 3)
+      const { agentService } = await import('./AgentService.js');
+      
+      let agent: Agent | null = null;
+      if (message.metadata?.fullPath) {
+          const parts = message.metadata.fullPath.split('/');
+          const agentId = parts[3];
+          const agentResult = await agentService.getAgent(tenantId, agentId);
+          agent = agentResult.success ? agentResult.data : null;
+      }
+
       const personality = agent?.personality || agent?.soul || 'a professional and helpful assistant';
 
       const systemPrompt = `You are a high-intelligence AI agent.
