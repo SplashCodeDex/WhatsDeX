@@ -3,10 +3,12 @@ import logger from '@/utils/logger.js';
 import { webhookService } from './webhookService.js';
 import { channelBindingService } from './ChannelBindingService.js';
 import { channelService } from './ChannelService.js';
+import { agentService } from './AgentService.js';
 import { createBotContext } from '../utils/createBotContext.js';
 import { GlobalContext } from '../types/index.js';
 import { tenantConfigService } from './tenantConfigService.js';
 import analyticsService from './analytics.js';
+import { Agent } from '../types/contracts.js';
 
 /**
  * Ingress Service
@@ -27,21 +29,34 @@ export class IngressService {
   }
 
   /**
-   * Process an incoming message from any channel
+   * Process an incoming message from any channel.
+   * @param fullPath Optional full Firestore path for path-aware routing (tenants/T/agents/A/channels/C)
    */
-  async handleMessage(tenantId: string, channelId: string, message: proto.IWebMessageInfo, context: GlobalContext): Promise<void> {
+  async handleMessage(tenantId: string, channelId: string, message: proto.IWebMessageInfo, context: GlobalContext, fullPath?: string): Promise<void> {
     try {
-      logger.info(`Processing message for channel ${channelId} (Tenant: ${tenantId})`);
+      logger.info(`Processing message for channel ${channelId} (Tenant: ${tenantId}, Path: ${fullPath || 'flat'})`);
+
+      let activeAgent: Agent | null = null;
 
       // 1. Resolve Binding
-      const agentResult = await channelBindingService.getActiveAgentForChannel(tenantId, channelId);
-      const activeAgent = agentResult.success ? agentResult.data : null;
+      if (fullPath && fullPath.includes('/agents/')) {
+        // --- HIERARCHICAL MODE ---
+        // Path: tenants/{tenantId}/agents/{agentId}/channels/{channelId}
+        const parts = fullPath.split('/');
+        const agentId = parts[3]; 
+        
+        const agentResult = await agentService.getAgent(tenantId, agentId);
+        activeAgent = agentResult.success ? agentResult.data : null;
+      } else {
+        // --- LEGACY/FLAT MODE ---
+        const agentResult = await channelBindingService.getActiveAgentForChannel(tenantId, channelId);
+        activeAgent = agentResult.success ? agentResult.data : null;
+      }
 
-      // 2. Prepare AI Context (Standard for both modes)
-      // Note: we might need a mock 'bot' for createBotContext if it strictly expects Baileys socket
+      // 2. Prepare AI Context
       const aiCtx = await createBotContext({ tenantId, botId: channelId } as any, message, context);
 
-      if (activeAgent) {
+      if (activeAgent && activeAgent.id !== 'system_default') {
         // --- AGENT MODE ---
         logger.info(`Routing to Agent: ${activeAgent.name} (${activeAgent.id})`);
         
@@ -54,13 +69,12 @@ export class IngressService {
           await this.dispatchWebhook(tenantId, channelId, message, aiCtx);
         }
       } else {
-        // --- WEBHOOK ONLY MODE ---
-        logger.info(`No Agent assigned. Forwarding to Webhook.`);
+        // --- WEBHOOK ONLY MODE (Includes system_default) ---
+        logger.info(`No AI Agent assigned (or system_default). Forwarding to Webhook.`);
         await this.dispatchWebhook(tenantId, channelId, message, aiCtx);
       }
 
-      // 3. Post-processing (Stats, Analytics)
-      // We'll implement incrementChannelStat in ChannelService soon
+      // 3. Post-processing
       analyticsService.trackMessage(tenantId, 'received');
 
     } catch (error: unknown) {
