@@ -23,9 +23,9 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: Path-Aware OpenClaw Integration' (Protocol in workflow.md)** 9345dbd
 
 ## Phase 3: Cascading Deletion & Cleanup
-- [ ] **Task: Implement Cascading Shutdown**
-    - [ ] Add `shutdownAllChannels(agentId)` to `AgentService`.
-    - [ ] Integrate with `OpenClawGateway` to ensure live sockets are closed on Agent removal.
+- [x] **Task: Implement Cascading Shutdown** 535b654
+    - [x] Add `shutdownAllChannels(agentId)` to `AgentService`.
+    - [x] Integrate with `OpenClawGateway` to ensure live sockets are closed on Agent removal.
 - [ ] **Task: Final Cleanup of Flattened Logic**
     - [ ] Remove `ChannelBindingService.ts` (obsolete).
     - [ ] Refactor any remaining `/api/bots` or `/api/channels` (top-level) controllers to the new hierarchical API structure.
