@@ -3,19 +3,23 @@ import { ContactService } from './contactService.js';
 import { Readable } from 'stream';
 import fs from 'fs';
 
-const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
-    const mockBatchSet = vi.fn();
+const { mockBatchSet, mockBatchUpdate, mockBatchDelete, mockBatchCommit, mockBatch } = vi.hoisted(() => {
+    const mockBatchSet = vi.fn().mockReturnThis();
+    const mockBatchUpdate = vi.fn().mockReturnThis();
+    const mockBatchDelete = vi.fn().mockReturnThis();
     const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
     const mockBatch = vi.fn(() => ({
         set: mockBatchSet,
+        update: mockBatchUpdate,
+        delete: mockBatchDelete,
         commit: mockBatchCommit,
     }));
-    return { mockBatchSet, mockBatchCommit, mockBatch };
+    return { mockBatchSet, mockBatchUpdate, mockBatchDelete, mockBatchCommit, mockBatch };
 });
 
 vi.mock('../lib/firebase.js', () => ({
     db: {
-        batch: mockBatch,
+        batch: vi.fn(), // Not used directly anymore by service
         collection: vi.fn(() => ({
             doc: vi.fn(() => ({
                 collection: vi.fn(() => ({
@@ -23,6 +27,13 @@ vi.mock('../lib/firebase.js', () => ({
                 })),
             })),
         })),
+    },
+    admin: {
+        firestore: {
+            FieldValue: {
+                increment: vi.fn((val) => val)
+            }
+        }
     }
 }));
 
@@ -30,6 +41,7 @@ vi.mock('./FirebaseService.js', () => ({
     firebaseService: {
         getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
         setDoc: vi.fn().mockResolvedValue(undefined),
+        batch: mockBatch,
     }
 }));
 
@@ -69,23 +81,27 @@ describe('ContactService', () => {
       expect(mockBatchSet).toHaveBeenCalledTimes(2);
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.stringMatching(/^cont_/),
         expect.objectContaining({
           name: 'Doe, John',
           phone: '1234567890@s.whatsapp.net',
           email: 'john@example.com',
           tags: ['vip', 'lead'],
-        })
+        }),
+        tenantId
       );
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.stringMatching(/^cont_/),
         expect.objectContaining({
           name: 'Jane Doe',
           phone: '19876543210@s.whatsapp.net',
           email: 'jane@example.com',
           tags: ['new'],
-        })
+        }),
+        tenantId
       );
 
       // Verify bot stats update
