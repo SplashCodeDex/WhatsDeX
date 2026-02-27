@@ -12,7 +12,7 @@
     - [x] Verify that deleting an agent logically impacts its child channels.
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Core Hierarchy Refactor' (Protocol in workflow.md)** 510f0d3
 
-## Phase 2: Path-Aware OpenClaw Integration
+## Phase 2: Path-Aware OpenClaw Integration [checkpoint: 9345dbd]
 - [x] **Task: Update OpenClaw Adapter Interface** d60f3b9
     - [x] Modify `ChannelAdapter` and `WhatsappAdapter` to accept `fullPath` during initialization.
     - [x] Update OpenClaw logging to include the Firestore path context.
@@ -20,7 +20,7 @@
     - [x] Update `IngressService.ts` to extract Agent and Tenant IDs directly from the path context provided by the adapter.
 - [x] **Task: Write Integration Tests for Path-Awareness** 549d27b
     - [x] Verify message routing using the full path from adapter to AI Agent.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 2: Path-Aware OpenClaw Integration' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 2: Path-Aware OpenClaw Integration' (Protocol in workflow.md)** 9345dbd
 
 ## Phase 3: Cascading Deletion & Cleanup
 - [ ] **Task: Implement Cascading Shutdown**
