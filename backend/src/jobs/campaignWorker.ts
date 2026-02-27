@@ -1,6 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import { Campaign, CampaignStatus, MessageTemplate, Contact, Audience } from '../types/contracts.js';
-import { multiTenantBotService } from '../services/multiTenantBotService.js';
+import { multiTenantBotService } from '../archive/multiTenantBotService.js';
 import { firebaseService } from '../services/FirebaseService.js';
 import { groupService } from '../services/groupService.js';
 import { webhookService } from '../services/webhookService.js';
@@ -72,7 +72,10 @@ class CampaignWorker {
         logger.info('CampaignWorker initialized with enhanced features');
     }
 
-    private async processCampaign(job: Job<CampaignJobData>): Promise<void> {
+    /**
+     * Public for testing
+     */
+    public async processCampaign(job: Job<CampaignJobData>): Promise<void> {
         const { tenantId, campaign } = job.data;
         const { id } = campaign;
 

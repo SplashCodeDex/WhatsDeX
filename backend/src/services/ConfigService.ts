@@ -32,6 +32,15 @@ export class ConfigService {
   }
 
   /**
+   * Resets the singleton instance.
+   * STRICT: Used for test isolation only.
+   */
+  public static resetInstance(): void {
+    // @ts-ignore - access private static member
+    ConfigService.instance = undefined;
+  }
+
+  /**
    * Retrieves a configuration value by key.
    * Supports dot notation for nested properties.
    */

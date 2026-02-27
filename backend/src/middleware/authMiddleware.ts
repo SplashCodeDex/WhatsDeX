@@ -32,7 +32,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.token;
         const source = authHeader ? 'header' : (req.cookies?.token ? 'cookie' : 'none');
 
-        const isMeRoute = req.path === '/me' || req.originalUrl.endsWith('/me');
+        const isMeRoute = req.path === '/me' || req.originalUrl?.endsWith('/me');
 
         if (!token) {
             if (isMeRoute) {
@@ -45,18 +45,28 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         const config = ConfigService.getInstance();
         const secret = config.get('JWT_SECRET');
 
-        // Check Blacklist
-        const isBlacklisted = await cacheService.isTokenBlacklisted(token);
-        if (isBlacklisted.success && isBlacklisted.data) {
-            logger.security('Auth Middleware: Blacklisted token', null, { token: token.substring(0, 10) + '...', ip: req.ip });
-            return res.status(401).json({ success: false, error: 'Token has been revoked' });
+        if (!secret) {
+            logger.security('Auth Middleware: JWT_SECRET not configured', null, { ip: req.ip });
+            return res.status(401).json({ success: false, error: 'Authentication system misconfigured' });
+        }
+
+        // Check Blacklist - Resilient
+        try {
+            const isBlacklisted = await cacheService.isTokenBlacklisted(token);
+            if (isBlacklisted.success && isBlacklisted.data) {
+                logger.security('Auth Middleware: Blacklisted token', null, { token: token.substring(0, 10) + '...', ip: req.ip });
+                return res.status(401).json({ success: false, error: 'Token has been revoked' });
+            }
+        } catch (cacheError) {
+            // Log but don't fail auth if cache is down
+            logger.warn('Auth Middleware: Blacklist check skipped (cache unavailable)');
         }
 
         // Verify Custom JWT
         try {
             const decoded = jwt.verify(token, secret) as UserPayload;
             req.user = decoded;
-            next();
+            return next();
         } catch (jwtError: unknown) {
             const name = jwtError instanceof Error ? jwtError.name : 'UnknownError';
             const message = jwtError instanceof Error ? jwtError.message : String(jwtError);

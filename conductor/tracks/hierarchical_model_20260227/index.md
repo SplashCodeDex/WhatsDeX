@@ -1,4 +1,4 @@
-# Track bot_to_channels_20260226 Context
+# Track hierarchical_model_20260227 Context
 
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)

@@ -6,6 +6,8 @@ import {
 import {
   TenantSchema,
   TenantUserSchema,
+  ChannelSchema,
+  AgentSchema,
   BotInstanceSchema,
   BotMemberSchema,
   BotGroupSchema,
@@ -29,6 +31,8 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants': TenantSchema as any,
   'tenants/{tenantId}/users': TenantUserSchema as any,
   'tenants/{tenantId}/bots': BotInstanceSchema as any,
+  'tenants/{tenantId}/channels': ChannelSchema as any,
+  'tenants/{tenantId}/agents': AgentSchema as any,
   'tenants/{tenantId}/slots': BotInstanceSchema as any,
   'tenants/{tenantId}/members': BotMemberSchema as any,
   'tenants/{tenantId}/groups': BotGroupSchema as any,
@@ -41,6 +45,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/audiences': AudienceSchema as any,
   'tenants/{tenantId}/templates': TemplateSchema as any,
   'tenants/{tenantId}/bots/{botId}/auth': AuthSchema as any,
+  'tenants/{tenantId}/channels/{channelId}/auth': AuthSchema as any,
   'tenants/{tenantId}/learning': LearningSchema as any,
   'tenants/{tenantId}/analytics': AnalyticsSchema as any,
 };
@@ -87,10 +92,11 @@ export class FirebaseService {
       // Special handling for nested subcollections like bots/{botId}/auth
       if (collection.includes('/')) {
         const parts = collection.split('/');
-        // Pattern: bots/{botId}/auth
-        if (parts[0] === 'bots' && parts[2] === 'auth') {
-          path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
-          schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+        // Pattern: bots/{botId}/auth or channels/{id}/auth
+        if ((parts[0] === 'bots' || parts[0] === 'channels') && parts[2] === 'auth') {
+          const type = parts[0];
+          path = `tenants/${tenantId}/${type}/${parts[1]}/auth`;
+          schemaKey = `tenants/{tenantId}/${type}/{${type === 'bots' ? 'botId' : 'channelId'}}/auth` as CollectionKey;
         } else if (parts[0] === 'slots') {
           path = `tenants/${tenantId}/slots`;
           schemaKey = `tenants/{tenantId}/slots` as CollectionKey;

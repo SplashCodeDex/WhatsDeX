@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { campaignWorker } from './campaignWorker.js';
+import { getCampaignWorker } from './campaignWorker.js';
 import { firebaseService } from '../services/FirebaseService.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
 import { TemplateService } from '../services/templateService.js';
@@ -25,7 +25,7 @@ vi.mock('../services/FirebaseService.js', () => ({
   FirebaseService: { getInstance: () => mockFirebase }
 }));
 
-vi.mock('../services/multiTenantBotService.js', () => ({
+vi.mock('../archive/multiTenantBotService.js', () => ({
   multiTenantBotService: mockBotService
 }));
 
@@ -85,10 +85,11 @@ describe('CampaignWorker throttling', () => {
     mockTemplateService.getTemplate.mockResolvedValue({ success: true, data: { content: 'Hi' } });
     mockBotService.sendMessage.mockResolvedValue({ success: true });
 
-    const worker = campaignWorker as any;
+    // Use getter for the lazy singleton
+    const worker = getCampaignWorker() as any;
     
     // Start processing
-    const promise = worker.processCampaign({ data: { tenantId, campaign } });
+    const promise = worker.processCampaign({ data: { tenantId, campaign } } as any);
 
     // Wait for first message and delay start
     await vi.advanceTimersByTimeAsync(0); 

@@ -14,6 +14,9 @@ vi.mock('./FirebaseService.js', () => ({
 
 vi.mock('../lib/firebase.js', () => ({
   db: {
+    doc: vi.fn(() => ({
+      update: vi.fn().mockResolvedValue(undefined)
+    })),
     collection: vi.fn(() => ({
       add: vi.fn().mockResolvedValue({ id: 'event_1' }),
       where: vi.fn().mockReturnThis(),
@@ -29,7 +32,8 @@ vi.mock('../lib/firebase.js', () => ({
   admin: {
     firestore: {
       FieldValue: {
-        increment: vi.fn((val) => `increment_${val}`)
+        increment: vi.fn((val) => `increment_${val}`),
+        serverTimestamp: vi.fn(() => 'mock-timestamp')
       }
     }
   }

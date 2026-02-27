@@ -3,25 +3,25 @@ import { MultiTenantBotService } from './multiTenantBotService.js';
 import { WhatsappAdapter } from '../services/channels/whatsapp/WhatsappAdapter.js';
 import { channelManager } from '../services/channels/ChannelManager.js';
 
-const { mockUnifiedAI, mockContext } = vi.hoisted(() => ({
-  mockUnifiedAI: { processMessage: vi.fn() },
-  mockContext: {
-    commandSystem: { processMessage: vi.fn().mockResolvedValue(false) },
-    unifiedAI: { processMessage: vi.fn() }
-  }
-}));
+const { mockUnifiedAI, mockContext } = vi.hoisted(() => {
+  const aiMock = { processMessage: vi.fn().mockResolvedValue({ success: true }) };
+  return {
+    mockUnifiedAI: aiMock,
+    mockContext: {
+      commandSystem: { processMessage: vi.fn().mockResolvedValue(false) },
+      unifiedAI: aiMock
+    }
+  };
+});
 
-// Update the internal reference
-mockContext.unifiedAI = mockUnifiedAI;
-
-// Mock dependencies
-vi.mock('./analytics.js', () => ({
+// Mock dependencies with correct relative paths
+vi.mock('../services/analytics.js', () => ({
   default: {
     trackMessage: vi.fn().mockResolvedValue(undefined)
   }
 }));
 
-vi.mock('./socketService.js', () => ({
+vi.mock('../services/socketService.js', () => ({
   socketService: {
     emitToTenant: vi.fn(),
     emitBotProgress: vi.fn(),
@@ -30,17 +30,17 @@ vi.mock('./socketService.js', () => ({
   }
 }));
 
-vi.mock('./eventHandler.js', () => ({
+vi.mock('../services/eventHandler.js', () => ({
   eventHandler: {
     bind: vi.fn()
   }
 }));
 
-vi.mock('./memoryService.js', () => ({
+vi.mock('../services/memoryService.js', () => ({
   memoryService: {}
 }));
 
-vi.mock('./embeddingService.js', () => ({
+vi.mock('../services/embeddingService.js', () => ({
   embeddingService: {
     getInstance: vi.fn()
   },
@@ -92,10 +92,16 @@ vi.mock('@/services/FirebaseService.js', () => ({
   }
 }));
 
-vi.mock('./tenantConfigService.js', () => ({
+vi.mock('../services/tenantConfigService.js', () => ({
   tenantConfigService: {
     getBotConfig: vi.fn().mockResolvedValue({ success: true, data: {} }),
     isFeatureEnabled: vi.fn().mockResolvedValue(true)
+  }
+}));
+
+vi.mock('../services/flowService.js', () => ({
+  flowService: {
+    listActiveFlows: vi.fn().mockResolvedValue({ success: true, data: [] })
   }
 }));
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { campaignWorker } from './campaignWorker.js';
+import { getCampaignWorker } from './campaignWorker.js';
 import { firebaseService } from '../services/FirebaseService.js';
 import { groupService } from '../services/groupService.js';
 import { multiTenantBotService } from '../services/multiTenantBotService.js';
@@ -35,7 +35,7 @@ vi.mock('../services/groupService.js', () => ({
   groupService: mockGroupService
 }));
 
-vi.mock('../services/multiTenantBotService.js', () => ({
+vi.mock('../archive/multiTenantBotService.js', () => ({
   multiTenantBotService: mockBotService
 }));
 
@@ -98,12 +98,12 @@ describe('CampaignWorker Group Support', () => {
     mockBotService.sendMessage.mockResolvedValue({ success: true });
     mockBotService.getBotSocket.mockReturnValue({ id: 'bot_1', tenantId, botId: 'bot_1' });
 
-    const worker = campaignWorker as any;
+    const campaignWorkerInstance = getCampaignWorker() as any;
 
     const expectedActiveBot = { id: 'bot_1', tenantId, botId: 'bot_1' };
     mockBotService.getBotSocket.mockReturnValue(expectedActiveBot);
 
-    await worker.processCampaign({ data: { tenantId, campaign } });
+    await campaignWorkerInstance.processCampaign({ data: { tenantId, campaign } } as any);
 
     expect(mockGroupService.syncAllGroups).toHaveBeenCalledWith(expectedActiveBot);
     expect(mockBotService.sendMessage).toHaveBeenCalledWith(

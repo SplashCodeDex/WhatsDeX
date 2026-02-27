@@ -462,11 +462,23 @@ export type AuthData = z.infer<typeof AuthSchema>;
  * Analytics Schema ('tenants/{tenantId}/analytics/{date}' subcollection)
  * Tracks daily message statistics
  */
+/**
+ * Schema for fields that can be either a number or a Firestore increment transform.
+ * Essential for atomic operations while maintaining Zod validation.
+ */
+export const FirestoreNumberSchema = z.union([
+  z.number(),
+  z.object({
+    operand: z.number(),
+    method: z.string().optional() // Handles FieldValue.increment
+  }).passthrough()
+]);
+
 export const AnalyticsSchema = z.object({
   date: z.string(), // ISO date string YYYY-MM-DD
-  sent: z.number().default(0),
-  received: z.number().default(0),
-  errors: z.number().default(0),
+  sent: FirestoreNumberSchema.default(0),
+  received: FirestoreNumberSchema.default(0),
+  errors: FirestoreNumberSchema.default(0),
   updatedAt: TimestampSchema
 }).readonly();
 
