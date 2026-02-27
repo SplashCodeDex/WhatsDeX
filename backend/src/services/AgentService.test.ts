@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AgentService } from './AgentService.js';
 import { firebaseService } from './FirebaseService.js';
+import channelService from './ChannelService.js';
 
 // Mock dependencies
 vi.mock('./FirebaseService.js', () => ({
@@ -11,6 +12,13 @@ vi.mock('./FirebaseService.js', () => ({
     deleteDoc: vi.fn()
   },
   FirebaseService: { getInstance: () => ({}) }
+}));
+
+vi.mock('./ChannelService.js', () => ({
+  default: {
+    getChannelsForAgent: vi.fn(),
+    deleteChannel: vi.fn()
+  }
 }));
 
 vi.mock('@/utils/logger.js', () => ({
@@ -59,11 +67,18 @@ describe('AgentService', () => {
   });
 
   describe('deleteAgent', () => {
-    it('should delete agent document', async () => {
-      const agentId = 'custom-123';
+    it('should delete agent and shutdown all child channels', async () => {
+      const agentId = 'agent-to-kill';
+      const mockChannels = [{ id: 'chan-1' }, { id: 'chan-2' }];
+      
+      vi.mocked(channelService.getChannelsForAgent).mockResolvedValue({ success: true, data: mockChannels as any });
+      vi.mocked(channelService.deleteChannel).mockResolvedValue({ success: true, data: undefined });
+
       const result = await service.deleteAgent(tenantId, agentId);
 
       expect(result.success).toBe(true);
+      expect(channelService.getChannelsForAgent).toHaveBeenCalledWith(tenantId, agentId);
+      expect(channelService.deleteChannel).toHaveBeenCalledTimes(2);
       expect(firebaseService.deleteDoc).toHaveBeenCalledWith('agents', agentId, tenantId);
     });
 

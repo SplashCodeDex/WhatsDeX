@@ -2,6 +2,7 @@ import { firebaseService } from '@/services/FirebaseService.js';
 import { Agent, AgentSchema, Result } from '../types/contracts.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import logger from '@/utils/logger.js';
+import channelService from './ChannelService.js';
 
 /**
  * Agent Service
@@ -104,7 +105,17 @@ export class AgentService {
         throw new Error('Cannot delete the system default agent.');
       }
 
-      // Logic for cascading shutdown will be added in Phase 3
+      // 1. Get all child channels
+      const channelsResult = await channelService.getChannelsForAgent(tenantId, agentId);
+      if (channelsResult.success) {
+        // 2. Shut down and delete each channel
+        for (const channel of channelsResult.data) {
+          logger.info(`Cascading delete: Removing channel ${channel.id} for agent ${agentId}`);
+          await channelService.deleteChannel(tenantId, channel.id, agentId);
+        }
+      }
+
+      // 3. Delete the agent itself
       await firebaseService.deleteDoc<'tenants/{tenantId}/agents'>('agents', agentId, tenantId);
       
       logger.info(`Agent ${agentId} deleted for tenant ${tenantId}`);
