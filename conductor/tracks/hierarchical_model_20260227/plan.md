@@ -4,9 +4,9 @@
 - [x] **Task: Update Firestore Schema & Path Resolution** 427854d
     - [x] Update `backend/src/types/firestore.ts` to reflect nested `channels` subcollection.
     - [x] Update `backend/src/services/FirebaseService.ts` to support the `tenants/{t}/agents/{a}/channels/{c}` path pattern.
-- [ ] **Task: Implement AgentService & System Agent**
-    - [ ] Create `backend/src/services/AgentService.ts` with logic to ensure `system_default` agent exists for every tenant.
-    - [ ] Update `ChannelService.ts` to always create channels within an agent's path.
+- [x] **Task: Implement AgentService & System Agent** 96a56fe
+    - [x] Create `backend/src/services/AgentService.ts` with logic to ensure `system_default` agent exists for every tenant.
+    - [x] Update `ChannelService.ts` to always create channels within an agent's path.
 - [ ] **Task: Write Tests for Hierarchy**
     - [ ] Create `backend/src/services/AgentService.test.ts`.
     - [ ] Verify that deleting an agent logically impacts its child channels.
