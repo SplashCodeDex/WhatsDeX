@@ -1,6 +1,6 @@
 # Implementation Plan: Hierarchical Agent-Controller Model
 
-## Phase 1: Core Hierarchy Refactor
+## Phase 1: Core Hierarchy Refactor [checkpoint: 510f0d3]
 - [x] **Task: Update Firestore Schema & Path Resolution** 427854d
     - [x] Update `backend/src/types/firestore.ts` to reflect nested `channels` subcollection.
     - [x] Update `backend/src/services/FirebaseService.ts` to support the `tenants/{t}/agents/{a}/channels/{c}` path pattern.
@@ -10,7 +10,7 @@
 - [x] **Task: Write Tests for Hierarchy** 1f702d9
     - [x] Create `backend/src/services/AgentService.test.ts`.
     - [x] Verify that deleting an agent logically impacts its child channels.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Core Hierarchy Refactor' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Core Hierarchy Refactor' (Protocol in workflow.md)** 510f0d3
 
 ## Phase 2: Path-Aware OpenClaw Integration
 - [ ] **Task: Update OpenClaw Adapter Interface**
