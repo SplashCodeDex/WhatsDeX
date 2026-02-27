@@ -57,4 +57,23 @@ describe('AgentService', () => {
       expect(firebaseService.setDoc).not.toHaveBeenCalled();
     });
   });
+
+  describe('deleteAgent', () => {
+    it('should delete agent document', async () => {
+      const agentId = 'custom-123';
+      const result = await service.deleteAgent(tenantId, agentId);
+
+      expect(result.success).toBe(true);
+      expect(firebaseService.deleteDoc).toHaveBeenCalledWith('agents', agentId, tenantId);
+    });
+
+    it('should fail if trying to delete system_default', async () => {
+      const result = await service.deleteAgent(tenantId, 'system_default');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toBe('Cannot delete the system default agent.');
+      }
+    });
+  });
 });
