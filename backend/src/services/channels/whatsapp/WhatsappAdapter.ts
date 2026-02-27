@@ -15,12 +15,14 @@ import { setActiveWebListener, type ActiveWebListener, type ActiveWebSendOptions
 export class WhatsappAdapter implements ChannelAdapter {
   public readonly id = 'whatsapp';
   public readonly instanceId: string;
+  public readonly fullPath?: string;
   private authSystem: AuthSystem;
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
   private socket: any = null;
 
-  constructor(private tenantId: string, private channelId: string) {
+  constructor(private tenantId: string, private channelId: string, fullPath?: string) {
     this.instanceId = channelId;
+    this.fullPath = fullPath;
     this.authSystem = new AuthSystem({ bot: {} }, tenantId, channelId);
   }
 
@@ -29,7 +31,7 @@ export class WhatsappAdapter implements ChannelAdapter {
   }
 
   public async connect(): Promise<void> {
-    logger.info(`Connecting WhatsappAdapter for channel ${this.channelId}`);
+    logger.info(`Connecting WhatsappAdapter for channel ${this.channelId} (Path: ${this.fullPath || 'legacy'})`);
 
     const connectResult = await this.authSystem.connect();
     if (!connectResult.success) {
@@ -91,6 +93,7 @@ export class WhatsappAdapter implements ChannelAdapter {
             tenantId: this.tenantId,
             channelId: this.id,
             botId: this.channelId, // Keep botId in event for backward compat or update interface later
+            fullPath: this.fullPath,
             sender: message.key.remoteJid,
             content: message.message,
             timestamp: new Date((message.messageTimestamp as number) * 1000),

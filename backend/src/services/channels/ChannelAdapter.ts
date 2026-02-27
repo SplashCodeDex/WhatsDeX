@@ -79,6 +79,7 @@ export interface InboundMessageEvent {
   tenantId: string;
   channelId: string;
   botId: string;
+  fullPath?: string; // Full Firestore path for path-aware routing
   sender: string;
   content: any;
   timestamp: Date;
