@@ -25,5 +25,5 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ---
 
-- [~] **Track: Refactor to Hierarchical Agent-Controller Model (Path-Aware)**
+- [x] **Track: Refactor to Hierarchical Agent-Controller Model (Path-Aware)**
 *Link: [./tracks/hierarchical_model_20260227/](./tracks/hierarchical_model_20260227/)*
