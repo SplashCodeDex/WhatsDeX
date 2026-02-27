@@ -22,7 +22,7 @@
     - [x] Verify message routing using the full path from adapter to AI Agent.
 - [x] **Task: Conductor - User Manual Verification 'Phase 2: Path-Aware OpenClaw Integration' (Protocol in workflow.md)** 9345dbd
 
-## Phase 3: Cascading Deletion & Cleanup
+## Phase 3: Cascading Deletion & Cleanup [checkpoint: 9ff2641]
 - [x] **Task: Implement Cascading Shutdown** 535b654
     - [x] Add `shutdownAllChannels(agentId)` to `AgentService`.
     - [x] Integrate with `OpenClawGateway` to ensure live sockets are closed on Agent removal.
@@ -31,4 +31,4 @@
     - [x] Refactor any remaining `/api/bots` or `/api/channels` (top-level) controllers to the new hierarchical API structure.
 - [x] **Task: Write Tests for Cleanup** b534fde
     - [x] Verify that `AgentService.deleteAgent` successfully shuts down all related connections.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Cascading Deletion & Cleanup' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Cascading Deletion & Cleanup' (Protocol in workflow.md)** 9ff2641
