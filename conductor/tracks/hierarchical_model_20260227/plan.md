@@ -13,9 +13,9 @@
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Core Hierarchy Refactor' (Protocol in workflow.md)** 510f0d3
 
 ## Phase 2: Path-Aware OpenClaw Integration
-- [ ] **Task: Update OpenClaw Adapter Interface**
-    - [ ] Modify `ChannelAdapter` and `WhatsappAdapter` to accept `fullPath` during initialization.
-    - [ ] Update OpenClaw logging to include the Firestore path context.
+- [x] **Task: Update OpenClaw Adapter Interface** d60f3b9
+    - [x] Modify `ChannelAdapter` and `WhatsappAdapter` to accept `fullPath` during initialization.
+    - [x] Update OpenClaw logging to include the Firestore path context.
 - [ ] **Task: Refactor IngressService**
     - [ ] Update `IngressService.ts` to extract Agent and Tenant IDs directly from the path context provided by the adapter.
 - [ ] **Task: Write Integration Tests for Path-Awareness**
