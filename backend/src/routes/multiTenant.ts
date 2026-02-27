@@ -33,7 +33,7 @@ router.post('/bots', async (req: Request, res: Response) => {
         } else {
             res.status(400).json({ success: false, error: result.error.message });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots POST error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -66,7 +66,7 @@ router.get('/bots', async (req: Request, res: Response) => {
         } else {
             res.status(500).json({ success: false, error: result.error?.message });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
@@ -88,7 +88,7 @@ router.get('/bots/:botId', async (req: Request, res: Response) => {
         } else {
             res.status(404).json({ success: false, error: result.error?.message || 'Bot not found' });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots/:botId GET error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -111,7 +111,7 @@ router.patch('/bots/:botId', async (req: Request, res: Response) => {
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Update failed' });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots/:botId PATCH error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -134,7 +134,7 @@ router.delete('/bots/:botId', async (req: Request, res: Response) => {
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Delete failed' });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots/:botId DELETE error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -157,7 +157,7 @@ router.post('/bots/:botId/connect', async (req: Request, res: Response) => {
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Connection failed' });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots/:botId/connect POST error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -180,7 +180,7 @@ router.post('/bots/:botId/disconnect', async (req: Request, res: Response) => {
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Disconnect failed' });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots/:botId/disconnect POST error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -208,7 +208,7 @@ router.get('/bots/:botId/qr', async (req: Request, res: Response) => {
         } else {
             res.json({ success: true, data: { qrCode: null, message: 'QR code not yet available, please wait...' } });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots/:botId/qr GET error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -237,7 +237,7 @@ router.post('/bots/:botId/pairing-code', async (req: Request, res: Response) => 
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Failed to get pairing code' });
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots/:botId/pairing-code POST error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
@@ -266,7 +266,7 @@ router.get('/bots/:botId/status', async (req: Request, res: Response) => {
                 hasQR
             }
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Route /bots/:botId/status GET error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }

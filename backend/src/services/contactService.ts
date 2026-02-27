@@ -39,7 +39,7 @@ export class ContactService {
     let count = 0;
     let rowIndex = 0;
     const BATCH_SIZE = 500;
-    let currentBatch = db.batch();
+    let currentBatch = firebaseService.batch();
     let currentBatchSize = 0;
     const batchPromises: Promise<any>[] = [];
 
@@ -72,17 +72,13 @@ export class ContactService {
           const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
           errors.push(`Row ${rowIndex + 1}: ${msg}`);
         } else {
-          const contactRef = db.collection('tenants')
-            .doc(tenantId)
-            .collection('contacts')
-            .doc(contactData.id);
-          currentBatch.set(contactRef, validation.data);
+          currentBatch.set('contacts', contactData.id, validation.data, tenantId);
           count++;
           currentBatchSize++;
 
           if (currentBatchSize >= BATCH_SIZE) {
             batchPromises.push(currentBatch.commit());
-            currentBatch = db.batch();
+            currentBatch = firebaseService.batch();
             currentBatchSize = 0;
           }
         }
@@ -144,7 +140,7 @@ export class ContactService {
    */
   public async listContacts(tenantId: string, limit: number = 100): Promise<Result<Contact[]>> {
     try {
-      const contacts = await firebaseService.getCollection('tenants/{tenantId}/contacts' as any, tenantId) as Contact[];
+      const contacts = await firebaseService.getCollection<'tenants/{tenantId}/contacts'>('contacts', tenantId);
       return { success: true, data: contacts.slice(0, limit) };
     } catch (error: unknown) {
       logger.error('ContactService.listContacts error', error);
@@ -167,7 +163,7 @@ export class ContactService {
       };
 
       const validated = ContactSchema.parse(contactData);
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, id, validated, tenantId, false);
+      await firebaseService.setDoc<'tenants/{tenantId}/contacts'>('contacts', id, validated, tenantId, false);
       return { success: true, data: validated };
     } catch (error: unknown) {
       logger.error('ContactService.createContact error', error);
@@ -184,7 +180,7 @@ export class ContactService {
         ...updates,
         updatedAt: new Date()
       };
-      await firebaseService.setDoc('tenants/{tenantId}/contacts' as any, contactId, contactData, tenantId, true);
+      await firebaseService.setDoc<'tenants/{tenantId}/contacts'>('contacts', contactId, contactData, tenantId, true);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.updateContact error', error);
@@ -197,7 +193,7 @@ export class ContactService {
    */
   public async deleteContact(tenantId: string, contactId: string): Promise<Result<void>> {
     try {
-      await firebaseService.deleteDoc('tenants/{tenantId}/contacts' as any, contactId, tenantId);
+      await firebaseService.deleteDoc<'tenants/{tenantId}/contacts'>('contacts', contactId, tenantId);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       logger.error('ContactService.deleteContact error', error);
@@ -210,7 +206,7 @@ export class ContactService {
    */
   public async getAudience(tenantId: string): Promise<Result<any[]>> {
     try {
-      const audiences = await firebaseService.getCollection('tenants/{tenantId}/audiences' as any, tenantId);
+      const audiences = await firebaseService.getCollection<'tenants/{tenantId}/audiences'>('audiences', tenantId);
       return { success: true, data: audiences };
     } catch (error: unknown) {
       logger.error('Error fetching audience', error);

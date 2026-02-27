@@ -99,7 +99,7 @@ export class GeminiAI extends EventEmitter {
       await this.learnFromInteraction(bot, userId, message, intelligence, ctx);
 
       // Store new interaction in Vector Memory
-      await memoryService.storeConversation(userId, message, {
+      await memoryService.storeConversation(tenantId, userId, message, {
         botId: bot.botId,
         response: finalResponse,
         interactionType: 'human-ai'
@@ -373,7 +373,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: any): Promise<string> {
     // 1. Retrieve Historical Context (RAG)
     const jid = ctx.sender.jid;
-    const historyResult = await memoryService.retrieveRelevantContext(jid, context.message.text);
+    const historyResult = await memoryService.retrieveRelevantContext(bot.tenantId, jid, context.message.text);
     let historicalContext = '';
 
     if (historyResult.success && historyResult.data?.length > 0) {

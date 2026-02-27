@@ -1,8 +1,9 @@
-import { db } from '../lib/firebase.js';
+import { firebaseService } from './FirebaseService.js';
 import { embeddingService } from './embeddingService.js';
-import { Timestamp } from 'firebase-admin/firestore';
+import { admin } from '../lib/firebase.js';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
+import { Timestamp } from 'firebase-admin/firestore';
 
 interface ConversationEmbedding {
   userId: string;
@@ -39,22 +40,24 @@ export class MemoryService {
   /**
    * Store a conversation snippet with its vector embedding
    */
-  async storeConversation(userId: string, conversationText: string, metadata: Record<string, any> = {}): Promise<Result<void>> {
+  async storeConversation(tenantId: string, userId: string, conversationText: string, metadata: Record<string, any> = {}): Promise<Result<void>> {
     try {
       const embeddingResult = await embeddingService.generateEmbedding(conversationText);
       if (!embeddingResult.success || !embeddingResult.data) {
         throw new Error('Failed to generate embedding');
       }
 
-      await db.collection('conversation_embeddings').add({
+      const id = admin.firestore().collection('tenants').doc(tenantId).collection('embeddings').doc().id;
+
+      await firebaseService.setDoc<'tenants/{tenantId}/embeddings'>('embeddings', id, {
         userId,
         content: conversationText,
         embedding: embeddingResult.data,
         metadata,
         timestamp: Timestamp.now()
-      });
+      } as any, tenantId, false);
 
-      logger.info(`Stored conversation embedding for user ${userId}`);
+      logger.info(`Stored conversation embedding for user ${userId} in tenant ${tenantId}`);
       return { success: true, data: undefined };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -66,7 +69,7 @@ export class MemoryService {
   /**
    * Retrieve relevant historical contexts
    */
-  async retrieveRelevantContext(userId: string, newText: string): Promise<Result<ConversationContext[]>> {
+  async retrieveRelevantContext(tenantId: string, userId: string, newText: string): Promise<Result<ConversationContext[]>> {
     try {
       const queryEmbeddingResult = await embeddingService.generateEmbedding(newText);
       if (!queryEmbeddingResult.success || !queryEmbeddingResult.data) {
@@ -74,7 +77,12 @@ export class MemoryService {
       }
       const queryEmbedding = queryEmbeddingResult.data;
 
-      const snapshot = await db.collection('conversation_embeddings')
+      // In 2026, we use direct Firestore query with filters to prevent OOM
+      // Note: We use logical collection name 'embeddings' for firebaseService if we were to use getCollection,
+      // but since we need where clauses and ordering, we use direct db access but ensure tenantId isolation.
+      const snapshot = await admin.firestore().collection('tenants')
+        .doc(tenantId)
+        .collection('embeddings')
         .where('userId', '==', userId)
         .orderBy('timestamp', 'desc')
         .limit(100)
@@ -120,9 +128,9 @@ export class MemoryService {
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
-  async getConversationStats(userId: string): Promise<Result<{ total: number; first: Date | null; last: Date | null }>> {
+  async getConversationStats(userId: string, tenantId: string): Promise<Result<{ total: number; first: Date | null; last: Date | null }>> {
     try {
-      const coll = db.collection('conversation_embeddings').where('userId', '==', userId);
+      const coll = admin.firestore().collection('tenants').doc(tenantId).collection('embeddings').where('userId', '==', userId);
       const snapshot = await coll.count().get();
       const count = snapshot.data().count;
 
@@ -144,41 +152,25 @@ export class MemoryService {
     }
   }
 
-  async cleanupOldConversations(daysToKeep = 30): Promise<Result<number>> {
+  async cleanupOldConversations(tenantId: string, daysToKeep = 30): Promise<Result<number>> {
     try {
       const cutoffDate = Timestamp.fromMillis(Date.now() - daysToKeep * 24 * 60 * 60 * 1000);
-      const snapshot = await db.collection('conversation_embeddings')
+      const snapshot = await admin.firestore().collection('tenants')
+        .doc(tenantId)
+        .collection('embeddings')
         .where('timestamp', '<', cutoffDate)
         .get();
 
-      const batch = db.batch();
+      const batch = admin.firestore().batch();
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
 
-      logger.info(`Cleaned up old conversations, deleted ${snapshot.size} records`);
+      logger.info(`Cleaned up old conversations for tenant ${tenantId}, deleted ${snapshot.size} records`);
       return { success: true, data: snapshot.size };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Error cleaning up conversations:', err);
       return { success: false, error: err };
-    }
-  }
-
-  setSimilarityThreshold(threshold: number): void {
-    if (threshold >= 0 && threshold <= 1) {
-      this.similarityThreshold = threshold;
-      logger.info(`Updated similarity threshold to ${threshold}`);
-    } else {
-      throw new Error('Similarity threshold must be between 0 and 1');
-    }
-  }
-
-  setMaxContexts(maxContexts: number): void {
-    if (maxContexts > 0) {
-      this.maxContexts = maxContexts;
-      logger.info(`Updated max contexts to ${maxContexts}`);
-    } else {
-      throw new Error('Max contexts must be greater than 0');
     }
   }
 }
