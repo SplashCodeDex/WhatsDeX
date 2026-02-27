@@ -22,8 +22,3 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ## [x] Track: Auth Flow Robustness & State Preservation
 *Link: [./conductor/tracks/auth_robustness_20260219/](./conductor/tracks/auth_robustness_20260219/)*    
-
----
-
-- [x] **Track: Refactor to Hierarchical Agent-Controller Model (Path-Aware)**
-*Link: [./tracks/hierarchical_model_20260227/](./tracks/hierarchical_model_20260227/)*
