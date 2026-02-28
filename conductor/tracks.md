@@ -6,12 +6,14 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [x] **Track: Phase 2: Visual Skill Orchestration**
-*Link: [./tracks/skill_orchestration_20260228/](./tracks/skill_orchestration_20260228/)*
+- [ ] *No active tracks currently.*
 
 ---
 
 ## Archived Tracks
+
+### [x] Track: Phase 2: Visual Skill Orchestration
+*Link: [./conductor/archive/skill_orchestration_20260228/](./skill_orchestration_20260228/)*
 
 ### [x] Track: System Stabilization & Core Wiring (Auth -> Dashboard)
 *Link: [./conductor/archive/stabilization_20260115/](./conductor/archive/stabilization_20260115/)*
