@@ -11,7 +11,7 @@
     - [x] Ensure the `QueryClient` singleton is stable across the SSR/Hydration boundary.
 - [x] **Task: Conductor - User Manual Verification 'Phase 1: Context & Hook Normalization' (Protocol in workflow.md)** cee0c08
 
-## Phase 2: Performance Recovery
+## Phase 2: Performance Recovery [checkpoint: 6681901]
 - [x] **Task: Re-enable Next.js 16 Caching** c3f961b
     - [x] Update `next.config.ts` to set `cacheComponents: true`.
 - [x] **Task: Cleanup Static Isolation** 5777700
