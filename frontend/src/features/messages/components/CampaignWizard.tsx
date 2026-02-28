@@ -65,7 +65,7 @@ export function CampaignWizard() {
     const [step, setStep] = useState<Step>('audience');
     const { data: audiences } = useAudiences();
     const { data: templates } = useTemplates();
-    const { data: bots } = useBots();
+    const { data: bots } = useBots('system_default');
 
     const [state, dispatch, isPending] = useActionState(createCampaign, null);
 

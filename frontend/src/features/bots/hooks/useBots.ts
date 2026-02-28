@@ -23,22 +23,22 @@ import { useAuth } from '@/features/auth';
  */
 export const botKeys = {
     all: ['bots'] as const,
-    lists: () => [...botKeys.all, 'list'] as const,
-    list: (filters: Record<string, unknown>) => [...botKeys.lists(), filters] as const,
-    details: () => [...botKeys.all, 'detail'] as const,
-    detail: (id: string) => [...botKeys.details(), id] as const,
-    qr: (id: string) => [...botKeys.all, 'qr', id] as const,
-    status: (id: string) => ['bot-status', id] as const,
+    lists: (agentId: string = 'system_default') => [...botKeys.all, 'list', agentId] as const,
+    list: (agentId: string, filters: Record<string, unknown>) => [...botKeys.lists(agentId), filters] as const,
+    details: (agentId: string) => [...botKeys.all, 'detail', agentId] as const,
+    detail: (agentId: string, id: string) => [...botKeys.details(agentId), id] as const,
+    qr: (agentId: string, id: string) => [...botKeys.all, 'qr', agentId, id] as const,
+    status: (agentId: string, id: string) => ['bot-status', agentId, id] as const,
 };
 
 /**
- * Fetch all bots
+ * Fetch all bots for an agent
  */
-export function useBots(): ReturnType<typeof useQuery<BotListItem[]>> {
+export function useBots(agentId: string = 'system_default'): ReturnType<typeof useQuery<BotListItem[]>> {
     return useQuery({
-        queryKey: botKeys.lists(),
+        queryKey: botKeys.lists(agentId),
         queryFn: async () => {
-            const response = await api.get<BotListItem[]>(API_ENDPOINTS.BOTS.LIST);
+            const response = await api.get<BotListItem[]>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.LIST(agentId));
             if (isApiSuccess(response)) {
                 return response.data;
             }
@@ -50,11 +50,11 @@ export function useBots(): ReturnType<typeof useQuery<BotListItem[]>> {
 /**
  * Fetch single bot by ID
  */
-export function useBot(botId: string): ReturnType<typeof useQuery<Bot>> {
+export function useBot(botId: string, agentId: string = 'system_default'): ReturnType<typeof useQuery<Bot>> {
     return useQuery({
-        queryKey: botKeys.detail(botId),
+        queryKey: botKeys.detail(agentId, botId),
         queryFn: async () => {
-            const response = await api.get<Bot>(API_ENDPOINTS.BOTS.GET(botId));
+            const response = await api.get<Bot>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.GET(agentId, botId));
             if (isApiSuccess(response)) {
                 return response.data;
             }
@@ -67,11 +67,11 @@ export function useBot(botId: string): ReturnType<typeof useQuery<Bot>> {
 /**
  * Fetch QR code for bot connection
  */
-export function useBotQR(botId: string, enabled: boolean = true): ReturnType<typeof useQuery<QRCodeResponse>> {
+export function useBotQR(botId: string, enabled: boolean = true, agentId: string = 'system_default'): ReturnType<typeof useQuery<QRCodeResponse>> {
     return useQuery({
-        queryKey: botKeys.qr(botId),
+        queryKey: botKeys.qr(agentId, botId),
         queryFn: async () => {
-            const response = await api.get<QRCodeResponse>(API_ENDPOINTS.BOTS.QR_CODE(botId));
+            const response = await api.get<QRCodeResponse>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.QR_CODE(agentId, botId));
             if (isApiSuccess(response)) {
                 return response.data;
             }
@@ -87,12 +87,12 @@ export function useBotQR(botId: string, enabled: boolean = true): ReturnType<typ
 /**
  * Create bot mutation
  */
-export function useCreateBot(): ReturnType<typeof useMutation<Bot, Error, CreateBotInput>> {
+export function useCreateBot(agentId: string = 'system_default'): ReturnType<typeof useMutation<Bot, Error, CreateBotInput>> {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (input: CreateBotInput) => {
-            const response = await api.post<Bot>(API_ENDPOINTS.BOTS.CREATE, input);
+            const response = await api.post<Bot>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.CREATE(agentId), input);
             if (isApiSuccess(response)) {
                 return response.data;
             }
@@ -100,7 +100,7 @@ export function useCreateBot(): ReturnType<typeof useMutation<Bot, Error, Create
         },
         onSuccess: () => {
             // Invalidate bot list to refetch
-            queryClient.invalidateQueries({ queryKey: botKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: botKeys.lists(agentId) });
         },
     });
 }
@@ -108,12 +108,12 @@ export function useCreateBot(): ReturnType<typeof useMutation<Bot, Error, Create
 /**
  * Update bot mutation
  */
-export function useUpdateBot(): ReturnType<typeof useMutation<Bot, Error, { id: string; data: UpdateBotInput }>> {
+export function useUpdateBot(agentId: string = 'system_default'): ReturnType<typeof useMutation<Bot, Error, { id: string; data: UpdateBotInput }>> {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async ({ id, data }: { id: string; data: UpdateBotInput }) => {
-            const response = await api.patch<Bot>(API_ENDPOINTS.BOTS.UPDATE(id), data);
+            const response = await api.patch<Bot>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.UPDATE(agentId, id), data);
             if (isApiSuccess(response)) {
                 return response.data;
             }
@@ -121,8 +121,8 @@ export function useUpdateBot(): ReturnType<typeof useMutation<Bot, Error, { id: 
         },
         onSuccess: (data, { id }) => {
             // Update cache with new data
-            queryClient.setQueryData(botKeys.detail(id), data);
-            queryClient.invalidateQueries({ queryKey: botKeys.lists() });
+            queryClient.setQueryData(botKeys.detail(agentId, id), data);
+            queryClient.invalidateQueries({ queryKey: botKeys.lists(agentId) });
         },
     });
 }
@@ -130,20 +130,20 @@ export function useUpdateBot(): ReturnType<typeof useMutation<Bot, Error, { id: 
 /**
  * Delete bot mutation
  */
-export function useDeleteBot(): ReturnType<typeof useMutation<void, Error, string>> {
+export function useDeleteBot(agentId: string = 'system_default'): ReturnType<typeof useMutation<void, Error, string>> {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (botId: string) => {
-            const response = await api.delete(API_ENDPOINTS.BOTS.DELETE(botId));
+            const response = await api.delete(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DELETE(agentId, botId));
             if (!isApiSuccess(response)) {
                 throw new Error(response.error.message);
             }
         },
         onSuccess: (_, botId) => {
             // Remove from cache
-            queryClient.removeQueries({ queryKey: botKeys.detail(botId) });
-            queryClient.invalidateQueries({ queryKey: botKeys.lists() });
+            queryClient.removeQueries({ queryKey: botKeys.detail(agentId, botId) });
+            queryClient.invalidateQueries({ queryKey: botKeys.lists(agentId) });
         },
     });
 }
@@ -151,19 +151,19 @@ export function useDeleteBot(): ReturnType<typeof useMutation<void, Error, strin
 /**
  * Connect bot mutation
  */
-export function useConnectBot(): ReturnType<typeof useMutation<void, Error, string>> {
+export function useConnectBot(agentId: string = 'system_default'): ReturnType<typeof useMutation<void, Error, string>> {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (botId: string) => {
-            const response = await api.post(API_ENDPOINTS.BOTS.CONNECT(botId));
+            const response = await api.post(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.CONNECT(agentId, botId));
             if (!isApiSuccess(response)) {
                 throw new Error(response.error.message);
             }
         },
         onSuccess: (_, botId) => {
-            queryClient.invalidateQueries({ queryKey: botKeys.detail(botId) });
-            queryClient.invalidateQueries({ queryKey: botKeys.qr(botId) });
+            queryClient.invalidateQueries({ queryKey: botKeys.detail(agentId, botId) });
+            queryClient.invalidateQueries({ queryKey: botKeys.qr(agentId, botId) });
         },
     });
 }
@@ -171,18 +171,18 @@ export function useConnectBot(): ReturnType<typeof useMutation<void, Error, stri
 /**
  * Disconnect bot mutation
  */
-export function useDisconnectBot(): ReturnType<typeof useMutation<void, Error, string>> {
+export function useDisconnectBot(agentId: string = 'system_default'): ReturnType<typeof useMutation<void, Error, string>> {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (botId: string) => {
-            const response = await api.post(API_ENDPOINTS.BOTS.DISCONNECT(botId));
+            const response = await api.post(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DISCONNECT(agentId, botId));
             if (!isApiSuccess(response)) {
                 throw new Error(response.error.message);
             }
         },
         onSuccess: (_, botId) => {
-            queryClient.invalidateQueries({ queryKey: botKeys.detail(botId) });
+            queryClient.invalidateQueries({ queryKey: botKeys.detail(agentId, botId) });
         },
     });
 }
@@ -205,23 +205,23 @@ export function usePairingCode(botId: string) {
 /**
  * Poll for bot status (Now using Firestore Snapshots)
  */
-export function useBotStatus(botId: string, enabled: boolean) {
+export function useBotStatus(botId: string, enabled: boolean, agentId: string = 'system_default') {
     const { user } = useAuth();
     const db = getClientFirestore();
     const tenantId = user?.tenantId;
 
-    // Build the Firestore reference for the bot
+    // Build the hierarchical Firestore reference for the channel
     const botDocRef = tenantId && botId
-        ? doc(db, 'tenants', tenantId, 'bots', botId)
+        ? doc(db, 'tenants', tenantId, 'agents', agentId, 'channels', botId)
         : null;
 
     // Use our live hook to keep the query key in sync
-    useFirestoreLive(botKeys.status(botId), botDocRef, enabled && !!tenantId);
+    useFirestoreLive(botKeys.status(agentId, botId), botDocRef, enabled && !!tenantId);
 
     return useQuery({
-        queryKey: botKeys.status(botId),
+        queryKey: botKeys.status(agentId, botId),
         queryFn: async () => {
-            const response = await api.get<{ status: string, isActive: boolean, hasQR: boolean }>(API_ENDPOINTS.BOTS.STATUS(botId));
+            const response = await api.get<{ status: string, isActive: boolean, hasQR: boolean }>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.STATUS(agentId, botId));
             if (isApiSuccess(response)) {
                 return response.data;
             }

@@ -28,16 +28,18 @@ class AuthSystem extends EventEmitter {
   private readonly config: AuthConfig;
   private readonly tenantId: string;
   private readonly channelId: string;
+  private readonly collectionOrPath: string;
   private authState: 'connected' | 'disconnected' | 'connecting';
   private client: WASocket | null;
   private currentQrCode: string | null;
   private stats: AuthStats;
 
-  constructor(config: AuthConfig, tenantId: string, channelId: string) {
+  constructor(config: AuthConfig, tenantId: string, channelId: string, collectionOrPath: string = 'channels') {
     super();
     this.config = config;
     this.tenantId = tenantId;
     this.channelId = channelId;
+    this.collectionOrPath = collectionOrPath;
     this.authState = 'disconnected';
     this.client = null;
     this.currentQrCode = null;
@@ -52,7 +54,7 @@ class AuthSystem extends EventEmitter {
       activeSessions: 0,
     };
 
-    logger.info(`AuthSystem initialized for Channel: ${channelId} (Tenant: ${tenantId})`);
+    logger.info(`AuthSystem initialized for Channel: ${channelId} (Tenant: ${tenantId}, Path: ${collectionOrPath})`);
   }
 
   async connect(): Promise<Result<WASocket>> {
@@ -61,8 +63,8 @@ class AuthSystem extends EventEmitter {
     this._recordAttempt(method);
 
     try {
-      // Fix: Correctly pass tenantId and channelId to the auth adapter
-      const { state, saveCreds } = await useFirestoreAuthState(this.tenantId, this.channelId, 'channels');
+      // Fix: Correctly pass tenantId, channelId and collectionOrPath to the auth adapter
+      const { state, saveCreds } = await useFirestoreAuthState(this.tenantId, this.channelId, this.collectionOrPath);
 
       const pinoLogger = pino({ level: 'silent' });
 
@@ -161,7 +163,7 @@ class AuthSystem extends EventEmitter {
 
   async detectExistingSession(): Promise<{ hasSession: boolean; isValid: boolean }> {
     try {
-      const { state } = await useFirestoreAuthState(this.tenantId, this.channelId, 'channels');
+      const { state } = await useFirestoreAuthState(this.tenantId, this.channelId, this.collectionOrPath);
       // Check if we have a registration ID and 'me' object which indicates a successful login
       const hasSession = !!(state.creds && state.creds.registrationId);
       const isValid = !!(state.creds && state.creds.me);

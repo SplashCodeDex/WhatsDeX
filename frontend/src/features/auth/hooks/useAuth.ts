@@ -56,14 +56,14 @@ export function useAuth(): UseAuthReturn {
                 setUser(userData);
             } else {
                 setUser(null);
-                const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.SIGNUP;
+                const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.REGISTER;
                 if (!isAuthPage) {
                     window.location.href = ROUTES.LOGIN;
                 }
             }
         } catch (err) {
             setUser(null);
-            const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.SIGNUP;
+            const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.REGISTER;
             if (!isAuthPage) {
                 window.location.href = ROUTES.LOGIN;
             }
@@ -105,6 +105,7 @@ export function useAuth(): UseAuthReturn {
 
             return () => clearInterval(timer);
         }
+        return undefined;
     }, [isAuthenticated, user, refreshSession]);
 
     const signOut = useCallback(async (): Promise<void> => {

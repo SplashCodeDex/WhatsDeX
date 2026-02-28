@@ -47,6 +47,18 @@ export class ChannelManager {
     }
 
     /**
+     * Shut down and unregister an adapter
+     */
+    public async shutdownAdapter(key: string): Promise<void> {
+        const adapter = this.adapters.get(key);
+        if (adapter) {
+            console.log(`[ChannelManager] Shutting down adapter: ${key}`);
+            await adapter.shutdown();
+            this.adapters.delete(key);
+        }
+    }
+
+    /**
      * Get all registered keys
      */
     public getRegisteredChannelKeys(): string[] {

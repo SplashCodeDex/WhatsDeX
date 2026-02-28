@@ -26,10 +26,14 @@ import {
 import { createBot, useBots } from '@/features/bots';
 import { useSubscription } from '@/features/billing';
 
-export function CreateBotDialog() {
+interface CreateBotDialogProps {
+    agentId?: string;
+}
+
+export function CreateBotDialog({ agentId = 'system_default' }: CreateBotDialogProps) {
     const [open, setOpen] = useState(false);
     const [botType, setBotType] = useState('whatsapp');
-    const { data: bots } = useBots();
+    const { data: bots } = useBots(agentId);
     const { limits, isAtLimit, isLoading: isLoadingPlan } = useSubscription();
 
     const [state, formAction, isPending] = useActionState(createBot, null);
@@ -55,6 +59,7 @@ export function CreateBotDialog() {
             <DialogContent className="sm:max-w-[425px]">
                 <form action={formAction}>
                     <input type="hidden" name="type" value={botType} />
+                    <input type="hidden" name="agentId" value={agentId} />
                     <DialogHeader>
                         <DialogTitle>Create New Bot</DialogTitle>
                         <DialogDescription>

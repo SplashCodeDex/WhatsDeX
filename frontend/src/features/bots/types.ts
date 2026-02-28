@@ -22,6 +22,7 @@ export interface Bot {
     lastSeenAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
+    assignedAgentId?: string | null;
     config: BotConfig;
     stats: BotStats;
 }

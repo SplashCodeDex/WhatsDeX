@@ -92,10 +92,10 @@ describe('TemplateManagement', () => {
         const spinButton = screen.getAllByLabelText('AI Spin')[0];
 
         await act(async () => {
-            fireEvent.click(spinButton);
+            fireEvent.click(spinButton!);
         });
 
-        expect(mockSpinMessage).toHaveBeenCalledWith(mockTemplates[0].content);
+        expect(mockSpinMessage).toHaveBeenCalledWith(mockTemplates[0]!.content);
         expect(toast.success).toHaveBeenCalledWith(
             expect.stringContaining('AI variation generated'),
             expect.any(Object)
@@ -112,7 +112,7 @@ describe('TemplateManagement', () => {
         const spinButton = screen.getAllByLabelText('AI Spin')[0];
 
         await act(async () => {
-            fireEvent.click(spinButton);
+            fireEvent.click(spinButton!);
         });
 
         expect(mockSpinMessage).not.toHaveBeenCalled();

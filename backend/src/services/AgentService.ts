@@ -72,6 +72,18 @@ export class AgentService {
   }
 
   /**
+   * List all agents for a tenant
+   */
+  async getAllAgents(tenantId: string): Promise<Result<Agent[]>> {
+    try {
+      const docs = await firebaseService.getCollection<'tenants/{tenantId}/agents'>('agents', tenantId);
+      return { success: true, data: docs as Agent[] };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  }
+
+  /**
    * Create a custom AI Agent
    */
   async createAgent(tenantId: string, agentData: Partial<Agent>): Promise<Result<Agent>> {

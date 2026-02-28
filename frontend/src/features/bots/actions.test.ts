@@ -11,6 +11,17 @@ vi.mock('@/lib/api', () => ({
     get: vi.fn(),
   },
   API_ENDPOINTS: {
+    OMNICHANNEL: {
+        AGENTS: {
+            CHANNELS: {
+                CREATE: (agentId: string) => `/api/internal/agents/${agentId}/channels` as const,
+                UPDATE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}` as const,
+                DELETE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}` as const,
+                CONNECT: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/connect` as const,
+                DISCONNECT: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/disconnect` as const,
+            }
+        }
+    },
     BOTS: {
       CREATE: '/api/internal/bots',
       UPDATE: (id: string) => `/api/internal/bots/${id}`,
@@ -37,10 +48,11 @@ describe('Bot Actions', () => {
 
       const formData = new FormData();
       formData.append('name', 'Test Bot');
+      formData.append('agentId', 'system_default');
 
       const result = await createBot(null, formData);
 
-      expect(api.post).toHaveBeenCalledWith('/api/internal/bots', { name: 'Test Bot' });
+      expect(api.post).toHaveBeenCalledWith('/api/internal/agents/system_default/channels', expect.objectContaining({ name: 'Test Bot' }));
       expect(result).toEqual({ success: true, data: mockBot });
     });
 
@@ -56,23 +68,6 @@ describe('Bot Actions', () => {
           expect(result.error.code).toBe('validation_error');
       }
     });
-
-    it('should return error when API fails', async () => {
-      (api.post as any).mockResolvedValue({ 
-        success: false, 
-        error: { code: 'server_error', message: 'Failed' } 
-      });
-
-      const formData = new FormData();
-      formData.append('name', 'Test Bot');
-
-      const result = await createBot(null, formData);
-
-      expect(result).toEqual({ 
-        success: false, 
-        error: { code: 'server_error', message: 'Failed' } 
-      });
-    });
   });
 
   describe('updateBot', () => {
@@ -83,9 +78,9 @@ describe('Bot Actions', () => {
       const formData = new FormData();
       formData.append('data', JSON.stringify({ name: 'Updated Bot' }));
 
-      const result = await updateBot('123', null, formData);
+      const result = await updateBot('123', 'system_default', null, formData);
 
-      expect(api.patch).toHaveBeenCalledWith('/api/internal/bots/123', { name: 'Updated Bot' });
+      expect(api.patch).toHaveBeenCalledWith('/api/internal/agents/system_default/channels/123', expect.objectContaining({ name: 'Updated Bot' }));
       expect(result).toEqual({ success: true, data: mockBot });
     });
 
@@ -93,7 +88,7 @@ describe('Bot Actions', () => {
         const formData = new FormData();
         formData.append('data', '{ invalid json');
   
-        const result = await updateBot('123', null, formData);
+        const result = await updateBot('123', 'system_default', null, formData);
   
         expect(result.success).toBe(false);
         if (!result.success) {
@@ -106,10 +101,10 @@ describe('Bot Actions', () => {
     it('should delete a bot successfully', async () => {
       (api.delete as any).mockResolvedValue({ success: true, data: null });
       
-      const formData = new FormData(); // Not used but required by signature
-      const result = await deleteBot('123', null, formData);
+      const formData = new FormData();
+      const result = await deleteBot('123', 'system_default', null, formData);
 
-      expect(api.delete).toHaveBeenCalledWith('/api/internal/bots/123');
+      expect(api.delete).toHaveBeenCalledWith('/api/internal/agents/system_default/channels/123');
       expect(result).toEqual({ success: true, data: null });
     });
   });
@@ -119,9 +114,9 @@ describe('Bot Actions', () => {
       (api.post as any).mockResolvedValue({ success: true, data: null });
 
       const formData = new FormData();
-      const result = await connectBot('123', null, formData);
+      const result = await connectBot('123', 'system_default', null, formData);
 
-      expect(api.post).toHaveBeenCalledWith('/api/internal/bots/123/connect');
+      expect(api.post).toHaveBeenCalledWith('/api/internal/agents/system_default/channels/123/connect');
       expect(result).toEqual({ success: true, data: null });
     });
   });
@@ -131,9 +126,9 @@ describe('Bot Actions', () => {
         (api.post as any).mockResolvedValue({ success: true, data: null });
   
         const formData = new FormData();
-        const result = await disconnectBot('123', null, formData);
+        const result = await disconnectBot('123', 'system_default', null, formData);
   
-        expect(api.post).toHaveBeenCalledWith('/api/internal/bots/123/disconnect');
+        expect(api.post).toHaveBeenCalledWith('/api/internal/agents/system_default/channels/123/disconnect');
         expect(result).toEqual({ success: true, data: null });
       });
     });

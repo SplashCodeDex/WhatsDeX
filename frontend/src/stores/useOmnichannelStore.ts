@@ -49,7 +49,8 @@ interface OmnichannelState {
     error: string | null;
 
     // Actions
-    fetchChannels: () => Promise<void>;
+    fetchChannels: (agentId?: string) => Promise<void>;
+    fetchAllChannels: () => Promise<void>;
     updateChannelStatus: (botId: string, status: Channel['status']) => void;
     addActivityEvent: (event: Omit<ActivityEvent, 'id'>) => void;
     handleProgressUpdate: (update: BotProgressUpdate) => void;
@@ -118,10 +119,10 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     isLoading: false,
     error: null,
 
-    fetchChannels: async () => {
+    fetchChannels: async (agentId: string = 'system_default') => {
         set({ isLoading: true, error: null });
         try {
-            const response = await api.get<any[]>(API_ENDPOINTS.BOTS.LIST);
+            const response = await api.get<any[]>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.LIST(agentId));
 
             if (response.success) {
                 // Map the backend BotListItem shape to the frontend Channel shape
@@ -129,14 +130,43 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
                 const mappedChannels: Channel[] = data.map(bot => ({
                     id: bot.id,
                     name: bot.name,
-                    type: 'whatsapp', // Default to whatsapp as it's the primary channel type for now
+                    type: bot.type || 'whatsapp',
                     status: bot.status as any,
-                    account: bot.phoneNumber || null,
-                    lastActiveAt: bot.lastActiveAt
+                    account: bot.phoneNumber || bot.account || null,
+                    lastActiveAt: bot.lastActiveAt,
+                    assignedAgentId: bot.assignedAgentId
                 }));
                 set({ channels: mappedChannels, isLoading: false });
             } else {
                 set({ error: response.error.message || 'Failed to fetch channels', isLoading: false });
+            }
+        } catch (err) {
+            set({
+                error: 'Failed to connect to the server',
+                isLoading: false
+            });
+        }
+    },
+
+    fetchAllChannels: async () => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await api.get<any[]>(API_ENDPOINTS.OMNICHANNEL.CHANNELS.ALL);
+
+            if (response.success) {
+                const data = response.data || [];
+                const mappedChannels: Channel[] = data.map(bot => ({
+                    id: bot.id,
+                    name: bot.name,
+                    type: bot.type || 'whatsapp',
+                    status: bot.status as any,
+                    account: bot.account || bot.phoneNumber || null,
+                    lastActiveAt: bot.lastActiveAt,
+                    assignedAgentId: bot.assignedAgentId
+                }));
+                set({ channels: mappedChannels, isLoading: false });
+            } else {
+                set({ error: response.error.message || 'Failed to fetch all channels', isLoading: false });
             }
         } catch (err) {
             set({

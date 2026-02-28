@@ -20,20 +20,20 @@ describe('autoMapHeaders', () => {
         const mappings = autoMapHeaders(headers, ['John', '+123456789', 'j@x.com', 'vip']);
 
         expect(mappings).toHaveLength(4);
-        expect(mappings[0].targetField).toBe('name');
-        expect(mappings[1].targetField).toBe('phone');
-        expect(mappings[2].targetField).toBe('email');
-        expect(mappings[3].targetField).toBe('tags');
+        expect(mappings[0]!.targetField).toBe('name');
+        expect(mappings[1]!.targetField).toBe('phone');
+        expect(mappings[2]!.targetField).toBe('email');
+        expect(mappings[3]!.targetField).toBe('tags');
     });
 
     it('maps Google Contacts headers (case-insensitive)', () => {
         const headers = ['Given Name', 'Phone 1 - Value', 'E-mail 1 - Value', 'Group Membership'];
         const mappings = autoMapHeaders(headers);
 
-        expect(mappings[0].targetField).toBe('name');
-        expect(mappings[1].targetField).toBe('phone');
-        expect(mappings[2].targetField).toBe('email');
-        expect(mappings[3].targetField).toBe('tags');
+        expect(mappings[0]!.targetField).toBe('name');
+        expect(mappings[1]!.targetField).toBe('phone');
+        expect(mappings[2]!.targetField).toBe('email');
+        expect(mappings[3]!.targetField).toBe('tags');
     });
 
     it('falls back to value-pattern detection for unknown headers', () => {
@@ -41,9 +41,9 @@ describe('autoMapHeaders', () => {
         const firstRow = ['John Doe', '+1234567890', 'john@test.com'];
         const mappings = autoMapHeaders(headers, firstRow);
 
-        expect(mappings[0].targetField).toBe('skip'); // Cannot detect 'name' by value pattern
-        expect(mappings[1].targetField).toBe('phone');
-        expect(mappings[2].targetField).toBe('email');
+        expect(mappings[0]!.targetField).toBe('skip'); // Cannot detect 'name' by value pattern
+        expect(mappings[1]!.targetField).toBe('phone');
+        expect(mappings[2]!.targetField).toBe('email');
     });
 
     it('handles empty headers array', () => {
@@ -55,15 +55,15 @@ describe('autoMapHeaders', () => {
         const headers = ['Phone', 'Mobile'];
         const mappings = autoMapHeaders(headers, ['+123', '+456']);
 
-        expect(mappings[0].targetField).toBe('phone');
-        expect(mappings[1].targetField).toBe('skip');
+        expect(mappings[0]!.targetField).toBe('phone');
+        expect(mappings[1]!.targetField).toBe('skip');
     });
 
     it('generates fallback column names for empty headers', () => {
         const headers = ['Name', ''];
         const mappings = autoMapHeaders(headers);
 
-        expect(mappings[1].csvHeader).toBe('Column 2');
+        expect(mappings[1]!.csvHeader).toBe('Column 2');
     });
 
     it('preserves sampleValue from firstRow', () => {
@@ -71,7 +71,7 @@ describe('autoMapHeaders', () => {
         const firstRow = ['Alice'];
         const mappings = autoMapHeaders(headers, firstRow);
 
-        expect(mappings[0].sampleValue).toBe('Alice');
+        expect(mappings[0]!.sampleValue).toBe('Alice');
     });
 });
 
@@ -159,7 +159,7 @@ describe('validateAllRows', () => {
         ];
         const results = validateAllRows(data, mappings);
         expect(results).toHaveLength(1);
-        expect(results[0].row.name).toBe('John');
+        expect(results[0]!.row.name).toBe('John');
     });
 
     it('filters out empty rows', () => {
@@ -247,7 +247,7 @@ TEL:+9876543210
 END:VCARD`;
 
         const result = parseVCard(vcf);
-        expect(result[1][0]).toBe('Jane Doe');
+        expect(result[1]![0]).toBe('Jane Doe');
     });
 
     it('handles multiple vCards in one file', () => {
@@ -272,7 +272,7 @@ CATEGORIES:Friends,Family
 END:VCARD`;
 
         const result = parseVCard(vcf);
-        expect(result[1][3]).toBe('Friends|Family');
+        expect(result[1]![3]).toBe('Friends|Family');
     });
 
     it('skips cards with no name and no phone', () => {
@@ -292,7 +292,7 @@ TEL;TYPE=CELL:+444
 END:VCARD`;
 
         const result = parseVCard(vcf);
-        expect(result[1][1]).toBe('+444');
+        expect(result[1]![1]).toBe('+444');
     });
 });
 

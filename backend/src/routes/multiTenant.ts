@@ -33,7 +33,7 @@ router.get('/agents', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await multiTenantService.getAgents(tenantId);
+        const result = await agentService.getAllAgents(tenantId);
         res.json(result);
     } catch (error: any) {
         res.status(500).json({ success: false, error: 'Internal server error' });
@@ -106,6 +106,36 @@ router.post('/agents/:agentId/channels', async (req: Request, res: Response) => 
         }
     } catch (error: any) {
         logger.error('Route /agents/:agentId/channels POST error', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * List ALL channels across ALL agents for the authenticated tenant
+ */
+router.get('/channels/all', async (req: Request, res: Response) => {
+    try {
+        const tenantId = req.user?.tenantId;
+        if (!tenantId) {
+            return res.status(401).json({ success: false, error: 'Authentication required' });
+        }
+
+        const result = await channelService.getAllChannelsAcrossAgents(tenantId);
+
+        if (result.success) {
+            const channels = result.data.map(chan => ({
+                id: chan.id,
+                name: chan.name,
+                type: chan.type,
+                status: chan.status,
+                assignedAgentId: chan.assignedAgentId,
+                account: chan.phoneNumber || chan.identifier || null
+            }));
+            res.json({ success: true, data: channels });
+        } else {
+            res.status(500).json({ success: false, error: result.error?.message });
+        }
+    } catch (error: any) {
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
@@ -276,7 +306,7 @@ router.post(['/agents/:agentId/channels/:id/connect', '/bots/:botId/connect'], a
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await multiTenantBotService.startBot(tenantId, id);
+        const result = await channelService.startChannel(tenantId, id, agentId);
         if (result.success) {
             res.json({ success: true, data: { message: 'Connection initiated' } });
         } else {
@@ -294,12 +324,13 @@ router.post(['/agents/:agentId/channels/:id/connect', '/bots/:botId/connect'], a
 router.post(['/agents/:agentId/channels/:id/disconnect', '/bots/:botId/disconnect'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId;
+        const agentId = req.params.agentId || 'system_default';
         const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await multiTenantBotService.stopBot(id);
+        const result = await channelService.stopChannel(id, tenantId, agentId);
         if (result.success) {
             res.json({ success: true, data: { message: 'Disconnected successfully' } });
         } else {

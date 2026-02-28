@@ -6,8 +6,12 @@ import { useBots } from '@/features/bots';
 import { CreateBotDialog } from './CreateBotDialog';
 import { BotCard } from './BotCard';
 
-export function BotList() {
-    const { data: bots, isLoading, error } = useBots();
+interface BotListProps {
+    agentId?: string;
+}
+
+export function BotList({ agentId = 'system_default' }: BotListProps) {
+    const { data: bots, isLoading, error } = useBots(agentId);
 
     if (isLoading) {
         return (
@@ -41,7 +45,7 @@ export function BotList() {
                 <p className="mb-4 mt-2 text-sm text-muted-foreground max-w-sm text-balance">
                     You haven&apos;t created any WhatsApp bots yet. Create one to start automating your messages.
                 </p>
-                <CreateBotDialog />
+                <CreateBotDialog agentId={agentId} />
             </div>
         );
     }
@@ -50,11 +54,11 @@ export function BotList() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Your Instances</h2>
-                <CreateBotDialog />
+                <CreateBotDialog agentId={agentId} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {bots.map((bot) => (
-                    <BotCard key={bot.id} bot={bot} />
+                    <BotCard key={bot.id} bot={bot} agentId={agentId} />
                 ))}
             </div>
         </div>

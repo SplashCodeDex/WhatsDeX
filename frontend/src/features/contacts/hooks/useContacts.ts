@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { Contact, ContactImportResult, Audience } from '../types';

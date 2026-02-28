@@ -14,6 +14,8 @@ export async function createBot(
     prevState: Result<Bot> | null,
     formData: FormData
 ): Promise<Result<Bot>> {
+    const agentId = (formData.get('agentId') as string) || 'system_default';
+
     // 1. Validate Input
     const rawData = {
         name: formData.get('name'),
@@ -37,7 +39,7 @@ export async function createBot(
     }
 
     // 2. Call API
-    const response = await api.post<Bot>(API_ENDPOINTS.BOTS.CREATE, parsed.data);
+    const response = await api.post<Bot>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.CREATE(agentId), parsed.data);
 
     if (!response.success) {
         return {
@@ -48,6 +50,8 @@ export async function createBot(
 
     // 3. Revalidate
     revalidatePath('/dashboard/bots');
+    revalidatePath('/dashboard/omnichannel');
+    revalidatePath('/dashboard/agents');
 
     return { success: true, data: response.data };
 }
@@ -58,6 +62,7 @@ export async function createBot(
  */
 export async function updateBot(
     botId: string,
+    agentId: string = 'system_default',
     prevState: Result<Bot> | null,
     formData: FormData
 ): Promise<Result<Bot>> {
@@ -75,8 +80,6 @@ export async function updateBot(
             };
         }
     } else {
-        // Fallback or other handling could go here.
-        // For now, we expect JSON for the complex schema.
         rawData = {};
     }
 
@@ -93,7 +96,7 @@ export async function updateBot(
         };
     }
 
-    const response = await api.patch<Bot>(API_ENDPOINTS.BOTS.UPDATE(botId), parsed.data);
+    const response = await api.patch<Bot>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.UPDATE(agentId, botId), parsed.data);
 
     if (!response.success) {
         return {
@@ -103,6 +106,8 @@ export async function updateBot(
     }
 
     revalidatePath('/dashboard/bots');
+    revalidatePath('/dashboard/omnichannel');
+    revalidatePath('/dashboard/agents');
     return { success: true, data: response.data };
 }
 
@@ -111,10 +116,11 @@ export async function updateBot(
  */
 export async function deleteBot(
     botId: string,
+    agentId: string = 'system_default',
     prevState: Result<null> | null,
     formData: FormData
 ): Promise<Result<null>> {
-    const response = await api.delete<null>(API_ENDPOINTS.BOTS.DELETE(botId));
+    const response = await api.delete<null>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DELETE(agentId, botId));
 
     if (!response.success) {
         return {
@@ -124,6 +130,8 @@ export async function deleteBot(
     }
 
     revalidatePath('/dashboard/bots');
+    revalidatePath('/dashboard/omnichannel');
+    revalidatePath('/dashboard/agents');
     return { success: true, data: null };
 }
 
@@ -132,10 +140,11 @@ export async function deleteBot(
  */
 export async function connectBot(
     botId: string,
+    agentId: string = 'system_default',
     prevState: Result<null> | null,
     formData: FormData
 ): Promise<Result<null>> {
-    const response = await api.post<null>(API_ENDPOINTS.BOTS.CONNECT(botId));
+    const response = await api.post<null>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.CONNECT(agentId, botId));
 
     if (!response.success) {
         return {
@@ -145,6 +154,8 @@ export async function connectBot(
     }
 
     revalidatePath('/dashboard/bots');
+    revalidatePath('/dashboard/omnichannel');
+    revalidatePath('/dashboard/agents');
     return { success: true, data: null };
 }
 
@@ -153,10 +164,11 @@ export async function connectBot(
  */
 export async function disconnectBot(
     botId: string,
+    agentId: string = 'system_default',
     prevState: Result<null> | null,
     formData: FormData
 ): Promise<Result<null>> {
-    const response = await api.post<null>(API_ENDPOINTS.BOTS.DISCONNECT(botId));
+    const response = await api.post<null>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DISCONNECT(agentId, botId));
 
     if (!response.success) {
         return {
@@ -166,6 +178,8 @@ export async function disconnectBot(
     }
 
     revalidatePath('/dashboard/bots');
+    revalidatePath('/dashboard/omnichannel');
+    revalidatePath('/dashboard/agents');
     return { success: true, data: null };
 }
 

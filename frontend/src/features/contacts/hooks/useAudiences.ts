@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { isApiSuccess } from '@/types';

@@ -12,7 +12,7 @@ vi.mock('../hooks/useContacts');
 const mockContacts: Contact[] = [
   {
     id: '1',
-    phoneNumber: '+1234567890',
+    phone: '+1234567890',
     name: 'John Doe',
     email: 'john@example.com',
     tags: ['customer', 'vip'],
@@ -21,7 +21,7 @@ const mockContacts: Contact[] = [
   },
   {
     id: '2',
-    phoneNumber: '+0987654321',
+    phone: '+0987654321',
     name: 'Jane Smith',
     email: 'jane@example.com',
     tags: ['lead'],
@@ -30,7 +30,7 @@ const mockContacts: Contact[] = [
   },
   {
     id: '3',
-    phoneNumber: '+1122334455',
+    phone: '+1122334455',
     name: 'Bob Johnson',
     email: 'bob@example.com',
     tags: ['customer'],
@@ -175,7 +175,7 @@ describe('ContactsTable', () => {
       btn.querySelector('.w-5.h-5')
     );
     
-    await user.click(checkboxes[1]); // Click first contact checkbox
+    await user.click(checkboxes[1]!); // Click first contact checkbox
     
     await waitFor(() => {
       expect(screen.getByText(/1 selected/i)).toBeInTheDocument();
@@ -216,7 +216,7 @@ describe('ContactsTable', () => {
     const user = userEvent.setup();
     const manyContacts = Array.from({ length: 25 }, (_, i) => ({
       id: String(i + 1),
-      phoneNumber: `+123456789${i}`,
+      phone: `+123456789${i}`,
       name: `Contact ${i + 1}`,
       email: `contact${i + 1}@example.com`,
       tags: ['customer'],

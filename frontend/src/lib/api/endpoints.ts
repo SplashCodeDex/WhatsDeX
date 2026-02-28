@@ -84,6 +84,9 @@ export const API_ENDPOINTS = {
     // Omnichannel
     OMNICHANNEL: {
         STATUS: '/api/omnichannel/status',
+        CHANNELS: {
+            ALL: '/api/internal/channels/all',
+        },
         CRON: {
             STATUS: '/api/omnichannel/cron/status',
             LIST: '/api/omnichannel/cron/jobs',
@@ -104,6 +107,17 @@ export const API_ENDPOINTS = {
             IDENTITY: (id: string) => `/api/omnichannel/agents/${id}/identity` as const,
             FILES: (id: string) => `/api/omnichannel/agents/${id}/files` as const,
             CONFIG: (id: string) => `/api/omnichannel/agents/${id}/config` as const,
+            CHANNELS: {
+                LIST: (agentId: string) => `/api/internal/agents/${agentId}/channels` as const,
+                CREATE: (agentId: string) => `/api/internal/agents/${agentId}/channels` as const,
+                GET: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}` as const,
+                UPDATE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}` as const,
+                DELETE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}` as const,
+                CONNECT: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/connect` as const,
+                DISCONNECT: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/disconnect` as const,
+                QR_CODE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/qr` as const,
+                STATUS: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/status` as const,
+            }
         },
         GATEWAY: {
             HEALTH: '/api/omnichannel/gateway/health',

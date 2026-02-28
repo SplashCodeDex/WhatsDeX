@@ -28,6 +28,7 @@ export const AgentSchema = z.object({
     systemPrompt: z.string().min(1, 'System prompt is required'),
     model: AIModelSchema,
     skills: z.array(z.string()).default([]),
+    boundChannels: z.array(z.string()).default([]),
     plan: z.preprocess((val, ctx) => {
         if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
         const input = (ctx as any).parent || {};

@@ -3,11 +3,13 @@ import { firebaseService } from '../services/FirebaseService.js';
 
 /**
  * Custom Baileys Auth State using Firestore subcollections
- * Structure: tenants/{tenantId}/channels/{channelId}/auth/{type}
+ * Supports both flat (legacy) and hierarchical paths.
+ * @param collectionOrPath Either a collection name ('channels') or a partial path ('agents/A/channels/C')
  */
-export async function useFirestoreAuthState(tenantId: string, channelId: string, collection: 'channels' | 'bots' = 'channels'): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void> }> {
+export async function useFirestoreAuthState(tenantId: string, channelId: string, collectionOrPath: string = 'channels'): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void> }> {
 
-  const path = `${collection}/${channelId}/auth`;
+  // If collectionOrPath already contains '/auth', don't append it
+  const path = collectionOrPath.endsWith('/auth') ? collectionOrPath : `${collectionOrPath}/${channelId}/auth`;
 
   const writeData = async (data: any, id: string) => {
     const serialized = JSON.parse(JSON.stringify(data, BufferJSON.replacer));

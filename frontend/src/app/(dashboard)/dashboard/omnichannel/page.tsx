@@ -107,13 +107,13 @@ function ChannelCard({ channel }: { channel: any }) {
 }
 
 export default function OmnichannelHubPage() {
-    const { channels, activity, isLoading, fetchChannels } = useOmnichannelStore();
+    const { channels, activity, isLoading, fetchAllChannels } = useOmnichannelStore();
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [selectedPlatform, setSelectedSelectedPlatform] = useState<'telegram' | 'discord' | 'slack'>('telegram');
 
     useEffect(() => {
-        fetchChannels();
-    }, [fetchChannels]);
+        fetchAllChannels();
+    }, [fetchAllChannels]);
 
     return (
         <div className="space-y-8">
@@ -127,7 +127,7 @@ export default function OmnichannelHubPage() {
                     </p>
                 </div>
                 <div className="flex space-x-2">
-                    <Button variant="outline" size="icon" onClick={() => fetchChannels()} disabled={isLoading}>
+                    <Button variant="outline" size="icon" onClick={() => fetchAllChannels()} disabled={isLoading}>
                         <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                     </Button>
 

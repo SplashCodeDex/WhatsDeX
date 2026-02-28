@@ -19,6 +19,7 @@ export interface Channel {
     status: ChannelStatus;
     account: string | null;
     lastActiveAt?: string | Date;
+    assignedAgentId?: string | null;
     lastProgress?: {
         step: string;
         status: BotProgressUpdate['status'];

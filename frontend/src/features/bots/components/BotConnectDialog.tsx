@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 
 interface BotConnectDialogProps {
     bot: { id: string; name: string };
+    agentId: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
@@ -27,10 +28,10 @@ const pairingSchema = z.object({
 
 type PairingForm = z.infer<typeof pairingSchema>;
 
-export function BotConnectDialog({ bot, open, onOpenChange }: BotConnectDialogProps) {
+export function BotConnectDialog({ bot, agentId, open, onOpenChange }: BotConnectDialogProps) {
     const [activeTab, setActiveTab] = useState<'qr' | 'code'>('qr');
     const [isGeneratingQR, setIsGeneratingQR] = useState(false);
-    const { data: statusData } = useBotStatus(bot.id, open); // Poll status while open
+    const { data: statusData } = useBotStatus(bot.id, open, agentId); // Poll status while open
     const { mutate: requestPairingCode, isPending: isRequestingCode, data: pairingCodeData, error: pairingError } = usePairingCode(bot.id);
 
     // Auto-close on connection
@@ -89,6 +90,7 @@ export function BotConnectDialog({ bot, open, onOpenChange }: BotConnectDialogPr
                             <div className="scale-90">
                                 <QRCodeDisplay
                                     botId={bot.id}
+                                    agentId={agentId}
                                     isGenerating={isGeneratingQR}
                                     onGenerate={() => setIsGeneratingQR(true)}
                                 />

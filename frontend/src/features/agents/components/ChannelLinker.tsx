@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { canAddChannelSlot, getSlotLimit } from '../utils/ChannelSlotGuard';
 import Link from 'next/link';
+import { api, API_ENDPOINTS } from '@/lib/api';
 
 interface ChannelLinkerProps {
     agentId: string;
@@ -23,15 +24,15 @@ interface ChannelLinkerProps {
  */
 export function ChannelLinker({ agentId }: ChannelLinkerProps) {
     const { user } = useAuth();
-    const { channels, fetchChannels, isLoading } = useOmnichannelStore();
+    const { channels, fetchAllChannels, isLoading } = useOmnichannelStore();
     const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
     useEffect(() => {
-        fetchChannels();
-    }, [fetchChannels]);
+        fetchAllChannels();
+    }, [fetchAllChannels]);
 
     const userTier = user?.plan || 'starter';
-    const activeLinkedChannels = channels.filter(c => (c as any).linkedAgentId).length;
+    const activeLinkedChannels = channels.filter(c => c.assignedAgentId && c.assignedAgentId !== 'system_default').length;
 
     const handleLink = async (channelId: string) => {
         // Check if user can add another active connection
@@ -40,15 +41,33 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
             return;
         }
 
-        toast.success(`Linking agent to ${channelId}...`);
-        // Logic to link agentId to channelId via backend would go here
-        await fetchChannels();
+        toast.promise(
+            // To link in hierarchy, we move the channel document
+            // We'll need a backend endpoint for "moveChannel" or just use updateChannel
+            api.patch(API_ENDPOINTS.BOTS.UPDATE(channelId), { assignedAgentId: agentId }),
+            {
+                loading: 'Linking agent to connection...',
+                success: () => {
+                    fetchAllChannels();
+                    return `Linked successfully!`;
+                },
+                error: (err) => err.message || 'Failed to link agent',
+            }
+        );
     };
 
     const handleUnlink = async (channelId: string) => {
-        toast.success(`Unlinking agent from ${channelId}...`);
-        // Logic to unlink via backend would go here
-        await fetchChannels();
+        toast.promise(
+            api.patch(API_ENDPOINTS.BOTS.UPDATE(channelId), { assignedAgentId: 'system_default' }),
+            {
+                loading: 'Unlinking agent...',
+                success: () => {
+                    fetchAllChannels();
+                    return `Unlinked successfully! (Moved to default pool)`;
+                },
+                error: (err) => err.message || 'Failed to unlink agent',
+            }
+        );
     };
 
     return (
@@ -57,10 +76,10 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                 <div className="space-y-1">
                     <h3 className="text-lg font-semibold">Channel Connectivity</h3>
                     <p className="text-xs text-muted-foreground">
-                        Linked Channels: {activeLinkedChannels} / {getSlotLimit(userTier)}
+                        Agent Specific Connections: {channels.filter(c => c.assignedAgentId === agentId).length}
                     </p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => fetchChannels()} disabled={isLoading}>
+                <Button variant="ghost" size="icon" onClick={() => fetchAllChannels()} disabled={isLoading}>
                     <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                 </Button>
             </div>
@@ -74,8 +93,11 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                     </Card>
                 ) : (
                     channels.map((channel) => {
-                        const isLinkedToThisAgent = (channel as any).linkedAgentId === agentId;
-                        const isLinkedToOther = (channel as any).linkedAgentId && !isLinkedToThisAgent;
+                        const isLinkedToThisAgent = channel.assignedAgentId === agentId;
+                        const isLinkedToOther = !!(channel.assignedAgentId && channel.assignedAgentId !== 'system_default' && !isLinkedToThisAgent);
+                        const isAvailable = !channel.assignedAgentId || channel.assignedAgentId === 'system_default';
+
+                        if (!isLinkedToThisAgent && !isAvailable) return null; // Only show relevant ones
 
                         return (
                             <Card key={channel.id} className="overflow-hidden">
@@ -86,13 +108,13 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold">{channel.id}</span>
+                                                <span className="font-semibold">{channel.name || channel.id}</span>
                                                 <Badge variant={channel.status === 'connected' ? 'default' : 'secondary'} className="text-[10px] uppercase">
                                                     {channel.status}
                                                 </Badge>
                                             </div>
                                             <div className="text-xs text-muted-foreground capitalize">
-                                                {channel.type} Channel
+                                                {channel.type} Channel • {channel.account || 'No ID'}
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
@@ -109,13 +131,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                                                     disabled={isLinkedToOther}
                                                 >
                                                     <LinkIcon className="mr-2 h-4 w-4" />
-                                                    {isLinkedToOther ? 'Linked Elsewhere' : 'Link Brain'}
-                                                </Button>
-                                            )}
-                                            {channel.status === 'qr_pending' && (
-                                                <Button variant="secondary" size="sm">
-                                                    <QrCode className="mr-2 h-4 w-4" />
-                                                    Show QR
+                                                    {isLinkedToOther ? 'Linked Elsewhere' : 'Link to Agent'}
                                                 </Button>
                                             )}
                                         </div>

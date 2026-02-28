@@ -23,7 +23,16 @@ export class WhatsappAdapter implements ChannelAdapter {
   constructor(private tenantId: string, private channelId: string, fullPath?: string) {
     this.instanceId = channelId;
     this.fullPath = fullPath;
-    this.authSystem = new AuthSystem({ bot: {} }, tenantId, channelId);
+    
+    // Resolve the partial path for session storage (agents/A/channels/C)
+    let collectionOrPath = 'channels';
+    if (fullPath && fullPath.includes('/agents/')) {
+        const parts = fullPath.split('/');
+        // Extract 'agents/{agentId}/channels'
+        collectionOrPath = `agents/${parts[3]}/channels`;
+    }
+    
+    this.authSystem = new AuthSystem({ bot: {} }, tenantId, channelId, collectionOrPath);
   }
 
   public async initialize(): Promise<void> {

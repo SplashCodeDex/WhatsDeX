@@ -26,15 +26,15 @@ vi.mock('next/navigation', () => ({
 describe('ChannelLinker', () => {
     const mockAgentId = 'agent_123';
     const mockChannels = [
-        { id: 'whatsapp_1', type: 'whatsapp', status: 'connected', linkedAgentId: 'agent_123' },
-        { id: 'telegram_1', type: 'telegram', status: 'disconnected', linkedAgentId: null },
+        { id: 'whatsapp_1', type: 'whatsapp', status: 'connected', assignedAgentId: 'agent_123' },
+        { id: 'telegram_1', type: 'telegram', status: 'disconnected', assignedAgentId: null },
     ];
 
     beforeEach(() => {
         vi.clearAllMocks();
         (useOmnichannelStore as any).mockReturnValue({
             channels: mockChannels,
-            fetchChannels: vi.fn(),
+            fetchAllChannels: vi.fn(),
             isLoading: false,
         });
         (useAuth as any).mockReturnValue({

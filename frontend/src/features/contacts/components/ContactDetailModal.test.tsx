@@ -6,11 +6,11 @@ import { Contact } from '../types';
 
 const mockContact: Contact = {
   id: '1',
-  phoneNumber: '+1234567890',
+  phone: '+1234567890',
   name: 'John Doe',
   email: 'john@example.com',
   tags: ['customer', 'vip'],
-  metadata: {
+  attributes: {
     company: 'Acme Corp',
     notes: 'Important client',
   },
@@ -101,7 +101,7 @@ describe('ContactDetailModal', () => {
   it('handles contact without metadata', () => {
     const contactWithoutMetadata: Contact = {
       ...mockContact,
-      metadata: undefined,
+      attributes: undefined,
     };
     const onClose = vi.fn();
     

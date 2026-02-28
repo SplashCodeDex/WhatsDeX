@@ -4,6 +4,7 @@ import { Channel, ChannelSchema, Result } from '../types/contracts.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import logger from '@/utils/logger.js';
 import crypto from 'crypto';
+import { channelManager } from './channels/ChannelManager.js';
 
 /**
  * Channel Service
@@ -103,6 +104,35 @@ export class ChannelService {
   }
 
   /**
+   * List all channels across all agents for a tenant.
+   * Useful for the Omnichannel Hub (Global View).
+   */
+  async getAllChannelsAcrossAgents(tenantId: string): Promise<Result<Channel[]>> {
+    try {
+      const { agentService } = await import('./AgentService.js');
+      const agentsResult = await agentService.getAllAgents(tenantId);
+      
+      if (!agentsResult.success) return { success: false, error: agentsResult.error };
+
+      const allChannels: Channel[] = [];
+      
+      // Ensure system_default is always checked first or included in the list
+      await agentService.ensureSystemAgent(tenantId);
+      
+      for (const agent of agentsResult.data) {
+        const chanResult = await this.getChannelsForAgent(tenantId, agent.id);
+        if (chanResult.success) {
+          allChannels.push(...chanResult.data);
+        }
+      }
+
+      return { success: true, data: allChannels };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  }
+
+  /**
    * Update channel metadata
    */
   async updateChannel(tenantId: string, channelId: string, patch: Partial<Channel>, agentId: string = 'system_default'): Promise<Result<Channel>> {
@@ -120,14 +150,70 @@ export class ChannelService {
   }
 
   /**
+   * Start a channel instance (OpenClaw)
+   */
+  async startChannel(tenantId: string, channelId: string, agentId: string = 'system_default'): Promise<Result<void>> {
+    try {
+      const channelResult = await this.getChannel(tenantId, channelId, agentId);
+      if (!channelResult.success) return { success: false, error: channelResult.error };
+      
+      const channel = channelResult.data;
+      const fullPath = `tenants/${tenantId}/agents/${agentId}/channels/${channelId}`;
+
+      // Initialize Adapter
+      if (channel.type === 'whatsapp') {
+        const adapter = new WhatsappAdapter(tenantId, channelId, fullPath);
+        
+        adapter.onMessage(async (event) => {
+          const { ingressService } = await import('./IngressService.js');
+          const context = await (await import('../lib/context.js')).default();
+          await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
+        });
+
+        await adapter.connect();
+        channelManager.registerAdapter(adapter);
+      } else {
+        return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
+      }
+
+      await this.updateStatus(tenantId, channelId, 'connected', agentId);
+      return { success: true, data: undefined };
+    } catch (error: any) {
+      logger.error(`Failed to start channel ${channelId}:`, error);
+      await this.updateStatus(tenantId, channelId, 'error', agentId);
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Stop a channel instance
+   */
+  async stopChannel(channelId: string, tenantId: string, agentId: string = 'system_default'): Promise<Result<void>> {
+    try {
+      await channelManager.shutdownAdapter(channelId);
+      await this.updateStatus(tenantId, channelId, 'disconnected', agentId);
+      return { success: true, data: undefined };
+    } catch (error: any) {
+      return { success: false, error };
+    }
+  }
+
+  /**
    * Delete a channel slot
+   * STRICT: Shuts down live connection BEFORE deleting database record.
    */
   async deleteChannel(tenantId: string, channelId: string, agentId: string = 'system_default'): Promise<Result<void>> {
     try {
+      // 1. Kill live session in memory (Rule 0 / Rule 9 integrity)
+      await channelManager.shutdownAdapter(channelId);
+
+      // 2. Remove from Firestore
       await firebaseService.deleteDoc(this.getPath(agentId), channelId, tenantId);
+      
       logger.info(`Channel deleted: ${channelId} from tenant ${tenantId} under Agent ${agentId}`);
       return { success: true, data: undefined };
     } catch (error: any) {
+      logger.error(`Failed to delete channel ${channelId}:`, error);
       return { success: false, error };
     }
   }

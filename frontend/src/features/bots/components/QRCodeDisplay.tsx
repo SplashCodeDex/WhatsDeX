@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 
 interface QRCodeDisplayProps {
     botId: string;
+    agentId?: string;
     isGenerating: boolean;
     onGenerate: () => void;
 }
 
-export function QRCodeDisplay({ botId, isGenerating, onGenerate }: QRCodeDisplayProps) {
-    const { data: qrData, isFetching: isQRLoading, error } = useBotQR(botId, isGenerating);
+export function QRCodeDisplay({ botId, agentId = 'system_default', isGenerating, onGenerate }: QRCodeDisplayProps) {
+    const { data: qrData, isFetching: isQRLoading, error } = useBotQR(botId, isGenerating, agentId);
 
     if (!isGenerating) {
         return (

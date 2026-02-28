@@ -1,14 +1,13 @@
-import { Suspense } from 'react';
-import { Metadata } from 'next';
+'use client';
+
+import { useState } from 'react';
 import {
-    Search,
-    Code2,
     Globe,
     Zap,
+    Code2,
     Cpu,
     Lock,
     CheckCircle2,
-    ShoppingCart,
     ExternalLink
 } from 'lucide-react';
 
@@ -16,12 +15,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-export const metadata: Metadata = {
-    title: 'Skills Store',
-    description: 'Enhance your bots with powerful new capabilities',
-};
 
 interface SkillCardProps {
     id: string;
@@ -41,7 +34,7 @@ const SKILLS: SkillCardProps[] = [
         icon: Globe,
         isEligible: false,
         tier: 'pro',
-        category: 'AI & Search'
+        category: 'ai'
     },
     {
         id: 'math',
@@ -50,7 +43,7 @@ const SKILLS: SkillCardProps[] = [
         icon: Zap,
         isEligible: true,
         tier: 'starter',
-        category: 'Core Utilities'
+        category: 'utility'
     },
     {
         id: 'coding-agent',
@@ -59,7 +52,7 @@ const SKILLS: SkillCardProps[] = [
         icon: Code2,
         isEligible: false,
         tier: 'enterprise',
-        category: 'Developer Tools'
+        category: 'dev'
     },
     {
         id: 'image-gen',
@@ -68,7 +61,7 @@ const SKILLS: SkillCardProps[] = [
         icon: Cpu,
         isEligible: false,
         tier: 'pro',
-        category: 'AI & Search'
+        category: 'ai'
     }
 ];
 
@@ -108,6 +101,10 @@ function SkillCard({ title, description, icon: Icon, isEligible, tier }: SkillCa
 }
 
 export default function SkillsStorePage() {
+    const [filter, setFilter] = useState('all');
+
+    const filteredSkills = SKILLS.filter(s => filter === 'all' || s.category === filter);
+
     return (
         <div className="space-y-8 text-foreground">
             <div className="flex items-center justify-between">
@@ -124,22 +121,27 @@ export default function SkillsStorePage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="all" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 max-w-md">
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="ai">AI & Search</TabsTrigger>
-                    <TabsTrigger value="dev">Dev Tools</TabsTrigger>
-                    <TabsTrigger value="utility">Utility</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="all" className="mt-6">
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {SKILLS.map((skill) => (
-                            <SkillCard key={skill.id} {...skill} />
-                        ))}
-                    </div>
-                </TabsContent>
-            </Tabs>
+            <div className="flex gap-2">
+                {['all', 'ai', 'dev', 'utility'].map((cat) => (
+                    <Button
+                        key={cat}
+                        variant={filter === cat ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFilter(cat)}
+                        className="capitalize"
+                    >
+                        {cat === 'ai' ? 'AI & Search' : cat === 'dev' ? 'Dev Tools' : cat}
+                    </Button>
+                ))}
+            </div>
+            
+            <div className="mt-6">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {filteredSkills.map((skill) => (
+                        <SkillCard key={skill.id} {...skill} />
+                    ))}
+                </div>
+            </div>
 
             <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 p-8 border border-primary/20">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-foreground">

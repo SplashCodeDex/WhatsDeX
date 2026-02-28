@@ -41,14 +41,15 @@ import { toast } from 'sonner';
 
 interface BotSettingsDialogProps {
     botId: string;
+    agentId?: string;
     botType: string | undefined;
     initialConfig: Partial<BotConfig> | undefined;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-export function BotSettingsDialog({ botId, botType, initialConfig, open, onOpenChange }: BotSettingsDialogProps) {
-    const updateBotWithId = updateBot.bind(null, botId);
+export function BotSettingsDialog({ botId, agentId = 'system_default', botType, initialConfig, open, onOpenChange }: BotSettingsDialogProps) {
+    const updateBotWithId = updateBot.bind(null, botId, agentId);
     const [state, dispatch, isPending] = useActionState(updateBotWithId, null);
 
     // Command Store State

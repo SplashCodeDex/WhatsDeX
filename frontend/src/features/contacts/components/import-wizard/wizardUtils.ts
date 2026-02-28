@@ -252,7 +252,10 @@ export async function parseExcel(file: File): Promise<string[][]> {
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: 'array' });
     const firstSheetName = workbook.SheetNames[0];
+    if (!firstSheetName) return [];
+    
     const worksheet = workbook.Sheets[firstSheetName];
+    if (!worksheet) return [];
 
     // Convert to 2D array (header: 1 ensures it returns string[][])
     // We clean up nulls/undefined to empty strings

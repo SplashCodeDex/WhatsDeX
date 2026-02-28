@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 
 interface BotCardProps {
     bot: BotListItem;
+    agentId?: string;
 }
 
 const platformIcons: Record<string, any> = {
@@ -30,16 +31,16 @@ const platformIcons: Record<string, any> = {
     signal: Icons.Radio
 };
 
-export function BotCard({ bot }: BotCardProps) {
+export function BotCard({ bot, agentId = 'system_default' }: BotCardProps) {
     const [showQR, setShowQR] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
 
     // Fetch full bot data only when settings are open
-    const { data: fullBot } = useBot(bot.id);
+    const { data: fullBot } = useBot(bot.id, agentId);
 
-    const { mutate: deleteBot } = useDeleteBot();
-    const { mutate: disconnectBot } = useDisconnectBot();
-    const { mutate: connectBot } = useConnectBot();
+    const { mutate: deleteBot } = useDeleteBot(agentId);
+    const { mutate: disconnectBot } = useDisconnectBot(agentId);
+    const { mutate: connectBot } = useConnectBot(agentId);
 
     const handleConnectClick = () => {
         if (bot.type === 'whatsapp' || !bot.type) {
@@ -124,6 +125,7 @@ export function BotCard({ bot }: BotCardProps) {
             {(bot.type === 'whatsapp' || !bot.type) && (
                 <BotConnectDialog
                     bot={bot}
+                    agentId={agentId}
                     open={showQR}
                     onOpenChange={setShowQR}
                 />
