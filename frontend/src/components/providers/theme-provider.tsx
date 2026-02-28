@@ -5,7 +5,6 @@ import { z } from 'zod';
 
 /**
  * Theme Schema (2026 Mastermind Edition)
- * Rule 1: Every interaction with external data MUST be validated via Zod.
  */
 const themeSchema = z.enum(['dark', 'light', 'system']);
 type Theme = z.infer<typeof themeSchema>;
@@ -32,11 +31,10 @@ export function ThemeProvider({
     children,
     defaultTheme = 'system',
     storageKey = 'whatsdex-theme',
-    ...props
 }: ThemeProviderProps) {
     const [theme, setTheme] = React.useState<Theme>(defaultTheme);
 
-    // Rule 1: Validate external data via Zod, but DO NOT do it during initial render to avoid hydration mismatch.
+    // Hydration Logic: Read from localStorage strictly in useEffect
     React.useEffect(() => {
         try {
             const stored = localStorage.getItem(storageKey);
@@ -49,9 +47,11 @@ export function ThemeProvider({
         }
     }, [storageKey]);
 
+    // Apply classes to document element
     React.useEffect(() => {
-        const root = window.document.documentElement;
+        if (typeof window === 'undefined') return;
 
+        const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
 
         if (theme === 'system') {
@@ -77,10 +77,11 @@ export function ThemeProvider({
         [theme, storageKey]
     );
 
+    // React 19: Use Context directly as provider
     return (
-        <ThemeProviderContext.Provider {...props} value={value}>
+        <ThemeProviderContext value={value}>
             {children}
-        </ThemeProviderContext.Provider>
+        </ThemeProviderContext>
     );
 }
 

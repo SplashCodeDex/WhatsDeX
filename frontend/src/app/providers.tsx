@@ -1,10 +1,11 @@
 'use client';
 
 /**
- * Application Providers
+ * Application Providers (Refactored for SSR Safety)
  *
  * Wraps the app with all required context providers.
- * This is a Client Component because providers need client-side context.
+ * STRICT: All providers must be active during the server-side pass
+ * to ensure useContext and useEffect in child components do not fail.
  */
 
 import { Toaster } from 'sonner';
@@ -17,6 +18,12 @@ interface ProvidersProps {
 
 /**
  * Providers wrapper component
+ *
+ * @example
+ * // In root layout
+ * <Providers>
+ *   {children}
+ * </Providers>
  */
 export function Providers({ children }: ProvidersProps): React.JSX.Element {
     return (
