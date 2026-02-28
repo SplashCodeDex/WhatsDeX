@@ -249,8 +249,8 @@ class CampaignWorker {
                     phone: g.id, // JID
                     tags: [],
                     status: 'active' as const,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
+                    createdAt: (g as any).createdAt || new Date(),
+                    updatedAt: (g as any).updatedAt || new Date()
                 } as Contact));
             } else {
                 let group = await firebaseService.getDoc<'tenants/{tenantId}/groups'>('groups', audience.targetId, tenantId);
@@ -273,8 +273,8 @@ class CampaignWorker {
                     phone: group.id, // JID
                     tags: [],
                     status: 'active' as const,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
+                    createdAt: (group as any).createdAt || new Date(),
+                    updatedAt: (group as any).updatedAt || new Date()
                 } as Contact];
             }
         }

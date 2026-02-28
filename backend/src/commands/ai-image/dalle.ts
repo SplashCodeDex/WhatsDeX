@@ -23,7 +23,7 @@ export default {
 
     try {
       // Add a job to the image generation queue
-      await imageGenerationQueue.add({
+      await imageGenerationQueue.add('generate-image', {
         input: input,
         userJid: ctx.sender.jid,
         used: ctx.used, // Pass the 'used' context for the reply button

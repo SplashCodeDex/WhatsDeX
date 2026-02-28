@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ContactSchema, AudienceSchema } from './contracts';
+import { ContactSchema, AudienceSchema } from './contracts.js';
 
 describe('ContactSchema', () => {
   it('validates a valid contact', () => {

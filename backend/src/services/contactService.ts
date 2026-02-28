@@ -1,11 +1,10 @@
-import { db } from '../lib/firebase.js';
 import { firebaseService } from './FirebaseService.js';
 import { ContactSchema, Result, type Contact } from '../types/contracts.js';
 import logger from '../utils/logger.js';
 import crypto from 'node:crypto';
 import { parse } from 'csv-parse';
 import fs from 'node:fs';
-import { FieldValue } from 'firebase-admin/firestore';
+import { admin } from '../lib/firebase.js';
 
 const normalizePhoneNumber = (phone: string): string => {
   if (phone.includes('@s.whatsapp.net') || phone.includes('@g.us')) {
@@ -39,7 +38,9 @@ export class ContactService {
     let count = 0;
     let rowIndex = 0;
     const BATCH_SIZE = 500;
-    let currentBatch = db.batch();
+
+    // Using firebaseService.batch() which is recommended by memory
+    let batch = firebaseService.batch();
     let currentBatchSize = 0;
     const batchPromises: Promise<any>[] = [];
 
@@ -72,24 +73,21 @@ export class ContactService {
           const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
           errors.push(`Row ${rowIndex + 1}: ${msg}`);
         } else {
-          const contactRef = db.collection('tenants')
-            .doc(tenantId)
-            .collection('contacts')
-            .doc(contactData.id);
-          currentBatch.set(contactRef, validation.data);
+          // Use firebaseService for setting in batch
+          batch.set('contacts', contactData.id, validation.data as any, tenantId);
           count++;
           currentBatchSize++;
 
           if (currentBatchSize >= BATCH_SIZE) {
-            batchPromises.push(currentBatch.commit());
-            currentBatch = db.batch();
+            batchPromises.push(batch.commit());
+            batch = firebaseService.batch();
             currentBatchSize = 0;
           }
         }
       }
 
       if (currentBatchSize > 0) {
-        batchPromises.push(currentBatch.commit());
+        batchPromises.push(batch.commit());
       }
       await Promise.all(batchPromises);
 
@@ -101,7 +99,7 @@ export class ContactService {
             await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
               'bots',
               botId,
-              { 'stats.contactsCount': FieldValue.increment(count) } as any,
+              { 'stats.contactsCount': admin.firestore.FieldValue.increment(count) } as any,
               tenantId,
               true
             );
@@ -112,7 +110,7 @@ export class ContactService {
               firebaseService.setDoc<'tenants/{tenantId}/bots'>(
                 'bots',
                 bot.id,
-                { 'stats.contactsCount': FieldValue.increment(count) } as any,
+                { 'stats.contactsCount': admin.firestore.FieldValue.increment(count) } as any,
                 tenantId,
                 true
               )

@@ -586,7 +586,7 @@ export class MultiTenantBotService {
       }
 
       // Basic JID formatting
-      const jid = payload.to.includes('@s.whatsapp.net') ? payload.to : `${payload.to}@s.whatsapp.net`;
+      const jid = payload.to.includes('@') ? payload.to : `${payload.to}@s.whatsapp.net`;
 
       let result;
       if (payload.type === 'text') {

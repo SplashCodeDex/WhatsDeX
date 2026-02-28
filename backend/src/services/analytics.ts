@@ -1,7 +1,7 @@
 
 import { WebSocket, WebSocketServer } from 'ws';
 import logger from '../utils/logger.js';
-import { db, admin } from '../lib/firebase.js';
+import { admin, db } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { firebaseService } from './FirebaseService.js';
 import { Result, AnalyticsData } from '../types/contracts.js';
@@ -183,7 +183,7 @@ class AnalyticsService {
 
   async trackEvent(tenantId: string, userId: string, event: string, properties: any = {}): Promise<Result<void>> {
     try {
-      // Use tenant-specific collection for events
+      // Use tenant-specific collection for events via db since FirebaseService doesn't have .add() yet
       await db.collection(`tenants/${tenantId}/events`).add({
         userId,
         event: `event_${event}`,

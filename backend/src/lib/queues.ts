@@ -1,4 +1,4 @@
-import Queue from 'bull';
+import { Queue, QueueEvents } from 'bullmq';
 import configManager from '../config/ConfigManager.js';
 import logger from '../utils/logger.js';
 
@@ -10,35 +10,43 @@ const redisConnection = {
   host: config.redis?.host || 'localhost',
   port: config.redis?.port || 6379,
   password: config.redis?.password,
+  maxRetriesPerRequest: null,
 };
 
 // Create and export the queues
 export const imageGenerationQueue = new Queue('image-generation', {
-  redis: redisConnection,
+  connection: redisConnection,
+});
+
+export const imageGenerationEvents = new QueueEvents('image-generation', {
+  connection: redisConnection,
 });
 
 export const jobResultsQueue = new Queue('job-results', {
-  redis: redisConnection,
+  connection: redisConnection,
+});
+
+export const jobResultsEvents = new QueueEvents('job-results', {
+  connection: redisConnection,
 });
 
 // You can add more queues here as needed
-// export const videoProcessingQueue = new Queue('video-processing', { redis: redisConnection });
 
-// Add event listeners for logging and debugging (optional but recommended)
-imageGenerationQueue.on('completed', (job, result) => {
-  logger.info(`✅ Job ${job.id} (image-generation) completed successfully.`);
+// Add event listeners for logging and debugging
+imageGenerationEvents.on('completed', ({ jobId, returnvalue }) => {
+  logger.info(`✅ Job ${jobId} (image-generation) completed successfully.`);
 });
 
-imageGenerationQueue.on('failed', (job, err) => {
-  logger.error(`❌ Job ${job.id} (image-generation) failed with error:`, { error: err.message });
+imageGenerationEvents.on('failed', ({ jobId, failedReason }) => {
+  logger.error(`❌ Job ${jobId} (image-generation) failed with error:`, { error: failedReason });
 });
 
-jobResultsQueue.on('completed', (job, result) => {
-  logger.info(`✅ Job ${job.id} (job-results) completed successfully.`);
+jobResultsEvents.on('completed', ({ jobId, returnvalue }) => {
+  logger.info(`✅ Job ${jobId} (job-results) completed successfully.`);
 });
 
-jobResultsQueue.on('failed', (job, err) => {
-  logger.error(`❌ Job ${job.id} (job-results) failed with error:`, { error: err.message });
+jobResultsEvents.on('failed', ({ jobId, failedReason }) => {
+  logger.error(`❌ Job ${jobId} (job-results) failed with error:`, { error: failedReason });
 });
 
-logger.info('✅ Bull queues initialized.');
+logger.info('✅ BullMQ queues initialized.');
