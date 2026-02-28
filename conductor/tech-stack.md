@@ -6,6 +6,7 @@
 - **Library:** React 19.2.3 (Server Components, Server Actions, React Compiler Enabled)
 - **Language:** TypeScript 5.9.3 (Strict Mode)
 - **Styling:** Tailwind CSS 4.1.18 (CSS-first `@theme` configuration, Zero Config)
+- **Dynamic Forms:** JSON Schema-based form generation for AI Skill parameters
 - **Animations:** Framer Motion 12.26.2 (GPU-accelerated)
 - **State Management:**
   - **Server State:** Server Components & Actions (Result Pattern)
@@ -22,6 +23,7 @@
 - **Language:** TypeScript 5.9.3
 - **Execution:** `tsx` (TypeScript Execute) - **STRICT: DO NOT use ts-node**
 - **Omnichannel Engine:** OpenClaw 2026.2.15 (Unified Gateway & Skills Platform)
+- **Orchestration:** Unified Tool Registry (Bridging OpenClaw Skills & Internal Tools)
 - **WhatsApp API:** Baileys 7.0.0 (via OpenClaw Adapter)
 - **Telegram API:** grammY 1.40.0 (via OpenClaw Adapter)
 - **Discord API:** discord.js 14.18.0 (via OpenClaw Adapter)
