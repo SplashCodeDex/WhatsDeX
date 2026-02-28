@@ -1,6 +1,18 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 export default function NotFound(): React.JSX.Element {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <div className="min-h-screen bg-background" />;
+    }
+
     return (
         <div className="flex min-h-screen flex-col items-center justify-center px-4">
             <div className="text-center">
@@ -13,7 +25,19 @@ export default function NotFound(): React.JSX.Element {
                 </p>
                 <a
                     href="/"
-                    className="inline-flex h-10 items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+                    style={{
+                        display: 'inline-flex',
+                        height: '2.5rem',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '0.5rem',
+                        backgroundColor: '#000',
+                        color: '#fff',
+                        padding: '0 1rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        textDecoration: 'none'
+                    }}
                 >
                     Go Home
                 </a>

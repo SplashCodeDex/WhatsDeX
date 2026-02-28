@@ -19,68 +19,68 @@ export default function MessagesPage() {
                         <MessageSquare className="w-8 h-8 text-primary" /> Messaging Hub
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Configure campaigns or manage your unified conversation history.
+                        Manage your omnichannel marketing campaigns and unified inbox.
                     </p>
                 </div>
-
-                <Button
-                    onClick={() => setShowWizard(!showWizard)}
-                    variant={showWizard ? "secondary" : "default"}
-                    className="shadow-lg shadow-primary/10"
-                >
-                    {showWizard ? (
-                        <><X className="w-4 h-4 mr-2" /> Cancel Wizard</>
-                    ) : (
-                        <><Plus className="w-4 h-4 mr-2" /> New Campaign</>
-                    )}
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button 
+                        onClick={() => setShowWizard(true)}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow font-bold"
+                    >
+                        <Plus className="w-4 h-4 mr-2" /> Create Campaign
+                    </Button>
+                </div>
             </div>
 
-            <div className="flex-1 overflow-auto p-8">
-                <div className="max-w-7xl mx-auto space-y-8">
-                    <Tabs defaultValue="campaigns" className="w-full">
-                        <TabsList className="bg-muted/50 border border-border/50">
-                            <TabsTrigger value="campaigns" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                                <Send className="w-4 h-4 mr-2" /> Campaigns
-                            </TabsTrigger>
-                            <TabsTrigger value="inbox" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                                <Inbox className="w-4 h-4 mr-2" /> Unified Inbox
-                            </TabsTrigger>
-                        </TabsList>
+            {/* Main Content */}
+            <div className="flex-1 overflow-hidden p-8">
+                {showWizard ? (
+                    <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold">New Campaign</h2>
+                            <Button variant="ghost" size="sm" onClick={() => setShowWizard(false)}>
+                                <X className="w-4 h-4 mr-2" /> Cancel
+                            </Button>
+                        </div>
+                        <CampaignWizard />
+                    </div>
+                ) : (
+                    <Tabs defaultValue="campaigns" className="h-full flex flex-col">
+                        <div className="flex items-center justify-between mb-6">
+                            <TabsList className="bg-card/50 backdrop-blur-sm border border-border/40">
+                                <TabsTrigger value="campaigns" className="font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                    <Send className="w-4 h-4 mr-2" /> Campaigns
+                                </TabsTrigger>
+                                <TabsTrigger value="inbox" className="font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                    <Inbox className="w-4 h-4 mr-2" /> Unified Inbox
+                                </TabsTrigger>
+                            </TabsList>
 
-                        <TabsContent value="campaigns" className="mt-6 space-y-8">
-                            {showWizard && (
-                                <div className="animate-in fade-in zoom-in-95 duration-300">
-                                    <CampaignWizard />
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" className="h-9 border-border/40 bg-card/30">
+                                    <ListFilter className="w-4 h-4 mr-2" /> Filter
+                                </Button>
+                            </div>
+                        </div>
 
-                            {!showWizard && (
-                                <Alert className="bg-primary/5 border-primary/20 text-foreground">
-                                    <Info className="h-4 w-4 text-primary" />
-                                    <AlertTitle className="font-bold text-primary">Mastermind Tip</AlertTitle>
-                                    <AlertDescription className="text-muted-foreground">
-                                        Broadcast campaigns use BullMQ for background processing and randomized throttling to stay beneath WhatsApp's spam detection radar.
+                        <TabsContent value="campaigns" className="flex-1 mt-0 overflow-auto pr-2">
+                            <div className="grid gap-6">
+                                <Alert className="bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400">
+                                    <Info className="h-4 w-4" />
+                                    <AlertTitle className="font-bold">Campaign Optimization</AlertTitle>
+                                    <AlertDescription>
+                                        Use AI Message Spinning to ensure high deliverability and prevent carrier bans.
                                     </AlertDescription>
                                 </Alert>
-                            )}
-
-                            <section>
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                                        <ListFilter className="w-5 h-5 text-primary" />
-                                        {showWizard ? "Recent Campaigns" : "Active & Recent Campaigns"}
-                                    </h2>
-                                </div>
                                 <CampaignList />
-                            </section>
+                            </div>
                         </TabsContent>
 
-                        <TabsContent value="inbox" className="mt-6">
+                        <TabsContent value="inbox" className="flex-1 mt-0 h-full overflow-hidden">
                             <UnifiedInbox />
                         </TabsContent>
                     </Tabs>
-                </div>
+                )}
             </div>
         </div>
     );

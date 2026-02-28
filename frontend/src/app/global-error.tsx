@@ -7,8 +7,6 @@
  * This ensures the error page renders even if the root context systems fail.
  */
 
-export const dynamic = "force-dynamic";
-
 export default function GlobalError({
   error,
   reset,
@@ -58,7 +56,7 @@ export default function GlobalError({
             marginBottom: '1.5rem',
             lineHeight: '1.5'
           }}>
-            The application encountered an unrecoverable root-level exception. Our engineers have been notified.
+            The application encountered an unrecoverable root-level exception.
           </p>
           
           <div style={{
@@ -74,8 +72,7 @@ export default function GlobalError({
             maxHeight: '100px',
             border: '1px solid #450a0a'
           }}>
-            Error: {error.message || "Unknown error"}
-            {error.digest && <div style={{ marginTop: '0.25rem', color: '#71717a' }}>ID: {error.digest}</div>}
+            Error: {error?.message || "Unknown error"}
           </div>
 
           <button 
@@ -87,11 +84,8 @@ export default function GlobalError({
               padding: '0.75rem 1.5rem',
               borderRadius: '0.5rem',
               border: 'none',
-              cursor: 'pointer',
-              transition: 'opacity 0.2s'
+              cursor: 'pointer'
             }}
-            onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
-            onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
           >
             Restart Application
           </button>

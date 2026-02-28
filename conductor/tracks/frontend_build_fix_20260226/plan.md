@@ -9,7 +9,7 @@
     - [x] Update `src/app/providers.tsx` to ensure all child providers are wrapped in a single `'use client'` entry point.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Root Architecture Stabilization' (Protocol in workflow.md)**
 
-## Phase 2: Route Rendering Strategy
+## Phase 2: Route Rendering Strategy [checkpoint: 4d1a4fd]
 - [x] **Task: Configure Dynamic Dashboard Routes** 7c1e5bb
     - [x] Add `export const dynamic = 'force-dynamic'` to the root layout of the `(dashboard)` group.
     - [x] Verify that this bypasses static prerendering for all authenticated sub-pages.
@@ -19,7 +19,7 @@
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Route Rendering Strategy' (Protocol in workflow.md)**
 
 ## Phase 3: Final Build & Validation
-- [ ] **Task: Comprehensive Build Verification**
+- [~] **Task: Comprehensive Build Verification**
     - [ ] Run `pnpm --filter frontend typecheck`.
     - [ ] Run `pnpm --filter frontend build`.
     - [ ] Address any remaining "Key" prop warnings or hydration mismatches identified in logs.

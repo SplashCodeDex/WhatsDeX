@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
-
-import { Button } from '@/components/ui/button';
 
 interface ErrorProps {
     error: Error & { digest?: string };
@@ -11,15 +9,22 @@ interface ErrorProps {
 }
 
 export default function Error({ error, reset }: ErrorProps): React.JSX.Element {
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
+        setMounted(true);
         // Log the error to an error reporting service
         logger.error('Application error:', { error: error });
     }, [error]);
 
+    if (!mounted) {
+        return <div className="min-h-screen bg-background" />;
+    }
+
     return (
         <div className="flex min-h-screen flex-col items-center justify-center px-4">
             <div className="text-center">
-                <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-error/10 text-error">
+                <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
                     <svg
                         className="h-8 w-8"
                         fill="none"
@@ -42,10 +47,41 @@ export default function Error({ error, reset }: ErrorProps): React.JSX.Element {
                     support if the problem persists.
                 </p>
                 <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-                    <Button onClick={reset}>Try Again</Button>
-                    <Button variant="outline" asChild>
-                        <a href="/">Go Home</a>
-                    </Button>
+                    <button 
+                        onClick={reset}
+                        style={{
+                            height: '2.5rem',
+                            borderRadius: '0.5rem',
+                            backgroundColor: '#000',
+                            color: '#fff',
+                            padding: '0 1.5rem',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Try Again
+                    </button>
+                    <a 
+                        href="/"
+                        style={{
+                            height: '2.5rem',
+                            borderRadius: '0.5rem',
+                            border: '1px solid #ddd',
+                            backgroundColor: 'transparent',
+                            color: '#000',
+                            padding: '0 1.5rem',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textDecoration: 'none'
+                        }}
+                    >
+                        Go Home
+                    </a>
                 </div>
                 {error.digest && (
                     <p className="mt-8 text-xs text-muted-foreground">

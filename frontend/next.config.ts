@@ -1,8 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-    // Enable Cache Components (includes Partial Prerendering)
-    cacheComponents: true,
+    // Disable Cache Components temporarily to resolve build-time prerendering conflicts
+    // with React 19 context providers.
+    cacheComponents: false,
 
     // Turbopack configuration (default in Next.js 16)
     turbopack: {

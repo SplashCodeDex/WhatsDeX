@@ -8,7 +8,6 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
 
 interface QueryProviderProps {
     children: React.ReactNode;
@@ -60,10 +59,7 @@ function getQueryClient(): QueryClient {
  * Query Provider Component
  */
 export function QueryProvider({ children }: QueryProviderProps): React.JSX.Element {
-    // 2026 Mastermind Note: Use useState to ensure the client is stable across re-renders
-    // and correctly initialized during the hydration pass.
-    // getQueryClient() is still used as a fallback for SSR safety if needed.
-    const [queryClient] = useState(() => getQueryClient());
+    const queryClient = getQueryClient();
 
     return (
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
