@@ -32,8 +32,10 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { useTemplates } from '@/features/messages/hooks/useTemplates';
 import { useSubscription } from '@/features/billing';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import {
   Select,
   SelectContent,
@@ -71,6 +73,7 @@ const nodeTypes = {
 function FlowBuilder() {
   const { data: templates } = useTemplates();
   const { subscription, isLoading: isLoadingPlan } = useSubscription();
+  const { skills, fetchSkills } = useOmnichannelStore();
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -81,10 +84,12 @@ function FlowBuilder() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const isProFeatureOpen = subscription?.plan !== 'starter';
+  const userTier = subscription?.plan || 'starter';
 
-  // Load existing flows on mount
+  // Load existing flows and skills on mount
   React.useEffect(() => {
     if (!isProFeatureOpen) return;
+    fetchSkills();
     const loadFlows = async () => {
       try {
         const response = await api.get('/api/flows') as { success: boolean; data?: any[]; error?: any };
@@ -108,7 +113,7 @@ function FlowBuilder() {
       }
     };
     loadFlows();
-  }, [isProFeatureOpen, setNodes, setEdges]);
+  }, [isProFeatureOpen, setNodes, setEdges, fetchSkills]);
 
   const selectedNode = useMemo(() => nodes.find(n => n.id === selectedNodeId), [nodes, selectedNodeId]);
 
@@ -263,6 +268,8 @@ function FlowBuilder() {
     );
   }
 
+  const selectedSkill = skills.find(s => s.id === (selectedNode?.data as any)?.skillName);
+
   return (
     <div className="flex h-[calc(100vh-120px)] w-full gap-4 overflow-hidden">
       {/* Sidebar */}
@@ -378,7 +385,7 @@ function FlowBuilder() {
 
       {/* Properties Panel */}
       {selectedNode && (
-        <div className="w-80 border border-border/40 rounded-xl bg-card/30 backdrop-blur-md p-4 flex flex-col gap-6 animate-in slide-in-from-right duration-300">
+        <div className="w-80 border border-border/40 rounded-xl bg-card/30 backdrop-blur-md p-4 flex flex-col gap-6 animate-in slide-in-from-right duration-300 overflow-y-auto">
           <div>
             <h2 className="text-xs font-black uppercase tracking-tighter text-primary mb-4">Node Properties</h2>
             <div className="space-y-4">
@@ -457,23 +464,65 @@ function FlowBuilder() {
               )}
 
               {selectedNode.type === 'skill' && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground">OpenClaw Skill</label>
-                  <Select
-                    value={(selectedNode.data as any).skillName || ''}
-                    onValueChange={(val) => updateNodeData(selectedNode.id, { skillName: val })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a skill..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="youtubevideo">YouTube Downloader</SelectItem>
-                      <SelectItem value="dalle">AI Image Gen</SelectItem>
-                      <SelectItem value="weather">Real-time Weather</SelectItem>
-                      <SelectItem value="ocr">Image to Text (OCR)</SelectItem>
-                      <SelectItem value="web_search">Web Search</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground">OpenClaw Skill</label>
+                    <Select
+                      value={(selectedNode.data as any).skillName || ''}
+                      onValueChange={(val) => {
+                        const skill = skills.find(s => s.id === val);
+                        updateNodeData(selectedNode.id, { 
+                          skillName: val,
+                          params: {} // Reset params on skill change
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a skill..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {skills.map(skill => {
+                          const isLocked = skill.requiredTier === 'enterprise' ? userTier !== 'enterprise' :
+                                          skill.requiredTier === 'pro' ? (userTier !== 'pro' && userTier !== 'enterprise') : false;
+                          
+                          return (
+                            <SelectItem key={skill.id} value={skill.id} disabled={isLocked}>
+                              <div className="flex items-center gap-2">
+                                <span>{skill.emoji || '🧠'}</span>
+                                <span className="truncate">{skill.name}</span>
+                                {isLocked && <Lock className="w-3 h-3 ml-auto text-muted-foreground" />}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedSkill && (
+                    <div className="space-y-4 pt-4 border-t border-border/20">
+                      <h3 className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Parameters</h3>
+                      {Object.entries(selectedSkill.parameters?.properties || {}).map(([key, prop]: [string, any]) => (
+                        <div key={key} className="space-y-1.5">
+                          <Label className="text-[10px] font-bold uppercase">{prop.title || key}</Label>
+                          <Input
+                            placeholder={prop.description || ''}
+                            value={(selectedNode.data as any).params?.[key] || ''}
+                            onChange={(e) => {
+                              const currentParams = (selectedNode.data as any).params || {};
+                              updateNodeData(selectedNode.id, {
+                                params: { ...currentParams, [key]: e.target.value }
+                              });
+                            }}
+                          />
+                          {prop.description && <p className="text-[9px] text-muted-foreground leading-tight">{prop.description}</p>}
+                        </div>
+                      ))}
+                      {Object.keys(selectedSkill.parameters?.properties || {}).length === 0 && (
+                        <p className="text-[10px] text-muted-foreground italic">No parameters required for this skill.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -527,7 +576,7 @@ function FlowBuilder() {
                 setIsTesting(false);
                 setTestLogs([]);
                 setTestInput('');
-                setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, executing: false } })));
+                setNodes(nds => nds.map(n => ({ ...n.data, executing: false } as any)));
               }}
               className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
             >

@@ -10,10 +10,12 @@ export default function HomePage(): React.JSX.Element {
             {/* Interactive 3D Hero Section */}
             <section className="relative h-screen w-full flex-col overflow-hidden bg-background">
                 {/* 3D Background */}
-                <SplineRobot
-                    sceneUrl="https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
-                    className="absolute inset-0 z-0"
-                />
+                <div className="absolute inset-0 z-0 pointer-events-auto">
+                    <SplineRobot
+                        sceneUrl="https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
+                        className="w-full h-full"
+                    />
+                </div>
 
                 {/* Floating Navigation */}
                 <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-6 md:px-12 md:py-8">

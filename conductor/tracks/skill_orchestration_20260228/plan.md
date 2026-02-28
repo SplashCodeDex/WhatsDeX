@@ -2,24 +2,24 @@
 
 This plan outlines the integration of the Intelligence Store with the FlowBuilder to enable dynamic, visual AI automation.
 
-## Phase 1: Shared Capabilities Foundation
+## Phase 1: Shared Capabilities Foundation [checkpoint: 045417b]
 Goal: Ensure skill definitions and metadata are available globally in the frontend.
 
-- [~] Task: Shared Zustand Store.
-    - [ ] Create/Update `useOmnichannelStore` to include a `skills` array and `fetchSkills` action.
-    - [ ] Refactor `Intelligence Store` page to consume this shared state.
-- [ ] Task: Backend Schema Enrichment.
-    - [ ] Update `skillsManager.listAvailableSkills` to return full JSON Schema for skill parameters.
-    - [ ] Add `category` and `icon` metadata to the `/api/skills` response.
-- [ ] Task: Conductor - User Manual Verification 'Shared Capabilities Foundation' (Protocol in workflow.md)
+- [x] Task: Shared Zustand Store. 045417b
+    - [x] Create/Update `useOmnichannelStore` to include a `skills` array and `fetchSkills` action.
+    - [x] Refactor `Intelligence Store` page to consume this shared state.
+- [x] Task: Backend Schema Enrichment. 045417b
+    - [x] Update `skillsManager.listAvailableSkills` to return full JSON Schema for skill parameters.
+    - [x] Add `category` and `icon` metadata to the `/api/skills` response.
+- [x] Task: Conductor - User Manual Verification 'Shared Capabilities Foundation' (Protocol in workflow.md) 045417b
 
 ## Phase 2: Visual Flow Integration
 Goal: Dynamically load and configure skills within the FlowBuilder canvas.
 
-- [ ] Task: Dynamic Skill Palette.
+- [~] Task: Dynamic Skill Palette.
     - [ ] Refactor `FlowBuilder` sidebar to use the shared store for the `Skill` node dropdown.
     - [ ] Implement visual plan-gating (locks) for Pro/Enterprise skills in the FlowBuilder.
-- [ ] Task: Intelligent Property Editor.
+- [~] Task: Intelligent Property Editor.
     - [ ] Create a dynamic form generator that renders input fields based on the selected skill's JSON Schema.
     - [ ] Ensure parameter values are saved into the `node.data` object.
 - [ ] Task: Conductor - User Manual Verification 'Visual Flow Integration' (Protocol in workflow.md)
