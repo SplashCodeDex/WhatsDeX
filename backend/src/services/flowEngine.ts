@@ -2,6 +2,8 @@ import logger from '../utils/logger.js';
 import { FlowData } from './flowService.js';
 import { cacheService } from './cache.js';
 import { TemplateService } from './templateService.js';
+import { db } from '../lib/firebase.js';
+import { Timestamp } from 'firebase-admin/firestore';
 
 interface FlowState {
   flowId: string;
@@ -180,12 +182,23 @@ export class FlowEngine {
   }
 
   private async trackNodeExecution(tenantId: string, nodeId: string, type: string, metadata: any = {}) {
-    // In production, this would emit to a dedicated Analytics/Billing service
-    // For now, we log it for future "Node Execution" monetization
-    logger.debug(`[METRIC] Flow Node Executed: ${nodeId} [Type: ${type}] Tenant: ${tenantId}`, metadata);
-    
-    // Future implementation:
-    // await analyticsService.trackNodeExecution(tenantId, nodeId, type, metadata);
+    try {
+      logger.debug(`[METRIC] Flow Node Executed: ${nodeId} [Type: ${type}] Tenant: ${tenantId}`, metadata);
+      
+      // Persist to Firestore for monetization/usage tracking
+      await db.collection('tenants')
+        .doc(tenantId)
+        .collection('events')
+        .add({
+          type: 'node_execution',
+          nodeType: type,
+          nodeId,
+          metadata,
+          timestamp: Timestamp.now()
+        });
+    } catch (error) {
+      logger.error(`[FlowEngine] Failed to track node execution for ${tenantId}:`, error);
+    }
   }
 
   private async handleWaitNode(node: any, flow: FlowData, context: any) {
@@ -233,7 +246,7 @@ User Input: "${userInput}"
 Return ONLY the label of the best matching category (e.g., "${data.options[0]?.label}"). If no category matches well, return "none".
 `;
 
-      const response = await unifiedAI.gemini.getChatCompletion(prompt);
+      const response = await (unifiedAI.gemini as any).getChatCompletion(prompt);
       const cleanedResponse = response.trim().toLowerCase();
 
       // Find exact match in options

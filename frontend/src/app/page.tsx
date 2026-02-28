@@ -18,8 +18,8 @@ export default function HomePage(): React.JSX.Element {
                 </div>
 
                 {/* Floating Navigation */}
-                <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-6 md:px-12 md:py-8">
-                    <Link href="/" className="flex items-center gap-2">
+                <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-6 md:px-12 md:py-8 pointer-events-none">
+                    <Link href="/" className="flex items-center gap-2 pointer-events-auto">
                         <Image
                             src="/logo.png"
                             alt="WhatsDeX"
@@ -30,7 +30,7 @@ export default function HomePage(): React.JSX.Element {
                         />
                     </Link>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 pointer-events-auto">
                         <Link href="/faq" className="hidden text-sm font-medium text-foreground/80 hover:text-primary-400 transition-colors md:block drop-shadow-sm">
                             FAQs
                         </Link>

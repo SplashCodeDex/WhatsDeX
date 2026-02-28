@@ -13,26 +13,26 @@ Goal: Ensure skill definitions and metadata are available globally in the fronte
     - [x] Add `category` and `icon` metadata to the `/api/skills` response.
 - [x] Task: Conductor - User Manual Verification 'Shared Capabilities Foundation' (Protocol in workflow.md) 045417b
 
-## Phase 2: Visual Flow Integration
+## Phase 2: Visual Flow Integration [checkpoint: 4ea4e46]
 Goal: Dynamically load and configure skills within the FlowBuilder canvas.
 
-- [~] Task: Dynamic Skill Palette.
-    - [ ] Refactor `FlowBuilder` sidebar to use the shared store for the `Skill` node dropdown.
-    - [ ] Implement visual plan-gating (locks) for Pro/Enterprise skills in the FlowBuilder.
-- [~] Task: Intelligent Property Editor.
-    - [ ] Create a dynamic form generator that renders input fields based on the selected skill's JSON Schema.
-    - [ ] Ensure parameter values are saved into the `node.data` object.
-- [ ] Task: Conductor - User Manual Verification 'Visual Flow Integration' (Protocol in workflow.md)
+- [x] Task: Dynamic Skill Palette. 4ea4e46
+    - [x] Refactor `FlowBuilder` sidebar to use the shared store for the `Skill` node dropdown.
+    - [x] Implement visual plan-gating (locks) for Pro/Enterprise skills in the FlowBuilder.
+- [x] Task: Intelligent Property Editor. 4ea4e46
+    - [x] Create a dynamic form generator that renders input fields based on the selected skill's JSON Schema.
+    - [x] Ensure parameter values are saved into the `node.data` object.
+- [x] Task: Conductor - User Manual Verification 'Visual Flow Integration' (Protocol in workflow.md) 4ea4e46
 
 ## Phase 3: Logic Engine & Execution
 Goal: Execute orchestrated skills with real-time parameters and track metrics.
 
-- [ ] Task: TDD - Skill Execution Logic.
+- [~] Task: TDD - Skill Execution Logic.
     - [ ] Write backend unit tests for `FlowEngine.executeSkillNode` using mocked OpenClaw tools.
     - [ ] Write integration tests for flow traversal with parameter passing.
 - [ ] Task: Implement Execution Bridge.
     - [ ] Refactor `FlowEngine` to extract parameters from `node.data` and pass them to the `toolRegistry.executeTool` method.
     - [ ] Enhance error handling to return human-friendly messages when skills fail or keys are missing.
-- [ ] Task: Metrics & Monetization.
+- [~] Task: Metrics & Monetization.
     - [ ] Implement `trackNodeExecution` to record every skill trigger in `tenants/{tenantId}/events`.
 - [ ] Task: Conductor - User Manual Verification 'Logic Engine & Execution' (Protocol in workflow.md)
