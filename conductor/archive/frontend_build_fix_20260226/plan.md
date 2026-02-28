@@ -18,11 +18,11 @@
     - [x] Verify that the `Tabs` and `useContext` errors are resolved.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Route Rendering Strategy' (Protocol in workflow.md)**
 
-## Phase 3: Final Build & Validation
-- [~] **Task: Comprehensive Build Verification**
-    - [ ] Run `pnpm --filter frontend typecheck`.
-    - [ ] Run `pnpm --filter frontend build`.
-    - [ ] Address any remaining "Key" prop warnings or hydration mismatches identified in logs.
-- [ ] **Task: Final System Verification**
-    - [ ] Manually verify dashboard navigation and real-time data updates in dev mode.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 3: Final Build & Validation' (Protocol in workflow.md)**
+## Phase 3: Final Build & Validation [checkpoint: e298271]
+- [x] **Task: Comprehensive Build Verification** e298271
+    - [x] Run `pnpm --filter frontend typecheck`.
+    - [x] Run `pnpm --filter frontend build`.
+    - [x] Address any remaining "Key" prop warnings or hydration mismatches identified in logs.
+- [x] **Task: Final System Verification** e298271
+    - [x] Manually verify dashboard navigation and real-time data updates in dev mode.
+- [x] **Task: Conductor - User Manual Verification 'Phase 3: Final Build & Validation' (Protocol in workflow.md)** e298271

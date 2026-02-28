@@ -1,14 +1,14 @@
 # Implementation Plan: Frontend SSR Optimization
 
 ## Phase 1: Context & Hook Normalization
-- [ ] **Task: Refactor `useAuth` for SSR Safety**
-    - [ ] Replace `window.location` with `usePathname`.
-    - [ ] Ensure all redirection logic is deferred to `useEffect`.
-- [ ] **Task: Standardize Root Providers**
-    - [ ] Remove the hydration guard (`if (!mounted)`) in `src/app/providers.tsx`.
-    - [ ] Update `ThemeProvider.tsx` to use React 19 `<Context value={...}>` syntax and provide a solid initial state.
-- [ ] **Task: Secure `QueryProvider` Hydration**
-    - [ ] Ensure the `QueryClient` singleton is stable across the SSR/Hydration boundary.
+- [x] **Task: Refactor `useAuth` for SSR Safety** ac07b9f
+    - [x] Replace `window.location` with `usePathname`.
+    - [x] Ensure all redirection logic is deferred to `useEffect`.
+- [x] **Task: Standardize Root Providers** b0e0a14
+    - [x] Remove the hydration guard (`if (!mounted)`) in `src/app/providers.tsx`.
+    - [x] Update `ThemeProvider.tsx` to use React 19 `<Context value={...}>` syntax and provide a solid initial state.
+- [x] **Task: Secure `QueryProvider` Hydration** 0a4ba69
+    - [x] Ensure the `QueryClient` singleton is stable across the SSR/Hydration boundary.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Context & Hook Normalization' (Protocol in workflow.md)**
 
 ## Phase 2: Performance Recovery
