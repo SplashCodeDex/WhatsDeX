@@ -25,15 +25,13 @@ export async function requireAuth() {
         await jwtVerify(token, JWT_SECRET);
         return token;
     } catch (error: any) {
-        // Clear the invalid token to prevent redirect loops in proxy/middleware
-        const cookieStore = await cookies();
-        cookieStore.delete('token');
-
         if (error?.code === 'ERR_JWT_EXPIRED') {
             console.warn('[Session] Token expired, redirecting to login...');
         } else {
             console.error('[Session] Token verification failed:', error);
         }
-        redirect('/login');
+        // Redirect to the logout route handler which CAN modify cookies
+        // (Server Components can only read cookies, not modify them)
+        redirect('/api/auth/logout');
     }
 }

@@ -26,6 +26,7 @@ import flowRoutes from '../routes/flowRoutes.js';
 import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import integrationRoutes from '../routes/integrationRoutes.js';
+import logsRoutes from '../routes/logsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
 import { socketService } from '../services/socketService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
@@ -225,6 +226,9 @@ export class MultiTenantApp {
     // Billing routes
     this.app.use('/api/billing/webhook', stripeWebhookRoutes);
     this.app.use('/api/billing', authenticateToken, billingRoutes);
+
+    // Client Logs
+    this.app.use('/api/logs', logsRoutes);
 
     // 404 handler
     this.app.use(notFoundHandler);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,6 +16,8 @@ import { signIn, googleAuthAction } from '../actions';
 
 export function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get('from') || '/dashboard';
     const [state, formAction, isPending] = useActionState(signIn, null);
     const fields = state?.success === false ? state.error.details?.fields as any : null;
 
@@ -25,7 +27,7 @@ export function LoginForm() {
                 description: 'Redirecting to your dashboard...',
             });
             import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
-            router.push('/dashboard');
+            router.push(redirectTo);
         } else if (state?.success === false && state?.error) {
             // If field error exists, it's shown inline. If not, toast.
             if (!state.error.details?.field) {
@@ -50,7 +52,7 @@ export function LoginForm() {
                     description: 'Redirecting to your dashboard...',
                 });
                 import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
-                router.push('/dashboard');
+                router.push(redirectTo);
             } else {
                 toast.error('Google Sign-In failed', {
                     description: actionResult.error.message,

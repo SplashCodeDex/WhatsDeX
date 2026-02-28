@@ -12,12 +12,12 @@ interface ErrorProps {
 
 /**
  * Root Error Boundary
- * 
+ *
  * Optimized for SSR/Hydration. Removed temporary mounted guard.
  */
 export default function Error({ error, reset }: ErrorProps): React.JSX.Element {
     useEffect(() => {
-        logger.error('Application error:', { error });
+        logger.error('Application error:', error.message, error.stack);
     }, [error]);
 
     return (
