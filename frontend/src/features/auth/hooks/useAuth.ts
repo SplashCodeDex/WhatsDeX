@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * useAuth Hook (Refactored for Session-based Auth)
- *
- * Persists auth state via cookie-based sessions.
- * Hydrates state from /api/auth/me on mount.
+ * useAuth Hook (Refactored for SSR Safety & React 19)
+ * 
+ * STRICT: No direct 'window' or 'document' access during render.
+ * Redirection logic is deferred to useEffect.
  */
 
 import { useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 import { signInWithCustomToken } from 'firebase/auth';
 import { useAuthStore } from '../store';
@@ -32,6 +32,7 @@ export function useAuth(): UseAuthReturn {
     const { user, isLoading, isAuthenticated, error, setUser, setLoading, setError, clearError } =
         useAuthStore();
     const router = useRouter();
+    const pathname = usePathname();
 
     const verifySession = useCallback(async () => {
         setLoading(true);
@@ -56,17 +57,9 @@ export function useAuth(): UseAuthReturn {
                 setUser(userData);
             } else {
                 setUser(null);
-                const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.REGISTER;
-                if (!isAuthPage) {
-                    window.location.href = ROUTES.LOGIN;
-                }
             }
         } catch (err) {
             setUser(null);
-            const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.REGISTER;
-            if (!isAuthPage) {
-                window.location.href = ROUTES.LOGIN;
-            }
         } finally {
             setLoading(false);
         }
@@ -78,7 +71,6 @@ export function useAuth(): UseAuthReturn {
             const response = await api.post(API_ENDPOINTS.AUTH.REFRESH);
             if (response.success) {
                 logger.info('Session refreshed successfully');
-                // Re-verify to update user state if needed
                 await verifySession();
             } else {
                 logger.warn('Session refresh failed:', response.error);
@@ -90,12 +82,23 @@ export function useAuth(): UseAuthReturn {
 
     // Initial hydration
     useEffect(() => {
-        if (!user) {
+        if (!user && !isLoading) {
             verifySession();
         }
-    }, [verifySession, user]);
+    }, [verifySession, user, isLoading]);
 
-    // Background refresh timer (runs every 45 mins since access token is 1h)
+    // Redirection Logic (SSR Safe)
+    useEffect(() => {
+        // Only redirect once loading is finished and we've confirmed null user
+        if (!isLoading && !user) {
+            const isAuthPage = pathname === ROUTES.LOGIN || pathname === ROUTES.REGISTER;
+            if (!isAuthPage) {
+                router.push(ROUTES.LOGIN);
+            }
+        }
+    }, [user, isLoading, pathname, router]);
+
+    // Background refresh timer
     useEffect(() => {
         if (isAuthenticated && user) {
             const REFRESH_INTERVAL = 45 * 60 * 1000;
@@ -110,15 +113,10 @@ export function useAuth(): UseAuthReturn {
 
     const signOut = useCallback(async (): Promise<void> => {
         try {
-            // Call logout endpoint to clear cookie server-side
             await fetch('/api/auth/logout', { method: 'POST' });
-            // Or use server action, but we are in client hook.
-            // Simplified: clear store and redirect.
-            // Ideally we hit an endpoint that clears the cookie.
-
             setUser(null);
             router.push(ROUTES.LOGIN);
-            router.refresh(); // Refresh to clear server component cache
+            router.refresh(); 
         } catch (signOutError) {
             logger.error('Sign out error:', signOutError);
         }
