@@ -35,6 +35,14 @@ export class TelegramAdapter implements ChannelAdapter {
     // Setup message listener
     this.bot.on('message', async (ctx) => {
       if (this.messageHandler) {
+        // Increment received stats
+        try {
+          const { channelService } = await import('@/services/ChannelService.js');
+          await channelService.incrementChannelStat(this.tenantId, this.botId, 'messagesReceived');
+        } catch (e) {
+          logger.warn('Failed to increment stats in TelegramAdapter', e);
+        }
+
         await this.messageHandler({
           tenantId: this.tenantId,
           channelId: this.id,
@@ -80,6 +88,14 @@ export class TelegramAdapter implements ChannelAdapter {
       api: this.bot.api,
       textMode: "markdown",
     });
+
+    // Track stats
+    try {
+      const { channelService } = await import('@/services/ChannelService.js');
+      await channelService.incrementChannelStat(this.tenantId, this.botId, 'messagesSent');
+    } catch (e) {
+      logger.warn('Failed to increment stats in TelegramAdapter', e);
+    }
   }
 
   public async sendCommon(message: CommonMessage): Promise<void> {

@@ -14,8 +14,7 @@ export { default as CacheService } from './cache.js';
 export { default as GeminiAI } from './geminiAI.js';
 export { GeminiAI as EnhancedAIBrain } from './geminiAI.js'; // Legacy alias
 
-// Bot Services (Archived/Deprecated)
-export { default as MultiTenantBotService } from '../archive/multiTenantBotService.js';
+// Bot Services (Omnichannel 2026)
 export { default as CommandSystem } from './commandSystem.js';
 export { default as MultiTenantService } from './multiTenantService.js';
 export { default as ChannelService } from './ChannelService.js';

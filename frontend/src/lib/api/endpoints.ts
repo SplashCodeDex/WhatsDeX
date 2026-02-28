@@ -98,6 +98,7 @@ export const API_ENDPOINTS = {
         },
         SKILLS: {
             REPORT: '/api/omnichannel/skills/report',
+            LIST: '/api/omnichannel/skills',
             TOGGLE: (key: string) => `/api/omnichannel/skills/${key}/toggle` as const,
             SAVE_KEY: (key: string) => `/api/omnichannel/skills/${key}/key` as const,
             INSTALL: (key: string) => `/api/omnichannel/skills/${key}/install` as const,

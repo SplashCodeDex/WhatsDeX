@@ -35,6 +35,7 @@ interface OmnichannelState {
     cronStatus: CronStatus | null;
     cronRuns: Record<string, CronRunLogEntry[]>;
     skillReport: SkillStatusReport | null;
+    skills: any[]; // Unified Skill/Tool list
     agentsResult: AgentsListResult | null;
     agentIdentities: Record<string, AgentIdentityResult>;
     usageTotals: UsageTotals | null;
@@ -66,6 +67,7 @@ interface OmnichannelState {
 
     // Skill Actions
     fetchSkillReport: () => Promise<void>;
+    fetchSkills: () => Promise<void>;
     toggleSkill: (key: string, enabled: boolean) => Promise<boolean>;
     saveSkillKey: (key: string, apiKey: string) => Promise<boolean>;
     installSkill: (key: string, installId: string) => Promise<boolean>;
@@ -106,6 +108,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     cronStatus: null,
     cronRuns: {},
     skillReport: null,
+    skills: [],
     agentsResult: null,
     agentIdentities: {},
     usageTotals: null,
@@ -325,11 +328,23 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
         }
     },
 
+    fetchSkills: async () => {
+        try {
+            const response = await api.get<any[]>(API_ENDPOINTS.OMNICHANNEL.SKILLS.LIST);
+            if (response.success) {
+                set({ skills: response.data });
+            }
+        } catch (err) {
+            console.error('Failed to fetch skills:', err);
+        }
+    },
+
     toggleSkill: async (key, enabled) => {
         try {
             const response = await api.post(API_ENDPOINTS.OMNICHANNEL.SKILLS.TOGGLE(key), { enabled });
             if (response.success) {
                 await get().fetchSkillReport();
+                await get().fetchSkills();
                 return true;
             }
         } catch (err) {
@@ -353,6 +368,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
             const response = await api.post(API_ENDPOINTS.OMNICHANNEL.SKILLS.INSTALL(key), { installId });
             if (response.success) {
                 await get().fetchSkillReport();
+                await get().fetchSkills();
                 return true;
             }
         } catch (err) {

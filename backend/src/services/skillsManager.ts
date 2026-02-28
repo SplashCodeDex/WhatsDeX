@@ -1,5 +1,6 @@
 // @ts-ignore
 import { loadWorkspaceSkillEntries } from '../../../openclaw/src/agents/skills/workspace.js';
+import { toolRegistry } from './toolRegistry.js';
 import logger from '@/utils/logger.js';
 
 /**
@@ -19,17 +20,40 @@ export class SkillsManager {
   }
 
   /**
-   * Lists all available skills from OpenClaw.
+   * Lists all available skills from the Unified Tool Registry.
+   * This includes enriched schemas for FlowBuilder.
    */
   public async listAvailableSkills(): Promise<any[]> {
     try {
-      const skills = await (loadWorkspaceSkillEntries as any)();
-      return skills;
+      // Use the Unified Registry as the source of truth for "active" skills
+      const tools = toolRegistry.getAllTools();
+
+      // Also get the status report for installation/dependency info
+      const statusEntries = await (loadWorkspaceSkillEntries as any)();
+
+      return tools.map(tool => {
+        const status = statusEntries.find((s: any) => s.name === tool.name || s.skillKey === tool.name);
+        return {
+          id: tool.name,
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters,
+          source: tool.source,
+          category: tool.category || (tool.source === 'openclaw' ? 'Intelligence' : 'System'),
+          emoji: status?.emoji || (tool.source === 'openclaw' ? '🧠' : '⚙️'),
+          status: status ? {
+            disabled: status.disabled,
+            missing: status.missing,
+            install: status.install
+          } : undefined
+        };
+      });
     } catch (error) {
       logger.error('Failed to list available skills:', error);
       return [];
     }
   }
+...
 
   /**
    * Checks if a tenant is eligible for a specific skill based on their tier.

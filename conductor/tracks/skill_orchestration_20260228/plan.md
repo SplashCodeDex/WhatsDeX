@@ -5,7 +5,7 @@ This plan outlines the integration of the Intelligence Store with the FlowBuilde
 ## Phase 1: Shared Capabilities Foundation
 Goal: Ensure skill definitions and metadata are available globally in the frontend.
 
-- [ ] Task: Shared Zustand Store.
+- [~] Task: Shared Zustand Store.
     - [ ] Create/Update `useOmnichannelStore` to include a `skills` array and `fetchSkills` action.
     - [ ] Refactor `Intelligence Store` page to consume this shared state.
 - [ ] Task: Backend Schema Enrichment.

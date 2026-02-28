@@ -61,9 +61,9 @@ walk(rootDir, (filePath) => {
         }
     }
 
-    // 3. Service Renames: multiBotService -> multiTenantBotService
-    if (content.includes('multiBotService')) {
-        content = content.replace(/multiBotService/g, 'multiTenantBotService');
+    // 3. Service Renames: bot services -> channelService
+    if (content.includes('multiBotService') || content.includes('multiTenantBotService')) {
+        content = content.replace(/multiBotService|multiTenantBotService/g, 'channelService');
         modified = true;
     }
 

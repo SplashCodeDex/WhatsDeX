@@ -3,6 +3,7 @@ import { ChannelAdapter, InboundMessageEvent } from '../ChannelAdapter.js';
 import AuthSystem from '@/services/authSystem.js';
 import logger from '@/utils/logger.js';
 import { eventHandler } from '@/services/eventHandler.js';
+import QRCode from 'qrcode';
 
 // @ts-ignore
 import { sendMessageWhatsApp, sendReactionWhatsApp, sendPollWhatsApp } from '../../../../../openclaw/src/web/outbound.js';
@@ -20,6 +21,7 @@ export class WhatsappAdapter implements ChannelAdapter {
   private authSystem: AuthSystem;
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
   private socket: any = null;
+  private qrCodeUrl: string | null = null;
 
   constructor(private tenantId: string, private channelId: string, fullPath?: string) {
     this.instanceId = channelId;
@@ -53,6 +55,35 @@ export class WhatsappAdapter implements ChannelAdapter {
     // MASTERMIND Goodie: Bind EventHandler for Anti-Call and Group Sync
     eventHandler.bind(this.socket);
 
+    // MASTERMIND Goodie: Listen for QR codes and convert to DataURL for UI
+    this.authSystem.on('qr', async (qr) => {
+      try {
+        this.qrCodeUrl = await QRCode.toDataURL(qr);
+      } catch (err) {
+        logger.error('Failed to generate QR DataURL', err);
+      }
+    });
+
+    // MASTERMIND Goodie: Automatic Phone Number Discovery
+    this.socket.ev.on('connection.update', async (update: any) => {
+      if (update.connection === 'open' && update.me?.id) {
+        this.qrCodeUrl = null; // Clear QR on success
+        const phoneNumber = update.me.id.split(':')[0];
+        logger.info(`Channel ${this.channelId} connected with number: ${phoneNumber}`);
+        
+        try {
+          const { channelService } = await import('@/services/ChannelService.js');
+          let agentId = 'system_default';
+          if (this.fullPath && this.fullPath.includes('/agents/')) {
+            agentId = this.fullPath.split('/')[3];
+          }
+          await channelService.updateChannel(this.tenantId, this.channelId, { phoneNumber }, agentId);
+        } catch (e) {
+          logger.error(`Failed to update discovered phone number for ${this.channelId}`, e);
+        }
+      }
+    });
+
     // Register active web listener for OpenClaw's outbound pipeline
     const listener: ActiveWebListener = {
       sendMessage: async (to: string, text: string, mediaBuffer?: Buffer, mediaType?: string, options?: ActiveWebSendOptions) => {
@@ -77,6 +108,19 @@ export class WhatsappAdapter implements ChannelAdapter {
           payload.text = text;
         }
         const result = await this.socket.sendMessage(to, payload);
+        
+        // Track stats
+        try {
+          const { channelService } = await import('@/services/ChannelService.js');
+          let agentId = 'system_default';
+          if (this.fullPath && this.fullPath.includes('/agents/')) {
+            agentId = this.fullPath.split('/')[3];
+          }
+          await channelService.incrementChannelStat(this.tenantId, this.channelId, 'messagesSent', agentId);
+        } catch (e) {
+          logger.warn('Failed to increment stats in WhatsappAdapter', e);
+        }
+
         return { messageId: result?.key?.id || '' };
       },
       sendPoll: async (to: string, poll: any) => {
@@ -156,6 +200,18 @@ export class WhatsappAdapter implements ChannelAdapter {
       accountId: this.channelId,
       mediaUrl
     });
+
+    // Track stats
+    try {
+      const { channelService } = await import('@/services/ChannelService.js');
+      let agentId = 'system_default';
+      if (this.fullPath && this.fullPath.includes('/agents/')) {
+        agentId = this.fullPath.split('/')[3];
+      }
+      await channelService.incrementChannelStat(this.tenantId, this.channelId, 'messagesSent', agentId);
+    } catch (e) {
+      logger.warn('Failed to increment stats in WhatsappAdapter', e);
+    }
   }
 
   public async sendReaction(chatJid: string, messageId: string, emoji: string): Promise<void> {
@@ -185,5 +241,21 @@ export class WhatsappAdapter implements ChannelAdapter {
 
   public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {
     this.messageHandler = handler;
+  }
+
+  /**
+   * Get the current QR code image URL
+   */
+  public getQR(): string | null {
+    return this.qrCodeUrl;
+  }
+
+  /**
+   * Request a pairing code
+   */
+  public async requestPairingCode(phoneNumber: string): Promise<string> {
+    const result = await this.authSystem.getPairingCode(phoneNumber);
+    if (!result.success) throw result.error;
+    return result.data;
   }
 }

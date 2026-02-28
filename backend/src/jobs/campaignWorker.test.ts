@@ -1,18 +1,19 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { getCampaignWorker } from './campaignWorker.js';
 import { firebaseService } from '../services/FirebaseService.js';
-import { multiTenantBotService } from '../services/multiTenantBotService.js';
+import { channelManager } from '../services/channels/ChannelManager.js';
 import { TemplateService } from '../services/templateService.js';
 
 // Hoist mocks
-const { mockFirebase, mockBotService, mockTemplateService } = vi.hoisted(() => ({
+const { mockFirebase, mockChannelManager, mockTemplateService } = vi.hoisted(() => ({
   mockFirebase: {
     getDoc: vi.fn(),
     getCollection: vi.fn(),
     setDoc: vi.fn(),
   },
-  mockBotService: {
-    sendMessage: vi.fn(),
+  mockChannelManager: {
+    getAdapter: vi.fn(),
+    getRegisteredChannelKeys: vi.fn(),
   },
   mockTemplateService: {
     getTemplate: vi.fn(),
@@ -25,8 +26,8 @@ vi.mock('../services/FirebaseService.js', () => ({
   FirebaseService: { getInstance: () => mockFirebase }
 }));
 
-vi.mock('../archive/multiTenantBotService.js', () => ({
-  multiTenantBotService: mockBotService
+vi.mock('../services/channels/ChannelManager.js', () => ({
+  channelManager: mockChannelManager
 }));
 
 vi.mock('../services/templateService.js', () => ({
@@ -64,12 +65,11 @@ describe('CampaignWorker throttling', () => {
       id: 'camp_1',
       templateId: 'tpl_1',
       audience: { type: 'audience', targetId: 'aud_1' },
-      distribution: { type: 'single', botId: 'bot_1' },
-      antiBan: { minDelay: 1, maxDelay: 2, aiSpinning: false },
+      distribution: { type: 'single', botId: 'chan_1' },
+      antiBan: { minDelay: 1, maxDelay: 2, aiSpinning: false, batchSize: 0 },
       stats: { sent: 0, failed: 0 }
     };
 
-    const mockBots = [{ id: 'bot_1', status: 'connected' }];
     const mockContacts = [
       { phone: '111', name: 'U1' },
       { phone: '222', name: 'U2' }
@@ -77,13 +77,17 @@ describe('CampaignWorker throttling', () => {
 
     mockFirebase.getDoc.mockResolvedValue(campaign);
     mockFirebase.getCollection.mockImplementation(async (col) => {
-        if (col === 'bots') return mockBots;
         if (col === 'contacts') return mockContacts;
         return [];
     });
 
     mockTemplateService.getTemplate.mockResolvedValue({ success: true, data: { content: 'Hi' } });
-    mockBotService.sendMessage.mockResolvedValue({ success: true });
+    
+    const mockAdapter = {
+        sendMessage: vi.fn().mockResolvedValue(undefined)
+    };
+    mockChannelManager.getAdapter.mockReturnValue(mockAdapter);
+    mockChannelManager.getRegisteredChannelKeys.mockReturnValue(['chan_1']);
 
     // Use getter for the lazy singleton
     const worker = getCampaignWorker() as any;
@@ -93,13 +97,13 @@ describe('CampaignWorker throttling', () => {
 
     // Wait for first message and delay start
     await vi.advanceTimersByTimeAsync(0); 
-    expect(mockBotService.sendMessage).toHaveBeenCalledTimes(1);
+    expect(mockAdapter.sendMessage).toHaveBeenCalledTimes(1);
 
     // Advance past the first delay (1-2s)
     await vi.advanceTimersByTimeAsync(2000);
     
     // Should have sent the second message
     await promise; 
-    expect(mockBotService.sendMessage).toHaveBeenCalledTimes(2);
+    expect(mockAdapter.sendMessage).toHaveBeenCalledTimes(2);
   });
 });

@@ -2,7 +2,6 @@ import express, { Request, Response } from 'express';
 import multiTenantService from '../services/multiTenantService.js';
 import agentService from '../services/AgentService.js';
 import channelService from '../services/ChannelService.js';
-import multiTenantBotService from '../archive/multiTenantBotService.js';
 import logger from '../utils/logger.js';
 import initializeContext from '../lib/context.js';
 
@@ -310,7 +309,7 @@ router.post(['/agents/:agentId/channels/:id/connect', '/bots/:botId/connect'], a
         if (result.success) {
             res.json({ success: true, data: { message: 'Connection initiated' } });
         } else {
-            res.status(400).json({ success: false, error: result.error?.message || 'Connection failed' });
+            res.status(400).json({ success: false, error: result.error.message });
         }
     } catch (error: any) {
         logger.error('Route connect POST error', error);
@@ -349,16 +348,12 @@ router.get(['/agents/:agentId/channels/:id/qr', '/bots/:botId/qr'], async (req: 
     try {
         const tenantId = req.user?.tenantId;
         const id = (req.params.id || req.params.botId) as string;
+        const agentId = req.params.agentId || 'system_default';
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        // Ensure bot is started/connecting to generate QR
-        if (!multiTenantBotService.hasActiveBot(id)) {
-            await multiTenantBotService.startBot(tenantId, id);
-        }
-
-        const qrCode = multiTenantBotService.getBotQR(id);
+        const qrCode = channelService.getChannelQR(id);
         if (qrCode) {
             res.json({ success: true, data: { qrCode } });
         } else {
@@ -377,6 +372,7 @@ router.post(['/agents/:agentId/channels/:id/pairing-code', '/bots/:botId/pairing
     try {
         const tenantId = req.user?.tenantId;
         const id = (req.params.id || req.params.botId) as string;
+        const agentId = req.params.agentId || 'system_default';
         const { phoneNumber } = req.body;
 
         if (!tenantId) {
@@ -386,7 +382,7 @@ router.post(['/agents/:agentId/channels/:id/pairing-code', '/bots/:botId/pairing
             return res.status(400).json({ success: false, error: 'Phone number is required' });
         }
 
-        const result = await multiTenantBotService.requestPairingCode(tenantId, id, phoneNumber);
+        const result = await channelService.requestPairingCode(tenantId, id, phoneNumber, agentId);
 
         if (result.success) {
             res.json({ success: true, data: { pairingCode: result.data } });
@@ -406,19 +402,23 @@ router.get(['/agents/:agentId/channels/:id/status', '/bots/:botId/status'], asyn
     try {
         const tenantId = req.user?.tenantId;
         const id = (req.params.id || req.params.botId) as string;
+        const agentId = req.params.agentId || 'system_default';
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const isActive = multiTenantBotService.hasActiveBot(id);
-        const hasQR = !!multiTenantBotService.getBotQR(id);
+        const channelResult = await channelService.getChannel(tenantId, id, agentId);
+        if (!channelResult.success) return res.status(404).json({ success: false, error: 'Channel not found' });
+
+        const channel = channelResult.data;
+        const hasQR = !!channelService.getChannelQR(id);
 
         res.json({
             success: true,
             data: {
                 id: id,
-                status: isActive ? (hasQR ? 'connecting' : 'connected') : 'disconnected',
-                isActive,
+                status: channel.status,
+                isActive: channel.status === 'connected' || channel.status === 'connecting',
                 hasQR
             }
         });

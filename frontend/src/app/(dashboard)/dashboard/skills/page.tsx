@@ -33,7 +33,7 @@ import {
 import { Label } from '@/components/ui/label';
 
 export default function SkillsStorePage() {
-    const { skillReport, fetchSkillReport, toggleSkill, saveSkillKey, installSkill, isLoading } = useOmnichannelStore();
+    const { skills, skillReport, fetchSkillReport, fetchSkills, toggleSkill, saveSkillKey, installSkill, isLoading } = useOmnichannelStore();
     const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -44,7 +44,7 @@ export default function SkillsStorePage() {
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
-        await fetchSkillReport();
+        await Promise.all([fetchSkillReport(), fetchSkills()]);
         setIsRefreshing(false);
     };
 
@@ -52,7 +52,7 @@ export default function SkillsStorePage() {
         handleRefresh();
     }, []);
 
-    const filteredSkills = skillReport?.skills.filter(skill =>
+    const filteredSkills = skills.filter(skill =>
         skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         skill.description.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
@@ -134,12 +134,17 @@ export default function SkillsStorePage() {
                     </div>
                 ) : (
                     filteredSkills.map((skill) => {
-                        const accessible = canAccess(skill.skillKey);
-                        const isInstalled = skill.missing.bins.length === 0;
-                        const needsKey = Boolean(skill.primaryEnv);
+                        const skillKey = skill.skillKey || skill.id || skill.name;
+                        const accessible = canAccess(skillKey);
+                        // Find extra status info from report if available
+                        const statusInfo = skillReport?.skills.find(s => s.skillKey === skillKey || s.name === skill.name);
+                        
+                        const isInstalled = statusInfo ? statusInfo.missing.bins.length === 0 : true;
+                        const isDisabled = statusInfo ? statusInfo.disabled : false;
+                        const needsKey = Boolean(statusInfo?.primaryEnv || skill.primaryEnv);
 
                         return (
-                            <Card key={skill.skillKey} className={cn(
+                            <Card key={skillKey} className={cn(
                                 "flex flex-col border-border/50 bg-card transition-all hover:shadow-md",
                                 !accessible && "opacity-75 grayscale-[0.5]"
                             )}>
@@ -151,13 +156,13 @@ export default function SkillsStorePage() {
                                             </div>
                                             <div>
                                                 <CardTitle className="text-lg">{skill.name}</CardTitle>
-                                                <CardDescription className="text-xs">{skill.source}</CardDescription>
+                                                <CardDescription className="text-xs">{skill.source || 'OpenClaw'}</CardDescription>
                                             </div>
                                         </div>
                                         {!accessible && (
                                             <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20">
                                                 <Lock className="mr-1 h-3 w-3" />
-                                                {isEnterpriseSkill(skill.skillKey) ? 'Enterprise' : 'Pro'}
+                                                {isEnterpriseSkill(skillKey) ? 'Enterprise' : 'Pro'}
                                             </Badge>
                                         )}
                                     </div>
@@ -168,7 +173,7 @@ export default function SkillsStorePage() {
                                     </p>
 
                                     <div className="space-y-2">
-                                        {skill.missing.bins.map(bin => (
+                                        {statusInfo?.missing.bins.map(bin => (
                                             <div key={bin} className="flex items-center text-[10px] text-destructive">
                                                 <ShieldAlert className="mr-1 h-3 w-3" />
                                                 Missing dependency: {bin}
@@ -188,21 +193,21 @@ export default function SkillsStorePage() {
                                             <>
                                                 {isInstalled ? (
                                                     <Button
-                                                        variant={skill.disabled ? "default" : "outline"}
+                                                        variant={isDisabled ? "default" : "outline"}
                                                         className="flex-1"
-                                                        onClick={() => handleToggle(skill.skillKey, skill.disabled)}
+                                                        onClick={() => handleToggle(skillKey, isDisabled)}
                                                     >
-                                                        {skill.disabled ? 'Enable Skill' : 'Disable Skill'}
+                                                        {isDisabled ? 'Enable Skill' : 'Disable Skill'}
                                                     </Button>
                                                 ) : (
-                                                    skill.install.length > 0 && skill.install[0] && (
+                                                    statusInfo?.install && statusInfo.install.length > 0 && statusInfo.install[0] && (
                                                         <Button
                                                             variant="default"
                                                             className="flex-1"
-                                                            onClick={() => handleInstall(skill.skillKey, skill.install[0]!.id)}
+                                                            onClick={() => handleInstall(skillKey, statusInfo.install[0]!.id)}
                                                         >
                                                             <Download className="mr-2 h-4 w-4" />
-                                                            Install {skill.install[0]!.label}
+                                                            Install {statusInfo.install[0]!.label}
                                                         </Button>
                                                     )
                                                 )}
@@ -210,7 +215,7 @@ export default function SkillsStorePage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => { setSelectedSkillKey(skill.skillKey); setKeyDialogOpen(true); }}
+                                                        onClick={() => { setSelectedSkillKey(skillKey); setKeyDialogOpen(true); }}
                                                         title="Configure API Key"
                                                     >
                                                         <Key className="h-4 w-4" />
@@ -223,9 +228,9 @@ export default function SkillsStorePage() {
                                             </Button>
                                         )}
                                     </div>
-                                    {skill.homepage && (
+                                    {(skill.homepage || statusInfo?.homepage) && (
                                         <a
-                                            href={skill.homepage}
+                                            href={skill.homepage || statusInfo?.homepage}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="text-[10px] text-muted-foreground hover:text-primary flex items-center self-center"

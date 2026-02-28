@@ -1,27 +1,23 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { getCampaignWorker } from './campaignWorker.js';
 import { firebaseService } from '../services/FirebaseService.js';
+import { channelManager } from '../services/channels/ChannelManager.js';
 import { groupService } from '../services/groupService.js';
-import { multiTenantBotService } from '../services/multiTenantBotService.js';
-import { TemplateService } from '../services/templateService.js';
 
 // Hoist mocks
-const { mockFirebase, mockGroupService, mockBotService, mockTemplateService } = vi.hoisted(() => ({
+const { mockFirebase, mockChannelManager, mockGroupService } = vi.hoisted(() => ({
   mockFirebase: {
     getDoc: vi.fn(),
     getCollection: vi.fn(),
     setDoc: vi.fn(),
   },
+  mockChannelManager: {
+    getAdapter: vi.fn(),
+    getRegisteredChannelKeys: vi.fn(),
+  },
   mockGroupService: {
-    syncAllGroups: vi.fn(),
     syncGroup: vi.fn(),
-  },
-  mockBotService: {
-    sendMessage: vi.fn(),
-    getBotSocket: vi.fn(),
-  },
-  mockTemplateService: {
-    getTemplate: vi.fn(),
+    syncAllGroups: vi.fn(),
   }
 }));
 
@@ -31,85 +27,58 @@ vi.mock('../services/FirebaseService.js', () => ({
   FirebaseService: { getInstance: () => mockFirebase }
 }));
 
+vi.mock('../services/channels/ChannelManager.js', () => ({
+  channelManager: mockChannelManager
+}));
+
 vi.mock('../services/groupService.js', () => ({
   groupService: mockGroupService
 }));
 
-vi.mock('../archive/multiTenantBotService.js', () => ({
-  multiTenantBotService: mockBotService
-}));
-
 vi.mock('../services/templateService.js', () => ({
-  TemplateService: { getInstance: () => mockTemplateService }
+  TemplateService: { getInstance: () => ({ getTemplate: vi.fn().mockResolvedValue({ success: true, data: { content: 'Hi' } }) }) }
 }));
 
-vi.mock('../services/webhookService.js', () => ({
-  webhookService: { dispatch: vi.fn().mockResolvedValue(undefined) }
-}));
-
-vi.mock('../services/socketService.js', () => ({
-  socketService: { emitProgress: vi.fn() }
-}));
-
-// Mock BullMQ Worker
 vi.mock('bullmq', () => ({
-  Worker: vi.fn().mockImplementation(function() {
-    return { on: vi.fn() };
-  })
+  Worker: vi.fn().mockImplementation(() => ({ on: vi.fn() }))
 }));
 
-describe('CampaignWorker Group Support', () => {
+describe('CampaignWorker group targeting', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should auto-sync groups if Firestore collection is empty', async () => {
+  it('should target specific groups and trigger sync if missing', async () => {
     const tenantId = 'tenant_1';
     const campaign = {
       id: 'camp_1',
       templateId: 'tpl_1',
-      audience: { type: 'groups', targetId: 'all' },
+      audience: { type: 'groups', targetId: 'group_123' },
       distribution: { type: 'pool' },
-      antiBan: { minDelay: 1, maxDelay: 2, aiSpinning: false, batchSize: 0 },
+      antiBan: { minDelay: 0, maxDelay: 0, aiSpinning: false, batchSize: 0 },
       stats: { sent: 0, failed: 0 }
     };
 
-    const mockBots = [{ id: 'bot_1', status: 'connected' }];
-    const mockGroups = [{ id: 'group_1@g.us', subject: 'Test Group' }];
+    // First call: group not found in Firestore
+    mockFirebase.getDoc.mockResolvedValueOnce(campaign); // processCampaign start
+    mockFirebase.getDoc.mockResolvedValueOnce(null); // loadTargets check for group_123
+    
+    // Second call: group found after sync
+    mockFirebase.getDoc.mockResolvedValueOnce({ id: 'group_123', subject: 'Test Group' });
 
-    mockFirebase.getDoc.mockImplementation(async (col, id) => {
-        if (col === 'campaigns') return campaign;
-        return null;
-    });
+    mockChannelManager.getRegisteredChannelKeys.mockReturnValue(['chan_1']);
+    const mockAdapter = { 
+        socket: {}, 
+        sendMessage: vi.fn().mockResolvedValue(undefined) 
+    };
+    mockChannelManager.getAdapter.mockReturnValue(mockAdapter);
 
-    mockFirebase.getCollection.mockImplementation(async (col) => {
-        if (col === 'bots') return mockBots;
-        if (col === 'groups') {
-            // Return empty first, then return mockGroups after sync
-            if (mockGroupService.syncAllGroups.mock.calls.length > 0) {
-                return mockGroups;
-            }
-            return [];
-        }
-        return [];
-    });
+    const worker = getCampaignWorker() as any;
+    await worker.processCampaign({ data: { tenantId, campaign } } as any);
 
-    mockTemplateService.getTemplate.mockResolvedValue({ success: true, data: { content: 'Hi' } });
-    mockBotService.sendMessage.mockResolvedValue({ success: true });
-    mockBotService.getBotSocket.mockReturnValue({ id: 'bot_1', tenantId, botId: 'bot_1' });
-
-    const campaignWorkerInstance = getCampaignWorker() as any;
-
-    const expectedActiveBot = { id: 'bot_1', tenantId, botId: 'bot_1' };
-    mockBotService.getBotSocket.mockReturnValue(expectedActiveBot);
-
-    await campaignWorkerInstance.processCampaign({ data: { tenantId, campaign } } as any);
-
-    expect(mockGroupService.syncAllGroups).toHaveBeenCalledWith(expectedActiveBot);
-    expect(mockBotService.sendMessage).toHaveBeenCalledWith(
-        tenantId,
-        'bot_1',
-        expect.objectContaining({ to: 'group_1@g.us' })
-    );
+    // Verify sync was called
+    expect(mockGroupService.syncGroup).toHaveBeenCalledWith(mockAdapter.socket, 'group_123');
+    // Verify message sent to group JID
+    expect(mockAdapter.sendMessage).toHaveBeenCalledWith('group_123', expect.anything());
   });
 });

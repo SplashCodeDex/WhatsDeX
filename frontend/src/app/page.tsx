@@ -11,7 +11,7 @@ export default function HomePage(): React.JSX.Element {
             <section className="relative h-screen w-full flex-col overflow-hidden bg-background">
                 {/* 3D Background */}
                 <SplineRobot
-                    sceneUrl="https://prod.spline.design/wAHkVb0vEq1OPkK5/scene.splinecode"
+                    sceneUrl="https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
                     className="absolute inset-0 z-0"
                 />
 
@@ -41,18 +41,7 @@ export default function HomePage(): React.JSX.Element {
                     </div>
                 </nav>
 
-                {/* Overlay Text - Positioned at the bottom to let the robot shine */}
-                <div className="absolute inset-0 z-10 pointer-events-none flex flex-col items-center justify-end pb-24 md:pb-32 px-4 text-center">
-                    <h1 className="mb-4 text-4xl font-bold tracking-tight text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] sm:text-5xl md:text-6xl">
-                        Manage WhatsApp Bots{' '}
-                        <span className="text-primary-400 drop-shadow-[0_0_15px_rgba(var(--color-primary-500),0.8)]">
-                            Like a Pro
-                        </span>
-                    </h1>
-                    <p className="mx-auto max-w-2xl text-lg text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] md:text-xl">
-                        The all-in-one platform for creating, deploying, and managing automation at scale.
-                    </p>
-                </div>
+                {/* Overlay Text - Intentionally empty to let the robot shine, text is handled via the Spline canvas */}
             </section>
 
             {/* Features Section */}

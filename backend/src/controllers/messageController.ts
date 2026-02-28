@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import logger from '../utils/logger.js';
-import multiTenantBotService from '../archive/multiTenantBotService.js';
+import { channelManager } from '../services/channels/ChannelManager.js';
 import { db } from '../lib/firebase.js';
 
 // Validation Schemas
@@ -68,19 +68,17 @@ export class MessageController {
             }
 
             const originalMessage = messageSnap.data() as any;
+            const channelId = originalMessage.channelId || originalMessage.botId;
 
-            // 2. Send via the SAME bot/channel
-            const result = await multiTenantBotService.sendMessage(tenantId, originalMessage.botId, {
-                to: originalMessage.remoteJid,
-                text: text,
-                type: 'text'
-            });
-
-            if (result.success) {
-                res.json({ success: true, data: result.data });
-            } else {
-                res.status(400).json({ success: false, error: result.error?.message });
+            // 2. Send via the SAME channel
+            const adapter = channelManager.getAdapter(channelId);
+            if (!adapter) {
+                return res.status(400).json({ success: false, error: 'Channel not connected or inactive' });
             }
+
+            await adapter.sendMessage(originalMessage.remoteJid, { text });
+
+            res.json({ success: true, data: { message: 'Reply sent' } });
 
         } catch (error: any) {
             if (error instanceof z.ZodError) {
@@ -92,7 +90,7 @@ export class MessageController {
     }
 
     /**
-     * Send a message via a specific bot
+     * Send a message via a specific channel (bot)
      */
     static async sendMessage(req: Request, res: Response) {
         try {
@@ -101,25 +99,20 @@ export class MessageController {
 
             const payload = sendMessageSchema.parse(req.body);
 
-            // 1. Check if bot belongs to tenant
-            // (multiTenantBotService checks this internally or we trust the ID if we pass tenantId context)
+            // 1. Resolve Adapter
+            const adapter = channelManager.getAdapter(payload.botId);
+            if (!adapter) {
+                return res.status(400).json({ success: false, error: 'Channel not active' });
+            }
 
-            // 2. Send Message via Bot Service
-            const result = await multiTenantBotService.sendMessage(tenantId, payload.botId, {
-                to: payload.to,
+            // 2. Send Message
+            await adapter.sendMessage(payload.to, {
                 text: payload.message || '',
-                type: payload.type,
-                url: payload.mediaUrl,
+                mediaUrl: payload.mediaUrl,
                 caption: payload.caption
             });
 
-            if (result.success) {
-                // 3. Log to Firestore (optional, if service doesn't do it)
-                // Ideally, the service handles storage. For now, we assume service returns success.
-                res.json({ success: true, data: result.data });
-            } else {
-                res.status(400).json({ success: false, error: result.error?.message });
-            }
+            res.json({ success: true, data: { status: 'sent' } });
 
         } catch (error: any) {
             if (error instanceof z.ZodError) {

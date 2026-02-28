@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
 import { MessageController } from './messageController.js';
-import multiTenantBotService from '../archive/multiTenantBotService.js';
+import { channelManager } from '../services/channels/ChannelManager.js';
 import { db } from '../lib/firebase.js';
 
 // Mock dependencies
-vi.mock('../archive/multiTenantBotService.js', () => ({
-  default: {
-    sendMessage: vi.fn(),
+vi.mock('../services/channels/ChannelManager.js', () => ({
+  channelManager: {
+    getAdapter: vi.fn(),
   },
 }));
 
@@ -42,33 +42,32 @@ describe('MessageController', () => {
   });
 
   describe('reply', () => {
-    it('should send a reply via the last interacting bot', async () => {
+    it('should send a reply via the active channel adapter', async () => {
       mockReq.body = {
         messageId: 'msg-original',
         text: 'This is a reply'
       };
 
-      // Mock fetching the original message to find botId and sender
+      // Mock fetching the original message
       (db.collection('').doc('').get as any).mockResolvedValue({
         exists: true,
         data: () => ({ 
-          botId: 'bot-456', 
-          remoteJid: 'user-789@s.whatsapp.net',
-          channelType: 'whatsapp' 
+          botId: 'chan-456', 
+          remoteJid: 'user-789@s.whatsapp.net'
         }),
       });
 
-      (multiTenantBotService.sendMessage as any).mockResolvedValue({ success: true });
+      const mockAdapter = {
+        sendMessage: vi.fn().mockResolvedValue(undefined)
+      };
+      (channelManager.getAdapter as any).mockReturnValue(mockAdapter);
 
       await (MessageController as any).reply(mockReq as Request, mockRes as Response);
 
-      expect(multiTenantBotService.sendMessage).toHaveBeenCalledWith(
-        'tenant-123',
-        'bot-456',
-        expect.objectContaining({
-          to: 'user-789@s.whatsapp.net',
-          text: 'This is a reply'
-        })
+      expect(channelManager.getAdapter).toHaveBeenCalledWith('chan-456');
+      expect(mockAdapter.sendMessage).toHaveBeenCalledWith(
+        'user-789@s.whatsapp.net',
+        expect.objectContaining({ text: 'This is a reply' })
       );
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
     });

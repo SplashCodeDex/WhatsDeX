@@ -280,6 +280,41 @@ export class OmnichannelController {
     }
 
     // ═══════════════════════════════════════════════════════
+    //  SKILLS
+    // ═══════════════════════════════════════════════════════
+
+    /** GET /api/omnichannel/skills */
+    static async getSkills(req: Request, res: Response) {
+        try {
+            const { skillsManager } = await import('../services/skillsManager.js');
+            const { db } = await import('../lib/firebase.js');
+            
+            const tenantId = req.user?.tenantId;
+            if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+            const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+            const tier = tenantDoc.data()?.plan || 'starter';
+
+            const allSkills = await skillsManager.listAvailableSkills();
+
+            const data = await Promise.all(allSkills.map(async (skill) => {
+                const isEligible = await skillsManager.isTenantEligible(tenantId, skill.id, tier);
+                return {
+                    ...skill,
+                    isEligible,
+                    requiredTier: ['web-search', 'firecrawl', 'brave-search', 'perplexity'].includes(skill.id) ? 'pro' :
+                        ['coding-agent', 'custom-hooks'].includes(skill.id) ? 'enterprise' : 'starter'
+                };
+            }));
+
+            res.json({ success: true, data });
+        } catch (error: any) {
+            logger.error('OmnichannelController.getSkills', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
     //  LOGS
     // ═══════════════════════════════════════════════════════
 

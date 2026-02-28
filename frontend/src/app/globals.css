@@ -416,3 +416,13 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
 }
+
+/* Hide Spline Logo Watermark */
+#spline-logo,
+a[href*="splinetool.com"],
+a[href*="spline.design"],
+.spline-watermark {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
