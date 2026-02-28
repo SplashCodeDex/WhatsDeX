@@ -1,12 +1,12 @@
 # Implementation Plan: Resolve Systemic Frontend Build Failures
 
 ## Phase 1: Root Architecture Stabilization
-- [ ] **Task: Refactor Global Error Boundary**
-    - [ ] Rewrite `src/app/global-error.tsx` as a minimal, dependency-free React component.
-    - [ ] Remove all complex provider dependencies from the global error page.
-- [ ] **Task: Secure Provider Initialization**
-    - [ ] Update `src/lib/query/provider.tsx` to use a singleton pattern that is safe for both SSR and Hydration.
-    - [ ] Update `src/app/providers.tsx` to ensure all child providers are wrapped in a single `'use client'` entry point.
+- [x] **Task: Refactor Global Error Boundary** 11e424f
+    - [x] Rewrite `src/app/global-error.tsx` as a minimal, dependency-free React component.
+    - [x] Remove all complex provider dependencies from the global error page.
+- [x] **Task: Secure Provider Initialization** eabc3a3
+    - [x] Update `src/lib/query/provider.tsx` to use a singleton pattern that is safe for both SSR and Hydration.
+    - [x] Update `src/app/providers.tsx` to ensure all child providers are wrapped in a single `'use client'` entry point.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Root Architecture Stabilization' (Protocol in workflow.md)**
 
 ## Phase 2: Route Rendering Strategy
