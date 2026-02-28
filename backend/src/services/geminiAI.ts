@@ -386,7 +386,8 @@ Be intelligent - understand implied requests, context clues, and natural languag
     const personality = bot.config.aiPersonality || 'a professional assistant';
 
     const learnedContext = context.learnedFacts?.length > 0
-      ? "\n[WHAT I'VE LEARNED ABOUT THIS USER]:\n" + context.learnedFacts.map((f: any) => `- ${f.content}`).join('\n')
+      ? "\n[WHAT I'VE LEARNED ABOUT THIS USER (IMPORTANT)]:\n" +
+        context.learnedFacts.map((f: any) => `- ${f.content} (Extracted: ${new Date(f.extractedAt).toLocaleDateString()})`).join('\n')
       : '';
 
     const systemPrompt = `You are a high-intelligence AI agent.
@@ -394,8 +395,17 @@ Role: ${personality}
 Context: Acting on behalf of ${bot.user?.name ?? 'WhatsDeX'}.
 Current Time: ${new Date().toLocaleString()}
 Work on behalf of the customer. Use the tools provided when necessary.
-${historicalContext}
+
 ${learnedContext}
+
+${historicalContext}
+
+INSTRUCTIONS:
+- Use the "WHAT I'VE LEARNED ABOUT THIS USER" section to personalize your responses.
+- If the user provides new information that contradicts old facts, prioritize the newer information.
+- Maintain the persona of ${personality} at all times.
+- Be proactive and helpful.
+
 Respond appropriately based on your role.`;
 
     const conversationPrompt = `

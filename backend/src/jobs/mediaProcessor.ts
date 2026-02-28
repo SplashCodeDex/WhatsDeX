@@ -2,7 +2,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { promises as fs } from 'fs';
 import logger from '../utils/logger.js';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 
 /**
  * Media Processing Job Handlers
@@ -87,6 +87,29 @@ class MediaProcessor {
       logger.debug('Media processing directories ensured');
     } catch (error: any) {
       logger.error('Failed to create media processing directories', { error: error.message });
+    }
+  }
+
+  /**
+   * Main handler for BullMQ jobs
+   */
+  async handle(job: Job): Promise<any> {
+    switch (job.name) {
+      case 'optimize-image':
+        return this.processImageOptimization(job.data, job);
+      case 'batch-optimize':
+        return this.processBatchImageProcessing(job.data, job);
+      case 'video-thumbnail':
+        return this.processVideoThumbnail(job.data, job);
+      case 'file-conversion':
+        return this.processFileConversion(job.data, job);
+      case 'media-cleanup':
+        return this.processMediaCleanup(job.data, job);
+      case 'media-analytics':
+        return this.processMediaAnalytics(job.data, job);
+      default:
+        logger.warn(`MediaProcessor received unknown job name: ${job.name}`);
+        return { success: false, error: 'Unknown job name' };
     }
   }
 
@@ -232,7 +255,7 @@ class MediaProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / images.length) * 100);
+        await job.updateProgress(((i + 1) / images.length) * 100);
       }
 
       const successful = results.filter(r => r.success).length;
@@ -409,16 +432,6 @@ class MediaProcessor {
         outputFormat,
         inputSize: inputStats.size,
         outputSize: outputStats.size,
-      };
-
-      return {
-        success: true,
-        inputPath,
-        outputPath,
-        inputFormat: inputExt,
-        outputFormat,
-        inputSize: inputStats.size,
-        outputSize: outputStats.size,
         processingTime,
       };
     } catch (error: any) {
@@ -562,17 +575,11 @@ class MediaProcessor {
       }
       const toGB = (bytes: number) => `${(bytes / (1024 * 1024 * 1024)).toFixed(2)}GB`;
 
-      // Additionally compute average processing time and success rate from analytics table (last 30d or provided)
-      const avgProcessing: number | null = null;
-      const successRate: number | null = null;
-
       const analytics = {
         totalProcessed: files.length,
         imagesOptimized: images.length,
         videosProcessed: videos.length,
         storageUsed: toGB(totalSize),
-        averageProcessingTime: avgProcessing,
-        successRate,
         popularFormats: Array.from(new Set(files.map(f => path.extname(f).slice(1).toLowerCase()))).slice(0, 5),
         timeRange,
         generatedAt: new Date().toISOString(),

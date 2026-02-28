@@ -1,4 +1,4 @@
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import GeminiService from '../services/gemini.js';
 import logger from '../utils/logger.js';
 
@@ -57,6 +57,29 @@ class AIProcessor {
   }
 
   /**
+   * Main handler for BullMQ jobs
+   */
+  async handle(job: Job): Promise<any> {
+    const { type, data } = job.data;
+
+    switch (job.name) {
+      case 'generate-content':
+        return this.processContentGeneration(job.data, job);
+      case 'batch-analysis':
+        return this.processBatchAnalysis(job.data, job);
+      case 'content-moderation':
+        return this.processContentModeration(job.data, job);
+      case 'fine-tuning-data':
+        return this.processFineTuningData(job.data, job);
+      case 'performance-analytics':
+        return this.processPerformanceAnalytics(job.data, job);
+      default:
+        logger.warn(`AIProcessor received unknown job name: ${job.name}`);
+        return { success: false, error: 'Unknown job name' };
+    }
+  }
+
+  /**
    * Process AI content generation job
    * @param {Object} jobData - Job data
    * @param {Object} job - Bull job instance
@@ -101,12 +124,6 @@ class AIProcessor {
 
         default:
           result = await this.gemini.getChatCompletion(prompt);
-      }
-
-      // Store result in cache for faster retrieval
-      if (context?.cacheKey) {
-        // Implementation would depend on cache service
-        logger.debug('AI result cached', { cacheKey: context.cacheKey });
       }
 
       return {
@@ -202,7 +219,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / items.length) * 100);
+        await job.updateProgress(((i + 1) / items.length) * 100);
       }
 
       return {
@@ -321,7 +338,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / conversations.length) * 100);
+        await job.updateProgress(((i + 1) / conversations.length) * 100);
       }
 
       return {
@@ -404,7 +421,6 @@ Generate a JSON training example with the following format:
       });
 
       // This would analyze AI performance metrics
-      // For now, return mock analytics data
       const analytics = {
         totalRequests: 1250,
         averageResponseTime: 2.3,

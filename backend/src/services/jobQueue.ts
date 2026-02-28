@@ -1,22 +1,30 @@
-import Queue, { Job, JobOptions } from 'bull';
+import { Queue, Job, JobsOptions, QueueEvents } from 'bullmq';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
+import { Redis } from 'ioredis';
 
 interface QueueConfig {
   concurrency: number;
   priority: number;
 }
 
+const redisOptions = {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD || '',
+  maxRetriesPerRequest: null,
+};
+
 export class JobQueueService {
-  private queues: Map<string, Queue.Queue>;
-  private processors: Map<string, Function>;
+  private queues: Map<string, Queue>;
+  private queueEvents: Map<string, QueueEvents>;
   private isInitialized: boolean;
-  private defaultJobOptions: JobOptions;
+  private defaultJobOptions: JobsOptions;
   private queueConfigs: Record<string, QueueConfig>;
 
   constructor() {
     this.queues = new Map();
-    this.processors = new Map();
+    this.queueEvents = new Map();
     this.isInitialized = false;
 
     this.defaultJobOptions = {
@@ -34,44 +42,42 @@ export class JobQueueService {
       cleanup: { concurrency: 1, priority: 1 },
     };
 
-    logger.info('Job queue service initialized');
+    logger.info('Job queue service initialized (BullMQ)');
   }
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
     try {
-      logger.info('Initializing job queues...');
+      logger.info('Initializing BullMQ job queues...');
       for (const [queueName, config] of Object.entries(this.queueConfigs)) {
         await this.createQueue(queueName, config);
       }
       this.setupGlobalErrorHandlers();
       this.isInitialized = true;
-      logger.info('All job queues initialized successfully');
+      logger.info('All BullMQ job queues initialized successfully');
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Failed to initialize job queues', { error: err.message });
+      logger.error('Failed to initialize BullMQ job queues', { error: err.message });
       throw err;
     }
   }
 
-  async createQueue(queueName: string, config: Partial<QueueConfig> = {}): Promise<Queue.Queue> {
+  async createQueue(queueName: string, config: Partial<QueueConfig> = {}): Promise<Queue> {
     try {
       const queue = new Queue(queueName, {
-        redis: {
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          password: process.env.REDIS_PASSWORD || '',
-          db: parseInt(process.env.REDIS_DB || '0'),
-        },
+        connection: redisOptions,
         defaultJobOptions: {
           ...this.defaultJobOptions,
           priority: config.priority || 5,
         },
       });
 
+      const events = new QueueEvents(queueName, { connection: redisOptions });
+
       this.queues.set(queueName, queue);
-      this.setupQueueListeners(queue, queueName);
+      this.queueEvents.set(queueName, events);
+      this.setupQueueListeners(queue, events, queueName);
       logger.info(`Queue '${queueName}' created successfully`);
       return queue;
     } catch (error: unknown) {
@@ -81,23 +87,21 @@ export class JobQueueService {
     }
   }
 
-  private setupQueueListeners(queue: Queue.Queue, queueName: string): void {
-    queue.on('ready', () => logger.info(`Queue '${queueName}' is ready`));
-    queue.on('error', (error) => logger.error(`Queue '${queueName}' error`, { error: error.message }));
-    queue.on('waiting', (jobId) => logger.debug(`Job ${jobId} is waiting in queue '${queueName}'`));
-    queue.on('active', (job) => logger.debug(`Job ${job.id} started in queue '${queueName}'`, { jobName: job.data.jobName }));
-    queue.on('completed', (job, result) => {
-      logger.info(`Job ${job.id} completed in queue '${queueName}'`, {
-        jobName: job.data.jobName,
-        duration: job.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : 0,
-        result: typeof result === 'object' ? JSON.stringify(result) : result,
+  private setupQueueListeners(queue: Queue, events: QueueEvents, queueName: string): void {
+    // BullMQ Queue doesn't have 'ready' event like Bull
+    logger.info(`Queue '${queueName}' is ready`);
+
+    events.on('error', (error) => logger.error(`Queue '${queueName}' events error`, { error: error.message }));
+    events.on('waiting', ({ jobId }) => logger.debug(`Job ${jobId} is waiting in queue '${queueName}'`));
+    events.on('active', ({ jobId }) => logger.debug(`Job ${jobId} started in queue '${queueName}'`));
+    events.on('completed', ({ jobId, returnvalue }) => {
+      logger.info(`Job ${jobId} completed in queue '${queueName}'`, {
+        result: typeof returnvalue === 'object' ? JSON.stringify(returnvalue) : returnvalue,
       });
     });
-    queue.on('failed', (job, err) => {
-      logger.error(`Job ${job.id} failed in queue '${queueName}'`, {
-        jobName: job.data.jobName,
-        error: err.message,
-        attemptsMade: job.attemptsMade,
+    events.on('failed', ({ jobId, failedReason }) => {
+      logger.error(`Job ${jobId} failed in queue '${queueName}'`, {
+        error: failedReason,
       });
     });
   }
@@ -107,13 +111,13 @@ export class JobQueueService {
     process.on('SIGINT', async () => await this.closeAllQueues());
   }
 
-  async addJob(queueName: string, jobName: string, data: any = {}, options: JobOptions = {}): Promise<Result<Job>> {
+  async addJob(queueName: string, jobName: string, data: any = {}, options: JobsOptions = {}): Promise<Result<Job>> {
     try {
       const queue = this.queues.get(queueName);
       if (!queue) throw new Error(`Queue '${queueName}' not found`);
 
       const serializableData = JSON.parse(JSON.stringify(data));
-      const jobOptions = { ...this.defaultJobOptions, ...options, timestamp: Date.now() };
+      const jobOptions = { ...this.defaultJobOptions, ...options };
       const job = await queue.add(jobName, serializableData, jobOptions);
 
       logger.debug(`Job added to queue '${queueName}'`, { jobId: job.id, jobName });
@@ -132,10 +136,11 @@ export class JobQueueService {
 
       let count = 0;
       if (state === 'waiting') {
-        await queue.empty();
-        count = 0; // Bull's empty doesn't return count
+        await queue.drain();
+        count = 0; // drain doesn't return count
       } else {
-        const jobs = await queue.clean(0, state);
+        // BullMQ clean takes (grace, limit, type)
+        const jobs = await queue.clean(0, 1000, state);
         count = jobs.length;
       }
 
@@ -151,7 +156,12 @@ export class JobQueueService {
   async closeAllQueues(): Promise<void> {
     logger.info('Closing all job queues...');
     await Promise.all(Array.from(this.queues.values()).map(q => q.close()));
+    await Promise.all(Array.from(this.queueEvents.values()).map(e => e.close()));
     logger.info('All job queues closed');
+  }
+
+  public getQueue(queueName: string): Queue | undefined {
+    return this.queues.get(queueName);
   }
 }
 

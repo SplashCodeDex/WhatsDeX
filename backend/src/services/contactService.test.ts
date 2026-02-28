@@ -4,7 +4,7 @@ import { Readable } from 'stream';
 import fs from 'fs';
 
 const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
-    const mockBatchSet = vi.fn();
+    const mockBatchSet = vi.fn().mockReturnThis();
     const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
     const mockBatch = vi.fn(() => ({
         set: mockBatchSet,
@@ -14,6 +14,13 @@ const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
 });
 
 vi.mock('../lib/firebase.js', () => ({
+    admin: {
+        firestore: {
+            FieldValue: {
+                increment: vi.fn((n) => n)
+            }
+        }
+    },
     db: {
         batch: mockBatch,
         collection: vi.fn(() => ({
@@ -30,6 +37,7 @@ vi.mock('./FirebaseService.js', () => ({
     firebaseService: {
         getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
         setDoc: vi.fn().mockResolvedValue(undefined),
+        batch: mockBatch,
     }
 }));
 
@@ -69,23 +77,27 @@ describe('ContactService', () => {
       expect(mockBatchSet).toHaveBeenCalledTimes(2);
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.stringMatching(/^cont_/),
         expect.objectContaining({
           name: 'Doe, John',
           phone: '1234567890@s.whatsapp.net',
           email: 'john@example.com',
           tags: ['vip', 'lead'],
-        })
+        }),
+        tenantId
       );
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.stringMatching(/^cont_/),
         expect.objectContaining({
           name: 'Jane Doe',
           phone: '19876543210@s.whatsapp.net',
           email: 'jane@example.com',
           tags: ['new'],
-        })
+        }),
+        tenantId
       );
 
       // Verify bot stats update

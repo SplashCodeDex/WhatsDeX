@@ -207,6 +207,45 @@ export class FirebaseService {
       throw err;
     }
   }
+
+  /**
+   * Return a batch object for atomic operations
+   */
+  public batch() {
+    const firestoreBatch = db.batch();
+    return {
+      set: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string,
+        merge = true
+      ) => {
+        const { path } = this.getCollectionInfo(collection, tenantId);
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.set(docRef, data, { merge });
+        return this;
+      },
+      update: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string
+      ) => {
+        const { path } = this.getCollectionInfo(collection, tenantId);
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.update(docRef, data as any);
+        return this;
+      },
+      delete: (collection: string, docId: string, tenantId?: string) => {
+        const { path } = this.getCollectionInfo(collection, tenantId);
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.delete(docRef);
+        return this;
+      },
+      commit: () => firestoreBatch.commit()
+    };
+  }
 }
 
 export const firebaseService = FirebaseService.getInstance();
