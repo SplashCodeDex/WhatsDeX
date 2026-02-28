@@ -1,6 +1,6 @@
 # Implementation Plan: Resolve Systemic Frontend Build Failures
 
-## Phase 1: Root Architecture Stabilization
+## Phase 1: Root Architecture Stabilization [checkpoint: 78bde66]
 - [x] **Task: Refactor Global Error Boundary** 11e424f
     - [x] Rewrite `src/app/global-error.tsx` as a minimal, dependency-free React component.
     - [x] Remove all complex provider dependencies from the global error page.
@@ -10,12 +10,12 @@
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1: Root Architecture Stabilization' (Protocol in workflow.md)**
 
 ## Phase 2: Route Rendering Strategy
-- [ ] **Task: Configure Dynamic Dashboard Routes**
-    - [ ] Add `export const dynamic = 'force-dynamic'` to the root layout of the `(dashboard)` group.
-    - [ ] Verify that this bypasses static prerendering for all authenticated sub-pages.
-- [ ] **Task: Restore Skills Page**
-    - [ ] Re-enable the full `SkillsStorePage` component in `src/app/(dashboard)/dashboard/omnichannel/skills/page.tsx`.
-    - [ ] Verify that the `Tabs` and `useContext` errors are resolved.
+- [x] **Task: Configure Dynamic Dashboard Routes** 7c1e5bb
+    - [x] Add `export const dynamic = 'force-dynamic'` to the root layout of the `(dashboard)` group.
+    - [x] Verify that this bypasses static prerendering for all authenticated sub-pages.
+- [x] **Task: Restore Skills Page** 48082ea
+    - [x] Re-enable the full `SkillsStorePage` component in `src/app/(dashboard)/dashboard/omnichannel/skills/page.tsx`.
+    - [x] Verify that the `Tabs` and `useContext` errors are resolved.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Route Rendering Strategy' (Protocol in workflow.md)**
 
 ## Phase 3: Final Build & Validation
