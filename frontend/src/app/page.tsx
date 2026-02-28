@@ -8,14 +8,12 @@ export default function HomePage(): React.JSX.Element {
     return (
         <div className="flex min-h-screen flex-col">
             {/* Interactive 3D Hero Section */}
-            <section className="relative h-screen w-full flex-col overflow-hidden bg-background">
+            <section className="relative h-screen w-full flex-col bg-background">
                 {/* 3D Background */}
-                <div className="absolute inset-0 z-0 pointer-events-auto">
-                    <SplineRobot
-                        sceneUrl="https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
-                        className="w-full h-full"
-                    />
-                </div>
+                <SplineRobot
+                    sceneUrl="https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
+                    className="absolute inset-0 w-full h-full z-0"
+                />
 
                 {/* Floating Navigation */}
                 <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-6 md:px-12 md:py-8 pointer-events-none">
@@ -23,9 +21,9 @@ export default function HomePage(): React.JSX.Element {
                         <Image
                             src="/logo.png"
                             alt="WhatsDeX"
-                            width={160}
+                            width={40}
                             height={40}
-                            className="h-10 w-auto object-contain drop-shadow-md"
+                            className="h-10 w-10 drop-shadow-md"
                             priority
                         />
                     </Link>
