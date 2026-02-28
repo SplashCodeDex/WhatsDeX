@@ -25,5 +25,10 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ---
 
-- [x] **Track: Resolve Systemic Frontend Build Failures**
+## [x] Track: Resolve Systemic Frontend Build Failures
 *Link: [./tracks/frontend_build_fix_20260226/](./tracks/frontend_build_fix_20260226/)*
+
+---
+
+- [ ] **Track: Frontend SSR Optimization & Build Stabilization**
+*Link: [./tracks/frontend_ssr_optimization_20260228/](./tracks/frontend_ssr_optimization_20260228/)*
