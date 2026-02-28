@@ -58,15 +58,12 @@ function getQueryClient(): QueryClient {
 
 /**
  * Query Provider Component
- *
- * @example
- * // In root layout
- * <QueryProvider>
- *   {children}
- * </QueryProvider>
  */
 export function QueryProvider({ children }: QueryProviderProps): React.JSX.Element {
-    const queryClient = getQueryClient();
+    // 2026 Mastermind Note: Use useState to ensure the client is stable across re-renders
+    // and correctly initialized during the hydration pass.
+    // getQueryClient() is still used as a fallback for SSR safety if needed.
+    const [queryClient] = useState(() => getQueryClient());
 
     return (
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
