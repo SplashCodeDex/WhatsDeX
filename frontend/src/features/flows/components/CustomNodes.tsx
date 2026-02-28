@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { BaseNode } from './BaseNode';
-import { MessageSquare, Zap, GitBranch, Sparkles } from 'lucide-react';
+import { MessageSquare, Zap, GitBranch, Sparkles, Wrench, Route } from 'lucide-react';
 
 export function TriggerNode({ data, selected }: any) {
   return (
@@ -50,6 +50,32 @@ export function AINode({ data, selected }: any) {
         <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Agent Response</p>
         <div className="p-2 rounded-lg bg-purple-500/5 border border-purple-500/20 text-xs">
           Let AI decide the best response based on context.
+        </div>
+      </div>
+    </BaseNode>
+  );
+}
+
+export function SkillNode({ data, selected }: any) {
+  return (
+    <BaseNode title="Execute Skill" icon={<Wrench className="w-4 h-4" />} type="skill" selected={selected} executing={data.executing}>
+      <div className="space-y-2">
+        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">OpenClaw Engine</p>
+        <div className="p-2 rounded-lg bg-blue-500/5 border border-blue-500/20 text-xs font-semibold text-blue-400">
+          {data.skillName || 'Select Skill...'}
+        </div>
+      </div>
+    </BaseNode>
+  );
+}
+
+export function AIRouterNode({ data, selected }: any) {
+  return (
+    <BaseNode title="AI Router" icon={<Route className="w-4 h-4" />} type="ai_router" selected={selected} executing={data.executing}>
+      <div className="space-y-2">
+        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Semantic Intent</p>
+        <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs">
+          Routes based on AI understanding of user intent.
         </div>
       </div>
     </BaseNode>

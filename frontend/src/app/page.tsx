@@ -1,49 +1,57 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
+import { SplineRobot } from '@/components/landing/SplineRobot';
 
 export default function HomePage(): React.JSX.Element {
     return (
         <div className="flex min-h-screen flex-col">
-            {/* Hero Section */}
-            <section className="relative flex flex-1 flex-col items-center justify-center px-4 py-24">
-                {/* Background gradient */}
-                <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary-50 via-background to-background dark:from-primary-950/20" />
+            {/* Interactive 3D Hero Section */}
+            <section className="relative h-screen w-full flex-col overflow-hidden bg-background">
+                {/* 3D Background */}
+                <SplineRobot
+                    sceneUrl="https://prod.spline.design/wAHkVb0vEq1OPkK5/scene.splinecode"
+                    className="absolute inset-0 z-0"
+                />
 
-                {/* Glow effect */}
-                <div className="absolute left-1/2 top-0 -z-10 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-primary-500/20 blur-[100px]" />
+                {/* Floating Navigation */}
+                <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-6 md:px-12 md:py-8">
+                    <Link href="/" className="flex items-center gap-2">
+                        <Image
+                            src="/logo.png"
+                            alt="WhatsDeX"
+                            width={160}
+                            height={40}
+                            className="h-10 w-auto object-contain drop-shadow-md"
+                            priority
+                        />
+                    </Link>
 
-                <div className="mx-auto max-w-4xl text-center">
-                    {/* Badge */}
-                    <div className="mb-6 inline-flex items-center rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium text-muted-foreground shadow-sm">
-                        <span className="mr-2 inline-block h-2 w-2 rounded-full bg-success" />
-                        Now with Multi-Bot Support
+                    <div className="flex items-center gap-6">
+                        <Link href="/faq" className="hidden text-sm font-medium text-foreground/80 hover:text-primary-400 transition-colors md:block drop-shadow-sm">
+                            FAQs
+                        </Link>
+                        <Link href="/login" className="hidden text-sm font-medium text-foreground/80 hover:text-primary-400 transition-colors md:block drop-shadow-sm">
+                            Login
+                        </Link>
+                        <Button className="rounded-full shadow-lg hover:shadow-primary-500/25 transition-shadow" asChild>
+                            <Link href="/register">Get Started</Link>
+                        </Button>
                     </div>
+                </nav>
 
-                    {/* Heading */}
-                    <h1 className="mb-6 text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-                        Manage Your WhatsApp Bots{' '}
-                        <span className="bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                {/* Overlay Text - Positioned at the bottom to let the robot shine */}
+                <div className="absolute inset-0 z-10 pointer-events-none flex flex-col items-center justify-end pb-24 md:pb-32 px-4 text-center">
+                    <h1 className="mb-4 text-4xl font-bold tracking-tight text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] sm:text-5xl md:text-6xl">
+                        Manage WhatsApp Bots{' '}
+                        <span className="text-primary-400 drop-shadow-[0_0_15px_rgba(var(--color-primary-500),0.8)]">
                             Like a Pro
                         </span>
                     </h1>
-
-                    {/* Subheading */}
-                    <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground md:text-xl">
-                        WhatsDeX is the all-in-one platform for creating, deploying, and
-                        managing WhatsApp automation. Connect multiple accounts, automate
-                        messages, and scale your communication effortlessly.
+                    <p className="mx-auto max-w-2xl text-lg text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] md:text-xl">
+                        The all-in-one platform for creating, deploying, and managing automation at scale.
                     </p>
-
-                    {/* CTA Buttons */}
-                    <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                        <Button size="lg" asChild>
-                            <Link href="/register">Get Started Free</Link>
-                        </Button>
-                        <Button size="lg" variant="outline" asChild>
-                            <Link href="/login">Sign In</Link>
-                        </Button>
-                    </div>
                 </div>
             </section>
 

@@ -18,8 +18,11 @@ vi.mock('../lib/firebase.js', () => ({
         batch: mockBatch,
         collection: vi.fn(() => ({
             doc: vi.fn(() => ({
+                set: vi.fn().mockResolvedValue(undefined),
                 collection: vi.fn(() => ({
-                    doc: vi.fn(() => ({})), // Return a mock doc reference
+                    doc: vi.fn(() => ({
+                        set: vi.fn().mockResolvedValue(undefined),
+                    })),
                 })),
             })),
         })),

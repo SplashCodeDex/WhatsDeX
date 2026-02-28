@@ -6,7 +6,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [ ] *No active tracks currently.*
+- [ ] **Track: Phase 2: Visual Skill Orchestration**
+*Link: [./tracks/skill_orchestration_20260228/](./tracks/skill_orchestration_20260228/)*
 
 ---
 

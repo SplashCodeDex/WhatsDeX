@@ -219,6 +219,45 @@ export class ChannelService {
   }
 
   /**
+   * Resume all active channels across all tenants.
+   * STRICT: Used on server boot to restore connectivity.
+   */
+  async resumeActiveChannels(): Promise<void> {
+    logger.info('>>> [MASTERMIND] Resuming all active channels...');
+    try {
+      const { multiTenantService } = await import('./multiTenantService.js');
+      const tenants = await multiTenantService.listTenants();
+
+      let totalStarted = 0;
+
+      for (const tenant of tenants) {
+        if (tenant.status !== 'active') continue;
+
+        // Get all channels across all agents for this tenant
+        const channelsResult = await this.getAllChannelsAcrossAgents(tenant.id);
+        if (!channelsResult.success) continue;
+
+        for (const channel of channelsResult.data) {
+          // Restart channels that were previously connected or in error state (retry)
+          if (channel.status === 'connected' || channel.status === 'connecting' || channel.status === 'qr_pending') {
+            logger.info(`[ChannelService] Auto-starting channel ${channel.id} (${channel.name}) for tenant ${tenant.id}`);
+            
+            // Non-blocking start
+            this.startChannel(tenant.id, channel.id, channel.assignedAgentId).catch(err => {
+              logger.error(`[ChannelService] Failed to auto-start channel ${channel.id}:`, err);
+            });
+            totalStarted++;
+          }
+        }
+      }
+
+      logger.info(`[ChannelService] Successfully queued ${totalStarted} channels for resumption.`);
+    } catch (error) {
+      logger.error('[ChannelService] Critical error during channel resumption:', error);
+    }
+  }
+
+  /**
    * Update channel connectivity status
    */
   async updateStatus(tenantId: string, channelId: string, status: Channel['status'], agentId: string = 'system_default'): Promise<void> {

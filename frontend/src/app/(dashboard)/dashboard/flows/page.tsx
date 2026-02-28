@@ -17,8 +17,8 @@ import {
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
-import { TriggerNode, ActionNode, LogicNode, AINode } from '@/features/flows/components/CustomNodes';
-import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2, Send, Lock } from 'lucide-react';
+import { TriggerNode, ActionNode, LogicNode, AINode, SkillNode, AIRouterNode } from '@/features/flows/components/CustomNodes';
+import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2, Send, Lock, Wrench, Route } from 'lucide-react';
 import { api } from '@/lib/api/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -64,6 +64,8 @@ const nodeTypes = {
   action: ActionNode,
   logic: LogicNode,
   ai: AINode,
+  skill: SkillNode,
+  ai_router: AIRouterNode,
 };
 
 function FlowBuilder() {
@@ -87,30 +89,26 @@ function FlowBuilder() {
       try {
         const response = await api.get('/api/flows') as { success: boolean; data?: any[]; error?: any };
         if (response.success && Array.isArray(response.data) && response.data.length > 0) {
-          // Load the first active flow for now (can be expanded to a flow selector)
           const flow = response.data[0];
           if (flow.nodes && flow.nodes.length > 0) {
             setNodes(flow.nodes);
             setEdges(flow.edges || []);
           } else {
-            // Empty canvas if flow has no nodes
             setNodes([]);
             setEdges([]);
           }
         } else {
-          // If no flows exist, start with an empty canvas instead of the starter template
           setNodes([]);
           setEdges([]);
         }
       } catch (error) {
         toast.error('Failed to load flows');
-        // Fallback to empty canvas
         setNodes([]);
         setEdges([]);
       }
     };
     loadFlows();
-  }, [setNodes, setEdges]);
+  }, [isProFeatureOpen, setNodes, setEdges]);
 
   const selectedNode = useMemo(() => nodes.find(n => n.id === selectedNodeId), [nodes, selectedNodeId]);
 
@@ -163,7 +161,6 @@ function FlowBuilder() {
 
     setTestLogs([`User: ${testInput}`]);
 
-    // Find trigger node
     const trigger = nodes.find(n => n.type === 'trigger' && (n.data as any).keyword?.toLowerCase() === testInput.toLowerCase());
 
     if (!trigger) {
@@ -171,10 +168,8 @@ function FlowBuilder() {
       return;
     }
 
-    // Reset all nodes
     setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, executing: false } })));
 
-    // Execute path
     let currentNodeId = trigger.id;
     await executeSimulationStep(currentNodeId);
   };
@@ -183,28 +178,24 @@ function FlowBuilder() {
     const node = nodes.find(n => n.id === nodeId);
     if (!node) return;
 
-    // Highlight node
     setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, executing: true } } : n));
 
-    // Log action
     if (node.type === 'action') {
       setTestLogs(prev => [...prev, `Bot: ${(node.data as any).message || '(Empty Message)'}`]);
     } else if (node.type === 'trigger') {
       setTestLogs(prev => [...prev, `System: Trigger matched [${(node.data as any).keyword}]`]);
+    } else if (node.type === 'skill') {
+      setTestLogs(prev => [...prev, `System: Executing skill [${(node.data as any).skillName}]`]);
     }
 
-    // Wait for effect
     await new Promise(r => setTimeout(r, 1000));
 
-    // Find next nodes
     const outboundEdges = edges.filter(e => e.source === nodeId);
     for (const edge of outboundEdges) {
-      // Un-highlight current
       setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, executing: false } } : n));
       await executeSimulationStep(edge.target);
     }
 
-    // Final un-highlight
     setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, executing: false } } : n));
   };
 
@@ -223,7 +214,7 @@ function FlowBuilder() {
         return;
       }
 
-      const position = { x: event.clientX - 400, y: event.clientY - 200 }; // Offset for sidebar and header
+      const position = { x: event.clientX - 400, y: event.clientY - 200 };
       const newNode = {
         id: `node_${Date.now()}`,
         type,
@@ -278,7 +269,7 @@ function FlowBuilder() {
       <div className="w-64 border border-border/40 rounded-xl bg-card/30 backdrop-blur-md p-4 flex flex-col gap-4">
         <div>
           <h2 className="text-xs font-black uppercase tracking-tighter text-muted-foreground mb-4">Node Palette</h2>
-          <div className="space-y-2">
+          <div className="space-y-2 h-[450px] overflow-y-auto pr-1 custom-scrollbar">
             <div
               className="p-3 rounded-lg border border-border/40 bg-background/50 cursor-grab hover:border-green-500/50 transition-colors flex items-center gap-3 group"
               onDragStart={(e) => onDragStart(e, 'trigger')}
@@ -321,6 +312,28 @@ function FlowBuilder() {
                 <Sparkles className="w-4 h-4" />
               </div>
               <span className="text-xs font-bold uppercase tracking-tight group-hover:text-purple-500 transition-colors">Gemini AI</span>
+            </div>
+
+            <div
+              className="p-3 rounded-lg border border-border/40 bg-background/50 cursor-grab hover:border-sky-500/50 transition-colors flex items-center gap-3 group"
+              onDragStart={(e) => onDragStart(e, 'skill')}
+              draggable
+            >
+              <div className="p-1.5 rounded-md bg-sky-500/10 text-sky-500">
+                <Wrench className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-tight group-hover:text-sky-500 transition-colors">Execute Skill</span>
+            </div>
+
+            <div
+              className="p-3 rounded-lg border border-border/40 bg-background/50 cursor-grab hover:border-orange-500/50 transition-colors flex items-center gap-3 group"
+              onDragStart={(e) => onDragStart(e, 'ai_router')}
+              draggable
+            >
+              <div className="p-1.5 rounded-md bg-orange-500/10 text-orange-500">
+                <Route className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-tight group-hover:text-orange-500 transition-colors">AI Router</span>
             </div>
           </div>
         </div>
@@ -438,6 +451,27 @@ function FlowBuilder() {
                     <SelectContent>
                       <SelectItem value="is_premium">User is Premium</SelectItem>
                       <SelectItem value="has_tag">User has Tag</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {selectedNode.type === 'skill' && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground">OpenClaw Skill</label>
+                  <Select
+                    value={(selectedNode.data as any).skillName || ''}
+                    onValueChange={(val) => updateNodeData(selectedNode.id, { skillName: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a skill..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="youtubevideo">YouTube Downloader</SelectItem>
+                      <SelectItem value="dalle">AI Image Gen</SelectItem>
+                      <SelectItem value="weather">Real-time Weather</SelectItem>
+                      <SelectItem value="ocr">Image to Text (OCR)</SelectItem>
+                      <SelectItem value="web_search">Web Search</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

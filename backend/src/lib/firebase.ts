@@ -3,49 +3,61 @@ import { readFileSync } from 'fs';
 import { ConfigService } from '../services/ConfigService.js';
 import logger from '../utils/logger.js';
 
-let db: admin.firestore.Firestore;
-const config = ConfigService.getInstance();
+let _db: admin.firestore.Firestore | null = null;
 
+function getDbInstance(): admin.firestore.Firestore {
+    if (_db) return _db;
 
-try {
-    if (admin.apps.length === 0) {
-        // If we have service account in config/env, use it.
-        // Otherwise rely on ADC (Application Default Credentials)
-        const options: any = {};
+    const config = ConfigService.getInstance();
 
-        // Check if we have explicit config path in env
-        const serviceAccountPath = config.get('FIREBASE_SERVICE_ACCOUNT_PATH');
-        const projectId = config.get('FIREBASE_PROJECT_ID');
-        const clientEmail = config.get('FIREBASE_CLIENT_EMAIL');
-        const privateKey = config.get('FIREBASE_PRIVATE_KEY');
+    try {
+        if (admin.apps.length === 0) {
+            const options: any = {};
 
-        if (serviceAccountPath) {
-            const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
-            options.credential = admin.credential.cert(serviceAccount);
-            options.projectId = serviceAccount.project_id || projectId;
-        } else if (projectId && clientEmail && privateKey) {
-            options.credential = admin.credential.cert({
-                projectId,
-                clientEmail,
-                privateKey: privateKey.replace(/\\n/g, '\n'),
-            });
-            options.projectId = projectId;
-        } else {
-            // ADC is only used as a fallback and it's handled here to avoid blocking hangs
-            options.credential = admin.credential.applicationDefault();
-            if (projectId) {
+            const serviceAccountPath = config.get('FIREBASE_SERVICE_ACCOUNT_PATH');
+            const projectId = config.get('FIREBASE_PROJECT_ID');
+            const clientEmail = config.get('FIREBASE_CLIENT_EMAIL');
+            const privateKey = config.get('FIREBASE_PRIVATE_KEY');
+
+            if (serviceAccountPath) {
+                const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
+                options.credential = admin.credential.cert(serviceAccount);
+                options.projectId = serviceAccount.project_id || projectId;
+            } else if (projectId && clientEmail && privateKey) {
+                options.credential = admin.credential.cert({
+                    projectId,
+                    clientEmail,
+                    privateKey: privateKey.replace(/\\n/g, '\n'),
+                });
                 options.projectId = projectId;
+            } else {
+                options.credential = admin.credential.applicationDefault();
+                if (projectId) {
+                    options.projectId = projectId;
+                }
             }
-        }
 
-        admin.initializeApp(options);
-        logger.info(`🔥 Firebase Admin Initialized (Project: ${options.projectId || 'ADC'})`);
+            admin.initializeApp(options);
+            logger.info(`🔥 Firebase Admin Initialized (Project: ${options.projectId || 'ADC'})`);
+        }
+        _db = admin.firestore();
+        _db.settings({ ignoreUndefinedProperties: true });
+        return _db;
+    } catch (error: any) {
+        logger.error('Failed to initialize Firebase:', error);
+        throw error;
     }
-    db = admin.firestore();
-    db.settings({ ignoreUndefinedProperties: true });
-} catch (error: any) {
-    logger.error('Failed to initialize Firebase:', error);
-    throw error;
 }
 
-export { admin, db };
+/**
+ * Lazy-initialized Firestore instance
+ */
+export const db = new Proxy({} as admin.firestore.Firestore, {
+    get(_target, prop) {
+        const instance = getDbInstance();
+        const value = (instance as any)[prop];
+        return typeof value === 'function' ? value.bind(instance) : value;
+    }
+});
+
+export { admin };

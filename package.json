@@ -25,8 +25,5 @@
       "wa-sticker-formatter>sharp": "^0.33.5",
       "punycode": "npm:punycode@^2.3.1"
     }
-  },
-  "dependencies": {
-    "codedex-api-manager": "this should be installed with the npm package"
   }
 }

@@ -9,7 +9,7 @@ import logger from '../utils/logger.js';
 import { ConfigService } from '../services/ConfigService.js';
 import multiTenantService from '../services/multiTenantService.js';
 import stripeService from '../services/stripeService.js';
-import multiTenantBotService from '../services/multiTenantBotService.js';
+import { channelService } from '../services/ChannelService.js';
 import multiTenantRoutes from '../routes/multiTenant.js';
 import authRoutes from '../routes/authRoutes.js';
 import templateRoutes from '../routes/templateRoutes.js';
@@ -255,10 +255,10 @@ export class MultiTenantApp {
 
   private async startActiveTenantBots(): Promise<void> {
     try {
-      logger.info('Starting active tenant bots...');
-      await multiTenantBotService.startAllBots();
+      logger.info('Starting active tenant channels...');
+      await channelService.resumeActiveChannels();
     } catch (error: unknown) {
-      logger.error('Failed to start tenant bots', {
+      logger.error('Failed to start tenant channels', {
         error: error instanceof Error ? error.message : String(error)
       });
     }
@@ -289,7 +289,7 @@ export class MultiTenantApp {
   async shutdown(): Promise<void> {
     logger.info('Shutting down multi-tenant server...');
     try {
-      await multiTenantBotService.stopAllBots();
+      // NOTE: Channel shutdown handled by individual adapter shutdown if needed
       if (this.httpServer) {
         this.httpServer.close(() => {
           logger.info('Server closed successfully');

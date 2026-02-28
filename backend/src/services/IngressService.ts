@@ -8,12 +8,14 @@ import { GlobalContext } from '../types/index.js';
 import { tenantConfigService } from './tenantConfigService.js';
 import analyticsService from './analytics.js';
 import { Agent } from '../types/contracts.js';
+import { flowService } from './flowService.js';
+import { flowEngine } from './flowEngine.js';
 
 /**
  * Ingress Service
  * 
  * Centralized entry point for all incoming messages from all channels.
- * Handles the "Agent exists ? Agent Respond : Webhook Forward" logic.
+ * Handles the "Flows ? Agent exists ? Agent Respond : Webhook Forward" logic.
  */
 export class IngressService {
   private static instance: IngressService;
@@ -50,8 +52,29 @@ export class IngressService {
       // 2. Prepare AI Context
       const aiCtx = await createBotContext({ tenantId, botId: channelId } as any, message, context);
 
+      // --- FLOW MODE (Priority 1) ---
+      // Check for active visual flows before anything else
+      const flowsResult = await flowService.listActiveFlows(tenantId);
+      if (flowsResult.success && flowsResult.data.length > 0) {
+        for (const flow of flowsResult.data) {
+          const executed = await flowEngine.executeFlow(flow, aiCtx);
+          if (executed) {
+            logger.info(`Message handled by Visual Flow: ${flow.id}`);
+            // Webhook Dispatch for flow execution
+            await webhookService.dispatch(tenantId, 'flow.executed', {
+              channelId,
+              flowId: flow.id,
+              sender: aiCtx.sender?.jid,
+              timestamp: Date.now()
+            });
+            analyticsService.trackMessage(tenantId, 'received');
+            return; // Exit early
+          }
+        }
+      }
+
       if (activeAgent && activeAgent.id !== 'system_default') {
-        // --- AGENT MODE ---
+        // --- AGENT MODE (Priority 2) ---
         logger.info(`Routing to Agent: ${activeAgent.name} (${activeAgent.id})`);
         
         // Enforce Feature Flag: Check if AI is enabled for this tenant

@@ -2,6 +2,7 @@ import { CommonMessage } from '../../../types/omnichannel.js';
 import { ChannelAdapter, InboundMessageEvent } from '../ChannelAdapter.js';
 import AuthSystem from '@/services/authSystem.js';
 import logger from '@/utils/logger.js';
+import { eventHandler } from '@/services/eventHandler.js';
 
 // @ts-ignore
 import { sendMessageWhatsApp, sendReactionWhatsApp, sendPollWhatsApp } from '../../../../../openclaw/src/web/outbound.js';
@@ -48,6 +49,9 @@ export class WhatsappAdapter implements ChannelAdapter {
     }
 
     this.socket = connectResult.data;
+
+    // MASTERMIND Goodie: Bind EventHandler for Anti-Call and Group Sync
+    eventHandler.bind(this.socket);
 
     // Register active web listener for OpenClaw's outbound pipeline
     const listener: ActiveWebListener = {
@@ -132,6 +136,19 @@ export class WhatsappAdapter implements ChannelAdapter {
 
     const text = typeof content === 'string' ? content : (content.text || '');
     const mediaUrl = content.mediaUrl;
+
+    // MASTERMIND Goodie: Human-like Presence (Typing Simulation)
+    if (text && text.length > 0) {
+      // Calculate delay: ~50ms per character, capped at 3 seconds
+      const typingDelay = Math.min(text.length * 50, 3000);
+      try {
+        await this.socket.sendPresenceUpdate('composing', jid);
+        await new Promise(r => setTimeout(r, typingDelay));
+        await this.socket.sendPresenceUpdate('paused', jid);
+      } catch (e) {
+        logger.warn(`Failed to send presence update for ${jid}`, e);
+      }
+    }
 
     // Leverage OpenClaw's rich pipeline
     await sendMessageWhatsApp(jid, text, {

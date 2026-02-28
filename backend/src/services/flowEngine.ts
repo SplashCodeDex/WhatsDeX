@@ -130,6 +130,10 @@ export class FlowEngine {
         // logic handled in executeNodePath
         break;
 
+      case 'skill':
+        await this.executeSkillNode(node, context);
+        break;
+
       case 'wait_for_input':
         await this.handleWaitNode(node, flow, context);
         return; // Stop execution until next message
@@ -141,6 +145,47 @@ export class FlowEngine {
     } else if (node.type === 'logic') {
       await this.executeNodePath(node.id, flow, context);
     }
+  }
+
+  private async executeSkillNode(node: any, context: any) {
+    const { data } = node;
+    const { unifiedAI, bot, tenantId } = context;
+
+    if (!unifiedAI) {
+      logger.warn('FlowEngine: unifiedAI not found in context, skipping skill node');
+      return;
+    }
+
+    try {
+      const skillName = data.skillName;
+      if (!skillName) throw new Error('Skill name not specified in node');
+
+      logger.info(`Executing skill: ${skillName} for tenant ${tenantId}`);
+
+      // Track execution for metrics/monetization
+      await this.trackNodeExecution(tenantId, node.id, 'skill', { skillName });
+
+      // Execute tool via UnifiedAI Registry
+      const result = await unifiedAI.executeTool(skillName, data.params || {}, context);
+
+      if (result.success && result.message) {
+        await context.reply(result.message);
+      } else if (!result.success) {
+        logger.error(`Skill execution failed: ${skillName}`, result.error);
+        await context.reply(`⚠️ Failed to execute ${skillName}.`);
+      }
+    } catch (error: any) {
+      logger.error('FlowEngine.executeSkillNode error:', error);
+    }
+  }
+
+  private async trackNodeExecution(tenantId: string, nodeId: string, type: string, metadata: any = {}) {
+    // In production, this would emit to a dedicated Analytics/Billing service
+    // For now, we log it for future "Node Execution" monetization
+    logger.debug(`[METRIC] Flow Node Executed: ${nodeId} [Type: ${type}] Tenant: ${tenantId}`, metadata);
+    
+    // Future implementation:
+    // await analyticsService.trackNodeExecution(tenantId, nodeId, type, metadata);
   }
 
   private async handleWaitNode(node: any, flow: FlowData, context: any) {
