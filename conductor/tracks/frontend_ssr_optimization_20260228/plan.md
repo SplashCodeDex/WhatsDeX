@@ -1,6 +1,6 @@
 # Implementation Plan: Frontend SSR Optimization
 
-## Phase 1: Context & Hook Normalization
+## Phase 1: Context & Hook Normalization [checkpoint: cee0c08]
 - [x] **Task: Refactor `useAuth` for SSR Safety** ac07b9f
     - [x] Replace `window.location` with `usePathname`.
     - [x] Ensure all redirection logic is deferred to `useEffect`.
@@ -9,16 +9,16 @@
     - [x] Update `ThemeProvider.tsx` to use React 19 `<Context value={...}>` syntax and provide a solid initial state.
 - [x] **Task: Secure `QueryProvider` Hydration** 0a4ba69
     - [x] Ensure the `QueryClient` singleton is stable across the SSR/Hydration boundary.
-- [ ] **Task: Conductor - User Manual Verification 'Phase 1: Context & Hook Normalization' (Protocol in workflow.md)**
+- [x] **Task: Conductor - User Manual Verification 'Phase 1: Context & Hook Normalization' (Protocol in workflow.md)** cee0c08
 
 ## Phase 2: Performance Recovery
-- [ ] **Task: Re-enable Next.js 16 Caching**
-    - [ ] Update `next.config.ts` to set `cacheComponents: true`.
-- [ ] **Task: Cleanup Static Isolation**
-    - [ ] Remove `export const dynamic = 'force-dynamic'` from layout/page files.
-    - [ ] Remove `DashboardClientWrapper.tsx` and integrate `DashboardShell.tsx` directly into the layout.
-- [ ] **Task: Restore Full Page Logic**
-    - [ ] Revert any temporary build-fix skeleton pages to their full implementations.
+- [x] **Task: Re-enable Next.js 16 Caching** c3f961b
+    - [x] Update `next.config.ts` to set `cacheComponents: true`.
+- [x] **Task: Cleanup Static Isolation** 5777700
+    - [x] Remove `export const dynamic = 'force-dynamic'` from layout/page files.
+    - [x] Remove `DashboardClientWrapper.tsx` and integrate `DashboardShell.tsx` directly into the layout.
+- [x] **Task: Restore Full Page Logic** b46d1eb
+    - [x] Revert any temporary build-fix skeleton pages to their full implementations.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 2: Performance Recovery' (Protocol in workflow.md)**
 
 ## Phase 3: Final Build & Audit
