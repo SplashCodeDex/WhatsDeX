@@ -4,7 +4,7 @@
  * React Query Provider
  *
  * Configures TanStack Query for client-side data fetching and caching.
- * Wrap the app with this provider for query functionality.
+ * Optimized for SSR/Hydration in React 19.
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -20,35 +20,28 @@ function makeQueryClient(): QueryClient {
     return new QueryClient({
         defaultOptions: {
             queries: {
-                // Data is considered fresh for 1 minute
                 staleTime: 60 * 1000,
-                // Keep unused data in cache for 5 minutes
                 gcTime: 5 * 60 * 1000,
-                // Retry failed queries 2 times
                 retry: 2,
-                // Don't retry on 4xx errors
-                retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-                // Refetch on window focus (good for real-time data)
                 refetchOnWindowFocus: true,
             },
             mutations: {
-                // Retry mutations once
                 retry: 1,
             },
         },
     });
 }
 
-// Singleton for SSR - prevents creating multiple clients
+// 2026 Mastermind Singleton Pattern
 let browserQueryClient: QueryClient | undefined;
 
 function getQueryClient(): QueryClient {
     if (typeof window === 'undefined') {
-        // Server: always create a new client
+        // Server: always create a new client for every request
         return makeQueryClient();
     }
 
-    // Browser: reuse client across renders
+    // Browser: reuse client across the entire session
     if (!browserQueryClient) {
         browserQueryClient = makeQueryClient();
     }
@@ -59,6 +52,7 @@ function getQueryClient(): QueryClient {
  * Query Provider Component
  */
 export function QueryProvider({ children }: QueryProviderProps): React.JSX.Element {
+    // 2026 Edition: In React 19, we keep the initialization lazy but stable
     const queryClient = getQueryClient();
 
     return (
