@@ -12,18 +12,9 @@ This track refactors the system architecture to establish a strict hierarchy whe
     -   Prepare a **Cloud Function Hook** (optional scaffold) for asynchronous session cleanup in production.
 5.  **Path-Based OpenClaw Init:** Update OpenClaw adapters to receive and store the full Firestore path. This allows OpenClaw to perform its own direct lookups or logs within the correct tenant/agent scope.
 
-## Non-Functional Requirements
-1.  **Breaking Refactor:** Existing top-level channel logic will be fully migrated to the new hierarchy.
-2.  **Zero-Trust Pathing:** Ensure `FirebaseService` is updated to validate the deep nested paths.
-3.  **Performance:** Optimize the `Agent-First` mapping to ensure no latency increase in message processing.
-
 ## Acceptance Criteria
 1.  Deleting an Agent automatically deletes (or renders inactive) all its child Channels in Firestore.
 2.  Incoming messages on a WhatsApp Channel correctly identify their parent Agent via the path hierarchy.
 3.  Users on the Free plan can connect social media through the `system_default` agent without AI intervention.
 4.  OpenClaw social media sessions are successfully terminated when the parent Agent is removed.
 5.  OpenClaw adapter logs include the full Firestore path for easier debugging and multi-tenant audit trails.
-
-## Out of Scope
-- Building a complex multi-agent UI (focus is on data and service orchestration).
-- Support for legacy top-level 'channels' after migration.
