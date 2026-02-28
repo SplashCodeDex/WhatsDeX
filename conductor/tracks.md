@@ -22,3 +22,8 @@ _Link: [./conductor/tracks/stabilization_20260115/](./conductor/tracks/stabiliza
 
 ## [x] Track: Auth Flow Robustness & State Preservation
 *Link: [./conductor/tracks/auth_robustness_20260219/](./conductor/tracks/auth_robustness_20260219/)*    
+
+---
+
+- [ ] **Track: Resolve Systemic Frontend Build Failures**
+*Link: [./tracks/frontend_build_fix_20260226/](./tracks/frontend_build_fix_20260226/)*
