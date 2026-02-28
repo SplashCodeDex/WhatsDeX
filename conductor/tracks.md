@@ -6,7 +6,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [ ] *No active tracks currently.*
+- [ ] **Track: Upstream Engine Synchronization (2026.2.24)**
+*Link: [./tracks/openclaw_sync_20260228/](./tracks/openclaw_sync_20260228/)*
 
 ---
 
