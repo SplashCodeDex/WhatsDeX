@@ -1,6 +1,6 @@
+import fs from "node:fs/promises";
 import type { Server } from "node:http";
 import express, { type Express } from "express";
-import fs from "node:fs/promises";
 import { danger } from "../globals.js";
 import { SafeOpenError, openFileWithinRoot } from "../infra/fs-safe.js";
 import { defaultRuntime, type RuntimeEnv } from "../runtime.js";
@@ -75,6 +75,10 @@ export function attachMediaRoutes(
       });
     } catch (err) {
       if (err instanceof SafeOpenError) {
+        if (err.code === "outside-workspace") {
+          res.status(400).send("file is outside workspace root");
+          return;
+        }
         if (err.code === "invalid-path") {
           res.status(400).send("invalid path");
           return;

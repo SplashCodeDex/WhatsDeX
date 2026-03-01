@@ -1,7 +1,7 @@
-import type { ChatType } from "../channels/chat-type.js";
-import type { OpenClawConfig } from "../config/config.js";
 import { resolveDefaultAgentId } from "../agents/agent-scope.js";
+import type { ChatType } from "../channels/chat-type.js";
 import { normalizeChatType } from "../channels/chat-type.js";
+import type { OpenClawConfig } from "../config/config.js";
 import { shouldLogVerbose } from "../globals.js";
 import { logDebug } from "../logger.js";
 import { listBindings } from "./bindings.js";
@@ -10,6 +10,7 @@ import {
   buildAgentPeerSessionKey,
   DEFAULT_ACCOUNT_ID,
   DEFAULT_MAIN_KEY,
+  normalizeAccountId,
   normalizeAgentId,
   sanitizeAgentId,
 } from "./session-key.js";
@@ -61,13 +62,14 @@ function normalizeToken(value: string | undefined | null): string {
   return (value ?? "").trim().toLowerCase();
 }
 
-function normalizeId(value: string | undefined | null): string {
-  return (value ?? "").trim();
-}
-
-function normalizeAccountId(value: string | undefined | null): string {
-  const trimmed = (value ?? "").trim();
-  return trimmed ? trimmed : DEFAULT_ACCOUNT_ID;
+function normalizeId(value: unknown): string {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+  if (typeof value === "number" || typeof value === "bigint") {
+    return String(value).trim();
+  }
+  return "";
 }
 
 function matchesAccountId(match: string | undefined, actual: string): boolean {
@@ -78,7 +80,7 @@ function matchesAccountId(match: string | undefined, actual: string): boolean {
   if (trimmed === "*") {
     return true;
   }
-  return trimmed === actual;
+  return normalizeAccountId(trimmed) === actual;
 }
 
 export function buildAgentSessionKey(params: {
@@ -289,7 +291,12 @@ function matchesBindingScope(match: NormalizedBindingMatch, scope: BindingScope)
 export function resolveAgentRoute(input: ResolveAgentRouteInput): ResolvedAgentRoute {
   const channel = normalizeToken(input.channel);
   const accountId = normalizeAccountId(input.accountId);
-  const peer = input.peer ? { kind: input.peer.kind, id: normalizeId(input.peer.id) } : null;
+  const peer = input.peer
+    ? {
+        kind: normalizeChatType(input.peer.kind) ?? input.peer.kind,
+        id: normalizeId(input.peer.id),
+      }
+    : null;
   const guildId = normalizeId(input.guildId);
   const teamId = normalizeId(input.teamId);
   const memberRoleIds = input.memberRoleIds ?? [];
@@ -349,7 +356,10 @@ export function resolveAgentRoute(input: ResolveAgentRouteInput): ResolvedAgentR
   }
   // Thread parent inheritance: if peer (thread) didn't match, check parent peer binding
   const parentPeer = input.parentPeer
-    ? { kind: input.parentPeer.kind, id: normalizeId(input.parentPeer.id) }
+    ? {
+        kind: normalizeChatType(input.parentPeer.kind) ?? input.parentPeer.kind,
+        id: normalizeId(input.parentPeer.id),
+      }
     : null;
   const baseScope = {
     guildId,

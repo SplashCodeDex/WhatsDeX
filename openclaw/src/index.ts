@@ -15,11 +15,11 @@ import {
   resolveStorePath,
   saveSessionStore,
 } from "./config/sessions.js";
-import { ensureBinary } from "./infra/binaries.js"; 
-import { loadDotEnv } from "./infra/dotenv.js";     
-import { normalizeEnv } from "./infra/env.js";      
+import { ensureBinary } from "./infra/binaries.js";
+import { loadDotEnv } from "./infra/dotenv.js";
+import { normalizeEnv } from "./infra/env.js";
 import { formatUncaughtError } from "./infra/errors.js";
-import { isMainModule } from "./infra/is-main.js";  
+import { isMainModule } from "./infra/is-main.js";
 import { ensureOpenClawCliOnPath } from "./infra/path-env.js";
 import {
   describePortOwner,
@@ -32,7 +32,6 @@ import { installUnhandledRejectionHandler } from "./infra/unhandled-rejections.j
 import { enableConsoleCapture } from "./logging.js";
 import { runCommandWithTimeout, runExec } from "./process/exec.js";
 import { assertWebChannel, normalizeE164, toWhatsappJid } from "./utils.js";
-import { startGatewayServer } from "./gateway/server.js";
 
 loadDotEnv({ quiet: true });
 normalizeEnv();
@@ -44,7 +43,7 @@ enableConsoleCapture();
 // Enforce the minimum supported runtime before doing any work.
 assertSupportedRuntime();
 
-import { buildProgram } from "./cli/program.js";    
+import { buildProgram } from "./cli/program.js";
 
 const program = buildProgram();
 
@@ -69,13 +68,12 @@ export {
   runCommandWithTimeout,
   runExec,
   saveSessionStore,
-  startGatewayServer,
   toWhatsappJid,
   waitForever,
 };
 
 const isMain = isMainModule({
-  currentFile: fileURLToPath(import.meta.url),      
+  currentFile: fileURLToPath(import.meta.url),
 });
 
 if (isMain) {
@@ -83,7 +81,7 @@ if (isMain) {
   // These log the error and exit gracefully instead of crashing without trace.
   installUnhandledRejectionHandler();
 
-  process.on("uncaughtException", (error) => {      
+  process.on("uncaughtException", (error) => {
     console.error("[openclaw] Uncaught exception:", formatUncaughtError(error));
     process.exit(1);
   });

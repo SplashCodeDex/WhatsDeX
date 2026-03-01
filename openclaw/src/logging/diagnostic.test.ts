@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  diagnosticSessionStates,
   getDiagnosticSessionStateCountForTest,
   getDiagnosticSessionState,
+  pruneDiagnosticSessionStates,
   resetDiagnosticSessionStateForTest,
 } from "./diagnostic-session-state.js";
 
@@ -28,11 +30,30 @@ describe("diagnostic session state pruning", () => {
   });
 
   it("caps tracked session states to a bounded max", () => {
+    const now = Date.now();
     for (let i = 0; i < 2001; i += 1) {
-      getDiagnosticSessionState({ sessionId: `session-${i}` });
+      diagnosticSessionStates.set(`session-${i}`, {
+        sessionId: `session-${i}`,
+        lastActivity: now + i,
+        state: "idle",
+        queueDepth: 1,
+      });
     }
+    pruneDiagnosticSessionStates(now + 2002, true);
 
     expect(getDiagnosticSessionStateCountForTest()).toBe(2000);
+  });
+
+  it("reuses keyed session state when later looked up by sessionId", () => {
+    const keyed = getDiagnosticSessionState({
+      sessionId: "s1",
+      sessionKey: "agent:main:discord:channel:c1",
+    });
+    const bySessionId = getDiagnosticSessionState({ sessionId: "s1" });
+
+    expect(bySessionId).toBe(keyed);
+    expect(bySessionId.sessionKey).toBe("agent:main:discord:channel:c1");
+    expect(getDiagnosticSessionStateCountForTest()).toBe(1);
   });
 });
 

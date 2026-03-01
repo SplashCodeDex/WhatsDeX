@@ -2,7 +2,12 @@ export type CronConfig = {
   enabled?: boolean;
   store?: string;
   maxConcurrentRuns?: number;
+  /**
+   * Deprecated legacy fallback webhook URL used only for stored jobs with notify=true.
+   * Prefer per-job delivery.mode="webhook" with delivery.to.
+   */
   webhook?: string;
+  /** Bearer token for cron webhook POST delivery. */
   webhookToken?: string;
   /**
    * How long to retain completed cron run sessions before automatic pruning.
@@ -10,4 +15,12 @@ export type CronConfig = {
    * Default: "24h".
    */
   sessionRetention?: string | false;
+  /**
+   * Run-log pruning controls for `cron/runs/<jobId>.jsonl`.
+   * Defaults: `maxBytes=2_000_000`, `keepLines=2000`.
+   */
+  runLog?: {
+    maxBytes?: number | string;
+    keepLines?: number;
+  };
 };
