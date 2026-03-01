@@ -425,6 +425,8 @@ export const AnalyticsSchema = z.object({
   sent: z.number().default(0),
   received: z.number().default(0),
   errors: z.number().default(0),
+  totalCommands: z.number().default(0),
+  aiRequests: z.number().default(0),
   updatedAt: TimestampSchema
 }).readonly();
 

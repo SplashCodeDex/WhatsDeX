@@ -153,6 +153,10 @@ export class JobQueueService {
     await Promise.all(Array.from(this.queues.values()).map(q => q.close()));
     logger.info('All job queues closed');
   }
+
+  getQueue(queueName: string): Queue.Queue | undefined {
+    return this.queues.get(queueName);
+  }
 }
 
 export const jobQueueService = new JobQueueService();

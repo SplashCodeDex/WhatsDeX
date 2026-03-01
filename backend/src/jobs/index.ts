@@ -1,6 +1,7 @@
 import { JobQueueService } from '../services/jobQueue.js';
 import AIProcessor from './aiProcessor.js';
 import MediaProcessor from './mediaProcessor.js';
+import StatsAggregatorJob from './statsAggregatorJob.js';
 import logger from '../utils/logger.js';
 import { Job } from 'bull';
 
@@ -15,6 +16,7 @@ class JobRegistry {
   private processors: {
     ai: AIProcessor;
     media: MediaProcessor;
+    stats: StatsAggregatorJob;
   };
 
   constructor() {
@@ -22,6 +24,7 @@ class JobRegistry {
     this.processors = {
       ai: new AIProcessor(),
       media: new MediaProcessor(),
+      stats: new StatsAggregatorJob(),
     };
   }
 
@@ -30,16 +33,38 @@ class JobRegistry {
 
     try {
       logger.info('Registering job processors...');
-      // Note: In real implementation, the processors should expose public methods matching these calls.
-      // Assuming AIProcessor and MediaProcessor have these methods or will be updated.
-      // For now, removing direct calls to avoid type errors if methods don't exist yet, 
-      // or assuming they are dynamically handled. 
-      
-      // Since I can't see aiProcessor.ts / mediaProcessor.ts content fully, I will stub the registration 
-      // logic to compile correctly, assuming the methods exist or will be implemented.
-      
-      // ... registration logic ...
-      
+
+      // 1. AI Processor Registration
+      const aiQueue = jobQueueService.getQueue('ai-processing');
+      if (aiQueue) {
+        aiQueue.process('content-generation', (job: Job) => this.processors.ai.processContentGeneration(job.data, job));
+        aiQueue.process('batch-analysis', (job: Job) => this.processors.ai.processBatchAnalysis(job.data, job));
+        aiQueue.process('moderation', (job: Job) => this.processors.ai.processContentModeration(job.data, job));
+        logger.info('Registered AI job processors');
+      }
+
+      // 2. Media Processor Registration
+      const mediaQueue = jobQueueService.getQueue('media-processing');
+      if (mediaQueue) {
+        mediaQueue.process('image-optimization', (job: Job) => this.processors.media.processImageOptimization(job.data, job));
+        mediaQueue.process('video-thumbnail', (job: Job) => this.processors.media.processVideoThumbnail(job.data, job));
+        mediaQueue.process('file-conversion', (job: Job) => this.processors.media.processFileConversion(job.data, job));
+        logger.info('Registered Media job processors');
+      }
+
+      // 3. Stats Aggregator Registration
+      const analyticsQueue = jobQueueService.getQueue('analytics');
+      if (analyticsQueue) {
+        analyticsQueue.process('aggregate-stats', (job: Job) => this.processors.stats.process(job));
+
+        // Schedule daily aggregation at 01:00 AM
+        await analyticsQueue.add('aggregate-stats', {}, {
+          repeat: { cron: '0 1 * * *' },
+          jobId: 'daily-stats-aggregation'
+        });
+        logger.info('Scheduled daily stats aggregation job (01:00 AM)');
+      }
+
       logger.info('All job processors registered successfully');
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
