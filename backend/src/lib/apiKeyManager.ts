@@ -246,6 +246,13 @@ export class ApiKeyManager {
             this.manager.markFailed(key, classification);
         }
     }
+
+    /**
+     * Reset the singleton instance (for testing purposes).
+     */
+    public static resetInstance(): void {
+        ApiKeyManager.instance = null;
+    }
 }
 
 // ============================================================================
