@@ -22,10 +22,15 @@
     "lightningcss": "^1.30.2"
   },
   "overrides": {
-    "wa-sticker-formatter": {
-      "axios": "^1.7.9",
-      "sharp": "^0.33.5"
-    }
+    "fast-xml-parser": "^5.4.1",
+    "axios": "^1.13.6",
+    "sharp": "^0.34.5",
+    "multer": "^2.1.0",
+    "rollup": "^4.59.0",
+    "next": "^16.1.6",
+    "minimatch": "^3.1.2",
+    "ajv": "^6.14.0",
+    "qs": "^6.14.1"
   },
   "dependencies": {
     "codedex-api-manager": "file:../MyTemplates"
