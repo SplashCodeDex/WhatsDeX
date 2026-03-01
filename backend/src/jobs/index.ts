@@ -30,16 +30,30 @@ class JobRegistry {
 
     try {
       logger.info('Registering job processors...');
-      // Note: In real implementation, the processors should expose public methods matching these calls.
-      // Assuming AIProcessor and MediaProcessor have these methods or will be updated.
-      // For now, removing direct calls to avoid type errors if methods don't exist yet, 
-      // or assuming they are dynamically handled. 
-      
-      // Since I can't see aiProcessor.ts / mediaProcessor.ts content fully, I will stub the registration 
-      // logic to compile correctly, assuming the methods exist or will be implemented.
-      
-      // ... registration logic ...
-      
+
+      // AI Queue Processor
+      const aiQueue = this.jobQueue.getQueue('ai-processing');
+      if (aiQueue) {
+        aiQueue.process('content-generation', (job) => this.processors.ai.processContentGeneration(job.data, job));
+        aiQueue.process('batch-analysis', (job) => this.processors.ai.processBatchAnalysis(job.data, job));
+        aiQueue.process('content-moderation', (job) => this.processors.ai.processContentModeration(job.data, job));
+        aiQueue.process('fine-tuning', (job) => this.processors.ai.processFineTuningData(job.data, job));
+        aiQueue.process('performance-analytics', (job) => this.processors.ai.processPerformanceAnalytics(job.data, job));
+        logger.info('AI job processors registered');
+      }
+
+      // Media Queue Processor
+      const mediaQueue = this.jobQueue.getQueue('media-processing');
+      if (mediaQueue) {
+        mediaQueue.process('image-optimization', (job) => this.processors.media.processImageOptimization(job.data, job));
+        mediaQueue.process('batch-image', (job) => this.processors.media.processBatchImageProcessing(job.data, job));
+        mediaQueue.process('video-thumbnail', (job) => this.processors.media.processVideoThumbnail(job.data, job));
+        mediaQueue.process('file-conversion', (job) => this.processors.media.processFileConversion(job.data, job));
+        mediaQueue.process('media-cleanup', (job) => this.processors.media.processMediaCleanup(job.data, job));
+        mediaQueue.process('media-analytics', (job) => this.processors.media.processMediaAnalytics(job.data, job));
+        logger.info('Media job processors registered');
+      }
+
       logger.info('All job processors registered successfully');
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));

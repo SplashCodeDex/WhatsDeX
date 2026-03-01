@@ -42,6 +42,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/bots/{botId}/auth': AuthSchema as any,
   'tenants/{tenantId}/learning': LearningSchema as any,
   'tenants/{tenantId}/analytics': AnalyticsSchema as any,
+  'tenants/{tenantId}/command_usage': z.any(),
 };
 
 export class FirebaseService {
@@ -64,20 +65,28 @@ export class FirebaseService {
     let schemaKey: CollectionKey;
 
     if (tenantId) {
-      // Special handling for nested subcollections like bots/{botId}/auth
-      if (collection.includes('/')) {
-        const parts = collection.split('/');
-        // Pattern: bots/{botId}/auth
-        if (parts[0] === 'bots' && parts[2] === 'auth') {
-          path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
-          schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+      // Handle cases where full path or template path might be passed
+      if (collection.startsWith('tenants/')) {
+        path = collection.replace('{tenantId}', tenantId);
+        schemaKey = collection.includes('{tenantId}')
+          ? collection as CollectionKey
+          : collection.replace(`tenants/${tenantId}/`, 'tenants/{tenantId}/') as CollectionKey;
+      } else {
+        // Logical name or subpath relative to tenant
+        if (collection.includes('/')) {
+          const parts = collection.split('/');
+          // Special handling for nested subcollections like bots/{botId}/auth
+          if (parts[0] === 'bots' && parts[2] === 'auth') {
+            path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
+            schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+          } else {
+            path = `tenants/${tenantId}/${collection}`;
+            schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
+          }
         } else {
           path = `tenants/${tenantId}/${collection}`;
           schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
         }
-      } else {
-        path = `tenants/${tenantId}/${collection}`;
-        schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
       }
     } else {
       path = collection;
@@ -86,7 +95,9 @@ export class FirebaseService {
 
     const schema = SchemaMap[schemaKey];
     if (!schema) {
-      throw new Error(`No schema defined for collection: ${schemaKey}`);
+      const errorMsg = `No schema defined for collection: ${schemaKey}`;
+      logger.error(`FirebaseService.getCollectionInfo: ${errorMsg}`, { collection, tenantId, resolvedPath: path });
+      throw new Error(errorMsg);
     }
 
     return { path, schema };

@@ -55,6 +55,10 @@ export class JobQueueService {
     }
   }
 
+  getQueue(queueName: string): Queue.Queue | undefined {
+    return this.queues.get(queueName);
+  }
+
   async createQueue(queueName: string, config: Partial<QueueConfig> = {}): Promise<Queue.Queue> {
     try {
       const queue = new Queue(queueName, {

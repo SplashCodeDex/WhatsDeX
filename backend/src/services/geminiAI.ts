@@ -569,14 +569,16 @@ Respond in the user's language if they're not using English.
 
     try {
       // 1. Extract facts from the current interaction
-      const learned = await this.extractFacts(message, { memory: await this.getPersistentLearning(userId, bot.tenantId) });
+      const extractResult = await this.extractFacts(message, { memory: await this.getPersistentLearning(userId, bot.tenantId) });
+      if (!extractResult.success) return;
+      const learned = extractResult.data;
 
       if (learned.facts.length > 0 || Object.keys(learned.preferences).length > 0) {
         // 2. Load existing learning data
         const existingResult = await this.getPersistentLearning(userId, bot.tenantId);
         const existing = existingResult.success && existingResult.data
           ? existingResult.data
-          : { userId, facts: [], preferences: {}, lastInteraction: new Date() as any };
+          : { userId, facts: [], preferences: {}, lastInteraction: new Date() };
 
         // 3. Merge facts
         const newFacts = learned.facts.map(content => ({
@@ -612,7 +614,7 @@ Respond in the user's language if they're not using English.
   /**
    * Extract key facts from user message
    */
-  async extractFacts(message: string, context: { memory: Result<import('../types/contracts.js').LearningData | null> }): Promise<{ facts: string[], preferences: Record<string, any> }> {
+  async extractFacts(message: string, context: { memory: Result<import('../types/contracts.js').LearningData | null> }): Promise<Result<{ facts: string[], preferences: Record<string, any> }>> {
     const prompt = `
 Analyze the following message and extract any persistent facts or preferences about the user.
 Facts include personal info, interests, important dates, or recurring needs.
@@ -634,10 +636,18 @@ Only include NEW or UPDATED information. If nothing significant is found, return
       // More robust JSON extraction (2026 Recommended cleaning)
       const jsonMatch = response.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
       const cleanedResponse = jsonMatch ? jsonMatch[0] : response;
-      return JSON.parse(cleanedResponse);
-    } catch (error) {
-      logger.warn('Fact extraction failed', error);
-      return { facts: [], preferences: {} };
+      const data = JSON.parse(cleanedResponse);
+      return {
+        success: true,
+        data: {
+          facts: Array.isArray(data.facts) ? data.facts : [],
+          preferences: data.preferences && typeof data.preferences === 'object' ? data.preferences : {}
+        }
+      };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('Fact extraction failed', err);
+      return { success: false, error: err };
     }
   }
 

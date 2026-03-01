@@ -92,23 +92,30 @@ class AnalyticsService {
     }, 30000);
   }
 
-  async updateTenantMetrics(tenantId: string) {
-    const oneDayAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
-    const tenantPath = `tenants/${tenantId}`;
+  async updateTenantMetrics(tenantId: string): Promise<Result<void>> {
+    try {
+      const oneDayAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
+      const tenantPath = `tenants/${tenantId}`;
 
-    // Workspace-isolated queries
-    const commandCount = (await db.collection(`${tenantPath}/command_usage`).where('usedAt', '>=', oneDayAgo).count().get()).data().count;
-    const aiCount = (await db.collection(`${tenantPath}/command_usage`).where('category', '==', 'ai-chat').count().get()).data().count;
-    const errorCount = (await db.collection(`${tenantPath}/command_usage`).where('success', '==', false).count().get()).data().count;
+      // Workspace-isolated queries
+      const commandCount = (await db.collection(`${tenantPath}/command_usage`).where('usedAt', '>=', oneDayAgo).count().get()).data().count;
+      const aiCount = (await db.collection(`${tenantPath}/command_usage`).where('category', '==', 'ai-chat').count().get()).data().count;
+      const errorCount = (await db.collection(`${tenantPath}/command_usage`).where('success', '==', false).count().get()).data().count;
 
-    this.metrics.set(tenantId, {
-      activeUsers: 0, // Implement per-tenant activity tracking in next step
-      totalCommands: commandCount,
-      aiRequests: aiCount,
-      responseTime: 0,
-      errorRate: commandCount > 0 ? (errorCount / commandCount) * 100 : 0,
-      uptime: process.uptime(),
-    });
+      this.metrics.set(tenantId, {
+        activeUsers: 0, // Implement per-tenant activity tracking in next step
+        totalCommands: commandCount,
+        aiRequests: aiCount,
+        responseTime: 0,
+        errorRate: commandCount > 0 ? (errorCount / commandCount) * 100 : 0,
+        uptime: process.uptime(),
+      });
+      return { success: true, data: undefined };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`AnalyticsService.updateTenantMetrics error [${tenantId}]:`, err);
+      return { success: false, error: err };
+    }
   }
 
   async getDashboardData(tenantId: string): Promise<Result<any>> {

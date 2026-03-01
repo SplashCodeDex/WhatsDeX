@@ -117,6 +117,13 @@ export class ApiKeyManager {
     }
 
     /**
+     * Reset the singleton instance (primarily for testing).
+     */
+    public static resetInstance(): void {
+        ApiKeyManager.instance = null;
+    }
+
+    /**
      * Wire up library events to system logger.
      */
     private wireEvents(): void {

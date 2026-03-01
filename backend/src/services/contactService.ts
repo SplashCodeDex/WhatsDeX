@@ -5,6 +5,7 @@ import logger from '../utils/logger.js';
 import crypto from 'node:crypto';
 import { parse } from 'csv-parse';
 import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const normalizePhoneNumber = (phone: string): string => {
@@ -50,43 +51,48 @@ export class ContactService {
         trim: true,
       }));
 
-      for await (const record of parser) {
-        rowIndex++;
-        const rawData = record as Record<string, string>;
-        const phone = rawData.phone || rawData.phoneNumber || '';
+      await pipeline(
+        parser,
+        async (source) => {
+          for await (const record of source) {
+            rowIndex++;
+            const rawData = record as Record<string, string>;
+            const phone = rawData.phone || rawData.phoneNumber || '';
 
-        const contactData = {
-          id: `cont_${crypto.randomUUID()}`,
-          tenantId,
-          name: rawData.name || rawData.fullName || 'Unknown',
-          phone: phone ? normalizePhoneNumber(phone) : '',
-          email: rawData.email || '',
-          tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
-          attributes: rawData,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
+            const contactData = {
+              id: `cont_${crypto.randomUUID()}`,
+              tenantId,
+              name: rawData.name || rawData.fullName || 'Unknown',
+              phone: phone ? normalizePhoneNumber(phone) : '',
+              email: rawData.email || '',
+              tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
+              attributes: rawData,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
 
-        const validation = ContactSchema.safeParse(contactData);
-        if (!validation.success) {
-          const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-          errors.push(`Row ${rowIndex + 1}: ${msg}`);
-        } else {
-          const contactRef = db.collection('tenants')
-            .doc(tenantId)
-            .collection('contacts')
-            .doc(contactData.id);
-          currentBatch.set(contactRef, validation.data);
-          count++;
-          currentBatchSize++;
+            const validation = ContactSchema.safeParse(contactData);
+            if (!validation.success) {
+              const msg = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+              errors.push(`Row ${rowIndex + 1}: ${msg}`);
+            } else {
+              const contactRef = db.collection('tenants')
+                .doc(tenantId)
+                .collection('contacts')
+                .doc(contactData.id);
+              currentBatch.set(contactRef, validation.data);
+              count++;
+              currentBatchSize++;
 
-          if (currentBatchSize >= BATCH_SIZE) {
-            batchPromises.push(currentBatch.commit());
-            currentBatch = db.batch();
-            currentBatchSize = 0;
+              if (currentBatchSize >= BATCH_SIZE) {
+                batchPromises.push(currentBatch.commit());
+                currentBatch = db.batch();
+                currentBatchSize = 0;
+              }
+            }
           }
         }
-      }
+      );
 
       if (currentBatchSize > 0) {
         batchPromises.push(currentBatch.commit());
