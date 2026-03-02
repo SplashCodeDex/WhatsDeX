@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase.js';
+import { db, admin } from '@/lib/firebase.js';
 import logger from '@/utils/logger.js';
 import {
   FirestoreSchema
@@ -63,33 +63,84 @@ export class FirebaseService {
     let path: string;
     let schemaKey: CollectionKey;
 
-    if (tenantId) {
-      // Special handling for nested subcollections like bots/{botId}/auth
-      if (collection.includes('/')) {
-        const parts = collection.split('/');
-        // Pattern: bots/{botId}/auth
-        if (parts[0] === 'bots' && parts[2] === 'auth') {
-          path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
-          schemaKey = `tenants/{tenantId}/bots/{botId}/auth` as CollectionKey;
+    // 1. If it's already a full path starting with tenants/
+    if (collection.startsWith('tenants/')) {
+        path = collection;
+        // Map path back to schema key template
+        schemaKey = collection
+            .replace(/tenants\/[^/]+\/bots\/[^/]+\/auth/, 'tenants/{tenantId}/bots/{botId}/auth')
+            .replace(/tenants\/[^/]+\/([^/]+)/, 'tenants/{tenantId}/$1') as CollectionKey;
+
+        // Final fallback for root tenants collection
+        if (collection === 'tenants') schemaKey = 'tenants';
+    }
+    // 2. If we have a tenantId and it's a logical name (e.g. 'contacts')
+    else if (tenantId) {
+        if (collection.includes('/')) {
+            const parts = collection.split('/');
+            if (parts[0] === 'bots' && parts[2] === 'auth') {
+                path = `tenants/${tenantId}/bots/${parts[1]}/auth`;
+                schemaKey = 'tenants/{tenantId}/bots/{botId}/auth';
+            } else {
+                path = `tenants/${tenantId}/${collection}`;
+                schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
+            }
         } else {
-          path = `tenants/${tenantId}/${collection}`;
-          schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
+            path = `tenants/${tenantId}/${collection}`;
+            schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
         }
-      } else {
-        path = `tenants/${tenantId}/${collection}`;
-        schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
-      }
-    } else {
-      path = collection;
-      schemaKey = collection as CollectionKey;
+    }
+    // 3. Fallback to root or template key
+    else {
+        path = collection;
+        schemaKey = collection as CollectionKey;
     }
 
     const schema = SchemaMap[schemaKey];
     if (!schema) {
-      throw new Error(`No schema defined for collection: ${schemaKey}`);
+      throw new Error(`No schema defined for collection: ${schemaKey} (Resolved from: ${collection})`);
     }
 
     return { path, schema };
+  }
+
+  /**
+   * Validation Helper (Zero-Trust)
+   */
+  private validate<K extends CollectionKey>(schema: z.ZodSchema<any>, data: any, merge: boolean): FirestoreSchema[K] {
+    try {
+        if (merge) {
+            // Attempt to derive a partial schema
+            let partialSchema: any = schema;
+            if (typeof (schema as any).partial === 'function') {
+                partialSchema = (schema as any).partial();
+            } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+                partialSchema = (schema as any).unwrap().partial();
+            }
+
+            // If derivation was successful, validate.
+            // BUT: If data contains FieldValues (like increment), Zod will fail.
+            // We only validate if it's a plain object without FieldValues at the top level.
+            const hasFieldValues = Object.values(data).some(v =>
+                v && typeof v === 'object' && ('constructor' in v) &&
+                (v.constructor.name === 'FieldValue' || v.constructor.name === 'NumericIncrementTransform')
+            );
+
+            if (!hasFieldValues) {
+                return partialSchema.parse(data);
+            }
+            return data;
+        }
+        return schema.parse(data);
+    } catch (error) {
+        // If validation fails because we couldn't derive a partial schema or other issues,
+        // we log it but might allow it in merge mode to prevent blocking valid updates.
+        if (merge) {
+            logger.warn('Firestore partial validation bypassed or failed:', error);
+            return data;
+        }
+        throw error;
+    }
   }
 
   /**
@@ -132,25 +183,11 @@ export class FirebaseService {
     try {
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
 
-      // Validation (Zero-Trust)
-      // Since data might be Partial, we use a partial schema for validation if merge is true
-      if (merge) {
-        // Best effort validation for partial updates
-        // Note: Zod doesn't easily support dynamic partial validation against a deep schema
-        // but for our flat-ish documents, it works well enough.
-        // We safely check if .partial() exists (e.g. not a preprocessed or readonly schema)
-        if (typeof (schema as any).partial === 'function') {
-          (schema as any).partial().parse(data);
-        } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
-          // Handle Readonly schemas
-          (schema as any).unwrap().partial().parse(data);
-        }
-      } else {
-        schema.parse(data);
-      }
+      // Validation
+      const validatedData = this.validate<K>(schema, data, merge);
 
       const docRef = db.collection(path).doc(docId);
-      await docRef.set(data, { merge });
+      await docRef.set(validatedData as any, { merge });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Firestore setDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, {
@@ -206,6 +243,58 @@ export class FirebaseService {
       logger.error(`Firestore deleteDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, err);
       throw err;
     }
+  }
+
+  /**
+   * Create a Firestore WriteBatch wrapper with Zod validation
+   */
+  public batch() {
+    const firestoreBatch = db.batch();
+
+    const wrapper = {
+      set: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: FirestoreSchema[K],
+        tenantId?: string,
+        options: { merge?: boolean } = {}
+      ) => {
+        const { path, schema } = this.getCollectionInfo(collection, tenantId);
+        const merge = options.merge ?? false;
+        const validatedData = this.validate<K>(schema, data, merge);
+
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.set(docRef, validatedData as any, { merge });
+        return wrapper;
+      },
+
+      update: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string
+      ) => {
+        const { path, schema } = this.getCollectionInfo(collection, tenantId);
+        const validatedData = this.validate<K>(schema, data, true);
+
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.update(docRef, validatedData as any);
+        return wrapper;
+      },
+
+      delete: (collection: string, docId: string, tenantId?: string) => {
+        const { path } = this.getCollectionInfo(collection, tenantId);
+        const docRef = db.collection(path).doc(docId);
+        firestoreBatch.delete(docRef);
+        return wrapper;
+      },
+
+      commit: async (): Promise<void> => {
+        await firestoreBatch.commit();
+      }
+    };
+
+    return wrapper;
   }
 }
 

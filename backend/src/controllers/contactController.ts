@@ -4,6 +4,20 @@ import logger from '@/utils/logger.js';
 import { ContactService } from '@/services/contactService.js';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { ContactSchema } from '@/types/contracts.js';
+
+const CreateContactSchema = ContactSchema.omit({
+    id: true,
+    tenantId: true,
+    createdAt: true,
+    updatedAt: true,
+    status: true
+}).extend({
+    phone: z.string().min(1, "Phone number is required"),
+    name: z.string().min(1, "Name is required")
+});
+
+const UpdateContactSchema = CreateContactSchema.partial();
 
 export class ContactController {
     /**
@@ -72,22 +86,18 @@ export class ContactController {
             const tenantId = req.user?.tenantId;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-            const body = req.body;
-            const rawData = {
-                name: body.name,
-                phone: body.phone || body.phoneNumber,
-                email: body.email || '',
-                tags: body.tags || [],
-                attributes: body.attributes || body.metadata || {},
-            };
+            const validated = CreateContactSchema.safeParse(req.body);
+            if (!validated.success) {
+                return res.status(400).json({
+                    success: false,
+                    error: validated.error.issues[0].message
+                });
+            }
 
             const service = ContactService.getInstance();
-            const result = await service.createContact(tenantId, rawData);
+            const result = await service.createContact(tenantId, validated.data);
 
             if (!result.success) {
-                if (result.error instanceof z.ZodError) {
-                    return res.status(400).json({ success: false, error: result.error.issues[0].message });
-                }
                 return res.status(500).json({ success: false, error: result.error.message });
             }
 
@@ -107,25 +117,22 @@ export class ContactController {
             const contactId = req.params.id as string;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-            if (Object.keys(req.body).length === 0) {
+            const validated = UpdateContactSchema.safeParse(req.body);
+            if (!validated.success) {
+                return res.status(400).json({
+                    success: false,
+                    error: validated.error.issues[0].message
+                });
+            }
+
+            if (Object.keys(validated.data).length === 0) {
                 return res.status(400).json({ success: false, error: 'Request body cannot be empty.' });
             }
 
-            const body = req.body;
-            const updates: Record<string, unknown> = {};
-            if (body.name) updates.name = body.name;
-            if (body.phone || body.phoneNumber) updates.phone = body.phone || body.phoneNumber;
-            if (body.email !== undefined) updates.email = body.email;
-            if (body.tags) updates.tags = body.tags;
-            if (body.attributes || body.metadata) updates.attributes = body.attributes || body.metadata;
-
             const service = ContactService.getInstance();
-            const result = await service.updateContact(tenantId, contactId, updates);
+            const result = await service.updateContact(tenantId, contactId, validated.data);
 
             if (!result.success) {
-                if (result.error instanceof z.ZodError) {
-                    return res.status(400).json({ success: false, error: result.error.issues[0].message });
-                }
                 return res.status(500).json({ success: false, error: result.error.message });
             }
 

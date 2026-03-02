@@ -5,7 +5,6 @@
  * Designed to work seamlessly with HttpOnly cookies across Server and Client components.
  */
 
-import { APP_CONFIG } from '@/lib/constants';
 import type { ApiResponse, ApiSuccessResponse, ApiErrorResponse } from '@/types';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -56,24 +55,12 @@ function createUrl(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>
 ): string {
-    // Rely on Next.js Rewrite Proxy: Just use the relative path.
-    // Ensure it starts with /api if it's an API call (logic moved to caller or standard endpoints)
-    // Endpoints in endpoints.ts already include /api prefix or /internal which maps to /api/internal
-    // Actually, endpoints in endpoints.ts are like '/auth/login'.
-    // We need to ensure they hit '/api/auth/login' so the proxy catches them.
-    // Previous refactor added /api prefix to endpoints.
-    // So we just need to return the path.
-
-    // Use environment variable or default to 3001.
-    // This allows changing the port in .env without code changes.
     const baseUrl = typeof window === 'undefined'
         ? (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001')
         : '';
-    // Server-side fetch needs absolute URL (internal docker/localhost).
-    // Client-side fetch uses relative URL to hit proxy.
 
     let path = endpoint;
-    const url = new URL(path, baseUrl || 'http://dummy.com'); // Dummy base for relative path construction
+    const url = new URL(path, baseUrl || 'http://dummy.com');
 
     if (params) {
         Object.entries(params).forEach(([key, value]) => {
@@ -83,23 +70,25 @@ function createUrl(
         });
     }
 
-    // Return relative path for client, absolute for server
     return typeof window === 'undefined' ? url.toString() : url.pathname + url.search;
 }
 
 /**
  * Get authorization header from session (SERVER-SIDE ONLY)
- * On client side, the browser sends the cookie automatically.
  */
 async function getAuthHeader(): Promise<string | null> {
     if (typeof window !== 'undefined') {
         return null;
     }
 
-    const { cookies } = await import('next/headers');
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token');
-    return token?.value ?? null;
+    try {
+        const { cookies } = await import('next/headers');
+        const cookieStore = await cookies();
+        const token = cookieStore.get('token');
+        return token?.value ?? null;
+    } catch {
+        return null;
+    }
 }
 
 async function apiClient<TData, TBody = unknown>(
@@ -119,11 +108,15 @@ async function apiClient<TData, TBody = unknown>(
     const authToken = await getAuthHeader();
 
     const requestHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
         ...headers,
     };
 
-    // Only attach Bearer token on Server Side where cookies aren't automatic
+    // Auto-detect Content-Type: application/json unless it's FormData
+    const isFormData = body instanceof FormData;
+    if (!isFormData && !requestHeaders['Content-Type']) {
+        requestHeaders['Content-Type'] = 'application/json';
+    }
+
     if (authToken) {
         requestHeaders['Authorization'] = `Bearer ${authToken}`;
     }
@@ -135,7 +128,11 @@ async function apiClient<TData, TBody = unknown>(
     };
 
     if (body !== undefined) {
-        fetchOptions.body = JSON.stringify(body);
+        if (isFormData) {
+            fetchOptions.body = body as any;
+        } else {
+            fetchOptions.body = JSON.stringify(body);
+        }
     }
 
     if (cache !== undefined) {
@@ -168,7 +165,7 @@ async function apiClient<TData, TBody = unknown>(
 
         return {
             success: true,
-            data: data.data ?? data, // Handle wrapped vs unwrapped data
+            data: data.data ?? data,
             meta: data.meta,
         } as ApiSuccessResponse<TData>;
     } catch (err) {
@@ -176,37 +173,23 @@ async function apiClient<TData, TBody = unknown>(
             if (err.name === 'AbortError') {
                 return {
                     success: false,
-                    error: {
-                        code: 'request_aborted',
-                        message: 'Request was cancelled',
-                    },
+                    error: { code: 'request_aborted', message: 'Request was cancelled' },
                 };
             }
             return {
                 success: false,
-                error: {
-                    code: 'network_error',
-                    message: 'Unable to connect to server',
-                },
+                error: { code: 'network_error', message: 'Unable to connect to server' },
             };
         }
         return {
             success: false,
-            error: {
-                code: 'unknown_error',
-                message: 'An unexpected error occurred',
-            },
+            error: { code: 'unknown_error', message: 'An unexpected error occurred' },
         };
     }
 }
 
 export const api = {
     get<TData>(endpoint: string, params?: Record<string, any>, config?: RequestConfig) {
-        const url = params ? createUrl(endpoint, params).replace(new URL(createUrl(endpoint)).origin, '') : endpoint; // Hacky url fix? No, simpler to just pass endpoint
-        // Actually createUrl builds full URL, but apiClient calls createUrl again.
-        // Let's refactor createUrl usage to be efficient.
-        // If we pass full URL to apiClient, it might duplicate base.
-        // Let's keep it simple: api.get passes filtered params to client
         return apiClient<TData>(endpoint, { ...config, method: 'GET' });
     },
     post<TData, TBody = unknown>(endpoint: string, body?: TBody, config?: RequestConfig<TBody>) {
