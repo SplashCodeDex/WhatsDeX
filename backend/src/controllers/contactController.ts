@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { ContactSchema } from '@/types/contracts.js';
 
-const CreateContactSchema = ContactSchema.omit({
+const CreateContactSchema = (ContactSchema as any).unwrap().omit({
     id: true,
     tenantId: true,
     createdAt: true,

@@ -14,6 +14,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 export function ImportContactsDialog() {
     const [open, setOpen] = useState(false);
@@ -37,14 +38,19 @@ export function ImportContactsDialog() {
     const handleImport = async () => {
         if (!file) return;
 
-        try {
-            await importMutation.mutateAsync(file);
-            setOpen(false);
-            setFile(null);
-            setCsvPreview('');
-        } catch (err) {
-            // Error is handled by mutation state
-        }
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const csvData = event.target?.result as string;
+            try {
+                await importMutation.mutateAsync(csvData);
+                setOpen(false);
+                setFile(null);
+                setCsvPreview('');
+            } catch (err) {
+                // Error is handled by mutation state
+            }
+        };
+        reader.readAsText(file);
     };
 
     return (

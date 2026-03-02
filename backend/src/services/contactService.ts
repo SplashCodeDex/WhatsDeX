@@ -65,9 +65,9 @@ export class ContactService {
               email: rawData.email || '',
               tags: rawData.tags ? rawData.tags.split('|').map((t: string) => t.trim()) : [],
               attributes: rawData,
+              status: 'active' as const,
               createdAt: new Date(),
-              updatedAt: new Date(),
-              status: 'active' as const
+              updatedAt: new Date()
             };
 
             const validation = ContactSchema.safeParse(contactData);
@@ -96,17 +96,25 @@ export class ContactService {
       // Update bot statistics (contactsCount)
       if (count > 0) {
         try {
-            const statsUpdate = { 'stats.contactsCount': admin.firestore.FieldValue.increment(count) };
-            if (botId) {
-                await firebaseService.setDoc('bots', botId, statsUpdate as any, tenantId, true);
-            } else {
-                const bots = await firebaseService.getCollection('bots', tenantId);
-                const statsBatch = firebaseService.batch();
-                bots.forEach(bot => {
-                    statsBatch.update('bots', bot.id, statsUpdate as any, tenantId);
-                });
-                await statsBatch.commit();
-            }
+          const updateData = { 'stats.contactsCount': admin.firestore.FieldValue.increment(count) };
+          if (botId) {
+            // Update specific bot
+            await firebaseService.setDoc(
+              'bots',
+              botId,
+              updateData as any,
+              tenantId,
+              true
+            );
+          } else {
+            // Update all bots for this tenant to reflect new total
+            const bots = await firebaseService.getCollection('bots', tenantId);
+            const statsBatch = firebaseService.batch();
+            bots.forEach(bot => {
+                statsBatch.update('bots', (bot as any).id, updateData as any, tenantId);
+            });
+            await statsBatch.commit();
+          }
         } catch (statsError) {
           logger.error('Failed to update bot stats after import', statsError);
         }
