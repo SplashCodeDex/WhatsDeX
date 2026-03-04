@@ -22,7 +22,7 @@
 - **Framework:** Express 5.2.1 (Thin Controllers, Service-Oriented)
 - **Language:** TypeScript 5.9.3
 - **Execution:** `tsx` (TypeScript Execute) - **STRICT: DO NOT use ts-node**
-- **Omnichannel Engine:** OpenClaw 2026.2.15 (Unified Gateway & Skills Platform)
+- **Omnichannel Engine:** OpenClaw 2026.2.27 (Modernized Gateway & Unified Exports)
 - **Orchestration:** Unified Tool Registry (Bridging OpenClaw Skills & Internal Tools)
 - **WhatsApp API:** Baileys 7.0.0 (via OpenClaw Adapter)
 - **Telegram API:** grammY 1.40.0 (via OpenClaw Adapter)
