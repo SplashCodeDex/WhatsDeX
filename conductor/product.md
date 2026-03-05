@@ -27,7 +27,8 @@ The platform operates on a multi-tenant architecture where each customer's data,
 - **Webhook Mode:** Support for connectivity-only use cases where incoming messages are forwarded to external webhooks without AI intervention (standard for Free Tier).
 - **Unified Agent Orchestration:** A consolidated "Brain + Phone" architecture where independent AI personas (Agents) act as the parent for one or more Channels (Connectivity Slots).
 - **Dynamic Binding:** Ability to hot-swap Agents across Channels instantly without disconnecting the underlying platform session.
-- **Subagent Nesting:** Advanced orchestration allowing agents to spawn specialized sub-specialists for complex research and tasks.
+- **Deep Reasoning (Mastermind Phase 2):** High-intelligence multi-agent orchestration supporting up to **5 levels of nesting**. Agents can autonomously spawn researchers, fact-checkers, and synthesis nodes.
+- **Autonomous Multi-Agent Audit:** Integrated verification phase where specialized sub-agents critique and verify primary research findings before delivery, ensuring high accuracy and preventing hallucinations.
 - **Media Fidelity:** Support for **Opus-encoded WhatsApp voice notes** for superior audio quality and compatibility.
 
 ### 3. Messaging & Automation

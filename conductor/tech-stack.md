@@ -7,6 +7,7 @@
 - **Language:** TypeScript 5.9.3 (Strict Mode)
 - **Styling:** Tailwind CSS 4.1.18 (CSS-first `@theme` configuration, Zero Config)
 - **Dynamic Forms:** JSON Schema-based form generation for AI Skill parameters
+- **Visual Reasoning:** Recursive Tree-view components for real-time Agent Spawning Trace
 - **Animations:** Framer Motion 12.26.2 (GPU-accelerated)
 - **State Management:**
   - **Server State:** Server Components & Actions (Result Pattern)
@@ -24,6 +25,7 @@
 - **Execution:** `tsx` (TypeScript Execute) - **STRICT: DO NOT use ts-node**
 - **Omnichannel Engine:** OpenClaw 2026.2.27 (Modernized Gateway & Unified Exports)
 - **Orchestration:** Unified Tool Registry (Bridging OpenClaw Skills & Internal Tools)
+- **Agentic Research:** Multi-agent autonomous research cycles (Researcher -> Auditor -> Synthesis)
 - **WhatsApp API:** Baileys 7.0.0 (via OpenClaw Adapter)
 - **Telegram API:** grammY 1.40.0 (via OpenClaw Adapter)
 - **Discord API:** discord.js 14.18.0 (via OpenClaw Adapter)
