@@ -1,4 +1,4 @@
-import { Worker, ConnectionOptions } from 'bullmq';
+import { Worker, Job, ConnectionOptions } from 'bullmq';
 import { JobQueueService } from '../services/jobQueue.js';
 import AIProcessor from './aiProcessor.js';
 import MediaProcessor from './mediaProcessor.js';
@@ -12,6 +12,12 @@ const redisOptions: ConnectionOptions = {
   db: Number(process.env.REDIS_DB) || 0,
   maxRetriesPerRequest: null,
 };
+
+interface BaseJobData {
+  jobName: string;
+  tenantId?: string;
+  userId?: string;
+}
 
 class JobRegistry {
   private jobQueue: JobQueueService | null;
@@ -37,39 +43,39 @@ class JobRegistry {
       logger.info('Registering BullMQ job processors...');
 
       // 1. AI Processor
-      this.workers.push(new Worker('ai-processing', async (job) => {
+      this.workers.push(new Worker<BaseJobData>('ai-processing', async (job) => {
         const { jobName } = job.data;
         switch (jobName) {
           case 'content-generation':
-            return await this.processors.ai.processContentGeneration(job.data, job as any);
+            return await this.processors.ai.processContentGeneration(job.data as any, job as any);
           case 'batch-analysis':
-            return await this.processors.ai.processBatchAnalysis(job.data, job as any);
+            return await this.processors.ai.processBatchAnalysis(job.data as any, job as any);
           case 'moderation':
-            return await this.processors.ai.processContentModeration(job.data, job as any);
+            return await this.processors.ai.processContentModeration(job.data as any, job as any);
           default:
             throw new Error(`Unknown AI job type: ${jobName}`);
         }
       }, { connection: redisOptions, concurrency: 2 }));
 
       // 2. Media Processor
-      this.workers.push(new Worker('media-processing', async (job) => {
+      this.workers.push(new Worker<BaseJobData>('media-processing', async (job) => {
         const { jobName } = job.data;
         switch (jobName) {
           case 'image-optimization':
-            return await this.processors.media.processImageOptimization(job.data, job as any);
+            return await this.processors.media.processImageOptimization(job.data as any, job as any);
           case 'batch-processing':
-            return await this.processors.media.processBatchImageProcessing(job.data, job as any);
+            return await this.processors.media.processBatchImageProcessing(job.data as any, job as any);
           case 'video-thumbnail':
-            return await this.processors.media.processVideoThumbnail(job.data, job as any);
+            return await this.processors.media.processVideoThumbnail(job.data as any, job as any);
           case 'file-conversion':
-            return await this.processors.media.processFileConversion(job.data, job as any);
+            return await this.processors.media.processFileConversion(job.data as any, job as any);
           default:
             throw new Error(`Unknown Media job type: ${jobName}`);
         }
       }, { connection: redisOptions, concurrency: 3 }));
 
       // 3. Stats Aggregator Processor (Daily Job)
-      this.workers.push(new Worker('analytics', async (job) => {
+      this.workers.push(new Worker<BaseJobData>('analytics', async (job) => {
         const { jobName } = job.data;
         if (jobName === 'aggregate-stats') {
           return await StatsAggregatorJob.aggregateStats(job as any);
@@ -86,9 +92,6 @@ class JobRegistry {
         });
         logger.info('Daily stats aggregation job scheduled');
       }
-
-      // Note: CampaignWorker handles its own Worker registration for now,
-      // but in a future refactor it could also be centralized here.
 
       logger.info('All job processors registered successfully');
     } catch (error: unknown) {

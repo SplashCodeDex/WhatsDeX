@@ -1,4 +1,4 @@
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import GeminiService from '../services/gemini.js';
 import logger from '../utils/logger.js';
 
@@ -202,7 +202,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / items.length) * 100);
+        await job.updateProgress(((i + 1) / items.length) * 100);
       }
 
       return {
@@ -321,7 +321,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / conversations.length) * 100);
+        await job.updateProgress(((i + 1) / conversations.length) * 100);
       }
 
       return {

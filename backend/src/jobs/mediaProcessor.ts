@@ -2,7 +2,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { promises as fs } from 'fs';
 import logger from '../utils/logger.js';
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 
 /**
  * Media Processing Job Handlers
@@ -232,7 +232,7 @@ class MediaProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / images.length) * 100);
+        await job.updateProgress(((i + 1) / images.length) * 100);
       }
 
       const successful = results.filter(r => r.success).length;

@@ -37,7 +37,7 @@ export class AnalyticsController {
                 .doc(tenantId)
                 .collection('contacts');
 
-            const contactsSnapshot = await contactsQuery.count().get();
+            const contactsSnapshot = await (contactsQuery as any).count().get();
             const totalContacts = contactsSnapshot.data().count;
 
             const metrics = await monitoringService.getMetrics();

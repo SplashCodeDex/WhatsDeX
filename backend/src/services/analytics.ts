@@ -97,9 +97,9 @@ class AnalyticsService {
     const tenantPath = `tenants/${tenantId}`;
 
     // Workspace-isolated queries
-    const commandCount = (await db.collection(`${tenantPath}/command_usage`).where('usedAt', '>=', oneDayAgo).count().get()).data().count;
-    const aiCount = (await db.collection(`${tenantPath}/command_usage`).where('category', '==', 'ai-chat').count().get()).data().count;
-    const errorCount = (await db.collection(`${tenantPath}/command_usage`).where('success', '==', false).count().get()).data().count;
+    const commandCount = (await (db.collection(`${tenantPath}/command_usage`).where('usedAt', '>=', oneDayAgo) as any).count().get()).data().count;
+    const aiCount = (await (db.collection(`${tenantPath}/command_usage`).where('category', '==', 'ai-chat') as any).count().get()).data().count;
+    const errorCount = (await (db.collection(`${tenantPath}/command_usage`).where('success', '==', false) as any).count().get()).data().count;
 
     this.metrics.set(tenantId, {
       activeUsers: 0, // Implement per-tenant activity tracking in next step

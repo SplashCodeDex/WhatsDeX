@@ -64,7 +64,7 @@ ${formatter.quote(example)}`);
           categories: ['🤩'] as any, // Cast to any to bypass strict literal check for now
           id: ctx.id,
           quality: 50,
-        });
+        } as any);
 
         await ctx.reply({ sticker: await sticker.build() });
       } else if (!/utf-8|json|html|plain/.test(contentType)) {

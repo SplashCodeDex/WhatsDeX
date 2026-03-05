@@ -104,7 +104,7 @@ class AuditService {
       const snapshot = await query.offset((page - 1) * limit).limit(limit).get();
 
       // Get total count (using aggregation query if possible, or separate count)
-      const countSnapshot = await query.count().get();
+      const countSnapshot = await (query as any).count().get();
       const total = countSnapshot.data().count;
 
       const logs = snapshot.docs.map(doc => {
@@ -169,7 +169,7 @@ class AuditService {
       }
 
       // Get count
-      const countSnapshot = await query.count().get();
+      const countSnapshot = await (query as any).count().get();
       const totalEvents = countSnapshot.data().count;
 
       // Get recent events (last 10)

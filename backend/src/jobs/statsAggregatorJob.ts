@@ -74,26 +74,26 @@ class StatsAggregatorJob {
         const commandUsageRef = db.collection(`tenants/${tenantId}/command_usage`);
 
         // Count sent messages
-        const sentSnapshot = await commandUsageRef
+        const sentSnapshot = await (commandUsageRef
             .where('category', '==', 'message-sent')
             .where('usedAt', '>=', Timestamp.fromDate(startOfDay))
-            .where('usedAt', '<=', Timestamp.fromDate(endOfDay))
+            .where('usedAt', '<=', Timestamp.fromDate(endOfDay)) as any)
             .count()
             .get();
 
         // Count received messages (simulated or tracked via events)
-        const receivedSnapshot = await commandUsageRef
+        const receivedSnapshot = await (commandUsageRef
             .where('category', '==', 'message-received')
             .where('usedAt', '>=', Timestamp.fromDate(startOfDay))
-            .where('usedAt', '<=', Timestamp.fromDate(endOfDay))
+            .where('usedAt', '<=', Timestamp.fromDate(endOfDay)) as any)
             .count()
             .get();
 
         // Count errors
-        const errorSnapshot = await commandUsageRef
+        const errorSnapshot = await (commandUsageRef
             .where('success', '==', false)
             .where('usedAt', '>=', Timestamp.fromDate(startOfDay))
-            .where('usedAt', '<=', Timestamp.fromDate(endOfDay))
+            .where('usedAt', '<=', Timestamp.fromDate(endOfDay)) as any)
             .count()
             .get();
 

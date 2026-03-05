@@ -123,7 +123,7 @@ export class MemoryService {
   async getConversationStats(userId: string): Promise<Result<{ total: number; first: Date | null; last: Date | null }>> {
     try {
       const coll = db.collection('conversation_embeddings').where('userId', '==', userId);
-      const snapshot = await coll.count().get();
+      const snapshot = await (coll as any).count().get();
       const count = snapshot.data().count;
 
       const first = await coll.orderBy('timestamp', 'asc').limit(1).get();
