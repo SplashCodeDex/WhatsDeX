@@ -6,12 +6,14 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [x] **Track: Phase 2: Nested Agentic Research**
-*Link: [./tracks/nested_research_20260304/](./tracks/nested_research_20260304/)*
+- [ ] *No active tracks currently.*
 
 ---
 
 ## Archived Tracks
+
+### [x] Track: Phase 2: Nested Agentic Research
+*Link: [./conductor/archive/nested_research_20260304/](./nested_research_20260304/)*
 
 ### [x] Track: Upstream Engine Synchronization (2026.2.24)
 *Link: [./conductor/archive/openclaw_sync_20260228/](./openclaw_sync_20260228/)*
