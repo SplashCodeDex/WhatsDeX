@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CampaignService } from './campaignService.js';
-import { FirebaseService } from './FirebaseService.js';
-import { queueService } from './queueService.js';
 
 // Hoist mocks
 const { mockFirebase, mockQueueService } = vi.hoisted(() => ({
@@ -19,11 +17,10 @@ const { mockFirebase, mockQueueService } = vi.hoisted(() => ({
 // Mock dependencies
 vi.mock('./FirebaseService.js', () => ({
   firebaseService: mockFirebase,
-  FirebaseService: { getInstance: () => mockFirebase }
 }));
 
-vi.mock('./queueService.js', () => ({
-  queueService: mockQueueService
+vi.mock('./jobQueue.js', () => ({
+  jobQueueService: mockQueueService
 }));
 
 // Mock logger

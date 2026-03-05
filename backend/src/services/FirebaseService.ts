@@ -22,8 +22,59 @@ import {
   AnalyticsSchema
 } from '@/types/contracts.js';
 import { z } from 'zod';
+import admin from 'firebase-admin';
 
 type CollectionKey = keyof FirestoreSchema;
+
+class WriteBatchWrapper {
+  private batch: admin.firestore.WriteBatch;
+  private service: FirebaseService;
+
+  constructor(batch: admin.firestore.WriteBatch, service: FirebaseService) {
+    this.batch = batch;
+    this.service = service;
+  }
+
+  set<K extends CollectionKey>(
+    collection: string,
+    docId: string,
+    data: FirestoreSchema[K],
+    tenantId?: string,
+    options: { merge?: boolean } = {}
+  ) {
+    const { path, schema } = this.service.getCollectionInfo(collection, tenantId);
+    schema.parse(data);
+    const docRef = db.collection(path).doc(docId);
+    this.batch.set(docRef, data, options);
+    return this;
+  }
+
+  update<K extends CollectionKey>(
+    collection: string,
+    docId: string,
+    data: Partial<FirestoreSchema[K]>,
+    tenantId?: string
+  ) {
+    const { path, schema } = this.service.getCollectionInfo(collection, tenantId);
+    if (typeof (schema as any).partial === 'function') {
+      (schema as any).partial().parse(data);
+    }
+    const docRef = db.collection(path).doc(docId);
+    this.batch.update(docRef, data as any);
+    return this;
+  }
+
+  delete(collection: string, docId: string, tenantId?: string) {
+    const { path } = this.service.getCollectionInfo(collection, tenantId);
+    const docRef = db.collection(path).doc(docId);
+    this.batch.delete(docRef);
+    return this;
+  }
+
+  async commit() {
+    return await this.batch.commit();
+  }
+}
 
 const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants': TenantSchema as any,
@@ -59,7 +110,7 @@ export class FirebaseService {
   /**
    * Resolve a collection name to its full path and schema
    */
-  private getCollectionInfo(collection: string, tenantId?: string) {
+  public getCollectionInfo(collection: string, tenantId?: string) {
     let path: string;
     let schemaKey: CollectionKey;
 
@@ -206,6 +257,13 @@ export class FirebaseService {
       logger.error(`Firestore deleteDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, err);
       throw err;
     }
+  }
+
+  /**
+   * Create a new write batch
+   */
+  public batch(): WriteBatchWrapper {
+    return new WriteBatchWrapper(db.batch(), this);
   }
 }
 

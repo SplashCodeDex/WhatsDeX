@@ -7,6 +7,7 @@ import { webhookService } from '../services/webhookService.js';
 import { socketService } from '../services/socketService.js';
 import { TemplateService } from '../services/templateService.js';
 import { GeminiAI } from '../services/geminiAI.js';
+import { jobQueueService } from '../services/jobQueue.js';
 import logger from '../utils/logger.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import moment from 'moment-timezone';
@@ -205,8 +206,8 @@ class CampaignWorker {
                 delayTime = Math.floor(gaussianRandom(currentCampaign.antiBan.minDelay, currentCampaign.antiBan.maxDelay) * 1000);
             }
 
-            // Re-add to queue
-            await this.worker.queue.add('process-campaign', { tenantId, campaign: currentCampaign }, { delay: delayTime });
+            // Re-add to queue using centralized service
+            await jobQueueService.addCampaignJob(tenantId, currentCampaign, { delay: delayTime });
         } else {
             await this.finalizeCampaign(tenantId, id, sent, failed, total);
         }

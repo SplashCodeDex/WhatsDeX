@@ -1,5 +1,5 @@
 import { firebaseService } from './FirebaseService.js';
-import { queueService } from './queueService.js';
+import { jobQueueService } from './jobQueue.js';
 import { Campaign, CampaignSchema, CampaignStatus, Result } from '../types/contracts.js';
 import logger from '../utils/logger.js';
 import crypto from 'crypto';
@@ -94,7 +94,7 @@ export class CampaignService {
             }
 
             // Add to Queue
-            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'pending' }, { delay });
+            await jobQueueService.addCampaignJob(tenantId, { ...campaign, status: 'pending' }, { delay });
 
             return { success: true, data: undefined };
         } catch (error: unknown) {
@@ -123,7 +123,7 @@ export class CampaignService {
             // Note: If campaign was partially done, worker should handle "resume" logic by checking stats/state.
             // For now, we just add it back to queue, assuming worker is idempotent or handles processed items.
             // But since queue might be empty, we re-add.
-            await queueService.addCampaignJob(tenantId, { ...campaign, status: 'pending' }, { delay: 0 });
+            await jobQueueService.addCampaignJob(tenantId, { ...campaign, status: 'pending' }, { delay: 0 });
 
             return { success: true, data: undefined };
         } catch (error: unknown) {
