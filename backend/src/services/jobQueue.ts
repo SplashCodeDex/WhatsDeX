@@ -104,7 +104,8 @@ export class JobQueueService {
       if (state === 'waiting') {
         await queue.drain();
       } else {
-        await queue.clean(0, 1000, state as any);
+        const cleanedJobs = await queue.clean(0, 1000, state as any);
+        count = cleanedJobs.length;
       }
 
       logger.info(`Cleared ${state} jobs from queue '${queueName}'`);

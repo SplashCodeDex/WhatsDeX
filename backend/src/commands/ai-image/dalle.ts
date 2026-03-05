@@ -32,9 +32,9 @@ export default {
       // Inform the user that their request is being processed
       await ctx.reply(config.msg.wait);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle potential errors from adding the job to the queue
-      await tools.cmd.handleError(ctx, error, true);
+      await tools.cmd.handleError(ctx, error);
     }
   },
 };

@@ -9,7 +9,7 @@ import { Job } from 'bullmq';
  * Handles background media processing tasks like image optimization, video processing, etc.
  */
 
-interface ImageOptions {
+export interface ImageOptions {
   width?: number;
   height?: number;
   quality?: number;
@@ -17,26 +17,26 @@ interface ImageOptions {
   withoutEnlargement?: boolean;
 }
 
-interface ImageOptimizationData {
+export interface ImageOptimizationData {
   imagePath: string;
   options: ImageOptions;
   userId: string;
 }
 
-interface BatchImageProcessingData {
+export interface BatchImageProcessingData {
   images: { id: string; path: string; options?: ImageOptions }[];
   options: ImageOptions;
   userId: string;
 }
 
-interface VideoThumbnailData {
+export interface VideoThumbnailData {
   videoPath: string;
   timestamp?: number;
   size?: { width: number; height: number };
   userId: string;
 }
 
-interface FileConversionData {
+export interface FileConversionData {
   inputPath: string;
   outputFormat: string;
   options: any;

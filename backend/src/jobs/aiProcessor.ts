@@ -12,7 +12,7 @@ interface Conversation {
   context?: any;
 }
 
-interface ContentGenerationData {
+export interface ContentGenerationData {
   prompt: string;
   type: string;
   userId: string;
@@ -22,13 +22,13 @@ interface ContentGenerationData {
   };
 }
 
-interface BatchAnalysisData {
+export interface BatchAnalysisData {
   items: { id: string; content: string }[];
   analysisType: string;
   userId: string;
 }
 
-interface ContentModerationData {
+export interface ContentModerationData {
   content: string;
   userId: string;
   context?: any;
