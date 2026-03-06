@@ -15,8 +15,8 @@
     - [ ] Test contact list display.
 
 ## Phase 2: Analytics & Insights
-- [ ] **Task: Analytics Backend Rollup**
-    - [ ] Verify/Implement `StatsAggregatorJob`.
+- [x] **Task: Analytics Backend Rollup**
+    - [x] Verify/Implement `StatsAggregatorJob`.
 - [ ] **Task: Wire Dashboard Analytics**
     - [ ] Replace mock data in `DashboardStatsGrid`.
     - [ ] Wire `InsightCard` in Sidebar to real stats.

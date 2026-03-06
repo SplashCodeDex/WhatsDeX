@@ -6,10 +6,10 @@
 - [x] **Task: Standardize Frontend API Layer**
     - [x] Sub-task: Update `frontend/src/lib/api.ts` (or equivalent) to use the `Result<T>` pattern.
     - [x] Sub-task: Generate/Update TypeScript interfaces for all backend controller responses.
-- [ ] **Task: Backend Analytics Aggregator**
-    - [ ] Sub-task: Write tests for `StatsAggregatorJob`.
-    - [ ] Sub-task: Implement BullMQ job to roll up `command_usage` and `messages` into `stats_daily`.
-    - [ ] Sub-task: Implement `AnalyticsController.getMessageAnalytics` to query the daily collection.
+- [x] **Task: Backend Analytics Aggregator**
+    - [x] Sub-task: Write tests for `StatsAggregatorJob`.
+    - [x] Sub-task: Implement BullMQ job to roll up `command_usage` and `messages` into `stats_daily`.
+    - [x] Sub-task: Implement `AnalyticsController.getMessageAnalytics` to query the daily collection.
 - [ ] **Task: Wire Dashboard Analytics**
     - [ ] Sub-task: Replace mock data in Dashboard widgets with real calls to `getDashboardStats`.
     - [ ] Sub-task: Connect the message volume chart to `getMessageAnalytics`.
