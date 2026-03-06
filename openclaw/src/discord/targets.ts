@@ -54,13 +54,11 @@ export function parseDiscordTarget(
     return buildMessagingTarget("user", id, trimmed);
   }
   if (/^\d+$/.test(trimmed)) {
-    if (options.defaultKind) {
-      return buildMessagingTarget(options.defaultKind, trimmed, trimmed);
-    }
-    throw new Error(
-      options.ambiguousMessage ??
-        `Ambiguous Discord recipient "${trimmed}". Use "user:${trimmed}" for DMs or "channel:${trimmed}" for channel messages.`,
-    );
+    // OC-26164: Harden numeric ID resolution.
+    // Default to channel for bare numeric IDs if no defaultKind is specified,
+    // rather than throwing an ambiguous error, to match common tool usage patterns.
+    const kind = options.defaultKind ?? "channel";
+    return buildMessagingTarget(kind, trimmed, trimmed);
   }
   return buildMessagingTarget("channel", trimmed, trimmed);
 }

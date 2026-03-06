@@ -27,6 +27,15 @@ import type {
     isApiSuccess
 } from '@/types';
 
+interface NestedAgentTrace {
+    id: string;
+    label: string;
+    parent?: string;
+    status: 'thinking' | 'complete' | 'error';
+    task?: string;
+    timestamp: string;
+}
+
 interface OmnichannelState {
     // Data
     channels: Channel[];
@@ -46,6 +55,7 @@ interface OmnichannelState {
     devices: DevicePairingList | null;
     logs: LogEntry[];
     gatewayHealth: any | null;
+    nestedTrace: NestedAgentTrace[]; // Phase 2: Visual Trace
     isLoading: boolean;
     error: string | null;
 
@@ -55,6 +65,10 @@ interface OmnichannelState {
     updateChannelStatus: (botId: string, status: Channel['status']) => void;
     addActivityEvent: (event: Omit<ActivityEvent, 'id'>) => void;
     handleProgressUpdate: (update: BotProgressUpdate) => void;
+    
+    // Sub-agent Trace Actions
+    addTraceNode: (trace: Omit<NestedAgentTrace, 'timestamp'>) => void;
+    clearTrace: () => void;
 
     // Cron Actions
     fetchCronJobs: () => Promise<void>;
@@ -119,6 +133,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     devices: null,
     logs: [],
     gatewayHealth: null,
+    nestedTrace: [],
     isLoading: false,
     error: null,
 
@@ -225,6 +240,16 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
             message: `${step}: ${progressStatus}`,
             timestamp: new Date().toISOString()
         });
+    },
+
+    addTraceNode: (trace) => {
+        set((state) => ({
+            nestedTrace: [...state.nestedTrace, { ...trace, timestamp: new Date().toISOString() }]
+        }));
+    },
+
+    clearTrace: () => {
+        set({ nestedTrace: [] });
     },
 
     // --- Cron Actions ---

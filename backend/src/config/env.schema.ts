@@ -84,6 +84,7 @@ export const envSchema = z.object({
   AI_SUMMARIZE_THRESHOLD: z.coerce.number().default(16),
   AI_MESSAGES_TO_SUMMARIZE: z.coerce.number().default(10),
   AI_HISTORY_PRUNE_LENGTH: z.coerce.number().default(6),
+  AI_MAX_SPAWN_DEPTH: z.coerce.number().default(5),
   GROUP_LINK: z.string().url().optional(),
 
   // Connection

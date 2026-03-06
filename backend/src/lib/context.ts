@@ -17,6 +17,7 @@ import { userService } from '../services/userService.js';
 import { tenantConfigService } from '../services/tenantConfigService.js';
 import { WhatsDeXToolBridge } from '../services/WhatsDeXToolBridge.js';
 import { OpenClawSkillBridge } from '../services/OpenClawSkillBridge.js';
+import { MastermindSkillBridge } from '../services/MastermindSkillBridge.js';
 
 /**
  * Singleton state for context initialization
@@ -93,6 +94,11 @@ async function initializeContext(): Promise<GlobalContext> {
             logger.info('>>> [MASTERMIND] Registering OpenClaw skills...');
             await OpenClawSkillBridge.registerSkills();
             logger.info('>>> [MASTERMIND] OpenClaw skills registered.');
+
+            // Register Mastermind Advanced Skills (Phase 2)
+            logger.info('>>> [MASTERMIND] Registering Mastermind advanced skills...');
+            MastermindSkillBridge.registerSkills();
+            logger.info('>>> [MASTERMIND] Mastermind advanced skills registered.');
 
             logger.info('✅ Global Context initialized successfully');
             logger.info('>>> [MASTERMIND] Global Context initialized successfully');

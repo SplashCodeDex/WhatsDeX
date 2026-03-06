@@ -32,6 +32,10 @@ export async function createChannelDiscord(
   if (payload.nsfw !== undefined) {
     body.nsfw = payload.nsfw;
   }
+  // OC-26209: Support permission_overwrites during creation.
+  if (Array.isArray(payload.permissionOverwrites)) {
+    body.permission_overwrites = payload.permissionOverwrites;
+  }
   return (await rest.post(Routes.guildChannels(payload.guildId), {
     body,
   })) as APIChannel;
@@ -69,6 +73,10 @@ export async function editChannelDiscord(
   }
   if (payload.autoArchiveDuration !== undefined) {
     body.auto_archive_duration = payload.autoArchiveDuration;
+  }
+  // OC-26209: Support permission_overwrites during editing.
+  if (Array.isArray(payload.permissionOverwrites)) {
+    body.permission_overwrites = payload.permissionOverwrites;
   }
   if (payload.availableTags !== undefined) {
     body.available_tags = payload.availableTags.map((t) => ({

@@ -129,6 +129,29 @@ export function resolveDmGroupAccessDecision(params: {
       reason: "dmPolicy=open",
     };
   }
+  if (dmPolicy === "allowlist") {
+    // OC-26094: Fail closed on explicit empty allowFrom lists.
+    if (effectiveAllowFrom.length === 0) {
+      return {
+        decision: "block",
+        reasonCode: DM_GROUP_ACCESS_REASON.DM_POLICY_NOT_ALLOWLISTED,
+        reason: "dmPolicy=allowlist (empty allowlist)",
+      };
+    }
+    if (params.isSenderAllowed(effectiveAllowFrom)) {
+      return {
+        decision: "allow",
+        reasonCode: DM_GROUP_ACCESS_REASON.DM_POLICY_ALLOWLISTED,
+        reason: `dmPolicy=${dmPolicy} (allowlisted)`,
+      };
+    }
+    return {
+      decision: "block",
+      reasonCode: DM_GROUP_ACCESS_REASON.DM_POLICY_NOT_ALLOWLISTED,
+      reason: `dmPolicy=${dmPolicy} (not allowlisted)`,
+    };
+  }
+
   if (params.isSenderAllowed(effectiveAllowFrom)) {
     return {
       decision: "allow",

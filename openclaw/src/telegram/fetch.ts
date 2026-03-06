@@ -36,27 +36,24 @@ function applyTelegramNetworkWorkarounds(network?: TelegramNetworkConfig): void 
   // Node 22's built-in globalThis.fetch uses undici's internal Agent whose
   // connect options are frozen at construction time. Calling
   // net.setDefaultAutoSelectFamily() after that agent is created has no
-  // effect on it. Replace the global dispatcher with one that carries the
-  // current autoSelectFamily setting so subsequent globalThis.fetch calls
-  // inherit the same decision.
-  // See: https://github.com/openclaw/openclaw/issues/25676
+  // effect on it. Avoid setGlobalDispatcher to prevent breaking other outbound requests (issue #26229).
+  // Instead, we return a local agent to be used by the Telegram-specific fetch.
+  let localDispatcher: Agent | undefined = undefined;
   if (
     autoSelectDecision.value !== null &&
     autoSelectDecision.value !== appliedGlobalDispatcherAutoSelectFamily
   ) {
     try {
-      setGlobalDispatcher(
-        new Agent({
-          connect: {
-            autoSelectFamily: autoSelectDecision.value,
-            autoSelectFamilyAttemptTimeout: 300,
-          },
-        }),
-      );
+      localDispatcher = new Agent({
+        connect: {
+          autoSelectFamily: autoSelectDecision.value,
+          autoSelectFamilyAttemptTimeout: 300,
+        },
+      });
       appliedGlobalDispatcherAutoSelectFamily = autoSelectDecision.value;
-      log.info(`global undici dispatcher autoSelectFamily=${autoSelectDecision.value}`);
+      log.info(`local undici dispatcher autoSelectFamily=${autoSelectDecision.value}`);
     } catch {
-      // ignore if setGlobalDispatcher is unavailable
+      // ignore if Agent constructor or setGlobalDispatcher logic is unavailable
     }
   }
 
@@ -76,6 +73,8 @@ function applyTelegramNetworkWorkarounds(network?: TelegramNetworkConfig): void 
       }
     }
   }
+
+  return localDispatcher;
 }
 
 // Prefer wrapped fetch when available to normalize AbortSignal across runtimes.
@@ -83,15 +82,23 @@ export function resolveTelegramFetch(
   proxyFetch?: typeof fetch,
   options?: { network?: TelegramNetworkConfig },
 ): typeof fetch | undefined {
-  applyTelegramNetworkWorkarounds(options?.network);
-  if (proxyFetch) {
-    return resolveFetch(proxyFetch);
-  }
-  const fetchImpl = resolveFetch();
-  if (!fetchImpl) {
+  const localDispatcher = applyTelegramNetworkWorkarounds(options?.network);
+  const baseFetch = proxyFetch ?? (resolveFetch() as typeof fetch);
+  if (!baseFetch) {
     throw new Error("fetch is not available; set channels.telegram.proxy in config");
   }
-  return fetchImpl;
+
+  if (localDispatcher) {
+    // Return a wrapped fetch that uses the local dispatcher.
+    return (url: string | URL | Request, init?: RequestInit) => {
+      return (baseFetch as any)(url, {
+        ...init,
+        dispatcher: localDispatcher,
+      });
+    };
+  }
+
+  return resolveFetch(baseFetch);
 }
 
 export function resetTelegramFetchStateForTests(): void {

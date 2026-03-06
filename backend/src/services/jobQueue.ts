@@ -1,4 +1,4 @@
-import { Queue, Worker, Job, JobOptions, ConnectionOptions } from 'bullmq';
+import { Queue, Worker, Job, JobsOptions, ConnectionOptions } from 'bullmq';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
 import configManager from '../config/ConfigManager.js';
@@ -12,7 +12,7 @@ export class JobQueueService {
   private queues: Map<string, Queue>;
   private workers: Map<string, Worker>;
   private isInitialized: boolean;
-  private defaultJobOptions: JobOptions;
+  private defaultJobOptions: JobsOptions;
   private queueConfigs: Record<string, QueueConfig>;
   private redisOptions: ConnectionOptions;
 
@@ -83,7 +83,7 @@ export class JobQueueService {
     }
   }
 
-  async addJob(queueName: string, jobName: string, data: any = {}, options: JobOptions = {}): Promise<Result<Job>> {
+  async addJob(queueName: string, jobName: string, data: any = {}, options: JobsOptions = {}): Promise<Result<Job>> {
     try {
       const queue = this.queues.get(queueName);
       if (!queue) throw new Error(`Queue '${queueName}' not found`);

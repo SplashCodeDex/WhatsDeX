@@ -1,7 +1,7 @@
 import { toolRegistry, ToolDefinition } from './toolRegistry.js';
-// @ts-ignore
-import { createOpenClawTools } from '../../../openclaw/src/agents/openclaw-tools.js';
+import { createOpenClawTools } from 'openclaw';
 import logger from '../utils/logger.js';
+import configManager from '../config/ConfigManager.js';
 
 /**
  * Bridge between OpenClaw skills and the WhatsDeX Unified Tool Registry.
@@ -13,13 +13,13 @@ export class OpenClawSkillBridge {
    */
   public static async registerSkills(): Promise<void> {
     try {
-      // Create tools with default options
-      // In a real scenario, we might want to pass more context
-      logger.info('🔧 Creating OpenClaw tools...');
+      // Create tools with full project configuration
+      logger.info('🔧 Creating OpenClaw tools with deep configuration...');
       const ocTools = createOpenClawTools({
         allowHostBrowserControl: true,
         sandboxed: false,
         config: {
+          ...configManager.config,
           plugins: {
             enabled: false // Disable heavy plugin discovery to prevent port 3001 hang
           }

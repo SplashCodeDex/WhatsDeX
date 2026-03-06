@@ -15,6 +15,7 @@ import { isApiSuccess } from '@/types';
 import { GatewayMetrics } from './GatewayMetrics';
 import { ActivityFeed } from '../omnichannel/ActivityFeed';
 import { OmnichannelSocketManager } from '../omnichannel/OmnichannelSocketManager';
+import { NestedResearchTrace } from './NestedResearchTrace';
 
 export const metadata: Metadata = {
     title: 'Dashboard Overview',
@@ -163,7 +164,8 @@ export default async function DashboardHomePage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <div className="col-span-4">
+                <div className="col-span-4 space-y-4">
+                    <NestedResearchTrace />
                     <ActivityFeed />
                 </div>
 

@@ -251,7 +251,12 @@ export async function handleSlackAction(
           typeof limitRaw === "number" && Number.isFinite(limitRaw) ? limitRaw : undefined;
         const before = readStringParam(params, "before");
         const after = readStringParam(params, "after");
-        const threadId = readStringParam(params, "threadId");
+        // OC-26216: Always forward threadId. Fallback to currentThreadTs from context
+        // if the channel matches the current conversation.
+        let threadId = readStringParam(params, "threadId");
+        if (!threadId && context?.currentThreadTs && context.currentChannelId === channelId) {
+          threadId = context.currentThreadTs;
+        }
         const result = await readSlackMessages(channelId, {
           ...readOpts,
           limit,

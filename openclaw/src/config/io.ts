@@ -696,6 +696,24 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       }
       const raw = deps.fs.readFileSync(configPath, "utf-8");
       const parsed = deps.json5.parse(raw);
+
+      // OC-26104: Verify config integrity if a hash is present in meta.
+      const metaIntegrity = (parsed as any)?.meta?.integrity;
+      if (metaIntegrity) {
+        const stagedForHash = structuredClone(parsed) as any;
+        if (stagedForHash.meta) {
+          delete stagedForHash.meta.integrity;
+        }
+        const jsonForHash = JSON.stringify(stagedForHash, null, 2).trimEnd().concat("\n");
+        const calculatedHash = hashConfigRaw(jsonForHash);
+        
+        if (metaIntegrity !== calculatedHash) {
+          deps.logger.warn(
+            `Config integrity mismatch at ${configPath}: expected ${metaIntegrity}, got ${calculatedHash}`,
+          );
+        }
+      }
+
       const { resolvedConfigRaw: resolvedConfig } = resolveConfigForRead(
         resolveConfigIncludesForRead(parsed, configPath, deps),
         deps.env,
@@ -1129,6 +1147,15 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
     // Do NOT apply runtime defaults when writing — user config should only contain
     // explicitly set values. Runtime defaults are applied when loading (issue #6070).
     const stampedOutputConfig = stampConfigVersion(outputConfig);
+
+    // OC-26104: Calculate and stamp integrity hash.
+    // We hash the JSON representation of the config BEFORE adding the integrity field.
+    const jsonWithoutIntegrity = JSON.stringify(stampedOutputConfig, null, 2).trimEnd().concat("\n");
+    const integrityHash = hashConfigRaw(jsonWithoutIntegrity);
+    if (stampedOutputConfig.meta) {
+      stampedOutputConfig.meta.integrity = integrityHash;
+    }
+
     const json = JSON.stringify(stampedOutputConfig, null, 2).trimEnd().concat("\n");
     const nextHash = hashConfigRaw(json);
     const previousHash = resolveConfigSnapshotHash(snapshot);

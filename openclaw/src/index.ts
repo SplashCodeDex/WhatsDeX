@@ -33,6 +33,12 @@ import { enableConsoleCapture } from "./logging.js";
 import { runCommandWithTimeout, runExec } from "./process/exec.js";
 import { assertWebChannel, normalizeE164, toWhatsappJid } from "./utils.js";
 
+// Bridge Exports for WhatsDeX
+export { sendMessageWhatsApp, sendReactionWhatsApp, sendPollWhatsApp } from "./web/outbound.js";
+export { setActiveWebListener, type ActiveWebListener, type ActiveWebSendOptions } from "./web/active-listener.js";
+export { sendMessageTelegram } from "./telegram/send.js";
+export { createOpenClawTools } from "./agents/openclaw-tools.js";
+
 loadDotEnv({ quiet: true });
 normalizeEnv();
 ensureOpenClawCliOnPath();

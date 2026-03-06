@@ -23,7 +23,7 @@ export default function HomePage(): React.JSX.Element {
                             alt="WhatsDeX"
                             width={40}
                             height={40}
-                            className="h-10 w-10 drop-shadow-md"
+                            className="h-15 w-15 drop-shadow-md"
                             priority
                         />
                     </Link>

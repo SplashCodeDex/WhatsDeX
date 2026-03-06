@@ -148,7 +148,11 @@ export class ChannelService {
       status = 'disconnected'; // Sync DOWN (stale from crash)
     }
 
-    return { ...channel, status };
+    return { 
+      ...channel, 
+      status,
+      phoneNumber: channel.phoneNumber || undefined 
+    };
   }
 
   /**

@@ -205,6 +205,23 @@ export async function writeFileWithinRoot(params: {
     await fs.mkdir(path.dirname(resolved), { recursive: true });
   }
 
+  // OC-26073: Harden symlink escape check. We must ensure that any symlink
+  // at the target path or in its parents does not lead outside the root.
+  let lstat: Stats | null = null;
+  try {
+    lstat = await fs.lstat(resolved);
+    if (lstat.isSymbolicLink()) {
+      const target = await fs.realpath(resolved);
+      if (!isPathInside(rootWithSep, target)) {
+        throw new SafeOpenError("outside-workspace", "symlink points outside workspace root");
+      }
+    }
+  } catch (err) {
+    if (!isNotFoundPathError(err)) {
+      throw err;
+    }
+  }
+
   let ioPath = resolved;
   try {
     const resolvedRealPath = await fs.realpath(resolved);

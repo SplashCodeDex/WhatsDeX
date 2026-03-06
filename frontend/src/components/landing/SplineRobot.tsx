@@ -49,6 +49,7 @@ interface SplineRobotProps {
 
 export function SplineRobot({ sceneUrl, className = '' }: SplineRobotProps) {
     const [hasError, setHasError] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Catch Spline runtime errors that fire outside React's lifecycle
     // (e.g. "Cannot read properties of undefined (reading 'position')" in onFrame)
@@ -65,14 +66,24 @@ export function SplineRobot({ sceneUrl, className = '' }: SplineRobotProps) {
     }, []);
 
     const handleLoad = useCallback((splineApp: Application) => {
-        console.log('[SplineRobot] Scene loaded successfully');
-        // Store ref if needed for future interactions
-        void splineApp;
-    }, []);
+        // Spline wrapper mounted, now manually load the scene safely.
+        // This prevents the autostart `onFrame` crash.
+        splineApp.load(sceneUrl)
+            .then(() => {
+                console.log('[SplineRobot] Scene loaded successfully via manual load');
+                setIsLoading(false);
+            })
+            .catch((err) => {
+                console.error('[SplineRobot] Failed to manual load scene:', err);
+                setHasError(true);
+                setIsLoading(false);
+            });
+    }, [sceneUrl]);
 
     const handleError = useCallback(() => {
-        console.warn('[SplineRobot] Failed to load scene, showing fallback');
+        console.warn('[SplineRobot] Failed to initialize Spline wrapper, showing fallback');
         setHasError(true);
+        setIsLoading(false);
     }, []);
 
     const fallbackUI = (
@@ -95,23 +106,28 @@ export function SplineRobot({ sceneUrl, className = '' }: SplineRobotProps) {
     return (
         <div className={className}>
             <SplineErrorBoundary fallback={fallbackUI}>
-                <Suspense fallback={
-                    <div className="flex h-full w-full items-center justify-center bg-background">
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="w-12 h-12 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
-                            <p className="text-sm text-muted-foreground animate-pulse">Initializing Studio...</p>
+                <div className="relative w-full h-full">
+                    {/* Show loader while manual load is happening */}
+                    {isLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-background z-10 pointer-events-none">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-12 h-12 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
+                                <p className="text-sm text-muted-foreground animate-pulse">Initializing Studio...</p>
+                            </div>
                         </div>
-                    </div>
-                }>
-                    <Spline
-                        scene={sceneUrl}
-                        onLoad={handleLoad}
-                        onError={handleError}
-                    />
-                </Suspense>
+                    )}
+                    <Suspense fallback={null}>
+                        {/* Only initialize the app, DO NOT pass scene prop directly to avoid onFrame undefined crash */}
+                        <Spline
+                            scene=""
+                            onLoad={handleLoad}
+                            onError={handleError}
+                        />
+                    </Suspense>
+                </div>
             </SplineErrorBoundary>
 
-            {/* Ambient Base Glow (disabled pointer events safely so it doesn't block Spline) */}
+            {/* Ambient Base Glow */}
             <div className="absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[80%] h-[30%] bg-primary-500/20 blur-[100px] -z-10 rounded-full pointer-events-none"></div>
         </div>
     );

@@ -501,6 +501,17 @@ function FlowBuilder() {
 
                   {selectedSkill && (
                     <div className="space-y-4 pt-4 border-t border-border/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-bold uppercase">Deep Reasoning (Nesting)</Label>
+                        <input
+                          type="checkbox"
+                          className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary"
+                          checked={(selectedNode.data as any).nesting || false}
+                          onChange={(e) => updateNodeData(selectedNode.id, { nesting: e.target.checked })}
+                        />
+                      </div>
+                      <p className="text-[9px] text-muted-foreground leading-tight">Enable autonomous sub-agent research and fact-checking for this node.</p>
+                      
                       <h3 className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Parameters</h3>
                       {Object.entries(selectedSkill.parameters?.properties || {}).map(([key, prop]: [string, any]) => (
                         <div key={key} className="space-y-1.5">

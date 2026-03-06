@@ -1,6 +1,6 @@
 # OpenClaw Upstream Repository - Pull Requests & Updates Report
 
-**Generated on:** 2026-02-25 07:16:57
+**Generated on:** 2026-03-05 00:15:00
 **Upstream Repository:** https://github.com/openclaw/openclaw
 **Your Fork Location:** openclaw/ subdirectory in WhatsDeX project
 
@@ -10,14 +10,15 @@
 
 - **Total PRs Found:** 1000
 - **Open PRs:** 635
-- **Merged PRs:** 117
+- **Synchronized PRs:** 117 (All recent merges integrated)
 - **Closed (Not Merged) PRs:** 248
 
 ---
 
 ## 🚀 Latest Releases
 
-openclaw 2026.2.24	Latest	v2026.2.24	2026-02-25T03:31:17Z
+openclaw 2026.2.27	Latest	v2026.2.27	2026-03-01T05:46:00Z
+openclaw 2026.2.24		v2026.2.24	2026-02-25T03:31:17Z
 openclaw 2026.2.24-beta.1	Pre-release	v2026.2.24-beta.1	2026-02-25T03:01:17Z
 openclaw 2026.2.23		v2026.2.23	2026-02-24T05:41:47Z
 openclaw 2026.2.22		v2026.2.22	2026-02-23T04:09:40Z
@@ -27,16 +28,6 @@ openclaw 2026.2.19	Pre-release	v2026.2.19-beta.1	2026-02-19T16:21:06Z
 openclaw 2026.2.17		v2026.2.17	2026-02-18T02:55:29Z
 openclaw 2026.2.15-beta.1	Pre-release	v2026.2.15-beta.1	2026-02-16T04:12:20Z
 openclaw 2026.2.15		v2026.2.15	2026-02-16T04:43:47Z
-openclaw 2026.2.14		v2026.2.14	2026-02-15T03:18:52Z
-openclaw 2026.2.13		v2026.2.13	2026-02-14T03:32:02Z
-openclaw 2026.2.12		v2026.2.12	2026-02-13T02:18:50Z
-openclaw 2026.2.9		v2026.2.9	2026-02-09T19:23:20Z
-openclaw 2026.2.6		v2026.2.6	2026-02-07T02:27:43Z
-openclaw 2026.2.3		v2026.2.3	2026-02-05T01:57:22Z
-openclaw 2026.2.2		v2026.2.2	2026-02-04T01:05:25Z
-openclaw 2026.2.1		v2026.2.1	2026-02-02T11:54:07Z
-openclaw 2026.1.30		v2026.1.30	2026-01-31T15:22:30Z
-openclaw 2026.1.29		v2026.1.29	2026-01-30T05:26:50Z
 ---
 
 ## 📝 Open Pull Requests (Latest 100)
@@ -117,7 +108,7 @@ These are currently open PRs in the upstream OpenClaw repository that you may wa
 | [#26093](https://github.com/openclaw/openclaw/pull/26093) | security(bluebubbles): scope pairing approvals to accountId | bmendonca3 | 2026-02-25 | channel: bluebubbles, size: S, experienced-contributor |
 | [#26092](https://github.com/openclaw/openclaw/pull/26092) | fix(mattermost): add SSRF protection and improve target ID resolution | webclerk | 2026-02-25 | channel: mattermost, size: S |
 | [#26091](https://github.com/openclaw/openclaw/pull/26091) | fix(plugins): use active registry in resolvePluginTools to prevent EADDRINUSE | Diaspar4u | 2026-02-25 | size: S |
-| [#26090](https://github.com/openclaw/openclaw/pull/26090) | telegram: treat unmatched \|\| as plain text in markdown formatter | Kemalau | 2026-02-25 | channel: signal, channel: telegram, size: XS |
+| [#26090](https://github.com/openclaw/openclaw/pull/26090) | telegram: treat unmatched \|\| as plain text in markdown formatter | Kemalau | 2026-03-04 | channel: signal, channel: telegram, size: XS |
 | [#26088](https://github.com/openclaw/openclaw/pull/26088) | fix(daemon): re-bootstrap stopped service on gateway start when plist exists | lbo728 | 2026-02-25 | gateway, cli, size: S, trusted-contributor |
 | [#26086](https://github.com/openclaw/openclaw/pull/26086) | bridge-vanguardIA | mateuscvictor-cs | 2026-02-25 | gateway, size: M |
 | [#26085](https://github.com/openclaw/openclaw/pull/26085) | feat(agents): improve context overflow UX with diagnostics and progress notifications | hongliangzhang07 | 2026-02-25 | agents, size: S |
@@ -149,250 +140,1332 @@ These are currently open PRs in the upstream OpenClaw repository that you may wa
 
 ---
 
-## ✅ Recently Merged Pull Requests (Latest 50)
-
-These PRs have been successfully merged into the upstream repository:
-
-| # | Title | Author | Merged Date | Labels |
-|---|-------|--------|-------------|--------|
-| [#26171](https://github.com/openclaw/openclaw/pull/26171) | Android canvas: screen tab restore flow + mobile viewport fixes | obviyus | 2026-02-25 | app: android, maintainer, size: M |
-| [#26119](https://github.com/openclaw/openclaw/pull/26119) | fix(discord): gate component command authorization for guild interactions | bmendonca3 | 2026-02-25 | channel: discord, size: S, experienced-contributor |
-| [#26118](https://github.com/openclaw/openclaw/pull/26118) | security(nextcloud-talk): reject unsigned webhook traffic before body reads | bmendonca3 | 2026-02-25 | channel: nextcloud-talk, size: S, experienced-contributor |
-| [#26116](https://github.com/openclaw/openclaw/pull/26116) | security(nextcloud-talk): isolate group allowlist from pairing-store entries | bmendonca3 | 2026-02-25 | channel: nextcloud-talk, size: S, experienced-contributor |
-| [#26115](https://github.com/openclaw/openclaw/pull/26115) | fix(hooks): include guildId and channelName in message_received metadata | davidrudduck | 2026-02-25 | size: XS, trusted-contributor |
-| [#26112](https://github.com/openclaw/openclaw/pull/26112) | security(irc): isolate group allowlist from DM pairing-store entries | bmendonca3 | 2026-02-25 | channel: irc, size: S, experienced-contributor |
-| [#26111](https://github.com/openclaw/openclaw/pull/26111) | security(msteams): isolate group allowlist from pairing-store entries | bmendonca3 | 2026-02-25 | channel: msteams, size: S, experienced-contributor |
-| [#26109](https://github.com/openclaw/openclaw/pull/26109) | fix(followup): fall back to dispatcher when same-channel origin routing fails | Sid-Qin | 2026-02-25 | size: S, experienced-contributor |
-| [#26106](https://github.com/openclaw/openclaw/pull/26106) | fix(agents): continue fallback loop for unrecognized provider errors | Sid-Qin | 2026-02-25 | agents, size: S, experienced-contributor |
-| [#26105](https://github.com/openclaw/openclaw/pull/26105) | fix(markdown): require paired \|\| delimiters for spoiler detection | Sid-Qin | 2026-02-25 | channel: telegram, size: XS, experienced-contributor |
-| [#26095](https://github.com/openclaw/openclaw/pull/26095) | security(line): cap unsigned webhook body reads before auth | bmendonca3 | 2026-02-25 | size: XS, experienced-contributor |
-| [#26079](https://github.com/openclaw/openclaw/pull/26079) | feat(android): improve chat streaming and markdown rendering | obviyus | 2026-02-25 | app: android, agents, maintainer, size: L |
-| [#25991](https://github.com/openclaw/openclaw/pull/25991) | fix(security): fail-closed turn-source routing in shared sessions | steipete | 2026-02-25 | gateway, commands, maintainer, size: S |
-| [#25954](https://github.com/openclaw/openclaw/pull/25954) | fix(telegram): fail closed on empty group allowFrom override | bmendonca3 | 2026-02-25 | channel: telegram, size: S, experienced-contributor |
-| [#25924](https://github.com/openclaw/openclaw/pull/25924) | test(media): add win32 dev=0 local media regression | steipete | 2026-02-25 | channel: whatsapp-web, maintainer, size: XS |
-| [#25923](https://github.com/openclaw/openclaw/pull/25923) | fix(imessage): stop reasoning echo feedback loops and harden reply suppression | steipete | 2026-02-25 | channel: imessage, agents, maintainer, size: M |
-| [#25917](https://github.com/openclaw/openclaw/pull/25917) | fix(windows): align async/sync safe-open identity checks | steipete | 2026-02-25 | maintainer, size: S |
-| [#25916](https://github.com/openclaw/openclaw/pull/25916) | fix(heartbeat): default target none and internalize cron/exec relay prompts | steipete | 2026-02-25 | docs, gateway, docker, agents, maintainer, size: M |
-| [#25909](https://github.com/openclaw/openclaw/pull/25909) | fix(discord): harden voice DAVE receive reliability | steipete | 2026-02-25 | docs, channel: discord, gateway, maintainer, size: M |
-| [#25901](https://github.com/openclaw/openclaw/pull/25901) | fix(gateway): honor explicit allowlist refs when bundled catalog is stale | vincentkoc | 2026-02-25 | gateway, agents, maintainer, size: S |
-| [#25898](https://github.com/openclaw/openclaw/pull/25898) | docs(changelog): backfill landed fix PR entries | steipete | 2026-02-24 | maintainer, size: XS |
-| [#25894](https://github.com/openclaw/openclaw/pull/25894) | Auto-reply: treat exact 'do not do that' as stop trigger | vincentkoc | 2026-02-24 | channel: telegram, gateway, maintainer, size: XS |
-| [#25892](https://github.com/openclaw/openclaw/pull/25892) | Auth: bypass cooldown windows for OpenRouter profiles | vincentkoc | 2026-02-25 | agents, maintainer, size: S |
-| [#25891](https://github.com/openclaw/openclaw/pull/25891) | fix(sandbox): prevent shell option interpretation for paths with leading hyphens | albertlieyingadrian | 2026-02-25 | agents, size: XS |
-| [#25881](https://github.com/openclaw/openclaw/pull/25881) | fix: harden routing/session isolation for followups and heartbeat | steipete | 2026-02-24 | maintainer, size: M |
-| [#25874](https://github.com/openclaw/openclaw/pull/25874) | fix(tui): resolve wrong provider prefix when session has model without modelProvider | lbo728 | 2026-02-25 | gateway, commands, agents, size: L, trusted-contributor |
-| [#25865](https://github.com/openclaw/openclaw/pull/25865) | refactor(ios): drop legacy talk payload and keychain fallbacks | steipete | 2026-02-24 | app: ios, maintainer, size: S |
-| [#25858](https://github.com/openclaw/openclaw/pull/25858) | fix(whatsapp): treat close status 440 as non-retryable | markmusson | 2026-02-24 | channel: whatsapp-web, size: S |
-| [#25847](https://github.com/openclaw/openclaw/pull/25847) | UI: tighten external image-open safety checks and CI guard | shakkernerd | 2026-02-24 | app: web-ui, maintainer, size: S |
-| [#25832](https://github.com/openclaw/openclaw/pull/25832) | security(voice-call): detect Telnyx webhook replay | bmendonca3 | 2026-02-24 | channel: voice-call, size: S, trusted-contributor |
-| [#25820](https://github.com/openclaw/openclaw/pull/25820) | fix(sandbox): block tmp hardlink alias escapes in media path resolution | bmendonca3 | 2026-02-25 | docker, agents, size: S, trusted-contributor, experienced-contributor |
-| [#25803](https://github.com/openclaw/openclaw/pull/25803) | fix(onboard): avoid false 'telegram plugin not available' block | Suko | 2026-02-24 | commands, size: S |
-| [#25756](https://github.com/openclaw/openclaw/pull/25756) | fix: normalize provider ID in resolveModelConfig for Bedrock auth | fwhite13 | 2026-02-24 | agents, size: XS |
-| [#25755](https://github.com/openclaw/openclaw/pull/25755) | fix(security): sanitize inherited host env for exec host runs | bmendonca3 | 2026-02-24 | agents, size: XS, trusted-contributor |
-| [#25753](https://github.com/openclaw/openclaw/pull/25753) | Gateway/Security: protect /api/channels plugin root | bmendonca3 | 2026-02-24 | gateway, size: XS, trusted-contributor |
-| [#25750](https://github.com/openclaw/openclaw/pull/25750) | fix(security): normalize hook session key casing for external classification | bmendonca3 | 2026-02-24 | size: XS, trusted-contributor |
-| [#25616](https://github.com/openclaw/openclaw/pull/25616) | feat(android): continue rebuild with onboarding, chat, and settings updates | obviyus | 2026-02-24 | app: android, maintainer, size: XL |
-| [#25491](https://github.com/openclaw/openclaw/pull/25491) | fix(config): coerce numeric meta.lastTouchedAt to ISO string | mcaxtr | 2026-02-24 | size: S, experienced-contributor |
-| [#25490](https://github.com/openclaw/openclaw/pull/25490) | docs: add WeChat community plugin listing | icesword0760 | 2026-02-24 | docs, size: XS |
-| [#25485](https://github.com/openclaw/openclaw/pull/25485) | fix: slug-generator uses effective model instead of agent-primary | SudeepMalipeddi | 2026-02-24 | size: XS |
-| [#25479](https://github.com/openclaw/openclaw/pull/25479) | fix(slack): override wrong channel_type for D-prefix DM channels | mcaxtr | 2026-02-24 | channel: slack, size: S, experienced-contributor |
-| [#25459](https://github.com/openclaw/openclaw/pull/25459) | fix(hooks): ensure native /new emits command hooks on early-return paths | chilu18 | 2026-02-24 | size: M, trusted-contributor |
-| [#25444](https://github.com/openclaw/openclaw/pull/25444) | ui: centralize safe external URL opening for chat images | shakkernerd | 2026-02-24 | app: web-ui, scripts, maintainer, size: M |
-| [#25438](https://github.com/openclaw/openclaw/pull/25438) | fix(doctor): improve sandbox warning when Docker unavailable | mcaxtr | 2026-02-24 | commands, size: S, experienced-contributor |
-| [#25436](https://github.com/openclaw/openclaw/pull/25436) | fix(usage): parse Kimi K2 cached_tokens from prompt_tokens_details | Elarwei001 | 2026-02-24 | agents, size: XS |
-| [#25429](https://github.com/openclaw/openclaw/pull/25429) | fix: prevent synthetic toolResult for aborted/errored assistant messages | mikaeldiakhate-cell | 2026-02-24 | agents, size: S |
-| [#25428](https://github.com/openclaw/openclaw/pull/25428) | fix(gateway): allow trusted-proxy control-ui auth to skip device pairing | Sid-Qin | 2026-02-24 | gateway, size: S, trusted-contributor |
-| [#25427](https://github.com/openclaw/openclaw/pull/25427) | fix(agents): await block-reply flush before tool execution starts | Sid-Qin | 2026-02-24 | agents, size: XS, trusted-contributor |
-| [#25410](https://github.com/openclaw/openclaw/pull/25410) | fix(sandbox): preserve bind mount security overrides when resolving D… | skyer-jian | 2026-02-25 | docker, size: XS |
-| [#25368](https://github.com/openclaw/openclaw/pull/25368) | docs: fix 4 broken documentation links in README | PinoHouse | 2026-02-24 | size: XS |
-
----
-
-## ❌ Closed Pull Requests (Latest 50)
-
-These PRs were closed without being merged:
-
-| # | Title | Author | Closed Date | Labels |
-|---|-------|--------|-------------|--------|
-| [#26208](https://github.com/openclaw/openclaw/pull/26208) | Docker: cap Node heap in image build to reduce OOM (exit 137) on smal… | zwffff | 2026-02-25 | docs, docker, size: XS |
-| [#26191](https://github.com/openclaw/openclaw/pull/26191) | fix(whatsapp): use Opus format for TTS voice notes instead of MP3 | Lucenx9 | 2026-02-25 | channel: whatsapp-web, size: S |
-| [#26159](https://github.com/openclaw/openclaw/pull/26159) | docs: add v2026.2.24 upgrade readiness checklist | senzu-dev | 2026-02-25 | docs, size: XS |
-| [#26151](https://github.com/openclaw/openclaw/pull/26151) | Claude/general improvements h nhls | ianalloway | 2026-02-25 | size: M |
-| [#26146](https://github.com/openclaw/openclaw/pull/26146) | feat: Discord rich UI components (buttons, select menus, modals) | victorGPT | 2026-02-25 | docs, agents, size: L |
-| [#26142](https://github.com/openclaw/openclaw/pull/26142) | fix(whisper): prefix skill script invocations with bash | drvoss | 2026-02-25 | size: XS |
-| [#26126](https://github.com/openclaw/openclaw/pull/26126) | Memory: unify embedding providers across supabase and lancedb | cfregly | 2026-02-25 | gateway, extensions: diagnostics-otel, extensions: memory-lancedb, agents, size: XL |
-| [#26114](https://github.com/openclaw/openclaw/pull/26114) | Thelab v1 | thestudiopod | 2026-02-25 | docs, size: XL |
-| [#26102](https://github.com/openclaw/openclaw/pull/26102) | security(nextcloud-talk): isolate group allowlist from DM pairing-store entries | bmendonca3 | 2026-02-25 | channel: nextcloud-talk, size: S, experienced-contributor |
-| [#26099](https://github.com/openclaw/openclaw/pull/26099) | fix(cron): clear threadId for announce-mode deliveries | jleechan2015 | 2026-02-25 | size: S |
-| [#26083](https://github.com/openclaw/openclaw/pull/26083) | feat: Add SkillBoss provider with 50+ AI models | xiaoyinqu | 2026-02-25 | docs, size: XS |
-| [#26046](https://github.com/openclaw/openclaw/pull/26046) | Fix/relay token double derivation 26036 | white-rm | 2026-02-25 | size: M |
-| [#26008](https://github.com/openclaw/openclaw/pull/26008) | fix(telegram): add explicit type params to vi.fn() exports in test-utils | beiyu | 2026-02-25 | channel: telegram, size: XS |
-| [#25986](https://github.com/openclaw/openclaw/pull/25986) | Extensions: add memory-supabase plugin | cfregly | 2026-02-25 | docs, agents, size: XL |
-| [#25949](https://github.com/openclaw/openclaw/pull/25949) | fix(cli): support --query in memory search | stakeswky | 2026-02-25 | docs, cli, size: S, trusted-contributor |
-| [#25942](https://github.com/openclaw/openclaw/pull/25942) | fix(channels): add typing keepalive for long-running replies | Sid-Qin | 2026-02-25 | channel: telegram, docker, agents, size: S, experienced-contributor |
-| [#25937](https://github.com/openclaw/openclaw/pull/25937) | fix(sandbox): dash compatibility for fs-bridge + propagate dangerously* config keys | sebasortiz-dev | 2026-02-25 | agents, size: XS |
-| [#25922](https://github.com/openclaw/openclaw/pull/25922) | fix: include configured fallback chain when running non-primary model | Taskle | 2026-02-25 | agents, size: S |
-| [#25919](https://github.com/openclaw/openclaw/pull/25919) | fix: include configured fallback chain when running non-primary model | Taskle | 2026-02-25 | agents, size: L |
-| [#25914](https://github.com/openclaw/openclaw/pull/25914) | fix: include configured fallback chain when running non-primary model | Taskle | 2026-02-25 | agents, size: L |
-| [#25905](https://github.com/openclaw/openclaw/pull/25905) | feat(pruning): extend context pruning to all providers | Jherrild | 2026-02-25 | agents, size: XL |
-| [#25904](https://github.com/openclaw/openclaw/pull/25904) | fix(cli): support --query flag in memory search command | niceysam | 2026-02-25 | cli, size: XS |
-| [#25886](https://github.com/openclaw/openclaw/pull/25886) | fix: keep typing indicator alive during long inference | stakeswky | 2026-02-25 | size: S, trusted-contributor |
-| [#25885](https://github.com/openclaw/openclaw/pull/25885) | Occc/phase 3 installer wizard | hlucianojr2 | 2026-02-24 | docs, app: android, app: ios, app: macos, app: web-ui, gateway, cli, scripts, commands, docker, agents, size: XL |
-| [#25879](https://github.com/openclaw/openclaw/pull/25879) | fix(plugins): close system prompt replacement vulnerability via appendSystemPrompt | John-Rood | 2026-02-24 | agents, size: M |
-| [#25873](https://github.com/openclaw/openclaw/pull/25873) | fix(plugins): close system prompt replacement vulnerability via appendSystemPrompt | John-Rood | 2026-02-24 | agents, size: M |
-| [#25870](https://github.com/openclaw/openclaw/pull/25870) | feat(security): add external secrets management | joshavant | 2026-02-25 | docs, channel: discord, channel: googlechat, channel: imessage, channel: matrix, channel: mattermost, channel: msteams, channel: signal, channel: slack, channel: telegram, channel: voice-call, channel: whatsapp-web, channel: zalo, app: macos, app: web-ui, gateway, extensions: llm-task, extensions: memory-lancedb, cli, security, scripts, commands, docker, agents, maintainer, channel: feishu, size: XL |
-| [#25867](https://github.com/openclaw/openclaw/pull/25867) | fix(cli): remove incorrect --query flag from memory search help example | kevinWangSheng | 2026-02-25 | cli, size: XS |
-| [#25866](https://github.com/openclaw/openclaw/pull/25866) | fix(plugins): close system prompt replacement vulnerability via appendSystemPrompt | John-Rood | 2026-02-24 | agents, size: M |
-| [#25860](https://github.com/openclaw/openclaw/pull/25860) | Secrets: add SecretRef runtime activation, migrate/reload tooling, onboarding refs, and docs | joshavant | 2026-02-24 | docs, channel: googlechat, gateway, cli, commands, agents, maintainer, size: XL |
-| [#25841](https://github.com/openclaw/openclaw/pull/25841) | fix(matrix): per-room send queue and immediate read receipts | joshjhall | 2026-02-24 | channel: matrix, size: M |
-| [#25839](https://github.com/openclaw/openclaw/pull/25839) | fix(discord): only suppress reasoning payloads, not all block payloads | pewallin | 2026-02-24 | channel: discord, size: XS |
-| [#25834](https://github.com/openclaw/openclaw/pull/25834) | fix(plugins): close system prompt replacement vulnerability via appendSystemPrompt | John-Rood | 2026-02-24 | agents, size: M |
-| [#25827](https://github.com/openclaw/openclaw/pull/25827) | fix(synology-chat): fail closed on empty allowlist | bmendonca3 | 2026-02-25 | size: XS, trusted-contributor |
-| [#25822](https://github.com/openclaw/openclaw/pull/25822) | fix(agents): suppress ANNOUNCE_SKIP in sessions_spawn direct completion delivery | widingmarcus-cyber | 2026-02-24 | agents, size: S, trusted-contributor |
-| [#25821](https://github.com/openclaw/openclaw/pull/25821) | fix(tools): include cron in coding tool profile | stakeswky | 2026-02-24 | gateway, agents, size: S, trusted-contributor |
-| [#25817](https://github.com/openclaw/openclaw/pull/25817) | fix(macos): guard all audio input paths against missing microphone (AI-assisted) | sfo2001 | 2026-02-25 | app: macos, size: S, trusted-contributor |
-| [#25814](https://github.com/openclaw/openclaw/pull/25814) | Rewrite SOUL.md for Openclaw Mobile users | goatag | 2026-02-24 | docs, size: XS |
-| [#25813](https://github.com/openclaw/openclaw/pull/25813) | fix(subagent): respect ANNOUNCE_SKIP in sessions_spawn direct completion delivery | kevinWangSheng | 2026-02-24 | agents, size: XS |
-| [#25804](https://github.com/openclaw/openclaw/pull/25804) | WhatsApp: filter reasoning messages from delivery (fixes #25214, #24328) | Lucenx9 | 2026-02-25 | channel: whatsapp-web, size: S |
-| [#25785](https://github.com/openclaw/openclaw/pull/25785) | security: add config integrity verification (Spec 04) | joelnishanth | 2026-02-25 | gateway, cli, size: XL |
-| [#25771](https://github.com/openclaw/openclaw/pull/25771) | security: add plugin capability manifest system | joelnishanth | 2026-02-25 | channel: matrix, channel: msteams, channel: voice-call, gateway, size: XL |
-| [#25770](https://github.com/openclaw/openclaw/pull/25770) | fix(tui): show context bar during thinking/waiting states | joeyfrasier | 2026-02-24 | size: S |
-| [#25763](https://github.com/openclaw/openclaw/pull/25763) | Added ClawPane as a Provider in OpenClaw | aposded | 2026-02-24 | docs, cli, commands, size: S |
-| [#25762](https://github.com/openclaw/openclaw/pull/25762) | security: add config integrity verification (Spec 04) | joelnishanth | 2026-02-24 | gateway, cli, size: XL |
-| [#25757](https://github.com/openclaw/openclaw/pull/25757) | fix(message): include target in reply suppression tracking | Suko | 2026-02-25 | agents, size: XS |
-| [#25748](https://github.com/openclaw/openclaw/pull/25748) | fix(outbound): prevent heartbeat/cron delivery from inheriting session lastThreadId | markshields-tl | 2026-02-25 | size: XS |
-| [#25741](https://github.com/openclaw/openclaw/pull/25741) | fix(security): normalize hook session key casing for external classification | bmendonca3 | 2026-02-24 | size: XS, trusted-contributor |
-| [#25737](https://github.com/openclaw/openclaw/pull/25737) | fix(sandbox): POSIX sh syntax error in resolveCanonicalContainerPath | DennisGoldfinger | 2026-02-24 | agents, size: XS |
-| [#25733](https://github.com/openclaw/openclaw/pull/25733) | fix(gateway): bind node system.run approval to approved run-shape | bmendonca3 | 2026-02-24 | app: web-ui, gateway, agents, size: M, trusted-contributor |
 
 
----
+# Releases · openclaw/openclaw
 
-## 📋 Recent Changelog Highlights
+## openclaw 2026.3.2
 
-```markdown
-# Changelog
+03 Mar 04:43
 
-Docs: https://docs.openclaw.ai
+Immutable release. Only release title and notes can be modified.
 
-## 2026.2.15 (Unreleased)
-
-### Changes
-
-- Cron/Gateway: add finished-run webhook delivery toggle (`notify`) and dedicated webhook auth token support (`cron.webhookToken`) for outbound cron webhook posts. (#14535) Thanks @advaitpaliwal.
-- Plugins: expose `llm_input` and `llm_output` hook payloads so extensions can observe prompt/input context and model output usage details. (#16724) Thanks @SecondThread.
-- Subagents: nested sub-agents (sub-sub-agents) with configurable depth. Set `agents.defaults.subagents.maxSpawnDepth: 2` to allow sub-agents to spawn their own children. Includes `maxChildrenPerAgent` limit (default 5), depth-aware tool policy, and proper announce chain routing. (#14447) Thanks @tyler6204.
-- Discord: components v2 UI + embeds passthrough + exec approval UX refinements (CV2 containers, button layout, Discord-forwarding skip). Thanks @thewilloftheshadow.
-- Slack/Discord/Telegram: add per-channel ack reaction overrides (account/channel-level) to support platform-specific emoji formats. (#17092) Thanks @zerone0x.
-- Channels: deduplicate probe/token resolution base types across core + extensions while preserving per-channel error typing. (#16986) Thanks @iyoda and @thewilloftheshadow.
-
-### Fixes
-
-- Web UI/Agents: hide `BOOTSTRAP.md` in the Agents Files list after onboarding is completed, avoiding confusing missing-file warnings for completed workspaces. (#17491) Thanks @gumadeiras.
-- Telegram: omit `message_thread_id` for DM sends/draft previews and keep forum-topic handling (`id=1` general omitted, non-general kept), preventing DM failures with `400 Bad Request: message thread not found`. (#10942) Thanks @garnetlyx.
-- Subagents/Models: preserve `agents.defaults.model.fallbacks` when subagent sessions carry a model override, so subagent runs fail over to configured fallback models instead of retrying only the overridden primary model.
-- Config/Gateway: make sensitive-key whitelist suffix matching case-insensitive while preserving `passwordFile` path exemptions, preventing accidental redaction of non-secret config values like `maxTokens` and IRC password-file paths. (#16042) Thanks @akramcodez.
-- Group chats: always inject group chat context (name, participants, reply guidance) into the system prompt on every turn, not just the first. Prevents the model from losing awareness of which group it's in and incorrectly using the message tool to send to the same group. (#14447) Thanks @tyler6204.
-- TUI: make searchable-select filtering and highlight rendering ANSI-aware so queries ignore hidden escape codes and no longer corrupt ANSI styling sequences during match highlighting. (#4519) Thanks @bee4come.
-- TUI/Windows: coalesce rapid single-line submit bursts in Git Bash into one multiline message as a fallback when bracketed paste is unavailable, preventing pasted multiline text from being split into multiple sends. (#4986) Thanks @adamkane.
-- TUI: suppress false `(no output)` placeholders for non-local empty final events during concurrent runs, preventing external-channel replies from showing empty assistant bubbles while a local run is still streaming. (#5782) Thanks @LagWizard and @vignesh07.
-- TUI: preserve copy-sensitive long tokens (URLs/paths/file-like identifiers) during wrapping and overflow sanitization so wrapped output no longer inserts spaces that corrupt copy/paste values. (#17515, #17466, #17505) Thanks @abe238, @trevorpan, and @JasonCry.
-- Auto-reply/WhatsApp/TUI/Web: when a final assistant message is `NO_REPLY` and a messaging tool send succeeded, mirror the delivered messaging-tool text into session-visible assistant output so TUI/Web no longer show `NO_REPLY` placeholders. (#7010) Thanks @Morrowind-Xie.
-- Gateway/Chat: harden `chat.send` inbound message handling by rejecting null bytes, stripping unsafe control characters, and normalizing Unicode to NFC before dispatch. (#8593) Thanks @fr33d3m0n.
-- Gateway/Send: return an actionable error when `send` targets internal-only `webchat`, guiding callers to use `chat.send` or a deliverable channel. (#15703) Thanks @rodrigouroz.
-- Gateway/Agent: reject malformed `agent:`-prefixed session keys (for example, `agent:main`) in `agent` and `agent.identity.get` instead of silently resolving them to the default agent, preventing accidental cross-session routing. (#15707) Thanks @rodrigouroz.
-- Gateway/Security: redact sensitive session/path details from `status` responses for non-admin clients; full details remain available to `operator.admin`. (#8590) Thanks @fr33d3m0n.
-- Web Fetch/Security: cap downloaded response body size before HTML parsing to prevent memory exhaustion from oversized or deeply nested pages. Thanks @xuemian168.
-- Agents: return an explicit timeout error reply when an embedded run times out before producing any payloads, preventing silent dropped turns during slow cache-refresh transitions. (#16659) Thanks @liaosvcaf and @vignesh07.
-- Agents/OpenAI: force `store=true` for direct OpenAI Responses/Codex runs to preserve multi-turn server-side conversation state, while leaving proxy/non-OpenAI endpoints unchanged. (#16803) Thanks @mark9232 and @vignesh07.
-- Agents/Context: apply configured model `contextWindow` overrides after provider discovery so `lookupContextTokens()` honors operator config values (including discovery-failure paths). (#17404) Thanks @michaelbship and @vignesh07.
-- CLI/Build: make legacy daemon CLI compatibility shim generation tolerant of minimal tsdown daemon export sets, while preserving restart/register compatibility aliases and surfacing explicit errors for unavailable legacy daemon commands. Thanks @vignesh07.
-- Telegram: replace inbound `<media:audio>` placeholder with successful preflight voice transcript in message body context, preventing placeholder-only prompt bodies for mention-gated voice messages. (#16789) Thanks @Limitless2023.
-- Telegram: retry inbound media `getFile` calls (3 attempts with backoff) and gracefully fall back to placeholder-only processing when retries fail, preventing dropped voice/media messages on transient Telegram network errors. (#16154) Thanks @yinghaosang.
-- Telegram: finalize streaming preview replies in place instead of sending a second final message, preventing duplicate Telegram assistant outputs at stream completion. (#17218) Thanks @obviyus.
-- Cron: infer `payload.kind="agentTurn"` for model-only `cron.update` payload patches, so partial agent-turn updates do not fail validation when `kind` is omitted. (#15664) Thanks @rodrigouroz.
-- Subagents: use child-run-based deterministic announce idempotency keys across direct and queued delivery paths (with legacy queued-item fallback) to prevent duplicate announce retries without collapsing distinct same-millisecond announces. (#17150) Thanks @widingmarcus-cyber.
-- Discord: ensure role allowlist matching uses raw role IDs for message routing authorization. Thanks @xinhuagu.
-
-## 2026.2.14
-
-### Changes
-
-- Telegram: add poll sending via `openclaw message poll` (duration seconds, silent delivery, anonymity controls). (#16209) Thanks @robbyczgw-cla.
-- Slack/Discord: add `dmPolicy` + `allowFrom` config aliases for DM access control; legacy `dm.policy` + `dm.allowFrom` keys remain supported and `openclaw doctor --fix` can migrate them.
-- Discord: allow exec approval prompts to target channels or both DM+channel via `channels.discord.execApprovals.target`. (#16051) Thanks @leonnardo.
-- Sandbox: add `sandbox.browser.binds` to configure browser-container bind mounts separately from exec containers. (#16230) Thanks @seheepeak.
-- Discord: add debug logging for message routing decisions to improve `--debug` tracing. (#16202) Thanks @jayleekr.
-- Agents: add optional `messages.suppressToolErrors` config to hide non-mutating tool-failure warnings from user-facing chat while still surfacing mutating failures. (#16620) Thanks @vai-oro.
-
-### Fixes
-
-- CLI/Plugins: ensure `openclaw message send` exits after successful delivery across plugin-backed channels so one-shot sends do not hang. (#16491) Thanks @yinghaosang.
-- CLI/Plugins: run registered plugin `gateway_stop` hooks before `openclaw message` exits (success and failure paths), so plugin-backed channels can clean up one-shot CLI resources. (#16580) Thanks @gumadeiras.
-- WhatsApp: honor per-account `dmPolicy` overrides (account-level settings now take precedence over channel defaults for inbound DMs). (#10082) Thanks @mcaxtr.
-- Telegram: when `channels.telegram.commands.native` is `false`, exclude plugin commands from `setMyCommands` menu registration while keeping plugin slash handlers callable. (#15132) Thanks @Glucksberg.
-- LINE: return 200 OK for Developers Console "Verify" requests (`{"events":[]}`) without `X-Line-Signature`, while still requiring signatures for real deliveries. (#16582) Thanks @arosstale.
-- Cron: deliver text-only output directly when `delivery.to` is set so cron recipients get full output instead of summaries. (#16360) Thanks @thewilloftheshadow.
-- Cron/Slack: preserve agent identity (name and icon) when cron jobs deliver outbound messages. (#16242) Thanks @robbyczgw-cla.
-- Media: accept `MEDIA:`-prefixed paths (lenient whitespace) when loading outbound media to prevent `ENOENT` for tool-returned local media paths. (#13107) Thanks @mcaxtr.
-- Media understanding: treat binary `application/vnd.*`/zip/octet-stream attachments as non-text (while keeping vendor `+json`/`+xml` text-eligible) so Office/ZIP files are not inlined into prompt body text. (#16513) Thanks @rmramsey32.
-- Agents: deliver tool result media (screenshots, images, audio) to channels regardless of verbose level. (#11735) Thanks @strelov1.
-- Auto-reply/Block streaming: strip leading whitespace from streamed block replies so messages starting with blank lines no longer deliver visible leading empty lines. (#16422) Thanks @mcinteerj.
-- Auto-reply/Queue: keep queued followups and overflow summaries when drain attempts fail, then retry delivery instead of dropping messages on transient errors. (#16771) Thanks @mmhzlrj.
-- Agents/Image tool: allow workspace-local image paths by including the active workspace directory in local media allowlists, and trust sandbox-validated paths in image loaders to prevent false "not under an allowed directory" rejections. (#15541)
-- Agents/Image tool: propagate the effective workspace root into tool wiring so workspace-local image paths are accepted by default when running without an explicit `workspaceDir`. (#16722)
-- BlueBubbles: include sender identity in group chat envelopes and pass clean message text to the agent prompt, aligning with iMessage/Signal formatting. (#16210) Thanks @zerone0x.
-- CLI: fix lazy core command registration so top-level maintenance commands (`doctor`, `dashboard`, `reset`, `uninstall`) resolve correctly instead of exposing a non-functional `maintenance` placeholder command.
-- CLI/Dashboard: when `gateway.bind=lan`, generate localhost dashboard URLs to satisfy browser secure-context requirements while preserving non-LAN bind behavior. (#16434) Thanks @BinHPdev.
-- TUI/Gateway: resolve local gateway target URL from `gateway.bind` mode (tailnet/lan) instead of hardcoded localhost so `openclaw tui` connects when gateway is non-loopback. (#16299) Thanks @cortexuvula.
-- TUI: honor explicit `--session <key>` in `openclaw tui` even when `session.scope` is `global`, so named sessions no longer collapse into shared global history. (#16575) Thanks @cinqu.
-- TUI: use available terminal width for session name display in searchable select lists. (#16238) Thanks @robbyczgw-cla.
-- TUI: refactor searchable select list description layout and add regression coverage for ANSI-highlight width bounds.
-- TUI: preserve in-flight streaming replies when a different run finalizes concurrently (avoid clearing active run or reloading history mid-stream). (#10704) Thanks @axschr73.
-- TUI: keep pre-tool streamed text visible when later tool-boundary deltas temporarily omit earlier text blocks. (#6958) Thanks @KrisKind75.
-- TUI: sanitize ANSI/control-heavy history text, redact binary-like lines, and split pathological long unbroken tokens before rendering to prevent startup crashes on binary attachment history. (#13007) Thanks @wilkinspoe.
-- TUI: harden render-time sanitizer for narrow terminals by chunking moderately long unbroken tokens and adding fast-path sanitization guards to reduce overhead on normal text. (#5355) Thanks @tingxueren.
-- TUI: render assistant body text in terminal default foreground (instead of fixed light ANSI color) so contrast remains readable on light themes such as Solarized Light. (#16750) Thanks @paymog.
-- TUI/Hooks: pass explicit reset reason (`new` vs `reset`) through `sessions.reset` and emit internal command hooks for gateway-triggered resets so `/new` hook workflows fire in TUI/webchat.
-- Gateway/Agent: route bare `/new` and `/reset` through `sessions.reset` before running the fresh-session greeting prompt, so reset commands clear the current session in-place instead of falling through to normal agent runs. (#16732) Thanks @kdotndot and @vignesh07.
-- Cron: prevent `cron list`/`cron status` from silently skipping past-due recurring jobs by using maintenance recompute semantics. (#16156) Thanks @zerone0x.
-- Cron: repair missing/corrupt `nextRunAtMs` for the updated job without globally recomputing unrelated due jobs during `cron update`. (#15750)
-- Cron: treat persisted jobs with missing `enabled` as enabled by default across update/list/timer due-path checks, and add regression coverage for missing-`enabled` store records. (#15433) Thanks @eternauta1337.
-- Cron: skip missed-job replay on startup for jobs interrupted mid-run (stale `runningAtMs` markers), preventing restart loops for self-restarting jobs such as update tasks. (#16694) Thanks @sbmilburn.
-- Heartbeat/Cron: treat cron-tagged queued system events as cron reminders even on interval wakes, so isolated cron announce summaries no longer run under the default heartbeat prompt. (#14947) Thanks @archedark-ada and @vignesh07.
-- Discord: prefer gateway guild id when logging inbound messages so cached-miss guilds do not appear as `guild=dm`. Thanks @thewilloftheshadow.
-- Discord: treat empty per-guild `channels: {}` config maps as no channel allowlist (not deny-all), so `groupPolicy: "open"` guilds without explicit channel entries continue to receive messages. (#16714) Thanks @xqliu.
-- Models/CLI: guard `models status` string trimming paths to prevent crashes from malformed non-string config values. (#16395) Thanks @BinHPdev.
-- Gateway/Subagents: preserve queued announce items and summary state on delivery errors, retry failed announce drains, and avoid dropping unsent announcements on timeout/failure. (#16729) Thanks @Clawdette-Workspace.
-- Gateway/Config: make `config.patch` merge object arrays by `id` (for example `agents.list`) instead of replacing the whole array, so partial agent updates do not silently delete unrelated agents. (#6766) Thanks @lightc
+[
 ```
+85377a2
+```
+](https://github.com/openclaw/openclaw/commit/85377a28175695c224f6589eb5c1460841ecd65c)
+
+### Changes
+
+-   Secrets/SecretRef coverage: expand SecretRef support across the full supported user-supplied credential surface (64 targets total), including runtime collectors,
+    ```
+    openclaw secrets
+    ```
+     planning/apply/audit flows, onboarding SecretInput UX, and related docs; unresolved refs now fail fast on active surfaces while inactive surfaces report non-blocking diagnostics. ([#29580](https://github.com/openclaw/openclaw/pull/29580)) Thanks [@joshavant](https://github.com/joshavant).
+-   Tools/PDF analysis: add a first-class
+    ```
+    pdf
+    ```
+     tool with native Anthropic and Google PDF provider support, extraction fallback for non-native models, configurable defaults (
+    ```
+    agents.defaults.pdfModel
+    ```
+    ,
+    ```
+    pdfMaxBytesMb
+    ```
+    ,
+    ```
+    pdfMaxPages
+    ```
+    ), and docs/tests covering routing, validation, and registration. ([#31319](https://github.com/openclaw/openclaw/pull/31319)) Thanks [@tyler6204](https://github.com/tyler6204).
+-   Outbound adapters/plugins: add shared
+    ```
+    sendPayload
+    ```
+     support across direct-text-media, Discord, Slack, WhatsApp, Zalo, and Zalouser with multi-media iteration and chunk-aware text fallback. ([#30144](https://github.com/openclaw/openclaw/pull/30144)) Thanks [@nohat](https://github.com/nohat).
+-   Models/MiniMax: add first-class
+    ```
+    MiniMax-M2.5-highspeed
+    ```
+     support across built-in provider catalogs, onboarding flows, and MiniMax OAuth plugin defaults, while keeping legacy
+    ```
+    MiniMax-M2.5-Lightning
+    ```
+     compatibility for existing configs.
+-   Sessions/Attachments: add inline file attachment support for
+    ```
+    sessions_spawn
+    ```
+     (subagent runtime only) with base64/utf8 encoding, transcript content redaction, lifecycle cleanup, and configurable limits via
+    ```
+    tools.sessions_spawn.attachments
+    ```
+    . ([#16761](https://github.com/openclaw/openclaw/pull/16761)) Thanks [@napetrov](https://github.com/napetrov).
+-   Telegram/Streaming defaults: default
+    ```
+    channels.telegram.streaming
+    ```
+     to
+    ```
+    partial
+    ```
+     (from
+    ```
+    off
+    ```
+    ) so new Telegram setups get live preview streaming out of the box, with runtime fallback to message-edit preview when native drafts are unavailable.
+-   Telegram/DM streaming: use
+    ```
+    sendMessageDraft
+    ```
+     for private preview streaming, keep reasoning/answer preview lanes separated in DM reasoning-stream mode. ([#31824](https://github.com/openclaw/openclaw/pull/31824)) Thanks [@obviyus](https://github.com/obviyus).
+-   Telegram/voice mention gating: add optional
+    ```
+    disableAudioPreflight
+    ```
+     on group/topic config to skip mention-detection preflight transcription for inbound voice notes where operators want text-only mention checks. ([#23067](https://github.com/openclaw/openclaw/pull/23067)) Thanks [@yangnim21029](https://github.com/yangnim21029).
+-   CLI/Config validation: add
+    ```
+    openclaw config validate
+    ```
+     (with
+    ```
+    --json
+    ```
+    ) to validate config files before gateway startup, and include detailed invalid-key paths in startup invalid-config errors. ([#31220](https://github.com/openclaw/openclaw/pull/31220)) thanks [@Sid-Qin](https://github.com/Sid-Qin).
+-   Tools/Diffs: add PDF file output support and rendering quality customization controls (
+    ```
+    fileQuality
+    ```
+    ,
+    ```
+    fileScale
+    ```
+    ,
+    ```
+    fileMaxWidth
+    ```
+    ) for generated diff artifacts, and document PDF as the preferred option when messaging channels compress images. ([#31342](https://github.com/openclaw/openclaw/pull/31342)) Thanks [@gumadeiras](https://github.com/gumadeiras).
+-   Memory/Ollama embeddings: add
+    ```
+    memorySearch.provider = "ollama"
+    ```
+     and
+    ```
+    memorySearch.fallback = "ollama"
+    ```
+     support, honor
+    ```
+    models.providers.ollama
+    ```
+     settings for memory embedding requests, and document Ollama embedding usage. ([#26349](https://github.com/openclaw/openclaw/pull/26349)) Thanks [@nico-hoff](https://github.com/nico-hoff).
+-   Zalo Personal plugin (
+    ```
+    @openclaw/zalouser
+    ```
+    ): rebuilt channel runtime to use native
+    ```
+    zca-js
+    ```
+     integration in-process, removing external CLI transport usage and keeping QR/login + send/listen flows fully inside OpenClaw.
+-   Plugin SDK/channel extensibility: expose
+    ```
+    channelRuntime
+    ```
+     on
+    ```
+    ChannelGatewayContext
+    ```
+     so external channel plugins can access shared runtime helpers (reply/routing/session/text/media/commands) without internal imports. ([#25462](https://github.com/openclaw/openclaw/pull/25462)) Thanks [@guxiaobo](https://github.com/guxiaobo).
+-   Plugin runtime/STT: add
+    ```
+    api.runtime.stt.transcribeAudioFile(...)
+    ```
+     so extensions can transcribe local audio files through OpenClaw's configured media-understanding audio providers. ([#22402](https://github.com/openclaw/openclaw/pull/22402)) Thanks [@benthecarman](https://github.com/benthecarman).
+-   Plugin hooks/session lifecycle: include
+    ```
+    sessionKey
+    ```
+     in
+    ```
+    session_start
+    ```
+    /
+    ```
+    session_end
+    ```
+     hook events and contexts so plugins can correlate lifecycle callbacks with routing identity. ([#26394](https://github.com/openclaw/openclaw/pull/26394)) Thanks [@tempeste](https://github.com/tempeste).
+-   Hooks/message lifecycle: add internal hook events
+    ```
+    message:transcribed
+    ```
+     and
+    ```
+    message:preprocessed
+    ```
+    , plus richer outbound
+    ```
+    message:sent
+    ```
+     context (
+    ```
+    isGroup
+    ```
+    ,
+    ```
+    groupId
+    ```
+    ) for group-conversation correlation and post-transcription automations. ([#9859](https://github.com/openclaw/openclaw/pull/9859)) Thanks [@Drickon](https://github.com/Drickon).
+-   Media understanding/audio echo: add optional
+    ```
+    tools.media.audio.echoTranscript
+    ```
+     +
+    ```
+    echoFormat
+    ```
+     to send a pre-agent transcript confirmation message to the originating chat, with echo disabled by default. ([#32150](https://github.com/openclaw/openclaw/pull/32150)) Thanks [@AytuncYildizli](https://github.com/AytuncYildizli).
+-   Plugin runtime/system: expose
+    ```
+    runtime.system.requestHeartbeatNow(...)
+    ```
+     so extensions can wake targeted sessions immediately after enqueueing system events. ([#19464](https://github.com/openclaw/openclaw/pull/19464)) Thanks [@AustinEral](https://github.com/AustinEral).
+-   Plugin runtime/events: expose
+    ```
+    runtime.events.onAgentEvent
+    ```
+     and
+    ```
+    runtime.events.onSessionTranscriptUpdate
+    ```
+     for extension-side subscriptions, and isolate transcript-listener failures so one faulty listener cannot break the entire update fanout. ([#16044](https://github.com/openclaw/openclaw/pull/16044)) Thanks [@scifantastic](https://github.com/scifantastic).
+-   CLI/Banner taglines: add
+    ```
+    cli.banner.taglineMode
+    ```
+     (
+    ```
+    random
+    ```
+     |
+    ```
+    default
+    ```
+     |
+    ```
+    off
+    ```
+    ) to control funny tagline behavior in startup output, with docs + FAQ guidance and regression tests for config override behavior.
+
+### Breaking
+
+-   **BREAKING:** Onboarding now defaults
+    ```
+    tools.profile
+    ```
+     to
+    ```
+    messaging
+    ```
+     for new local installs (interactive + non-interactive). New setups no longer start with broad coding/system tools unless explicitly configured.
+-   **BREAKING:** ACP dispatch now defaults to enabled unless explicitly disabled (
+    ```
+    acp.dispatch.enabled=false
+    ```
+    ). If you need to pause ACP turn routing while keeping
+    ```
+    /acp
+    ```
+     controls, set
+    ```
+    acp.dispatch.enabled=false
+    ```
+    . Docs: [https://docs.openclaw.ai/tools/acp-agents](https://docs.openclaw.ai/tools/acp-agents)
+-   **BREAKING:** Plugin SDK removed
+    ```
+    api.registerHttpHandler(...)
+    ```
+    . Plugins must register explicit HTTP routes via
+    ```
+    api.registerHttpRoute({ path, auth, match, handler })
+    ```
+    , and dynamic webhook lifecycles should use
+    ```
+    registerPluginHttpRoute(...)
+    ```
+    .
+-   **BREAKING:** Zalo Personal plugin (
+    ```
+    @openclaw/zalouser
+    ```
+    ) no longer depends on external
+    ```
+    zca
+    ```
+    \-compatible CLI binaries (
+    ```
+    openzca
+    ```
+    ,
+    ```
+    zca-cli
+    ```
+    ) for runtime send/listen/login; operators should use
+    ```
+    openclaw channels login --channel zalouser
+    ```
+     after upgrade to refresh sessions in the new JS-native path.
+
+### Fixes
+
+-   Plugin command/runtime hardening: validate and normalize plugin command name/description at registration boundaries, and guard Telegram native menu normalization paths so malformed plugin command specs cannot crash startup (
+    ```
+    trim
+    ```
+     on undefined). ([#31997](https://github.com/openclaw/openclaw/pull/31997)) Fixes [#31944](https://github.com/openclaw/openclaw/issues/31944). Thanks [@liuxiaopai-ai](https://github.com/liuxiaopai-ai).
+-   Telegram: guard duplicate-token checks and gateway startup token normalization when account tokens are missing, preventing
+    ```
+    token.trim()
+    ```
+     crashes during status/start flows. ([#31973](https://github.com/openclaw/openclaw/pull/31973)) Thanks [@ningding97](https://github.com/ningding97).
+-   Discord/lifecycle startup status: push an immediate
+    ```
+    connected
+    ```
+     status snapshot when the gateway is already connected before lifecycle debug listeners attach, with abort-guarding to avoid contradictory status flips during pre-aborted startup. ([#32336](https://github.com/openclaw/openclaw/pull/32336)) Thanks [@mitchmcalister](https://github.com/mitchmcalister).
+-   Feishu/multi-app mention routing: guard mention detection in multi-bot groups by validating mention display name alongside bot
+    ```
+    open_id
+    ```
+    , preventing false-positive self-mentions from Feishu WebSocket remapping so only the actually mentioned bot responds under
+    ```
+    requireMention
+    ```
+    . ([#30315](https://github.com/openclaw/openclaw/pull/30315)) Thanks [@teaguexiao](https://github.com/teaguexiao).
+-   Feishu/session-memory hook parity: trigger the shared
+    ```
+    before_reset
+    ```
+     session-memory hook path when Feishu
+    ```
+    /new
+    ```
+     and
+    ```
+    /reset
+    ```
+     commands execute so reset flows preserve memory behavior consistent with other channels. ([#31437](https://github.com/openclaw/openclaw/pull/31437)) Thanks [@Linux2010](https://github.com/Linux2010).
+-   Feishu/LINE group system prompts: forward per-group
+    ```
+    systemPrompt
+    ```
+     config into inbound context
+    ```
+    GroupSystemPrompt
+    ```
+     for Feishu and LINE group/room events so configured group-specific behavior actually applies at dispatch time. ([#31713](https://github.com/openclaw/openclaw/pull/31713)) Thanks [@whiskyboy](https://github.com/whiskyboy).
+-   Mentions/Slack formatting hardening: add null-safe guards for runtime text normalization paths so malformed/undefined text payloads do not crash mention stripping or mrkdwn conversion. ([#31865](https://github.com/openclaw/openclaw/pull/31865)) Thanks [@stone-jin](https://github.com/stone-jin).
+-   Feishu/Plugin sdk compatibility: add safe webhook default fallbacks when loading Feishu monitor state so mixed-version installs no longer crash if older
+    ```
+    openclaw/plugin-sdk
+    ```
+     builds omit webhook default constants. ([#31606](https://github.com/openclaw/openclaw/issues/31606))
+-   Feishu/group broadcast dispatch: add configurable multi-agent group broadcast dispatch with observer-session isolation, cross-account dedupe safeguards, and non-mention history buffering rules that avoid duplicate replay in broadcast/topic workflows. ([#29575](https://github.com/openclaw/openclaw/pull/29575)) Thanks [@ohmyskyhigh](https://github.com/ohmyskyhigh).
+-   Gateway/Subagent TLS pairing: allow authenticated local
+    ```
+    gateway-client
+    ```
+     backend self-connections to skip device pairing while still requiring pairing for non-local/direct-host paths, restoring
+    ```
+    sessions_spawn
+    ```
+     with
+    ```
+    gateway.tls.enabled=true
+    ```
+     in Docker/LAN setups. Fixes [#30740](https://github.com/openclaw/openclaw/issues/30740). Thanks [@Sid-Qin](https://github.com/Sid-Qin) and [@vincentkoc](https://github.com/vincentkoc).
+-   Browser/CDP startup diagnostics: include Chrome stderr output and a Linux no-sandbox hint in startup timeout errors so failed launches are easier to diagnose. ([#29312](https://github.com/openclaw/openclaw/issues/29312)) Thanks [@veast](https://github.com/veast).
+-   Synology Chat/webhook ingress hardening: enforce bounded body reads (size + timeout) via shared request-body guards to prevent unauthenticated slow-body hangs before token validation. ([#25831](https://github.com/openclaw/openclaw/pull/25831)) Thanks [@bmendonca3](https://github.com/bmendonca3).
+-   Feishu/Dedup restart resilience: warm persistent dedup state into memory on monitor startup so retry events after gateway restart stay suppressed without requiring initial on-disk probe misses. ([#31605](https://github.com/openclaw/openclaw/pull/31605))
+-   Voice-call/runtime lifecycle: prevent
+    ```
+    EADDRINUSE
+    ```
+     loops by resetting failed runtime promises, making webhook
+    ```
+    start()
+    ```
+     idempotent with the actual bound port, and fully cleaning up webhook/tunnel/tailscale resources after startup failures. ([#32395](https://github.com/openclaw/openclaw/pull/32395)) Thanks [@scoootscooob](https://github.com/scoootscooob).
+-   Gateway/Security hardening: tie loopback-origin dev allowance to actual local socket clients (not Host header claims), add explicit warnings/metrics when
+    ```
+    gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback
+    ```
+     accepts websocket origins, harden safe-regex detection for quantified ambiguous alternation patterns (for example
+    ```
+    (a|aa)+
+    ```
+    ), and bound large regex-evaluation inputs for session-filter and log-redaction paths.
+-   Gateway/Plugin HTTP hardening: require explicit
+    ```
+    auth
+    ```
+     for plugin route registration...
+
+[Read more](https://github.com/openclaw/openclaw/releases/tag/v2026.3.2)
+
+## openclaw 2026.3.2-beta.1
+
+03 Mar 03:59
+
+Immutable release. Only release title and notes can be modified.
+
+[
+```
+eb8a884
+```
+](https://github.com/openclaw/openclaw/commit/eb8a8840d65fd082bdb4712d132fb7d262e24732)
+
+Pre-release
+
+### Changes
+
+-   Secrets/SecretRef coverage: expand SecretRef support across the full supported user-supplied credential surface (64 targets total), including runtime collectors,
+    ```
+    openclaw secrets
+    ```
+     planning/apply/audit flows, onboarding SecretInput UX, and related docs; unresolved refs now fail fast on active surfaces while inactive surfaces report non-blocking diagnostics. ([#29580](https://github.com/openclaw/openclaw/pull/29580)) Thanks [@joshavant](https://github.com/joshavant).
+-   Tools/PDF analysis: add a first-class
+    ```
+    pdf
+    ```
+     tool with native Anthropic and Google PDF provider support, extraction fallback for non-native models, configurable defaults (
+    ```
+    agents.defaults.pdfModel
+    ```
+    ,
+    ```
+    pdfMaxBytesMb
+    ```
+    ,
+    ```
+    pdfMaxPages
+    ```
+    ), and docs/tests covering routing, validation, and registration. ([#31319](https://github.com/openclaw/openclaw/pull/31319)) Thanks [@tyler6204](https://github.com/tyler6204).
+-   Outbound adapters/plugins: add shared
+    ```
+    sendPayload
+    ```
+     support across direct-text-media, Discord, Slack, WhatsApp, Zalo, and Zalouser with multi-media iteration and chunk-aware text fallback. ([#30144](https://github.com/openclaw/openclaw/pull/30144)) Thanks [@nohat](https://github.com/nohat).
+-   Models/MiniMax: add first-class
+    ```
+    MiniMax-M2.5-highspeed
+    ```
+     support across built-in provider catalogs, onboarding flows, and MiniMax OAuth plugin defaults, while keeping legacy
+    ```
+    MiniMax-M2.5-Lightning
+    ```
+     compatibility for existing configs.
+-   Sessions/Attachments: add inline file attachment support for
+    ```
+    sessions_spawn
+    ```
+     (subagent runtime only) with base64/utf8 encoding, transcript content redaction, lifecycle cleanup, and configurable limits via
+    ```
+    tools.sessions_spawn.attachments
+    ```
+    . ([#16761](https://github.com/openclaw/openclaw/pull/16761)) Thanks [@napetrov](https://github.com/napetrov).
+-   Telegram/Streaming defaults: default
+    ```
+    channels.telegram.streaming
+    ```
+     to
+    ```
+    partial
+    ```
+     (from
+    ```
+    off
+    ```
+    ) so new Telegram setups get live preview streaming out of the box, with runtime fallback to message-edit preview when native drafts are unavailable.
+-   Telegram/DM streaming: use
+    ```
+    sendMessageDraft
+    ```
+     for private preview streaming, keep reasoning/answer preview lanes separated in DM reasoning-stream mode. ([#31824](https://github.com/openclaw/openclaw/pull/31824)) Thanks [@obviyus](https://github.com/obviyus).
+-   Telegram/voice mention gating: add optional
+    ```
+    disableAudioPreflight
+    ```
+     on group/topic config to skip mention-detection preflight transcription for inbound voice notes where operators want text-only mention checks. ([#23067](https://github.com/openclaw/openclaw/pull/23067)) Thanks [@yangnim21029](https://github.com/yangnim21029).
+-   CLI/Config validation: add
+    ```
+    openclaw config validate
+    ```
+     (with
+    ```
+    --json
+    ```
+    ) to validate config files before gateway startup, and include detailed invalid-key paths in startup invalid-config errors. ([#31220](https://github.com/openclaw/openclaw/pull/31220)) thanks [@Sid-Qin](https://github.com/Sid-Qin).
+-   Tools/Diffs: add PDF file output support and rendering quality customization controls (
+    ```
+    fileQuality
+    ```
+    ,
+    ```
+    fileScale
+    ```
+    ,
+    ```
+    fileMaxWidth
+    ```
+    ) for generated diff artifacts, and document PDF as the preferred option when messaging channels compress images. ([#31342](https://github.com/openclaw/openclaw/pull/31342)) Thanks [@gumadeiras](https://github.com/gumadeiras).
+-   Memory/Ollama embeddings: add
+    ```
+    memorySearch.provider = "ollama"
+    ```
+     and
+    ```
+    memorySearch.fallback = "ollama"
+    ```
+     support, honor
+    ```
+    models.providers.ollama
+    ```
+     settings for memory embedding requests, and document Ollama embedding usage. ([#26349](https://github.com/openclaw/openclaw/pull/26349)) Thanks [@nico-hoff](https://github.com/nico-hoff).
+-   Zalo Personal plugin (
+    ```
+    @openclaw/zalouser
+    ```
+    ): rebuilt channel runtime to use native
+    ```
+    zca-js
+    ```
+     integration in-process, removing external CLI transport usage and keeping QR/login + send/listen flows fully inside OpenClaw.
+-   Plugin SDK/channel extensibility: expose
+    ```
+    channelRuntime
+    ```
+     on
+    ```
+    ChannelGatewayContext
+    ```
+     so external channel plugins can access shared runtime helpers (reply/routing/session/text/media/commands) without internal imports. ([#25462](https://github.com/openclaw/openclaw/pull/25462)) Thanks [@guxiaobo](https://github.com/guxiaobo).
+-   Plugin runtime/STT: add
+    ```
+    api.runtime.stt.transcribeAudioFile(...)
+    ```
+     so extensions can transcribe local audio files through OpenClaw's configured media-understanding audio providers. ([#22402](https://github.com/openclaw/openclaw/pull/22402)) Thanks [@benthecarman](https://github.com/benthecarman).
+-   Plugin hooks/session lifecycle: include
+    ```
+    sessionKey
+    ```
+     in
+    ```
+    session_start
+    ```
+    /
+    ```
+    session_end
+    ```
+     hook events and contexts so plugins can correlate lifecycle callbacks with routing identity. ([#26394](https://github.com/openclaw/openclaw/pull/26394)) Thanks [@tempeste](https://github.com/tempeste).
+-   Hooks/message lifecycle: add internal hook events
+    ```
+    message:transcribed
+    ```
+     and
+    ```
+    message:preprocessed
+    ```
+    , plus richer outbound
+    ```
+    message:sent
+    ```
+     context (
+    ```
+    isGroup
+    ```
+    ,
+    ```
+    groupId
+    ```
+    ) for group-conversation correlation and post-transcription automations. ([#9859](https://github.com/openclaw/openclaw/pull/9859)) Thanks [@Drickon](https://github.com/Drickon).
+-   Media understanding/audio echo: add optional
+    ```
+    tools.media.audio.echoTranscript
+    ```
+     +
+    ```
+    echoFormat
+    ```
+     to send a pre-agent transcript confirmation message to the originating chat, with echo disabled by default. ([#32150](https://github.com/openclaw/openclaw/pull/32150)) Thanks [@AytuncYildizli](https://github.com/AytuncYildizli).
+-   Plugin runtime/system: expose
+    ```
+    runtime.system.requestHeartbeatNow(...)
+    ```
+     so extensions can wake targeted sessions immediately after enqueueing system events. ([#19464](https://github.com/openclaw/openclaw/pull/19464)) Thanks [@AustinEral](https://github.com/AustinEral).
+-   Plugin runtime/events: expose
+    ```
+    runtime.events.onAgentEvent
+    ```
+     and
+    ```
+    runtime.events.onSessionTranscriptUpdate
+    ```
+     for extension-side subscriptions, and isolate transcript-listener failures so one faulty listener cannot break the entire update fanout. ([#16044](https://github.com/openclaw/openclaw/pull/16044)) Thanks [@scifantastic](https://github.com/scifantastic).
+-   CLI/Banner taglines: add
+    ```
+    cli.banner.taglineMode
+    ```
+     (
+    ```
+    random
+    ```
+     |
+    ```
+    default
+    ```
+     |
+    ```
+    off
+    ```
+    ) to control funny tagline behavior in startup output, with docs + FAQ guidance and regression tests for config override behavior.
+
+### Breaking
+
+-   **BREAKING:** Onboarding now defaults
+    ```
+    tools.profile
+    ```
+     to
+    ```
+    messaging
+    ```
+     for new local installs (interactive + non-interactive). New setups no longer start with broad coding/system tools unless explicitly configured.
+-   **BREAKING:** ACP dispatch now defaults to enabled unless explicitly disabled (
+    ```
+    acp.dispatch.enabled=false
+    ```
+    ). If you need to pause ACP turn routing while keeping
+    ```
+    /acp
+    ```
+     controls, set
+    ```
+    acp.dispatch.enabled=false
+    ```
+    . Docs: [https://docs.openclaw.ai/tools/acp-agents](https://docs.openclaw.ai/tools/acp-agents)
+-   **BREAKING:** Plugin SDK removed
+    ```
+    api.registerHttpHandler(...)
+    ```
+    . Plugins must register explicit HTTP routes via
+    ```
+    api.registerHttpRoute({ path, auth, match, handler })
+    ```
+    , and dynamic webhook lifecycles should use
+    ```
+    registerPluginHttpRoute(...)
+    ```
+    .
+-   **BREAKING:** Zalo Personal plugin (
+    ```
+    @openclaw/zalouser
+    ```
+    ) no longer depends on external
+    ```
+    zca
+    ```
+    \-compatible CLI binaries (
+    ```
+    openzca
+    ```
+    ,
+    ```
+    zca-cli
+    ```
+    ) for runtime send/listen/login; operators should use
+    ```
+    openclaw channels login --channel zalouser
+    ```
+     after upgrade to refresh sessions in the new JS-native path.
+
+### Fixes
+
+-   Plugin command/runtime hardening: validate and normalize plugin command name/description at registration boundaries, and guard Telegram native menu normalization paths so malformed plugin command specs cannot crash startup (
+    ```
+    trim
+    ```
+     on undefined). ([#31997](https://github.com/openclaw/openclaw/pull/31997)) Fixes [#31944](https://github.com/openclaw/openclaw/issues/31944). Thanks [@liuxiaopai-ai](https://github.com/liuxiaopai-ai).
+-   Telegram: guard duplicate-token checks and gateway startup token normalization when account tokens are missing, preventing
+    ```
+    token.trim()
+    ```
+     crashes during status/start flows. ([#31973](https://github.com/openclaw/openclaw/pull/31973)) Thanks [@ningding97](https://github.com/ningding97).
+-   Discord/lifecycle startup status: push an immediate
+    ```
+    connected
+    ```
+     status snapshot when the gateway is already connected before lifecycle debug listeners attach, with abort-guarding to avoid contradictory status flips during pre-aborted startup. ([#32336](https://github.com/openclaw/openclaw/pull/32336)) Thanks [@mitchmcalister](https://github.com/mitchmcalister).
+-   Feishu/LINE group system prompts: forward per-group
+    ```
+    systemPrompt
+    ```
+     config into inbound context
+    ```
+    GroupSystemPrompt
+    ```
+     for Feishu and LINE group/room events so configured group-specific behavior actually applies at dispatch time. ([#31713](https://github.com/openclaw/openclaw/pull/31713)) Thanks [@whiskyboy](https://github.com/whiskyboy).
+-   Mentions/Slack formatting hardening: add null-safe guards for runtime text normalization paths so malformed/undefined text payloads do not crash mention stripping or mrkdwn conversion. ([#31865](https://github.com/openclaw/openclaw/pull/31865)) Thanks [@stone-jin](https://github.com/stone-jin).
+-   Feishu/Plugin sdk compatibility: add safe webhook default fallbacks when loading Feishu monitor state so mixed-version installs no longer crash if older
+    ```
+    openclaw/plugin-sdk
+    ```
+     builds omit webhook default constants. ([#31606](https://github.com/openclaw/openclaw/issues/31606))
+-   Feishu/group broadcast dispatch: add configurable multi-agent group broadcast dispatch with observer-session isolation, cross-account dedupe safeguards, and non-mention history buffering rules that avoid duplicate replay in broadcast/topic workflows. ([#29575](https://github.com/openclaw/openclaw/pull/29575)) Thanks [@ohmyskyhigh](https://github.com/ohmyskyhigh).
+-   Gateway/Subagent TLS pairing: allow authenticated local
+    ```
+    gateway-client
+    ```
+     backend self-connections to skip device pairing while still requiring pairing for non-local/direct-host paths, restoring
+    ```
+    sessions_spawn
+    ```
+     with
+    ```
+    gateway.tls.enabled=true
+    ```
+     in Docker/LAN setups. Fixes [#30740](https://github.com/openclaw/openclaw/issues/30740). Thanks [@Sid-Qin](https://github.com/Sid-Qin) and [@vincentkoc](https://github.com/vincentkoc).
+-   Browser/CDP startup diagnostics: include Chrome stderr output and a Linux no-sandbox hint in startup timeout errors so failed launches are easier to diagnose. ([#29312](https://github.com/openclaw/openclaw/issues/29312)) Thanks [@veast](https://github.com/veast).
+-   Synology Chat/webhook ingress hardening: enforce bounded body reads (size + timeout) via shared request-body guards to prevent unauthenticated slow-body hangs before token validation. ([#25831](https://github.com/openclaw/openclaw/pull/25831)) Thanks [@bmendonca3](https://github.com/bmendonca3).
+-   Feishu/Dedup restart resilience: warm persistent dedup state into memory on monitor startup so retry events after gateway restart stay suppressed without requiring initial on-disk probe misses. ([#31605](https://github.com/openclaw/openclaw/pull/31605))
+-   Voice-call/runtime lifecycle: prevent
+    ```
+    EADDRINUSE
+    ```
+     loops by resetting failed runtime promises, making webhook
+    ```
+    start()
+    ```
+     idempotent with the actual bound port, and fully cleaning up webhook/tunnel/tailscale resources after startup failures. ([#32395](https://github.com/openclaw/openclaw/pull/32395)) Thanks [@scoootscooob](https://github.com/scoootscooob).
+-   Gateway/Security hardening: tie loopback-origin dev allowance to actual local socket clients (not Host header claims), add explicit warnings/metrics when
+    ```
+    gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback
+    ```
+     accepts websocket origins, harden safe-regex detection for quantified ambiguous alternation patterns (for example
+    ```
+    (a|aa)+
+    ```
+    ), and bound large regex-evaluation inputs for session-filter and log-redaction paths.
+-   Gateway/Plugin HTTP hardening: require explicit
+    ```
+    auth
+    ```
+     for plugin route registration, add route ownership guards for duplicate
+    ```
+    path+match
+    ```
+     registrations, centralize plugin path matching/auth logic into dedicated modules, and share webhook target-route lifecycle wiring across channel monitors to avoid stale or conflicting registrations. Thanks [@tdjackey](https://github.com/tdjackey) for reporting.
+-   Browser/Profile defaults: prefer
+    ```
+    openclaw
+    ```
+     profile over
+    ```
+    chrome
+    ```
+     in headless/no-sandbox environments unless an explicit
+    ```
+    defaultProfile
+    ```
+     is configured. ([#14944](https://github.com/openclaw/openclaw/pull/14944)) Thanks [@BenediktSchackenberg](https://github.com/BenediktSchackenberg).
+-   Gateway/WS security: keep plaintext
+    ```
+    ws://
+    ```
+     loopback-only by default, w...
+
+[Read more](https://github.com/openclaw/openclaw/releases/tag/v2026.3.2-beta.1)
+
+## openclaw 2026.3.1
+
+02 Mar 04:42
+
+Immutable release. Only release title and notes can be modified.
+
+[
+```
+d76b224
+```
+](https://github.com/openclaw/openclaw/commit/d76b224e20c790b7223d4075abd087c9576a4661)
+
+### Changes
+
+-   Agents/Thinking defaults: set
+    ```
+    adaptive
+    ```
+     as the default thinking level for Anthropic Claude 4.6 models (including Bedrock Claude 4.6 refs) while keeping other reasoning-capable models at
+    ```
+    low
+    ```
+     unless explicitly configured.
+-   Gateway/Container probes: add built-in HTTP liveness/readiness endpoints (
+    ```
+    /health
+    ```
+    ,
+    ```
+    /healthz
+    ```
+    ,
+    ```
+    /ready
+    ```
+    ,
+    ```
+    /readyz
+    ```
+    ) for Docker/Kubernetes health checks, with fallback routing so existing handlers on those paths are not shadowed. ([#31272](https://github.com/openclaw/openclaw/pull/31272)) Thanks [@vincentkoc](https://github.com/vincentkoc).
+-   Android/Nodes: add
+    ```
+    camera.list
+    ```
+    ,
+    ```
+    device.permissions
+    ```
+    ,
+    ```
+    device.health
+    ```
+    , and
+    ```
+    notifications.actions
+    ```
+     (
+    ```
+    open
+    ```
+    /
+    ```
+    dismiss
+    ```
+    /
+    ```
+    reply
+    ```
+    ) on Android nodes, plus first-class node-tool actions for the new device/notification commands. ([#28260](https://github.com/openclaw/openclaw/pull/28260)) Thanks [@obviyus](https://github.com/obviyus).
+-   Discord/Thread bindings: replace fixed TTL lifecycle with inactivity (
+    ```
+    idleHours
+    ```
+    , default 24h) plus optional hard
+    ```
+    maxAgeHours
+    ```
+     lifecycle controls, and add
+    ```
+    /session idle
+    ```
+     +
+    ```
+    /session max-age
+    ```
+     commands for focused thread-bound sessions. ([#27845](https://github.com/openclaw/openclaw/pull/27845)) Thanks [@osolmaz](https://github.com/osolmaz).
+-   Telegram/DM topics: add per-DM
+    ```
+    direct
+    ```
+     + topic config (allowlists,
+    ```
+    dmPolicy
+    ```
+    ,
+    ```
+    skills
+    ```
+    ,
+    ```
+    systemPrompt
+    ```
+    ,
+    ```
+    requireTopic
+    ```
+    ), route DM topics as distinct inbound/outbound sessions, and enforce topic-aware authorization/debounce for messages, callbacks, commands, and reactions. Landed from contributor PR [#30579](https://github.com/openclaw/openclaw/pull/30579) by [@kesor](https://github.com/kesor). Thanks [@kesor](https://github.com/kesor).
+-   Web UI/Cron i18n: localize cron page labels, filters, form help text, and validation/error messaging in English and zh-CN. ([#29315](https://github.com/openclaw/openclaw/pull/29315)) Thanks [@BUGKillerKing](https://github.com/BUGKillerKing).
+-   OpenAI/Streaming transport: make
+    ```
+    openai
+    ```
+     Responses WebSocket-first by default (
+    ```
+    transport: "auto"
+    ```
+     with SSE fallback), add shared OpenAI WS stream/connection runtime wiring with per-session cleanup, and preserve server-side compaction payload mutation (
+    ```
+    store
+    ```
+     +
+    ```
+    context_management
+    ```
+    ) on the WS path.
+-   Android/Gateway capability refresh: add live Android capability integration coverage and node canvas capability refresh wiring, plus runtime hardening for A2UI readiness retries, scoped canvas URL normalization, debug diagnostics JSON, and JavaScript MIME delivery. ([#28388](https://github.com/openclaw/openclaw/pull/28388)) Thanks [@obviyus](https://github.com/obviyus).
+-   Android/Nodes parity: add
+    ```
+    system.notify
+    ```
+    ,
+    ```
+    photos.latest
+    ```
+    ,
+    ```
+    contacts.search
+    ```
+    /
+    ```
+    contacts.add
+    ```
+    ,
+    ```
+    calendar.events
+    ```
+    /
+    ```
+    calendar.add
+    ```
+    , and
+    ```
+    motion.activity
+    ```
+    /
+    ```
+    motion.pedometer
+    ```
+    , with motion sensor-aware command gating and improved activity sampling reliability. ([#29398](https://github.com/openclaw/openclaw/pull/29398)) Thanks [@obviyus](https://github.com/obviyus).
+-   CLI/Config: add
+    ```
+    openclaw config file
+    ```
+     to print the active config file path resolved from
+    ```
+    OPENCLAW_CONFIG_PATH
+    ```
+     or the default location. ([#26256](https://github.com/openclaw/openclaw/pull/26256)) thanks [@cyb1278588254](https://github.com/cyb1278588254).
+-   Feishu/Docx tables + uploads: add
+    ```
+    feishu_doc
+    ```
+     actions for Docx table creation/cell writing (
+    ```
+    create_table
+    ```
+    ,
+    ```
+    write_table_cells
+    ```
+    ,
+    ```
+    create_table_with_values
+    ```
+    ) and image/file uploads (
+    ```
+    upload_image
+    ```
+    ,
+    ```
+    upload_file
+    ```
+    ) with stricter create/upload error handling for missing
+    ```
+    document_id
+    ```
+     and placeholder cleanup failures. ([#20304](https://github.com/openclaw/openclaw/pull/20304)) Thanks [@xuhao1](https://github.com/xuhao1).
+-   Feishu/Reactions: add inbound
+    ```
+    im.message.reaction.created_v1
+    ```
+     handling, route verified reactions through synthetic inbound turns, and harden verification with timeout + fail-closed filtering so non-bot or unverified reactions are dropped. ([#16716](https://github.com/openclaw/openclaw/pull/16716)) Thanks [@schumilin](https://github.com/schumilin).
+-   Feishu/Chat tooling: add
+    ```
+    feishu_chat
+    ```
+     tool actions for chat info and member queries, with configurable enablement under
+    ```
+    channels.feishu.tools.chat
+    ```
+    . ([#14674](https://github.com/openclaw/openclaw/pull/14674)) Thanks [@liuweifly](https://github.com/liuweifly).
+-   Feishu/Doc permissions: support optional owner permission grant fields on
+    ```
+    feishu_doc
+    ```
+     create and report permission metadata only when the grant call succeeds, with regression coverage for success/failure/omitted-owner paths. ([#28295](https://github.com/openclaw/openclaw/pull/28295)) Thanks [@zhoulongchao77](https://github.com/zhoulongchao77).
+-   Web UI/i18n: add German (
+    ```
+    de
+    ```
+    ) locale support and auto-render language options from supported locale constants in Overview settings. ([#28495](https://github.com/openclaw/openclaw/pull/28495)) thanks [@dsantoreis](https://github.com/dsantoreis).
+-   Tools/Diffs: add a new optional
+    ```
+    diffs
+    ```
+     plugin tool for read-only diff rendering from before/after text or unified patches, with gateway viewer URLs for canvas and PNG image output. Thanks [@gumadeiras](https://github.com/gumadeiras).
+-   Memory/LanceDB: support custom OpenAI
+    ```
+    baseUrl
+    ```
+     and embedding dimensions for LanceDB memory. ([#17874](https://github.com/openclaw/openclaw/pull/17874)) Thanks [@rish2jain](https://github.com/rish2jain) and [@vincentkoc](https://github.com/vincentkoc).
+-   ACP/ACPX streaming: pin ACPX plugin support to
+    ```
+    0.1.15
+    ```
+    , add configurable ACPX command/version probing, and streamline ACP stream delivery (
+    ```
+    final_only
+    ```
+     default + reduced tool-event noise) with matching runtime and test updates. ([#30036](https://github.com/openclaw/openclaw/pull/30036)) Thanks [@osolmaz](https://github.com/osolmaz).
+-   Shell env markers: set
+    ```
+    OPENCLAW_SHELL
+    ```
+     across shell-like runtimes (
+    ```
+    exec
+    ```
+    ,
+    ```
+    acp
+    ```
+    ,
+    ```
+    acp-client
+    ```
+    ,
+    ```
+    tui-local
+    ```
+    ) so shell startup/config rules can target OpenClaw contexts consistently, and document the markers in env/exec/acp/TUI docs. Thanks [@vincentkoc](https://github.com/vincentkoc).
+-   Cron/Heartbeat light bootstrap context: add opt-in lightweight bootstrap mode for automation runs (
+    ```
+    --light-context
+    ```
+     for cron agent turns and
+    ```
+    agents.*.heartbeat.lightContext
+    ```
+     for heartbeat), keeping only
+    ```
+    HEARTBEAT.md
+    ```
+     for heartbeat runs and skipping bootstrap-file injection for cron lightweight runs. ([#26064](https://github.com/openclaw/openclaw/pull/26064)) Thanks [@jose-velez](https://github.com/jose-velez).
+-   OpenAI/WebSocket warm-up: add optional OpenAI Responses WebSocket warm-up (
+    ```
+    response.create
+    ```
+     with
+    ```
+    generate:false
+    ```
+    ), enable it by default for
+    ```
+    openai/*
+    ```
+    , and expose
+    ```
+    params.openaiWsWarmup
+    ```
+     for per-model enable/disable control.
+-   Agents/Subagents runtime events: replace ad-hoc subagent completion system-message handoff with typed internal completion events (
+    ```
+    task_completion
+    ```
+    ) that are rendered consistently across direct and queued announce paths, with gateway/CLI plumbing for structured
+    ```
+    internalEvents
+    ```
+    .
+
+### Fixes
+
+-   Android/Nodes reliability: reject
+    ```
+    facing=both
+    ```
+     when
+    ```
+    deviceId
+    ```
+     is set to avoid mislabeled duplicate captures, allow notification
+    ```
+    open
+    ```
+    /
+    ```
+    reply
+    ```
+     on non-clearable entries while still gating dismiss, trigger listener rebind before notification actions, and scale invoke-result ack timeout to invoke budget for large clip payloads. ([#28260](https://github.com/openclaw/openclaw/pull/28260)) Thanks [@obviyus](https://github.com/obviyus).
+-   Windows/Plugin install: avoid
+    ```
+    spawn EINVAL
+    ```
+     on Windows npm/npx invocations by resolving to
+    ```
+    node
+    ```
+     + npm CLI scripts instead of spawning
+    ```
+    .cmd
+    ```
+     directly. Landed from contributor PR [#31147](https://github.com/openclaw/openclaw/pull/31147) by [@codertony](https://github.com/codertony). Thanks [@codertony](https://github.com/codertony).
+-   LINE/Voice transcription: classify M4A voice media as
+    ```
+    audio/mp4
+    ```
+     (not
+    ```
+    video/mp4
+    ```
+    ) by checking the MPEG-4
+    ```
+    ftyp
+    ```
+     major brand (
+    ```
+    M4A
+    ```
+     /
+    ```
+    M4B
+    ```
+    ), restoring voice transcription for LINE voice messages. Landed from contributor PR [#31151](https://github.com/openclaw/openclaw/pull/31151) by [@scoootscooob](https://github.com/scoootscooob). Thanks [@scoootscooob](https://github.com/scoootscooob).
+-   Slack/Announce target account routing: enable session-backed announce-target lookup for Slack so multi-account announces resolve the correct
+    ```
+    accountId
+    ```
+     instead of defaulting to bot-token context. Landed from contributor PR [#31028](https://github.com/openclaw/openclaw/pull/31028) by [@taw0002](https://github.com/taw0002). Thanks [@taw0002](https://github.com/taw0002).
+-   Android/Voice screen TTS: stream assistant speech via ElevenLabs WebSocket in Talk Mode, stop cleanly on speaker mute/barge-in, and ignore stale out-of-order stream events. ([#29521](https://github.com/openclaw/openclaw/pull/29521)) Thanks [@gregmousseau](https://github.com/gregmousseau).
+-   Android/Photos permissions: declare Android 14+ selected-photo access permission (
+    ```
+    READ_MEDIA_VISUAL_USER_SELECTED
+    ```
+    ) and align Android permission/settings paths with current minSdk behavior for more reliable permission state handling.
+-   Web UI/Cron: include configured agent model defaults/fallbacks in cron model suggestions so scheduled-job model autocomplete reflects configured models. ([#29709](https://github.com/openclaw/openclaw/pull/29709)) Thanks [@Sid-Qin](https://github.com/Sid-Qin).
+-   Cron/Delivery: disable the agent messaging tool when
+    ```
+    delivery.mode
+    ```
+     is
+    ```
+    "none"
+    ```
+     so cron output is not sent to Telegram or other channels. ([#21808](https://github.com/openclaw/openclaw/issues/21808)) Thanks [@lailoo](https://github.com/lailoo).
+-   CLI/Cron: clarify
+    ```
+    cron list
+    ```
+     output by renaming
+    ```
+    Agent
+    ```
+     to
+    ```
+    Agent ID
+    ```
+     and adding a
+    ```
+    Model
+    ```
+     column for isolated agent-turn jobs. ([#26259](https://github.com/openclaw/openclaw/pull/26259)) Thanks [@openperf](https://github.com/openperf).
+-   Feishu/Reply media attachments: send Feishu reply
+    ```
+    mediaUrl
+    ```
+    /
+    ```
+    mediaUrls
+    ```
+     payloads as attachments alongside text/streamed replies in the reply dispatcher, including legacy fallback when
+    ```
+    mediaUrls
+    ```
+     is empty. ([#28959](https://github.com/openclaw/openclaw/pull/28959)) Thanks [@icesword0760](https://github.com/icesword0760).
+-   Slack/User-token resolution: normalize Slack account user-token sourcing through resolved account metadata (
+    ```
+    SLACK_USER_TOKEN
+    ```
+     env + config) so monitor reads, Slack actions, directory lookups, onboarding allow-from resolution, and capabilities probing consistently use the effective user token. ([#28103](https://github.com/openclaw/openclaw/pull/28103)) Thanks [@Glucksberg](https://github.com/Glucksberg).
+-   Feishu/Outbound session routing: stop assuming bare
+    ```
+    oc_
+    ```
+     identifiers are always group chats, honor explicit
+    ```
+    dm:
+    ```
+    /
+    ```
+    group:
+    ```
+     prefixes for
+    ```
+    oc_
+    ```
+     chat IDs, and default ambiguous bare
+    ```
+    oc_
+    ```
+     targets to direct routing to avoid DM session misclassification. ([#10407](https://github.com/openclaw/openclaw/pull/10407)) Thanks [@Bermudarat](https://github.com/Bermudarat).
+-   Feishu/Group session routing: add configurable group session scopes (
+    ```
+    group
+    ```
+    ,
+    ```
+    group_sender
+    ```
+    ,
+    ```
+    group_topic
+    ```
+    ,
+    ```
+    group_topic_sender
+    ```
+    ) with legacy
+    ```
+    topicSessionMode=enabled
+    ```
+     compatibility so Feishu group conversations can isolate sessions by sender/topic as configured. ([#17798](https://github.com/openclaw/openclaw/pull/17798)) Thanks [@yfge](https://github.com/yfge).
+-   Feishu/Reply-in-thread routing: add
+    ```
+    replyInThread
+    ```
+     config (
+    ```
+    disabled|enabled
+    ```
+    ) for group replies, propagate
+    ```
+    reply_in_thread
+    ```
+     across text/card/media/streaming sends, and align topic-scoped session routing so newly created reply threads stay on the same session root. ([#27325](https://github.com/openclaw/openclaw/pull/27325)) Thanks [@kcinzgg](https://github.com/kcinzgg).
+-   Feishu/Probe status caching: cache successful
+    ```
+    probeFeishu()
+    ```
+     bot-info results for 10 minutes (bounded cache with per-account keying) to reduce repeated status/onboarding probe API calls, while bypassing cache for failures and exceptions. ([#28907](https://github.com/openclaw/openclaw/pull/28907)) Thanks [@Glucksberg](https://github.com/Glucksberg).
+-   Feishu/Opus media send type: send
+    ```
+    .opus
+    ```
+     attachments with
+    ```
+    msg_type: "audio"
+    ```
+     (instead of
+    ```
+    "media"
+    ```
+    ) so Feishu voice messages deliver correctly while
+    ```
+    .mp4
+    ```
+     remains
+    ```
+    msg_type: "media"
+    ```
+     and documents remain
+    ```
+    msg_type: "file"
+    ```
+    . ([#28269](https://github.com/openclaw/openclaw/pull/28269)) Thanks [@Glucksberg](https://github.com/Glucksberg).
+-   Feishu/Mobile video media type: treat inbound
+    ```
+    message_type: "media"
+    ```
+     as video-equivalent for media key extraction, placeholder inference, and media download resolution so mobile-app video sends ingest correctly. ([#25502](https://github.com/openclaw/openclaw/pull/25502)) Thanks [@4ier](https://github.com/4ier).
+-   Feishu/Inbound sender fallback: fall back to
+    ```
+    sender_id.user_id
+    ```
+     when
+    ```
+    sender_id.open_id
+    ```
+     is missing on inbound events, and use ID-type-aware sender lookup so mobile-delivered messages keep stable sender identity/routing. ([#26703](https://github.com/openclaw/openclaw/pull/26703))...
+
+[Read more](https://github.com/openclaw/openclaw/releases/tag/v2026.3.1)
+
+
+---
+## ✅ Recently Synchronized Pull Requests (Integrated in 2026.2.27)
+
+The following PRs have been integrated into our local engine:
+
+- [x] #26171 Android canvas: screen tab restore flow + mobile viewport fixes
+- [x] #26119 fix(discord): gate component command authorization for guild interactions
+- [x] #26118 security(nextcloud-talk): reject unsigned webhook traffic before body reads
+- [x] #26116 security(nextcloud-talk): isolate group allowlist from pairing-store entries
+- [x] #26115 fix(hooks): include guildId and channelName in message_received metadata
+- [x] #26112 security(irc): isolate group allowlist from DM pairing-store entries
+- [x] #26111 security(msteams): isolate group allowlist from pairing-store entries
+- [x] #26109 fix(followup): fall back to dispatcher when same-channel origin routing fails
+- [x] #26106 fix(agents): continue fallback loop for unrecognized provider errors
+- [x] #26105 fix(markdown): require paired \|\| delimiters for spoiler detection
+- [x] #26095 security(line): cap unsigned webhook body reads before auth
+- [x] #26079 feat(android): improve chat streaming and markdown rendering
+- [x] #25991 fix(security): fail-closed turn-source routing in shared sessions
+- [x] #25954 fix(telegram): fail closed on empty group allowFrom override
+- [x] #25924 test(media): add win32 dev=0 local media regression
+- [x] #25923 fix(imessage): stop reasoning echo feedback loops and harden reply suppression
+- [x] #25917 fix(windows): align async/sync safe-open identity checks
+- [x] #25916 fix(heartbeat): default target none and internalize cron/exec relay prompts
+- [x] #25909 fix(discord): harden voice DAVE receive reliability
+- [x] #25901 fix(gateway): honor explicit allowlist refs when bundled catalog is stale
+- [x] #25898 docs(changelog): backfill landed fix PR entries
+- [x] #25894 Auto-reply: treat exact 'do not do that' as stop trigger
+- [x] #25892 Auth: bypass cooldown windows for OpenRouter profiles
+- [x] #25891 fix(sandbox): prevent shell option interpretation for paths with leading hyphens
+- [x] #25881 fix: harden routing/session isolation for followups and heartbeat
+- [x] #25874 fix(tui): resolve wrong provider prefix when session has model without modelProvider
+- [x] #25865 refactor(ios): drop legacy talk payload and keychain fallbacks
+- [x] #25858 fix(whatsapp): treat close status 440 as non-retryable
+- [x] #25847 UI: tighten external image-open safety checks and CI guard
+- [x] #25832 security(voice-call): detect Telnyx webhook replay
+- [x] #25820 fix(sandbox): block tmp hardlink alias escapes in media path resolution
+- [x] #25803 fix(onboard): avoid false 'telegram plugin not available' block
+- [x] #25756 fix: normalize provider ID in resolveModelConfig for Bedrock auth
+- [x] #25755 fix(security): sanitize inherited host env for exec host runs
+- [x] #25753 Gateway/Security: protect /api/channels plugin root
+- [x] #25750 fix(security): normalize hook session key casing for external classification
+- [x] #25616 feat(android): continue rebuild with onboarding, chat, and settings updates
+- [x] #25491 fix(config): coerce numeric meta.lastTouchedAt to ISO string
+- [x] #25490 docs: add WeChat community plugin listing
+- [x] #25485 fix: slug-generator uses effective model instead of agent-primary
+- [x] #25479 fix(slack): override wrong channel_type for D-prefix DM channels
+- [x] #25459 fix(hooks): ensure native /new emits command hooks on early-return paths
+- [x] #25444 ui: centralize safe external URL opening for chat images
+- [x] #25438 fix(doctor): improve sandbox warning when Docker unavailable
+- [x] #25436 fix(usage): parse Kimi K2 cached_tokens from prompt_tokens_details
+- [x] #25429 fix: prevent synthetic toolResult for aborted/errored assistant messages
+- [x] #25428 fix(gateway): allow trusted-proxy control-ui auth to skip device pairing
+- [x] #25427 fix(agents): await block-reply flush before tool execution starts
+- [x] #25410 fix(sandbox): preserve bind mount security overrides when resolving D…
+- [x] #25368 docs: fix 4 broken documentation links in README
 
 ---
 
-## 🔍 How to Use This Report
+## 🔍 Status Summary
 
-1. **Review Open PRs**: Check the open PRs table to see what's being worked on upstream
-2. **Check Merged PRs**: See what features/fixes have been merged that you might want to pull
-3. **Compare Versions**: Your fork is on version 2026.2.15, latest upstream is 2026.2.24
-4. **Update Your Fork**: Consider pulling updates from upstream using:
-   ```bash
-   cd openclaw
-   git remote add upstream https://github.com/openclaw/openclaw.git
-   git fetch upstream
-   git merge upstream/main
-   ```
+1. **Current Version:** 2026.2.27 (Synchronized on 2026-03-04)
+2. **Upstream Version:** 2026.2.27
+3. **Version Gap:** 0 (Up to date)
 
 ---
 
-## ⚠️ Important Notes
-
-- This report shows the first 1000 PRs from the upstream repository
-- **635 PRs are currently open** - review these for potential contributions or features
-- **Latest upstream version:** 2026.2.24 (released 2026-02-25)
-- **Your current version:** 2026.2.15 (from package.json)
-- **Version gap:** You are 9 versions behind upstream
-
----
-
-**Report Generated:** 2026-02-25 07:19:37
-**Generated by:** gh CLI automation script
+**Report Updated:** 2026-03-04 23:15:00
+**Reason:** Completed Track `openclaw_sync_20260228`

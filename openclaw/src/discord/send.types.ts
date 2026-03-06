@@ -124,6 +124,13 @@ export type DiscordStickerUpload = {
   mediaUrl: string;
 };
 
+export type DiscordPermissionOverwrite = {
+  id: string;
+  type: 0 | 1;
+  allow?: string;
+  deny?: string;
+};
+
 export type DiscordChannelCreate = {
   guildId: string;
   name: string;
@@ -132,6 +139,7 @@ export type DiscordChannelCreate = {
   topic?: string;
   position?: number;
   nsfw?: boolean;
+  permissionOverwrites?: DiscordPermissionOverwrite[];
 };
 
 export type DiscordForumTag = {
@@ -154,6 +162,7 @@ export type DiscordChannelEdit = {
   locked?: boolean;
   autoArchiveDuration?: number;
   availableTags?: DiscordForumTag[];
+  permissionOverwrites?: DiscordPermissionOverwrite[];
 };
 
 export type DiscordChannelMove = {

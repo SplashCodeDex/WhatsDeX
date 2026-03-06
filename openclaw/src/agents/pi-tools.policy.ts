@@ -310,6 +310,21 @@ export function resolveGroupToolPolicy(params: {
 export function isToolAllowedByPolicies(
   name: string,
   policies: Array<SandboxToolPolicy | undefined>,
+  options: { attestation?: string } = {},
 ) {
-  return policies.every((policy) => isToolAllowedByPolicyName(name, policy));
+  const allowed = policies.every((policy) => isToolAllowedByPolicyName(name, policy));
+  if (!allowed) {
+    return false;
+  }
+
+  // OC-26192: Fail-closed governance for unsafe tool calls in Swift-governed environments.
+  const unsafeTools = ["exec", "process", "read", "write", "edit", "apply_patch"];
+  if (unsafeTools.includes(normalizeToolName(name))) {
+    const requiresAttestation = policies.some((p) => (p as any)?.requiresAttestation === true);
+    if (requiresAttestation && !options.attestation) {
+      return false;
+    }
+  }
+
+  return true;
 }

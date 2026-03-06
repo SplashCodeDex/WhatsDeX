@@ -1,35 +1,24 @@
 import { Bot, webhookCallback } from "grammy";
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
-// @ts-ignore
-import { sendMessageTelegram } from "../../../../../openclaw/src/telegram/send.js";
-import { CommonMessage } from "../../../types/omnichannel.js";
-import logger from "@/utils/logger.js";
+import { sendMessageTelegram } from 'openclaw';
+import logger from '@/utils/logger.js';
 
 /**
- * Adapter for Telegram integration using OpenClaw's engine.
+ * TelegramAdapter provides a grammY-powered implementation of the ChannelAdapter.
  */
 export class TelegramAdapter implements ChannelAdapter {
-  public readonly id: ChannelId = "telegram";
+  public readonly id = 'telegram';
   public readonly instanceId: string;
-  private bot: Bot | null = null;
+  private bot: Bot;
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
 
-  constructor(
-    private tenantId: string,
-    private botId: string,
-    private token: string
-  ) {
+  constructor(private tenantId: string, private botId: string, private token: string) {
     this.instanceId = botId;
+    this.bot = new Bot(token);
   }
 
-  async initialize(): Promise<void> {
-    // Basic init
-  }
-
-  async connect(): Promise<void> {
-    if (this.bot) return;
-
-    this.bot = new Bot(this.token);
+  public async initialize(): Promise<void> {
+    // grammY init
     await this.bot.init();
 
     // Setup message listener
@@ -54,35 +43,24 @@ export class TelegramAdapter implements ChannelAdapter {
         });
       }
     });
-
-    // Start polling for dev/test
-    this.bot.start().catch(err => {
-      logger.error(`[TelegramAdapter] Polling error for ${this.botId}:`, err);
-    });
-
-    logger.info(`[TelegramAdapter] Connected as @${this.bot.botInfo.username}`);
   }
 
-  async disconnect(): Promise<void> {
-    if (this.bot) {
-      await this.bot.stop();
-      this.bot = null;
-    }
+  public async connect(): Promise<void> {
+    // For long-polling or webhook.
+    // In our multi-tenant server, we use webhooks.
+    logger.info(`TelegramAdapter for ${this.botId} initialized.`);
   }
 
-  async shutdown(): Promise<void> {
+  public async disconnect(): Promise<void> {
+    await this.bot.stop();
+  }
+
+  public async shutdown(): Promise<void> {
     await this.disconnect();
   }
 
-  async sendMessage(target: string, content: any): Promise<void> {
-    if (!this.bot) {
-      throw new Error("TelegramAdapter not connected");
-    }
-
-    const text = typeof content === "string" ? content : content.text;
-
+  public async sendMessage(target: string, text: string): Promise<void> {
     // Use OpenClaw's robust send logic
-    // Signature: sendMessageTelegram(to: string, text: string, opts: TelegramSendOpts)
     await sendMessageTelegram(target, text, {
       token: this.token,
       api: this.bot.api,
@@ -98,10 +76,8 @@ export class TelegramAdapter implements ChannelAdapter {
     }
   }
 
-  public async sendCommon(message: CommonMessage): Promise<void> {
-    if (!message.content.text) return;
-
-    // OpenClaw's sendMessageTelegram handles Markdown formatting when textMode: 'markdown' is passed
+  public async sendCommon(message: any): Promise<void> {
+    if (!message.content?.text) return;
     await this.sendMessage(message.to, message.content.text);
   }
 
@@ -109,9 +85,11 @@ export class TelegramAdapter implements ChannelAdapter {
     this.messageHandler = handler;
   }
 
+  /**
+   * Express middleware for handling Telegram Webhooks
+   */
   public async handleWebhook(req: any, res: any): Promise<void> {
     if (!this.bot) {
-      logger.error(`[TelegramAdapter] Attempted to handle webhook but bot is not connected for tenant ${this.tenantId}`);
       res.status(503).send('Service Unavailable');
       return;
     }

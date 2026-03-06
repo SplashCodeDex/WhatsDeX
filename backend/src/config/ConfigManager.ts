@@ -95,6 +95,7 @@ export interface Config {
       MESSAGES_TO_SUMMARIZE: number;
       HISTORY_PRUNE_LENGTH: number;
     };
+    maxSpawnDepth: number;
     aiKeywords: string[];
   };
   payment: {
@@ -265,6 +266,7 @@ export class ConfigManager {
           MESSAGES_TO_SUMMARIZE: this.env.AI_MESSAGES_TO_SUMMARIZE,
           HISTORY_PRUNE_LENGTH: this.env.AI_HISTORY_PRUNE_LENGTH
         },
+        maxSpawnDepth: this.env.AI_MAX_SPAWN_DEPTH,
         aiKeywords: []
       },
 

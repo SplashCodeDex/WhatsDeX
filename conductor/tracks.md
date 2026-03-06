@@ -9,7 +9,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: OpenClaw Engine Hardening - Log Rotation & SSRF Protection**
 *Link: [./tracks/openclaw_hardening_20260305/](./tracks/openclaw_hardening_20260305/)*
 
-- [ ] **Track: Integrating Critical Upstream Patching (Telegram Proxy, Discord IDs, Anthropic Haiku)**
+- [~] **Track: Integrating Critical Upstream Patching (Telegram Proxy, Discord IDs, Anthropic Haiku)**
 *Link: [./tracks/openclaw_channel_fixes_20260305/](./tracks/openclaw_channel_fixes_20260305/)*
 
 ---

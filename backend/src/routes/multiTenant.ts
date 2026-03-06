@@ -27,7 +27,7 @@ router.get('/status', (req: Request, res: Response) => {
  */
 router.get('/agents', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -44,7 +44,7 @@ router.get('/agents', async (req: Request, res: Response) => {
  */
 router.post('/agents', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -65,7 +65,7 @@ router.post('/agents', async (req: Request, res: Response) => {
  */
 router.delete('/agents/:id', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -90,8 +90,8 @@ router.delete('/agents/:id', async (req: Request, res: Response) => {
  */
 router.post('/agents/:agentId/channels', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
-        const agentId = req.params.agentId;
+        const tenantId = req.user?.tenantId as string;
+        const agentId = req.params.agentId as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -114,7 +114,7 @@ router.post('/agents/:agentId/channels', async (req: Request, res: Response) => 
  */
 router.get('/channels/all', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -144,8 +144,8 @@ router.get('/channels/all', async (req: Request, res: Response) => {
  */
 router.get('/agents/:agentId/channels', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
-        const agentId = req.params.agentId;
+        const tenantId = req.user?.tenantId as string;
+        const agentId = req.params.agentId as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -174,7 +174,7 @@ router.get('/agents/:agentId/channels', async (req: Request, res: Response) => {
  */
 router.get(['/channels', '/bots'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -206,8 +206,8 @@ router.get(['/channels', '/bots'], async (req: Request, res: Response) => {
  */
 router.get(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
-        const agentId = req.params.agentId || 'system_default';
+        const tenantId = req.user?.tenantId as string;
+        const agentId = (req.params.agentId || 'system_default') as string;
         const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -230,8 +230,8 @@ router.get(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Reques
  */
 router.patch(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
-        const agentId = req.params.agentId || 'system_default';
+        const tenantId = req.user?.tenantId as string;
+        const agentId = (req.params.agentId || 'system_default') as string;
         const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -254,8 +254,8 @@ router.patch(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Requ
  */
 router.delete(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
-        const agentId = req.params.agentId || 'system_default';
+        const tenantId = req.user?.tenantId as string;
+        const agentId = (req.params.agentId || 'system_default') as string;
         const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -278,7 +278,7 @@ router.delete(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Req
  */
 router.get('/agents/:agentId/commands', async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -298,8 +298,8 @@ router.get('/agents/:agentId/commands', async (req: Request, res: Response) => {
  */
 router.post(['/agents/:agentId/channels/:id/connect', '/bots/:botId/connect'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
-        const agentId = req.params.agentId || 'system_default';
+        const tenantId = req.user?.tenantId as string;
+        const agentId = (req.params.agentId || 'system_default') as string;
         const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -322,8 +322,8 @@ router.post(['/agents/:agentId/channels/:id/connect', '/bots/:botId/connect'], a
  */
 router.post(['/agents/:agentId/channels/:id/disconnect', '/bots/:botId/disconnect'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
-        const agentId = req.params.agentId || 'system_default';
+        const tenantId = req.user?.tenantId as string;
+        const agentId = (req.params.agentId || 'system_default') as string;
         const id = (req.params.id || req.params.botId) as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -346,9 +346,9 @@ router.post(['/agents/:agentId/channels/:id/disconnect', '/bots/:botId/disconnec
  */
 router.get(['/agents/:agentId/channels/:id/qr', '/bots/:botId/qr'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         const id = (req.params.id || req.params.botId) as string;
-        const agentId = req.params.agentId || 'system_default';
+        const agentId = (req.params.agentId || 'system_default') as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -370,9 +370,9 @@ router.get(['/agents/:agentId/channels/:id/qr', '/bots/:botId/qr'], async (req: 
  */
 router.post(['/agents/:agentId/channels/:id/pairing-code', '/bots/:botId/pairing-code'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         const id = (req.params.id || req.params.botId) as string;
-        const agentId = req.params.agentId || 'system_default';
+        const agentId = (req.params.agentId || 'system_default') as string;
         const { phoneNumber } = req.body;
 
         if (!tenantId) {
@@ -400,9 +400,9 @@ router.post(['/agents/:agentId/channels/:id/pairing-code', '/bots/:botId/pairing
  */
 router.get(['/agents/:agentId/channels/:id/status', '/bots/:botId/status'], async (req: Request, res: Response) => {
     try {
-        const tenantId = req.user?.tenantId;
+        const tenantId = req.user?.tenantId as string;
         const id = (req.params.id || req.params.botId) as string;
-        const agentId = req.params.agentId || 'system_default';
+        const agentId = (req.params.agentId || 'system_default') as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }

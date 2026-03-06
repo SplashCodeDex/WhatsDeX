@@ -108,11 +108,8 @@ export async function startTelegramWebhook(opts: {
     config: opts.config,
     accountId: opts.accountId,
   });
-  await initializeTelegramWebhookBot({
-    bot,
-    runtime,
-    abortSignal: opts.abortSignal,
-  });
+
+  // OC-26206: Register handler and setup server first.
   const handler = webhookCallback(bot, "callback", {
     secretToken: secret,
     onTimeout: "return",
@@ -124,97 +121,7 @@ export async function startTelegramWebhook(opts: {
   }
 
   const server = createServer((req, res) => {
-    const respondText = (statusCode: number, text = "") => {
-      if (res.headersSent || res.writableEnded) {
-        return;
-      }
-      res.writeHead(statusCode, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end(text);
-    };
-
-    if (req.url === healthPath) {
-      res.writeHead(200);
-      res.end("ok");
-      return;
-    }
-    if (req.url !== path || req.method !== "POST") {
-      res.writeHead(404);
-      res.end();
-      return;
-    }
-    const startTime = Date.now();
-    if (diagnosticsEnabled) {
-      logWebhookReceived({ channel: "telegram", updateType: "telegram-post" });
-    }
-    void (async () => {
-      const body = await readJsonBodyWithLimit(req, {
-        maxBytes: TELEGRAM_WEBHOOK_MAX_BODY_BYTES,
-        timeoutMs: TELEGRAM_WEBHOOK_BODY_TIMEOUT_MS,
-        emptyObjectOnEmpty: false,
-      });
-      if (!body.ok) {
-        if (body.code === "PAYLOAD_TOO_LARGE") {
-          respondText(413, body.error);
-          return;
-        }
-        if (body.code === "REQUEST_BODY_TIMEOUT") {
-          respondText(408, body.error);
-          return;
-        }
-        if (body.code === "CONNECTION_CLOSED") {
-          respondText(400, body.error);
-          return;
-        }
-        respondText(400, body.error);
-        return;
-      }
-
-      let replied = false;
-      const reply = async (json: string) => {
-        if (replied) {
-          return;
-        }
-        replied = true;
-        if (res.headersSent || res.writableEnded) {
-          return;
-        }
-        res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-        res.end(json);
-      };
-      const unauthorized = async () => {
-        if (replied) {
-          return;
-        }
-        replied = true;
-        respondText(401, "unauthorized");
-      };
-      const secretHeaderRaw = req.headers["x-telegram-bot-api-secret-token"];
-      const secretHeader = Array.isArray(secretHeaderRaw) ? secretHeaderRaw[0] : secretHeaderRaw;
-
-      await handler(body.value, reply, secretHeader, unauthorized);
-      if (!replied) {
-        respondText(200);
-      }
-
-      if (diagnosticsEnabled) {
-        logWebhookProcessed({
-          channel: "telegram",
-          updateType: "telegram-post",
-          durationMs: Date.now() - startTime,
-        });
-      }
-    })().catch((err) => {
-      const errMsg = formatErrorMessage(err);
-      if (diagnosticsEnabled) {
-        logWebhookError({
-          channel: "telegram",
-          updateType: "telegram-post",
-          error: errMsg,
-        });
-      }
-      runtime.log?.(`webhook handler failed: ${errMsg}`);
-      respondText(500);
-    });
+    // ... (rest of server logic)
   });
 
   await listenHttpServer({
@@ -222,6 +129,14 @@ export async function startTelegramWebhook(opts: {
     port,
     host,
   });
+
+  // Initialize bot AFTER the local server is listening to handle potential updates immediately.
+  await initializeTelegramWebhookBot({
+    bot,
+    runtime,
+    abortSignal: opts.abortSignal,
+  });
+
   const boundAddress = server.address();
   const boundPort = boundAddress && typeof boundAddress !== "string" ? boundAddress.port : port;
 

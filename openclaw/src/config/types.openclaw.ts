@@ -33,6 +33,8 @@ export type OpenClawConfig = {
     lastTouchedVersion?: string;
     /** ISO timestamp when this config was last written. */
     lastTouchedAt?: string;
+    /** SHA-256 integrity hash of the config payload. */
+    integrity?: string;
   };
   auth?: AuthConfig;
   acp?: AcpConfig;

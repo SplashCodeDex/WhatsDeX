@@ -1,4 +1,4 @@
-export type SecretRefSource = "env" | "file" | "exec";
+export type SecretRefSource = "env" | "file" | "exec" | "vault";
 
 /**
  * Stable identifier for a secret in a configured source.
@@ -6,6 +6,7 @@ export type SecretRefSource = "env" | "file" | "exec";
  * - env source: provider "default", id "OPENAI_API_KEY"
  * - file source: provider "mounted-json", id "/providers/openai/apiKey"
  * - exec source: provider "vault", id "openai/api-key"
+ * - vault source: provider "hashicorp", id "secret/data/openai"
  */
 export type SecretRef = {
   source: SecretRefSource;
@@ -29,7 +30,10 @@ export function isSecretRef(value: unknown): value is SecretRef {
     return false;
   }
   return (
-    (value.source === "env" || value.source === "file" || value.source === "exec") &&
+    (value.source === "env" ||
+      value.source === "file" ||
+      value.source === "exec" ||
+      value.source === "vault") &&
     typeof value.provider === "string" &&
     value.provider.trim().length > 0 &&
     typeof value.id === "string" &&
@@ -131,10 +135,19 @@ export type ExecSecretProviderConfig = {
   allowSymlinkCommand?: boolean;
 };
 
+export type VaultSecretProviderConfig = {
+  source: "vault";
+  baseUrl: string;
+  token?: SecretInput;
+  namespace?: string;
+  timeoutMs?: number;
+};
+
 export type SecretProviderConfig =
   | EnvSecretProviderConfig
   | FileSecretProviderConfig
-  | ExecSecretProviderConfig;
+  | ExecSecretProviderConfig
+  | VaultSecretProviderConfig;
 
 export type SecretsConfig = {
   providers?: Record<string, SecretProviderConfig>;

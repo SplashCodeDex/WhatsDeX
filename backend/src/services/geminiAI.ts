@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
 import { EventEmitter } from 'events';
-import { Bot, GlobalContext, MessageContext, Result } from '../types/index.js';
+import { Bot, GlobalContext, MessageContext, Result, Agent } from '../types/index.js';
 import { CommonMessage } from '../types/omnichannel.js';
 import { databaseService } from './database.js';
 import { cacheService } from './cache.js';

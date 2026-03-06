@@ -134,6 +134,7 @@ export const OpenClawSchema = z
     meta: z
       .object({
         lastTouchedVersion: z.string().optional(),
+        integrity: z.string().optional(),
         // Accept any string unchanged (backwards-compatible) and coerce numeric Unix
         // timestamps to ISO strings (agent file edits may write Date.now()).
         lastTouchedAt: z

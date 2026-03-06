@@ -34,9 +34,9 @@ export class SkillsManager {
       return tools.map(tool => {
         const status = statusEntries.find((s: any) => s.name === tool.name || s.skillKey === tool.name);
         return {
-          id: tool.name,
-          name: tool.name,
-          description: tool.description,
+          id: String(tool.name),
+          name: String(tool.name),
+          description: String(tool.description),
           parameters: tool.parameters,
           source: tool.source,
           category: tool.category || (tool.source === 'openclaw' ? 'Intelligence' : 'System'),
@@ -53,7 +53,6 @@ export class SkillsManager {
       return [];
     }
   }
-...
 
   /**
    * Checks if a tenant is eligible for a specific skill based on their tier.
