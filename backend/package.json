@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/main.js",
+    "predev": "npx -y kill-port 3001",
     "dev": "bun --watch src/main.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

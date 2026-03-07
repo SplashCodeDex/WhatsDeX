@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "npx -y kill-port 3000",
     "dev": "next dev --turbopack -p 3000",
     "build": "next build",
     "start": "next start",

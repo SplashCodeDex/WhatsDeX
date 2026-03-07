@@ -9,6 +9,8 @@ import JobRegistry from './jobs/index.js';
 import { jobQueueService } from './services/jobQueue.js';
 import { validateEnvironmentOrThrow } from './utils/validateEnv.js';
 
+import { channelWatchdog } from './services/channels/ChannelWatchdog.js';
+
 /**
  * Main entry point for WhatsDeX
  */
@@ -47,6 +49,9 @@ async function main() {
             logger.info('>>> [MASTERMIND] MultiTenantApp initialized.');
             await app.start();
             logger.info('>>> [MASTERMIND] MultiTenantApp started.');
+
+            // Start Auto-Healing Watchdog
+            channelWatchdog.start(60000); // Check every 60s
         } else {
             logger.info('🔕 Server disabled in configuration');
         }
