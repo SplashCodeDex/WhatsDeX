@@ -10,7 +10,7 @@ interface BaseNodeProps {
   children?: React.ReactNode;
   selected?: boolean;
   executing?: boolean;
-  type: 'trigger' | 'action' | 'logic' | 'ai';
+  type: 'trigger' | 'action' | 'logic' | 'ai' | 'skill' | 'ai_router';
 }
 
 export function BaseNode({ title, icon, children, selected, executing, type }: BaseNodeProps) {
@@ -22,7 +22,9 @@ export function BaseNode({ title, icon, children, selected, executing, type }: B
       type === 'trigger' && "border-l-4 border-l-green-500",
       type === 'action' && "border-l-4 border-l-blue-500",
       type === 'logic' && "border-l-4 border-l-amber-500",
-      type === 'ai' && "border-l-4 border-l-purple-500"
+      type === 'ai' && "border-l-4 border-l-purple-500",
+      type === 'skill' && "border-l-4 border-l-blue-600",
+      type === 'ai_router' && "border-l-4 border-l-orange-500"
     )}>
       <div className="flex items-center gap-2 p-3 border-b border-border/20 bg-muted/30 rounded-t-xl">
         <div className={cn(
@@ -30,7 +32,9 @@ export function BaseNode({ title, icon, children, selected, executing, type }: B
           type === 'trigger' && "bg-green-500/10 text-green-500",
           type === 'action' && "bg-blue-500/10 text-blue-500",
           type === 'logic' && "bg-amber-500/10 text-amber-500",
-          type === 'ai' && "bg-purple-500/10 text-purple-500"
+          type === 'ai' && "bg-purple-500/10 text-purple-500",
+          type === 'skill' && "bg-blue-600/10 text-blue-600",
+          type === 'ai_router' && "bg-orange-500/10 text-orange-500"
         )}>
           {icon}
         </div>

@@ -82,12 +82,12 @@ export class WebhookService {
     private async sendWebhook(hook: Webhook, event: WebhookEvent, payload: any): Promise<void> {
         const timestamp = Date.now();
         // 2026 Security Fix: Use actual tenant context from payload if available, or hook.tenantId
-        const tenantId = payload.tenantId || hook.name.split('_')[0]; // Fallback logic or update schema
-        
+        const tenantId = payload.tenantId || (hook.name || '').split('_')[0]; // Fallback logic or update schema
+
         const body = JSON.stringify({
             event,
             timestamp,
-            tenantId: tenantId, 
+            tenantId: tenantId,
             data: payload
         });
 

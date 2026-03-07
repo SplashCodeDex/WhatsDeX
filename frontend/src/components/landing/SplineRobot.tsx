@@ -3,7 +3,7 @@
 import { Suspense, Component, useState, useCallback, useEffect } from 'react';
 import type { Application } from '@splinetool/runtime';
 import type { ReactNode, ErrorInfo } from 'react';
-import Spline from '@splinetool/react-spline';
+import Spline from '@splinetool/react-spline/next';
 
 // ── Error Boundary ──────────────────────────────────────────────────────
 // Catches Spline runtime errors (e.g. "Cannot read 'position' of undefined")
@@ -66,22 +66,12 @@ export function SplineRobot({ sceneUrl, className = '' }: SplineRobotProps) {
     }, []);
 
     const handleLoad = useCallback((splineApp: Application) => {
-        // Spline wrapper mounted, now manually load the scene safely.
-        // This prevents the autostart `onFrame` crash.
-        splineApp.load(sceneUrl)
-            .then(() => {
-                console.log('[SplineRobot] Scene loaded successfully via manual load');
-                setIsLoading(false);
-            })
-            .catch((err) => {
-                console.error('[SplineRobot] Failed to manual load scene:', err);
-                setHasError(true);
-                setIsLoading(false);
-            });
-    }, [sceneUrl]);
+        console.log('[SplineRobot] Scene loaded successfully');
+        setIsLoading(false);
+    }, []);
 
     const handleError = useCallback(() => {
-        console.warn('[SplineRobot] Failed to initialize Spline wrapper, showing fallback');
+        console.warn('[SplineRobot] Failed to initialize Spline, showing fallback');
         setHasError(true);
         setIsLoading(false);
     }, []);
@@ -107,7 +97,7 @@ export function SplineRobot({ sceneUrl, className = '' }: SplineRobotProps) {
         <div className={className}>
             <SplineErrorBoundary fallback={fallbackUI}>
                 <div className="relative w-full h-full">
-                    {/* Show loader while manual load is happening */}
+                    {/* Show loader while Spline is initializing */}
                     {isLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background z-10 pointer-events-none">
                             <div className="flex flex-col items-center gap-4">
@@ -117,9 +107,9 @@ export function SplineRobot({ sceneUrl, className = '' }: SplineRobotProps) {
                         </div>
                     )}
                     <Suspense fallback={null}>
-                        {/* Only initialize the app, DO NOT pass scene prop directly to avoid onFrame undefined crash */}
                         <Spline
-                            scene=""
+                            key={sceneUrl}
+                            scene={sceneUrl}
                             onLoad={handleLoad}
                             onError={handleError}
                         />

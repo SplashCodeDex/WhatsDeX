@@ -9,14 +9,14 @@ import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
 
 /**
  * Channel Service
- * 
+ *
  * Manages the lifecycle of connectivity slots (formerly 'Bots').
  * Operates within the Agent hierarchy: tenants/T/agents/A/channels/C.
  */
 export class ChannelService {
   private static instance: ChannelService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): ChannelService {
     if (!ChannelService.instance) {
@@ -112,14 +112,14 @@ export class ChannelService {
     try {
       const { agentService } = await import('./AgentService.js');
       const agentsResult = await agentService.getAllAgents(tenantId);
-      
+
       if (!agentsResult.success) return { success: false, error: agentsResult.error };
 
       const allChannels: Channel[] = [];
-      
+
       // Ensure system_default is always checked first or included in the list
       await agentService.ensureSystemAgent(tenantId);
-      
+
       for (const agent of agentsResult.data) {
         const chanResult = await this.getChannelsForAgent(tenantId, agent.id);
         if (chanResult.success) {
@@ -148,10 +148,10 @@ export class ChannelService {
       status = 'disconnected'; // Sync DOWN (stale from crash)
     }
 
-    return { 
-      ...channel, 
+    return {
+      ...channel,
       status,
-      phoneNumber: channel.phoneNumber || undefined 
+      phoneNumber: channel.phoneNumber || undefined
     };
   }
 
@@ -165,7 +165,7 @@ export class ChannelService {
         updatedAt: Timestamp.now()
       };
       await firebaseService.setDoc(this.getPath(agentId), channelId, updateData as any, tenantId, true);
-      
+
       return await this.getChannel(tenantId, channelId, agentId);
     } catch (error: any) {
       return { success: false, error };
@@ -184,21 +184,21 @@ export class ChannelService {
 
       const channelResult = await this.getChannel(tenantId, channelId, agentId);
       if (!channelResult.success) return { success: false, error: channelResult.error };
-      
+
       const channel = channelResult.data;
       const fullPath = `tenants/${tenantId}/agents/${agentId}/channels/${channelId}`;
 
       // Initialize Adapter
       if (channel.type === 'whatsapp') {
         const adapter = new WhatsappAdapter(tenantId, channelId, fullPath);
-        
+
         adapter.onMessage(async (event) => {
           const { ingressService } = await import('./IngressService.js');
           const context = await (await import('../lib/context.js')).default();
-          
+
           // Increment received stats
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-          
+
           await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
         });
 
@@ -213,10 +213,10 @@ export class ChannelService {
         adapter.onMessage(async (event) => {
           const { ingressService } = await import('./IngressService.js');
           const context = await (await import('../lib/context.js')).default();
-          
+
           // Increment received stats
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-          
+
           await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
         });
 
@@ -259,7 +259,7 @@ export class ChannelService {
 
       // 2. Remove from Firestore
       await firebaseService.deleteDoc(this.getPath(agentId), channelId, tenantId);
-      
+
       logger.info(`Channel deleted: ${channelId} from tenant ${tenantId} under Agent ${agentId}`);
       return { success: true, data: undefined };
     } catch (error: any) {
@@ -291,9 +291,9 @@ export class ChannelService {
           // Restart channels that were previously connected or in error state (retry)
           if (channel.status === 'connected' || channel.status === 'connecting' || channel.status === 'qr_pending') {
             logger.info(`[ChannelService] Auto-starting channel ${channel.id} (${channel.name}) for tenant ${tenant.id}`);
-            
+
             // Non-blocking start
-            this.startChannel(tenant.id, channel.id, channel.assignedAgentId).catch(err => {
+            this.startChannel(tenant.id, channel.id, channel.assignedAgentId || undefined).catch(err => {
               logger.error(`[ChannelService] Failed to auto-start channel ${channel.id}:`, err);
             });
             totalStarted++;
@@ -311,7 +311,7 @@ export class ChannelService {
    * Update channel connectivity status
    */
   async updateStatus(tenantId: string, channelId: string, status: Channel['status'], agentId: string = 'system_default'): Promise<void> {
-    await this.updateChannel(tenantId, channelId, { status }, agentId).catch(err => 
+    await this.updateChannel(tenantId, channelId, { status }, agentId).catch(err =>
       logger.error(`Failed to update status for channel ${channelId}:`, err)
     );
   }
@@ -321,8 +321,8 @@ export class ChannelService {
    */
   async incrementChannelStat(tenantId: string, channelId: string, field: 'messagesSent' | 'messagesReceived' | 'errorsCount', agentId: string = 'system_default'): Promise<void> {
     try {
-      const updateData: any = { 
-        updatedAt: Timestamp.now() 
+      const updateData: any = {
+        updatedAt: Timestamp.now()
       };
       updateData[`stats.${field}`] = FieldValue.increment(1);
 

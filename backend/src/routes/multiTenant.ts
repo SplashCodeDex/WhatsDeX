@@ -70,7 +70,7 @@ router.delete('/agents/:id', async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await agentService.deleteAgent(tenantId, req.params.id);
+        const result = await agentService.deleteAgent(tenantId, req.params.id as string);
         if (result.success) {
             res.json({ success: true, data: { message: 'Agent deleted' } });
         } else {

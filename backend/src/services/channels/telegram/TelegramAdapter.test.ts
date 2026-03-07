@@ -46,7 +46,7 @@ describe('TelegramAdapter', () => {
   });
 
   it('should send a message', async () => {
-    const { sendMessageTelegram } = await import('../../../../../openclaw/src/telegram/send.js');
+    const { sendMessageTelegram } = await import('../../../../../openclaw/dist/telegram/send.js');
     await adapter.connect();
     await adapter.sendMessage('chat123', 'hello');
     expect(sendMessageTelegram).toHaveBeenCalledWith('chat123', 'hello', expect.objectContaining({
@@ -56,7 +56,7 @@ describe('TelegramAdapter', () => {
   });
 
   it('should send a common message', async () => {
-    const { sendMessageTelegram } = await import('../../../../../openclaw/src/telegram/send.js');
+    const { sendMessageTelegram } = await import('../../../../../openclaw/dist/telegram/send.js');
     await adapter.connect();
     await adapter.sendCommon({
       id: 'msg-1',
@@ -75,9 +75,9 @@ describe('TelegramAdapter', () => {
   it('should trigger onMessage handler when telegram message arrives', async () => {
     const handler = vi.fn();
     adapter.onMessage(handler);
-    
+
     await adapter.connect();
-    
+
     const registeredHandler = mockBot.on.mock.calls.find(call => call[0] === 'message')?.[1];
     expect(registeredHandler).toBeDefined();
 

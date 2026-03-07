@@ -88,7 +88,7 @@ class ChannelWatchdog {
                             await channelManager.shutdownAdapter(channel.id);
 
                             // Attempt to restart
-                            const startResult = await channelService.startChannel(tenant.id, channel.id, channel.assignedAgentId);
+                            const startResult = await channelService.startChannel(tenant.id, channel.id, channel.assignedAgentId || undefined);
 
                             if (startResult.success) {
                                 logger.info(`[ChannelWatchdog] ✅ Successfully healed channel ${channel.id}`);
@@ -99,7 +99,16 @@ class ChannelWatchdog {
                             }
                         } catch (err: any) {
                             logger.error(`[ChannelWatchdog] ❌ Failed to heal channel ${channel.id}:`, err.message || err);
-                            this.applyBackoff(channel.id, now);
+                            const maxReached = this.applyBackoff(channel.id, now);
+                            if (maxReached) {
+                                logger.error(`[ChannelWatchdog] 🚨 Channel ${channel.id} reached MAX BACKOFF. Marking as 'error' in Firestore.`);
+                                await channelService.updateChannel(tenant.id, channel.id, {
+                                    status: 'error'
+                                }, channel.assignedAgentId || undefined).catch(e => {
+                                    logger.error(`[ChannelWatchdog] Failed to set error status for ${channel.id}:`, e);
+                                });
+                                this.retryTracker.delete(channel.id);
+                            }
                         }
                     } else {
                         // It's healthy. Clear any lingering backoff.
@@ -119,8 +128,9 @@ class ChannelWatchdog {
     /**
      * Exponential backoff calculator
      * Cap at 30 minutes max delay.
+     * Returns true if max attempts threshold is reached (>= 7 attempts).
      */
-    private applyBackoff(channelId: string, now: number): void {
+    private applyBackoff(channelId: string, now: number): boolean {
         const current = this.retryTracker.get(channelId) || { attempts: 0, nextRetryTime: 0 };
         current.attempts += 1;
 
@@ -132,6 +142,8 @@ class ChannelWatchdog {
 
         const delayMins = (delayMs / 60000).toFixed(1);
         logger.warn(`[ChannelWatchdog] Backoff applied for ${channelId}. Attempt ${current.attempts}. Next retry in ~${delayMins} mins.`);
+
+        return current.attempts >= 7;
     }
 }
 

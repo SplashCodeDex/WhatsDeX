@@ -11,17 +11,44 @@ export interface Config {
         tenantId: string;
         owners: string[];
         id?: string;
+        groupJid?: string;
         groupLink?: string;
         readyAt?: Date;
         uptime?: string;
         dbSize?: string;
+    };
+    msg: {
+        name: string;
+        footer: string;
+        notFound: string;
+        readmore: string;
+        wait: string;
+        error: string;
+        success: string;
+        admin: string;
+        botAdmin: string;
+        owner: string;
+        group: string;
+        private: string;
+        bot: string;
+        premium: string;
+        nsfw: string;
+        botGroupMembership?: string;
+        groupSewa?: string;
+        unavailableAtNight?: string;
+        coin?: string;
+        restrict?: string;
+        banned?: string;
+        gamerestrict?: string;
+        privatePremiumOnly?: string;
+        groupPremiumOnly?: string;
+        urlInvalid?: string;
     };
     system: {
         port: number;
         env: string;
         debug: boolean;
     };
-    msg: Record<string, string>;
 }
 
 export interface Bot extends Partial<WASocket> {

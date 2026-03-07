@@ -1,5 +1,5 @@
 // @ts-ignore
-import { loadWorkspaceSkillEntries } from '../../../openclaw/src/agents/skills/workspace.js';
+import { loadWorkspaceSkillEntries } from '../../../openclaw/dist/agents/skills/workspace.js';
 import { toolRegistry } from './toolRegistry.js';
 import logger from '@/utils/logger.js';
 
@@ -10,7 +10,7 @@ import logger from '@/utils/logger.js';
 export class SkillsManager {
   private static instance: SkillsManager;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): SkillsManager {
     if (!SkillsManager.instance) {
@@ -60,7 +60,7 @@ export class SkillsManager {
   public async isTenantEligible(tenantId: string, skillId: string, tier: 'starter' | 'pro' | 'enterprise'): Promise<boolean> {
     // Define premium-only skills
     const premiumSkills = ['web-search', 'firecrawl', 'brave-search', 'perplexity'];
-    
+
     if (premiumSkills.includes(skillId)) {
       return tier === 'pro' || tier === 'enterprise';
     }

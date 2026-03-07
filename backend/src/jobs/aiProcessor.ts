@@ -203,7 +203,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / items.length) * 100);
+        await job.updateProgress(((i + 1) / items.length) * 100);
       }
 
       return {
@@ -322,7 +322,7 @@ class AIProcessor {
         }
 
         // Update job progress
-        await job.progress(((i + 1) / conversations.length) * 100);
+        await job.updateProgress(((i + 1) / conversations.length) * 100);
       }
 
       return {

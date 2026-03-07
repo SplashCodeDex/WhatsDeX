@@ -56,6 +56,7 @@ export class ConfigService {
       ...this.config.bot,
       jid: this._jid,
       id: this._jid,
+      groupJid: this.get('GROUP_JID'),
       readyAt: new Date(),
       uptime: '0s',
       dbSize: '0B',
@@ -66,13 +67,33 @@ export class ConfigService {
   /**
    * Getter for message/comestics configuration.
    */
-  public get msg() {
+  public get msg(): import('../types/index.js').Config['msg'] {
     return {
       name: this.config.bot.name,
       footer: `© ${new Date().getFullYear()} ${this.config.bot.name}`,
       notFound: '❎ Result not found!',
       readmore: String.fromCharCode(8206).repeat(4001),
       wait: '⏳ Please wait...',
+      error: '❌ Internal Error',
+      success: '✅ Success',
+      admin: '⚠️ You are not an admin!',
+      botAdmin: '⚠️ I am not an admin!',
+      owner: '⚠️ Owner only command!',
+      group: '⚠️ Group only command!',
+      private: '⚠️ Private chat only command!',
+      bot: '⚠️ Bot only command!',
+      premium: '⚠️ Premium only!',
+      nsfw: '🔞 NSFW disabled!',
+      banned: '❌ You are banned!',
+      gamerestrict: '🎮 Game restricted!',
+      privatePremiumOnly: '💎 Premium only feature!',
+      groupPremiumOnly: '💎 Group premium only!',
+      urlInvalid: '🔗 Invalid URL provided!',
+      botGroupMembership: '🚫 You must join our official group first!',
+      groupSewa: '🔒 This group is not registered for full access!',
+      unavailableAtNight: '😴 The bot is sleeping, try again tomorrow!',
+      coin: '🪙 Not enough coins!',
+      restrict: '⚠️ This command is restricted in this chat!',
     };
   }
 

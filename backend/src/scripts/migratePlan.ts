@@ -1,5 +1,5 @@
-import { db } from './lib/firebase.js';
-import logger from './utils/logger.js';
+import { db } from '../lib/firebase.js';
+import logger from '../utils/logger.js';
 
 /**
  * Migration Script: planTier -> plan
