@@ -5,8 +5,10 @@
  * Usage: import { cache, redis, connectionManager } from './lib/index.js';
  */
 
+import { cacheService } from '../services/cache.js';
+
 // Cache utilities
-export { default as cache } from './cache.js';
+export const cache = cacheService;
 export { default as redis } from './redis.js';
 
 // File utilities

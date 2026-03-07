@@ -1,7 +1,6 @@
 import redis from '../lib/redis.js';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
-import crypto from 'node:crypto';
 
 export class CacheService {
   private static instance: CacheService;
@@ -44,12 +43,9 @@ export class CacheService {
     });
   }
 
-  /**
-   * Create a compact, deterministic cache key using MD5 hashing (2026 standard)
-   */
   createKey(data: any): string {
     const serialized = typeof data === 'string' ? data : JSON.stringify(data);
-    return crypto.createHash('md5').update(serialized).digest('hex');
+    return `cache:${Buffer.from(serialized).toString('base64').substring(0, 32)}`;
   }
 
   async get<T>(key: string): Promise<Result<T | null>> {
@@ -189,6 +185,42 @@ export class CacheService {
     if (this.client) {
       await this.client.quit();
       this.isConnected = false;
+    }
+  }
+
+  /**
+   * Invalidate all keys matching a pattern (e.g., 'gemini:*')
+   * Uses SCAN for production performance and chunked deletion to prevent stack overflow.
+   */
+  async invalidatePattern(pattern: string): Promise<Result<number>> {
+    if (!this.isConnected) {
+      return { success: false, error: new Error('Cache not connected') };
+    }
+
+    try {
+      let cursor = '0';
+      let totalDeleted = 0;
+      const CHUNK_SIZE = 1000;
+
+      do {
+        const [nextCursor, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', CHUNK_SIZE);
+        cursor = nextCursor;
+
+        if (keys.length > 0) {
+          // Delete in chunks to avoid "Maximum call stack size exceeded" with spread operator
+          for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
+            const chunk = keys.slice(i, i + CHUNK_SIZE);
+            await this.client.del(...chunk);
+            totalDeleted += chunk.length;
+          }
+        }
+      } while (cursor !== '0');
+
+      return { success: true, data: totalDeleted };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Cache.invalidatePattern error:', err);
+      return { success: false, error: err };
     }
   }
 }

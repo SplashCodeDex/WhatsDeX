@@ -429,3 +429,20 @@ export const AnalyticsSchema = z.object({
 }).readonly();
 
 export type AnalyticsData = z.infer<typeof AnalyticsSchema>;
+
+/**
+ * Command Usage Schema ('tenants/{tenantId}/command_usage' subcollection)
+ */
+export const CommandUsageSchema = z.object({
+  id: z.string().optional(),
+  commandName: z.string(),
+  userId: z.string(),
+  tenantId: z.string(),
+  usedAt: TimestampSchema,
+  success: z.boolean(),
+  executionTime: z.number().optional(),
+  category: z.string().optional(),
+  metadata: z.record(z.string(), z.any()).optional()
+}).readonly();
+
+export type CommandUsage = z.infer<typeof CommandUsageSchema>;

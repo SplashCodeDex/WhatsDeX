@@ -138,7 +138,7 @@ export class GeminiAI extends EventEmitter {
       environment: {
         timeOfDay: this.getTimeOfDay(),
         dayOfWeek: new Date().getDay(),
-        previousActions: await this.getRecentActions(userId, bot.tenantId),
+        previousActions: await this.getRecentActions(userId),
         activeConversations: await this.getActiveConversations(userId)
       }
     };
@@ -650,20 +650,6 @@ Only include NEW or UPDATED information. If nothing significant is found, return
     }
   }
 
-  async getRecentActions(userId: string, tenantId: string) {
-    try {
-      const actions = await firebaseService.getCollection('command_usage', tenantId, {
-        where: [['userId', '==', userId]],
-        orderBy: { field: 'usedAt', direction: 'desc' },
-        limit: 5
-      });
-      return actions;
-    } catch (error) {
-      logger.error('Failed to get recent actions:', error);
-      return [];
-    }
-  }
-
   async getConversationMemory(userId: string, tenantId: string) {
     const cacheKey = `ai:memory:${tenantId}:${userId}`;
     const cached = await cacheService.get<any[]>(cacheKey);
@@ -961,6 +947,7 @@ Message: "${content}"
   inferCommandParameters(command: any) { return {}; }
   async getActiveConversations(userId: string) { return []; }
   async getGroupContext(groupId: string) { return null; }
+  async getRecentActions(userId: string) { return []; }
 }
 
 export default GeminiAI;

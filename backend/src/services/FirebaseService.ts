@@ -19,8 +19,7 @@ import {
   TemplateSchema,
   AuthSchema,
   LearningSchema,
-  AnalyticsSchema,
-  CommandUsageSchema
+  AnalyticsSchema
 } from '@/types/contracts.js';
 import { z } from 'zod';
 
@@ -43,18 +42,7 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/bots/{botId}/auth': AuthSchema as any,
   'tenants/{tenantId}/learning': LearningSchema as any,
   'tenants/{tenantId}/analytics': AnalyticsSchema as any,
-  'tenants/{tenantId}/command_usage': CommandUsageSchema as any,
-  'tenants/{tenantId}/events': z.any(),
-  'analytics_legacy': z.any(),
-  'conversation_embeddings': z.any(),
 };
-
-export interface QueryOptions {
-  where?: [string, '==' | '>=' | '<=' | '>' | '<' | 'array-contains', any][];
-  orderBy?: { field: string; direction?: 'asc' | 'desc' };
-  limit?: number;
-  offset?: number;
-}
 
 export class FirebaseService {
   private static instance: FirebaseService;
@@ -66,13 +54,6 @@ export class FirebaseService {
       FirebaseService.instance = new FirebaseService();
     }
     return FirebaseService.instance;
-  }
-
-  /**
-   * Expose a write batch
-   */
-  public batch() {
-    return db.batch();
   }
 
   /**
@@ -182,38 +163,18 @@ export class FirebaseService {
   }
 
   /**
-   * Generic method to get all documents from a collection with querying
+   * Generic method to get all documents from a collection
    */
   public async getCollection<K extends CollectionKey>(
     collection: string,
-    tenantId?: string,
-    options: QueryOptions = {}
+    tenantId?: string
   ): Promise<FirestoreSchema[K][]> {
     try {
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
-      let query: any = db.collection(path);
+      const colRef = db.collection(path);
+      const snapshot = await colRef.get();
 
-      if (options.where) {
-        options.where.forEach(([field, op, value]) => {
-          query = query.where(field, op, value);
-        });
-      }
-
-      if (options.orderBy) {
-        query = query.orderBy(options.orderBy.field, options.orderBy.direction || 'asc');
-      }
-
-      if (options.limit) {
-        query = query.limit(options.limit);
-      }
-
-      if (options.offset) {
-        query = query.offset(options.offset);
-      }
-
-      const snapshot = await query.get();
-
-      return snapshot.docs.map((doc: any) => {
+      return snapshot.docs.map(doc => {
         try {
           return schema.parse(doc.data()) as FirestoreSchema[K];
         } catch (parsingError) {
@@ -224,54 +185,6 @@ export class FirebaseService {
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Firestore getCollection error [${collection}] (Tenant: ${tenantId}):`, err);
-      throw err;
-    }
-  }
-
-  /**
-   * Get count of documents in a collection with filters
-   */
-  public async getCount(
-    collection: string,
-    tenantId?: string,
-    where?: [string, '==' | '>=' | '<=' | '>' | '<' | 'array-contains', any][]
-  ): Promise<number> {
-    try {
-      const { path } = this.getCollectionInfo(collection, tenantId);
-      let query: any = db.collection(path);
-
-      if (where) {
-        where.forEach(([field, op, value]) => {
-          query = query.where(field, op, value);
-        });
-      }
-
-      const snapshot = await query.count().get();
-      return snapshot.data().count;
-    } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Firestore getCount error [${collection}] (Tenant: ${tenantId}):`, err);
-      throw err;
-    }
-  }
-
-  /**
-   * Add a document to a collection with an auto-generated ID
-   */
-  public async addDoc<K extends CollectionKey>(
-    collection: string,
-    data: FirestoreSchema[K],
-    tenantId?: string
-  ): Promise<string> {
-    try {
-      const { path, schema } = this.getCollectionInfo(collection, tenantId);
-      schema.parse(data);
-
-      const docRef = await db.collection(path).add(data);
-      return docRef.id;
-    } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Firestore addDoc error [${collection}] (Tenant: ${tenantId}):`, err);
       throw err;
     }
   }

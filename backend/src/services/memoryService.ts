@@ -1,9 +1,8 @@
-import { firebaseService } from './FirebaseService.js';
+import { db } from '../lib/firebase.js';
 import { embeddingService } from './embeddingService.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
-import { admin } from '../lib/firebase.js';
 
 interface ConversationEmbedding {
   userId: string;
@@ -47,13 +46,13 @@ export class MemoryService {
         throw new Error('Failed to generate embedding');
       }
 
-      await firebaseService.addDoc('conversation_embeddings' as any, {
+      await db.collection('conversation_embeddings').add({
         userId,
         content: conversationText,
         embedding: embeddingResult.data,
         metadata,
         timestamp: Timestamp.now()
-      } as any);
+      });
 
       logger.info(`Stored conversation embedding for user ${userId}`);
       return { success: true, data: undefined };
@@ -75,22 +74,22 @@ export class MemoryService {
       }
       const queryEmbedding = queryEmbeddingResult.data;
 
-      const docs = await firebaseService.getCollection('conversation_embeddings' as any, undefined, {
-        where: [['userId', '==', userId]],
-        orderBy: { field: 'timestamp', direction: 'desc' },
-        limit: 100
-      });
+      const snapshot = await db.collection('conversation_embeddings')
+        .where('userId', '==', userId)
+        .orderBy('timestamp', 'desc')
+        .limit(100)
+        .get();
 
-      if (docs.length === 0) return { success: true, data: [] };
+      if (snapshot.empty) return { success: true, data: [] };
 
-      const results = docs.map(data => {
-        const embeddingData = data as any as ConversationEmbedding;
-        const similarity = this.cosineSimilarity(queryEmbedding, embeddingData.embedding);
+      const results = snapshot.docs.map(doc => {
+        const data = doc.data() as ConversationEmbedding;
+        const similarity = this.cosineSimilarity(queryEmbedding, data.embedding);
         return {
-          content: embeddingData.content,
-          timestamp: embeddingData.timestamp.toDate(),
+          content: data.content,
+          timestamp: data.timestamp.toDate(),
           similarity,
-          metadata: embeddingData.metadata
+          metadata: data.metadata
         };
       });
 
@@ -123,28 +122,19 @@ export class MemoryService {
 
   async getConversationStats(userId: string): Promise<Result<{ total: number; first: Date | null; last: Date | null }>> {
     try {
-      const count = await firebaseService.getCount('conversation_embeddings' as any, undefined, [
-        ['userId', '==', userId]
-      ]);
+      const coll = db.collection('conversation_embeddings').where('userId', '==', userId);
+      const snapshot = await coll.count().get();
+      const count = snapshot.data().count;
 
-      const firstDocs = await firebaseService.getCollection('conversation_embeddings' as any, undefined, {
-        where: [['userId', '==', userId]],
-        orderBy: { field: 'timestamp', direction: 'asc' },
-        limit: 1
-      });
-
-      const lastDocs = await firebaseService.getCollection('conversation_embeddings' as any, undefined, {
-        where: [['userId', '==', userId]],
-        orderBy: { field: 'timestamp', direction: 'desc' },
-        limit: 1
-      });
+      const first = await coll.orderBy('timestamp', 'asc').limit(1).get();
+      const last = await coll.orderBy('timestamp', 'desc').limit(1).get();
 
       return {
         success: true,
         data: {
           total: count,
-          first: firstDocs.length === 0 ? null : (firstDocs[0].timestamp as any as Timestamp).toDate(),
-          last: lastDocs.length === 0 ? null : (lastDocs[0].timestamp as any as Timestamp).toDate()
+          first: first.empty ? null : (first.docs[0].data().timestamp as Timestamp).toDate(),
+          last: last.empty ? null : (last.docs[0].data().timestamp as Timestamp).toDate()
         }
       };
     } catch (error: unknown) {
@@ -157,23 +147,11 @@ export class MemoryService {
   async cleanupOldConversations(daysToKeep = 30): Promise<Result<number>> {
     try {
       const cutoffDate = Timestamp.fromMillis(Date.now() - daysToKeep * 24 * 60 * 60 * 1000);
-
-      // Use FirebaseService for querying
-      const docs = await firebaseService.getCollection('conversation_embeddings' as any, undefined, {
-        where: [['timestamp', '<', cutoffDate]]
-      });
-
-      // We need document references to delete.
-      // Since firebaseService.getCollection returns parsed data, we'll need to use direct db here
-      // for the deletion part or extend FirebaseService to return refs.
-      // For now, let's keep it simple and just use direct db for this specific cleanup task
-      // as it's a maintenance task.
-      const { db } = await import('../lib/firebase.js');
       const snapshot = await db.collection('conversation_embeddings')
         .where('timestamp', '<', cutoffDate)
         .get();
 
-      const batch = firebaseService.batch();
+      const batch = db.batch();
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
 
