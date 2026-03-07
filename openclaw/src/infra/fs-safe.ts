@@ -93,7 +93,7 @@ async function openVerifiedLocalFile(
 
     return { handle, realPath, stat };
   } catch (err) {
-    await handle.close().catch(() => {});
+    await handle.close().catch(() => { });
     if (err instanceof SafeOpenError) {
       throw err;
     }
@@ -124,9 +124,24 @@ export async function openFileWithinRoot(params: {
     throw new SafeOpenError("outside-workspace", "file is outside workspace root");
   }
 
+  try {
+    await assertNoPathAliasEscape({
+      absolutePath: resolved,
+      rootPath: rootReal,
+      boundaryLabel: "root",
+      policy: {
+        allowFinalHardlinkForUnlink: params.rejectHardlinks === false,
+      },
+    });
+  } catch (err) {
+    throw new SafeOpenError("invalid-path", "path alias escape blocked", { cause: err });
+  }
+
   let opened: SafeOpenResult;
   try {
-    opened = await openVerifiedLocalFile(resolved);
+    opened = await openVerifiedLocalFile(resolved, {
+      rejectHardlinks: params.rejectHardlinks !== false,
+    });
   } catch (err) {
     if (err instanceof SafeOpenError) {
       if (err.code === "not-found") {
@@ -139,13 +154,8 @@ export async function openFileWithinRoot(params: {
     throw err;
   }
 
-  if (params.rejectHardlinks !== false && opened.stat.nlink > 1) {
-    await opened.handle.close().catch(() => {});
-    throw new SafeOpenError("invalid-path", "hardlinked path not allowed");
-  }
-
   if (!isPathInside(rootWithSep, opened.realPath)) {
-    await opened.handle.close().catch(() => {});
+    await opened.handle.close().catch(() => { });
     throw new SafeOpenError("outside-workspace", "file is outside workspace root");
   }
 
@@ -167,7 +177,7 @@ export async function readLocalFileSafely(params: {
     const buffer = await opened.handle.readFile();
     return { buffer, realPath: opened.realPath, stat: opened.stat };
   } finally {
-    await opened.handle.close().catch(() => {});
+    await opened.handle.close().catch(() => { });
   }
 }
 
@@ -281,6 +291,6 @@ export async function writeFileWithinRoot(params: {
       await handle.writeFile(params.data);
     }
   } finally {
-    await handle.close().catch(() => {});
+    await handle.close().catch(() => { });
   }
 }

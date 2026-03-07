@@ -38,6 +38,7 @@ export { sendMessageWhatsApp, sendReactionWhatsApp, sendPollWhatsApp } from "./w
 export { setActiveWebListener, type ActiveWebListener, type ActiveWebSendOptions } from "./web/active-listener.js";
 export { sendMessageTelegram } from "./telegram/send.js";
 export { createOpenClawTools } from "./agents/openclaw-tools.js";
+export { startGatewayServer } from "./gateway/server.js";
 
 loadDotEnv({ quiet: true });
 normalizeEnv();

@@ -1,6 +1,6 @@
 # OpenClaw Upstream Repository - Pull Requests & Updates Report
 
-**Generated on:** 2026-03-05 00:15:00
+**Generated on:** 2026-03-07 12:39:17
 **Upstream Repository:** https://github.com/openclaw/openclaw
 **Your Fork Location:** openclaw/ subdirectory in WhatsDeX project
 
@@ -17,6 +17,10 @@
 
 ## 🚀 Latest Releases
 
+openclaw 2026.2.26	Latest	v2026.2.26	2026-02-27T00:01:43Z
+openclaw 2026.2.25	Latest	v2026.2.25	2026-02-26T04:17:56Z
+openclaw 2026.2.25-beta.1	Latest	v2026.2.25-beta.1	2026-02-26T03:55:38Z
+
 openclaw 2026.2.27	Latest	v2026.2.27	2026-03-01T05:46:00Z
 openclaw 2026.2.24		v2026.2.24	2026-02-25T03:31:17Z
 openclaw 2026.2.24-beta.1	Pre-release	v2026.2.24-beta.1	2026-02-25T03:01:17Z
@@ -30,112 +34,6 @@ openclaw 2026.2.15-beta.1	Pre-release	v2026.2.15-beta.1	2026-02-16T04:12:20Z
 openclaw 2026.2.15		v2026.2.15	2026-02-16T04:43:47Z
 ---
 
-## 📝 Open Pull Requests (Latest 100)
-
-These are currently open PRs in the upstream OpenClaw repository that you may want to review:
-
-| # | Title | Author | Created | Labels |
-|---|-------|--------|---------|--------|
-| [#26229](https://github.com/openclaw/openclaw/pull/26229) | fix(telegram): global dispatcher breaks HTTP proxy for all outbound requests (#26207) | yinghaosang | 2026-02-25 | channel: telegram, size: XS, experienced-contributor |
-| [#26228](https://github.com/openclaw/openclaw/pull/26228) | fix(gateway): prefer modelOverride over stale runtime model in session header | Sid-Qin | 2026-02-25 | gateway, size: XS, experienced-contributor |
-| [#26227](https://github.com/openclaw/openclaw/pull/26227) | fix(test): add missing setSessionRuntimeModel mock in run.skill-filter.test.ts | lbo728 | 2026-02-25 | size: XS, trusted-contributor |
-| [#26226](https://github.com/openclaw/openclaw/pull/26226) | fix: pass threadId in Discord read action (#26202) | echoVic | 2026-02-25 | size: XS, experienced-contributor |
-| [#26225](https://github.com/openclaw/openclaw/pull/26225) | fix(security): fail-closed SSRF protection for node camera downloads | Marvae | 2026-02-25 | cli, agents, size: M |
-| [#26223](https://github.com/openclaw/openclaw/pull/26223) | docs(i18n): fix locale internal links and add post-translation rewrite pipeline | strongwong | 2026-02-25 | docs, scripts, size: M |
-| [#26221](https://github.com/openclaw/openclaw/pull/26221) | fix: persist custom provider API keys to auth-profiles instead of openclaw.json | kckylechen1 | 2026-02-25 | commands, size: S |
-| [#26218](https://github.com/openclaw/openclaw/pull/26218) | feat(auto-reply): add Korean abort/stop triggers | jh280722 | 2026-02-25 | channel: telegram, gateway, size: XS |
-| [#26216](https://github.com/openclaw/openclaw/pull/26216) | fix(slack): always forward threadId in plugin-sdk read action | lbo728 | 2026-02-25 | size: XS, trusted-contributor |
-| [#26214](https://github.com/openclaw/openclaw/pull/26214) | fix(anthropic): add haiku model alias to resolve deprecated model error (#26018) | Lucenx9 | 2026-02-25 | agents, size: XS |
-| [#26213](https://github.com/openclaw/openclaw/pull/26213) | fix(heartbeat): detect local exec completed/failed events in heartbeat prompt | Sid-Qin | 2026-02-25 | size: XS, experienced-contributor |
-| [#26211](https://github.com/openclaw/openclaw/pull/26211) | fix(logging): rotate log file on size cap instead of suppressing writes | Sid-Qin | 2026-02-25 | size: S, experienced-contributor |
-| [#26210](https://github.com/openclaw/openclaw/pull/26210) | fix(synology-chat): read cfg from outbound context so incomingUrl res… | white-rm | 2026-02-25 | size: S |
-| [#26209](https://github.com/openclaw/openclaw/pull/26209) | feat(discord): support permission_overwrites for channel-create/channel-edit | ashclaw5381089 | 2026-02-25 | channel: discord, agents, size: S |
-| [#26206](https://github.com/openclaw/openclaw/pull/26206) | fix: avoid Telegram webhook startup delay by registering handler first | pandego | 2026-02-25 | channel: telegram, size: XS |
-| [#26205](https://github.com/openclaw/openclaw/pull/26205) | Memory: unify embedding providers across supabase and lancedb | cfregly | 2026-02-25 | gateway, extensions: diagnostics-otel, extensions: memory-lancedb, agents, size: XL |
-| [#26204](https://github.com/openclaw/openclaw/pull/26204) | fix(cli): rename cron list Agent column to Agent ID (#26122) | Lucenx9 | 2026-02-25 | cli, size: XS |
-| [#26203](https://github.com/openclaw/openclaw/pull/26203) | feat(feishu): reduce API rate limit consumption with probe cache and typing throttle | Stitch2001 | 2026-02-25 | channel: feishu, size: S |
-| [#26201](https://github.com/openclaw/openclaw/pull/26201) | fix(telegram): cancel in-flight typing HTTP request on stop() | openperf | 2026-02-25 | channel: telegram, size: M |
-| [#26200](https://github.com/openclaw/openclaw/pull/26200) | fix(agents): enforce config runTimeoutSeconds as minimum floor for subagent timeouts | MoerAI | 2026-02-25 | agents, size: XS |
-| [#26198](https://github.com/openclaw/openclaw/pull/26198) | test: auto-bundle A2UI assets before parallel suites | diegueins680 | 2026-02-25 | scripts, size: XS |
-| [#26195](https://github.com/openclaw/openclaw/pull/26195) | fix(whatsapp): use Opus format for TTS voice notes instead of MP3 | Lucenx9 | 2026-02-25 | size: XS |
-| [#26192](https://github.com/openclaw/openclaw/pull/26192) | feat: add SwiftAPI pre-execution attestation + fail-closed governance layer for unsafe tool calls | theonlypal | 2026-02-25 | size: L |
-| [#26190](https://github.com/openclaw/openclaw/pull/26190) | fix: label Codex secondary usage window as Week when >= 168h (#25812) | echoVic | 2026-02-25 | size: XS, experienced-contributor |
-| [#26189](https://github.com/openclaw/openclaw/pull/26189) | Chrome extension: fix toolbar stuck at …, add 8s timeout and cancel-o… | zwffff | 2026-02-25 | docs, size: M |
-| [#26188](https://github.com/openclaw/openclaw/pull/26188) | fix(compaction): route safeguard cancellation warnings through file logger | lbo728 | 2026-02-25 | agents, size: XS, trusted-contributor |
-| [#26187](https://github.com/openclaw/openclaw/pull/26187) | fix(discord): defer own-mode fetch until thread allow checks pass | victorGPT | 2026-02-25 | channel: discord, size: XS |
-| [#26184](https://github.com/openclaw/openclaw/pull/26184) | fix: preserve plugin-registered internal hooks across gateway startup | white-rm | 2026-02-25 | gateway, size: XS |
-| [#26182](https://github.com/openclaw/openclaw/pull/26182) | fix(cli): cron list shows "-" instead of misleading "default" for empty agentId | Kay-051 | 2026-02-25 | cli, size: XS |
-| [#26181](https://github.com/openclaw/openclaw/pull/26181) | fix: add haiku model aliases to prevent deprecated 404 (#26018) | echoVic | 2026-02-25 | agents, size: XS, experienced-contributor |
-| [#26180](https://github.com/openclaw/openclaw/pull/26180) | fix: migrate legacy cron jobId field to id on store load | Kay-051 | 2026-02-25 | size: XS |
-| [#26179](https://github.com/openclaw/openclaw/pull/26179) | fix: allow Google Fonts in Control UI CSP header | Kay-051 | 2026-02-25 | gateway, size: XS |
-| [#26178](https://github.com/openclaw/openclaw/pull/26178) | fix(compaction): use effective reserveTokens for memory flush threshold | MoerAI | 2026-02-25 | size: XS |
-| [#26177](https://github.com/openclaw/openclaw/pull/26177) | feat(memory): add configurable ftsMode (and/or) for hybrid FTS5 queries | jo-minjun | 2026-02-25 | agents, size: XS |
-| [#26176](https://github.com/openclaw/openclaw/pull/26176) | fix: add Model column to cron list and show dash for unset agentId (#26122) | echoVic | 2026-02-25 | cli, size: XS, experienced-contributor |
-| [#26175](https://github.com/openclaw/openclaw/pull/26175) | fix: "haiku" model alias resolves to claude-haiku-4-5 instead of deprecated snapshot | Kay-051 | 2026-02-25 | agents, size: XS |
-| [#26173](https://github.com/openclaw/openclaw/pull/26173) | fix: Slack streaming: false resolves to "off" instead of "partial" | Kay-051 | 2026-02-25 | size: XS |
-| [#26172](https://github.com/openclaw/openclaw/pull/26172) | fix(feishu): insert document blocks sequentially to preserve order (#26022) | echoVic | 2026-02-25 | channel: feishu, size: S, experienced-contributor |
-| [#26170](https://github.com/openclaw/openclaw/pull/26170) | fix(bluebubbles): add allowPrivateNetwork to gateway config schema | lbo728 | 2026-02-25 | size: XS, trusted-contributor |
-| [#26168](https://github.com/openclaw/openclaw/pull/26168) | fix(cron): bind new announce jobs to creator session target | yfge | 2026-02-25 | agents, size: XS |
-| [#26167](https://github.com/openclaw/openclaw/pull/26167) | test(web-search): use config apiKey instead of env stub for Brave tests | drvoss | 2026-02-25 | agents, size: XS |
-| [#26164](https://github.com/openclaw/openclaw/pull/26164) | fix/discord numeric channel id 26139 | Nipurn123 | 2026-02-25 | channel: discord, size: XS |
-| [#26163](https://github.com/openclaw/openclaw/pull/26163) | Agent: honor --session-id before --agent main fallback | danielstarman | 2026-02-25 | gateway, commands, size: M |
-| [#26162](https://github.com/openclaw/openclaw/pull/26162) | Fix cron list Agent column ambiguity when agentId is unset | pandego | 2026-02-25 | cli, size: XS |
-| [#26157](https://github.com/openclaw/openclaw/pull/26157) | fix(onboard): seed Control UI origins for non-loopback binds | stakeswky | 2026-02-25 | size: S, trusted-contributor |
-| [#26155](https://github.com/openclaw/openclaw/pull/26155) | feat(security): add external secrets management | joshavant | 2026-02-25 | docs, channel: googlechat, gateway, cli, commands, agents, maintainer, size: XL |
-| [#26153](https://github.com/openclaw/openclaw/pull/26153) | fix(session): clamp token counts to non-negative when storing usage | drvoss | 2026-02-25 | agents, size: S |
-| [#26152](https://github.com/openclaw/openclaw/pull/26152) | fix(hooks): warn when slug generator falls back to DEFAULT_MODEL | drvoss | 2026-02-25 | agents, size: S |
-| [#26150](https://github.com/openclaw/openclaw/pull/26150) | fix(gateway): allow Google Fonts origins in Control UI CSP | drvoss | 2026-02-25 | gateway, agents, size: S |
-| [#26149](https://github.com/openclaw/openclaw/pull/26149) | fix(extension): add configurable relay host to browser extension | drvoss | 2026-02-25 | agents, size: S |
-| [#26148](https://github.com/openclaw/openclaw/pull/26148) | fix(doctor): suggest gateway restart after writing config | drvoss | 2026-02-25 | commands, agents, size: XS |
-| [#26147](https://github.com/openclaw/openclaw/pull/26147) | fix(config): migrate removed telegram groupMentionsOnly key | drvoss | 2026-02-25 | agents, size: S |
-| [#26145](https://github.com/openclaw/openclaw/pull/26145) | fix(memory): correct off-by-one in memory flush cycle dedup | drvoss | 2026-02-25 | agents, size: S |
-| [#26144](https://github.com/openclaw/openclaw/pull/26144) | fix(discord): resolve channel ID in guildId/channelId config format | Sid-Qin | 2026-02-25 | channel: discord, size: XS, experienced-contributor |
-| [#26143](https://github.com/openclaw/openclaw/pull/26143) | fix(abort): add Korean stop phrases and cancel/quit triggers | drvoss | 2026-02-25 | agents, size: S |
-| [#26141](https://github.com/openclaw/openclaw/pull/26141) | fix(codex): label weekly usage window as Week not Day | drvoss | 2026-02-25 | agents, size: S |
-| [#26140](https://github.com/openclaw/openclaw/pull/26140) | test(web_search): assert Brave auth uses X-Subscription-Token | Kemalau | 2026-02-25 | agents, size: XS |
-| [#26138](https://github.com/openclaw/openclaw/pull/26138) | fix(config): add missing params field to AgentEntrySchema | moliendocode | 2026-02-25 | size: XS |
-| [#26134](https://github.com/openclaw/openclaw/pull/26134) | feat(models): support gemini-3.1-pro via preview normalization | DongDongBear | 2026-02-25 | agents, size: XS |
-| [#26133](https://github.com/openclaw/openclaw/pull/26133) | fix(agents): strip Cortex semantic tags from user-facing text | MoerAI | 2026-02-25 | agents, size: XS |
-| [#26131](https://github.com/openclaw/openclaw/pull/26131) | fix: preserve isReasoning flag in buildEmbeddedRunPayloads return mapping | HirokiKobayashi-R | 2026-02-25 | agents, size: XS |
-| [#26130](https://github.com/openclaw/openclaw/pull/26130) | security(bluebubbles): isolate group allowlist from DM pairing-store entries | bmendonca3 | 2026-02-25 | channel: bluebubbles, size: S, experienced-contributor |
-| [#26128](https://github.com/openclaw/openclaw/pull/26128) | fix: Issue where discord is not installed on startup. | ungb | 2026-02-25 | commands, size: M |
-| [#26124](https://github.com/openclaw/openclaw/pull/26124) | fix(cron): improve announce delivery reliability | dario-github | 2026-02-25 | agents, size: XS |
-| [#26121](https://github.com/openclaw/openclaw/pull/26121) | security(zalo): scope pairing approvals to accountId | bmendonca3 | 2026-02-25 | channel: zalo, size: S, experienced-contributor |
-| [#26104](https://github.com/openclaw/openclaw/pull/26104) | security: add config integrity verification (Spec 04) | joelnishanth | 2026-02-25 | gateway, cli, size: XL |
-| [#26098](https://github.com/openclaw/openclaw/pull/26098) | security(slack): isolate room text-command auth from DM pairing-store entries | bmendonca3 | 2026-02-25 | channel: slack, size: XS, experienced-contributor |
-| [#26096](https://github.com/openclaw/openclaw/pull/26096) | feat(plugins): expose session store API and sessionKey for plugin commands | hakonhagland | 2026-02-25 | docs, channel: telegram, extensions: lobster, size: S |
-| [#26094](https://github.com/openclaw/openclaw/pull/26094) | security(twitch): fail closed explicit empty allowFrom | bmendonca3 | 2026-02-25 | channel: twitch, size: XS, experienced-contributor |
-| [#26093](https://github.com/openclaw/openclaw/pull/26093) | security(bluebubbles): scope pairing approvals to accountId | bmendonca3 | 2026-02-25 | channel: bluebubbles, size: S, experienced-contributor |
-| [#26092](https://github.com/openclaw/openclaw/pull/26092) | fix(mattermost): add SSRF protection and improve target ID resolution | webclerk | 2026-02-25 | channel: mattermost, size: S |
-| [#26091](https://github.com/openclaw/openclaw/pull/26091) | fix(plugins): use active registry in resolvePluginTools to prevent EADDRINUSE | Diaspar4u | 2026-02-25 | size: S |
-| [#26090](https://github.com/openclaw/openclaw/pull/26090) | telegram: treat unmatched \|\| as plain text in markdown formatter | Kemalau | 2026-03-04 | channel: signal, channel: telegram, size: XS |
-| [#26088](https://github.com/openclaw/openclaw/pull/26088) | fix(daemon): re-bootstrap stopped service on gateway start when plist exists | lbo728 | 2026-02-25 | gateway, cli, size: S, trusted-contributor |
-| [#26086](https://github.com/openclaw/openclaw/pull/26086) | bridge-vanguardIA | mateuscvictor-cs | 2026-02-25 | gateway, size: M |
-| [#26085](https://github.com/openclaw/openclaw/pull/26085) | feat(agents): improve context overflow UX with diagnostics and progress notifications | hongliangzhang07 | 2026-02-25 | agents, size: S |
-| [#26084](https://github.com/openclaw/openclaw/pull/26084) | fix(voice-call): route CLI through gateway RPC to fix EADDRINUSE | Diaspar4u | 2026-02-25 | channel: voice-call, size: M |
-| [#26082](https://github.com/openclaw/openclaw/pull/26082) | fix(matrix): pass accountId through media send for multi-account routing | hclsys | 2026-02-25 | channel: matrix, size: XS |
-| [#26081](https://github.com/openclaw/openclaw/pull/26081) | fix(diagnostics-otel): support custom OTEL resource attributes via config | ibrahimover | 2026-02-25 | docs, extensions: diagnostics-otel, size: S |
-| [#26078](https://github.com/openclaw/openclaw/pull/26078) | fix: watch memory directory directly for recursive subdirectory monitoring | hclsys | 2026-02-25 | size: XS |
-| [#26077](https://github.com/openclaw/openclaw/pull/26077) | fix(irc): retry nick collisions with incremental fallback names | chilu18 | 2026-02-25 | channel: irc, size: S, trusted-contributor |
-| [#26073](https://github.com/openclaw/openclaw/pull/26073) | security(browser): block writable symlink path escapes | bmendonca3 | 2026-02-25 | size: S, experienced-contributor |
-| [#26072](https://github.com/openclaw/openclaw/pull/26072) | fix(skills): refresh stale skill snapshots on gateway restart and in agent command path | yongPhone | 2026-02-25 | gateway, commands, size: S |
-| [#26071](https://github.com/openclaw/openclaw/pull/26071) | fix(skills): guard install actions by architecture | chilu18 | 2026-02-25 | agents, size: S, trusted-contributor |
-| [#26070](https://github.com/openclaw/openclaw/pull/26070) | fix(build): make bundle-a2ui.sh work on Windows with WSL | BinHPdev | 2026-02-25 | scripts, agents, size: S |
-| [#26067](https://github.com/openclaw/openclaw/pull/26067) | security(feishu): block off-path traffic from exhausting webhook budget | bmendonca3 | 2026-02-25 | channel: feishu, size: XS, experienced-contributor |
-| [#26064](https://github.com/openclaw/openclaw/pull/26064) | feat: lightweight bootstrap context mode for heartbeat/cron runs | jose-velez | 2026-02-25 | app: web-ui, gateway, cli, agents, size: S |
-| [#26062](https://github.com/openclaw/openclaw/pull/26062) | fix(heartbeat): handle exec completed wake/events | chilu18 | 2026-02-25 | size: XS, trusted-contributor |
-| [#26061](https://github.com/openclaw/openclaw/pull/26061) | fix(signal): treat non-2xx probe as reachable and fallback to RPC | openperf | 2026-02-25 | channel: signal, size: S |
-| [#26060](https://github.com/openclaw/openclaw/pull/26060) | security(fs-safe): block root hardlink containment bypass | bmendonca3 | 2026-02-25 | size: XS, experienced-contributor |
-| [#26057](https://github.com/openclaw/openclaw/pull/26057) | fix(matrix): handle missing self-verification API | stakeswky | 2026-02-25 | channel: matrix, size: S, trusted-contributor |
-| [#26056](https://github.com/openclaw/openclaw/pull/26056) | fix(infra): add garbage collection to delivery queue for stale/undeliverable entries | mcekinci | 2026-02-25 | size: XS |
-| [#26054](https://github.com/openclaw/openclaw/pull/26054) | fix(agents): avoid injecting memory file twice on case-insensitive mounts | Lanfei | 2026-02-25 | agents, size: XS |
-| [#26053](https://github.com/openclaw/openclaw/pull/26053) | security(mattermost): isolate group allowlist from DM pairing-store entries | bmendonca3 | 2026-02-25 | channel: mattermost, size: S, experienced-contributor |
-| [#26052](https://github.com/openclaw/openclaw/pull/26052) | security(slack): isolate room slash auth from DM pairing-store entries | bmendonca3 | 2026-02-25 | channel: slack, size: XS, experienced-contributor |
-| [#26051](https://github.com/openclaw/openclaw/pull/26051) | security(sandbox): block hardlinked path alias escapes | bmendonca3 | 2026-02-25 | docker, agents, size: XS, experienced-contributor |
-| [#26050](https://github.com/openclaw/openclaw/pull/26050) | security(feishu): bound unauthenticated webhook rate-limit state | bmendonca3 | 2026-02-25 | channel: feishu, size: S, experienced-contributor |
-| [#26049](https://github.com/openclaw/openclaw/pull/26049) | test(bash-tools): fix Windows CI path prepend assertion | drvoss | 2026-02-25 | agents, size: XS |
-| [#26047](https://github.com/openclaw/openclaw/pull/26047) | security(line): dedupe replayed webhook events by webhookEventId | bmendonca3 | 2026-02-25 | size: S, experienced-contributor |
-| [#26045](https://github.com/openclaw/openclaw/pull/26045) | fix(gateway): exempt loopback from hook auth rate-limiting by default | mcekinci | 2026-02-25 | gateway, size: XS |
 
 
 ---
@@ -1402,6 +1300,15 @@ d76b224
 
 
 ---
+## 📥 Pending Fusion (New Upstream Activity)
+- [ ] #38825 fix: restart Windows gateway via Scheduled Task (07/03/2026) @obviyus [View](https://github.com/openclaw/openclaw/pull/38825)
+- [ ] #38819 fix: check managed systemd unit before is-enabled (07/03/2026) @obviyus [View](https://github.com/openclaw/openclaw/pull/38819)
+- [ ] #38774 fix(ci): re-enable detect-secrets on main (07/03/2026) @obviyus [View](https://github.com/openclaw/openclaw/pull/38774)
+- [ ] #38712 fix(android): rename app package to ai.openclaw.app (07/03/2026) @obviyus [View](https://github.com/openclaw/openclaw/pull/38712)
+- [ ] #38660 fix(nodes): remove redundant rawCommand from system.run.prepare (07/03/2026) @madsmash [View](https://github.com/openclaw/openclaw/pull/38660)
+- [ ] #38643 fix(gateway): stop stale-socket restarts before first event (07/03/2026) @Takhoffman [View](https://github.com/openclaw/openclaw/pull/38643)
+
+
 ## ✅ Recently Synchronized Pull Requests (Integrated in 2026.2.27)
 
 The following PRs have been integrated into our local engine:
@@ -1467,5 +1374,5 @@ The following PRs have been integrated into our local engine:
 
 ---
 
-**Report Updated:** 2026-03-04 23:15:00
+**Report Updated:** 2026-03-07 12:39:17
 **Reason:** Completed Track `openclaw_sync_20260228`

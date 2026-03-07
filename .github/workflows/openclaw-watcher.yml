@@ -1,0 +1,36 @@
+name: OpenClaw Upstream Watchtower
+
+on:
+  schedule:
+    - cron: '0 */12 * * *' # Every 12 hours
+  workflow_dispatch: # Manual trigger for testing
+
+jobs:
+  monitor-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install tsx -g
+
+      - name: Run Upstream Intelligence Watcher
+        run: tsx scripts/automation/upstream-watcher.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit Intelligence Report
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "WhatsDeX Watchtower [Bot]"
+          git add docs/OPENCLAW_UPSTREAM_REPORT.md
+          git diff --staged --quiet || git commit -m "docs: auto-update OpenClaw Upstream Intelligence [skip ci]"
+          git push

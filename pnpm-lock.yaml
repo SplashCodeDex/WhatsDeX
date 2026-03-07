@@ -13,9 +13,15 @@ importers:
 
   .:
     devDependencies:
+      '@types/node':
+        specifier: ^25.3.5
+        version: 25.3.5
       lightningcss:
         specifier: ^1.30.2
         version: 1.31.1
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
 
   backend:
     dependencies:
@@ -5377,6 +5383,9 @@ packages:
 
   '@types/node@25.3.3':
     resolution: {integrity: sha512-DpzbrH7wIcBaJibpKo9nnSQL0MTRdnWttGyE5haGwK86xgMOkFLp7vEyfQPGLOJh5wNYiJ3V9PmUMDhV9u8kkQ==}
+
+  '@types/node@25.3.5':
+    resolution: {integrity: sha512-oX8xrhvpiyRCQkG1MFchB09f+cXftgIXb3a7UUa4Y3wpmZPw5tyZGTLWhlESOLq1Rq6oDlc8npVU2/9xiCuXMA==}
 
   '@types/oracledb@6.5.2':
     resolution: {integrity: sha512-kK1eBS/Adeyis+3OlBDMeQQuasIDLUYXsi2T15ccNJ0iyUpQ4xDF7svFu3+bGVrI0CMBUclPciz+lsQR3JX3TQ==}
@@ -15477,7 +15486,7 @@ snapshots:
   '@types/compression@1.8.1':
     dependencies:
       '@types/express': 5.0.6
-      '@types/node': 25.2.3
+      '@types/node': 25.3.3
 
   '@types/connect@3.4.38':
     dependencies:
@@ -15493,7 +15502,7 @@ snapshots:
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 25.2.3
+      '@types/node': 25.3.3
 
   '@types/cron@2.4.3':
     dependencies:
@@ -15552,7 +15561,7 @@ snapshots:
   '@types/jsonwebtoken@9.0.10':
     dependencies:
       '@types/ms': 2.1.0
-      '@types/node': 25.2.3
+      '@types/node': 25.3.3
 
   '@types/linkify-it@5.0.0': {}
 
@@ -15609,13 +15618,17 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
+  '@types/node@25.3.5':
+    dependencies:
+      undici-types: 7.18.2
+
   '@types/oracledb@6.5.2':
     dependencies:
       '@types/node': 25.3.3
 
   '@types/papaparse@5.5.2':
     dependencies:
-      '@types/node': 25.2.3
+      '@types/node': 25.3.3
 
   '@types/pg-pool@2.0.7':
     dependencies:
@@ -15687,7 +15700,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 25.2.3
+      '@types/node': 25.3.3
 
   '@types/yauzl@2.10.3':
     dependencies:
@@ -17929,7 +17942,7 @@ snapshots:
 
   happy-dom@20.6.1:
     dependencies:
-      '@types/node': 25.2.3
+      '@types/node': 25.3.3
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
       entities: 6.0.1
