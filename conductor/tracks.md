@@ -6,12 +6,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [~] **Track: Integrating Critical Upstream Patching (Telegram Proxy, Discord IDs, Anthropic Haiku)**
-*Link: [./tracks/openclaw_channel_fixes_20260305/](./tracks/openclaw_channel_fixes_20260305/)*
-
 ---
 
 ## Archived Tracks
+
+### [~] Track: Integrating Critical Upstream Patching (Telegram Proxy, Discord IDs, Anthropic Haiku)
+*Link: [./conductor/archive/openclaw_channel_fixes_20260305/](./openclaw_channel_fixes_20260305/)*
 
 ### [x] Track: OpenClaw Engine Hardening - Log Rotation & SSRF Protection
 *Link: [./conductor/archive/openclaw_hardening_20260305/](./openclaw_hardening_20260305/)*
