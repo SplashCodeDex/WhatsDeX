@@ -6,15 +6,15 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [x] **Track: OpenClaw Engine Hardening - Log Rotation & SSRF Protection**
-*Link: [./tracks/openclaw_hardening_20260305/](./tracks/openclaw_hardening_20260305/)*
-
 - [~] **Track: Integrating Critical Upstream Patching (Telegram Proxy, Discord IDs, Anthropic Haiku)**
 *Link: [./tracks/openclaw_channel_fixes_20260305/](./tracks/openclaw_channel_fixes_20260305/)*
 
 ---
 
 ## Archived Tracks
+
+### [x] Track: OpenClaw Engine Hardening - Log Rotation & SSRF Protection
+*Link: [./conductor/archive/openclaw_hardening_20260305/](./openclaw_hardening_20260305/)*
 
 ### [x] Track: Phase 2: Nested Agentic Research
 *Link: [./conductor/archive/nested_research_20260304/](./nested_research_20260304/)*
