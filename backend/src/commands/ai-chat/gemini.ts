@@ -5,7 +5,7 @@ import aiTools from '../../tools/ai-tools.js';
 import chatHistoryManager from '../../utils/chatHistoryManager.js';
 import performanceMonitor from '../../utils/performanceMonitor.js';
 import { RateLimiter } from '../../utils/rateLimiter.js';
-import cache from '../../lib/cache.js';
+import cache from '../../services/cache.js';
 import redis from '../../lib/redis.js';
 import logger from '../../utils/logger.js';
 

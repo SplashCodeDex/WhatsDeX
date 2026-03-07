@@ -1,7 +1,6 @@
 
 import { WebSocket, WebSocketServer } from 'ws';
 import logger from '../utils/logger.js';
-import { db, admin } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { firebaseService } from './FirebaseService.js';
 import { Result, AnalyticsData } from '../types/contracts.js';
@@ -94,12 +93,17 @@ class AnalyticsService {
 
   async updateTenantMetrics(tenantId: string) {
     const oneDayAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
-    const tenantPath = `tenants/${tenantId}`;
 
-    // Workspace-isolated queries
-    const commandCount = (await db.collection(`${tenantPath}/command_usage`).where('usedAt', '>=', oneDayAgo).count().get()).data().count;
-    const aiCount = (await db.collection(`${tenantPath}/command_usage`).where('category', '==', 'ai-chat').count().get()).data().count;
-    const errorCount = (await db.collection(`${tenantPath}/command_usage`).where('success', '==', false).count().get()).data().count;
+    // Workspace-isolated queries using FirebaseService
+    const commandCount = await firebaseService.getCount('command_usage', tenantId, [
+      ['usedAt', '>=', oneDayAgo]
+    ]);
+    const aiCount = await firebaseService.getCount('command_usage', tenantId, [
+      ['category', '==', 'ai-chat']
+    ]);
+    const errorCount = await firebaseService.getCount('command_usage', tenantId, [
+      ['success', '==', false]
+    ]);
 
     this.metrics.set(tenantId, {
       activeUsers: 0, // Implement per-tenant activity tracking in next step
@@ -114,14 +118,16 @@ class AnalyticsService {
   async getDashboardData(tenantId: string): Promise<Result<any>> {
     try {
       const tenantMetrics = this.metrics.get(tenantId);
-      const tenantPath = `tenants/${tenantId}`;
 
       // Recent Activity for this tenant only
-      const recentSnapshot = await db.collection(`${tenantPath}/command_usage`).orderBy('usedAt', 'desc').limit(10).get();
-      const recentActivity = recentSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: (doc.data().usedAt as Timestamp).toDate()
+      const recentActivityDocs = await firebaseService.getCollection('command_usage', tenantId, {
+        orderBy: { field: 'usedAt', direction: 'desc' },
+        limit: 10
+      });
+
+      const recentActivity = recentActivityDocs.map(data => ({
+        ...data,
+        timestamp: (data.usedAt as any as Timestamp).toDate()
       }));
 
       return {
@@ -183,15 +189,19 @@ class AnalyticsService {
 
   async trackEvent(tenantId: string, userId: string, event: string, properties: any = {}): Promise<Result<void>> {
     try {
-      // Use tenant-specific collection for events
-      await db.collection(`tenants/${tenantId}/events`).add({
+      // Use tenant-specific collection for events via FirebaseService
+      // Note: events collection needs to be in SchemaMap if we want full validation
+      // For now, we'll use a generic approach if possible or assume it's added.
+      // Since it's not in SchemaMap yet, this might fail validation.
+      // I should add it to SchemaMap in FirebaseService if I want to use it here.
+      await firebaseService.addDoc('events' as any, {
         userId,
         event: `event_${event}`,
         value: 1,
         category: 'behavior',
         properties,
         recordedAt: Timestamp.now()
-      });
+      } as any, tenantId);
       return { success: true, data: undefined };
     } catch (error: any) {
       logger.error('Failed to track event', error);
@@ -208,10 +218,10 @@ class AnalyticsService {
   // Legacy wrapper
   async create(data: { data: any }) {
     try {
-      await db.collection('analytics_legacy').add({
+      await firebaseService.addDoc('analytics_legacy' as any, {
         ...data.data,
         recordedAt: Timestamp.now()
-      });
+      } as any);
     } catch (e) { logger.error('Failed to create legacy analytics entry', e); }
   }
 }

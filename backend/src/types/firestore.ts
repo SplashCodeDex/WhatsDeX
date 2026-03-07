@@ -151,4 +151,8 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/bots/{botId}/auth': { value: any };
   'tenants/{tenantId}/learning': LearningData;
   'tenants/{tenantId}/analytics': AnalyticsData;
+  'tenants/{tenantId}/command_usage': import('./contracts.js').CommandUsage;
+  'tenants/{tenantId}/events': any;
+  'analytics_legacy': any;
+  'conversation_embeddings': any;
 }

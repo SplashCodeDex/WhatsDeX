@@ -9,6 +9,7 @@ vi.mock('./FirebaseService.js', () => ({
     getCollection: vi.fn().mockResolvedValue([
         { date: '2026-02-09', sent: 10, received: 5, errors: 1 }
     ]),
+    addDoc: vi.fn().mockResolvedValue('id_1'),
   }
 }));
 
@@ -92,10 +93,16 @@ describe('AnalyticsService', () => {
   });
 
   it('should track events with tenant isolation', async () => {
-      const { db } = await import('../lib/firebase.js');
       const result = await analyticsService.trackEvent(tenantId, 'user_1', 'click_button', { btn: 'save' });
 
       expect(result.success).toBe(true);
-      expect(db.collection).toHaveBeenCalledWith(`tenants/${tenantId}/events`);
+      expect(firebaseService.addDoc).toHaveBeenCalledWith(
+        'events',
+        expect.objectContaining({
+          userId: 'user_1',
+          event: 'event_click_button'
+        }),
+        tenantId
+      );
   });
 });
