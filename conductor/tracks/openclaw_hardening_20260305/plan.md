@@ -14,11 +14,11 @@ Hardening the local `openclaw` engine by addressing two critical issues identifi
 - [x] Task: Create/update unit tests for `logger` to verify rotation behavior. [90709b7]
 
 ## Phase 3: SSRF Protection Implementation (#26225)
-- [x] Task: Locate `infra/net/ssrf.js` and identify the `SsrFPolicy` integration point.
-- [x] Task: Modify `writeUrlToFile` in `nodes-camera.ts` to enforce fail-closed SSRF protection.
-- [x] Task: Create/update unit tests for `nodes-camera` to verify SSRF blocking for private/loopback IPs.
+- [x] Task: Locate `infra/net/ssrf.js` and identify the `SsrFPolicy` integration point. [e91261a]
+- [x] Task: Modify `writeUrlToFile` in `nodes-camera.ts` to enforce fail-closed SSRF protection. [e91261a]
+- [x] Task: Create/update unit tests for `nodes-camera` to verify SSRF blocking for private/loopback IPs. [e91261a]
 
 ## Phase 4: Final System Validation
-- [ ] Task: Run full project regression suite (`npm test`) to ensure no side effects.
-- [ ] Task: Verify `nodes` tool functionality with the new security policy.
-- [ ] Task: Final Cleanup: Remove all remaining temporary research and test artifacts.
+- [x] Task: Run full project regression suite (`npm test`) to ensure no side effects.
+- [x] Task: Verify `nodes` tool functionality with the new security policy.
+- [x] Task: Final Cleanup: Remove all remaining temporary research and test artifacts.

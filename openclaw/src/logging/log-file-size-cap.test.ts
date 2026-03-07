@@ -42,27 +42,35 @@ describe("log file size cap", () => {
     expect(getResolvedLoggerSettings().maxFileBytes).toBe(2048);
   });
 
-  it("suppresses file writes after cap is reached and warns once", () => {
-    const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(
-      () => true as unknown as ReturnType<typeof process.stderr.write>, // preserve stream contract in test spy
-    );
-    setLoggerOverride({ level: "info", file: logPath, maxFileBytes: 1024 });
+  it("rotates file after cap is reached", () => {
+    const MAX_BYTES = 1024;
+    setLoggerOverride({ level: "info", file: logPath, maxFileBytes: MAX_BYTES });
     const logger = getLogger();
 
-    for (let i = 0; i < 200; i++) {
-      logger.error(`network-failure-${i}-${"x".repeat(80)}`);
+    // Fill the file until it's just about to rotate
+    let lastSize = 0;
+    for (let i = 0; i < 500; i++) {
+      logger.error(`log-${i}`);
+      const currentSize = fs.statSync(logPath).size;
+      if (currentSize >= MAX_BYTES) {
+        lastSize = currentSize;
+        break;
+      }
     }
-    const sizeAfterCap = fs.statSync(logPath).size;
-    for (let i = 0; i < 20; i++) {
-      logger.error(`post-cap-${i}-${"y".repeat(80)}`);
+    
+    // One more log should trigger rotation
+    logger.error("trigger-rotation");
+    
+    // Verification: backup file should exist and primary file should be fresh
+    expect(fs.existsSync(`${logPath}.1`), "Backup file should be created").toBe(true);
+    const sizeAfterRotation = fs.statSync(logPath).size;
+    expect(sizeAfterRotation).toBeLessThan(1000, "New log file should be fresh and small");
+    expect(fs.statSync(`${logPath}.1`).size).toBe(lastSize);
+    
+    try {
+      fs.rmSync(`${logPath}.1`, { force: true });
+    } catch {
+      // ignore
     }
-    const sizeAfterExtraLogs = fs.statSync(logPath).size;
-
-    expect(sizeAfterExtraLogs).toBe(sizeAfterCap);
-    expect(sizeAfterCap).toBeLessThanOrEqual(1024 + 512);
-    const capWarnings = stderrSpy.mock.calls
-      .map(([firstArg]) => String(firstArg))
-      .filter((line) => line.includes("log file size cap reached"));
-    expect(capWarnings).toHaveLength(1);
   });
 });
