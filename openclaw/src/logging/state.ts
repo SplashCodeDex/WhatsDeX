@@ -10,6 +10,9 @@ export const loggingState = {
   consoleSubsystemFilter: null as string[] | null,
   resolvingConsoleSettings: false,
   streamErrorHandlersInstalled: false,
+  currentFileBytes: 0,
+  warnedAboutSizeCap: false,
+  lastLogFile: null as string | null,
   rawConsole: null as {
     log: typeof console.log;
     info: typeof console.info;

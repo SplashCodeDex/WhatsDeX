@@ -103,39 +103,60 @@ function buildLogger(settings: ResolvedSettings): TsLogger<LogObj> {
   if (isRollingPath(settings.file)) {
     pruneOldRollingLogs(path.dirname(settings.file));
   }
-  let currentFileBytes = getCurrentLogFileBytes(settings.file);
-  let warnedAboutSizeCap = false;
   const logger = new TsLogger<LogObj>({
     name: "openclaw",
     minLevel: levelToMinLevel(settings.level),
     type: "hidden", // no ansi formatting
   });
 
+  if (loggingState.lastLogFile !== settings.file) {
+    loggingState.lastLogFile = settings.file;
+    loggingState.currentFileBytes = getCurrentLogFileBytes(settings.file);
+    loggingState.warnedAboutSizeCap = false;
+  }
+
   logger.attachTransport((logObj: LogObj) => {
     try {
+      // Always resolve settings dynamically to respect overrides during the lifetime of a logger.
+      const currentSettings = resolveSettings();
+      if (currentSettings.level === "silent") {
+        return;
+      }
+
       const time = logObj.date?.toISOString?.() ?? new Date().toISOString();
       const line = JSON.stringify({ ...logObj, time });
       const payload = `${line}\n`;
       const payloadBytes = Buffer.byteLength(payload, "utf8");
-      const nextBytes = currentFileBytes + payloadBytes;
-      if (nextBytes > settings.maxFileBytes) {
-        if (!warnedAboutSizeCap) {
-          warnedAboutSizeCap = true;
-          const warningLine = JSON.stringify({
-            time: new Date().toISOString(),
-            level: "warn",
-            subsystem: "logging",
-            message: `log file size cap reached; suppressing writes file=${settings.file} maxFileBytes=${settings.maxFileBytes}`,
-          });
-          appendLogLine(settings.file, `${warningLine}\n`);
-          process.stderr.write(
-            `[openclaw] log file size cap reached; suppressing writes file=${settings.file} maxFileBytes=${settings.maxFileBytes}\n`,
-          );
+
+      if (loggingState.currentFileBytes >= currentSettings.maxFileBytes) {
+        // Rotate the log file if it exists
+        if (fs.existsSync(currentSettings.file)) {
+          try {
+            const backupFile = `${currentSettings.file}.1`;
+            fs.renameSync(currentSettings.file, backupFile);
+            // Start fresh
+            loggingState.currentFileBytes = 0;
+            loggingState.warnedAboutSizeCap = false;
+          } catch (err: any) {
+            if (!loggingState.warnedAboutSizeCap) {
+              loggingState.warnedAboutSizeCap = true;
+              const warningLine = JSON.stringify({
+                time: new Date().toISOString(),
+                level: "warn",
+                subsystem: "logging",
+                message: `log file size cap reached and rotation failed (error=${err.code}); suppressing writes file=${currentSettings.file} maxFileBytes=${currentSettings.maxFileBytes}`,
+              });
+              appendLogLine(currentSettings.file, `${warningLine}\n`);
+              process.stderr.write(
+                `[openclaw] log file size cap reached and rotation failed (error=${err.code}); suppressing writes file=${currentSettings.file} maxFileBytes=${currentSettings.maxFileBytes}\n`,
+              );
+            }
+            return;
+          }
         }
-        return;
       }
-      if (appendLogLine(settings.file, payload)) {
-        currentFileBytes = nextBytes;
+      if (appendLogLine(currentSettings.file, payload)) {
+        loggingState.currentFileBytes += payloadBytes;
       }
     } catch {
       // never block on logging failures
@@ -240,6 +261,9 @@ export function setLoggerOverride(settings: LoggerSettings | null) {
   loggingState.cachedLogger = null;
   loggingState.cachedSettings = null;
   loggingState.cachedConsoleSettings = null;
+  loggingState.currentFileBytes = 0;
+  loggingState.warnedAboutSizeCap = false;
+  loggingState.lastLogFile = null;
 }
 
 export function resetLogger() {
@@ -247,6 +271,9 @@ export function resetLogger() {
   loggingState.cachedSettings = null;
   loggingState.cachedConsoleSettings = null;
   loggingState.overrideSettings = null;
+  loggingState.currentFileBytes = 0;
+  loggingState.warnedAboutSizeCap = false;
+  loggingState.lastLogFile = null;
 }
 
 export function registerLogTransport(transport: LogTransport): () => void {
