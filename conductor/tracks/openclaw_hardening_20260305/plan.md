@@ -9,14 +9,14 @@ Hardening the local `openclaw` engine by addressing two critical issues identifi
 - [x] Task: Verify the SSRF vulnerability in `nodes-camera.ts` (#26225) by attempting to fetch a local/private IP.
 
 ## Phase 2: Log Rotation Implementation (#26211)
-- [x] Task: Implement log rotation logic in the `logger` (rename to `.1` and start fresh).
-- [x] Task: Ensure rotation respects `maxFileBytes` and only keeps 1 backup by default.
-- [x] Task: Create/update unit tests for `logger` to verify rotation behavior.
+- [x] Task: Implement log rotation logic in the `logger` (rename to `.1` and start fresh). [90709b7]
+- [x] Task: Ensure rotation respects `maxFileBytes` and only keeps 1 backup by default. [90709b7]
+- [x] Task: Create/update unit tests for `logger` to verify rotation behavior. [90709b7]
 
 ## Phase 3: SSRF Protection Implementation (#26225)
-- [ ] Task: Locate `infra/net/ssrf.js` and identify the `SsrFPolicy` integration point.
-- [ ] Task: Modify `writeUrlToFile` in `nodes-camera.ts` to enforce fail-closed SSRF protection.
-- [ ] Task: Create/update unit tests for `nodes-camera` to verify SSRF blocking for private/loopback IPs.
+- [x] Task: Locate `infra/net/ssrf.js` and identify the `SsrFPolicy` integration point.
+- [x] Task: Modify `writeUrlToFile` in `nodes-camera.ts` to enforce fail-closed SSRF protection.
+- [x] Task: Create/update unit tests for `nodes-camera` to verify SSRF blocking for private/loopback IPs.
 
 ## Phase 4: Final System Validation
 - [ ] Task: Run full project regression suite (`npm test`) to ensure no side effects.

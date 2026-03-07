@@ -1,5 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { resolvePinnedHostname } from "../infra/net/ssrf.js";
 import { resolveCliName } from "./cli-name.js";
 import {
   asBoolean,
@@ -77,6 +78,9 @@ export async function writeUrlToFile(filePath: string, url: string) {
   if (parsed.protocol !== "https:") {
     throw new Error(`writeUrlToFile: only https URLs are allowed, got ${parsed.protocol}`);
   }
+
+  // SSRF Protection: Resolve and validate the hostname against private network policies.
+  await resolvePinnedHostname(parsed.hostname);
 
   const res = await fetch(url);
   if (!res.ok) {
