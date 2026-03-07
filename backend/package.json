@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/main.js",
-    "dev": "tsx watch src/main.ts",
+    "dev": "bun --watch src/main.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "build": "tsc",
