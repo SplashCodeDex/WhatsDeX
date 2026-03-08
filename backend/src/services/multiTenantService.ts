@@ -4,7 +4,6 @@ import crypto from 'crypto';
 import { Tenant, TenantSchema, Result, TenantUser, TenantUserSchema } from '@/types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getPlanLimits } from '@/utils/featureGating.js';
-import { db } from '@/lib/firebase.js';
 
 export class MultiTenantService {
   private static instance: MultiTenantService;
@@ -40,20 +39,21 @@ export class MultiTenantService {
     const limits = getPlanLimits(plan);
 
     try {
-      const result = await db.runTransaction(async (transaction) => {
+      const result = await firebaseService.runTransaction(async (transaction) => {
         // 1. Create Tenant
-        const tenantData: any = {
+        const trialEndsAt = Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+        const tenantData: Partial<Tenant> = {
           id: tenantId,
           name: tenantName,
           subdomain: subdomain.toLowerCase(),
-          plan: plan.toLowerCase(),
-          planTier: plan.toLowerCase(),
+          plan: plan,
+          planTier: plan,
           subscriptionStatus: 'trialing',
           status: 'active',
           ownerId: userId,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
-          trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+          trialEndsAt,
           settings: {
             maxBots: limits.maxBots,
             aiEnabled: plan !== 'starter',
@@ -61,17 +61,20 @@ export class MultiTenantService {
           }
         };
         const validatedTenant = TenantSchema.parse(tenantData);
+
+        const { db } = await import('@/lib/firebase.js');
+
         transaction.set(db.collection('tenants').doc(tenantId), validatedTenant);
 
         // 2. Create User in subcollection
-        const userData: any = {
+        const userData: Partial<TenantUser> = {
           id: userId,
           email,
           displayName,
           role: 'owner',
-          planTier: plan.toLowerCase(),
+          planTier: plan,
           subscriptionStatus: 'trialing',
-          trialEndsAt: tenantData.trialEndsAt,
+          trialEndsAt: trialEndsAt,
           joinedAt: Timestamp.now(),
           lastLogin: Timestamp.now(),
         };
@@ -194,9 +197,6 @@ export class MultiTenantService {
   /**
    * Check if tenant has reached bot limit
    */
-  /**
-   * Check if tenant has reached bot limit
-   */
   async canAddBot(tenantId: string): Promise<Result<boolean>> {
     const tenantResult = await this.getTenant(tenantId);
     if (!tenantResult.success) {
@@ -210,9 +210,8 @@ export class MultiTenantService {
     const maxBots = limits.maxBots;
 
     try {
-      // Get all bots for this tenant
-      const botDocs = await firebaseService.getCollection('bots' as any, tenantId);
-      const currentBotCount = botDocs.length;
+      // Get all bots for this tenant using the new centralized method
+      const currentBotCount = await firebaseService.getCount('bots', tenantId);
 
       if (currentBotCount >= maxBots) {
         return {

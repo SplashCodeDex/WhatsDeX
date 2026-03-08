@@ -10,7 +10,7 @@ import { trace, SpanStatusCode } from '@opentelemetry/api';
 
 import performanceMonitor from '../utils/performanceMonitor.js';
 import { proto, downloadContentFromMessage, getContentType } from 'baileys';
-import { type Bot, type Command, type MessageContext, type GlobalContext, type GroupFunctions } from '../types/index.js';
+import { type Bot, type Command, type MessageContext, type GlobalContext, type GroupFunctions, type Tenant } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -255,7 +255,7 @@ export class CommandSystem {
 
     const msgContext: MessageContext = {
       ...messageData,
-      tenant: null as any, // Placeholder, will be set or is optional
+      tenant: null as unknown as Tenant,
       isOwner: false,
       isAdmin: false,
       id: jid,
@@ -274,7 +274,7 @@ export class CommandSystem {
       author: {
         id: jid // Legacy alias for sender.jid
       },
-      quoted: quotedContext as any,
+      quoted: quotedContext as MessageContext['quoted'],
       msg: {
         key: messageData.key,
         ...messageData.message
@@ -295,7 +295,7 @@ export class CommandSystem {
       getId: (target: string) => target.split('@')[0],
       simulateTyping: () => {
         if (bot.sendPresenceUpdate) {
-          (bot.sendPresenceUpdate as any)('composing', jid).catch(() => { });
+          bot.sendPresenceUpdate('composing', jid).catch(() => { });
         }
       },
       used: {

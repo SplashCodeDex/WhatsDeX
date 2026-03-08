@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase.js';
+import { db, admin } from '@/lib/firebase.js';
 import logger from '@/utils/logger.js';
 import {
   FirestoreSchema
@@ -44,6 +44,12 @@ const SchemaMap: Record<CollectionKey, z.ZodSchema<any>> = {
   'tenants/{tenantId}/analytics': AnalyticsSchema as any,
 };
 
+export interface QueryOptions {
+  where?: [string, admin.firestore.WhereFilterOp, any][];
+  orderBy?: { field: string; direction?: 'asc' | 'desc' }[];
+  limit?: number;
+}
+
 export class FirebaseService {
   private static instance: FirebaseService;
 
@@ -64,8 +70,13 @@ export class FirebaseService {
     let schemaKey: CollectionKey;
 
     if (tenantId) {
+      // If collection already starts with tenants/ we assume it's a full path
+      if (collection.startsWith('tenants/')) {
+        path = collection.replace('{tenantId}', tenantId);
+        schemaKey = collection as CollectionKey;
+      }
       // Special handling for nested subcollections like bots/{botId}/auth
-      if (collection.includes('/')) {
+      else if (collection.includes('/')) {
         const parts = collection.split('/');
         // Pattern: bots/{botId}/auth
         if (parts[0] === 'bots' && parts[2] === 'auth') {
@@ -90,6 +101,29 @@ export class FirebaseService {
     }
 
     return { path, schema };
+  }
+
+  /**
+   * Validate data against a schema with support for partials and FieldValues
+   */
+  private validate(schema: z.ZodSchema<any>, data: any, merge: boolean): void {
+    // Check if data contains Firestore FieldValues (like increment)
+    // If so, we bypass full validation as Zod doesn't support these native types easily
+    const hasFieldValues = Object.values(data).some(val => val instanceof admin.firestore.FieldValue);
+    if (hasFieldValues) {
+      return;
+    }
+
+    if (merge) {
+      if (typeof (schema as any).partial === 'function') {
+        (schema as any).partial().parse(data);
+      } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
+        (schema as any).unwrap().partial().parse(data);
+      }
+      // If we can't derive a partial schema, we skip validation for merge to avoid blocking
+    } else {
+      schema.parse(data);
+    }
   }
 
   /**
@@ -132,25 +166,10 @@ export class FirebaseService {
     try {
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
 
-      // Validation (Zero-Trust)
-      // Since data might be Partial, we use a partial schema for validation if merge is true
-      if (merge) {
-        // Best effort validation for partial updates
-        // Note: Zod doesn't easily support dynamic partial validation against a deep schema
-        // but for our flat-ish documents, it works well enough.
-        // We safely check if .partial() exists (e.g. not a preprocessed or readonly schema)
-        if (typeof (schema as any).partial === 'function') {
-          (schema as any).partial().parse(data);
-        } else if (typeof (schema as any).unwrap === 'function' && typeof (schema as any).unwrap().partial === 'function') {
-          // Handle Readonly schemas
-          (schema as any).unwrap().partial().parse(data);
-        }
-      } else {
-        schema.parse(data);
-      }
+      this.validate(schema, data, merge);
 
       const docRef = db.collection(path).doc(docId);
-      await docRef.set(data, { merge });
+      await docRef.set(data as any, { merge });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Firestore setDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, {
@@ -163,28 +182,94 @@ export class FirebaseService {
   }
 
   /**
-   * Generic method to get all documents from a collection
+   * Generic method to add a document with auto-generated ID
+   */
+  public async addDoc<K extends CollectionKey>(
+    collection: string,
+    data: FirestoreSchema[K],
+    tenantId?: string
+  ): Promise<string> {
+    try {
+      const { path, schema } = this.getCollectionInfo(collection, tenantId);
+      schema.parse(data);
+
+      const docRef = await db.collection(path).add(data);
+      return docRef.id;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore addDoc error [${collection}] (Tenant: ${tenantId}):`, err);
+      throw err;
+    }
+  }
+
+  /**
+   * Generic method to get all documents from a collection with query options
    */
   public async getCollection<K extends CollectionKey>(
     collection: string,
-    tenantId?: string
+    tenantId?: string,
+    options?: QueryOptions
   ): Promise<FirestoreSchema[K][]> {
     try {
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
-      const colRef = db.collection(path);
-      const snapshot = await colRef.get();
+      let query: admin.firestore.Query = db.collection(path);
+
+      if (options) {
+        if (options.where) {
+          options.where.forEach(([field, op, val]) => {
+            query = query.where(field, op, val);
+          });
+        }
+        if (options.orderBy) {
+          options.orderBy.forEach(({ field, direction }) => {
+            query = query.orderBy(field, direction || 'asc');
+          });
+        }
+        if (options.limit) {
+          query = query.limit(options.limit);
+        }
+      }
+
+      const snapshot = await query.get();
 
       return snapshot.docs.map(doc => {
         try {
           return schema.parse(doc.data()) as FirestoreSchema[K];
         } catch (parsingError) {
           logger.warn(`Firestore parsing error in getCollection [${path}/${doc.id}]:`, parsingError);
-          return doc.data() as FirestoreSchema[K]; // Fallback to raw data in production but log warning
+          return doc.data() as FirestoreSchema[K];
         }
       });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Firestore getCollection error [${collection}] (Tenant: ${tenantId}):`, err);
+      throw err;
+    }
+  }
+
+  /**
+   * Get document count for a collection/query
+   */
+  public async getCount(
+    collection: string,
+    tenantId?: string,
+    options?: Pick<QueryOptions, 'where'>
+  ): Promise<number> {
+    try {
+      const { path } = this.getCollectionInfo(collection, tenantId);
+      let query: admin.firestore.Query = db.collection(path);
+
+      if (options?.where) {
+        options.where.forEach(([field, op, val]) => {
+          query = query.where(field, op, val);
+        });
+      }
+
+      const snapshot = await query.count().get();
+      return snapshot.data().count;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore getCount error [${collection}] (Tenant: ${tenantId}):`, err);
       throw err;
     }
   }
@@ -206,6 +291,59 @@ export class FirebaseService {
       logger.error(`Firestore deleteDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, err);
       throw err;
     }
+  }
+
+  /**
+   * Get a new write batch
+   */
+  public batch() {
+    const batch = db.batch();
+    const service = this;
+
+    return {
+      set: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string,
+        options: { merge?: boolean } = { merge: true }
+      ) => {
+        const { path, schema } = service.getCollectionInfo(collection, tenantId);
+        service.validate(schema, data, options.merge ?? true);
+        const docRef = db.collection(path).doc(docId);
+        batch.set(docRef, data, options);
+        return this;
+      },
+      update: <K extends CollectionKey>(
+        collection: string,
+        docId: string,
+        data: Partial<FirestoreSchema[K]>,
+        tenantId?: string
+      ) => {
+        const { path, schema } = service.getCollectionInfo(collection, tenantId);
+        // update is essentially a merge
+        service.validate(schema, data, true);
+        const docRef = db.collection(path).doc(docId);
+        batch.update(docRef, data as any);
+        return this;
+      },
+      delete: (collection: string, docId: string, tenantId?: string) => {
+        const { path } = service.getCollectionInfo(collection, tenantId);
+        const docRef = db.collection(path).doc(docId);
+        batch.delete(docRef);
+        return this;
+      },
+      commit: () => batch.commit()
+    };
+  }
+
+  /**
+   * Run a transaction
+   */
+  public async runTransaction<T>(
+    updateFunction: (transaction: admin.firestore.Transaction) => Promise<T>
+  ): Promise<T> {
+    return db.runTransaction(updateFunction);
   }
 }
 

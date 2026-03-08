@@ -1,29 +1,23 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MultiTenantService } from '@/services/multiTenantService.js';
-import { FirebaseService } from '@/services/FirebaseService.js';
+import { firebaseService } from '@/services/FirebaseService.js';
 
 // Hoist mocks
 const { mockFirebaseService } = vi.hoisted(() => {
     return {
         mockFirebaseService: {
-            getInstance: vi.fn(),
             getDoc: vi.fn(),
             getCollection: vi.fn(),
+            getCount: vi.fn(),
         }
     };
 });
 
 // Mock dependencies
 vi.mock('@/services/FirebaseService.js', () => ({
-    firebaseService: { // Mock the exported instance directly if possible, or the class
-        getDoc: mockFirebaseService.getDoc,
-        getCollection: mockFirebaseService.getCollection,
-    },
+    firebaseService: mockFirebaseService,
     FirebaseService: {
-        getInstance: () => ({
-            getDoc: mockFirebaseService.getDoc,
-            getCollection: mockFirebaseService.getCollection,
-        })
+        getInstance: () => mockFirebaseService
     }
 }));
 
@@ -54,15 +48,14 @@ describe('MultiTenantService', () => {
                 planTier: 'pro',
                 status: 'active',
                 subscriptionStatus: 'active',
+                ownerId: 'owner-1',
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                settings: { aiEnabled: true }
+                settings: { aiEnabled: true, maxBots: 3, timezone: 'UTC' }
             });
 
             // Mock existing bots (count = 1)
-            mockFirebaseService.getCollection.mockResolvedValueOnce([
-                { id: 'bot-1' }
-            ]);
+            mockFirebaseService.getCount.mockResolvedValueOnce(1);
 
             const result = await service.canAddBot('tenant-1');
             if (!result.success) console.error('Test Failed Error:', result.error);
@@ -79,15 +72,14 @@ describe('MultiTenantService', () => {
                 planTier: 'starter',
                 status: 'active',
                 subscriptionStatus: 'active',
+                ownerId: 'owner-1',
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                settings: { aiEnabled: false }
+                settings: { aiEnabled: false, maxBots: 1, timezone: 'UTC' }
             });
 
             // Mock existing bots (count = 1)
-            mockFirebaseService.getCollection.mockResolvedValueOnce([
-                { id: 'bot-1' }
-            ]);
+            mockFirebaseService.getCount.mockResolvedValueOnce(1);
 
             const result = await service.canAddBot('tenant-1');
             expect(result.success).toBe(true); // check executed successfully
@@ -103,15 +95,14 @@ describe('MultiTenantService', () => {
                 planTier: 'starter',
                 status: 'active',
                 subscriptionStatus: 'active',
+                ownerId: 'owner-1',
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 // missing settings
                 settings: { }
             });
 
-            mockFirebaseService.getCollection.mockResolvedValueOnce([
-                { id: 'bot-1' }
-            ]);
+            mockFirebaseService.getCount.mockResolvedValueOnce(1);
 
             const result = await service.canAddBot('tenant-1');
             // Default maxBots is 1. Existing is 1. Should be false.

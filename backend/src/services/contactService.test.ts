@@ -4,18 +4,27 @@ import { Readable } from 'stream';
 import fs from 'fs';
 
 const { mockBatchSet, mockBatchCommit, mockBatch } = vi.hoisted(() => {
-    const mockBatchSet = vi.fn();
+    const mockBatchSet = vi.fn().mockReturnThis();
     const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
     const mockBatch = vi.fn(() => ({
         set: mockBatchSet,
+        update: vi.fn().mockReturnThis(),
+        delete: vi.fn().mockReturnThis(),
         commit: mockBatchCommit,
     }));
     return { mockBatchSet, mockBatchCommit, mockBatch };
 });
 
+vi.mock('./FirebaseService.js', () => ({
+    firebaseService: {
+        batch: mockBatch,
+        getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
+        setDoc: vi.fn().mockResolvedValue(undefined),
+    }
+}));
+
 vi.mock('../lib/firebase.js', () => ({
     db: {
-        batch: mockBatch,
         collection: vi.fn(() => ({
             doc: vi.fn(() => ({
                 collection: vi.fn(() => ({
@@ -23,13 +32,13 @@ vi.mock('../lib/firebase.js', () => ({
                 })),
             })),
         })),
-    }
-}));
-
-vi.mock('./FirebaseService.js', () => ({
-    firebaseService: {
-        getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
-        setDoc: vi.fn().mockResolvedValue(undefined),
+    },
+    admin: {
+      firestore: {
+        FieldValue: {
+          increment: vi.fn((n) => `increment_${n}`)
+        }
+      }
     }
 }));
 
@@ -69,23 +78,27 @@ describe('ContactService', () => {
       expect(mockBatchSet).toHaveBeenCalledTimes(2);
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.any(String),
         expect.objectContaining({
           name: 'Doe, John',
           phone: '1234567890@s.whatsapp.net',
           email: 'john@example.com',
           tags: ['vip', 'lead'],
-        })
+        }),
+        tenantId
       );
 
       expect(mockBatchSet).toHaveBeenCalledWith(
-        expect.anything(),
+        'contacts',
+        expect.any(String),
         expect.objectContaining({
           name: 'Jane Doe',
           phone: '19876543210@s.whatsapp.net',
           email: 'jane@example.com',
           tags: ['new'],
-        })
+        }),
+        tenantId
       );
 
       // Verify bot stats update
@@ -93,7 +106,7 @@ describe('ContactService', () => {
       expect(firebaseService.setDoc).toHaveBeenCalledWith(
           'bots',
           'bot_1',
-          expect.objectContaining({ 'stats.contactsCount': expect.anything() }),
+          expect.objectContaining({ 'stats.contactsCount': 'increment_2' }),
           tenantId,
           true
       );

@@ -1,10 +1,9 @@
 
 import { WebSocket, WebSocketServer } from 'ws';
 import logger from '../utils/logger.js';
-import { db, admin } from '../lib/firebase.js';
-import { Timestamp } from 'firebase-admin/firestore';
 import { firebaseService } from './FirebaseService.js';
 import { Result, AnalyticsData } from '../types/contracts.js';
+import { admin } from '../lib/firebase.js';
 
 interface AnalyticsMetrics {
   activeUsers: number;
@@ -93,13 +92,18 @@ class AnalyticsService {
   }
 
   async updateTenantMetrics(tenantId: string) {
-    const oneDayAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
-    const tenantPath = `tenants/${tenantId}`;
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    // Workspace-isolated queries
-    const commandCount = (await db.collection(`${tenantPath}/command_usage`).where('usedAt', '>=', oneDayAgo).count().get()).data().count;
-    const aiCount = (await db.collection(`${tenantPath}/command_usage`).where('category', '==', 'ai-chat').count().get()).data().count;
-    const errorCount = (await db.collection(`${tenantPath}/command_usage`).where('success', '==', false).count().get()).data().count;
+    // Workspace-isolated queries using centralized FirebaseService
+    const commandCount = await firebaseService.getCount('command_usage' as any, tenantId, {
+      where: [['usedAt', '>=', oneDayAgo]]
+    });
+    const aiCount = await firebaseService.getCount('command_usage' as any, tenantId, {
+      where: [['category', '==', 'ai-chat']]
+    });
+    const errorCount = await firebaseService.getCount('command_usage' as any, tenantId, {
+      where: [['success', '==', false]]
+    });
 
     this.metrics.set(tenantId, {
       activeUsers: 0, // Implement per-tenant activity tracking in next step
@@ -114,15 +118,12 @@ class AnalyticsService {
   async getDashboardData(tenantId: string): Promise<Result<any>> {
     try {
       const tenantMetrics = this.metrics.get(tenantId);
-      const tenantPath = `tenants/${tenantId}`;
 
-      // Recent Activity for this tenant only
-      const recentSnapshot = await db.collection(`${tenantPath}/command_usage`).orderBy('usedAt', 'desc').limit(10).get();
-      const recentActivity = recentSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: (doc.data().usedAt as Timestamp).toDate()
-      }));
+      // Recent Activity for this tenant only via centralized service
+      const recentActivity = await firebaseService.getCollection('command_usage' as any, tenantId, {
+        orderBy: [{ field: 'usedAt', direction: 'desc' }],
+        limit: 10
+      });
 
       return {
         success: true,
@@ -167,14 +168,14 @@ class AnalyticsService {
     try {
       const metrics = await firebaseService.getCollection<'tenants/{tenantId}/analytics'>(
         'analytics',
-        tenantId
+        tenantId,
+        {
+          orderBy: [{ field: 'date', direction: 'desc' }],
+          limit: days
+        }
       );
-      // Sort and limit in memory for now, or use Firestore queries if supported by getCollection
-      const sorted = metrics
-        .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, days);
 
-      return { success: true, data: sorted };
+      return { success: true, data: metrics };
     } catch (error: any) {
       logger.error('Failed to get historical metrics', error);
       return { success: false, error };
@@ -183,15 +184,15 @@ class AnalyticsService {
 
   async trackEvent(tenantId: string, userId: string, event: string, properties: any = {}): Promise<Result<void>> {
     try {
-      // Use tenant-specific collection for events
-      await db.collection(`tenants/${tenantId}/events`).add({
+      // Use tenant-specific collection for events via centralized service
+      await firebaseService.addDoc('events' as any, {
         userId,
         event: `event_${event}`,
         value: 1,
         category: 'behavior',
         properties,
-        recordedAt: Timestamp.now()
-      });
+        recordedAt: new Date()
+      } as any, tenantId);
       return { success: true, data: undefined };
     } catch (error: any) {
       logger.error('Failed to track event', error);
@@ -205,13 +206,13 @@ class AnalyticsService {
     }
   }
 
-  // Legacy wrapper
+  // Legacy wrapper refactored to use centralized service if possible
   async create(data: { data: any }) {
     try {
-      await db.collection('analytics_legacy').add({
+      await firebaseService.addDoc('analytics_legacy' as any, {
         ...data.data,
-        recordedAt: Timestamp.now()
-      });
+        recordedAt: new Date()
+      } as any);
     } catch (e) { logger.error('Failed to create legacy analytics entry', e); }
   }
 }

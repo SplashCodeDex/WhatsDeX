@@ -98,6 +98,13 @@ export class ApiKeyManager {
     }
 
     /**
+     * Resets the singleton instance for testing.
+     */
+    public static resetInstance(): void {
+        ApiKeyManager.instance = null;
+    }
+
+    /**
      * Set up proactive health checks for automatic key recovery.
      */
     private setupHealthChecks(): void {
