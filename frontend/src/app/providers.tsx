@@ -30,14 +30,16 @@ export function Providers({ children }: ProvidersProps): React.JSX.Element {
         <QueryProvider>
             <ThemeProvider defaultTheme="system" storageKey="whatsdex-theme">
                 <Toaster
-                    position="top-right"
-                    expand={false}
-                    richColors={false}
+                    position="bottom-right"
+                    expand={true}
+                    richColors={true}
                     closeButton
                     theme="system"
+                    gap={12}
+                    offset={20}
                     toastOptions={{
-                        className: 'group hover:scale-[1.02] transition-transform active:scale-[0.98]',
-                        duration: 4000,
+                        className: 'group transition-all duration-500',
+                        duration: 6000,
                     }}
                 />
                 {children}

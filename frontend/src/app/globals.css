@@ -287,48 +287,119 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * SONNER NOTIFICATIONS - Premium Glassmorphism
+ * SONNER NOTIFICATIONS - Mastermind Liquid Glass Edition
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 [data-sonner-toast] {
-  background-color: var(--background) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-md) !important;
+  --glass-toast-bg: oklch(var(--background) / 0.6);
+  backdrop-filter: blur(20px) saturate(190%) !important;
+  background-color: var(--glass-toast-bg) !important;
+  background-image:
+    radial-gradient(at 0% 0%, oklch(var(--primary) / 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, oklch(var(--accent) / 0.08) 0px, transparent 50%) !important;
+
+  /* Borderless design: using inset shadow for subtle edge definition instead of solid border */
+  border: none !important;
+  border-radius: 2rem !important; /* Matches liquidGlass-pill aesthetic */
+
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 0 oklch(100% 0 0 / 0.15), /* Superior highlight */
+    inset 0 0 0 1px oklch(100% 0 0 / 0.05) !important;
+
   font-family: var(--font-sans) !important;
+  padding: 1.25rem 1.5rem !important;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  overflow: visible !important; /* Allow close button to float outside */
 }
 
+[data-sonner-toast]:hover {
+  transform: translateY(-4px) scale(1.02);
+  background-color: oklch(var(--background) / 0.7) !important;
+  box-shadow:
+    0 30px 35px -5px rgba(0, 0, 0, 0.2),
+    0 15px 20px -6px rgba(0, 0, 0, 0.1),
+    0 0 30px oklch(var(--primary) / 0.15) !important;
+}
+
+/* Dark Mode Gloss Profile */
+.dark [data-sonner-toast] {
+  --glass-toast-bg: oklch(14% 0.01 280 / 0.7);
+  background-image:
+    radial-gradient(at 0% 0%, oklch(var(--primary) / 0.12) 0px, transparent 55%),
+    radial-gradient(at 100% 100%, oklch(var(--accent) / 0.12) 0px, transparent 55%) !important;
+  box-shadow:
+    0 25px 30px -5px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 oklch(100% 0 0 / 0.1) !important;
+}
+
+/* Semantic Glows (Replacing Sidebars) */
 [data-sonner-toast][data-type='success'] {
-  border-color: oklch(var(--success) / 0.3) !important;
-  background-color: oklch(var(--success) / 0.05) !important;
-}
-
-[data-sonner-toast][data-type='success'] [data-icon] {
-  color: var(--color-success) !important;
+  background-image:
+    radial-gradient(at 0% 0%, oklch(var(--success) / 0.2) 0px, transparent 60%),
+    radial-gradient(at 100% 100%, oklch(var(--accent) / 0.05) 0px, transparent 50%) !important;
 }
 
 [data-sonner-toast][data-type='error'] {
-  border-color: oklch(var(--error) / 0.3) !important;
-  background-color: oklch(var(--error) / 0.05) !important;
-}
-
-[data-sonner-toast][data-type='error'] [data-icon] {
-  color: var(--color-error) !important;
+  background-image:
+    radial-gradient(at 0% 0%, oklch(var(--error) / 0.2) 0px, transparent 60%),
+    radial-gradient(at 100% 100%, oklch(var(--accent) / 0.05) 0px, transparent 50%) !important;
 }
 
 [data-sonner-toast] [data-title] {
-  @apply font-semibold tracking-tight;
-  color: #ffffff !important;
+  @apply font-bold tracking-tight text-base;
+  color: var(--foreground) !important;
 }
 
 [data-sonner-toast] [data-description] {
-  color: rgba(255, 255, 255, 0.9) !important;
+  @apply text-sm leading-relaxed font-medium;
+  color: var(--foreground) !important;
+  opacity: 0.7;
 }
 
+/* Mastermind Integrated Close Button */
 [data-sonner-toast] [data-close-button] {
-  background-color: oklch(var(--muted) / 0.5) !important;
-  border-color: oklch(var(--border) / 0.5) !important;
-  transition: background-color 0.2s ease !important;
+  top: 0 !important;
+  right: 0 !important;
+  transform: translate(40%, -40%) !important;
+
+  /* Minimal Circular Design */
+  background: oklch(var(--background) / 0.95) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid oklch(var(--foreground) / 0.1) !important;
+  color: var(--foreground) !important;
+  border-radius: 50% !important;
+  width: 24px !important;
+  height: 24px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  /* Initial state: hidden */
+  opacity: 0;
+  visibility: hidden;
+  box-shadow: var(--shadow-lg) !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+[data-sonner-toast]:hover [data-close-button] {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(30%, -30%) !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: oklch(var(--error)) !important;
+  color: white !important;
+  transform: translate(30%, -30%) scale(1.15) !important;
+  border-color: transparent !important;
+}
+
+[data-sonner-toast] [data-close-button] svg {
+  width: 12px !important;
+  height: 12px !important;
 }
 
 .skip-link:focus {

@@ -7,7 +7,7 @@ export const envSchema = z.object({
 
   // Bot Config
   BOT_NAME: z.string().default('whatsdex'),
-  BOT_PREFIX: z.string().default('^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]'),
+  BOT_PREFIX: z.string().default('^[.#!?]'),
   BOT_PHONE_NUMBER: z.string().optional(),
   GROUP_JID: z.string().optional(),
   NEWSLETTER_JID: z.string().default('120363416372653441@newsletter'),

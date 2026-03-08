@@ -14,11 +14,12 @@ import { toast } from 'sonner';
 
 interface ChannelConnectionFormProps {
   type: 'whatsapp' | 'telegram' | 'discord' | 'slack';
+  agentId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function ChannelConnectionForm({ type, onSuccess, onCancel }: ChannelConnectionFormProps) {
+export function ChannelConnectionForm({ type, agentId = 'system_default', onSuccess, onCancel }: ChannelConnectionFormProps) {
   const [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const { fetchChannels } = useOmnichannelStore();
@@ -64,9 +65,9 @@ export function ChannelConnectionForm({ type, onSuccess, onCancel }: ChannelConn
     setLoading(true);
 
     try {
-      const response = await api.post(API_ENDPOINTS.BOTS.CREATE, {
+      const response = await api.post(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.CREATE(agentId), {
         type,
-        name: `${type.charAt(0).toUpperCase() + type.slice(1)} Bot`,
+        name: `${type.charAt(0).toUpperCase() + type.slice(1)} Channel`,
         credentials
       });
 

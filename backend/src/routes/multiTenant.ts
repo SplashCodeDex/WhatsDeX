@@ -88,10 +88,10 @@ router.delete('/agents/:id', async (req: Request, res: Response) => {
 /**
  * Create a new channel under an agent
  */
-router.post('/agents/:agentId/channels', async (req: Request, res: Response) => {
+router.post(['/agents/:agentId/channels', '/channels', '/bots'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
-        const agentId = req.params.agentId as string;
+        const agentId = (req.params.agentId || 'system_default') as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -280,7 +280,7 @@ router.delete(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Req
 /**
  * Get available bot commands grouped by category
  */
-router.get('/agents/:agentId/commands', async (req: Request, res: Response) => {
+router.get(['/agents/:agentId/commands', '/bots/commands'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
         if (!tenantId) {

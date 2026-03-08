@@ -20,10 +20,13 @@ function getDbInstance(): admin.firestore.Firestore {
             const privateKey = config.get('FIREBASE_PRIVATE_KEY');
 
             if (serviceAccountPath) {
+                logger.info(`Loading service account from: ${serviceAccountPath}`);
                 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
                 options.credential = admin.credential.cert(serviceAccount);
                 options.projectId = serviceAccount.project_id || projectId;
+                logger.info(`Using service account for project: ${options.projectId}`);
             } else if (projectId && clientEmail && privateKey) {
+                logger.info(`Using explicit credentials for project: ${projectId}`);
                 options.credential = admin.credential.cert({
                     projectId,
                     clientEmail,
@@ -31,12 +34,14 @@ function getDbInstance(): admin.firestore.Firestore {
                 });
                 options.projectId = projectId;
             } else {
+                logger.info('Using application default credentials');
                 options.credential = admin.credential.applicationDefault();
                 if (projectId) {
                     options.projectId = projectId;
                 }
             }
 
+            logger.info('Initializing Firebase Admin...');
             admin.initializeApp(options);
             logger.info(`🔥 Firebase Admin Initialized (Project: ${options.projectId || 'ADC'})`);
         }
