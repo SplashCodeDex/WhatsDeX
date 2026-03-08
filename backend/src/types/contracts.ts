@@ -92,7 +92,7 @@ export const ChannelSchema = z.object({
   type: z.enum(['whatsapp', 'telegram', 'discord', 'slack', 'signal', 'irc', 'imessage', 'googlechat']).default('whatsapp'),
   phoneNumber: z.string().optional(), // WhatsApp/Signal specific
   identifier: z.string().optional(), // Generic identifier (e.g. username, bot handle)
-  status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error']),
+  status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error', 'archived']),
   lastSeenAt: TimestampSchema.optional(),
   connectionMetadata: z.object({
     browser: z.tuple([z.string(), z.string(), z.string()]).optional(),

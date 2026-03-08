@@ -92,7 +92,7 @@ interface OmnichannelState {
 
     // Channel Lifecycle Actions
     disconnectChannel: (agentId: string, channelId: string) => Promise<boolean>;
-    deleteChannel: (agentId: string, channelId: string) => Promise<boolean>;
+    deleteChannel: (agentId: string, channelId: string, archive?: boolean) => Promise<boolean>;
 
     // Usage & Session Actions
     fetchUsageTotals: () => Promise<void>;
@@ -445,9 +445,9 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
         return false;
     },
 
-    deleteChannel: async (agentId, channelId) => {
+    deleteChannel: async (agentId, channelId, archive = false) => {
         try {
-            const response = await api.delete(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DELETE(agentId, channelId));
+            const response = await api.delete(`${API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DELETE(agentId, channelId)}?archive=${archive}`);
             if (response.success) {
                 await get().fetchAllChannels();
                 return true;

@@ -16,7 +16,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Wiring Lifecycle Actions' (Protocol in workflow.md) a5f820d
 
 ## Phase 2: Advanced Deletion Logic
-- [ ] Task: TDD - Implement "Archive" option in `ChannelService.deleteChannel`
+- [~] Task: TDD - Implement "Archive" option in `ChannelService.deleteChannel`
     - [ ] **Investigate**: Check `ChannelSchema` in `contracts.ts` for an `archived` status or similar.
     - [ ] Update `deleteChannel` to accept an `options` object `{ archive: boolean }`.
     - [ ] If `archive: true`, only shutdown adapter but keep Firestore doc (mark as `archived`).

@@ -63,15 +63,34 @@ describe('ChannelService Lifecycle Actions', () => {
   });
 
   describe('deleteChannel', () => {
-    it('should shutdown the adapter and delete from Firestore', async () => {
+    it('should shutdown the adapter and delete from Firestore when archive is false', async () => {
       vi.mocked(channelManager.shutdownAdapter).mockResolvedValue(undefined);
       vi.mocked(firebaseService.deleteDoc).mockResolvedValue(undefined);
 
-      const result = await service.deleteChannel(tenantId, channelId, agentId);
+      const result = await service.deleteChannel(tenantId, channelId, agentId, { archive: false });
 
       expect(result.success).toBe(true);
       expect(channelManager.shutdownAdapter).toHaveBeenCalledWith(channelId);
       expect(firebaseService.deleteDoc).toHaveBeenCalledWith(expectedPath, channelId, tenantId);
+    });
+
+    it('should shutdown the adapter and update status to archived when archive is true', async () => {
+      vi.mocked(channelManager.shutdownAdapter).mockResolvedValue(undefined);
+      vi.mocked(firebaseService.setDoc).mockResolvedValue(undefined);
+      vi.mocked(firebaseService.getDoc).mockResolvedValue({ id: channelId, status: 'archived' });
+
+      const result = await service.deleteChannel(tenantId, channelId, agentId, { archive: true });
+
+      expect(result.success).toBe(true);
+      expect(channelManager.shutdownAdapter).toHaveBeenCalledWith(channelId);
+      expect(firebaseService.setDoc).toHaveBeenCalledWith(
+        expectedPath,
+        channelId,
+        expect.objectContaining({ status: 'archived' }),
+        tenantId,
+        true
+      );
+      expect(firebaseService.deleteDoc).not.toHaveBeenCalled();
     });
   });
 });

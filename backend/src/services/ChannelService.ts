@@ -327,20 +327,26 @@ export class ChannelService {
 
   /**
    * Delete a channel slot
-   * STRICT: Shuts down live connection BEFORE deleting database record.
+   * STRICT: Shuts down live connection BEFORE deleting/archiving database record.
    */
-  async deleteChannel(tenantId: string, channelId: string, agentId: string = 'system_default'): Promise<Result<void>> {
+  async deleteChannel(tenantId: string, channelId: string, agentId: string = 'system_default', options: { archive?: boolean } = {}): Promise<Result<void>> {
     try {
       // 1. Kill live session in memory (Rule 0 / Rule 9 integrity)
       await channelManager.shutdownAdapter(channelId);
 
-      // 2. Remove from Firestore
-      await firebaseService.deleteDoc(this.getPath(agentId), channelId, tenantId);
+      if (options.archive) {
+        // 2a. Mark as archived
+        await this.updateStatus(tenantId, channelId, 'archived', agentId);
+        logger.info(`Channel archived: ${channelId} for tenant ${tenantId}`);
+      } else {
+        // 2b. Remove from Firestore
+        await firebaseService.deleteDoc(this.getPath(agentId), channelId, tenantId);
+        logger.info(`Channel deleted: ${channelId} from tenant ${tenantId} under Agent ${agentId}`);
+      }
 
-      logger.info(`Channel deleted: ${channelId} from tenant ${tenantId} under Agent ${agentId}`);
       return { success: true, data: undefined };
     } catch (error: any) {
-      logger.error(`Failed to delete channel ${channelId}:`, error);
+      logger.error(`Failed to delete/archive channel ${channelId}:`, error);
       return { success: false, error };
     }
   }

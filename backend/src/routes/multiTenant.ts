@@ -261,13 +261,15 @@ router.delete(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Req
         const tenantId = req.user?.tenantId as string;
         const agentId = (req.params.agentId || 'system_default') as string;
         const id = (req.params.id || req.params.botId) as string;
+        const archive = req.query.archive === 'true';
+
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await channelService.deleteChannel(tenantId, id, agentId);
+        const result = await channelService.deleteChannel(tenantId, id, agentId, { archive });
         if (result.success) {
-            res.json({ success: true, data: { message: 'Channel deleted successfully' } });
+            res.json({ success: true, data: { message: `Channel ${archive ? 'archived' : 'deleted'} successfully` } });
         } else {
             res.status(400).json({ success: false, error: result.error?.message || 'Delete failed' });
         }

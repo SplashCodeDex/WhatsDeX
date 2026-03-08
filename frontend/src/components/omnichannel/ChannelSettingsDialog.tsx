@@ -22,6 +22,8 @@ import { Badge } from '@/components/ui/badge';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 interface ChannelSettingsDialogProps {
     channel: any;
@@ -32,6 +34,7 @@ interface ChannelSettingsDialogProps {
 export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: ChannelSettingsDialogProps) {
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [shouldArchive, setShouldArchive] = useState(true);
     const { disconnectChannel, deleteChannel } = useOmnichannelStore();
 
     const agentId = channel.assignedAgentId || 'system_default';
@@ -54,12 +57,12 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
     const handleDelete = async () => {
         setIsActionLoading(true);
         try {
-            const success = await deleteChannel(agentId, channel.id);
+            const success = await deleteChannel(agentId, channel.id, shouldArchive);
             if (success) {
-                toast.success(`Successfully deleted ${channel.name}`);
+                toast.success(`Successfully ${shouldArchive ? 'archived' : 'deleted'} ${channel.name}`);
                 onOpenChange(false);
             } else {
-                toast.error('Failed to delete channel');
+                toast.error(`Failed to ${shouldArchive ? 'archive' : 'delete'} channel`);
             }
         } finally {
             setIsActionLoading(false);
@@ -145,10 +148,23 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                 <div className="space-y-1">
                                     <p className="font-bold text-destructive">Are you absolutely sure?</p>
                                     <p className="text-xs text-muted-foreground">
-                                        This will permanently delete the channel and all associated connection data. This action cannot be undone.
+                                        This will remove the live connection for this channel.
                                     </p>
                                 </div>
                             </div>
+
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
+                                <div className="space-y-0.5">
+                                    <Label className="text-sm font-bold">Archive History</Label>
+                                    <p className="text-[10px] text-muted-foreground">Preserve message logs and metadata</p>
+                                </div>
+                                <Switch 
+                                    checked={shouldArchive} 
+                                    onCheckedChange={setShouldArchive}
+                                    disabled={isActionLoading}
+                                />
+                            </div>
+
                             <div className="flex gap-2">
                                 <Button 
                                     variant="ghost" 
@@ -167,7 +183,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                     disabled={isActionLoading}
                                 >
                                     {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                                    Confirm Delete
+                                    Confirm {shouldArchive ? 'Archive' : 'Delete'}
                                 </Button>
                             </div>
                         </div>
