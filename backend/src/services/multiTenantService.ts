@@ -28,8 +28,9 @@ export class MultiTenantService {
     tenantName: string;
     subdomain: string;
     plan?: string;
+    photoURL?: string;
   }): Promise<Result<{ tenant: Tenant; user: TenantUser }>> {
-    const { userId, email, displayName, tenantName, subdomain, plan: rawPlan = 'starter' } = payload;
+    const { userId, email, displayName, tenantName, subdomain, plan: rawPlan = 'starter', photoURL } = payload;
     const tenantId = `tenant-${crypto.randomUUID()}`;
 
     // Type-safe plan narrowing
@@ -74,6 +75,8 @@ export class MultiTenantService {
           joinedAt: Timestamp.now(),
           lastLogin: Timestamp.now(),
         };
+        if (photoURL) userData.photoURL = photoURL;
+
         const validatedUser = TenantUserSchema.parse(userData);
         transaction.set(db.collection('tenants').doc(tenantId).collection('users').doc(userId), validatedUser);
 

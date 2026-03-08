@@ -89,18 +89,18 @@ async function StatsGrid() {
     // Define stat cards with actual data
     const STATS: StatCardProps[] = [
         {
-            title: 'Total Messages',
-            value: stats?.totalMessages.toLocaleString() ?? '0',
+            title: 'Monthly Usage',
+            value: `${(stats as any)?.monthlyUsage?.toLocaleString() || 0} / ${(stats as any)?.monthlyLimit?.toLocaleString() || 1000}`,
             icon: MessageSquare,
-            color: 'text-blue-500',
-            bg: 'bg-blue-500/10',
+            color: 'text-primary-500',
+            bg: 'bg-primary-500/10',
         },
         {
             title: 'Active Bots',
             value: stats?.activeBots ?? '0',
             icon: Bot,
-            color: 'text-primary-500',
-            bg: 'bg-primary-500/10',
+            color: 'text-blue-500',
+            bg: 'bg-blue-500/10',
         },
         {
             title: 'Total Contacts',

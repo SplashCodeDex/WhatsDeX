@@ -42,6 +42,16 @@ export class AnalyticsController {
 
             const metrics = await monitoringService.getMetrics();
 
+            // 4. Fetch Tenant usage from root
+            const tenantRef = db.collection('tenants').doc(tenantId);
+            const tenantDoc = await tenantRef.get();
+            const tenantData = tenantDoc.data() || {};
+            const plan = (tenantData.plan || 'starter') as string;
+            const monthlyUsage = tenantData.stats?.totalMessagesSent || 0;
+            
+            const { usageGuard } = await import('../services/UsageGuard.js');
+            const monthlyLimit = usageGuard.getMonthlyLimit(plan as any);
+
             res.json({
                 success: true,
                 data: {
@@ -49,6 +59,9 @@ export class AnalyticsController {
                     activeBots,
                     totalMessages,
                     totalContacts,
+                    monthlyUsage,
+                    monthlyLimit,
+                    plan,
                     systemHealth: metrics.responseTimes.avg < 1000 ? 'Healthy' : 'Degraded',
                     metrics: metrics.systemHealth
                 }

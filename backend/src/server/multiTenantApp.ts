@@ -23,6 +23,7 @@ import billingRoutes from '../routes/billingRoutes.js';
 import omnichannelRoutes from '../routes/omnichannelRoutes.js';
 import skillsRoutes from '../routes/skillsRoutes.js';
 import flowRoutes from '../routes/flowRoutes.js';
+import automationRoutes from '../routes/automationRoutes.js';
 import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
 import integrationRoutes from '../routes/integrationRoutes.js';
@@ -216,6 +217,9 @@ export class MultiTenantApp {
 
     // Flow Routes
     this.app.use('/api/flows', authenticateToken, flowRoutes);
+
+    // Automation Routes
+    this.app.use('/api/automations', authenticateToken, automationRoutes);
 
     // Skills Routes
     this.app.use('/api/skills', authenticateToken, skillsRoutes);

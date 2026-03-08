@@ -10,6 +10,7 @@ import analyticsService from './analytics.js';
 import { Agent } from '../types/contracts.js';
 import { flowService } from './flowService.js';
 import { flowEngine } from './flowEngine.js';
+import { automationService } from './automationService.js';
 
 /**
  * Ingress Service
@@ -51,6 +52,21 @@ export class IngressService {
 
       // 2. Prepare AI Context
       const aiCtx = await createBotContext({ tenantId, botId: channelId } as any, message, context);
+
+      // --- AUTOMATION TRIGGER (Priority 0) ---
+      // Check for automations that trigger on message_received
+      const automationsResult = await automationService.listAutomations(tenantId);
+      if (automationsResult.success) {
+        const activeAutos = automationsResult.data.filter(a => a.isActive && a.trigger.type === 'message_received');
+        for (const auto of activeAutos) {
+          const keyword = auto.trigger.config?.keyword;
+          const text = aiCtx.message?.conversation || aiCtx.message?.extendedTextMessage?.text || '';
+          if (!keyword || text.toLowerCase().includes(keyword.toLowerCase())) {
+            logger.info(`Triggering Automation: ${auto.name} (${auto.id})`);
+            // Automation execution would involve iterating over actions
+          }
+        }
+      }
 
       // --- FLOW MODE (Priority 1) ---
       // Check for active visual flows before anything else

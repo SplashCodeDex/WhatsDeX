@@ -232,6 +232,11 @@ export interface UsageTotals {
   errors: number;
   tokens: number;
   cost: number;
+  tenantUsage?: {
+    monthlyUsage: number;
+    monthlyLimit: number;
+    plan: string;
+  };
 }
 
 export interface CostDailyEntry {

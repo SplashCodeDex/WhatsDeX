@@ -135,7 +135,8 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
                 displayName,
                 tenantName,
                 subdomain,
-                plan: 'starter'
+                plan: 'starter',
+                photoURL: picture,
             });
 
             if (!initResult.success) {
@@ -202,9 +203,10 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
 
-        // Update last login
+        // Update last login (and photoURL if available)
         db.collection('tenants').doc(tenantId).collection('users').doc(uid).update({
-            lastLogin: Timestamp.now()
+            lastLogin: Timestamp.now(),
+            ...(picture ? { photoURL: picture } : {})
         }).catch(e => logger.error('Failed to update last login', e));
 
         res.json({
@@ -212,7 +214,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
             data: {
                 token,
                 firebaseToken,
-                user: { id: uid, name: user.displayName || displayName, email, role, tenantId },
+                user: { id: uid, name: user.displayName || displayName, email, role, tenantId, photoURL: picture || user.photoURL },
                 tenant: { id: tenantId, name: tenant.name, subdomain: tenant.subdomain },
             }
         });
@@ -330,7 +332,7 @@ export const signup = async (req: Request, res: Response) => {
             data: {
                 token,
                 firebaseToken,
-                user: { id: userId, name: displayName, email, role: 'owner', tenantId: tenant.id },
+                user: { id: userId, name: displayName, email, role: 'owner', tenantId: tenant.id, photoURL: null },
                 tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
             }
         });
@@ -449,7 +451,7 @@ export const login = async (req: Request, res: Response) => {
             data: {
                 token,
                 firebaseToken,
-                user: { id: uid, name: user.displayName || 'User', email: user.email, role, tenantId },
+                user: { id: uid, name: user.displayName || 'User', email: user.email, role, tenantId, photoURL: user.photoURL },
                 tenant: { id: tenantId, name: tenant.name, subdomain: tenant.subdomain },
             }
         });
@@ -594,7 +596,7 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
         res.json({
             success: true,
             data: {
-                user: { id: user.id, name: user.displayName, email: user.email, role: user.role, tenantId },
+                user: { id: user.id, name: user.displayName, email: user.email, role: user.role, tenantId, photoURL: user.photoURL },
                 tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
                 firebaseToken
             }

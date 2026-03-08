@@ -75,6 +75,7 @@ export const TenantUserSchema = z.object({
   trialEndsAt: TimestampSchema.nullish(),
   joinedAt: TimestampSchema,
   lastLogin: TimestampSchema.optional(),
+  photoURL: z.string().url().max(2000).nullish(),
   metadata: z.record(z.string(), z.any()).optional()
 }).readonly();
 

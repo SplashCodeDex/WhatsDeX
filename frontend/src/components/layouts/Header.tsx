@@ -58,8 +58,8 @@ export function Header() {
                                         </div>
                                     ) : (
                                         <>
-                                            <span className="text-xs font-semibold text-foreground leading-none truncate w-full text-right" title={user?.name}>{user?.name}</span>
-                                            <span className="text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70 group-hover:opacity-100 transition-opacity truncate w-full text-right" title={user?.role}>{user?.role}</span>
+                                            <span className="block text-xs font-semibold text-foreground leading-none truncate w-full text-right" title={user?.name}>{user?.name}</span>
+                                            <span className="block text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70 group-hover:opacity-100 transition-opacity truncate w-full text-right" title={user?.role}>{user?.role}</span>
                                         </>
                                     )}
                                 </div>
@@ -75,7 +75,7 @@ export function Header() {
                         <DropdownMenuContent align="end" className="w-56 mt-2">
                             <DropdownMenuLabel className="font-normal">
                                 <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+                                    <p className="text-sm font-medium leading-none truncate" title={user?.name}>{user?.name}</p>
                                     <p className="text-xs leading-none text-muted-foreground">
                                         {user?.email}
                                     </p>

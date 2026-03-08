@@ -443,9 +443,9 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
 
     fetchUsageDaily: async () => {
         try {
-            const response = await api.get<CostDailyEntry[]>(API_ENDPOINTS.OMNICHANNEL.USAGE.DAILY);
+            const response = await api.get<{ daily: CostDailyEntry[] }>(API_ENDPOINTS.OMNICHANNEL.USAGE.DAILY);
             if (response.success) {
-                set({ usageDaily: response.data });
+                set({ usageDaily: response.data.daily || [] });
             }
         } catch (err) {
             console.error('Failed to fetch daily usage:', err);
@@ -454,9 +454,9 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
 
     fetchUsageSessions: async () => {
         try {
-            const response = await api.get<UsageSessionEntry[]>(API_ENDPOINTS.OMNICHANNEL.USAGE.SESSIONS);
+            const response = await api.get<{ sessions: UsageSessionEntry[] }>(API_ENDPOINTS.OMNICHANNEL.USAGE.SESSIONS);
             if (response.success) {
-                set({ usageSessions: response.data });
+                set({ usageSessions: response.data.sessions || [] });
             }
         } catch (err) {
             console.error('Failed to fetch usage sessions:', err);

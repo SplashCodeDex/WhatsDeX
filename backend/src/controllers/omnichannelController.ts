@@ -124,6 +124,24 @@ export class OmnichannelController {
             const gw = OmnichannelController.getGateway();
             const days = parseInt(req.query.days as string) || 30;
             const result = await gw.getUsageTotals(days);
+
+            // Add tenant-specific limits and actual usage
+            const tenantId = req.user?.tenantId;
+            if (tenantId) {
+                const { db } = await import('../lib/firebase.js');
+                const { usageGuard } = await import('../services/UsageGuard.js');
+                const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+                const data = tenantDoc.data() || {};
+                
+                if (result) {
+                    result.tenantUsage = {
+                        monthlyUsage: data.stats?.totalMessagesSent || 0,
+                        monthlyLimit: usageGuard.getMonthlyLimit(data.plan || 'starter'),
+                        plan: data.plan || 'starter'
+                    };
+                }
+            }
+
             res.json({ success: true, data: result });
         } catch (error: any) {
             logger.error('OmnichannelController.getUsageTotals', error);

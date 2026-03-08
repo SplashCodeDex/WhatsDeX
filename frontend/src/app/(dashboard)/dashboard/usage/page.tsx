@@ -13,13 +13,16 @@ import {
     Calendar,
     ArrowUpRight,
     ArrowDownRight,
-    Search
+    Search,
+    MessageSquare,
+    ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { toast } from 'sonner';
 import {
@@ -59,7 +62,7 @@ export default function UsagePage() {
         handleRefresh();
     }, []);
 
-    const filteredSessions = usageSessions.filter(s =>
+    const filteredSessions = (usageSessions || []).filter(s =>
         s.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.agent?.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -109,22 +112,38 @@ export default function UsagePage() {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="border-border/50 bg-card/50 shadow-lg shadow-primary/5 hover:shadow-primary/10 transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Tokens</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Monthly Quota</CardTitle>
                         <div className="rounded-lg bg-primary/10 p-2">
-                            <Zap className="h-4 w-4 text-primary" />
+                            <MessageSquare className="h-4 w-4 text-primary" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">{(usageTotals?.tokens || 0).toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                            <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-                            <span className="text-green-500 font-medium">+12.5%</span> <span className="ml-1">vs last month</span>
-                        </p>
+                        <div className="flex items-baseline justify-between">
+                            <div className="text-3xl font-bold">
+                                {usageTotals?.tenantUsage?.monthlyUsage?.toLocaleString() || 0}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                                / {usageTotals?.tenantUsage?.monthlyLimit?.toLocaleString() || 1000}
+                            </div>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                            <Progress 
+                                value={((usageTotals?.tenantUsage?.monthlyUsage || 0) / (usageTotals?.tenantUsage?.monthlyLimit || 1000)) * 100} 
+                                className="h-2" 
+                            />
+                            <div className="flex justify-between items-center text-[10px] uppercase tracking-tighter">
+                                <span className="text-muted-foreground font-mono">Usage Progress</span>
+                                <Badge variant="outline" className="h-4 px-1 text-[9px] bg-primary/5 border-primary/20 text-primary">
+                                    {usageTotals?.tenantUsage?.plan || 'Starter'} Plan
+                                </Badge>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
+
                 <Card className="border-border/50 bg-card/50 shadow-lg shadow-green-500/5 hover:shadow-green-500/10 transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Estimated Cost</CardTitle>
@@ -135,10 +154,11 @@ export default function UsagePage() {
                     <CardContent>
                         <div className="text-3xl font-bold">${(usageTotals?.cost || 0).toFixed(2)}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            Live market rate optimization
+                            Live AI token optimization
                         </p>
                     </CardContent>
                 </Card>
+
                 <Card className="border-border/50 bg-card/50 shadow-lg shadow-blue-500/5 hover:shadow-blue-500/10 transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Sessions</CardTitle>
@@ -149,24 +169,7 @@ export default function UsagePage() {
                     <CardContent>
                         <div className="text-3xl font-bold">{usageTotals?.sessions || 0}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            Parallel thread allocation
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="border-border/50 bg-card/50 shadow-lg shadow-destructive/5 hover:shadow-destructive/10 transition-all duration-300">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">System Stability</CardTitle>
-                        <div className="rounded-lg bg-destructive/10 p-2">
-                            <AlertCircle className="h-4 w-4 text-destructive" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold">
-                            {(usageTotals?.messages ? (100 - (usageTotals.errors / usageTotals.messages) * 100) : 100).toFixed(1)}%
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                            <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-                            <span className="text-green-500 font-medium">Nominal</span> <span className="ml-1">performance</span>
+                            Parallel AI thread allocation
                         </p>
                     </CardContent>
                 </Card>

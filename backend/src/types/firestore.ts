@@ -37,6 +37,7 @@ export interface TenantUserDocument {
   trialEndsAt?: Timestamp | Date;
   joinedAt: Timestamp | Date;
   lastLogin?: Timestamp | Date;
+  photoURL?: string | null;
   metadata?: Record<string, unknown>;
 }
 
