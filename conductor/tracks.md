@@ -9,6 +9,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 ### [ ] Track: Omnichannel Orphan Logic Audit & Wiring
 *Link: [./conductor/tracks/omnichannel_audit_20260308/](./tracks/omnichannel_audit_20260308/)*
 
+### [ ] Track: Connection Management Gaps (Audit Fix Phase 1)
+*Link: [./conductor/tracks/conn_mgmt_gaps_20260308/](./tracks/conn_mgmt_gaps_20260308/)*
+
 ---
 
 ## Archived Tracks
