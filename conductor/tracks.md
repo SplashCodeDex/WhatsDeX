@@ -6,6 +6,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
+### [ ] Track: Omnichannel Orphan Logic Audit & Wiring
+*Link: [./conductor/tracks/omnichannel_audit_20260308/](./tracks/omnichannel_audit_20260308/)*
+
 ---
 
 ## Archived Tracks

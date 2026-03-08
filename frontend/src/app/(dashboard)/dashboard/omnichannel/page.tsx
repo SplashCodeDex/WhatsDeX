@@ -11,9 +11,11 @@ import {
     Settings2,
     RefreshCw,
     AlertCircle,
-    Smartphone
+    Smartphone,
+    MessageSquare,
+    Hash
 } from 'lucide-react';
-import { SiWhatsapp, SiTelegram, SiDiscord } from 'react-icons/si';
+import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -38,7 +40,10 @@ const ICON_MAP = {
     telegram: SiTelegram,
     discord: SiDiscord,
     slack: Slack,
-    signal: Smartphone
+    signal: SiSignal,
+    imessage: MessageSquare,
+    irc: Hash,
+    googlechat: SiGooglechat
 };
 
 const COLOR_MAP = {
@@ -46,11 +51,14 @@ const COLOR_MAP = {
     telegram: 'bg-blue-400',
     discord: 'bg-indigo-500',
     slack: 'bg-purple-500',
-    signal: 'bg-teal-500'
+    signal: 'bg-blue-600',
+    imessage: 'bg-blue-400',
+    irc: 'bg-gray-500',
+    googlechat: 'bg-yellow-500'
 };
 
 function ChannelCard({ channel }: { channel: any }) {
-    const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || SiWhatsapp;
+    const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
     const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
 
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing';
@@ -104,14 +112,27 @@ function ChannelCard({ channel }: { channel: any }) {
     );
 }
 
+type Platform = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat';
+
 export default function OmnichannelHubPage() {
     const { channels, activity, isLoading, fetchAllChannels } = useOmnichannelStore();
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [selectedPlatform, setSelectedSelectedPlatform] = useState<'whatsapp' | 'telegram' | 'discord' | 'slack'>('whatsapp');
+    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('whatsapp');
 
     useEffect(() => {
         fetchAllChannels();
     }, [fetchAllChannels]);
+
+    const PLATFORMS: Array<{id: Platform, label: string, icon: any, color: string}> = [
+        { id: 'whatsapp', label: 'WhatsApp', icon: SiWhatsapp, color: 'text-green-500' },
+        { id: 'telegram', label: 'Telegram', icon: SiTelegram, color: 'text-blue-400' },
+        { id: 'discord', label: 'Discord', icon: SiDiscord, color: 'text-indigo-500' },
+        { id: 'slack', label: 'Slack', icon: Slack, color: 'text-purple-500' },
+        { id: 'signal', label: 'Signal', icon: SiSignal, color: 'text-blue-600' },
+        { id: 'googlechat', label: 'Google Chat', icon: SiGooglechat, color: 'text-yellow-500' },
+        { id: 'irc', label: 'IRC', icon: Hash, color: 'text-gray-500' },
+        { id: 'imessage', label: 'iMessage', icon: MessageSquare, color: 'text-blue-400' },
+    ];
 
     return (
         <div className="space-y-8">
@@ -148,71 +169,47 @@ export default function OmnichannelHubPage() {
             </div>
 
             {channels.length === 0 && !isLoading ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-4xl mx-auto">
-                    <button
-                        onClick={() => { setSelectedSelectedPlatform('whatsapp'); setIsAddDialogOpen(true); }}
-                        className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
-                    >
-                        <div className="rounded-full bg-green-500/10 p-4 text-green-500 mb-4 group-hover:scale-110 transition-transform">
-                            <SiWhatsapp className="h-8 w-8" />
-                        </div>
-                        <span className="font-medium text-foreground">Add WhatsApp</span>
-                    </button>
-
-                    <button
-                        onClick={() => { setSelectedSelectedPlatform('telegram'); setIsAddDialogOpen(true); }}
-                        className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
-                    >
-                        <div className="rounded-full bg-blue-500/10 p-4 text-blue-500 mb-4 group-hover:scale-110 transition-transform">
-                            <SiTelegram className="h-8 w-8" />
-                        </div>
-                        <span className="font-medium text-foreground">Add Telegram</span>
-                    </button>
-
-                    <button
-                        onClick={() => { setSelectedSelectedPlatform('discord'); setIsAddDialogOpen(true); }}
-                        className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
-                    >
-                        <div className="rounded-full bg-indigo-500/10 p-4 text-indigo-500 mb-4 group-hover:scale-110 transition-transform">
-                            <SiDiscord className="h-8 w-8" />
-                        </div>
-                        <span className="font-medium text-foreground">Add Discord</span>
-                    </button>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl mx-auto">
+                    {PLATFORMS.map(p => (
+                        <button
+                            key={p.id}
+                            onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
+                            className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
+                        >
+                            <div className={cn("rounded-full p-4 mb-4 group-hover:scale-110 transition-transform bg-opacity-10", p.color.replace('text-', 'bg-') + '/10')}>
+                                <p.icon className={cn("h-8 w-8", p.color)} />
+                            </div>
+                            <span className="font-medium text-foreground">{p.label}</span>
+                        </button>
+                    ))}
                 </div>
             ) : (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr">
-                    {channels.map((channel) => (
-                        <ChannelCard key={channel.id} channel={channel} />
-                    ))}
+                <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex-1 grid gap-6 md:grid-cols-2 auto-rows-min">
+                        {channels.map((channel) => (
+                            <ChannelCard key={channel.id} channel={channel} />
+                        ))}
+                    </div>
 
-                    <div className="flex flex-col gap-4">
-                        <button
-                            onClick={() => { setSelectedSelectedPlatform('whatsapp'); setIsAddDialogOpen(true); }}
-                            className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card/40 backdrop-blur-md"
-                        >
-                            <div className="rounded-full bg-green-500/10 p-3 text-green-500 group-hover:scale-110 transition-transform">
-                                <SiWhatsapp className="h-6 w-6" />
-                            </div>
-                            <span className="mt-2 font-medium">Add WhatsApp</span>
-                        </button>
-                        <button
-                            onClick={() => { setSelectedSelectedPlatform('telegram'); setIsAddDialogOpen(true); }}
-                            className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card/40 backdrop-blur-md"
-                        >
-                            <div className="rounded-full bg-blue-500/10 p-3 text-blue-500 group-hover:scale-110 transition-transform">
-                                <SiTelegram className="h-6 w-6" />
-                            </div>
-                            <span className="mt-2 font-medium">Add Telegram</span>
-                        </button>
-                        <button
-                            onClick={() => { setSelectedSelectedPlatform('discord'); setIsAddDialogOpen(true); }}
-                            className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card/40 backdrop-blur-md"
-                        >
-                            <div className="rounded-full bg-indigo-500/10 p-3 text-indigo-500 group-hover:scale-110 transition-transform">
-                                <SiDiscord className="h-6 w-6" />
-                            </div>
-                            <span className="mt-2 font-medium">Add Discord</span>
-                        </button>
+                    <div className="w-full lg:w-72 shrink-0 space-y-4">
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                            <Plus className="h-5 w-5 text-primary" />
+                            Add Platform
+                        </h3>
+                        <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                            {PLATFORMS.map(p => (
+                                <button
+                                    key={p.id}
+                                    onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
+                                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card/40 backdrop-blur-sm transition-all hover:bg-muted/50 hover:border-primary/30 group"
+                                >
+                                    <div className={cn("rounded-lg p-2 bg-opacity-10", p.color.replace('text-', 'bg-') + '/10')}>
+                                        <p.icon className={cn("h-4 w-4", p.color)} />
+                                    </div>
+                                    <span className="text-sm font-medium">{p.label}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}

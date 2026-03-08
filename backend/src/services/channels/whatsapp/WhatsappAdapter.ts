@@ -4,11 +4,14 @@ import AuthSystem from '@/services/authSystem.js';
 import logger from '@/utils/logger.js';
 import { eventHandler } from '@/services/eventHandler.js';
 import QRCode from 'qrcode';
+import { MiddlewareSystem } from '@/services/middlewareSystem.js';
+import { Channel } from '../../../types/contracts.js';
+import { Bot, MessageContext, Middleware } from '../../../types/index.js';
 
 // Import from openclaw workspace package
-import { 
-  sendMessageWhatsApp, 
-  sendReactionWhatsApp, 
+import {
+  sendMessageWhatsApp,
+  sendReactionWhatsApp,
   sendPollWhatsApp,
   setActiveWebListener,
   type ActiveWebListener,
@@ -19,7 +22,7 @@ import {
  * WhatsappAdapter wraps the existing WhatsDeX Baileys/AuthSystem logic
  * to conform to the ChannelAdapter interface.
  */
-export class WhatsappAdapter implements ChannelAdapter {
+export class WhatsappAdapter implements ChannelAdapter, Partial<Bot> {
   public readonly id = 'whatsapp';
   public readonly instanceId: string;
   public readonly fullPath?: string;
@@ -27,20 +30,43 @@ export class WhatsappAdapter implements ChannelAdapter {
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
   private socket: any = null;
   private qrCodeUrl: string | null = null;
+  private middlewareSystem = new MiddlewareSystem();
+  public config: any = {}; // Holds channel settings like selfMode, alwaysOnline
+  public botId: string; // Map instanceId to botId for index.ts Bot type
+  public context: any; // Injected GlobalContext
+  private presenceInterval: NodeJS.Timeout | null = null;
 
-  constructor(private tenantId: string, private channelId: string, fullPath?: string) {
+  constructor(public tenantId: string, private channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
     this.instanceId = channelId;
+    this.botId = channelId;
     this.fullPath = fullPath;
-    
+    this.config = channelData?.config || {};
+
     // Resolve the partial path for session storage (agents/A/channels/C)
     let collectionOrPath = 'channels';
     if (fullPath && fullPath.includes('/agents/')) {
-        const parts = fullPath.split('/');
-        // Extract 'agents/{agentId}/channels'
-        collectionOrPath = `agents/${parts[3]}/channels`;
+      const parts = fullPath.split('/');
+      // Extract 'agents/{agentId}/channels'
+      collectionOrPath = `agents/${parts[3]}/channels`;
     }
-    
+
     this.authSystem = new AuthSystem({ bot: {} }, tenantId, channelId, collectionOrPath);
+  }
+
+  // BOT INTERFACE IMPLEMENTATION
+  public use(middleware: Middleware): void {
+    this.middlewareSystem.use(middleware);
+  }
+
+  public async executeMiddleware(ctx: MessageContext, next: () => Promise<void>): Promise<void> {
+    await this.middlewareSystem.execute(ctx, next);
+  }
+
+  /**
+   * Inject GlobalContext for bridge compatibility
+   */
+  public setContext(context: any) {
+    this.context = context;
   }
 
   public async initialize(): Promise<void> {
@@ -75,7 +101,23 @@ export class WhatsappAdapter implements ChannelAdapter {
         this.qrCodeUrl = null; // Clear QR on success
         const phoneNumber = update.me.id.split(':')[0];
         logger.info(`Channel ${this.channelId} connected with number: ${phoneNumber}`);
-        
+
+        // --- ALWAYS ONLINE LOGIC ---
+        if (this.config.alwaysOnline) {
+          logger.info(`[WhatsappAdapter] Enabling AlwaysOnline for ${this.channelId}`);
+          await this.socket.sendPresenceUpdate('available');
+
+          // Periodic keep-alive
+          if (this.presenceInterval) clearInterval(this.presenceInterval);
+          this.presenceInterval = setInterval(async () => {
+            try {
+              if (this.socket) await this.socket.sendPresenceUpdate('available');
+            } catch (e) {
+              logger.warn(`[WhatsappAdapter] Failed to send keep-alive for ${this.channelId}`, e);
+            }
+          }, 5 * 60 * 1000); // 5 minutes
+        }
+
         try {
           const { channelService } = await import('@/services/ChannelService.js');
           let agentId = 'system_default';
@@ -113,7 +155,7 @@ export class WhatsappAdapter implements ChannelAdapter {
           payload.text = text;
         }
         const result = await this.socket.sendMessage(to, payload);
-        
+
         // Track stats
         try {
           const { channelService } = await import('@/services/ChannelService.js');
@@ -151,6 +193,10 @@ export class WhatsappAdapter implements ChannelAdapter {
     this.socket.ev.on('messages.upsert', async ({ messages, type }: any) => {
       if (type === 'notify' && this.messageHandler) {
         for (const message of messages) {
+          // Ignore messages sent by the bot itself unless selfMode is enabled
+          if (message.key.fromMe && !this.config?.selfMode) {
+            continue;
+          }
           await this.messageHandler({
             tenantId: this.tenantId,
             channelId: this.id,
@@ -167,6 +213,10 @@ export class WhatsappAdapter implements ChannelAdapter {
   }
 
   public async disconnect(): Promise<void> {
+    if (this.presenceInterval) {
+      clearInterval(this.presenceInterval);
+      this.presenceInterval = null;
+    }
     setActiveWebListener(this.channelId, null);
     await this.authSystem.disconnect();
     this.socket = null;

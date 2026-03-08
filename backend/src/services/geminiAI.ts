@@ -14,6 +14,7 @@ import { multiTenantService } from './multiTenantService.js';
 import { toolPersistenceService } from './toolPersistenceService.js';
 import { socketService } from './socketService.js';
 import { aiAnalyticsService } from './aiAnalytics.js';
+import { DeliberationService } from '../utils/deliberation.js';
 
 interface AIDecisionEngine {
   confidenceThreshold: number;
@@ -83,7 +84,9 @@ export class GeminiAI extends EventEmitter {
         timestamp: Date.now(),
         metadata: {
           isGroup: ctx.isGroup(),
-          mediaType: this.detectMediaType(ctx)
+          mediaType: this.detectMediaType(ctx),
+          simulateTyping: ctx.simulateTyping,
+          sendPresenceUpdate: ctx.sendPresenceUpdate
         }
       };
 
@@ -91,6 +94,11 @@ export class GeminiAI extends EventEmitter {
 
       if (result.success && result.data && result.data.content.text) {
         await ctx.reply(result.data.content.text);
+      }
+
+      // Cleanup presence
+      if (ctx.sendPresenceUpdate) {
+        await ctx.sendPresenceUpdate('paused');
       }
 
       return { success: true, data: undefined };
@@ -109,6 +117,15 @@ export class GeminiAI extends EventEmitter {
   async processOmnichannelMessage(tenantId: string, botId: string, message: CommonMessage): Promise<Result<CommonMessage>> {
     const startTime = Date.now(); // Track request start time for analytics
     try {
+      // MASTERMIND: Perception Phase (Reading the message)
+      const perceptionDelay = DeliberationService.getPerceptionDelay();
+      await DeliberationService.wait(perceptionDelay);
+
+      // Trigger initial presence if available
+      if (message.metadata?.sendPresenceUpdate) {
+        await message.metadata.sendPresenceUpdate('composing', message.id);
+      }
+
       const userId = message.from;
       const text = message.content.text || '';
       const platform = message.platform;
@@ -136,13 +153,13 @@ export class GeminiAI extends EventEmitter {
 
       // Get Agent-specific identity from hierarchy (Refactored Phase 3)
       const { agentService } = await import('./AgentService.js');
-      
+
       let agent: Agent | null = null;
       if (message.metadata?.fullPath) {
-          const parts = message.metadata.fullPath.split('/');
-          const agentId = parts[3];
-          const agentResult = await agentService.getAgent(tenantId, agentId);
-          agent = agentResult.success ? agentResult.data : null;
+        const parts = message.metadata.fullPath.split('/');
+        const agentId = parts[3];
+        const agentResult = await agentService.getAgent(tenantId, agentId);
+        agent = agentResult.success ? agentResult.data : null;
       }
 
       const personality = agent?.personality || agent?.soul || 'a professional and helpful assistant';
@@ -179,6 +196,14 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
 
         while (loopCount < maxLoops) {
           socketService.emitActivity(tenantId, botId, platform, 'agent_thinking', 'Agent is thinking...');
+          if (message.metadata?.simulateTyping) {
+            await message.metadata.simulateTyping();
+          }
+
+          // Thinking Jitter
+          const jitter = DeliberationService.getThinkingJitter();
+          await DeliberationService.wait(jitter);
+
           const response = await this.gemini.getChatCompletionWithTools(messages, toolRegistry.getAllTools().map(t => ({
             function: {
               name: t.name,
@@ -206,6 +231,14 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                 }
 
                 socketService.emitActivity(tenantId, botId, platform, 'tool_start', `Using tool: ${toolCall.function.name}`);
+                if (message.metadata?.simulateTyping) {
+                  await message.metadata.simulateTyping();
+                }
+
+                // Weighted Execution Delay (Cognitive Cost)
+                const toolWeight = DeliberationService.getToolWeight(toolCall.function.name);
+                await DeliberationService.wait(toolWeight);
+
                 const args = JSON.parse(toolCall.function.arguments);
                 const result = await toolRegistry.executeTool(toolCall.function.name, args, {
                   ...context,

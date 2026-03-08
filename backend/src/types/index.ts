@@ -155,7 +155,8 @@ export interface MessageContext {
     bot: Bot;
     getId: (jid: string) => string;
     getMentioned?: () => Promise<string[]>;
-    simulateTyping: () => void;
+    simulateTyping: (text?: string | number) => Promise<void>;
+    sendPresenceUpdate: (presence: 'composing' | 'recording' | 'paused' | 'unavailable', jid?: string) => Promise<void>;
     used: {
         command: string;
         prefix: string;

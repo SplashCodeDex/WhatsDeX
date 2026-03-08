@@ -16,8 +16,11 @@ import {
     Send as SendIcon, 
     Zap,
     Bot,
-    Reply
+    Reply,
+    Hash,
+    Slack
 } from 'lucide-react';
+import { SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api/client';
@@ -27,7 +30,7 @@ import { Button } from '@/components/ui/button';
 
 export function UnifiedInbox() {
     const { data: messages, isLoading, error, refetch } = useMessageHistory();
-    const [activeFilter, setActiveFilter] = useState<'all' | 'whatsapp' | 'telegram' | 'discord'>('all');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat'>('all');
     const [replyingToId, setReplyToId] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -78,36 +81,69 @@ export function UnifiedInbox() {
         activeFilter === 'all' || msg.channelType === activeFilter
     );
 
+    const getPlatformIcon = (type: string) => {
+        switch (type) {
+            case 'whatsapp': return <Smartphone className="h-4 w-4" />;
+            case 'telegram': return <SendIcon className="h-4 w-4" />;
+            case 'discord': return <SiDiscord className="h-4 w-4" />;
+            case 'slack': return <Slack className="h-4 w-4" />;
+            case 'signal': return <SiSignal className="h-4 w-4" />;
+            case 'googlechat': return <SiGooglechat className="h-4 w-4" />;
+            case 'irc': return <Hash className="h-4 w-4" />;
+            case 'imessage': return <MessageSquare className="h-4 w-4" />;
+            default: return <Zap className="h-4 w-4" />;
+        }
+    };
+
+    const getPlatformColor = (type: string) => {
+        switch (type) {
+            case 'whatsapp': return "bg-green-500/10 text-green-600";
+            case 'telegram': return "bg-blue-500/10 text-blue-600";
+            case 'discord': return "bg-indigo-500/10 text-indigo-600";
+            case 'slack': return "bg-purple-500/10 text-purple-600";
+            case 'signal': return "bg-blue-600/10 text-blue-700";
+            case 'googlechat': return "bg-yellow-500/10 text-yellow-600";
+            case 'imessage': return "bg-blue-400/10 text-blue-500";
+            default: return "bg-primary/10 text-primary";
+        }
+    };
+
     return (
         <Card className="border-border/40 bg-background/50 backdrop-blur-md">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-primary" />
-                    Unified Message History
-                </CardTitle>
+            <CardHeader className="flex flex-col space-y-4 pb-4">
+                <div className="flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-primary" />
+                        Unified Message History
+                    </CardTitle>
+                    <Button variant="outline" size="sm" onClick={() => refetch()} className="h-8">
+                        Refresh
+                    </Button>
+                </div>
                 
                 <Tabs value={activeFilter} onValueChange={(v: any) => setActiveFilter(v)}>
-                    <TabsList className="bg-muted/50 h-8">
-                        <TabsTrigger value="all" className="text-xs h-7" data-testid="filter-all">All</TabsTrigger>
-                        <TabsTrigger value="whatsapp" className="text-xs h-7" data-testid="filter-whatsapp">WhatsApp</TabsTrigger>
-                        <TabsTrigger value="telegram" className="text-xs h-7" data-testid="filter-telegram">Telegram</TabsTrigger>
-                    </TabsList>
+                    <div className="overflow-x-auto pb-2 scrollbar-hide">
+                        <TabsList className="bg-muted/50 h-8 inline-flex whitespace-nowrap">
+                            <TabsTrigger value="all" className="text-xs h-7">All</TabsTrigger>
+                            <TabsTrigger value="whatsapp" className="text-xs h-7">WhatsApp</TabsTrigger>
+                            <TabsTrigger value="telegram" className="text-xs h-7">Telegram</TabsTrigger>
+                            <TabsTrigger value="discord" className="text-xs h-7">Discord</TabsTrigger>
+                            <TabsTrigger value="slack" className="text-xs h-7">Slack</TabsTrigger>
+                            <TabsTrigger value="signal" className="text-xs h-7">Signal</TabsTrigger>
+                            <TabsTrigger value="googlechat" className="text-xs h-7">G-Chat</TabsTrigger>
+                            <TabsTrigger value="irc" className="text-xs h-7">IRC</TabsTrigger>
+                            <TabsTrigger value="imessage" className="text-xs h-7">iMessage</TabsTrigger>
+                        </TabsList>
+                    </div>
                 </Tabs>
             </CardHeader>
             <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                     {filteredMessages?.map((msg) => (
                         <div key={msg.id} className="space-y-3 group">
                             <div className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/30 transition-colors border border-transparent hover:border-border/50">
-                                <div className={cn(
-                                    "p-2 rounded-full",
-                                    msg.channelType === 'whatsapp' ? "bg-green-500/10 text-green-600" :
-                                    msg.channelType === 'telegram' ? "bg-blue-500/10 text-blue-600" :
-                                    "bg-primary/10 text-primary"
-                                )}>
-                                    {msg.channelType === 'whatsapp' ? <Smartphone className="h-4 w-4" /> :
-                                    msg.channelType === 'telegram' ? <SendIcon className="h-4 w-4" /> :
-                                    <Zap className="h-4 w-4" />}
+                                <div className={cn("p-2 rounded-full", getPlatformColor(msg.channelType))}>
+                                    {getPlatformIcon(msg.channelType)}
                                 </div>
                                 <div className="flex-1 space-y-1">
                                     <div className="flex items-center justify-between">

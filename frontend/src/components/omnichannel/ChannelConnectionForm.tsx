@@ -5,15 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Slack, ShieldCheck, Loader2 } from 'lucide-react';
-import { SiWhatsapp, SiTelegram, SiDiscord } from 'react-icons/si';
+import { Slack, ShieldCheck, Loader2, MessageSquare, Hash } from 'lucide-react';
+import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { toast } from 'sonner';
 
 interface ChannelConnectionFormProps {
-  type: 'whatsapp' | 'telegram' | 'discord' | 'slack';
+  type: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat';
   agentId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -55,6 +55,40 @@ export function ChannelConnectionForm({ type, agentId = 'system_default', onSucc
       icon: Slack,
       color: 'text-purple-500',
       fields: [{ id: 'token', label: 'xoxb- Token', placeholder: 'xoxb-...' }]
+    },
+    signal: {
+      title: 'Connect Signal',
+      description: 'Enter your Signal phone number (with country code)',
+      icon: SiSignal,
+      color: 'text-blue-600',
+      fields: [{ id: 'phone', label: 'Phone Number', placeholder: '+1234567890' }]
+    },
+    imessage: {
+      title: 'Connect iMessage',
+      description: 'Enter your Apple ID or Phone Number associated with iMessage',
+      icon: MessageSquare,
+      color: 'text-blue-400',
+      fields: [{ id: 'identifier', label: 'Identifier', placeholder: 'user@example.com or +123...' }]
+    },
+    irc: {
+      title: 'Connect IRC',
+      description: 'Enter your IRC server and nickname details',
+      icon: Hash,
+      color: 'text-gray-500',
+      fields: [
+        { id: 'server', label: 'Server', placeholder: 'irc.libera.chat' },
+        { id: 'nick', label: 'Nickname', placeholder: 'WhatsDeXBot' }
+      ]
+    },
+    googlechat: {
+      title: 'Connect Google Chat',
+      description: 'Enter your Google Chat Space ID and credentials',
+      icon: SiGooglechat,
+      color: 'text-yellow-500',
+      fields: [
+        { id: 'spaceId', label: 'Space ID', placeholder: 'spaces/...' },
+        { id: 'token', label: 'Access Token / Webhook', placeholder: '...' }
+      ]
     }
   }[type];
 

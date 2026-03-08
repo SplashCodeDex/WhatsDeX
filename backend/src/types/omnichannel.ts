@@ -55,7 +55,10 @@ export const CommonMessageSchema = z.object({
       multipleAnswers: z.boolean().default(false)
     }).optional()
   }),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).and(z.object({
+    simulateTyping: z.any().optional(),
+    sendPresenceUpdate: z.any().optional(),
+  })).optional(),
   timestamp: z.number().default(() => Date.now()),
   replyTo: z.string().optional()
 });

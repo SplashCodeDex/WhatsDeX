@@ -2,16 +2,11 @@ import { Middleware, MessageContext } from '../types/index.js';
 import { rateLimiterService } from '../services/rateLimiter.js';
 
 export const cooldownMiddleware: Middleware = async (ctx: MessageContext, next: () => Promise<void>) => {
-  const cmd = ctx.commandDef;
-  if (!cmd) {
-    return next();
-  }
-
   const tenantId = ctx.bot.tenantId;
   const userId = ctx.sender.jid;
 
-  // 1. Bot-Level Global Cooldown
-  const botCooldownSec = (ctx.bot.config.cooldownMs || 0) / 1000;
+  // 1. Bot-Level Global Cooldown (Strict enforcement for AI & Commands)
+  const botCooldownSec = (ctx.bot.config?.cooldownMs || 0) / 1000;
   if (botCooldownSec > 0) {
     const globalKey = `global_cooldown:${tenantId}:${userId}`;
     const globalAllowed = await rateLimiterService.check(globalKey, {
@@ -20,10 +15,19 @@ export const cooldownMiddleware: Middleware = async (ctx: MessageContext, next: 
     });
 
     if (!globalAllowed) {
-      // Silent ignore or small reaction to avoid spamming "wait" messages
-      await ctx.replyReact('⏳');
+      // 2026 Enhancement: Synchronize with presence
+      if (ctx.sendPresenceUpdate) {
+        await ctx.sendPresenceUpdate('paused');
+      }
+      await ctx.replyReact?.('⏳');
       return;
     }
+  }
+
+  // 2. Command-Specific Cooldown
+  const cmd = ctx.commandDef || (ctx.used?.command ? ctx.bot.cmd?.get(ctx.used.command) : null);
+  if (!cmd) {
+    return next();
   }
 
   // 2. Command-Specific Cooldown

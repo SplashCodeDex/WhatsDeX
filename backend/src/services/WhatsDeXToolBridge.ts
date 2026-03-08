@@ -23,14 +23,14 @@ export class WhatsDeXToolBridge {
       console.log(`>>> [MASTERMIND] Bridging command: ${name}`);
       const command = bot.cmd.get(name);
       if (command) {
-        this.bridgeCommand(name, command);
+        this.bridgeCommand(name, command, bot);
       } else {
         console.warn(`>>> [MASTERMIND] Command not found: ${name}`);
       }
     }
   }
 
-  private static bridgeCommand(name: string, command: Command): void {
+  private static bridgeCommand(name: string, command: Command, bot: Bot): void {
     const tool: ToolDefinition = {
       name,
       description: command.description || `Execute ${name} command`,
@@ -42,11 +42,23 @@ export class WhatsDeXToolBridge {
         const mockCtx = {
           ...context,
           args: Object.values(args).map(v => String(v)),
-          body: Object.values(args).join(' ')
+          body: Object.values(args).join(' '),
+          used: { command: name } // For middleware identification
         };
 
-        if (command.code) {
-          await command.code(mockCtx);
+        const handler = command.code;
+        if (handler) {
+          let blocked = true;
+          // Security enforcement via Middleware (Permissions, Cooldowns, etc.)
+          await (bot as any).executeMiddleware(mockCtx as any, async () => {
+            blocked = false;
+            await handler(mockCtx as any);
+          });
+
+          if (blocked) {
+            return { success: false, error: 'Execution blocked by security middleware.' };
+          }
+
           return { success: true, message: `Command ${name} executed.` };
         }
 

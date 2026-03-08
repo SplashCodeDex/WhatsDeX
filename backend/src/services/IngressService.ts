@@ -31,8 +31,51 @@ export class IngressService {
   }
 
   /**
+   * Process an incoming message from any channel using the CommonMessage format.
+   * This is the preferred way to handle messages in the 2026 Omnichannel architecture.
+   */
+  async handleCommonMessage(tenantId: string, channelId: string, message: CommonMessage, context: GlobalContext, fullPath?: string): Promise<void> {
+    try {
+      logger.info(`[Ingress] Common message from ${message.platform} (${channelId}) for tenant ${tenantId}`);
+
+      let activeAgent: Agent | null = null;
+
+      // 1. Resolve Agent from Path
+      if (fullPath && fullPath.includes('/agents/')) {
+        const parts = fullPath.split('/');
+        const agentId = parts[3]; 
+        const agentResult = await agentService.getAgent(tenantId, agentId);
+        activeAgent = agentResult.success ? agentResult.data : null;
+      }
+
+      // 2. Prepare AI Context (Bridge between CommonMessage and internal AI Logic)
+      // Note: In a full refactor, createBotContext should also accept CommonMessage.
+      // For now, we simulate a minimal context if we can't build a full one.
+      
+      const isAiEnabled = await tenantConfigService.isFeatureEnabled(tenantId, 'aiEnabled');
+      
+      if (activeAgent && activeAgent.id !== 'system_default' && isAiEnabled && context.unifiedAI) {
+          logger.info(`[Ingress] Routing ${message.platform} message to Agent: ${activeAgent.name}`);
+          // Inject the path into metadata for Agent hierarchy awareness
+          if (!message.metadata) message.metadata = {};
+          message.metadata.fullPath = fullPath;
+          
+          await (context.unifiedAI as any).processOmnichannelMessage(tenantId, channelId, message);
+      } else {
+          logger.info(`[Ingress] Webhook forwarding for ${message.platform} message.`);
+          await webhookService.dispatch(tenantId, 'message.received', message);
+      }
+
+      analyticsService.trackMessage(tenantId, 'received');
+    } catch (error: unknown) {
+      logger.error(`IngressService.handleCommonMessage error:`, error);
+    }
+  }
+
+  /**
    * Process an incoming message from any channel.
    * @param fullPath Optional full Firestore path for path-aware routing (tenants/T/agents/A/channels/C)
+   * @deprecated Use handleCommonMessage for new platform integrations.
    */
   async handleMessage(tenantId: string, channelId: string, message: proto.IWebMessageInfo, context: GlobalContext, fullPath?: string): Promise<void> {
     try {

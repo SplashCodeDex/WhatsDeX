@@ -25,7 +25,7 @@ import { Channel } from '@/types';
 interface ChannelCardProps {
     id: string;
     name: string;
-    type: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
+    type: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat';
     status: Channel['status'];
     account?: string | null;
     icon: React.ElementType;
@@ -38,7 +38,10 @@ const TYPE_CONFIG = {
     telegram: { icon: Send, color: 'bg-blue-400' },
     discord: { icon: Hash, color: 'bg-indigo-500' },
     slack: { icon: Slack, color: 'bg-purple-500' },
-    signal: { icon: MessageSquare, color: 'bg-blue-600' }
+    signal: { icon: MessageSquare, color: 'bg-blue-600' },
+    imessage: { icon: MessageSquare, color: 'bg-blue-400' },
+    irc: { icon: Hash, color: 'bg-gray-500' },
+    googlechat: { icon: MessageSquare, color: 'bg-yellow-500' }
 };
 
 function ChannelCard({ name, status, account, icon: Icon, color, lastProgress }: ChannelCardProps) {

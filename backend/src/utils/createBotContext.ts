@@ -3,6 +3,7 @@ import { downloadContentFromMessage, getContentType, type proto } from 'baileys'
 import { getJid, getSender, getGroup } from './baileysUtils.js';
 import type { Bot, GlobalContext, MessageContext } from '../types/index.js';
 import type { TenantSettings } from '../types/tenantConfig.js';
+import { DeliberationService } from './deliberation.js';
 
 const createBotContext = async (
   botInstance: Bot,
@@ -46,11 +47,29 @@ const createBotContext = async (
     }
   };
 
-  const simulateTyping = async () => {
-    if (useDirectBaileys && botInstance?.sendPresenceUpdate) { // removed presenceSubscribe check as it's not always needed/available on lightweight types
+  const simulateTyping = async (text?: string | number) => {
+    if (useDirectBaileys && botInstance?.sendPresenceUpdate) {
       try {
         await botInstance.sendPresenceUpdate('composing', remoteJid);
-        setTimeout(() => botInstance.sendPresenceUpdate?.('paused', remoteJid).catch(() => { }), 1500);
+
+        let delay = 1500;
+        if (typeof text === 'string') {
+          delay = DeliberationService.getTypingDelay(text);
+        } else if (typeof text === 'number') {
+          delay = text;
+        } else {
+          delay = DeliberationService.getThinkingJitter();
+        }
+
+        setTimeout(() => botInstance.sendPresenceUpdate?.('paused', remoteJid).catch(() => { }), delay);
+      } catch (_) { /* ignore */ }
+    }
+  };
+
+  const sendPresenceUpdate = async (presence: any, jid: string = remoteJid) => {
+    if (useDirectBaileys && botInstance?.sendPresenceUpdate) {
+      try {
+        await botInstance.sendPresenceUpdate(presence, jid);
       } catch (_) { /* ignore */ }
     }
   };
@@ -255,6 +274,7 @@ const createBotContext = async (
     reply,
     replyReact,
     simulateTyping,
+    sendPresenceUpdate,
     used,
     command: used.command,
     prefix: used.prefix,

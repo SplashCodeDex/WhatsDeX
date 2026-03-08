@@ -1,6 +1,7 @@
 import WhatsDeXBrain from '../services/whatsDeXBrain.js';
 import moment from 'moment-timezone';
 import { Bot, GlobalContext, MessageContext, BotMember, Command } from '../types/index.js';
+import { cooldownMiddleware } from './cooldown.js';
 
 /**
  * Check if user has enough coins
@@ -22,6 +23,8 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
         formatter,
     } = context;
     const brain = new WhatsDeXBrain(bot, context);
+
+    bot.use(cooldownMiddleware);
 
     bot.use(async (ctx: MessageContext, next: () => Promise<void>) => {
         // Common variables

@@ -190,7 +190,14 @@ export class ChannelService {
 
       // Initialize Adapter
       if (channel.type === 'whatsapp') {
-        const adapter = new WhatsappAdapter(tenantId, channelId, fullPath);
+        const adapter = new WhatsappAdapter(tenantId, channelId, fullPath, channel as any);
+
+        // --- MIDDLEWARE INJECTION ---
+        // Register the main middleware stack
+        const { default: mainMiddleware } = await import('../middleware/main.js');
+        const gCtx = await (await import('../lib/context.js')).default();
+        mainMiddleware(adapter as any, gCtx);
+        adapter.setContext(gCtx); // Set context for bridge usage
 
         adapter.onMessage(async (event) => {
           const { ingressService } = await import('./IngressService.js');
@@ -217,7 +224,15 @@ export class ChannelService {
           // Increment received stats
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
 
-          await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
+          await ingressService.handleCommonMessage(tenantId, channelId, {
+            id: event.raw.message_id?.toString() || crypto.randomUUID(),
+            platform: 'telegram',
+            from: event.sender,
+            to: channelId,
+            content: { text: event.content },
+            timestamp: event.timestamp.getTime(),
+            metadata: { raw: event.raw, fullPath }
+          }, context, fullPath);
         });
 
         await adapter.connect();
@@ -231,12 +246,21 @@ export class ChannelService {
         const adapter = new DiscordAdapter(tenantId, channelId, token); // DiscordAdapter constructor seems to take token as 3rd param in some versions, checking...
         // Wait, I saw the constructor in DiscordAdapter.ts: constructor(tenantId: string, botId: string, token: string)
         const dAdapter = new DiscordAdapter(tenantId, channelId, token);
-        
+
         dAdapter.onMessage(async (event) => {
           const { ingressService } = await import('./IngressService.js');
           const context = await (await import('../lib/context.js')).default();
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-          await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
+          
+          await ingressService.handleCommonMessage(tenantId, channelId, {
+            id: event.raw.id || crypto.randomUUID(),
+            platform: 'discord',
+            from: event.sender,
+            to: channelId,
+            content: { text: event.content },
+            timestamp: event.timestamp.getTime(),
+            metadata: { raw: event.raw, fullPath }
+          }, context, fullPath);
         });
 
         await dAdapter.connect();
@@ -263,6 +287,16 @@ export class ChannelService {
         if (!identifier) throw new Error('Missing iMessage identifier');
 
         const adapter = new IMessageAdapter(tenantId, channelId, identifier);
+        await adapter.connect();
+        channelManager.registerAdapter(adapter);
+      } else if (channel.type === 'irc') {
+        const { IRCAdapter } = await import('./channels/irc/IRCAdapter.ts' as any);
+        const adapter = new IRCAdapter(tenantId, channelId, channel.credentials || {});
+        await adapter.connect();
+        channelManager.registerAdapter(adapter);
+      } else if (channel.type === 'googlechat') {
+        const { GoogleChatAdapter } = await import('./channels/googlechat/GoogleChatAdapter.ts' as any);
+        const adapter = new GoogleChatAdapter(tenantId, channelId, channel.credentials || {});
         await adapter.connect();
         channelManager.registerAdapter(adapter);
       } else {
