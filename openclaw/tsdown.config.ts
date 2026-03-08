@@ -56,4 +56,32 @@ export default defineConfig([
     fixedExtension: false,
     platform: "node",
   },
+  {
+    entry: "src/agents/skills/workspace.ts",
+    outDir: "dist/agents/skills",
+    env,
+    fixedExtension: false,
+    platform: "node",
+  },
+  {
+    entry: "src/telegram/send.ts",
+    outDir: "dist/telegram",
+    env,
+    fixedExtension: false,
+    platform: "node",
+  },
+  {
+    entry: "src/web/active-listener.ts",
+    outDir: "dist/web",
+    env,
+    fixedExtension: false,
+    platform: "node",
+  },
+  {
+    entry: "src/web/outbound.ts",
+    outDir: "dist/web",
+    env,
+    fixedExtension: false,
+    platform: "node",
+  },
 ]);

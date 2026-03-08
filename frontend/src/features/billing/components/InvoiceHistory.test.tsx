@@ -67,7 +67,7 @@ describe('InvoiceHistory', () => {
     const mockInvoices: Invoice[] = [
       {
         id: 'inv_123',
-        date: '2024-01-15T10:00:00Z',
+        date: '2024-01-15T10:00:00.000Z',
         amount: 1999,
         status: 'paid',
         invoiceUrl: 'https://stripe.com/invoice/123',
@@ -75,7 +75,7 @@ describe('InvoiceHistory', () => {
       },
       {
         id: 'inv_124',
-        date: '2024-02-15T10:00:00Z',
+        date: '2024-02-15T10:00:00.000Z',
         amount: 1999,
         status: 'pending',
         invoiceUrl: 'https://stripe.com/invoice/124',
@@ -93,10 +93,10 @@ describe('InvoiceHistory', () => {
     render(<InvoiceHistory />);
     
     await waitFor(() => {
-      expect(screen.getByText('Pro Plan - Monthly')).toBeInTheDocument();
+      expect(screen.getAllByText('Pro Plan - Monthly')).toHaveLength(2);
     });
     
-    expect(screen.getByText('$19.99')).toBeInTheDocument();
+    expect(screen.getAllByText('$19.99')).toHaveLength(2);
     expect(screen.getByText('Paid')).toBeInTheDocument();
     expect(screen.getByText('Pending')).toBeInTheDocument();
   });
@@ -105,7 +105,7 @@ describe('InvoiceHistory', () => {
     const mockInvoices: Invoice[] = [
       {
         id: 'inv_1',
-        date: '2024-01-15T10:00:00Z',
+        date: '2024-01-15T10:00:00.000Z',
         amount: 1999,
         status: 'paid',
         invoiceUrl: 'https://stripe.com/invoice/1',
@@ -113,7 +113,7 @@ describe('InvoiceHistory', () => {
       },
       {
         id: 'inv_2',
-        date: '2024-01-16T10:00:00Z',
+        date: '2024-01-16T10:00:00.000Z',
         amount: 1999,
         status: 'pending',
         invoiceUrl: 'https://stripe.com/invoice/2',
@@ -121,7 +121,7 @@ describe('InvoiceHistory', () => {
       },
       {
         id: 'inv_3',
-        date: '2024-01-17T10:00:00Z',
+        date: '2024-01-17T10:00:00.000Z',
         amount: 1999,
         status: 'failed',
         invoiceUrl: 'https://stripe.com/invoice/3',
@@ -149,7 +149,7 @@ describe('InvoiceHistory', () => {
     const mockInvoices: Invoice[] = [
       {
         id: 'inv_123',
-        date: '2024-01-15T10:00:00Z',
+        date: '2024-01-15T10:00:00.000Z',
         amount: 1999,
         status: 'paid',
         invoiceUrl: 'https://stripe.com/invoice/123',
@@ -218,7 +218,7 @@ describe('InvoiceHistory', () => {
     const invalidInvoices = [
       {
         id: 'inv_123',
-        date: '2024-01-15T10:00:00Z',
+        date: '2024-01-15T10:00:00.000Z',
         amount: -100, // Invalid: negative amount
         status: 'paid',
         invoiceUrl: 'https://stripe.com/invoice/123',
@@ -247,7 +247,7 @@ describe('InvoiceHistory', () => {
     const mockInvoices: Invoice[] = [
       {
         id: 'inv_1',
-        date: '2024-01-15T10:00:00Z',
+        date: '2024-01-15T10:00:00.000Z',
         amount: 1050, // $10.50
         status: 'paid',
         invoiceUrl: 'https://stripe.com/invoice/1',
@@ -255,7 +255,7 @@ describe('InvoiceHistory', () => {
       },
       {
         id: 'inv_2',
-        date: '2024-01-16T10:00:00Z',
+        date: '2024-01-16T10:00:00.000Z',
         amount: 100000, // $1000.00
         status: 'paid',
         invoiceUrl: 'https://stripe.com/invoice/2',
@@ -282,7 +282,7 @@ describe('InvoiceHistory', () => {
     const mockInvoices: Invoice[] = [
       {
         id: 'inv_1',
-        date: '2024-01-15T10:00:00Z',
+        date: '2024-01-15T10:00:00.000Z',
         amount: 1999,
         status: 'paid',
         invoiceUrl: 'https://stripe.com/invoice/1',

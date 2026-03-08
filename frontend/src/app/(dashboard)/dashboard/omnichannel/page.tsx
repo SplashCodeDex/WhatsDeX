@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import {
-    MessageSquare,
-    Send,
-    Hash,
     Slack,
     LayoutGrid,
     Plus,
@@ -16,6 +13,7 @@ import {
     AlertCircle,
     Smartphone
 } from 'lucide-react';
+import { SiWhatsapp, SiTelegram, SiDiscord } from 'react-icons/si';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,9 +34,9 @@ const VisuallyHidden = ({ children }: { children: React.ReactNode }) => (
 );
 
 const ICON_MAP = {
-    whatsapp: MessageSquare,
-    telegram: Send,
-    discord: Hash,
+    whatsapp: SiWhatsapp,
+    telegram: SiTelegram,
+    discord: SiDiscord,
     slack: Slack,
     signal: Smartphone
 };
@@ -52,7 +50,7 @@ const COLOR_MAP = {
 };
 
 function ChannelCard({ channel }: { channel: any }) {
-    const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
+    const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || SiWhatsapp;
     const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
 
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing';
@@ -109,7 +107,7 @@ function ChannelCard({ channel }: { channel: any }) {
 export default function OmnichannelHubPage() {
     const { channels, activity, isLoading, fetchAllChannels } = useOmnichannelStore();
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [selectedPlatform, setSelectedSelectedPlatform] = useState<'telegram' | 'discord' | 'slack'>('telegram');
+    const [selectedPlatform, setSelectedSelectedPlatform] = useState<'whatsapp' | 'telegram' | 'discord' | 'slack'>('whatsapp');
 
     useEffect(() => {
         fetchAllChannels();
@@ -150,24 +148,36 @@ export default function OmnichannelHubPage() {
             </div>
 
             {channels.length === 0 && !isLoading ? (
-                <div className="flex h-[300px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-12 text-center bg-card/40 backdrop-blur-md">
-                    <div className="rounded-full bg-primary/10 p-4 text-primary">
-                        <LayoutGrid className="h-8 w-8" />
-                    </div>
-                    <h3 className="mt-4 text-xl font-semibold">No channels connected</h3>
-                    <p className="mb-6 mt-2 text-muted-foreground max-w-sm">
-                        Start by connecting your WhatsApp, Telegram, or Discord bot to unify your messaging.
-                    </p>
-                    <div className="flex gap-3">
-                        <Button onClick={() => { setSelectedSelectedPlatform('telegram'); setIsAddDialogOpen(true); }}>
-                            <Send className="mr-2 h-4 w-4" />
-                            Telegram
-                        </Button>
-                        <Button variant="outline" onClick={() => { setSelectedSelectedPlatform('discord'); setIsAddDialogOpen(true); }}>
-                            <Hash className="mr-2 h-4 w-4" />
-                            Discord
-                        </Button>
-                    </div>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-4xl mx-auto">
+                    <button
+                        onClick={() => { setSelectedSelectedPlatform('whatsapp'); setIsAddDialogOpen(true); }}
+                        className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
+                    >
+                        <div className="rounded-full bg-green-500/10 p-4 text-green-500 mb-4 group-hover:scale-110 transition-transform">
+                            <SiWhatsapp className="h-8 w-8" />
+                        </div>
+                        <span className="font-medium text-foreground">Add WhatsApp</span>
+                    </button>
+
+                    <button
+                        onClick={() => { setSelectedSelectedPlatform('telegram'); setIsAddDialogOpen(true); }}
+                        className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
+                    >
+                        <div className="rounded-full bg-blue-500/10 p-4 text-blue-500 mb-4 group-hover:scale-110 transition-transform">
+                            <SiTelegram className="h-8 w-8" />
+                        </div>
+                        <span className="font-medium text-foreground">Add Telegram</span>
+                    </button>
+
+                    <button
+                        onClick={() => { setSelectedSelectedPlatform('discord'); setIsAddDialogOpen(true); }}
+                        className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
+                    >
+                        <div className="rounded-full bg-indigo-500/10 p-4 text-indigo-500 mb-4 group-hover:scale-110 transition-transform">
+                            <SiDiscord className="h-8 w-8" />
+                        </div>
+                        <span className="font-medium text-foreground">Add Discord</span>
+                    </button>
                 </div>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr">
@@ -177,11 +187,20 @@ export default function OmnichannelHubPage() {
 
                     <div className="flex flex-col gap-4">
                         <button
+                            onClick={() => { setSelectedSelectedPlatform('whatsapp'); setIsAddDialogOpen(true); }}
+                            className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card/40 backdrop-blur-md"
+                        >
+                            <div className="rounded-full bg-green-500/10 p-3 text-green-500 group-hover:scale-110 transition-transform">
+                                <SiWhatsapp className="h-6 w-6" />
+                            </div>
+                            <span className="mt-2 font-medium">Add WhatsApp</span>
+                        </button>
+                        <button
                             onClick={() => { setSelectedSelectedPlatform('telegram'); setIsAddDialogOpen(true); }}
                             className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card/40 backdrop-blur-md"
                         >
                             <div className="rounded-full bg-blue-500/10 p-3 text-blue-500 group-hover:scale-110 transition-transform">
-                                <Send className="h-6 w-6" />
+                                <SiTelegram className="h-6 w-6" />
                             </div>
                             <span className="mt-2 font-medium">Add Telegram</span>
                         </button>
@@ -190,7 +209,7 @@ export default function OmnichannelHubPage() {
                             className="flex-1 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group bg-card/40 backdrop-blur-md"
                         >
                             <div className="rounded-full bg-indigo-500/10 p-3 text-indigo-500 group-hover:scale-110 transition-transform">
-                                <Hash className="h-6 w-6" />
+                                <SiDiscord className="h-6 w-6" />
                             </div>
                             <span className="mt-2 font-medium">Add Discord</span>
                         </button>

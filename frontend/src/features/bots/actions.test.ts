@@ -48,6 +48,7 @@ describe('Bot Actions', () => {
 
       const formData = new FormData();
       formData.append('name', 'Test Bot');
+      formData.append('token', 'valid-token');
       formData.append('agentId', 'system_default');
 
       const result = await createBot(null, formData);

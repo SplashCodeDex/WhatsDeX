@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { LoginForm } from './LoginForm';
 import * as actions from '../actions';
@@ -6,11 +7,13 @@ import * as actions from '../actions';
 // Mock dependencies
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => ({ get: vi.fn() }),
 }));
 
 // Mock relative imports
 vi.mock('../actions', () => ({
   signIn: vi.fn(),
+  googleAuthAction: vi.fn(),
 }));
 
 vi.mock('../store', () => ({
@@ -37,11 +40,20 @@ vi.mock('@/components/ui', () => ({
 }));
 
 vi.mock('@/components/ui/icons', () => ({
-  GoogleIcon: () => null,
+  GoogleIcon: () => <span />,
+}));
+
+vi.mock('sonner', () => ({
+    toast: {
+        success: vi.fn(),
+        error: vi.fn(),
+    }
 }));
 
 describe('LoginForm', () => {
   it('should display inline validation error when signIn fails', async () => {
+    const user = userEvent.setup();
+    
     // Mock signIn to return error
     (actions.signIn as any).mockResolvedValue({
       success: false,
@@ -55,15 +67,17 @@ describe('LoginForm', () => {
     render(<LoginForm />);
 
     // Fill form
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
-    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'password' } });
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password');
 
     // Submit
-    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(actions.signIn).toHaveBeenCalled();
 
     // Expect inline error
-    expect(await screen.findByText('Invalid input')).toBeInTheDocument();
+    await waitFor(() => {
+        expect(screen.getByText('Invalid input')).toBeInTheDocument();
+    });
   });
 });

@@ -33,6 +33,47 @@ vi.mock('./database.js', () => ({
   },
 }));
 
+vi.mock('./AgentService.js', () => ({
+  agentService: {
+    getAgent: vi.fn().mockResolvedValue({ success: true, data: { personality: 'test' } })
+  },
+  default: {
+    getAgent: vi.fn().mockResolvedValue({ success: true, data: { personality: 'test' } })
+  }
+}));
+
+vi.mock('./toolPersistenceService.js', () => ({
+  toolPersistenceService: {
+    getSessionResults: vi.fn().mockResolvedValue([])
+  }
+}));
+
+vi.mock('./aiAnalytics.js', () => ({
+  aiAnalyticsService: {
+    trackAIRequest: vi.fn().mockResolvedValue({ success: true })
+  }
+}));
+
+vi.mock('./socketService.js', () => ({
+  socketService: {
+    emitActivity: vi.fn()
+  }
+}));
+
+vi.mock('./cache.js', () => ({
+  cacheService: {
+    get: vi.fn().mockResolvedValue({ success: false }),
+    set: vi.fn().mockResolvedValue(true),
+    createKey: vi.fn((val) => `hash_${val}`)
+  }
+}));
+
+vi.mock('./skillsManager.js', () => ({
+  skillsManager: {
+    isTenantEligible: vi.fn().mockResolvedValue(true)
+  }
+}));
+
 vi.mock('./gemini.js', () => {
   const mockGemini = {
     getManager: vi.fn(() => ({

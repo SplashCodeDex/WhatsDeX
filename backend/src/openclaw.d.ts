@@ -21,4 +21,16 @@ declare module 'openclaw' {
     gifPlayback?: boolean;
     fileName?: string;
   };
+
+  // Channel-Specific AI Actions
+  export function handleWhatsAppAction(
+    params: Record<string, unknown>,
+    cfg: any,
+  ): Promise<{ type: string; value: unknown }>;
+
+  export function handleTelegramAction(
+    params: Record<string, unknown>,
+    cfg: any,
+    options?: { mediaLocalRoots?: readonly string[] },
+  ): Promise<{ type: string; value: unknown }>;
 }

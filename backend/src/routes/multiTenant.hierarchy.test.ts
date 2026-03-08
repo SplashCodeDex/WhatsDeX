@@ -4,10 +4,12 @@ import express from 'express';
 import router from './multiTenant.js';
 import { channelService } from '../services/ChannelService.js';
 import { channelManager } from '../services/channels/ChannelManager.js';
+import agentService from '../services/AgentService.js';
+import multiTenantService from '../services/multiTenantService.js';
 
 // Mock dependencies
-vi.mock('../services/ChannelService.js', () => ({
-  channelService: {
+const { mockChannelService } = vi.hoisted(() => ({
+  mockChannelService: {
     getChannelsForAgent: vi.fn(),
     getAllChannelsAcrossAgents: vi.fn(),
     getChannel: vi.fn(),
@@ -17,8 +19,35 @@ vi.mock('../services/ChannelService.js', () => ({
     startChannel: vi.fn(),
     stopChannel: vi.fn(),
     getChannelQR: vi.fn(),
+    getChannelStat: vi.fn(),
+    incrementChannelStat: vi.fn(),
     requestPairingCode: vi.fn(),
-  },
+  }
+}));
+
+vi.mock('../services/ChannelService.js', () => ({
+  channelService: mockChannelService,
+  default: mockChannelService,
+}));
+
+vi.mock('../services/AgentService.js', () => ({
+  default: {
+    getAllAgents: vi.fn(),
+    createAgent: vi.fn(),
+    deleteAgent: vi.fn(),
+    getAgent: vi.fn(),
+  }
+}));
+
+vi.mock('../services/multiTenantService.js', () => ({
+  default: {
+    getTenant: vi.fn(),
+    initializeTenant: vi.fn(),
+    createTenant: vi.fn(),
+    updateTenant: vi.fn(),
+    canAddBot: vi.fn(),
+    listTenants: vi.fn(),
+  }
 }));
 
 vi.mock('../services/channels/ChannelManager.js', () => ({

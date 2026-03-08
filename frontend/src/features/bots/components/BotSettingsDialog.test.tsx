@@ -5,9 +5,10 @@ import { BotSettingsDialog } from './BotSettingsDialog';
 // Mock Hooks and Actions
 vi.mock('../actions', () => ({
     updateBot: vi.fn(),
+    getCommands: vi.fn().mockResolvedValue({ success: true, data: {} }),
 }));
 
-import { updateBot } from '../actions';
+import { updateBot, getCommands } from '../actions';
 
 // Mock UI components to simplify
 vi.mock('@/components/ui/dialog', () => ({

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { IngressService } from './IngressService.js';
 import { agentService } from './AgentService.js';
-import { channelBindingService } from './ChannelBindingService.js';
 import { webhookService } from './webhookService.js';
 import { tenantConfigService } from './tenantConfigService.js';
 
@@ -9,12 +8,6 @@ import { tenantConfigService } from './tenantConfigService.js';
 vi.mock('./AgentService.js', () => ({
   agentService: {
     getAgent: vi.fn()
-  }
-}));
-
-vi.mock('./ChannelBindingService.js', () => ({
-  channelBindingService: {
-    getActiveAgentForChannel: vi.fn()
   }
 }));
 
@@ -65,7 +58,6 @@ describe('IngressService Hierarchy', () => {
     await service.handleMessage(tenantId, channelId, {} as any, mockContext, fullPath);
 
     expect(agentService.getAgent).toHaveBeenCalledWith(tenantId, agentId);
-    expect(channelBindingService.getActiveAgentForChannel).not.toHaveBeenCalled();
     expect(mockContext.unifiedAI.processMessage).toHaveBeenCalled();
   });
 });

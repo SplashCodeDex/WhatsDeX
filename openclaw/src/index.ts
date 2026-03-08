@@ -40,6 +40,10 @@ export { sendMessageTelegram } from "./telegram/send.js";
 export { createOpenClawTools } from "./agents/openclaw-tools.js";
 export { startGatewayServer } from "./gateway/server.js";
 
+// Channel-Specific AI Actions for WhatsDeX
+export { handleWhatsAppAction } from "./agents/tools/whatsapp-actions.js";
+export { handleTelegramAction } from "./agents/tools/telegram-actions.js";
+
 loadDotEnv({ quiet: true });
 normalizeEnv();
 ensureOpenClawCliOnPath();

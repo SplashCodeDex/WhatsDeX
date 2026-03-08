@@ -5,14 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Send, Hash, Slack, ShieldCheck, Loader2 } from 'lucide-react';
+import { Slack, ShieldCheck, Loader2 } from 'lucide-react';
+import { SiWhatsapp, SiTelegram, SiDiscord } from 'react-icons/si';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { toast } from 'sonner';
 
 interface ChannelConnectionFormProps {
-  type: 'telegram' | 'discord' | 'slack';
+  type: 'whatsapp' | 'telegram' | 'discord' | 'slack';
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -21,19 +22,26 @@ export function ChannelConnectionForm({ type, onSuccess, onCancel }: ChannelConn
   const [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const { fetchChannels } = useOmnichannelStore();
-  
+
   const config = {
+    whatsapp: {
+      title: 'Connect WhatsApp',
+      description: 'Create a WhatsApp channel instance. You will link your device using a QR code or pairing code next.',
+      icon: SiWhatsapp,
+      color: 'text-green-500',
+      fields: []
+    },
     telegram: {
       title: 'Connect Telegram Bot',
       description: 'Enter your bot token from @BotFather',
-      icon: Send,
+      icon: SiTelegram,
       color: 'text-blue-400',
       fields: [{ id: 'token', label: 'Bot Token', placeholder: '123456789:ABCdef...' }]
     },
     discord: {
       title: 'Connect Discord Bot',
       description: 'Enter your bot token and application ID from Discord Developer Portal',
-      icon: Hash,
+      icon: SiDiscord,
       color: 'text-indigo-500',
       fields: [
         { id: 'token', label: 'Bot Token', placeholder: 'OTQ...' },
@@ -54,7 +62,7 @@ export function ChannelConnectionForm({ type, onSuccess, onCancel }: ChannelConn
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const response = await api.post(API_ENDPOINTS.BOTS.CREATE, {
         type,
@@ -90,10 +98,10 @@ export function ChannelConnectionForm({ type, onSuccess, onCancel }: ChannelConn
           {config.fields.map((field) => (
             <div key={field.id} className="space-y-2">
               <Label htmlFor={field.id}>{field.label}</Label>
-              <Input 
-                id={field.id} 
-                placeholder={field.placeholder} 
-                required 
+              <Input
+                id={field.id}
+                placeholder={field.placeholder}
+                required
                 onChange={(e) => setCredentials(prev => ({ ...prev, [field.id]: e.target.value }))}
               />
             </div>

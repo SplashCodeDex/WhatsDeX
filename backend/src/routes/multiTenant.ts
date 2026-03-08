@@ -132,9 +132,11 @@ router.get('/channels/all', async (req: Request, res: Response) => {
             }));
             res.json({ success: true, data: channels });
         } else {
+            logger.error(`getAllChannelsAcrossAgents failed for tenant ${tenantId}:`, result.error);
             res.status(500).json({ success: false, error: result.error?.message });
         }
     } catch (error: any) {
+        logger.error('Route /channels/all GET error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
@@ -162,9 +164,11 @@ router.get('/agents/:agentId/channels', async (req: Request, res: Response) => {
             }));
             res.json({ success: true, data: channels });
         } else {
+            logger.error(`getChannelsForAgent failed for tenant ${tenantId}, agent ${agentId}:`, result.error);
             res.status(500).json({ success: false, error: result.error?.message });
         }
     } catch (error: any) {
+        logger.error('Route /agents/:agentId/channels GET error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });

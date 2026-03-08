@@ -1,8 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SkillsManager } from './skillsManager.js';
+import { toolRegistry } from './toolRegistry.js';
+
+// Mock toolRegistry
+vi.mock('./toolRegistry.js', () => ({
+  toolRegistry: {
+    getAllTools: vi.fn().mockReturnValue([
+      { name: 'web-search', description: 'Search the web', parameters: {}, source: 'openclaw' },
+      { name: 'math', description: 'Do math', parameters: {}, source: 'openclaw' }
+    ])
+  }
+}));
 
 // Mock openclaw skills
-vi.mock('../../../openclaw/src/agents/skills/workspace.js', () => ({
+vi.mock('openclaw/agents/skills/workspace', () => ({
   loadWorkspaceSkillEntries: vi.fn().mockResolvedValue([
     { id: 'web-search', metadata: { title: 'Web Search' } },
     { id: 'math', metadata: { title: 'Mathematics' } }

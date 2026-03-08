@@ -12,7 +12,7 @@ export interface ToolDefinition {
     required: string[];
   };
   execute: (args: any, context: any) => Promise<any>;
-  source: 'whatsdex' | 'openclaw';
+  source: 'whatsdex' | 'openclaw' | 'openclaw-channel';
   category?: string;
 }
 
@@ -24,7 +24,7 @@ export class ToolRegistry {
   private static instance: ToolRegistry;
   private tools: Map<string, ToolDefinition> = new Map();
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): ToolRegistry {
     if (!ToolRegistry.instance) {
@@ -72,13 +72,13 @@ export class ToolRegistry {
 
       // Persist result for chaining if context has enough info
       if (context.tenantId && context.platform && context.userId) {
-        const scope = { 
-          tenantId: context.tenantId, 
-          platform: context.platform, 
-          chatId: context.userId 
+        const scope = {
+          tenantId: context.tenantId,
+          platform: context.platform,
+          chatId: context.userId
         };
         await toolPersistenceService.storeResult(scope, name, result);
-        
+
         // Ensure the key is registered in the session list
         const toolKey = `tool:res:${scope.tenantId}:${scope.platform}:${scope.chatId}:${name}`;
         await toolPersistenceService.registerKey(scope, toolKey);

@@ -59,6 +59,9 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object);
         break;
+      case 'invoice.paid':
+        await handleInvoicePaid(event.data.object);
+        break;
       default:
         logger.info(`Unhandled Stripe event type: ${event.type}`);
     }
@@ -181,4 +184,27 @@ const handleSubscriptionDeleted = async (subscription: any) => {
     status: 'canceled',
     updatedAt: new Date(),
   });
+};
+
+const handleInvoicePaid = async (invoice: any) => {
+  logger.info('Handling invoice.paid', { invoiceId: invoice.id });
+  const subscriptionId = invoice.subscription;
+  
+  if (!subscriptionId) return;
+
+  const tenantQuery = await db.collection('tenants').where('stripeSubscriptionId', '==', subscriptionId).limit(1).get();
+  if (tenantQuery.empty) {
+    logger.error('Tenant not found for invoice paid', { subscriptionId });
+    return;
+  }
+
+  const tenantDoc = tenantQuery.docs[0];
+  
+  // Reset monthly usage when a new invoice is paid (billing cycle renewal)
+  await tenantDoc.ref.update({
+    'stats.totalMessagesSent': 0,
+    updatedAt: new Date(),
+  });
+
+  logger.info(`Reset usage for tenant ${tenantDoc.id} due to invoice payment`);
 };

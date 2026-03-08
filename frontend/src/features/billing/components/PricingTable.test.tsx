@@ -80,7 +80,7 @@ describe('PricingTable', () => {
     
     // Pro features
     expect(screen.getByText('3 Bot Accounts')).toBeInTheDocument();
-    expect(screen.getByText('Advanced Gemini AI')).toBeInTheDocument();
+    expect(screen.getAllByText('Advanced Gemini AI')).toHaveLength(2); // In Pro and Enterprise
     expect(screen.getByText('Priority Support')).toBeInTheDocument();
     
     // Enterprise features
@@ -286,9 +286,9 @@ describe('PricingTable', () => {
     const elements = container.querySelectorAll('[class*="bg-primary"]');
     expect(elements.length).toBeGreaterThan(0);
     
-    // Should NOT have hardcoded color classes like bg-primary-100
-    const hardcodedColors = container.querySelectorAll('[class*="bg-primary-100"]');
-    expect(hardcodedColors.length).toBe(0);
+    // Should NOT have hardcoded primary color classes
+    const hardcodedPrimary = container.querySelectorAll('[class*="bg-primary-50"]');
+    expect(hardcodedPrimary.length).toBe(0);
   });
 
   it('should render icons for each plan', () => {

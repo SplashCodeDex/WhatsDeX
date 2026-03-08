@@ -30,6 +30,27 @@ vi.mock('./memoryService.js', () => ({
   }
 }));
 
+vi.mock('./AgentService.js', () => ({
+  agentService: {
+    getAgent: vi.fn().mockResolvedValue({ success: true, data: { personality: 'test' } })
+  },
+  default: {
+    getAgent: vi.fn().mockResolvedValue({ success: true, data: { personality: 'test' } })
+  }
+}));
+
+vi.mock('./aiAnalytics.js', () => ({
+  aiAnalyticsService: {
+    trackAIRequest: vi.fn().mockResolvedValue({ success: true })
+  }
+}));
+
+vi.mock('./socketService.js', () => ({
+  socketService: {
+    emitActivity: vi.fn()
+  }
+}));
+
 vi.mock('./multiTenantService.js', () => ({
   multiTenantService: {
     getTenant: vi.fn().mockResolvedValue({ success: true, data: { plan: 'pro' } })

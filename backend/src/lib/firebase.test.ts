@@ -53,7 +53,11 @@ describe('Firebase Initialization', () => {
     mockConfig.get.mockReturnValue(undefined);
     
     // In Vitest, we can re-import or use dynamic imports
-    await import('@/lib/firebase.js');
+    const { db } = await import('@/lib/firebase.js');
+    
+    // Trigger lazy init
+    // @ts-ignore
+    const test = db.collection;
 
     expect(mockCredential.applicationDefault).toHaveBeenCalled();
     expect(mockAdmin.initializeApp).toHaveBeenCalled();

@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { IngressService } from './IngressService.js';
-import { channelBindingService } from './ChannelBindingService.js';
+import { agentService } from './AgentService.js';
 import { webhookService } from './webhookService.js';
 import { tenantConfigService } from './tenantConfigService.js';
 
 // Mock dependencies
-vi.mock('./ChannelBindingService.js', () => ({
-  channelBindingService: {
-    getActiveAgentForChannel: vi.fn()
+vi.mock('./AgentService.js', () => ({
+  agentService: {
+    getAgent: vi.fn()
   }
 }));
 
@@ -34,6 +34,7 @@ describe('IngressService', () => {
   let service: IngressService;
   const tenantId = 'tenant-123';
   const channelId = 'chan-456';
+  const fullPath = `tenants/${tenantId}/agents/agent-1/channels/${channelId}`;
   const mockContext: any = {
     unifiedAI: {
       processMessage: vi.fn().mockResolvedValue({ success: true })
@@ -45,25 +46,26 @@ describe('IngressService', () => {
     service = IngressService.getInstance();
   });
 
-  it('should route to AI Agent when agent is assigned', async () => {
-    vi.mocked(channelBindingService.getActiveAgentForChannel).mockResolvedValue({
+  it('should route to AI Agent when agent is assigned via path', async () => {
+    vi.mocked(agentService.getAgent).mockResolvedValue({
       success: true,
-      data: { id: 'agent-1', name: 'AI Assistant', memorySearch: true, boundChannels: [], skills: [], createdAt: new Date(), updatedAt: new Date() }
+      data: { id: 'agent-1', name: 'AI Assistant', memorySearch: true, boundChannels: [], skills: [], createdAt: new Date(), updatedAt: new Date() } as any
     });
 
-    await service.handleMessage(tenantId, channelId, {} as any, mockContext);
+    await service.handleMessage(tenantId, channelId, {} as any, mockContext, fullPath);
 
+    expect(agentService.getAgent).toHaveBeenCalledWith(tenantId, 'agent-1');
     expect(mockContext.unifiedAI.processMessage).toHaveBeenCalled();
     expect(webhookService.dispatch).not.toHaveBeenCalledWith(tenantId, 'message.received', expect.anything());
   });
 
-  it('should forward to Webhook when no agent is assigned', async () => {
-    vi.mocked(channelBindingService.getActiveAgentForChannel).mockResolvedValue({
+  it('should forward to Webhook when no agent is assigned (system_default)', async () => {
+    vi.mocked(agentService.getAgent).mockResolvedValue({
       success: true,
-      data: null
+      data: { id: 'system_default', name: 'Default' } as any
     });
 
-    await service.handleMessage(tenantId, channelId, {} as any, mockContext);
+    await service.handleMessage(tenantId, channelId, {} as any, mockContext, `tenants/${tenantId}/agents/system_default/channels/${channelId}`);
 
     expect(mockContext.unifiedAI.processMessage).not.toHaveBeenCalled();
     expect(webhookService.dispatch).toHaveBeenCalledWith(tenantId, 'message.received', expect.objectContaining({

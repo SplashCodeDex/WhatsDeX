@@ -12,9 +12,17 @@ vi.mock('fs/promises', async (importOriginal) => {
         unlink: vi.fn().mockResolvedValue(undefined),
     };
 });
-vi.mock('fs', () => ({
-    existsSync: vi.fn().mockReturnValue(true),
-}));
+vi.mock('fs', async (importOriginal) => {
+    const original = await importOriginal<any>();
+    return {
+        ...original,
+        default: {
+            ...original.default,
+            existsSync: vi.fn().mockReturnValue(true),
+        },
+        existsSync: vi.fn().mockReturnValue(true),
+    };
+});
 
 // Mock ContactService
 const mockContactService = {

@@ -1,5 +1,5 @@
 // @ts-ignore
-import { loadWorkspaceSkillEntries } from '../../../openclaw/dist/agents/skills/workspace.js';
+import { loadWorkspaceSkillEntries } from 'openclaw/agents/skills/workspace';
 import { toolRegistry } from './toolRegistry.js';
 import logger from '@/utils/logger.js';
 

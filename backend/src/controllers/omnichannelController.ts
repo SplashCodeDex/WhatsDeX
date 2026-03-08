@@ -280,6 +280,33 @@ export class OmnichannelController {
     }
 
     // ═══════════════════════════════════════════════════════
+    //  MESSAGING
+    // ═══════════════════════════════════════════════════════
+
+    /** POST /api/omnichannel/send */
+    static async sendMessage(req: Request, res: Response) {
+        try {
+            const { channelManager } = await import('../services/channels/ChannelManager.js');
+            const { botId, to, text } = req.body;
+
+            if (!botId || !to || !text) {
+                return res.status(400).json({ success: false, error: 'Missing required fields: botId, to, text' });
+            }
+
+            const adapter = channelManager.getAdapter(botId);
+            if (!adapter) {
+                return res.status(400).json({ success: false, error: 'Channel not active' });
+            }
+
+            await adapter.sendMessage(to, { text });
+            res.json({ success: true, data: { status: 'sent' } });
+        } catch (error: any) {
+            logger.error('OmnichannelController.sendMessage', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
     //  SKILLS
     // ═══════════════════════════════════════════════════════
 

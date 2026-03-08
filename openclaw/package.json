@@ -44,6 +44,22 @@
       "types": "./dist/plugin-sdk/account-id.d.ts",
       "default": "./dist/plugin-sdk/account-id.js"
     },
+    "./agents/skills/workspace": {
+      "types": "./src/agents/skills/workspace.ts",
+      "default": "./dist/agents/skills/workspace.js"
+    },
+    "./telegram/send": {
+      "types": "./src/telegram/send.ts",
+      "default": "./dist/telegram/send.js"
+    },
+    "./web/active-listener": {
+      "types": "./src/web/active-listener.ts",
+      "default": "./dist/web/active-listener.js"
+    },
+    "./web/outbound": {
+      "types": "./src/web/outbound.ts",
+      "default": "./dist/web/outbound.js"
+    },
     "./cli-entry": "./openclaw.mjs"
   },
   "scripts": {

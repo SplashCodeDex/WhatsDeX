@@ -143,4 +143,37 @@ describe('StripeWebhookController', () => {
       subscriptionStatus: 'active',
     }));
   });
+
+  it('should handle invoice.paid and reset usage', async () => {
+    // 1. Mock idempotency check (event not processed)
+    (db.get as any).mockResolvedValueOnce({ exists: false });
+
+    // 2. Mock tenant lookup
+    const mockUpdate = vi.fn();
+    (db.get as any).mockResolvedValueOnce({
+      empty: false,
+      docs: [{ id: 'tenant-123', ref: { update: mockUpdate } }]
+    });
+
+    const mockInvoice = {
+      id: 'in_123',
+      subscription: 'sub_123',
+      customer: 'cus_123',
+    };
+
+    (stripeService.stripe.webhooks.constructEvent as any).mockReturnValue({
+      id: 'evt_invoice',
+      type: 'invoice.paid',
+      data: { object: mockInvoice },
+    });
+
+    (db.where as any).mockReturnThis();
+
+    await handleStripeWebhook(mockReq as Request, mockRes as Response);
+
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      'stats.totalMessagesSent': 0
+    }));
+  });
 });

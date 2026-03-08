@@ -39,9 +39,17 @@ vi.mock('../services/templateService.js', () => ({
   TemplateService: { getInstance: () => ({ getTemplate: vi.fn().mockResolvedValue({ success: true, data: { content: 'Hi' } }) }) }
 }));
 
-vi.mock('bullmq', () => ({
-  Worker: vi.fn().mockImplementation(() => ({ on: vi.fn() }))
-}));
+vi.mock('bullmq', () => {
+  return {
+    Worker: vi.fn().mockImplementation(function() {
+      return {
+        on: vi.fn(),
+        queue: { add: vi.fn() }
+      };
+    }),
+    Job: vi.fn()
+  };
+});
 
 describe('CampaignWorker group targeting', () => {
   beforeEach(() => {

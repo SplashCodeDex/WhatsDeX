@@ -108,6 +108,12 @@ router.post('/devices/:id/reject', OmnichannelController.rejectDevice);
 router.post('/devices/:id/revoke', OmnichannelController.revokeDevice);
 
 // ═══════════════════════════════════════════════════════
+//  MESSAGING
+// ═══════════════════════════════════════════════════════
+
+router.post('/send', OmnichannelController.sendMessage);
+
+// ═══════════════════════════════════════════════════════
 //  LOGS
 // ═══════════════════════════════════════════════════════
 
