@@ -1,6 +1,6 @@
 # Implementation Plan: Connection Management Gaps (Audit Fix Phase 1)
 
-## Phase 1: Wiring Lifecycle Actions
+## Phase 1: Wiring Lifecycle Actions [checkpoint: a5f820d]
 - [x] Task: TDD - Implement/Leverage Backend API for stopping a channel 4a9af31
     - [x] **Investigate**: Check `multiTenant.ts` for existing `/disconnect` route and verify if it's fully wired to `ChannelService.stopChannel`.
     - [x] Write failing test for the endpoint (or enhance existing ones).
@@ -13,7 +13,7 @@
     - [x] **Investigate**: Check if `OmnichannelHubContent.tsx` or `ChannelCard` has commented out logic for disconnect.
     - [x] Add "Stop Bot" button to the Manage Connection modal.
     - [x] Implement API call and update local store.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Wiring Lifecycle Actions' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Wiring Lifecycle Actions' (Protocol in workflow.md) a5f820d
 
 ## Phase 2: Advanced Deletion Logic
 - [ ] Task: TDD - Implement "Archive" option in `ChannelService.deleteChannel`
