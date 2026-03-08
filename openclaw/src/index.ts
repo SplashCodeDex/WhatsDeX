@@ -37,6 +37,10 @@ import { assertWebChannel, normalizeE164, toWhatsappJid } from "./utils.js";
 export { sendMessageWhatsApp, sendReactionWhatsApp, sendPollWhatsApp } from "./web/outbound.js";
 export { setActiveWebListener, type ActiveWebListener, type ActiveWebSendOptions } from "./web/active-listener.js";
 export { sendMessageTelegram } from "./telegram/send.js";
+export { sendMessageDiscord } from "./discord/send.js";
+export { sendMessageSlack } from "./slack/send.js";
+export { sendMessageSignal } from "./signal/send.js";
+export { sendMessageIMessage } from "./imessage/send.js";
 export { createOpenClawTools } from "./agents/openclaw-tools.js";
 export { startGatewayServer } from "./gateway/server.js";
 

@@ -222,6 +222,49 @@ export class ChannelService {
 
         await adapter.connect();
         channelManager.registerAdapter(adapter);
+      } else if (channel.type === 'discord') {
+        const { DiscordAdapter } = await import('./channels/discord/DiscordAdapter.js');
+        const token = channel.credentials?.token;
+        const appId = channel.credentials?.appId;
+        if (!token || !appId) throw new Error('Missing Discord token or appId');
+
+        const adapter = new DiscordAdapter(tenantId, channelId, token); // DiscordAdapter constructor seems to take token as 3rd param in some versions, checking...
+        // Wait, I saw the constructor in DiscordAdapter.ts: constructor(tenantId: string, botId: string, token: string)
+        const dAdapter = new DiscordAdapter(tenantId, channelId, token);
+        
+        dAdapter.onMessage(async (event) => {
+          const { ingressService } = await import('./IngressService.js');
+          const context = await (await import('../lib/context.js')).default();
+          this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
+          await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
+        });
+
+        await dAdapter.connect();
+        channelManager.registerAdapter(dAdapter);
+      } else if (channel.type === 'slack') {
+        const { SlackAdapter } = await import('./channels/slack/SlackAdapter.js');
+        const token = channel.credentials?.token;
+        if (!token) throw new Error('Missing Slack token');
+
+        const adapter = new SlackAdapter(tenantId, channelId, token);
+        await adapter.connect();
+        channelManager.registerAdapter(adapter);
+      } else if (channel.type === 'signal') {
+        const { SignalAdapter } = await import('./channels/signal/SignalAdapter.js');
+        const phone = channel.phoneNumber || channel.credentials?.phone;
+        if (!phone) throw new Error('Missing Signal phone number');
+
+        const adapter = new SignalAdapter(tenantId, channelId, phone);
+        await adapter.connect();
+        channelManager.registerAdapter(adapter);
+      } else if (channel.type === 'imessage') {
+        const { IMessageAdapter } = await import('./channels/imessage/IMessageAdapter.js');
+        const identifier = channel.identifier || channel.credentials?.identifier;
+        if (!identifier) throw new Error('Missing iMessage identifier');
+
+        const adapter = new IMessageAdapter(tenantId, channelId, identifier);
+        await adapter.connect();
+        channelManager.registerAdapter(adapter);
       } else {
         return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
       }
