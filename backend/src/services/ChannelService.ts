@@ -388,9 +388,8 @@ export class ChannelService {
    * Update channel connectivity status
    */
   async updateStatus(tenantId: string, channelId: string, status: Channel['status'], agentId: string = 'system_default'): Promise<void> {
-    await this.updateChannel(tenantId, channelId, { status }, agentId).catch(err =>
-      logger.error(`Failed to update status for channel ${channelId}:`, err)
-    );
+    const result = await this.updateChannel(tenantId, channelId, { status }, agentId);
+    if (!result.success) throw result.error;
   }
 
   /**
