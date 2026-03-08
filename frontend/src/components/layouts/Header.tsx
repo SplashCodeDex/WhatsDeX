@@ -63,8 +63,12 @@ export function Header() {
                                         </>
                                     )}
                                 </div>
-                                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 transition-transform group-hover:scale-105">
-                                    <User className="h-3.5 w-3.5" />
+                                <div className="h-7 w-7 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center text-primary border border-primary/20 transition-transform group-hover:scale-105">
+                                    {user?.photoURL ? (
+                                        <img src={user.photoURL} alt={user.name || "User avatar"} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                                    ) : (
+                                        <User className="h-3.5 w-3.5" />
+                                    )}
                                 </div>
                             </Button>
                         </DropdownMenuTrigger>

@@ -89,6 +89,9 @@ export class MultiTenantApp {
   }
 
   private setupMiddleware(): void {
+    // Trust reverse proxy for rate limiting and IP detection
+    this.app.set('trust proxy', 1);
+
     // Request Logging
     this.app.use((req: Request, _res: Response, next: NextFunction) => {
       logger.info(`INCOMING REQUEST: ${req.method} ${req.url}`);
