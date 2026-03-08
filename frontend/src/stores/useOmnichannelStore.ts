@@ -90,6 +90,10 @@ interface OmnichannelState {
     fetchAgents: () => Promise<void>;
     fetchAgentIdentity: (id: string) => Promise<void>;
 
+    // Channel Lifecycle Actions
+    disconnectChannel: (agentId: string, channelId: string) => Promise<boolean>;
+    deleteChannel: (agentId: string, channelId: string) => Promise<boolean>;
+
     // Usage & Session Actions
     fetchUsageTotals: () => Promise<void>;
     fetchUsageDaily: () => Promise<void>;
@@ -426,6 +430,32 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
         } catch (err) {
             console.error(`Failed to fetch identity for agent ${id}:`, err);
         }
+    },
+
+    disconnectChannel: async (agentId, channelId) => {
+        try {
+            const response = await api.post(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DISCONNECT(agentId, channelId), {});
+            if (response.success) {
+                await get().fetchAllChannels();
+                return true;
+            }
+        } catch (err) {
+            console.error('Failed to disconnect channel:', err);
+        }
+        return false;
+    },
+
+    deleteChannel: async (agentId, channelId) => {
+        try {
+            const response = await api.delete(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DELETE(agentId, channelId));
+            if (response.success) {
+                await get().fetchAllChannels();
+                return true;
+            }
+        } catch (err) {
+            console.error('Failed to delete channel:', err);
+        }
+        return false;
     },
 
     // --- Usage & Session Actions ---

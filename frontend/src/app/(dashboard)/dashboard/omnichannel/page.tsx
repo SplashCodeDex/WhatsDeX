@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ChannelConnectionForm } from '@/components/omnichannel/ChannelConnectionForm';
+import { ChannelSettingsDialog } from '@/components/omnichannel/ChannelSettingsDialog';
 import { ChannelProgressStepper } from './ChannelProgressStepper';
 import { OmnichannelSocketManager } from './OmnichannelSocketManager';
 import { ActivityFeed } from './ActivityFeed';
@@ -58,57 +59,71 @@ const COLOR_MAP = {
 };
 
 function ChannelCard({ channel }: { channel: any }) {
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
     const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
 
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing';
 
     return (
-        <Card className="overflow-hidden border-border/50 bg-card/40 backdrop-blur-md transition-all hover:shadow-md h-full flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="flex items-center space-x-2">
-                    <div className={cn("rounded-lg p-2 text-white", color)}>
-                        <Icon className="h-5 w-5" />
+        <>
+            <Card className="overflow-hidden border-border/50 bg-card/40 backdrop-blur-md transition-all hover:shadow-md h-full flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="flex items-center space-x-2">
+                        <div className={cn("rounded-lg p-2 text-white", color)}>
+                            <Icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-lg">{channel.name}</CardTitle>
+                            <CardDescription>{channel.account || 'Not configured'}</CardDescription>
+                        </div>
                     </div>
-                    <div>
-                        <CardTitle className="text-lg">{channel.name}</CardTitle>
-                        <CardDescription>{channel.account || 'Not configured'}</CardDescription>
-                    </div>
-                </div>
-                <Badge variant={
-                    channel.status === 'connected' ? 'default' :
-                        channel.status === 'error' ? 'destructive' :
-                            'secondary'
-                } className="capitalize">
-                    {channel.status}
-                </Badge>
-            </CardHeader>
-            <CardContent className="pt-4 flex-1">
-                {isConnecting ? (
-                    <ChannelProgressStepper
-                        currentStep="Starting Connection"
-                        status="in_progress"
-                    />
-                ) : (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                        {channel.status === 'connected' ? (
-                            <Wifi className="mr-2 h-4 w-4 text-green-500" />
-                        ) : (
-                            <WifiOff className="mr-2 h-4 w-4" />
-                        )}
-                        <span>
-                            {channel.status === 'connected' ? 'Bot is active and listening' : 'Bot is currently offline'}
-                        </span>
-                    </div>
-                )}
-            </CardContent>
-            <CardFooter className="bg-muted/30 border-t border-border/50 py-3 mt-auto">
-                <Button variant="ghost" size="sm" className="w-full justify-between font-normal">
-                    <span>Manage connection</span>
-                    <Settings2 className="h-4 w-4" />
-                </Button>
-            </CardFooter>
-        </Card>
+                    <Badge variant={
+                        channel.status === 'connected' ? 'default' :
+                            channel.status === 'error' ? 'destructive' :
+                                'secondary'
+                    } className="capitalize">
+                        {channel.status}
+                    </Badge>
+                </CardHeader>
+                <CardContent className="pt-4 flex-1">
+                    {isConnecting ? (
+                        <ChannelProgressStepper
+                            currentStep="Starting Connection"
+                            status="in_progress"
+                        />
+                    ) : (
+                        <div className="flex items-center text-sm text-muted-foreground">
+                            {channel.status === 'connected' ? (
+                                <Wifi className="mr-2 h-4 w-4 text-green-500" />
+                            ) : (
+                                <WifiOff className="mr-2 h-4 w-4" />
+                            )}
+                            <span>
+                                {channel.status === 'connected' ? 'Bot is active and listening' : 'Bot is currently offline'}
+                            </span>
+                        </div>
+                    )}
+                </CardContent>
+                <CardFooter className="bg-muted/30 border-t border-border/50 py-3 mt-auto">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full justify-between font-normal"
+                        onClick={() => setIsSettingsOpen(true)}
+                    >
+                        <span>Manage connection</span>
+                        <Settings2 className="h-4 w-4" />
+                    </Button>
+                </CardFooter>
+            </Card>
+
+            <ChannelSettingsDialog 
+                channel={channel} 
+                isOpen={isSettingsOpen} 
+                onOpenChange={setIsSettingsOpen} 
+            />
+        </>
     );
 }
 
