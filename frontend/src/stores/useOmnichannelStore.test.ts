@@ -6,13 +6,14 @@ import { api } from '@/lib/api/client';
 vi.mock('@/lib/api/client', () => ({
     api: {
         get: vi.fn(),
+        post: vi.fn(),
+        delete: vi.fn(),
     },
 }));
 
 describe('useOmnichannelStore', () => {
     beforeEach(() => {
         // Reset the store before each test
-        const { activity, channels } = useOmnichannelStore.getState();
         useOmnichannelStore.setState({
             channels: [],
             activity: [],
@@ -105,5 +106,27 @@ describe('useOmnichannelStore', () => {
         expect(state.channels[0]!.status).toBe('connected');
         expect(state.activity).toHaveLength(1);
         expect(state.activity[0]!.message).toContain('Connecting: complete');
+    });
+
+    it('should disconnect channel successfully', async () => {
+        (api.post as any).mockResolvedValue({ success: true, data: {} });
+        (api.get as any).mockResolvedValue({ success: true, data: [] });
+
+        const success = await useOmnichannelStore.getState().disconnectChannel('agent_1', 'bot_1');
+
+        expect(success).toBe(true);
+        expect(api.post).toHaveBeenCalled();
+        expect(api.get).toHaveBeenCalled(); // Should refresh (fetchAllChannels)
+    });
+
+    it('should delete channel successfully', async () => {
+        (api.delete as any).mockResolvedValue({ success: true, data: {} });
+        (api.get as any).mockResolvedValue({ success: true, data: [] });
+
+        const success = await useOmnichannelStore.getState().deleteChannel('agent_1', 'bot_1');
+
+        expect(success).toBe(true);
+        expect(api.delete).toHaveBeenCalled();
+        expect(api.get).toHaveBeenCalled(); // Should refresh (fetchAllChannels)
     });
 });

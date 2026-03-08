@@ -1,18 +1,18 @@
 # Implementation Plan: Connection Management Gaps (Audit Fix Phase 1)
 
 ## Phase 1: Wiring Lifecycle Actions
-- [ ] Task: TDD - Implement/Leverage Backend API for stopping a channel
-    - [ ] **Investigate**: Check `multiTenant.ts` for existing `/disconnect` route and verify if it's fully wired to `ChannelService.stopChannel`.
-    - [ ] Write failing test for the endpoint (or enhance existing ones).
-    - [ ] Implement/Fix the wiring to ensure Firestore and Memory states are synced.
-- [ ] Task: TDD - Implement/Leverage Backend API for deleting a channel (Basic)
-    - [ ] **Investigate**: Check existing `DELETE` routes in `multiTenant.ts`.
-    - [ ] Write failing test for the endpoint.
-    - [ ] Ensure `ChannelService.deleteChannel` correctly cleans up.
-- [ ] Task: UI - Wire "Stop" button in Manage Dialog
-    - [ ] **Investigate**: Check if `OmnichannelHubContent.tsx` or `ChannelCard` has commented out logic for disconnect.
-    - [ ] Add "Stop Bot" button to the Manage Connection modal.
-    - [ ] Implement API call and update local store.
+- [x] Task: TDD - Implement/Leverage Backend API for stopping a channel 4a9af31
+    - [x] **Investigate**: Check `multiTenant.ts` for existing `/disconnect` route and verify if it's fully wired to `ChannelService.stopChannel`.
+    - [x] Write failing test for the endpoint (or enhance existing ones).
+    - [x] Implement/Fix the wiring to ensure Firestore and Memory states are synced.
+- [x] Task: TDD - Implement/Leverage Backend API for deleting a channel (Basic) 4a9af31
+    - [x] **Investigate**: Check existing `DELETE` routes in `multiTenant.ts`.
+    - [x] Write failing test for the endpoint.
+    - [x] Ensure `ChannelService.deleteChannel` correctly cleans up.
+- [x] Task: UI - Wire "Stop" button in Manage Dialog 8f0a2cb7
+    - [x] **Investigate**: Check if `OmnichannelHubContent.tsx` or `ChannelCard` has commented out logic for disconnect.
+    - [x] Add "Stop Bot" button to the Manage Connection modal.
+    - [x] Implement API call and update local store.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Wiring Lifecycle Actions' (Protocol in workflow.md)
 
 ## Phase 2: Advanced Deletion Logic
