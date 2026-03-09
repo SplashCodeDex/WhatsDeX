@@ -247,9 +247,9 @@ class CampaignWorker {
     private getAvailableChannelIds(tenantId: string, distribution: Campaign['distribution']): string[] {
         const keys = channelManager.getRegisteredChannelKeys();
         // Simplified filter: in 2026 production, we'd verify tenantId ownership via ChannelService
-        const targetId = distribution.channelId || (distribution as any).botId;
-        if (distribution.type === 'single' && targetId) {
-            return keys.includes(targetId) ? [targetId] : [];
+        const channelId = distribution.channelId || (distribution as any).botId;
+        if (distribution.type === 'single' && channelId) {
+            return keys.includes(channelId) ? [channelId] : [];
         }
         return keys;
     }

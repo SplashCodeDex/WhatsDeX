@@ -1,7 +1,7 @@
 # Specification: Refactor Bot to Channels
 
 ## Overview
-This track focuses on the architectural retirement of the "Bot" entity in WhatsDeX. The responsibility for connectivity will be moved to a unified "Channels" system, while the "Agent" system will handle the assignment and intelligence. This allows for a "connectivity-only" experience for users who don't need or aren't eligible for AI Agents.
+This track focuses on the architectural retirement of the "Bot" entity in DeXMart. The responsibility for connectivity will be moved to a unified "Channels" system, while the "Agent" system will handle the assignment and intelligence. This allows for a "connectivity-only" experience for users who don't need or aren't eligible for AI Agents.
 
 ## Functional Requirements
 1.  **Retire "Bot" Entity:** Remove the concept of "Bots" as the primary unit of management in the system hierarchy.

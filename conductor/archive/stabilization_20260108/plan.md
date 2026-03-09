@@ -1,7 +1,7 @@
 # Global Stabilization & Linting Fixes
 
 ## Goal
-Achieve a 100% type-safe and lint-clean codebase for the WhatsDeX backend by systematically resolving remaining errors and enforcing the new project standards.
+Achieve a 100% type-safe and lint-clean codebase for the DeXMart backend by systematically resolving remaining errors and enforcing the new project standards.
 
 ## Phase 1: Automated Cleanup [DONE]
 - [x] Task: Run `npm run lint:fix` to auto-resolve stylistic issues.

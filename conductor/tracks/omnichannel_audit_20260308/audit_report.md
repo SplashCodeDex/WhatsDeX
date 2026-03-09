@@ -28,7 +28,7 @@
 
 ### Missing Surfacing
 - **AI Soul/Personality**: Backend `geminiAI.ts` looks for `channelDoc.config.aiPersonality`, but there is no "Settings" dialog for individual channels to set this.
-- **OpenClaw Tools**: OpenClaw has a rich set of tools (YouTube DL, DALL-E, etc.), but `WhatsDeXToolBridge` only bridges a hardcoded list. There's no UI to enable/disable specific tools per channel.
+- **OpenClaw Tools**: OpenClaw has a rich set of tools (YouTube DL, DALL-E, etc.), but `DeXMartToolBridge` only bridges a hardcoded list. There's no UI to enable/disable specific tools per channel.
 
 ## 4. Ingress & AI Wiring
 

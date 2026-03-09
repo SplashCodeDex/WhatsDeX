@@ -10,7 +10,7 @@ import { trace, SpanStatusCode } from '@opentelemetry/api';
 
 import performanceMonitor from '../utils/performanceMonitor.js';
 import { proto, downloadContentFromMessage, getContentType } from 'baileys';
-import { type Bot, type Command, type MessageContext, type GlobalContext, type GroupFunctions } from '../types/index.js';
+import { type ActiveChannel, type Command, type MessageContext, type GlobalContext, type GroupFunctions } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -168,7 +168,7 @@ export class CommandSystem {
     return !!(command && typeof command === 'object' && 'name' in command && typeof (command as Command).code === 'function');
   }
 
-  async processMessage(bot: Bot, messageData: proto.IWebMessageInfo) {
+  async processMessage(bot: ActiveChannel, messageData: proto.IWebMessageInfo) {
     const text = this.extractText(messageData);
     if (!text) return false;
 
@@ -196,7 +196,7 @@ export class CommandSystem {
     return { name, args, fullText: text, prefix };
   }
 
-  async executeCommand(bot: Bot, command: Command, messageData: proto.IWebMessageInfo, commandInfo: { name: string; args: string[]; prefix: string }) {
+  async executeCommand(bot: ActiveChannel, command: Command, messageData: proto.IWebMessageInfo, commandInfo: { name: string; args: string[]; prefix: string }) {
     const timer = performanceMonitor.startTimer('command_execution', {
       command: command.name,
       userId: messageData.key?.remoteJid || 'unknown',
@@ -247,7 +247,7 @@ export class CommandSystem {
     });
   }
 
-  async createContext(bot: Bot, messageData: proto.IWebMessageInfo, commandInfo: { args: string[]; prefix: string }, command: Command): Promise<MessageContext> {
+  async createContext(bot: ActiveChannel, messageData: proto.IWebMessageInfo, commandInfo: { args: string[]; prefix: string }, command: Command): Promise<MessageContext> {
     const text = this.extractText(messageData);
     const jid = messageData.key?.remoteJid || '';
 
@@ -304,7 +304,7 @@ export class CommandSystem {
         key: messageData.key,
         ...messageData.message
       },
-      bot: bot,
+      channel: bot,
       reply: async (msg: string | { text?: string;[key: string]: unknown }) => {
         const content = typeof msg === 'string' ? { text: msg } : msg;
         return await bot.sendMessage(jid, content, { quoted: messageData });
@@ -318,9 +318,14 @@ export class CommandSystem {
       isGroup: () => jid.endsWith('@g.us'),
       usage: {},
       getId: (target: string) => target.split('@')[0],
-      simulateTyping: () => {
+      simulateTyping: async () => {
         if (bot.sendPresenceUpdate) {
-          (bot.sendPresenceUpdate as any)('composing', jid).catch(() => { });
+          await bot.sendPresenceUpdate('composing', jid).catch(() => { });
+        }
+      },
+      sendPresenceUpdate: async (presence: any, jid?: string) => {
+        if (bot.sendPresenceUpdate) {
+          await bot.sendPresenceUpdate(presence, jid || messageData.key?.remoteJid || '').catch(() => { });
         }
       },
       used: {

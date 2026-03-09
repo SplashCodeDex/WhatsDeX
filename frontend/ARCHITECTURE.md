@@ -1,4 +1,4 @@
-# WhatsDeX Frontend Architecture
+# DeXMart Frontend Architecture
 
 > **Version**: 1.0.0
 > **Last Updated**: 2026-01-15
@@ -23,7 +23,7 @@
 
 ## Overview
 
-The WhatsDeX frontend follows a **Hybrid Feature-Sliced Design (FSD)** architecture optimized for Next.js 16's App Router. The codebase emphasizes:
+The DeXMart frontend follows a **Hybrid Feature-Sliced Design (FSD)** architecture optimized for Next.js 16's App Router. The codebase emphasizes:
 
 - **Server-First Rendering**: RSC by default, Client Components only for interactivity
 - **Domain-Driven Organization**: Code organized by business feature, not technology

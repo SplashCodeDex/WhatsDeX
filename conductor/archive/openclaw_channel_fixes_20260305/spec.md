@@ -62,5 +62,5 @@ This track integrates 40 critical upstream pull requests from the `OPENCLAW_UPST
 - [ ] Cleanup performed after each implementation block.
 
 ## Out of Scope
-- UI/UX changes to the WhatsDeX Dashboard (Backend/Engine only).
+- UI/UX changes to the DeXMart Dashboard (Backend/Engine only).
 - Non-essential upstream PRs (refactor-only or documentation-only).

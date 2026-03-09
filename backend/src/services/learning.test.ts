@@ -53,10 +53,10 @@ vi.mock('../utils/logger.js', () => ({
 
 describe('GeminiAI Learning', () => {
   let ai: GeminiAI;
-  const mockBot = {
+  const activeChannel = {
     tenantId: 'tenant_1',
     channelId: 'channel_1',
-    user: { name: 'TestBot' },
+    user: { name: 'TestChannel' },
     config: { aiPersonality: 'friendly' }
   } as any;
 
@@ -88,7 +88,7 @@ describe('GeminiAI Learning', () => {
 
     (firebaseService.getDoc as any).mockResolvedValue(null); // No existing learning
 
-    await ai.learnFromInteraction(mockBot, userId, message, intelligence, ctx);
+    await ai.learnFromInteraction(activeChannel, userId, message, intelligence, ctx);
 
     expect(firebaseService.setDoc).toHaveBeenCalledWith(
       'learning',
@@ -120,7 +120,7 @@ describe('GeminiAI Learning', () => {
       msg: { contentType: 'textMessage' }
     } as any;
 
-    const context = await ai.buildEnhancedContext(mockBot, userId, 'hello', mockCtx);
+    const context = await ai.buildEnhancedContext(activeChannel, userId, 'hello', mockCtx);
 
     expect(context.learnedFacts).toHaveLength(1);
     expect(context.learnedFacts[0].content).toBe('User likes pizza');

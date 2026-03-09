@@ -1,4 +1,4 @@
-# WhatsDeX Product Guidelines
+# DeXMart Product Guidelines
 
 ## 1. Tone and Voice
 

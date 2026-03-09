@@ -1,7 +1,7 @@
 # Specification: Plans & Billing Integration
 
 ## Overview
-Implement a comprehensive, enterprise-grade subscription and billing system for WhatsDeX using Stripe. This system will manage three affordable tiers (Starter, Pro, Enterprise) with both monthly and yearly billing options. Crucially, **all plans will offer a 7-day free trial** to maximize customer acquisition, replacing the permanent free tier.
+Implement a comprehensive, enterprise-grade subscription and billing system for DeXMart using Stripe. This system will manage three affordable tiers (Starter, Pro, Enterprise) with both monthly and yearly billing options. Crucially, **all plans will offer a 7-day free trial** to maximize customer acquisition, replacing the permanent free tier.
 
 ## Functional Requirements
 
@@ -40,7 +40,7 @@ Implement a comprehensive, enterprise-grade subscription and billing system for 
 - [ ] Running the seeding script creates all 3 products with Monthly/Yearly prices in Stripe.
 - [ ] A user can successfully subscribe to a plan via the UI and have their status updated in Firestore.
 - [ ] A user is blocked from adding more bots than their plan allows.
-- [ ] Canceling a subscription in the Stripe Portal updates the user's access in WhatsDeX at the end of the billing period.
+- [ ] Canceling a subscription in the Stripe Portal updates the user's access in DeXMart at the end of the billing period.
 - [ ] AI and Backup features are only accessible to Pro and Enterprise users.
 - [ ] Users start with a 7-day free trial and are not charged until it expires.
 

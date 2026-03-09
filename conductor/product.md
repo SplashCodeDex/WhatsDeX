@@ -1,8 +1,8 @@
-# WhatsDeX Product Guide
+# DeXMart Product Guide
 
 ## Initial Concept
 
-WhatsDeX is an enterprise-grade, omnichannel AI automation platform. Built upon the OpenClaw engine and Baileys Web API, it enables users to manage AI-powered interactions across WhatsApp, Telegram, Discord, and Slack through a unified system of **Channels** and **Agents**.
+DeXMart is an enterprise-grade, omnichannel AI automation platform. Built upon the OpenClaw engine and Baileys Web API, it enables users to manage AI-powered interactions across WhatsApp, Telegram, Discord, and Slack through a unified system of **Channels** and **Agents**.
 
 The platform operates on a multi-tenant architecture where each customer's data, channels, and agents are isolated within their own workspace. It offers a tiered subscription model (Free vs. Premium), unlocking advanced features such as multiple connectivity slots (supporting WhatsApp, Telegram, Discord, Slack, Signal, iMessage, IRC, and Google Chat), marketing campaign tools, Google Drive backups, and agentic AI reasoning.
 
@@ -45,7 +45,7 @@ The platform operates on a multi-tenant architecture where each customer's data,
 
 - **AI Integration:** Leverage Google Gemini as a platform-agnostic "Mastermind" capable of autonomous reasoning and tool usage across all channels.
 - **Skills Platform:** Integrated OpenClaw skills (Web Search, Code Analysis, etc.) gated by subscription tiers.
-- **Unified Tool Registry:** A seamless merge of legacy WhatsDeX utility commands and OpenClaw agentic skills, enabling the AI to pick the best tool for the task.
+- **Unified Tool Registry:** A seamless merge of legacy DeXMart utility commands and OpenClaw agentic skills, enabling the AI to pick the best tool for the task.
 - **Contextual Memory:** Platform-scoped conversation history ensuring that AI interactions remain private and relevant to each specific chat (e.g., WhatsApp vs Telegram).
 - **AI Persistent Learning:** Agents autonomously learn and recall user-specific facts and preferences across sessions, enabling a personalized "Mastermind" experience.
 - **Backups:** Automated system backups to Google Drive, ensuring user data and configuration safety.

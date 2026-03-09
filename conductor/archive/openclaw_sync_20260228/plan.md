@@ -35,7 +35,7 @@ Goal: Resolve engine build errors and align dependencies.
 - [ ] Task: Conductor - User Manual Verification 'Build & Stabilization' (Protocol in workflow.md)
 
 ## Phase 4: Integration Validation
-Goal: Ensure WhatsDeX bridges still work with the new engine.
+Goal: Ensure DeXMart bridges still work with the new engine.
 
 - [ ] Task: Full Test Suite Execution.
     - [ ] Run `pnpm --filter openclaw test`.

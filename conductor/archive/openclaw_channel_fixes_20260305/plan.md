@@ -39,5 +39,5 @@ Strategic integration of 40 upstream patches. Every fix MUST be preceded by an e
 
 ## Phase 6: Final System Validation
 - [ ] Task: Run full project regression suite (`npm test`) to ensure no side effects.
-- [ ] Task: Verify WhatsDeX Dashboard connectivity with the fully patched engine.
+- [ ] Task: Verify DeXMart Dashboard connectivity with the fully patched engine.
 - [ ] Task: Final Cleanup: Remove all remaining temporary research and test artifacts.

@@ -8,7 +8,7 @@ Identify all "orphan" backend logic—functions, services, and configurations th
 2. **Pairing Methods**: QR code and Pairing Code logic for WhatsApp, Signal, and potential other channels.
 3. **Configurations**: Channel-specific settings (e.g., auto-reply, media handling, proxy settings) that are defined in backend but missing UI controls.
 4. **Agent-Channel Linkage**: Verification of the hierarchy `tenants/T/agents/A/channels/C` and if UI correctly handles this nesting.
-5. **OpenClaw Parity**: Ensuring all relevant OpenClaw engine features are exposed via WhatsDeX.
+5. **OpenClaw Parity**: Ensuring all relevant OpenClaw engine features are exposed via DeXMart.
 
 ## Deliverables
 - A comprehensive Audit Report (`audit_report.md`).

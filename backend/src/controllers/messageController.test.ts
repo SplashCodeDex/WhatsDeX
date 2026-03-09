@@ -51,8 +51,8 @@ describe('MessageController', () => {
       // Mock fetching the original message
       (db.collection('').doc('').get as any).mockResolvedValue({
         exists: true,
-        data: () => ({ 
-          botId: 'chan-456', 
+        data: () => ({
+          channelId: 'chan-456',
           remoteJid: 'user-789@s.whatsapp.net'
         }),
       });

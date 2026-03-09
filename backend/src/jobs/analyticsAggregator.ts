@@ -99,13 +99,13 @@ class AnalyticsAggregator {
       return;
     }
 
-    // Get message counts from bots
-    const botsSnapshot = await db.collection(`${tenantPath}/bots`).get();
-    const bots = botsSnapshot.docs.map(doc => doc.data());
+    // Get message counts from channels
+    const channelsSnapshot = await db.collection(`${tenantPath}/channels`).get();
+    const channels = channelsSnapshot.docs.map(doc => doc.data());
 
-    const totalSent = bots.reduce((sum, bot) => sum + (bot.stats?.messagesSent || 0), 0);
-    const totalReceived = bots.reduce((sum, bot) => sum + (bot.stats?.messagesReceived || 0), 0);
-    const totalErrors = bots.reduce((sum, bot) => sum + (bot.stats?.errorsCount || 0), 0);
+    const totalSent = channels.reduce((sum, channel) => sum + (channel.stats?.messagesSent || 0), 0);
+    const totalReceived = channels.reduce((sum, channel) => sum + (channel.stats?.messagesReceived || 0), 0);
+    const totalErrors = channels.reduce((sum, channel) => sum + (channel.stats?.errorsCount || 0), 0);
 
     // Store aggregated data
     await analyticsRef.set({
@@ -128,7 +128,7 @@ class AnalyticsAggregator {
   private async aggregateAIData(tenantId: string, dateStr: string) {
     const tenantPath = `tenants/${tenantId}`;
     const aiAggregateRef = db.doc(`${tenantPath}/ai_analytics_daily/${dateStr}`);
-    
+
     const existingDoc = await aiAggregateRef.get();
     if (existingDoc.exists) {
       logger.debug(`AI analytics already aggregated for ${tenantId} on ${dateStr}`);

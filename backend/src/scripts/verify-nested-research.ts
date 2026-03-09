@@ -8,12 +8,12 @@ async function main() {
 
   try {
     const context = await initializeContext();
-    
+
     // Preparation: ensure tools are registered
     console.log('--- Step 1: Tool Registry Check ---');
     const tools = toolRegistry.getAllTools();
     const researchTool = tools.find(t => t.name === 'research');
-    
+
     if (!researchTool) {
       throw new Error('Research tool not found in registry.');
     }
@@ -22,7 +22,7 @@ async function main() {
     // Step 2: Execute Research Cycle
     console.log('--- Step 2: Executing Deep Research Cycle ---');
     console.log('Topic: "Impact of AI on software engineering in 2026"');
-    
+
     const result = await toolRegistry.executeTool('research', {
       topic: 'Impact of AI on software engineering in 2026',
       depth: 3,
@@ -30,7 +30,7 @@ async function main() {
     }, {
       ...context,
       tenantId: 'system',
-      botId: 'test-bot'
+      channelId: 'test-channel'
     });
 
     if (result.success) {

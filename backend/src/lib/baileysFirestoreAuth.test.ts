@@ -4,13 +4,13 @@ import { firebaseService } from '../services/FirebaseService.js';
 
 describe('Firestore Auth Provider', () => {
   const tenantId = 'test-tenant';
-  const botId = 'test-bot';
+  const channelId = 'test-channel';
 
   it('should initialize with new creds if none exist', async () => {
     // Mock getDoc to return null (no creds)
     const getDocSpy = vi.spyOn(firebaseService, 'getDoc').mockResolvedValue(null);
 
-    const { state } = await useFirestoreAuthState(tenantId, botId);
+    const { state } = await useFirestoreAuthState(tenantId, channelId);
     expect(state.creds).toBeDefined();
     expect(state.creds.noiseKey).toBeDefined();
 
@@ -25,9 +25,9 @@ describe('Firestore Auth Provider', () => {
       if (id === 'creds') savedData = data;
     });
 
-    const { state, saveCreds } = await useFirestoreAuthState(tenantId, botId);
+    const { state, saveCreds } = await useFirestoreAuthState(tenantId, channelId);
     await saveCreds();
-    
+
     expect(savedData).toBeDefined();
     expect(savedData.value).toBeDefined();
 

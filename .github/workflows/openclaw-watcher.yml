@@ -30,7 +30,7 @@ jobs:
       - name: Commit Intelligence Report
         run: |
           git config --local user.email "action@github.com"
-          git config --local user.name "WhatsDeX Watchtower [Bot]"
+          git config --local user.name "DeXMart Watchtower [Bot]"
           git add docs/OPENCLAW_UPSTREAM_REPORT.md
           git diff --staged --quiet || git commit -m "docs: auto-update OpenClaw Upstream Intelligence [skip ci]"
           git push

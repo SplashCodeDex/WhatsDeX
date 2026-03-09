@@ -1,7 +1,7 @@
 import { MessageContext } from '../../types/index.js';
 export default {
-  name: 'setbotpp',
-  aliases: ['setboticon', 'seticonbot', 'setppbot'],
+  name: 'setchannelpp',
+  aliases: ['setchannelicon', 'seticonchannel', 'setppchannel'],
   category: 'owner',
   permissions: {
     owner: true,
@@ -22,7 +22,7 @@ export default {
       const buffer = (await ctx.msg.media.toBuffer()) || (await ctx.quoted?.media.toBuffer());
       await ctx.core.updateProfilePicture(ctx.core.user.id, buffer);
 
-      await ctx.reply(formatter.quote('✅ Berhasil mengubah gambar profil bot!'));
+      await ctx.reply(formatter.quote('✅ Berhasil mengubah gambar profil channel!'));
     } catch (error: any) {
       await tools.cmd.handleError(ctx, error);
     }

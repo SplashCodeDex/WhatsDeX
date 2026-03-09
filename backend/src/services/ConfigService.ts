@@ -91,7 +91,7 @@ export class ConfigService {
       urlInvalid: '🔗 Invalid URL provided!',
       channelGroupMembership: '🚫 You must join our official group first!',
       groupSewa: '🔒 This group is not registered for full access!',
-      unavailableAtNight: '😴 The bot is sleeping, try again tomorrow!',
+      unavailableAtNight: '😴 The channel is sleeping, try again tomorrow!',
       coin: '🪙 Not enough coins!',
       restrict: '⚠️ This command is restricted in this chat!',
     };

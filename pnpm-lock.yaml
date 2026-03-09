@@ -72,7 +72,7 @@ importers:
       '@types/cron':
         specifier: ^2.4.3
         version: 2.4.3
-      '@whatsdex/shared':
+      '@DeXMart/shared':
         specifier: workspace:*
         version: link:../shared
       aki-api:
@@ -343,7 +343,7 @@ importers:
       '@types/papaparse':
         specifier: ^5.5.2
         version: 5.5.2
-      '@whatsdex/shared':
+      '@DeXMart/shared':
         specifier: workspace:*
         version: link:../shared
       '@xyflow/react':

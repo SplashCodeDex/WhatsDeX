@@ -1,7 +1,7 @@
 import { db } from '../lib/firebase.js';
 import logger from '../utils/logger.js';
 import { firebaseService } from './FirebaseService.js';
-import { BotMember, Result, BotMemberSchema, BotGroupDocument } from '../types/index.js';
+import { ChannelMember, Result, ChannelMemberSchema, ChannelGroupDocument } from '../types/index.js';
 import { Timestamp } from 'firebase-admin/firestore';
 
 /** Soft-deleted document marker */
@@ -20,13 +20,13 @@ export class DatabaseService {
     /**
      * Get member (WhatsApp user) by JID within a tenant
      */
-    async getUser(tenantId: string, jid: string): Promise<BotMember | null> {
+    async getUser(tenantId: string, jid: string): Promise<ChannelMember | null> {
         try {
             const data = await firebaseService.getDoc<'tenants/{tenantId}/members'>('members', jid, tenantId);
             if (!data) return null;
 
             // Zero-Trust Validation
-            return BotMemberSchema.parse(data);
+            return ChannelMemberSchema.parse(data);
         } catch (error: unknown) {
             logger.error(`DatabaseService.getUser error [${tenantId}/${jid}]:`, error);
             return null;
@@ -36,7 +36,7 @@ export class DatabaseService {
     /**
      * Create or Update member data (atomic merge)
      */
-    async updateUser(tenantId: string, jid: string, data: Partial<BotMember>): Promise<Result<void>> {
+    async updateUser(tenantId: string, jid: string, data: Partial<ChannelMember>): Promise<Result<void>> {
         try {
             const updatePayload = {
                 ...data,
@@ -70,13 +70,13 @@ export class DatabaseService {
     /**
      * Get group settings
      */
-    async getGroup(tenantId: string, jid: string): Promise<BotGroupDocument | null> {
+    async getGroup(tenantId: string, jid: string): Promise<ChannelGroupDocument | null> {
         try {
             const data = await firebaseService.getDoc<'tenants/{tenantId}/groups'>('groups', jid, tenantId);
             if (!data) return null;
 
             // Optional: You might want to parse against BotGroupSchema here too if strict runtime checks are needed
-            // But since BotGroupDocument is looser (metadata: any), we can just return it or cast it
+            // But since ChannelGroupDocument is looser (metadata: any), we can just return it or cast it
             // For 2026 Mastermind Compliance, let's parse strict fields where possible, or just return strict Type
             return data;
         } catch (error: unknown) {
@@ -88,7 +88,7 @@ export class DatabaseService {
     /**
      * Create or Update group data (atomic merge)
      */
-    async updateGroup(tenantId: string, jid: string, data: Partial<BotGroupDocument>): Promise<Result<void>> {
+    async updateGroup(tenantId: string, jid: string, data: Partial<ChannelGroupDocument>): Promise<Result<void>> {
         try {
             const updatePayload = {
                 ...data,
@@ -107,7 +107,7 @@ export class DatabaseService {
     /**
      * Get leaderboard (Top 10 by winGame/level)
      */
-    async getLeaderboard(tenantId: string, limit: number = 10): Promise<BotMember[]> {
+    async getLeaderboard(tenantId: string, limit: number = 10): Promise<ChannelMember[]> {
         try {
             const snapshot = await db.collection('tenants')
                 .doc(tenantId)
@@ -117,7 +117,7 @@ export class DatabaseService {
                 .limit(limit)
                 .get();
 
-            return snapshot.docs.map(doc => BotMemberSchema.parse({ id: doc.id, ...doc.data() }));
+            return snapshot.docs.map(doc => ChannelMemberSchema.parse({ id: doc.id, ...doc.data() }));
         } catch (error: unknown) {
             logger.error(`DatabaseService.getLeaderboard error [${tenantId}]:`, error);
             return [];
@@ -158,13 +158,13 @@ export class DatabaseService {
                 const senderDoc = await t.get(senderRef);
                 if (!senderDoc.exists) throw new Error('Sender not found');
 
-                const senderData = senderDoc.data() as BotMember;
+                const senderData = senderDoc.data() as ChannelMember;
                 const currentCoins = senderData.coin || 0;
 
                 if (currentCoins < amount) throw new Error('Insufficient funds');
 
                 const receiverDoc = await t.get(receiverRef);
-                const receiverCoins = (receiverDoc.data() as BotMember | undefined)?.coin || 0;
+                const receiverCoins = (receiverDoc.data() as ChannelMember | undefined)?.coin || 0;
 
                 t.update(senderRef, {
                     coin: currentCoins - amount,
@@ -200,13 +200,13 @@ export class DatabaseService {
 
     public user = {
         get: (jid: string, tenantId: string = 'system') => this.getUser(tenantId, jid),
-        update: (jid: string, data: Partial<BotMember>, tenantId: string = 'system') => this.updateUser(tenantId, jid, data),
+        update: (jid: string, data: Partial<ChannelMember>, tenantId: string = 'system') => this.updateUser(tenantId, jid, data),
         delete: (jid: string, tenantId: string = 'system') => this.deleteUser(tenantId, jid),
     };
 
     public group = {
         get: (jid: string, tenantId: string = 'system') => this.getGroup(tenantId, jid),
-        update: (jid: string, data: Partial<BotGroupDocument>, tenantId: string = 'system') => this.updateGroup(tenantId, jid, data),
+        update: (jid: string, data: Partial<ChannelGroupDocument>, tenantId: string = 'system') => this.updateGroup(tenantId, jid, data),
     };
 
     public chat = {

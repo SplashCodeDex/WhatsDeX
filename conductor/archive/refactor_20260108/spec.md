@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Transition the WhatsDeX backend from its current hybrid/placeholder state to a 100% Firebase-native architecture. This track eliminates Prisma/PostgreSQL technical debt, enforces strict TypeScript, and implements a secure, subcollection-based multi-tenant data structure in Firestore.
+Transition the DeXMart backend from its current hybrid/placeholder state to a 100% Firebase-native architecture. This track eliminates Prisma/PostgreSQL technical debt, enforces strict TypeScript, and implements a secure, subcollection-based multi-tenant data structure in Firestore.
 
 ## 2. Functional Requirements
 

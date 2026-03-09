@@ -2,7 +2,7 @@
 
 ## Phase 1: Hierarchy & Configuration Alignment
 - [ ] **Unified Config Paths**: Update `TenantConfigService.ts` to support the `agents/A/channels/C` path for all omnichannel settings.
-- [ ] **Dynamic Tool Bridging**: Refactor `WhatsDeXToolBridge` to dynamically load OpenClaw tools based on channel configuration rather than a hardcoded list.
+- [ ] **Dynamic Tool Bridging**: Refactor `DeXMartToolBridge` to dynamically load OpenClaw tools based on channel configuration rather than a hardcoded list.
 
 ## Phase 2: Connection Management Wiring
 - [ ] **Disconnect & Delete**: Add API endpoints and UI buttons to stop and remove channels.

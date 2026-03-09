@@ -54,7 +54,7 @@ ${formatter.quote(example)}`);
           caption: formatter.quote('Untukmu, tuan!'),
         });
       } else if (/webp/.test(contentType)) {
-        const pack = (config as any).sticker?.packname || 'WhatsDeX Bot';
+        const pack = (config as any).sticker?.packname || 'WhatsDeX';
         const author = (config as any).sticker?.author || 'CodeDeX';
 
         const sticker = new Sticker(response?.data, {

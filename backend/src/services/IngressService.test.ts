@@ -23,8 +23,8 @@ vi.mock('./tenantConfigService.js', () => ({
   }
 }));
 
-vi.mock('../utils/createBotContext.js', () => ({
-  createBotContext: vi.fn().mockResolvedValue({
+vi.mock('../utils/createChannelContext.js', () => ({
+  createChannelContext: vi.fn().mockResolvedValue({
     sender: { jid: 'user-123' },
     message: { conversation: 'hello' }
   })

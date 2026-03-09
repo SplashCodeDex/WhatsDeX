@@ -24,7 +24,7 @@
 
 ### 🤖 AI Agents & Automation
 - **[Bytebot](file:///W:/CodeDeX/bytebot)**: Self-hosted AI desktop agent using Ubuntu in Docker for full task autonomy.
-- **[WhatsDeX](file:///W:/CodeDeX/WhatsDeX)**: Advanced WhatsApp bot framework with AI intent detection, RAG, and anti-ban engines.
+- **[DeXMart](file:///W:/CodeDeX/DeXMart)**: Advanced WhatsApp bot framework with AI intent detection, RAG, and anti-ban engines.
 - **[AlterEgo-AI](file:///W:/CodeDeX/AlterEgo-AI)**: Generative AI platform for photo reimagining and artistic styling.
 - **[AutoGitGrow](file:///W:/CodeDeX/AutoGitGrow)**: Specialized automation for git workflow management and repository scaling.
 

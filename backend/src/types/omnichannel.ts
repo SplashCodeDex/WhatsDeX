@@ -45,7 +45,7 @@ export const CommonMessageSchema = z.object({
   platform: PlatformSchema,
   from: z.string(),
   to: z.string(),
-  channelId: z.string().optional(), // Specific account/bot ID on the platform
+  channelId: z.string().optional(), // Specific account/channel ID on the platform
   content: z.object({
     text: z.string().optional(),
     attachments: z.array(CommonAttachmentSchema).optional(),

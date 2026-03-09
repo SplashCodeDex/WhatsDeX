@@ -1,13 +1,13 @@
 import WhatsDeXBrain from '../services/whatsDeXBrain.js';
 import moment from 'moment-timezone';
-import { Bot, GlobalContext, MessageContext, BotMember, Command } from '../types/index.js';
+import { ActiveChannel, GlobalContext, MessageContext, ChannelMember, Command } from '../types/index.js';
 import { cooldownMiddleware } from './cooldown.js';
 
 /**
  * Check if user has enough coins
  * @returns {Promise<boolean>} true if BLOCKED (not enough coins), false if allowed
  */
-const checkCoin = async (database: any, required: number | string, userDb: BotMember | null, senderId: string, isOwner: boolean): Promise<boolean> => {
+const checkCoin = async (database: any, required: number | string, userDb: ChannelMember | null, senderId: string, isOwner: boolean): Promise<boolean> => {
     if (isOwner) return false;
     const requiredCoins = Number(required);
     const userCoins = userDb?.coin || 0;
@@ -15,18 +15,18 @@ const checkCoin = async (database: any, required: number | string, userDb: BotMe
 };
 
 // Main bot middleware
-const mainMiddleware = (bot: Bot, context: GlobalContext) => {
+const mainMiddleware = (channel: ActiveChannel, context: GlobalContext) => {
     const {
         database,
         tools: { cmd },
         config,
         formatter,
     } = context;
-    const brain = new WhatsDeXBrain(bot, context);
+    const brain = new WhatsDeXBrain(channel, context);
 
-    bot.use(cooldownMiddleware);
+    channel.use(cooldownMiddleware);
 
-    bot.use(async (ctx: MessageContext, next: () => Promise<void>) => {
+    channel.use(async (ctx: MessageContext, next: () => Promise<void>) => {
         // Common variables
         const isGroup = ctx.isGroup();
         const isPrivate = !isGroup;
@@ -38,8 +38,8 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
         const isAdmin = isGroup ? await ctx.group().isAdmin(senderJid) : false;
 
         // Get database
-        const userDb = await database.user.get(senderId, ctx.bot.tenantId);
-        const groupDb = isGroup ? await database.group.get(groupId!, ctx.bot.tenantId) : null;
+        const userDb = await database.user.get(senderId, ctx.channel.tenantId);
+        const groupDb = isGroup ? await database.group.get(groupId!, ctx.channel.tenantId) : null;
 
         // Process message with the brain
         await brain.processMessage(ctx);
@@ -65,9 +65,9 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                 });
             }
 
-            await database.user.update(senderId, { xp: newUserXp, level: newUserLevel }, ctx.bot.tenantId);
+            await database.user.update(senderId, { xp: newUserXp, level: newUserLevel }, ctx.channel.tenantId);
         } else {
-            await database.user.update(senderId, { xp: newUserXp }, ctx.bot.tenantId);
+            await database.user.update(senderId, { xp: newUserXp }, ctx.channel.tenantId);
         }
 
         // Simulate typing
@@ -90,7 +90,7 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                     (groupDb as any)?.option?.gamerestrict &&
                     isGroup &&
                     !isAdmin &&
-                    ctx.bot.cmd.get(ctx.used.command)?.category === 'game',
+                    ctx.channel.cmd.get(ctx.used.command)?.category === 'game',
                 msg: config.msg.gamerestrict,
                 reaction: '🎮',
             },
@@ -106,17 +106,17 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                 reaction: '💎',
             },
             {
-                key: 'requireBotGroupMembership',
+                key: 'requireChannelGroupMembership',
                 condition:
-                    config.system.requireBotGroupMembership &&
+                    config.system.requireChannelGroupMembership &&
                     !isOwner &&
                     !userDb?.premium &&
-                    ctx.used.command !== 'botgroup' &&
-                    config.bot.groupJid &&
-                    !(await ctx.group(config.bot.groupJid).members()).some(
+                    ctx.used.command !== 'channelgroup' &&
+                    config.channel.groupJid &&
+                    !(await ctx.group(config.channel.groupJid).members()).some(
                         jid => jid === senderJid
                     ),
-                msg: config.msg.botGroupMembership,
+                msg: config.msg.channelGroupMembership,
                 reaction: '🚫',
             },
             {
@@ -157,7 +157,7 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                     simulateTyping();
                     await database.user.update(senderId, {
                         lastSentMsg: { ...userDb?.lastSentMsg, [key]: now },
-                    }, ctx.bot.tenantId);
+                    }, ctx.channel.tenantId);
                     return await ctx.reply({
                         text: msg,
                     });
@@ -167,7 +167,7 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
         }
 
         // Check permission conditions
-        const command = ctx.bot.cmd.get(ctx.used.command);
+        const command = ctx.channel.cmd.get(ctx.used.command);
         if (!command) return await next();
 
         const permissions = command.permissions || {};
@@ -179,9 +179,9 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                 reaction: '🛡️',
             },
             {
-                key: 'botAdmin' as const,
-                condition: isGroup && !(await ctx.group().isBotAdmin()),
-                msg: config.msg.botAdmin,
+                key: 'channelAdmin' as const,
+                condition: isGroup && !(await ctx.group().isChannelAdmin()),
+                msg: config.msg.channelAdmin,
                 reaction: '🤖',
             },
             {
@@ -235,7 +235,7 @@ const mainMiddleware = (bot: Bot, context: GlobalContext) => {
                     simulateTyping();
                     await database.user.update(senderId, {
                         lastSentMsg: { ...userDb?.lastSentMsg, [key]: now },
-                    }, ctx.bot.tenantId);
+                    }, ctx.channel.tenantId);
                     return await ctx.reply({
                         text: msg,
                     });

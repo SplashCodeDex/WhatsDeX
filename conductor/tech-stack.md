@@ -1,4 +1,4 @@
-# WhatsDeX Technology Stack (2026 Mastermind Edition)
+# DeXMart Technology Stack (2026 Mastermind Edition)
 
 ## 1. Frontend
 

@@ -1,10 +1,10 @@
-# Plan: WhatsDeX × OpenClaw Omnichannel Integration
+# Plan: DeXMart × OpenClaw Omnichannel Integration
 
 ## Phase 1: Foundation & OpenClaw Linkage [checkpoint: a18cfa2]
-Setup the technical bridge between the WhatsDeX backend and the OpenClaw engine.
+Setup the technical bridge between the DeXMart backend and the OpenClaw engine.
 
 - [x] Task: Project - Initialize pnpm workspace linkage and verify dependencies a18cfa2
-- [x] Task: Backend - Implement `OpenClawGateway` service singleton in WhatsDeX a18cfa2
+- [x] Task: Backend - Implement `OpenClawGateway` service singleton in DeXMart a18cfa2
 - [x] Task: Backend - Create `ChannelAdapter` base class/interface following OpenClaw's registry pattern a18cfa2
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Foundation' (Protocol in workflow.md) a18cfa2
 
@@ -29,9 +29,9 @@ Prepare the UI and database for multiple platforms.
 Activate Telegram and Discord via OpenClaw bridges.
 
 - [x] Task: Test - Write unit tests for `TelegramChannelBridge` integration 3c9c078
-- [x] Task: Implement - Wire OpenClaw Telegram bridge to WhatsDeX Gemini Brain 3c9c078
+- [x] Task: Implement - Wire OpenClaw Telegram bridge to DeXMart Gemini Brain 3c9c078
 - [x] Task: Test - Write unit tests for `DiscordChannelBridge` integration 3c9c078
-- [x] Task: Implement - Wire OpenClaw Discord bridge to WhatsDeX Gemini Brain 3c9c078
+- [x] Task: Implement - Wire OpenClaw Discord bridge to DeXMart Gemini Brain 3c9c078
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Multi-Channel Expansion' (Protocol in workflow.md) 3c9c078
 
 ## Phase 5: Skills Platform & Tier Integration [checkpoint: 0df5979]

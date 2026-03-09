@@ -14,7 +14,7 @@ export interface ChannelAdapter {
   readonly id: ChannelId;
 
   /**
-   * Optional unique identifier for the specific bot instance.
+   * Optional unique identifier for the specific channel instance.
    */
   readonly instanceId?: string;
 
@@ -77,7 +77,7 @@ export interface ChannelAdapter {
  */
 export interface InboundMessageEvent {
   tenantId: string;
-  channelId: string; // The specific instance ID (was botId)
+  channelId: string; // The specific instance ID
   channelType: ChannelId; // 'whatsapp', 'telegram', etc.
   fullPath?: string;
   sender: string;

@@ -6,7 +6,7 @@ import AuthSystem from '@/services/authSystem.js';
 
 // Mock dependencies
 vi.mock('@/services/authSystem.js', () => ({
-  default: vi.fn().mockImplementation(function() {
+  default: vi.fn().mockImplementation(function () {
     return {
       connect: vi.fn().mockResolvedValue({ success: true, data: { ev: { on: vi.fn() }, sendMessage: vi.fn() } }),
       disconnect: vi.fn().mockResolvedValue(undefined),
@@ -48,8 +48,8 @@ vi.mock('openclaw', async (importOriginal) => {
   };
 });
 
-vi.mock('../utils/createBotContext.js', () => ({
-  createBotContext: vi.fn().mockResolvedValue({
+vi.mock('../utils/createChannelContext.js', () => ({
+  createChannelContext: vi.fn().mockResolvedValue({
     sender: { jid: 'user-123' },
     message: { conversation: 'hello path' }
   })
@@ -60,7 +60,7 @@ describe('Path-Aware Integration (Adapter -> Ingress)', () => {
   const agentId = 'agent-master';
   const channelId = 'chan-wa-1';
   const fullPath = `tenants/${tenantId}/agents/${agentId}/channels/${channelId}`;
-  
+
   const mockContext: any = {
     unifiedAI: {
       processMessage: vi.fn().mockResolvedValue({ success: true })
@@ -74,10 +74,10 @@ describe('Path-Aware Integration (Adapter -> Ingress)', () => {
   it('should flow from WhatsappAdapter message event to IngressService AI processing using fullPath', async () => {
     // 1. Setup Adapter
     const adapter = new WhatsappAdapter(tenantId, channelId, fullPath);
-    
+
     // 2. Setup Ingress Link
     adapter.onMessage(async (event) => {
-      await IngressService.getInstance().handleMessage(event.tenantId, event.botId, event.raw, mockContext, event.fullPath);
+      await IngressService.getInstance().handleMessage(event.tenantId, event.channelId, event.raw, mockContext, event.fullPath);
     });
 
     // 3. Setup Agent Mock

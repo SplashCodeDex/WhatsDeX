@@ -17,10 +17,10 @@ Refactor the GeminiAI service to be platform-agnostic.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: AI Decoupling' (Protocol in workflow.md)
 
 ## Phase 3: Unified Tool Registry & Bridges
-Create the technical bridge between WhatsDeX commands and OpenClaw skills.
+Create the technical bridge between DeXMart commands and OpenClaw skills.
 
 - [x] Task: Backend - Implement `ToolRegistry` service to manage available tools for the AI (b8d7a73)
-- [x] Task: Backend - Create `WhatsDeXToolBridge` to wrap selected commands (Sticker, Downloader) as AI tools (b8d7a73)
+- [x] Task: Backend - Create `DeXMartToolBridge` to wrap selected commands (Sticker, Downloader) as AI tools (b8d7a73)
 - [x] Task: Backend - Create `OpenClawSkillBridge` to register OpenClaw skills into the registry (b8d7a73)
 - [x] Task: Backend - Wire the `ToolRegistry` into Gemini's function-calling loop (b8d7a73)
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Tool Registry' (Protocol in workflow.md)

@@ -1,6 +1,13 @@
+vi.mock('./ChannelService.js', () => ({
+    channelService: {
+        getAllChannelsAcrossAgents: vi.fn()
+    }
+}));
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MultiTenantService } from '@/services/multiTenantService.js';
-import { FirebaseService } from '@/services/FirebaseService.js';
+import { MultiTenantService } from './multiTenantService.js';
+import { FirebaseService } from './FirebaseService.js';
+import { channelService } from './ChannelService.js';
 
 // Hoist mocks
 const { mockFirebaseService } = vi.hoisted(() => {
@@ -44,8 +51,8 @@ describe('MultiTenantService', () => {
         service = MultiTenantService.getInstance();
     });
 
-    describe('canAddBot', () => {
-        it('should return true if bot count is less than maxBots', async () => {
+    describe('canAddChannel', () => {
+        it('should return true if channel count is less than maxChannels', async () => {
             // Mock Tenant with pro plan (maxBots = 3)
             mockFirebaseService.getDoc.mockResolvedValueOnce({
                 id: 'tenant-1',
@@ -58,18 +65,21 @@ describe('MultiTenantService', () => {
                 settings: { aiEnabled: true }
             });
 
-            // Mock existing bots (count = 1)
-            mockFirebaseService.getCollection.mockResolvedValueOnce([
-                { id: 'bot-1' }
-            ]);
+            // Mock existing channels (count = 1)
+            (channelService.getAllChannelsAcrossAgents as any).mockResolvedValueOnce({
+                success: true,
+                data: [
+                    { id: 'chan-1' }
+                ]
+            });
 
-            const result = await service.canAddBot('tenant-1');
+            const result = await service.canAddChannel('tenant-1');
             if (!result.success) console.error('Test Failed Error:', result.error);
             expect(result.success).toBe(true);
             expect(result.data).toBe(true);
         });
 
-        it('should return false if bot count equals maxBots', async () => {
+        it('should return false if channel count equals maxChannels', async () => {
             // Mock Tenant with starter plan (maxBots = 1)
             mockFirebaseService.getDoc.mockResolvedValueOnce({
                 id: 'tenant-1',
@@ -82,17 +92,20 @@ describe('MultiTenantService', () => {
                 settings: { aiEnabled: false }
             });
 
-            // Mock existing bots (count = 1)
-            mockFirebaseService.getCollection.mockResolvedValueOnce([
-                { id: 'bot-1' }
-            ]);
+            // Mock existing channels (count = 1)
+            (channelService.getAllChannelsAcrossAgents as any).mockResolvedValueOnce({
+                success: true,
+                data: [
+                    { id: 'chan-1' }
+                ]
+            });
 
-            const result = await service.canAddBot('tenant-1');
+            const result = await service.canAddChannel('tenant-1');
             expect(result.success).toBe(true); // check executed successfully
-            expect(result.data).toBe(false); // but user cannot add bot
+            expect(result.data).toBe(false); // but user cannot add channel
         });
 
-        it('should handle missing settings and default to 1 bot', async () => {
+        it('should handle missing settings and default to 1 channel', async () => {
             // Mock Tenant with missing plan (defaults to starter)
             mockFirebaseService.getDoc.mockResolvedValueOnce({
                 id: 'tenant-1',
@@ -106,12 +119,15 @@ describe('MultiTenantService', () => {
                 settings: {}
             });
 
-            mockFirebaseService.getCollection.mockResolvedValueOnce([
-                { id: 'bot-1' }
-            ]);
+            (channelService.getAllChannelsAcrossAgents as any).mockResolvedValueOnce({
+                success: true,
+                data: [
+                    { id: 'chan-1' }
+                ]
+            });
 
-            const result = await service.canAddBot('tenant-1');
-            // Default maxBots is 1. Existing is 1. Should be false.
+            const result = await service.canAddChannel('tenant-1');
+            // Default maxChannels is 1. Existing is 1. Should be false.
             expect(result.success).toBe(true);
             expect(result.data).toBe(false);
         });
@@ -119,7 +135,7 @@ describe('MultiTenantService', () => {
         it('should return error if tenant not found', async () => {
             mockFirebaseService.getDoc.mockResolvedValueOnce(null);
 
-            const result = await service.canAddBot('tenant-missing');
+            const result = await service.canAddChannel('tenant-missing');
             expect(result.success).toBe(false);
             expect(result.error).toBeDefined();
         });

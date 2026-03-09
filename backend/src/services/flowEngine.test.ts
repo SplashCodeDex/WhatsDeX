@@ -124,7 +124,7 @@ describe('FlowEngine', () => {
       body: 'ask ai',
       reply: mockReply,
       sender: { jid: 'user1' },
-      bot: { botId: 'bot1', tenantId: 'tenant1' },
+      channel: { channelId: 'chan1', tenantId: 'tenant1' },
       unifiedAI: {
         processOmnichannelMessage: mockProcessMessage
       }

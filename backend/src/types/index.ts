@@ -90,7 +90,7 @@ export interface GroupFunctions {
     isAdmin: (userJid?: string) => Promise<boolean>;
     matchAdmin: (userJid: string) => Promise<boolean>;
     members: () => Promise<string[]>;
-    isChannelAdmin: () => Promise<boolean>;
+    isActiveChannelAdmin: () => Promise<boolean>;
     metadata: () => Promise<any>;
     owner: () => Promise<string | null>;
     name: () => Promise<string>;
@@ -189,7 +189,7 @@ export interface MessageContext {
 
 export interface CommandPermissions {
     admin?: boolean;
-    channelAdmin?: boolean;
+    isActiveChannelAdmin?: boolean;
     owner?: boolean;
     group?: boolean;
     private?: boolean;

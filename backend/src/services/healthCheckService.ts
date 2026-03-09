@@ -33,7 +33,7 @@ export class HealthCheckService {
     this.healthChecks = new Map();
     this.metrics = new Map();
     this.rateLimiter = new RateLimiter(redis);
-    
+
     this.registerDefaultChecks();
     this.startPeriodicChecks();
   }
@@ -91,11 +91,11 @@ export class HealthCheckService {
       const totalMem = os.totalmem();
       const freeMem = os.freemem();
       const usedMem = totalMem - freeMem;
-      
+
       const heapUsage = (usage.heapUsed / usage.heapTotal) * 100;
       const systemUsage = (usedMem / totalMem) * 100;
       const status = heapUsage > 85 || systemUsage > 90 ? 'warning' : 'healthy';
-      
+
       return {
         status,
         details: {
@@ -121,7 +121,7 @@ export class HealthCheckService {
     try {
       const result = await Promise.race([
         checkFunction(),
-        new Promise<never>((_, reject) => 
+        new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Health check timeout')), 5000)
         )
       ]);
@@ -148,7 +148,7 @@ export class HealthCheckService {
     for (const name of checks) {
       results[name] = await this.runHealthCheck(name);
     }
-    
+
     const hasUnhealthyCritical = Object.values(results).some(r => r.critical && r.status === 'unhealthy');
     const hasWarnings = Object.values(results).some(r => r.status === 'warning');
 
@@ -163,7 +163,7 @@ export class HealthCheckService {
   async getSystemInfo() {
     const memoryUsage = process.memoryUsage();
     return {
-      service: 'WhatsDeX Bot',
+      service: 'WhatsDeX Channel',
       version: '1.0.0',
       uptime: this.getUptime(),
       memory: {

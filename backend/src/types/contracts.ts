@@ -186,7 +186,7 @@ export type Violation = z.infer<typeof ViolationSchema>;
  */
 export const CommandPermissionsSchema = z.object({
   admin: z.boolean().optional(),
-  channelAdmin: z.boolean().optional(),
+  isActiveChannelAdmin: z.boolean().optional(),
   owner: z.boolean().optional(),
   group: z.boolean().optional(),
   private: z.boolean().optional(),

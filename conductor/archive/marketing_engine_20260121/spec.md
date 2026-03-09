@@ -1,7 +1,7 @@
 # Specification: Marketing & Broadcast Engine (WANotifier Clone)
 
 ## Overview
-This track implements a high-performance marketing and broadcast engine for WhatsDeX. It allows users to manage contacts, create rich media templates, and launch personalized mass-messaging campaigns. The system is designed for maximum deliverability and account safety, with features scaled according to the user's subscription tier.
+This track implements a high-performance marketing and broadcast engine for DeXMart. It allows users to manage contacts, create rich media templates, and launch personalized mass-messaging campaigns. The system is designed for maximum deliverability and account safety, with features scaled according to the user's subscription tier.
 
 ## Functional Requirements
 

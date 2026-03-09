@@ -1,7 +1,7 @@
 # Specification: FlowBuilder 2.0 (The Visual Revolution)
 
 ## Overview
-FlowBuilder 2.0 is a visual, no-code logic designer for WhatsDeX. It allows users to create complex automation workflows by dragging and dropping nodes on a canvas. This moves the platform beyond simple auto-replies into sophisticated, multi-step conversation logic and platform actions.
+FlowBuilder 2.0 is a visual, no-code logic designer for DeXMart. It allows users to create complex automation workflows by dragging and dropping nodes on a canvas. This moves the platform beyond simple auto-replies into sophisticated, multi-step conversation logic and platform actions.
 
 ## Functional Requirements
 

@@ -9,14 +9,14 @@ import { Middleware, MessageContext } from '../types/index.js';
 import logger from '../utils/logger.js';
 
 export const permissionMiddleware: Middleware = async (ctx: MessageContext, next: () => Promise<void>) => {
-    // 0. Bot-Level Access Control (Multi-Tenant Mode & SelfMode)
-    const { mode, selfMode, disabledCommands = [] } = ctx.bot.config;
+    // 0. Channel-Level Access Control (Multi-Tenant Mode & SelfMode)
+    const { mode, selfMode, disabledCommands = [] } = ctx.channel.config;
 
     const cmd = ctx.commandDef;
 
     // 0.1 Command Toggle Check (Command Store)
     if (cmd && disabledCommands.includes(cmd.name)) {
-        return ctx.reply(`⚠️ The \`${cmd.name}\` command is currently disabled for this bot.`);
+        return ctx.reply(`⚠️ The \`${cmd.name}\` command is currently disabled for this channel.`);
     }
 
     // Self Mode: Only owner/self can trigger
@@ -26,7 +26,7 @@ export const permissionMiddleware: Middleware = async (ctx: MessageContext, next
 
     // Mode Enforcement
     if (mode === 'group-only' && !ctx.isGroup()) {
-        return ctx.reply('⚠️ This bot is configured to work in groups only.');
+        return ctx.reply('⚠️ This channel is configured to work in groups only.');
     }
 
     if (mode === 'private' && ctx.isGroup()) {
@@ -39,12 +39,12 @@ export const permissionMiddleware: Middleware = async (ctx: MessageContext, next
     }
 
     const perms = cmd.permissions;
-    const { formatter } = ctx.bot.context;
+    const { formatter } = ctx.channel.context;
 
     // 1. Owner Check
     if (perms.owner && !ctx.sender.isOwner) {
         await ctx.replyReact('⛔');
-        return ctx.reply(formatter.quote('⚠️ This command is restricted to the bot owner.'));
+        return ctx.reply(formatter.quote('⚠️ This command is restricted to the agent owner.'));
     }
 
     // 2. Group Only Check
@@ -65,12 +65,12 @@ export const permissionMiddleware: Middleware = async (ctx: MessageContext, next
         }
     }
 
-    // 5. Bot Admin Check (Group only)
-    if (perms.botAdmin && ctx.isGroup()) {
-        // We need to check if bot is admin
+    // 5. Active Channel Admin Check (Group only)
+    if (perms.isActiveChannelAdmin && ctx.isGroup()) {
+        // We need to check if channel is admin
         // Note: Generic ctx.group() implementation should provide this
-        const isBotAd = await ctx.group().isBotAdmin();
-        if (!isBotAd) {
+        const isAdmin = await ctx.group().isActiveChannelAdmin();
+        if (!isAdmin) {
             return ctx.reply(formatter.quote('⚠️ I need to be an admin to perform this action.'));
         }
     }
@@ -78,8 +78,8 @@ export const permissionMiddleware: Middleware = async (ctx: MessageContext, next
     // 6. Premium Check
     if (perms.premium) {
         if (!ctx.sender.isOwner) {
-            const { databaseService } = ctx.bot.context;
-            const user = await databaseService.getUser(ctx.bot.tenantId, ctx.sender.jid);
+            const { databaseService } = ctx.channel.context;
+            const user = await databaseService.getUser(ctx.channel.tenantId, ctx.sender.jid);
             if (!user?.premium) {
                 return ctx.reply(formatter.quote('🌟 This command is for Premium users only.'));
             }

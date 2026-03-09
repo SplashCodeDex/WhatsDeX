@@ -1,7 +1,7 @@
 # Specification: Codebase-Wide Placeholder & Simulation Cleanup
 
 ## Overview
-This track focuses on the systematic identification and replacement of all placeholders, dummy data, and simulations across the WhatsDeX codebase. The goal is to move the system from a "simulated" state to a "live-ready" state by wiring real backend services, external APIs (in Sandbox mode), and dynamic frontend components.
+This track focuses on the systematic identification and replacement of all placeholders, dummy data, and simulations across the DeXMart codebase. The goal is to move the system from a "simulated" state to a "live-ready" state by wiring real backend services, external APIs (in Sandbox mode), and dynamic frontend components.
 
 ## Functional Requirements
 1.  **Backend Service Finalization**:

@@ -24,7 +24,7 @@ describe('ResearchSkill Integration', () => {
     vi.clearAllMocks();
     mockContext = {
       tenantId: 'tenant-123',
-      botId: 'bot-1',
+      channelId: 'channel-1',
       userId: 'user-1'
     };
   });
@@ -56,7 +56,7 @@ describe('ResearchSkill Integration', () => {
     expect(result.success).toBe(true);
     expect(result.report).toContain('Final Verified Report');
     expect(toolRegistry.executeTool).toHaveBeenCalledTimes(3);
-    
+
     // Verify first call was for the Lead Researcher
     expect(toolRegistry.executeTool).toHaveBeenNthCalledWith(1, 'sessions_spawn', expect.objectContaining({
       label: 'Lead Researcher'

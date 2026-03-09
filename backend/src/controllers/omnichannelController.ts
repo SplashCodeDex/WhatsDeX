@@ -306,13 +306,13 @@ export class OmnichannelController {
         try {
             const { channelManager } = await import('../services/channels/ChannelManager.js');
             const { channelId, botId, to, text } = req.body;
-            const id = channelId || botId;
+            const targetId = channelId || botId;
 
-            if (!id || !to || !text) {
-                return res.status(400).json({ success: false, error: 'Missing required fields: channelId/botId, to, text' });
+            if (!targetId || !to || !text) {
+                return res.status(400).json({ success: false, error: 'Missing required fields: channelId, to, text' });
             }
 
-            const adapter = channelManager.getAdapter(id);
+            const adapter = channelManager.getAdapter(targetId);
             if (!adapter) {
                 return res.status(400).json({ success: false, error: 'Channel not active' });
             }

@@ -32,8 +32,8 @@ jspm_packages/
 .env.parcel
 .env.*
 database.json
-.whatsdex-learning.json
-.whatsdex-profile.json
+.DeXMart-learning.json
+.DeXMart-profile.json
 eslint-report.json
 eslint-report.txt
 

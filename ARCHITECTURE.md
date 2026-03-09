@@ -1,11 +1,11 @@
-# WhatsDeX Architecture
+# DeXMart Architecture
 
 > **Version**: 2.0.0
 > **Last Updated**: 2026-01-15
 
 ## 1. System Overview
 
-WhatsDeX is a modern WhatsApp bot management dashboard and automation platform. It consists of a decoupled architecture with a distinct Frontend and Backend, communicating via RESTful APIs and WebSockets.
+DeXMart is a modern WhatsApp bot management dashboard and automation platform. It consists of a decoupled architecture with a distinct Frontend and Backend, communicating via RESTful APIs and WebSockets.
 
 ### High-Level Components
 
@@ -54,7 +54,7 @@ graph TB
 
 ## 2. AI Intelligence & Agentic Brain
 
-WhatsDeX features a multi-layer intelligence system (GeminiAI) that acts as the "brain" of the bot.
+DeXMart features a multi-layer intelligence system (GeminiAI) that acts as the "brain" of the bot.
 
 ### Intelligence Layers
 1.  **Intent Detection**: Context-aware analysis of user messages to identify multiple goals.
@@ -74,7 +74,7 @@ WhatsDeX features a multi-layer intelligence system (GeminiAI) that acts as the 
 The project follows a monorepo-style structure:
 
 ```
-WhatsDeX/
+DeXMart/
 ├── backend/                # Node.js Express Server
 │   └── src/
 │       ├── commands/       # Bot commands
@@ -104,7 +104,7 @@ WhatsDeX/
 
 ## 3. Frontend Architecture
 
-> **📄 Detailed Documentation**: [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/WhatsDeX/frontend/ARCHITECTURE.md)
+> **📄 Detailed Documentation**: [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/DeXMart/frontend/ARCHITECTURE.md)
 
 ### Technology Stack
 
@@ -194,7 +194,7 @@ match /tenants/{tenantId}/{document=**} {
 
 #### Configuration Hierarchy
 
-WhatsDeX uses a **layered configuration system** that separates infrastructure from tenant settings:
+DeXMart uses a **layered configuration system** that separates infrastructure from tenant settings:
 
 | Layer | Location | Controlled By | Examples |
 |-------|----------|---------------|----------|

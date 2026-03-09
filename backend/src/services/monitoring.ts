@@ -1,6 +1,6 @@
 import logger from '../utils/logger.js';
 import { databaseService } from './database.js'; // Use the new service
-import { Bot, GlobalContext, MessageContext } from '../types/index.js';
+import { ActiveChannel, GlobalContext, MessageContext } from '../types/index.js';
 import os from 'os';
 
 interface Metrics {
@@ -90,7 +90,7 @@ class MonitoringService {
       const used = process.memoryUsage().heapUsed / 1024 / 1024;
       this.metrics.memoryUsage = Math.round(used * 100) / 100;
       this.metrics.uptime = process.uptime();
-      
+
       // Calculate approximate CPU usage from load average
       const load = os.loadavg()[0];
       const cores = os.cpus().length;

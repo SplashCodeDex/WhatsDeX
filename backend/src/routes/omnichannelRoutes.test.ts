@@ -36,7 +36,7 @@ describe('Omnichannel Routes', () => {
       const res = await request(app)
         .post('/send')
         .send({
-          botId: 'chan-456',
+          channelId: 'chan-456',
           to: '1234567890',
           text: 'Hello via adapter'
         });
@@ -52,7 +52,7 @@ describe('Omnichannel Routes', () => {
       const res = await request(app)
         .post('/send')
         .send({
-          botId: 'inactive',
+          channelId: 'inactive',
           to: '1234567890',
           text: 'hi'
         });

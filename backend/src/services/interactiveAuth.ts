@@ -24,7 +24,7 @@ class InteractiveAuthEnhancement {
     try {
       logger.info('🔍 Detecting existing authenticated session...');
 
-      const sessionId = this.unifiedAuth.config.bot?.sessionId || 'default_session';
+      const sessionId = this.unifiedAuth.config.channel?.sessionId || 'default_session';
       const sessionRef = db.collection('waba_sessions').doc(sessionId);
       const doc = await sessionRef.get();
 
@@ -142,7 +142,7 @@ class InteractiveAuthEnhancement {
   async promptAuthenticationChoice(): Promise<any> {
     return new Promise(resolve => {
       logger.info('\n' + '╔══════════════════════════════════════════════════════════════╗');
-      logger.info('║                    WhatsDeX Authentication                   ║');
+      logger.info('║                   WhatsDeX Authentication                    ║');
       logger.info('╠══════════════════════════════════════════════════════════════╣');
       logger.info('║                                                              ║');
       logger.info('║  🔍 Session Status: No active session found                  ║');

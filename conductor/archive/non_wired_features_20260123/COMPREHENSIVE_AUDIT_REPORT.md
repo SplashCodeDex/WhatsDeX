@@ -1,7 +1,7 @@
 # 🔍 COMPREHENSIVE NON-WIRED FEATURES AUDIT REPORT
-**WhatsDeX Multi-Tenant SaaS Platform**  
-**Date:** February 20, 2026  
-**Auditor:** Rovo Dev AI Assistant  
+**DeXMart Multi-Tenant SaaS Platform**
+**Date:** February 20, 2026
+**Auditor:** Rovo Dev AI Assistant
 **Scope:** Backend Services, Frontend Components, API Routes, Jobs, Webhooks, Payment Flows
 
 ---
@@ -157,7 +157,7 @@ export class StatsAggregatorJob {
 
 **Fix Required:**
 ```typescript
-// In whatsDeXBrain.ts or message handler:
+// In DeXMartBrain.ts or message handler:
 const userFacts = await geminiAI.getPersistentLearning(userId);
 const systemPrompt = `User facts: ${JSON.stringify(userFacts)}`;
 // After response:
@@ -238,7 +238,7 @@ export class UsageController {
 ## ❌ NOT WIRED FEATURES (Exist in Code, Never Used)
 
 ### 13. **Google Drive Backup Service** ❌
-- **Status:** Command exists in OpenClaw integration, NOT in WhatsDeX backend
+- **Status:** Command exists in OpenClaw integration, NOT in DeXMart backend
 - **Backend:**
   - ❌ No `BackupService` class
   - ❌ No Google Drive OAuth flow
@@ -304,7 +304,7 @@ await jobRegistry.initialize(jobQueueService);
 
 **Fix Required:**
 ```typescript
-// In message handler or whatsDeXBrain.ts:
+// In message handler or DeXMartBrain.ts:
 import NLPProcessorService from './services/nlpProcessor.js';
 const intent = await NLPProcessorService.detectIntent(message);
 if (intent.name === 'cancel_subscription') { ... }
@@ -500,8 +500,8 @@ Before marking a feature as "fully wired":
 
 ---
 
-**Report Generated:** February 20, 2026  
-**Total Features Audited:** 21  
-**Completion Rate:** 68% (14/21 features fully or partially working)  
-**Critical Gaps:** 4  
+**Report Generated:** February 20, 2026
+**Total Features Audited:** 21
+**Completion Rate:** 68% (14/21 features fully or partially working)
+**Critical Gaps:** 4
 **Next Review Date:** March 1, 2026

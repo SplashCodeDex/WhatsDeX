@@ -1,7 +1,7 @@
-# WhatsDeX Mastermind: Phase 2 Manuscript (2026)
+# DeXMart Mastermind: Phase 2 Manuscript (2026)
 
 ## 1. Executive Summary
-WhatsDeX has successfully evolved from a multi-channel bot platform into an **Omnichannel AI Mastermind**. The "Phase 1" consolidation is complete: we have a unified neural core (Gemini 2.5), a platform-agnostic message bus, and a high-performance agentic loop capable of parallel tool execution and short-term memory persistence.
+DeXMart has successfully evolved from a multi-channel bot platform into an **Omnichannel AI Mastermind**. The "Phase 1" consolidation is complete: we have a unified neural core (Gemini 2.5), a platform-agnostic message bus, and a high-performance agentic loop capable of parallel tool execution and short-term memory persistence.
 
 **Phase 2** is about **Cognitive Expansion and Enterprise Scale**. We will move from "smart bots" to "autonomous swarms" and from a single-server architecture to a distributed, edge-cached global network.
 

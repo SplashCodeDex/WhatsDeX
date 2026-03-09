@@ -2,7 +2,7 @@
 
 **Generated on:** 2026-03-07 12:39:17
 **Upstream Repository:** https://github.com/openclaw/openclaw
-**Your Fork Location:** openclaw/ subdirectory in WhatsDeX project
+**Your Fork Location:** openclaw/ subdirectory in DeXMart project
 
 ---
 

@@ -2,16 +2,16 @@ import { Middleware, MessageContext } from '../types/index.js';
 import { rateLimiterService } from '../services/rateLimiter.js';
 
 export const cooldownMiddleware: Middleware = async (ctx: MessageContext, next: () => Promise<void>) => {
-  const tenantId = ctx.bot.tenantId;
+  const tenantId = ctx.channel.tenantId;
   const userId = ctx.sender.jid;
 
-  // 1. Bot-Level Global Cooldown (Strict enforcement for AI & Commands)
-  const botCooldownSec = (ctx.bot.config?.cooldownMs || 0) / 1000;
-  if (botCooldownSec > 0) {
+  // 1. Channel-Level Global Cooldown (Strict enforcement for AI & Commands)
+  const channelCooldownSec = (ctx.channel.config?.cooldownMs || 0) / 1000;
+  if (channelCooldownSec > 0) {
     const globalKey = `global_cooldown:${tenantId}:${userId}`;
     const globalAllowed = await rateLimiterService.check(globalKey, {
       points: 1,
-      duration: botCooldownSec
+      duration: channelCooldownSec
     });
 
     if (!globalAllowed) {
@@ -25,7 +25,7 @@ export const cooldownMiddleware: Middleware = async (ctx: MessageContext, next: 
   }
 
   // 2. Command-Specific Cooldown
-  const cmd = ctx.commandDef || (ctx.used?.command ? ctx.bot.cmd?.get(ctx.used.command) : null);
+  const cmd = ctx.commandDef || (ctx.used?.command ? ctx.channel.cmd?.get(ctx.used.command) : null);
   if (!cmd) {
     return next();
   }

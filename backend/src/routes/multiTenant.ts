@@ -353,13 +353,13 @@ router.post(['/agents/:agentId/channels/:id/disconnect', '/channels/:id/disconne
 router.get(['/agents/:agentId/channels/:id/qr', '/bots/:botId/qr'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
-        const id = (req.params.id || req.params.botId) as string;
+        const channelId = (req.params.id || req.params.botId) as string;
         const agentId = (req.params.agentId || 'system_default') as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const qrCode = channelService.getChannelQR(id);
+        const qrCode = channelService.getChannelQR(channelId);
         if (qrCode) {
             res.json({ success: true, data: { qrCode } });
         } else {
@@ -377,7 +377,7 @@ router.get(['/agents/:agentId/channels/:id/qr', '/bots/:botId/qr'], async (req: 
 router.post(['/agents/:agentId/channels/:id/pairing-code', '/bots/:botId/pairing-code'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
-        const id = (req.params.id || req.params.botId) as string;
+        const channelId = (req.params.id || req.params.botId) as string;
         const agentId = (req.params.agentId || 'system_default') as string;
         const { phoneNumber } = req.body;
 
@@ -388,7 +388,7 @@ router.post(['/agents/:agentId/channels/:id/pairing-code', '/bots/:botId/pairing
             return res.status(400).json({ success: false, error: 'Phone number is required' });
         }
 
-        const result = await channelService.requestPairingCode(tenantId, id, phoneNumber, agentId);
+        const result = await channelService.requestPairingCode(tenantId, channelId, phoneNumber, agentId);
 
         if (result.success) {
             res.json({ success: true, data: { pairingCode: result.data } });
@@ -432,22 +432,22 @@ router.post('/agents/:agentId/channels/:id/move', async (req: Request, res: Resp
 router.get(['/agents/:agentId/channels/:id/status', '/bots/:botId/status'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
-        const id = (req.params.id || req.params.botId) as string;
+        const channelId = (req.params.id || req.params.botId) as string;
         const agentId = (req.params.agentId || 'system_default') as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const channelResult = await channelService.getChannel(tenantId, id, agentId);
+        const channelResult = await channelService.getChannel(tenantId, channelId, agentId);
         if (!channelResult.success) return res.status(404).json({ success: false, error: 'Channel not found' });
 
         const channel = channelResult.data;
-        const hasQR = !!channelService.getChannelQR(id);
+        const hasQR = !!channelService.getChannelQR(channelId);
 
         res.json({
             success: true,
             data: {
-                id: id,
+                id: channelId,
                 status: channel.status,
                 isActive: channel.status === 'connected' || channel.status === 'connecting',
                 hasQR

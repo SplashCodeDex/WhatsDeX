@@ -1,7 +1,7 @@
 # Specification: System-Wide Feature Integration & Infrastructure Fixes
 
 ## Overview
-This track addresses the critical infrastructure gaps and "partially wired" features identified in the system audit. The goal is to move the WhatsDeX platform from a state of visual completion to full operational robustness by initializing the background job system, connecting the frontend to missing backend routes, and implementing key interaction and intelligence logic.
+This track addresses the critical infrastructure gaps and "partially wired" features identified in the system audit. The goal is to move the DeXMart platform from a state of visual completion to full operational robustness by initializing the background job system, connecting the frontend to missing backend routes, and implementing key interaction and intelligence logic.
 
 ## Functional Requirements
 
@@ -10,7 +10,7 @@ This track addresses the critical infrastructure gaps and "partially wired" feat
 - **Worker Connectivity:** Ensure all BullMQ workers (AI, Media, Analytics, Campaigns) are started during the boot sequence.
 
 ### 2. Messaging: Unified Inbox & Safety
-- **Inbox Reply:** Implement the `reply` functionality in the Unified Inbox. 
+- **Inbox Reply:** Implement the `reply` functionality in the Unified Inbox.
     - Logic: Replies must be automatically routed through the *last* bot/channel that interacted with the contact.
 - **AI Message Spinning:** Add a UI button to the Template/Campaign editors to trigger the backend "Message Spinning" logic (Enterprise only).
 - **Template Management:** Create a dedicated dashboard page for managing (CRUD) message templates.

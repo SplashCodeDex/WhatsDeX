@@ -1,6 +1,6 @@
 # Implementation Plan: System-Wide Feature Integration & Infrastructure Fixes
 
-This plan addresses critical infrastructure gaps and wires up partially implemented features to ensure WhatsDeX is fully operational and scalable.
+This plan addresses critical infrastructure gaps and wires up partially implemented features to ensure DeXMart is fully operational and scalable.
 
 ## Phase 1: Infrastructure & Job Activation [checkpoint: a84243c8]
 Goal: Enable the background processing engine to support AI, analytics, and campaigns.

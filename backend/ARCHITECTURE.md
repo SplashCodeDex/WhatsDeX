@@ -1,4 +1,4 @@
-# WhatsDeX Backend Architecture
+# DeXMart Backend Architecture
 
 > **Version**: 1.0.0
 > **Last Updated**: 2026-01-23
@@ -8,7 +8,7 @@
 
 ## 1. Design Philosophy
 
-The WhatsDeX backend is a high-performance, multi-tenant bot management engine. It prioritizes **Resilience**, **Security**, and **Observability**.
+The DeXMart backend is a high-performance, multi-tenant bot management engine. It prioritizes **Resilience**, **Security**, and **Observability**.
 
 ### Key Principles
 - **Zero-Trust Data Layer**: All I/O is validated at the boundary via Zod.

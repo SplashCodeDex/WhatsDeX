@@ -193,10 +193,7 @@ export class MultiTenantService {
   }
 
   /**
-   * Check if tenant has reached bot limit
-   */
-  /**
-   * Check if tenant has reached bot limit
+   * Check if tenant has reached channel limit
    */
   async canAddChannel(tenantId: string): Promise<Result<boolean>> {
     const tenantResult = await this.getTenant(tenantId);
@@ -225,7 +222,7 @@ export class MultiTenantService {
 
       return { success: true, data: true };
     } catch (error) {
-      logger.error(`MultiTenantService.canAddBot failed to count bots [${tenantId}]:`, error);
+      logger.error(`MultiTenantService.canAddChannel failed to count channels [${tenantId}]:`, error);
       return { success: false, error: error as Error };
     }
   }
