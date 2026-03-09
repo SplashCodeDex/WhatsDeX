@@ -6,7 +6,7 @@ export const envSchema = z.object({
   // DATABASE_URL removed as we use Firestore exclusively
 
   // Channel Config
-  CHANNEL_NAME: z.string().default('whatsdex'),
+  CHANNEL_NAME: z.string().default('DeXMart'),
   CHANNEL_PREFIX: z.string().default('^[.#!?]'),
   CHANNEL_PHONE_NUMBER: z.string().optional(),
   GROUP_JID: z.string().optional(),
@@ -24,7 +24,7 @@ export const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),
-  FIREBASE_TABLE_NAME: z.string().default('whatsdex'),
+  FIREBASE_TABLE_NAME: z.string().default('DeXMart'),
   FIREBASE_SESSION: z.string().default('state'),
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
   FIREBASE_WEB_API_KEY: z.string().optional(), // Required for Firebase Auth REST API login
