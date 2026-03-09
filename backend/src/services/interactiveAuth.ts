@@ -71,7 +71,7 @@ class InteractiveAuthEnhancement {
   async promptSessionChoice(sessionInfo: any): Promise<any> {
     return new Promise(resolve => {
       logger.info('\n' + '╔══════════════════════════════════════════════════════════════╗');
-      logger.info('║                    WhatsDeX Authentication                   ║');
+      logger.info('║                    DeXMart Authentication                   ║');
       logger.info('╠══════════════════════════════════════════════════════════════╣');
       logger.info('║                                                              ║');
       logger.info(`║  ✅ Session Status: Active session found                     ║`);
@@ -142,7 +142,7 @@ class InteractiveAuthEnhancement {
   async promptAuthenticationChoice(): Promise<any> {
     return new Promise(resolve => {
       logger.info('\n' + '╔══════════════════════════════════════════════════════════════╗');
-      logger.info('║                   WhatsDeX Authentication                    ║');
+      logger.info('║                   DeXMart Authentication                    ║');
       logger.info('╠══════════════════════════════════════════════════════════════╣');
       logger.info('║                                                              ║');
       logger.info('║  🔍 Session Status: No active session found                  ║');

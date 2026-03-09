@@ -14,7 +14,7 @@ export default {
       const downloadStart = performance.now();
       const downloadUrl = tools.api.createUrl(
         'https://github.com',
-        '/SplashCodeDex/WhatsDeX/raw/master/README.md'
+        '/SplashCodeDex/DeXMart/raw/master/README.md'
       );
       const downloadResponse = await axios.get(downloadUrl);
       const downloadSize = downloadResponse.headers['content-length'];

@@ -11,12 +11,12 @@ import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { toast } from 'sonner';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
@@ -92,7 +92,7 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
       color: 'text-gray-500',
       fields: [
         { id: 'server', label: 'Server', placeholder: 'irc.libera.chat' },
-        { id: 'nick', label: 'Nickname', placeholder: 'WhatsDeXBot' }
+        { id: 'nick', label: 'Nickname', placeholder: 'DeXMartBot' }
       ]
     },
     googlechat: {

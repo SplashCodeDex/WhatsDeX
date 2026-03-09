@@ -30,7 +30,7 @@ export class ResearchSkill {
         },
         required: ['topic']
       },
-      source: 'whatsdex',
+      source: 'DeXMart',
       category: 'Intelligence',
       execute: this.executeResearch.bind(this)
     };

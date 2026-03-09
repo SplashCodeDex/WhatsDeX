@@ -23,7 +23,7 @@ export default {
 
     if (!input) {
       const instruction = tools.msg.generateInstruction(['send'], ['text']);
-      const example = tools.msg.generateCmdExample(ctx.used, 'whatsdex');
+      const example = tools.msg.generateCmdExample(ctx.used, 'DeXMart');
       return await ctx.reply(`${formatter.quote(instruction)}
 ${formatter.quote(example)}`);
     }

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
     title: 'Create Account',
-    description: 'Create your WhatsDeX account',
+    description: 'Create your DeXMart account',
 };
 
 export default function RegisterLayout({

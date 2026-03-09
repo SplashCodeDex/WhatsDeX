@@ -1,6 +1,6 @@
 /**
  * Universal API Key Rotation Manager (Adapter)
- * Wraps @codedex/api-key-manager for backward compatibility in WhatsDeX.
+ * Wraps @codedex/api-key-manager for backward compatibility in DeXMart.
  *
  * @module lib/apiKeyManager
  */
@@ -19,7 +19,7 @@ import type { Result } from '../types/contracts.js';
 // ============================================================================
 
 const CONFIG = {
-    STATE_FILE: join(tmpdir(), 'whatsdex_api_key_state_v2.json'),
+    STATE_FILE: join(tmpdir(), 'DeXMart_api_key_state_v2.json'),
 } as const;
 
 // ============================================================================

@@ -5,7 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { APP_CONFIG } from '@/lib/constants/config';
 
 export const metadata = {
-    title: 'Privacy Policy - WhatsDeX',
+    title: 'Privacy Policy - DeXMart',
     description: 'How we handle your data and protect your privacy.',
 };
 
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
                     <section>
                         <h2 className="text-2xl font-semibold text-foreground mb-4">1. Introduction</h2>
                         <p className="text-muted-foreground leading-relaxed">
-                            At WhatsDeX, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
+                            At DeXMart, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
                         </p>
                     </section>
 

@@ -1,4 +1,4 @@
-import WhatsDeXBrain from '../services/whatsDeXBrain.js';
+import DeXMartBrain from '../services/DeXMartBrain.js';
 import moment from 'moment-timezone';
 import { ActiveChannel, GlobalContext, MessageContext, ChannelMember, Command } from '../types/index.js';
 import { cooldownMiddleware } from './cooldown.js';
@@ -22,7 +22,7 @@ const mainMiddleware = (channel: ActiveChannel, context: GlobalContext) => {
         config,
         formatter,
     } = context;
-    const brain = new WhatsDeXBrain(channel, context);
+    const brain = new DeXMartBrain(channel, context);
 
     channel.use(cooldownMiddleware);
 

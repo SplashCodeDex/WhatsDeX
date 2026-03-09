@@ -15,7 +15,7 @@ class SettingsService {
 
   initializeDefaultSettings() {
     const defaultSettings = {
-      'general.channelName': { category: 'general', key: 'channelName', value: 'WhatsDeX', valueType: 'string', description: 'Channel display name', isEncrypted: false },
+      'general.channelName': { category: 'general', key: 'channelName', value: 'DeXMart', valueType: 'string', description: 'Channel display name', isEncrypted: false },
       'general.channelDescription': { category: 'general', key: 'channelDescription', value: 'Advanced WhatsApp Channel with AI Features', valueType: 'string', description: 'Channel description', isEncrypted: false },
       'general.ownerName': { category: 'general', key: 'ownerName', value: 'CodeDeX', valueType: 'string', description: 'Channel owner name', isEncrypted: false },
       'general.timezone': { category: 'general', key: 'timezone', value: 'Africa/Accra', valueType: 'string', description: 'System timezone', isEncrypted: false },
@@ -33,7 +33,7 @@ class SettingsService {
       // Database
       'database.host': { category: 'database', key: 'host', value: process.env.DB_HOST || 'localhost', valueType: 'string', description: 'Database host', isEncrypted: false },
       'database.port': { category: 'database', key: 'port', value: Number(process.env.DB_PORT || 5432), valueType: 'number', description: 'Database port', isEncrypted: false },
-      'database.database': { category: 'database', key: 'database', value: process.env.DB_NAME || 'whatsdex', valueType: 'string', description: 'Database name', isEncrypted: false },
+      'database.database': { category: 'database', key: 'database', value: process.env.DB_NAME || 'DeXMart', valueType: 'string', description: 'Database name', isEncrypted: false },
     };
 
     Object.entries(defaultSettings).forEach(([key, setting]) => {

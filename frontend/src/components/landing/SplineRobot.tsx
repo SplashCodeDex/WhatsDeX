@@ -79,14 +79,14 @@ export function SplineRobot({ sceneUrl, className = '' }: SplineRobotProps) {
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-background z-10 transition-opacity duration-1000">
                             {/* Robot Placeholder Image */}
                             <div className="relative w-full h-full flex items-center justify-center">
-                                <Image 
+                                <Image
                                     src="/assets/illustrations/bot-automation.png"
-                                    alt="WhatsDeX Assistant Loading..."
+                                    alt="DeXMart Assistant Loading..."
                                     fill
                                     className="object-contain opacity-20 scale-90 blur-sm animate-pulse"
                                     priority
                                 />
-                                
+
                                 {/* Loading Indicator Overlay */}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-transparent via-background/40 to-background">
                                     <div className="flex flex-col items-center gap-6">

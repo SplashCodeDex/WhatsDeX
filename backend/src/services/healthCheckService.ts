@@ -163,7 +163,7 @@ export class HealthCheckService {
   async getSystemInfo() {
     const memoryUsage = process.memoryUsage();
     return {
-      service: 'WhatsDeX Channel',
+      service: 'DeXMart Channel',
       version: '1.0.0',
       uptime: this.getUptime(),
       memory: {

@@ -28,7 +28,7 @@ export default {
 
   // Bot sticker
   sticker: {
-    packname: 'WhatsDeX Sticker Pack',
+    packname: 'DeXMart Sticker Pack',
     author: 'CodeDeX',
   },
 

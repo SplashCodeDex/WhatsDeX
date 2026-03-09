@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
 
     // Environment variables exposed to browser
     env: {
-        NEXT_PUBLIC_APP_NAME: 'WhatsDeX',
+        NEXT_PUBLIC_APP_NAME: 'DeXMart',
     },
 
     // Security headers

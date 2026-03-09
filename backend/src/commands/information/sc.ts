@@ -8,7 +8,7 @@ export default {
     code: async (ctx: MessageContext) => {
         const { formatter, config } = ctx.channel.context;
         await ctx.reply({
-            text: formatter.quote('https://github.com/SplashCodeDex/WhatsDeX'),
+            text: formatter.quote('https://github.com/SplashCodeDex/DeXMart'),
             footer: config.msg.footer,
         });
     },

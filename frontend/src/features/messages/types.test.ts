@@ -11,7 +11,7 @@ describe('Omnichannel Message Schema', () => {
             remoteJid: '1234567890@s.whatsapp.net',
             fromMe: true,
             type: 'text',
-            content: 'Hello from WhatsDeX!',
+            content: 'Hello from DeXMart!',
             status: 'sent',
             timestamp: new Date().toISOString(),
             createdAt: new Date().toISOString(),

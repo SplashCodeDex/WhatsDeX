@@ -28,7 +28,7 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps): React.JSX.Element {
     return (
         <QueryProvider>
-            <ThemeProvider defaultTheme="system" storageKey="whatsdex-theme">
+            <ThemeProvider defaultTheme="system" storageKey="DeXMart-theme">
                 <Toaster
                     position="bottom-right"
                     expand={true}

@@ -1,5 +1,5 @@
 /**
- * WhatsDeXBrain - Legacy Alias for GeminiAI
+ * DeXMartBrain - Legacy Alias for GeminiAI
  *
  * @deprecated Use GeminiAI directly
  * This module provides backward compatibility for imports using the old name.
@@ -10,16 +10,16 @@ import { ActiveChannel, GlobalContext, MessageContext, Result } from '../types/i
 import logger from '../utils/logger.js';
 
 /**
- * WhatsDeXBrain wraps GeminiAI for backward compatibility
+ * DeXMartBrain wraps GeminiAI for backward compatibility
  */
-export class WhatsDeXBrain {
+export class DeXMartBrain {
     private ai: GeminiAI;
     private channel: ActiveChannel;
 
     constructor(channel: ActiveChannel, context: GlobalContext) {
         this.channel = channel;
         this.ai = new GeminiAI(context);
-        logger.debug('[WhatsDeXBrain] Initialized (wrapping GeminiAI)');
+        logger.debug('[DeXMartBrain] Initialized (wrapping GeminiAI)');
     }
 
     /**
@@ -30,4 +30,4 @@ export class WhatsDeXBrain {
     }
 }
 
-export default WhatsDeXBrain;
+export default DeXMartBrain;

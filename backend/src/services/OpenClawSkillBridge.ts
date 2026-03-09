@@ -6,7 +6,7 @@ import logger from '../utils/logger.js';
 import configManager from '../config/ConfigManager.js';
 
 /**
- * Bridge between OpenClaw skills and the WhatsDeX Unified Tool Registry.
+ * Bridge between OpenClaw skills and the DeXMart Unified Tool Registry.
  *
  * Responsibilities:
  * 1. Create OpenClaw tools with full configuration options

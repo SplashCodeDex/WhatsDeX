@@ -1,5 +1,5 @@
 /**
- * WhatsDeX Frontend Type Definitions
+ * DeXMart Frontend Type Definitions
  *
  * Centralized type exports for the entire frontend.
  */

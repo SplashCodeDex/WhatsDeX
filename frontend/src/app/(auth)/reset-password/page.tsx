@@ -4,7 +4,7 @@ import { ResetPasswordForm } from '@/features/auth';
 import { Loader2 } from 'lucide-react';
 
 export const metadata: Metadata = {
-    title: 'Reset Password | WhatsDeX',
+    title: 'Reset Password | DeXMart',
     description: 'Set your new account password',
 };
 

@@ -33,7 +33,7 @@ import { enableConsoleCapture } from "./logging.js";
 import { runCommandWithTimeout, runExec } from "./process/exec.js";
 import { assertWebChannel, normalizeE164, toWhatsappJid } from "./utils.js";
 
-// Bridge Exports for WhatsDeX
+// Bridge Exports for DeXMart
 export { sendMessageWhatsApp, sendReactionWhatsApp, sendPollWhatsApp } from "./web/outbound.js";
 export { setActiveWebListener, type ActiveWebListener, type ActiveWebSendOptions } from "./web/active-listener.js";
 export { sendMessageTelegram } from "./telegram/send.js";
@@ -44,7 +44,7 @@ export { sendMessageIMessage } from "./imessage/send.js";
 export { createOpenClawTools } from "./agents/openclaw-tools.js";
 export { startGatewayServer } from "./gateway/server.js";
 
-// Channel-Specific AI Actions for WhatsDeX
+// Channel-Specific AI Actions for DeXMart
 export { handleWhatsAppAction } from "./agents/tools/whatsapp-actions.js";
 export { handleTelegramAction } from "./agents/tools/telegram-actions.js";
 

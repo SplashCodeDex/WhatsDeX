@@ -1,5 +1,5 @@
 /**
- * Global type declarations for WhatsDeX Frontend
+ * Global type declarations for DeXMart Frontend
  */
 
 // Extend Window interface if needed

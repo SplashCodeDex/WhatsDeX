@@ -302,7 +302,7 @@ export function BotSettingsDialog({ botId, agentId = 'system_default', botType, 
                                         <FormItem>
                                             <FormLabel>AI Personality / Prompt</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="You are a helpful assistant named WhatsDeX..." {...field} />
+                                                <Input placeholder="You are a helpful assistant named DeXMart..." {...field} />
                                             </FormControl>
                                             <FormDescription>Defines how the AI responds.</FormDescription>
                                         </FormItem>

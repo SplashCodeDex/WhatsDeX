@@ -1,4 +1,4 @@
-// Prepared context for WhatsDeX - Firebase ready
+// Prepared context for DeXMart - Firebase ready
 // 2026 Mastermind Edition - Strictly Typed
 import { ConfigService } from '../services/ConfigService.js';
 import tools from '../tools/exports.js';
@@ -15,7 +15,7 @@ import { agentService } from '../services/AgentService.js';
 import { ingressService } from '../services/IngressService.js';
 import { userService } from '../services/userService.js';
 import { tenantConfigService } from '../services/tenantConfigService.js';
-import { WhatsDeXToolBridge } from '../services/WhatsDeXToolBridge.js';
+import { DeXMartToolBridge } from '../services/DeXMartToolBridge.js';
 import { OpenClawSkillBridge } from '../services/OpenClawSkillBridge.js';
 import { MastermindSkillBridge } from '../services/MastermindSkillBridge.js';
 
@@ -79,16 +79,16 @@ async function initializeContext(): Promise<GlobalContext> {
             logger.info('Bridging tools for Agentic Brain...');
 
             // We need a temporary bot mock to extract commands for bridging
-            // since commands are tied to bot instances in WhatsDeX
+            // since commands are tied to bot instances in DeXMart
             // AUDIT-INTENTIONAL(#8): mockBot only provides `cmd` (a Map<string, Command>),
-            // which is the only property WhatsDeXToolBridge.registerCommands() accesses.
+            // which is the only property DeXMartToolBridge.registerCommands() accesses.
             // A full Bot instance isn't available at boot time (no WhatsApp connection yet).
             const mockBot = { cmd: commandSystem.getCommands() } as any;
             logger.info(`>>> [MASTERMIND] Mock bot created. Command count: ${mockBot.cmd.size}`);
 
-            logger.info('>>> [MASTERMIND] Bridging WhatsDeX tools...');
-            WhatsDeXToolBridge.registerCommands(mockBot);
-            logger.info('>>> [MASTERMIND] WhatsDeX tools bridged successfully.');
+            logger.info('>>> [MASTERMIND] Bridging DeXMart tools...');
+            DeXMartToolBridge.registerCommands(mockBot);
+            logger.info('>>> [MASTERMIND] DeXMart tools bridged successfully.');
 
             // Register OpenClaw Skills
             logger.info('>>> [MASTERMIND] Registering OpenClaw skills...');

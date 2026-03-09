@@ -3,11 +3,11 @@
  */
 
 export const APP_CONFIG = {
-    name: 'WhatsDeX',
+    name: 'DeXMart',
     description: 'WhatsApp Bot Management Platform',
     url: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
     apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
-    contactEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@whatsdex.com',
+    contactEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@DeXMart.com',
 } as const;
 
 export const PAGINATION = {

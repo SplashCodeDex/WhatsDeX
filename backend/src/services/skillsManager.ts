@@ -5,7 +5,7 @@ import logger from '@/utils/logger.js';
 
 /**
  * SkillsManager wraps OpenClaw's skills platform and handles
- * tier-based gating for WhatsDeX tenants.
+ * tier-based gating for DeXMart tenants.
  */
 export class SkillsManager {
   private static instance: SkillsManager;

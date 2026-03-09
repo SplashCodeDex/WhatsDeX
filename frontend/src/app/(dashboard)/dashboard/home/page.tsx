@@ -19,7 +19,7 @@ import { NestedResearchTrace } from './NestedResearchTrace';
 
 export const metadata: Metadata = {
     title: 'Dashboard Overview',
-    description: 'WhatsDeX system overview and statistics',
+    description: 'DeXMart system overview and statistics',
 };
 
 // Server-side data fetching
@@ -144,7 +144,7 @@ export default async function DashboardHomePage() {
     return (
         <div className="space-y-8">
             <OmnichannelSocketManager />
-            
+
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Overview</h2>
                 <p className="text-muted-foreground">

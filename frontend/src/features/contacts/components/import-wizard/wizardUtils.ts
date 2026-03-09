@@ -1,4 +1,4 @@
-import { FIELD_ALIASES, type TargetField as SharedTargetField } from '@whatsdex/shared/fieldAliases';
+import { FIELD_ALIASES, type TargetField as SharedTargetField } from '@DeXMart/shared/fieldAliases';
 import * as XLSX from 'xlsx';
 
 // ─── Target Fields ────────────────────────────────────────────────
@@ -49,7 +49,7 @@ export const initialWizardState: WizardState = {
 };
 
 // ─── Header Aliases ───────────────────────────────────────────────
-// Now using synchronized FIELD_ALIASES from @whatsdex/shared/fieldAliases
+// Now using synchronized FIELD_ALIASES from @DeXMart/shared/fieldAliases
 const HEADER_ALIASES = FIELD_ALIASES;
 
 // ─── Auto-Mapping Engine ─────────────────────────────────────────
@@ -182,7 +182,7 @@ export function downloadSampleCSV() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'whatsdex-contacts-template.csv';
+    link.download = 'DeXMart-contacts-template.csv';
     link.click();
     URL.revokeObjectURL(url);
 }
@@ -253,7 +253,7 @@ export async function parseExcel(file: File): Promise<string[][]> {
     const workbook = XLSX.read(data, { type: 'array' });
     const firstSheetName = workbook.SheetNames[0];
     if (!firstSheetName) return [];
-    
+
     const worksheet = workbook.Sheets[firstSheetName];
     if (!worksheet) return [];
 
@@ -267,7 +267,7 @@ export async function parseExcel(file: File): Promise<string[][]> {
 }
 
 // ─── Mapping Profile Persistence ──────────────────────────────
-const STORAGE_KEY = 'whatsdex:mapping-profiles';
+const STORAGE_KEY = 'DeXMart:mapping-profiles';
 
 export function getMappingProfiles(): MappingProfile[] {
     if (typeof window === 'undefined') return [];

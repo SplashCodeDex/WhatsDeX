@@ -27,7 +27,7 @@ describe('TemplateManagement', () => {
         {
             id: 't1',
             name: 'Welcome Template',
-            content: 'Hello {{name}}, welcome to WhatsDeX!',
+            content: 'Hello {{name}}, welcome to DeXMart!',
             category: 'marketing',
             mediaType: 'text',
             updatedAt: new Date().toISOString()

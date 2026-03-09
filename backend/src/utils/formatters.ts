@@ -1,5 +1,5 @@
 /**
- * WhatsDeX Formatters Utility
+ * DeXMart Formatters Utility
  */
 
 export const quote = (text: string): string => `> ${text}`;

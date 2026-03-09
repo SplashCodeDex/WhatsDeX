@@ -20,7 +20,7 @@ export default function HomePage(): React.JSX.Element {
                     <Link href="/" className="flex items-center gap-2 pointer-events-auto">
                         <Image
                             src="/logo.png"
-                            alt="WhatsDeX"
+                            alt="DeXMart"
                             width={40}
                             height={40}
                             className="h-15 w-15 drop-shadow-md"
@@ -79,7 +79,7 @@ export default function HomePage(): React.JSX.Element {
             <footer className="border-t border-border px-4 py-8">
                 <div className="mx-auto flex max-w-6xl items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                        © 2026 WhatsDeX. All rights reserved.
+                        © 2026 DeXMart. All rights reserved.
                     </p>
                     <div className="flex gap-4">
                         <Link

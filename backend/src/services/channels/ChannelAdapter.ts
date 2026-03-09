@@ -4,8 +4,8 @@ export type ChannelId = string;
 
 /**
  * ChannelAdapter is the base interface for all messaging channel adapters
- * in WhatsDeX. It follows the pattern established by OpenClaw but is
- * tailored for WhatsDeX's multi-tenant architecture.
+ * in DeXMart. It follows the pattern established by OpenClaw but is
+ * tailored for DeXMart's multi-tenant architecture.
  */
 export interface ChannelAdapter {
   /**

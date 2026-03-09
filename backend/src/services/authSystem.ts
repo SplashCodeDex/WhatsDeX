@@ -72,7 +72,7 @@ class AuthSystem extends EventEmitter {
         auth: state,
         printQRInTerminal: true, // We might want to disable this in production/SaaS mode
         logger: pinoLogger as any,
-        browser: ['WhatsDeX', 'Chrome', '1.0.0'],
+        browser: ['DeXMart', 'Chrome', '1.0.0'],
       });
 
       this.client.ev.on('creds.update', saveCreds);

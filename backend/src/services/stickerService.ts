@@ -89,7 +89,7 @@ export class StickerService {
    */
   async createSticker(mediaBuffer: Buffer, options: { packname?: string; author?: string; categories?: string[] } = {}): Promise<Result<{ buffer: Buffer }>> {
     try {
-      const { packname = 'WhatsDeX', author = 'CodeDeX', categories = [] } = options;
+      const { packname = 'DeXMart', author = 'CodeDeX', categories = [] } = options;
       const stickerBuffer = await writeExif(mediaBuffer, { packname, author, categories });
       return { success: true, data: { buffer: stickerBuffer } };
     } catch (error: unknown) {

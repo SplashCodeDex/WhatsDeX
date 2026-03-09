@@ -15,7 +15,7 @@ import { type ActiveChannel, type Command, type MessageContext, type GlobalConte
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const tracer = trace.getTracer('whatsdex-command-system');
+const tracer = trace.getTracer('DeXMart-command-system');
 
 export class CommandSystem {
   private context: GlobalContext;

@@ -1,7 +1,7 @@
 import { AgentTemplate } from '../types';
 
 /**
- * Initial set of Agent Templates to simplify onboarding for WhatsDeX users.
+ * Initial set of Agent Templates to simplify onboarding for DeXMart users.
  */
 export const AGENT_TEMPLATES: AgentTemplate[] = [
     {

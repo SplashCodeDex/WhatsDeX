@@ -12,13 +12,13 @@ export interface ToolDefinition {
     required: string[];
   };
   execute: (args: any, context: any) => Promise<any>;
-  source: 'whatsdex' | 'openclaw' | 'openclaw-channel';
+  source: 'DeXMart' | 'openclaw' | 'openclaw-channel';
   category?: string;
 }
 
 /**
  * Unified Tool Registry (2026 Edition)
- * Merges legacy WhatsDeX commands with OpenClaw skills.
+ * Merges legacy DeXMart commands with OpenClaw skills.
  */
 export class ToolRegistry {
   private static instance: ToolRegistry;

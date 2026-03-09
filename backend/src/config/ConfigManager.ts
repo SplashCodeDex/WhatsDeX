@@ -238,7 +238,7 @@ export class ConfigManager {
       // Channel Configuration
       channel: {
         name: this.env.CHANNEL_NAME,
-        browser: ['WhatsDeX', 'Chrome', '1.0.0'],
+        browser: ['DeXMart', 'Chrome', '1.0.0'],
         prefix: this.env.CHANNEL_PREFIX.startsWith('^') ? [this.env.CHANNEL_PREFIX] : this.env.CHANNEL_PREFIX.split(''),
         mode: 'public',
         selfMode: this.env.SELF_OWNER,

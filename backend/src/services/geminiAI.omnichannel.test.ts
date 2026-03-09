@@ -177,7 +177,7 @@ describe('GeminiAI Omnichannel Support', () => {
       description: 'A test tool',
       parameters: { type: 'object', properties: {}, required: [] },
       execute: vi.fn().mockResolvedValue('Tool result'),
-      source: 'whatsdex' as const
+      source: 'DeXMart' as const
     };
     toolRegistry.registerTool(mockTool);
 
@@ -221,14 +221,14 @@ describe('GeminiAI Omnichannel Support', () => {
       description: 'First tool',
       parameters: { type: 'object', properties: {}, required: [] },
       execute: vi.fn().mockResolvedValue('Result 1'),
-      source: 'whatsdex' as const
+      source: 'DeXMart' as const
     };
     const tool2 = {
       name: 'tool2',
       description: 'Second tool',
       parameters: { type: 'object', properties: {}, required: [] },
       execute: vi.fn().mockResolvedValue('Result 2'),
-      source: 'whatsdex' as const
+      source: 'DeXMart' as const
     };
     toolRegistry.registerTool(tool1);
     toolRegistry.registerTool(tool2);

@@ -15,7 +15,7 @@ export default {
     if (!url)
       return await ctx.reply(
         `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          tools.msg.generateCmdExample(ctx.used, 'https://github.com/itsreimau/whatsdex')
+          tools.msg.generateCmdExample(ctx.used, 'https://github.com/itsreimau/DeXMart')
         )}`
       );
 

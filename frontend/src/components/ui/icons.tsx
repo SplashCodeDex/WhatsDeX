@@ -1,5 +1,5 @@
 /**
- * WhatsDeX - Custom SVG Icon Components
+ * DeXMart - Custom SVG Icon Components
  * Brand-aligned programmatic icons
  */
 
@@ -44,6 +44,6 @@ export function GoogleIcon({ size = 24, className = '' }: Omit<IconProps, 'color
 }
 
 // Export all icons as a collection
-export const WhatsDeXIcons = {
+export const DeXMartIcons = {
     Google: GoogleIcon,
 };

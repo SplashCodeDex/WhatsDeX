@@ -14,7 +14,7 @@ export default {
     if (!input)
       return await ctx.reply(
         `${formatter.quote(tools.msg.generateInstruction(['send'], ['text']))}\n${formatter.quote(
-          tools.msg.generateCmdExample(ctx.used, 'whatsdex')
+          tools.msg.generateCmdExample(ctx.used, 'DeXMart')
         )}`
       );
 

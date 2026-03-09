@@ -2,9 +2,9 @@ import { startGatewayServer } from 'openclaw';
 
 /**
  * OpenClawGateway is a singleton service that manages the lifecycle
- * of the OpenClaw engine within the WhatsDeX backend.
+ * of the OpenClaw engine within the DeXMart backend.
  *
- * Serves as the proxy layer between the WhatsDeX REST API and
+ * Serves as the proxy layer between the DeXMart REST API and
  * OpenClaw's internal JSON-RPC-style gateway methods.
  */
 export class OpenClawGateway {

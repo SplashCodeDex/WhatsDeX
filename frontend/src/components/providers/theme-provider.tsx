@@ -30,7 +30,7 @@ export interface ThemeProviderProps {
 export function ThemeProvider({
     children,
     defaultTheme = 'system',
-    storageKey = 'whatsdex-theme',
+    storageKey = 'DeXMart-theme',
 }: ThemeProviderProps) {
     const [theme, setTheme] = React.useState<Theme>(defaultTheme);
 

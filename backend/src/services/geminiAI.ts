@@ -166,7 +166,7 @@ export class GeminiAI extends EventEmitter {
 
       const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
-Name: ${agent?.name || 'WhatsDeX AI'}
+Name: ${agent?.name || 'DeXMart AI'}
 Context: Omnichannel Mastermind.
 Current Time: ${new Date().toLocaleString()}
 User: ${JSON.stringify(context.user)}
@@ -878,7 +878,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
 
     const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
-Context: Acting on behalf of ${channel.user?.name ?? 'WhatsDeX'}.
+Context: Acting on behalf of ${channel.user?.name ?? 'DeXMart'}.
 Current Time: ${new Date().toLocaleString()}
 Work on behalf of the customer. Use the tools provided when necessary.
 ${historicalContext}

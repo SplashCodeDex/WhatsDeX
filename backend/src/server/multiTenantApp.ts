@@ -50,7 +50,7 @@ export class MultiTenantApp {
 
   async initialize(): Promise<void> {
     try {
-      logger.info('Initializing Multi-tenant WhatsDeX SaaS Platform...');
+      logger.info('Initializing Multi-tenant DeXMart SaaS Platform...');
 
       logger.info('>>> [MASTERMIND] Setting up server middleware...');
       // Setup middleware
@@ -279,7 +279,7 @@ export class MultiTenantApp {
 
       logger.info(`>>> [MASTERMIND] Attempting to listen on port ${this.port}...`);
       this.httpServer.listen(this.port, () => {
-        logger.info(`>>> [MASTERMIND] Multi-tenant WhatsDeX server running on port ${this.port}`);
+        logger.info(`>>> [MASTERMIND] Multi-tenant DeXMart server running on port ${this.port}`);
       });
 
       process.on('SIGTERM', () => this.shutdown());

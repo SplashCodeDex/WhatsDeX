@@ -83,7 +83,7 @@ export class BackupService {
         const dbExport = await this.exportTenantDatabase(tenantId);
         const jsonBuffer = Buffer.from(JSON.stringify(dbExport, null, 2));
         fileStream = Readable.from(jsonBuffer);
-        fileName = `WhatsDeX_DB_Backup_${tenantId}_${new Date().toISOString().split('T')[0]}.json`;
+        fileName = `DeXMart_DB_Backup_${tenantId}_${new Date().toISOString().split('T')[0]}.json`;
         mimeType = 'application/json';
       }
 

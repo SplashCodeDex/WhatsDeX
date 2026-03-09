@@ -94,7 +94,7 @@ export const ChannelConfigSchema = z.object({
     aiPersonality: z.string().optional(),
 
     // Sticker Configuration
-    stickerPackname: z.string().default('WhatsDeX Sticker Pack'),
+    stickerPackname: z.string().default('DeXMart Sticker Pack'),
     stickerAuthor: z.string().default('CodeDeX'),
 
     // Rate Limiting
@@ -154,7 +154,7 @@ export const DEFAULT_CHANNEL_CONFIG: Partial<ChannelConfig> = {
     autoTypingCmd: true,
     autoReply: false,
     aiEnabled: false,
-    stickerPackname: 'WhatsDeX Sticker Pack',
+    stickerPackname: 'DeXMart Sticker Pack',
     stickerAuthor: 'CodeDeX',
     cooldownMs: 10000,
     maxCommandsPerMinute: 60,

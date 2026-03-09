@@ -179,7 +179,7 @@ export function AnimatedAuthHero({ hideContent = false, particles = [] }: Animat
                         >
                             Welcome to{' '}
                             <span className="inline-flex overflow-hidden">
-                                {Array.from("WhatsDeX").map((char, index) => (
+                                {Array.from("DeXMart").map((char, index) => (
                                     <motion.span
                                         key={index}
                                         className="bg-gradient-to-r from-white via-primary-200 to-white bg-clip-text text-transparent"

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
     title: 'Sign In',
-    description: 'Sign in to your WhatsDeX account',
+    description: 'Sign in to your DeXMart account',
 };
 
 export default function LoginLayout({

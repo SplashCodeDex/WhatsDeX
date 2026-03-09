@@ -22,7 +22,7 @@ export function RegisterForm() {
     useEffect(() => {
         if (state?.success) {
             toast.success('Account created successfully!', {
-                description: 'Welcome to WhatsDeX! Redirecting...',
+                description: 'Welcome to DeXMart! Redirecting...',
             });
             import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
             router.push('/dashboard');
@@ -47,7 +47,7 @@ export function RegisterForm() {
 
             if (actionResult.success) {
                 toast.success('Successfully signed in with Google!', {
-                    description: 'Welcome to WhatsDeX! Redirecting...',
+                    description: 'Welcome to DeXMart! Redirecting...',
                 });
                 import('@/lib/confetti').then((mod) => mod.triggerSuccessBurst());
                 router.push('/dashboard');

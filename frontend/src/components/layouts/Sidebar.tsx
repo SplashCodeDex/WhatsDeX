@@ -149,7 +149,7 @@ export function Sidebar() {
                     <SheetContent side="left" className="w-[85vw] max-w-80 p-0 border-r border-border bg-background shadow-2xl text-foreground">
                         <SheetHeader className="p-6 pb-4 border-b border-border">
                             <SheetTitle className="text-2xl font-black text-primary">
-                                WhatsDeX
+                                DeXMart
                             </SheetTitle>
                         </SheetHeader>
                         {NavContent(true)}
@@ -180,7 +180,7 @@ export function Sidebar() {
                                     animate={{ opacity: 1 }}
                                     className="text-2xl font-black text-primary tracking-tight"
                                 >
-                                    WhatsDeX
+                                    DeXMart
                                 </motion.span>
                             )}
                             <Button

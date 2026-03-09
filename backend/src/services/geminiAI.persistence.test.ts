@@ -106,7 +106,7 @@ describe('GeminiAI Tool Persistence', () => {
       description: 'Download video',
       parameters: { type: 'object', properties: { url: { type: 'string' } }, required: ['url'] },
       execute: vi.fn().mockResolvedValue({ videoUrl: 'https://cdn.com/file.mp4' }),
-      source: 'whatsdex' as const
+      source: 'DeXMart' as const
     };
     toolRegistry.registerTool(mockTool);
 

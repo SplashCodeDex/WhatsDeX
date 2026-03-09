@@ -2,7 +2,7 @@ import React from 'react';
 import { PricingTable } from '@/features/billing/components/PricingTable';
 
 export const metadata = {
-  title: 'Pricing - WhatsDeX',
+  title: 'Pricing - DeXMart',
   description: 'Choose the right plan for your WhatsApp automation needs. Start with a 7-day free trial.',
 };
 

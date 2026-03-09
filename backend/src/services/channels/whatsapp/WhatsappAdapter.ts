@@ -19,7 +19,7 @@ import {
 } from 'openclaw';
 
 /**
- * WhatsappAdapter wraps the existing WhatsDeX Baileys/AuthSystem logic
+ * WhatsappAdapter wraps the existing DeXMart Baileys/AuthSystem logic
  * to conform to the ChannelAdapter interface.
  */
 export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {

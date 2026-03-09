@@ -105,9 +105,9 @@ export class WebhookService {
                 await axios.post(hook.url, body, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-WhatsDeX-Signature': signature,
-                        'X-WhatsDeX-Timestamp': timestamp.toString(),
-                        'User-Agent': 'WhatsDeX-Webhook-Engine/1.0'
+                        'X-DeXMart-Signature': signature,
+                        'X-DeXMart-Timestamp': timestamp.toString(),
+                        'User-Agent': 'DeXMart-Webhook-Engine/1.0'
                     },
                     timeout: 5000
                 });

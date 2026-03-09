@@ -3,12 +3,12 @@ import { Channel, Command } from '../types/index.js';
 import logger from '../utils/logger.js';
 
 /**
- * Bridge between WhatsDeX legacy commands and the Unified Tool Registry.
+ * Bridge between DeXMart legacy commands and the Unified Tool Registry.
  */
-export class WhatsDeXToolBridge {
+export class DeXMartToolBridge {
 
   /**
-   * Registers a subset of high-value WhatsDeX commands as AI tools.
+   * Registers a subset of high-value DeXMart commands as AI tools.
    */
   public static registerCommands(channel: Channel): void {
     const highValueCommands = [
@@ -35,7 +35,7 @@ export class WhatsDeXToolBridge {
       name,
       description: command.description || `Execute ${name} command`,
       parameters: this.inferParameters(name, command.category),
-      source: 'whatsdex',
+      source: 'DeXMart',
       category: command.category,
       execute: async (args, context) => {
         // Prepare a mock context for the legacy command

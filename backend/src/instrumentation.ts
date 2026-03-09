@@ -32,7 +32,7 @@ const sdk = new NodeSDK({
       '@opentelemetry/instrumentation-redis': { enabled: true },
     }),
   ],
-  serviceName: 'whatsdex-bot',
+  serviceName: 'DeXMart-bot',
 });
 
 // Handle graceful shutdown
@@ -52,7 +52,7 @@ process.on('SIGTERM', () => {
 try {
   sdk.start();
   logger.info('OpenTelemetry instrumentation started', {
-    serviceName: 'whatsdex-bot',
+    serviceName: 'DeXMart-bot',
     prometheusPort: Number(process.env.OTEL_PROMETHEUS_PORT) || 9464,
   });
 } catch (error: any) {

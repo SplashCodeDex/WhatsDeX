@@ -6,8 +6,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
     title: {
-        default: 'WhatsDeX - WhatsApp Bot Management Platform',
-        template: '%s | WhatsDeX',
+        default: 'DeXMart - WhatsApp Bot Management Platform',
+        template: '%s | DeXMart',
     },
     description:
         'Professional WhatsApp bot management dashboard. Create, deploy, and manage WhatsApp automation with ease.',
@@ -19,22 +19,22 @@ export const metadata: Metadata = {
         'dashboard',
         'management',
     ],
-    authors: [{ name: 'WhatsDeX Team' }],
-    creator: 'WhatsDeX',
+    authors: [{ name: 'DeXMart Team' }],
+    creator: 'DeXMart',
     metadataBase: new URL(
         process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
     ),
     openGraph: {
         type: 'website',
         locale: 'en_US',
-        siteName: 'WhatsDeX',
-        title: 'WhatsDeX - WhatsApp Bot Management Platform',
+        siteName: 'DeXMart',
+        title: 'DeXMart - WhatsApp Bot Management Platform',
         description:
             'Professional WhatsApp bot management dashboard. Create, deploy, and manage WhatsApp automation with ease.',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'WhatsDeX',
+        title: 'DeXMart',
         description: 'Professional WhatsApp bot management platform',
     },
     robots: {

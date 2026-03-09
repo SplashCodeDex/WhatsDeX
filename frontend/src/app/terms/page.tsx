@@ -5,8 +5,8 @@ import { ChevronLeft } from 'lucide-react';
 import { APP_CONFIG } from '@/lib/constants/config';
 
 export const metadata = {
-    title: 'Terms of Service - WhatsDeX',
-    description: 'The legal agreement for using the WhatsDeX platform.',
+    title: 'Terms of Service - DeXMart',
+    description: 'The legal agreement for using the DeXMart platform.',
 };
 
 export default function TermsPage() {
@@ -35,21 +35,21 @@ export default function TermsPage() {
                     <section>
                         <h2 className="text-2xl font-semibold text-foreground mb-4">1. Acceptance of Terms</h2>
                         <p className="text-muted-foreground leading-relaxed">
-                            By accessing or using WhatsDeX, you agree to be bound by these Terms of Service. If you do not agree to all the terms and conditions, you are prohibited from using the service.
+                            By accessing or using DeXMart, you agree to be bound by these Terms of Service. If you do not agree to all the terms and conditions, you are prohibited from using the service.
                         </p>
                     </section>
 
                     <section>
                         <h2 className="text-2xl font-semibold text-foreground mb-4">2. Description of Service</h2>
                         <p className="text-muted-foreground leading-relaxed">
-                            WhatsDeX provides an AI-powered WhatsApp automation and management platform. We reserve the right to modify or discontinue the service with or without notice.
+                            DeXMart provides an AI-powered WhatsApp automation and management platform. We reserve the right to modify or discontinue the service with or without notice.
                         </p>
                     </section>
 
                     <section>
                         <h2 className="text-2xl font-semibold text-foreground mb-4">3. User Responsibilities</h2>
                         <p className="text-muted-foreground leading-relaxed">
-                            As a user of WhatsDeX, you agree to:
+                            As a user of DeXMart, you agree to:
                         </p>
                         <ul className="list-disc pl-5 text-muted-foreground space-y-2 mt-4">
                             <li>Comply with WhatsApp's own Terms of Service.</li>
@@ -62,7 +62,7 @@ export default function TermsPage() {
                     <section>
                         <h2 className="text-2xl font-semibold text-foreground mb-4">4. Limitation of Liability</h2>
                         <p className="text-muted-foreground leading-relaxed">
-                            WhatsDeX shall not be liable for any account bans, data loss, or indirect damages arising out of your use of the platform. The service is provided "as is" without warranty of any kind.
+                            DeXMart shall not be liable for any account bans, data loss, or indirect damages arising out of your use of the platform. The service is provided "as is" without warranty of any kind.
                         </p>
                     </section>
 

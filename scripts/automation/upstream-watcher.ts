@@ -28,7 +28,7 @@ async function fetchGithub(endpoint: string) {
 }
 
 async function updateReport() {
-    console.log('🚀 WhatsDeX Watchtower: Syncing with OpenClaw Upstream...');
+    console.log('🚀 DeXMart Watchtower: Syncing with OpenClaw Upstream...');
 
     if (!fs.existsSync(REPORT_PATH)) {
         console.error(`❌ Error: Report file not found at ${REPORT_PATH}`);
@@ -46,7 +46,7 @@ async function updateReport() {
         const tagRegex = new RegExp(`\\b${rel.tag_name}\\b`);
         return !tagRegex.test(existingContent);
     });
-    
+
     // 2. Identify New PRs (Using word boundaries for numbers)
     const newPRs = mergedPulls.filter(pr => {
         const prRegex = new RegExp(`#${pr.number}\\b`);

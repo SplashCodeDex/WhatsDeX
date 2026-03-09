@@ -12,12 +12,12 @@ import { validateEnvironmentOrThrow } from './utils/validateEnv.js';
 import { channelWatchdog } from './services/channels/ChannelWatchdog.js';
 
 /**
- * Main entry point for WhatsDeX
+ * Main entry point for DeXMart
  */
 async function main() {
     logger.info('>>> [MASTERMIND] Starting main()');
     try {
-        logger.info('🚀 Starting WhatsDeX...');
+        logger.info('🚀 Starting DeXMart...');
 
         // Validate environment variables before proceeding
         logger.info('>>> [MASTERMIND] Validating environment variables...');
@@ -56,7 +56,7 @@ async function main() {
             logger.info('🔕 Server disabled in configuration');
         }
 
-        logger.info('✨ WhatsDeX is ready!');
+        logger.info('✨ DeXMart is ready!');
     } catch (error: any) {
         logger.error('💥 Fatal error during startup:', error);
         process.exit(1);
