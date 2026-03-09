@@ -6,7 +6,7 @@ export default {
     category: 'information',
     description: 'Get the source code link for this bot.',
     code: async (ctx: MessageContext) => {
-        const { formatter, config } = ctx.bot.context;
+        const { formatter, config } = ctx.channel.context;
         await ctx.reply({
             text: formatter.quote('https://github.com/SplashCodeDex/WhatsDeX'),
             footer: config.msg.footer,

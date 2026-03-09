@@ -132,7 +132,7 @@ export class OmnichannelController {
                 const { usageGuard } = await import('../services/UsageGuard.js');
                 const tenantDoc = await db.collection('tenants').doc(tenantId).get();
                 const data = tenantDoc.data() || {};
-                
+
                 if (result) {
                     result.tenantUsage = {
                         monthlyUsage: data.stats?.totalMessagesSent || 0,
@@ -305,13 +305,14 @@ export class OmnichannelController {
     static async sendMessage(req: Request, res: Response) {
         try {
             const { channelManager } = await import('../services/channels/ChannelManager.js');
-            const { botId, to, text } = req.body;
+            const { channelId, botId, to, text } = req.body;
+            const id = channelId || botId;
 
-            if (!botId || !to || !text) {
-                return res.status(400).json({ success: false, error: 'Missing required fields: botId, to, text' });
+            if (!id || !to || !text) {
+                return res.status(400).json({ success: false, error: 'Missing required fields: channelId/botId, to, text' });
             }
 
-            const adapter = channelManager.getAdapter(botId);
+            const adapter = channelManager.getAdapter(id);
             if (!adapter) {
                 return res.status(400).json({ success: false, error: 'Channel not active' });
             }
@@ -333,7 +334,7 @@ export class OmnichannelController {
         try {
             const { skillsManager } = await import('../services/skillsManager.js');
             const { db } = await import('../lib/firebase.js');
-            
+
             const tenantId = req.user?.tenantId;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 

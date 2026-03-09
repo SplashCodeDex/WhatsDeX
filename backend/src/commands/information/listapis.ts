@@ -9,7 +9,7 @@ export default {
   aliases: ['listapi'],
   category: 'information',
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context as GlobalContext;
+    const { formatter, tools, config } = ctx.channel.context as GlobalContext;
     try {
       const APIs: Record<string, APIConfig> = tools.api.listUrl();
       let resultText = '';

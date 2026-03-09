@@ -27,7 +27,7 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { config, formatter } = ctx.bot.context as GlobalContext;
+    const { config, formatter } = ctx.channel.context as GlobalContext;
 
     // Constants for summarization logic
     const {
@@ -63,7 +63,7 @@ export default {
       // Service call with tool handling
       const geminiService = new GeminiService();
       const userId = ctx.sender.jid;
-      const tenantId = ctx.bot.tenantId;
+      const tenantId = ctx.channel.tenantId;
 
       // Use ChatHistoryManager
       const chat = (await chatHistoryManager.getChat(tenantId, userId)) || { history: [], summary: '' };
@@ -132,7 +132,7 @@ export default {
         for (const toolCall of responseMessage.tool_calls) {
           const functionName = toolCall.function.name;
           const functionArgs = JSON.parse(toolCall.function.arguments);
-          const commandToExecute = ctx.bot.cmd.get(functionName);
+          const commandToExecute = ctx.channel.cmd.get(functionName);
           let toolResponse = 'Error: Command not found.';
 
           if (commandToExecute) {

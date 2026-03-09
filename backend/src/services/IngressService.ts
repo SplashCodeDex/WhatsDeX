@@ -3,7 +3,7 @@ import logger from '@/utils/logger.js';
 import { webhookService } from './webhookService.js';
 import { channelService } from './ChannelService.js';
 import { agentService } from './AgentService.js';
-import { createBotContext } from '../utils/createBotContext.js';
+import { createChannelContext } from '../utils/createChannelContext.js';
 import { GlobalContext } from '../types/index.js';
 import { tenantConfigService } from './tenantConfigService.js';
 import analyticsService from './analytics.js';
@@ -11,17 +11,18 @@ import { Agent } from '../types/contracts.js';
 import { flowService } from './flowService.js';
 import { flowEngine } from './flowEngine.js';
 import { automationService } from './automationService.js';
+import { CommonMessage } from '../types/omnichannel.js';
 
 /**
  * Ingress Service
- * 
+ *
  * Centralized entry point for all incoming messages from all channels.
  * Handles the "Flows ? Agent exists ? Agent Respond : Webhook Forward" logic.
  */
 export class IngressService {
   private static instance: IngressService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): IngressService {
     if (!IngressService.instance) {
@@ -43,27 +44,27 @@ export class IngressService {
       // 1. Resolve Agent from Path
       if (fullPath && fullPath.includes('/agents/')) {
         const parts = fullPath.split('/');
-        const agentId = parts[3]; 
+        const agentId = parts[3];
         const agentResult = await agentService.getAgent(tenantId, agentId);
         activeAgent = agentResult.success ? agentResult.data : null;
       }
 
       // 2. Prepare AI Context (Bridge between CommonMessage and internal AI Logic)
-      // Note: In a full refactor, createBotContext should also accept CommonMessage.
+      // Note: In a full refactor, createChannelContext should also accept CommonMessage.
       // For now, we simulate a minimal context if we can't build a full one.
-      
+
       const isAiEnabled = await tenantConfigService.isFeatureEnabled(tenantId, 'aiEnabled');
-      
+
       if (activeAgent && activeAgent.id !== 'system_default' && isAiEnabled && context.unifiedAI) {
-          logger.info(`[Ingress] Routing ${message.platform} message to Agent: ${activeAgent.name}`);
-          // Inject the path into metadata for Agent hierarchy awareness
-          if (!message.metadata) message.metadata = {};
-          message.metadata.fullPath = fullPath;
-          
-          await (context.unifiedAI as any).processOmnichannelMessage(tenantId, channelId, message);
+        logger.info(`[Ingress] Routing ${message.platform} message to Agent: ${activeAgent.name}`);
+        // Inject the path into metadata for Agent hierarchy awareness
+        if (!message.metadata) message.metadata = {};
+        message.metadata.fullPath = fullPath;
+
+        await (context.unifiedAI as any).processOmnichannelMessage(tenantId, channelId, message);
       } else {
-          logger.info(`[Ingress] Webhook forwarding for ${message.platform} message.`);
-          await webhookService.dispatch(tenantId, 'message.received', message);
+        logger.info(`[Ingress] Webhook forwarding for ${message.platform} message.`);
+        await webhookService.dispatch(tenantId, 'message.received', message);
       }
 
       analyticsService.trackMessage(tenantId, 'received');
@@ -83,18 +84,24 @@ export class IngressService {
 
       let activeAgent: Agent | null = null;
 
-      // 1. Resolve Agent from Path
+      // 1. Resolve Agent (Architecture Alignment)
       if (fullPath && fullPath.includes('/agents/')) {
-        // Path: tenants/{tenantId}/agents/{agentId}/channels/{channelId}
+        // Path-based resolution: tenants/{tenantId}/agents/{agentId}/channels/{channelId}
         const parts = fullPath.split('/');
-        const agentId = parts[3]; 
-        
+        const agentId = parts[3];
         const agentResult = await agentService.getAgent(tenantId, agentId);
         activeAgent = agentResult.success ? agentResult.data : null;
+      } else {
+        // Fallback: Resolve via Channel mapping (Surgical Migration Safety)
+        const channelResult = await channelService.getChannel(tenantId, channelId); // Defaults to system_default agent if not nested
+        if (channelResult.success && channelResult.data.assignedAgentId) {
+          const agentResult = await agentService.getAgent(tenantId, channelResult.data.assignedAgentId);
+          activeAgent = agentResult.success ? agentResult.data : null;
+        }
       }
 
       // 2. Prepare AI Context
-      const aiCtx = await createBotContext({ tenantId, botId: channelId } as any, message, context);
+      const aiCtx = await createChannelContext({ tenantId, channelId: channelId } as any, message, context);
 
       // --- AUTOMATION TRIGGER (Priority 0) ---
       // Check for automations that trigger on message_received
@@ -135,11 +142,11 @@ export class IngressService {
       if (activeAgent && activeAgent.id !== 'system_default') {
         // --- AGENT MODE (Priority 2) ---
         logger.info(`Routing to Agent: ${activeAgent.name} (${activeAgent.id})`);
-        
+
         // Enforce Feature Flag: Check if AI is enabled for this tenant
         const isAiEnabled = await tenantConfigService.isFeatureEnabled(tenantId, 'aiEnabled');
         if (isAiEnabled && context.unifiedAI) {
-          await context.unifiedAI.processMessage({ tenantId, botId: channelId } as any, aiCtx);
+          await context.unifiedAI.processMessage({ tenantId, channelId: channelId } as any, aiCtx);
         } else {
           logger.warn(`AI processing skipped for tenant ${tenantId}: AI disabled or service missing.`);
           await this.dispatchWebhook(tenantId, channelId, message, aiCtx);
@@ -160,10 +167,9 @@ export class IngressService {
 
   private async dispatchWebhook(tenantId: string, channelId: string, message: proto.IWebMessageInfo, aiCtx: any) {
     const text = aiCtx.message?.conversation || aiCtx.message?.extendedTextMessage?.text || '';
-    
+
     await webhookService.dispatch(tenantId, 'message.received', {
       channelId,
-      botId: channelId, // Backward compat
       sender: aiCtx.sender.jid,
       message: text,
       timestamp: Date.now(),

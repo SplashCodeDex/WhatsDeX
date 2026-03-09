@@ -9,7 +9,7 @@ export default {
         owner: true,
     },
     code: async (ctx: MessageContext) => {
-        const { formatter, tools, database: db } = ctx.bot.context;
+        const { formatter, tools, database: db } = ctx.channel.context;
         const userJid =
             ctx.quoted?.senderJid ||
             (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) ||
@@ -28,7 +28,7 @@ export default {
                 mentions: [ctx.sender.jid],
             });
 
-        const isOnWhatsApp = ctx.bot.onWhatsApp ? await ctx.bot.onWhatsApp(userJid) : [];
+        const isOnWhatsApp = ctx.channel.onWhatsApp ? await ctx.channel.onWhatsApp(userJid) : [];
         if (!isOnWhatsApp || isOnWhatsApp.length === 0)
             return await ctx.reply(formatter.quote('❎ Account does not exist on WhatsApp!'));
 

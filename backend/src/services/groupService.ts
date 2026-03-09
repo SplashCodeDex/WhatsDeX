@@ -6,7 +6,7 @@
  */
 
 import { GroupMetadata } from 'baileys';
-import { Bot, GroupFunctions } from '../types/index.js';
+import { ActiveChannel as Channel, GroupFunctions } from '../types/index.js';
 import logger from '../utils/logger.js';
 
 export class GroupService {
@@ -14,61 +14,61 @@ export class GroupService {
     /**
      * Create a scoped GroupFunctions object for a specific message context
      */
-    createFunctions(bot: Bot, _tenantId: string, groupJid: string, senderJid: string): GroupFunctions {
+    createFunctions(channel: Channel, _tenantId: string, groupJid: string, senderJid: string): GroupFunctions {
         return {
-            isAdmin: async (targetJid = senderJid) => this.isAdmin(bot, groupJid, targetJid),
-            matchAdmin: async (targetId: string) => this.matchAdmin(bot, groupJid, targetId),
-            members: async () => this.getMembers(bot, groupJid),
-            isBotAdmin: async () => this.isBotAdmin(bot, groupJid),
-            metadata: async () => this.getMetadata(bot, groupJid),
-            owner: async () => this.getOwner(bot, groupJid),
-            name: async () => this.getName(bot, groupJid),
-            open: async () => this.updateSetting(bot, groupJid, 'announcement', false),
-            close: async () => this.updateSetting(bot, groupJid, 'announcement', true),
-            lock: async () => this.updateSetting(bot, groupJid, 'locked', true),
-            unlock: async () => this.updateSetting(bot, groupJid, 'locked', false),
-            add: async (jids) => this.addParticipants(bot, groupJid, jids),
-            kick: async (jids) => this.removeParticipants(bot, groupJid, jids),
-            promote: async (jids) => this.promoteParticipants(bot, groupJid, jids),
-            demote: async (jids) => this.demoteParticipants(bot, groupJid, jids),
-            inviteCode: async () => this.getInviteCode(bot, groupJid),
-            pendingMembers: async () => this.getPendingMembers(bot, groupJid),
-            approvePendingMembers: async (jids) => this.handlePendingMembers(bot, groupJid, jids, 'approve'),
-            rejectPendingMembers: async (jids) => this.handlePendingMembers(bot, groupJid, jids, 'reject'),
-            updateDescription: async (desc) => this.updateDescription(bot, groupJid, desc),
-            updateSubject: async (subject) => this.updateSubject(bot, groupJid, subject),
-            joinApproval: async (mode) => this.updateJoinApproval(bot, groupJid, mode),
-            membersCanAddMemberMode: async (mode) => this.updateMemberAddMode(bot, groupJid, mode),
+            isAdmin: async (targetJid = senderJid) => this.isAdmin(channel, groupJid, targetJid),
+            matchAdmin: async (targetId: string) => this.matchAdmin(channel, groupJid, targetId),
+            members: async () => this.getMembers(channel, groupJid),
+            isChannelAdmin: async () => this.isChannelAdmin(channel, groupJid),
+            metadata: async () => this.getMetadata(channel, groupJid),
+            owner: async () => this.getOwner(channel, groupJid),
+            name: async () => this.getName(channel, groupJid),
+            open: async () => this.updateSetting(channel, groupJid, 'announcement', false),
+            close: async () => this.updateSetting(channel, groupJid, 'announcement', true),
+            lock: async () => this.updateSetting(channel, groupJid, 'locked', true),
+            unlock: async () => this.updateSetting(channel, groupJid, 'locked', false),
+            add: async (jids) => this.addParticipants(channel, groupJid, jids),
+            kick: async (jids) => this.removeParticipants(channel, groupJid, jids),
+            promote: async (jids) => this.promoteParticipants(channel, groupJid, jids),
+            demote: async (jids) => this.demoteParticipants(channel, groupJid, jids),
+            inviteCode: async () => this.getInviteCode(channel, groupJid),
+            pendingMembers: async () => this.getPendingMembers(channel, groupJid),
+            approvePendingMembers: async (jids) => this.handlePendingMembers(channel, groupJid, jids, 'approve'),
+            rejectPendingMembers: async (jids) => this.handlePendingMembers(channel, groupJid, jids, 'reject'),
+            updateDescription: async (desc) => this.updateDescription(channel, groupJid, desc),
+            updateSubject: async (subject) => this.updateSubject(channel, groupJid, subject),
+            joinApproval: async (mode) => this.updateJoinApproval(channel, groupJid, mode),
+            membersCanAddMemberMode: async (mode) => this.updateMemberAddMode(channel, groupJid, mode),
             isOwner: async (targetJid = senderJid) => {
-                const owner = await this.getOwner(bot, groupJid);
+                const owner = await this.getOwner(channel, groupJid);
                 // Check if targetJid matches owner or if superadmin logic applies
-                return owner ? owner.includes(bot.decodeJid(targetJid)) : false;
+                return owner ? owner.includes(channel.decodeJid(targetJid)) : false;
             },
         };
     }
 
     // --- Core Implementations ---
 
-    async getMetadata(bot: Bot, groupJid: string): Promise<Partial<GroupMetadata>> {
+    async getMetadata(channel: Channel, groupJid: string): Promise<Partial<GroupMetadata>> {
         try {
-            if (!bot.groupMetadata) throw new Error('Bot does not support groupMetadata');
-            return await bot.groupMetadata(groupJid);
+            if (!channel.groupMetadata) throw new Error('Channel does not support groupMetadata');
+            return await channel.groupMetadata(groupJid);
         } catch (error) {
             logger.error(`GroupService.getMetadata failed for ${groupJid}`, error);
             return {};
         }
     }
 
-    async getMembers(bot: Bot, groupJid: string): Promise<string[]> {
-        const metadata = await this.getMetadata(bot, groupJid);
+    async getMembers(channel: Channel, groupJid: string): Promise<string[]> {
+        const metadata = await this.getMetadata(channel, groupJid);
         if ('participants' in metadata && metadata.participants) {
             return metadata.participants.map((p) => p.id);
         }
         return [];
     }
 
-    async isAdmin(bot: Bot, groupJid: string, userJid: string): Promise<boolean> {
-        const metadata = await this.getMetadata(bot, groupJid);
+    async isAdmin(channel: Channel, groupJid: string, userJid: string): Promise<boolean> {
+        const metadata = await this.getMetadata(channel, groupJid);
         if ('participants' in metadata && metadata.participants) {
             const participant = metadata.participants.find((p) => p.id === userJid);
             return !!(participant && participant.admin);
@@ -76,26 +76,26 @@ export class GroupService {
         return false;
     }
 
-    async matchAdmin(bot: Bot, groupJid: string, userJid: string): Promise<boolean> {
-        return this.isAdmin(bot, groupJid, userJid);
+    async matchAdmin(channel: Channel, groupJid: string, userJid: string): Promise<boolean> {
+        return this.isAdmin(channel, groupJid, userJid);
     }
 
-    async isBotAdmin(bot: Bot, groupJid: string): Promise<boolean> {
-        const botId = bot.user?.id ? bot.decodeJid(bot.user.id) : undefined;
-        if (!botId) return false;
-        return this.isAdmin(bot, groupJid, botId);
+    async isChannelAdmin(channel: Channel, groupJid: string): Promise<boolean> {
+        const channelId = channel.user?.id ? channel.decodeJid(channel.user.id) : undefined;
+        if (!channelId) return false;
+        return this.isAdmin(channel, groupJid, channelId);
     }
 
-    async getOwner(bot: Bot, groupJid: string): Promise<string | null> {
-        const metadata = await this.getMetadata(bot, groupJid);
+    async getOwner(channel: Channel, groupJid: string): Promise<string | null> {
+        const metadata = await this.getMetadata(channel, groupJid);
         if ('owner' in metadata) {
             return metadata.owner || metadata.subjectOwner || null;
         }
         return null;
     }
 
-    async getName(bot: Bot, groupJid: string): Promise<string> {
-        const metadata = await this.getMetadata(bot, groupJid);
+    async getName(channel: Channel, groupJid: string): Promise<string> {
+        const metadata = await this.getMetadata(channel, groupJid);
         if ('subject' in metadata && metadata.subject) {
             return metadata.subject;
         }
@@ -104,69 +104,69 @@ export class GroupService {
 
     // --- Actions ---
 
-    async addParticipants(bot: Bot, groupJid: string, jids: string[]) {
+    async addParticipants(channel: Channel, groupJid: string, jids: string[]) {
         try {
-            if (!bot.groupParticipantsUpdate) throw new Error('Method not supported');
-            return await bot.groupParticipantsUpdate(groupJid, jids, 'add');
+            if (!channel.groupParticipantsUpdate) throw new Error('Method not supported');
+            return await channel.groupParticipantsUpdate(groupJid, jids, 'add');
         } catch (error) {
             logger.error(`GroupService.add failed`, error);
             return { error };
         }
     }
 
-    async removeParticipants(bot: Bot, groupJid: string, jids: string[]) {
+    async removeParticipants(channel: Channel, groupJid: string, jids: string[]) {
         try {
-            if (!bot.groupParticipantsUpdate) throw new Error('Method not supported');
-            return await bot.groupParticipantsUpdate(groupJid, jids, 'remove');
+            if (!channel.groupParticipantsUpdate) throw new Error('Method not supported');
+            return await channel.groupParticipantsUpdate(groupJid, jids, 'remove');
         } catch (error) {
             logger.error(`GroupService.remove failed`, error);
             return { error };
         }
     }
 
-    async promoteParticipants(bot: Bot, groupJid: string, jids: string[]) {
+    async promoteParticipants(channel: Channel, groupJid: string, jids: string[]) {
         try {
-            if (!bot.groupParticipantsUpdate) throw new Error('Method not supported');
-            return await bot.groupParticipantsUpdate(groupJid, jids, 'promote');
+            if (!channel.groupParticipantsUpdate) throw new Error('Method not supported');
+            return await channel.groupParticipantsUpdate(groupJid, jids, 'promote');
         } catch (error) {
             logger.error(`GroupService.promote failed`, error);
             return { error };
         }
     }
 
-    async demoteParticipants(bot: Bot, groupJid: string, jids: string[]) {
+    async demoteParticipants(channel: Channel, groupJid: string, jids: string[]) {
         try {
-            if (!bot.groupParticipantsUpdate) throw new Error('Method not supported');
-            return await bot.groupParticipantsUpdate(groupJid, jids, 'demote');
+            if (!channel.groupParticipantsUpdate) throw new Error('Method not supported');
+            return await channel.groupParticipantsUpdate(groupJid, jids, 'demote');
         } catch (error) {
             logger.error(`GroupService.demote failed`, error);
             return { error };
         }
     }
 
-    async updateSubject(bot: Bot, groupJid: string, subject: string) {
+    async updateSubject(channel: Channel, groupJid: string, subject: string) {
         try {
-            if (!bot.groupUpdateSubject) throw new Error('Method not supported');
-            return await bot.groupUpdateSubject(groupJid, subject);
+            if (!channel.groupUpdateSubject) throw new Error('Method not supported');
+            return await channel.groupUpdateSubject(groupJid, subject);
         } catch (error) {
             logger.error(`GroupService.updateSubject failed`, error);
             return { error };
         }
     }
 
-    async updateDescription(bot: Bot, groupJid: string, description: string) {
+    async updateDescription(channel: Channel, groupJid: string, description: string) {
         try {
-            if (!bot.groupUpdateDescription) throw new Error('Method not supported');
-            return await bot.groupUpdateDescription(groupJid, description);
+            if (!channel.groupUpdateDescription) throw new Error('Method not supported');
+            return await channel.groupUpdateDescription(groupJid, description);
         } catch (error) {
             logger.error(`GroupService.updateDescription failed`, error);
             return { error };
         }
     }
 
-    async updateSetting(bot: Bot, groupJid: string, setting: 'announcement' | 'locked', value: boolean) {
+    async updateSetting(channel: Channel, groupJid: string, setting: 'announcement' | 'locked', value: boolean) {
         try {
-            if (!bot.groupSettingUpdate) throw new Error('Method not supported');
+            if (!channel.groupSettingUpdate) throw new Error('Method not supported');
             // Baileys 'groupSettingUpdate' handling
             // Map our logical setting to Baileys expected string
             let action: 'announcement' | 'not_announcement' | 'locked' | 'unlocked' | null = null;
@@ -178,8 +178,8 @@ export class GroupService {
             }
 
             if (action) {
-                await bot.groupSettingUpdate(groupJid, action);
-                this.syncGroup(bot, groupJid); // Optimistic sync
+                await channel.groupSettingUpdate(groupJid, action);
+                this.syncGroup(channel, groupJid); // Optimistic sync
                 return;
             }
         } catch (error) {
@@ -188,41 +188,41 @@ export class GroupService {
         }
     }
 
-    async updateJoinApproval(bot: Bot, groupJid: string, mode: 'on' | 'off') {
+    async updateJoinApproval(channel: Channel, groupJid: string, mode: 'on' | 'off') {
         try {
-            if (!bot.groupJoinApprovalMode) throw new Error('Method not supported');
-            return await bot.groupJoinApprovalMode(groupJid, mode);
+            if (!channel.groupJoinApprovalMode) throw new Error('Method not supported');
+            return await channel.groupJoinApprovalMode(groupJid, mode);
         } catch (error) {
             logger.error(`GroupService.updateJoinApproval failed`, error);
             return { error };
         }
     }
 
-    async getPendingMembers(bot: Bot, groupJid: string) {
+    async getPendingMembers(channel: Channel, groupJid: string) {
         try {
-            if (!bot.groupRequestParticipantsList) throw new Error('Method not supported');
-            return await bot.groupRequestParticipantsList(groupJid);
+            if (!channel.groupRequestParticipantsList) throw new Error('Method not supported');
+            return await channel.groupRequestParticipantsList(groupJid);
         } catch (error) {
             logger.error(`GroupService.getPendingMembers failed`, error);
             return [];
         }
     }
 
-    async handlePendingMembers(bot: Bot, groupJid: string, jids: string[], action: 'approve' | 'reject') {
+    async handlePendingMembers(channel: Channel, groupJid: string, jids: string[], action: 'approve' | 'reject') {
         try {
-            if (!bot.groupRequestParticipantsUpdate) throw new Error('Method not supported');
-            return await bot.groupRequestParticipantsUpdate(groupJid, jids, action);
+            if (!channel.groupRequestParticipantsUpdate) throw new Error('Method not supported');
+            return await channel.groupRequestParticipantsUpdate(groupJid, jids, action);
         } catch (error) {
             logger.error(`GroupService.handlePendingMembers failed for ${action}`, error);
             return { error };
         }
     }
 
-    async updateMemberAddMode(bot: Bot, groupJid: string, mode: boolean | 'on' | 'off') {
+    async updateMemberAddMode(channel: Channel, groupJid: string, mode: boolean | 'on' | 'off') {
         try {
-            if (!bot.groupMemberAddMode) throw new Error('Method not supported');
+            if (!channel.groupMemberAddMode) throw new Error('Method not supported');
             const isEnable = typeof mode === 'boolean' ? mode : mode === 'on';
-            await bot.groupMemberAddMode(groupJid, isEnable ? 'all_member_add' : 'admin_add');
+            await channel.groupMemberAddMode(groupJid, isEnable ? 'all_member_add' : 'admin_add');
             return { success: true };
         } catch (error) {
             logger.error(`GroupService.updateMemberAddMode failed`, error);
@@ -230,10 +230,10 @@ export class GroupService {
         }
     }
 
-    async getInviteCode(bot: Bot, groupJid: string): Promise<string> {
+    async getInviteCode(channel: Channel, groupJid: string): Promise<string> {
         try {
-            if (!bot.groupInviteCode) throw new Error('Method not supported');
-            return await bot.groupInviteCode(groupJid) || '';
+            if (!channel.groupInviteCode) throw new Error('Method not supported');
+            return await channel.groupInviteCode(groupJid) || '';
         } catch (error) {
             logger.error(`GroupService.getInviteCode failed`, error);
             return '';
@@ -246,12 +246,12 @@ export class GroupService {
      * Syncs group metadata from Baileys to Firestore
      * Uses Tenant-Scoped path: tenants/{tenantId}/groups/{groupJid}
      */
-    async syncGroup(bot: Bot, groupJid: string): Promise<void> {
+    async syncGroup(channel: Channel, groupJid: string): Promise<void> {
         try {
-            const { databaseService } = bot.context;
+            const { databaseService } = channel.context;
             if (!databaseService) return;
 
-            const metadata = await this.getMetadata(bot, groupJid);
+            const metadata = await this.getMetadata(channel, groupJid);
             if (!metadata || !metadata.id) return;
 
             const participants = metadata.participants || [];
@@ -278,10 +278,10 @@ export class GroupService {
                 'groups', // Collection name relative to tenant
                 groupJid,
                 groupData,
-                bot.tenantId
+                channel.tenantId
             );
 
-            logger.info(`Synced group ${metadata.subject} (${groupJid}) for tenant ${bot.tenantId}`);
+            logger.info(`Synced group ${metadata.subject} (${groupJid}) for tenant ${channel.tenantId}`);
 
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
@@ -290,27 +290,27 @@ export class GroupService {
     }
 
     /**
-     * Fetch all groups the bot is participating in and sync them to Firestore
+     * Fetch all groups the channel is participating in and sync them to Firestore
      */
-    async syncAllGroups(bot: Bot): Promise<void> {
+    async syncAllGroups(channel: Channel): Promise<void> {
         try {
-            if (!bot.groupFetchAllParticipating) {
-                logger.warn(`Bot ${bot.botId} does not support groupFetchAllParticipating`);
+            if (!channel.groupFetchAllParticipating) {
+                logger.warn(`Channel ${channel.channelId} does not support groupFetchAllParticipating`);
                 return;
             }
 
-            const groups = await bot.groupFetchAllParticipating();
+            const groups = await channel.groupFetchAllParticipating();
             const groupJids = Object.keys(groups);
 
-            logger.info(`Syncing ${groupJids.length} groups for bot ${bot.botId}`);
+            logger.info(`Syncing ${groupJids.length} groups for channel ${channel.channelId}`);
 
             for (const jid of groupJids) {
-                await this.syncGroup(bot, jid);
+                await this.syncGroup(channel, jid);
             }
 
-            logger.info(`Successfully synced all groups for bot ${bot.botId}`);
+            logger.info(`Successfully synced all groups for channel ${channel.channelId}`);
         } catch (error) {
-            logger.error(`GroupService.syncAllGroups failed for bot ${bot.botId}`, error);
+            logger.error(`GroupService.syncAllGroups failed for channel ${channel.channelId}`, error);
         }
     }
 }

@@ -4,13 +4,13 @@ export default {
   aliases: ['belibot', 'harga', 'sewa', 'sewabot'],
   category: 'information',
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
+    const { formatter, tools, config, database: db } = ctx.channel.context;
     try {
       const customText = (await db.get<string>('bot.text.price')) || null;
       const text = customText
         ? customText
           .replace(/%tag%/g, `@${ctx.getId(ctx.sender.jid)}`)
-          .replace(/%name%/g, config.bot.name)
+          .replace(/%name%/g, config.channel.name)
           .replace(/%prefix%/g, ctx.used.prefix)
           .replace(/%command%/g, ctx.used.command)
           .replace(/%footer%/g, config.msg.footer)

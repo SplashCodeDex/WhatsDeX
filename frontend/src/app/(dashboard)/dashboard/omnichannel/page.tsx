@@ -60,10 +60,14 @@ const COLOR_MAP = {
 
 function ChannelCard({ channel }: { channel: any }) {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const { agentsResult } = useOmnichannelStore();
     const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
     const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
 
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing';
+    
+    const agent = agentsResult?.agents.find(a => a.id === (channel.assignedAgentId || 'system_default'));
+    const agentName = agent?.name || (channel.assignedAgentId === 'system_default' ? 'System Agent' : 'Unknown Agent');
 
     return (
         <>
@@ -75,7 +79,12 @@ function ChannelCard({ channel }: { channel: any }) {
                         </div>
                         <div>
                             <CardTitle className="text-lg">{channel.name}</CardTitle>
-                            <CardDescription>{channel.account || 'Not configured'}</CardDescription>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <CardDescription>{channel.account || 'Not configured'}</CardDescription>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
+                                    {agentName}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <Badge variant={

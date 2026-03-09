@@ -12,8 +12,8 @@ export default {
     category: 'information',
     description: 'Get information about the bot.',
     code: async (ctx: MessageContext) => {
-        const { formatter, tools, config, database: db, tenantConfigService } = ctx.bot.context;
-        const tenantId = (ctx.bot as any).tenantId;
+        const { formatter, tools, config, database: db, tenantConfigService } = ctx.channel.context;
+        const tenantId = (ctx.channel as any).tenantId;
 
         try {
             const botDb = (await db.get<{ mode?: string }>('bot')) || {};
@@ -22,11 +22,11 @@ export default {
 
             await ctx.reply({
                 text:
-                    `${formatter.quote(`👋 Hello! I am a WhatsApp bot named ${config.bot.name}, owned by ${ownerName}. I can perform many commands, such as creating stickers, using AI for certain tasks, and several other useful commands. I am here to entertain and please you!`)}
+                    `${formatter.quote(`👋 Hello! I am a WhatsApp bot named ${config.channel.name}, owned by ${ownerName}. I can perform many commands, such as creating stickers, using AI for certain tasks, and several other useful commands. I am here to entertain and please you!`)}
 ` +
                     `${formatter.quote('· · ─ ·✶· ─ · ·')}
 ` +
-                    `${formatter.quote(`Bot Name: ${config.bot.name}`)}
+                    `${formatter.quote(`Bot Name: ${config.channel.name}`)}
 ` +
                     `${formatter.quote(`Version: ${packageJson.version}`)}
 ` +
@@ -34,9 +34,9 @@ export default {
 ` +
                     `${formatter.quote(`Mode: ${tools.msg.ucwords(botDb?.mode || 'public')}`)}
 ` +
-                    `${formatter.quote(`Bot Uptime: ${config.bot.uptime}`)}
+                    `${formatter.quote(`Bot Uptime: ${config.channel.uptime}`)}
 ` +
-                    `${formatter.quote(`Database: ${config.bot.dbSize} (Simpl.DB - JSON)`)}
+                    `${formatter.quote(`Database: ${config.channel.dbSize} (Simpl.DB - JSON)`)}
 ${formatter.quote(
                         'Library: baileys'
                     )}`,

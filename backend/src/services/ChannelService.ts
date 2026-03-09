@@ -10,7 +10,7 @@ import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
 /**
  * Channel Service
  *
- * Manages the lifecycle of connectivity slots (formerly 'Bots').
+ * Manages the lifecycle of connectivity slots.
  * Operates within the Agent hierarchy: tenants/T/agents/A/channels/C.
  */
 export class ChannelService {
@@ -37,7 +37,7 @@ export class ChannelService {
    */
   async createChannel(tenantId: string, channelData: Partial<Channel>, agentId: string = 'system_default'): Promise<Result<Channel>> {
     try {
-      const canAddResult = await multiTenantService.canAddBot(tenantId);
+      const canAddResult = await multiTenantService.canAddChannel(tenantId);
       if (!canAddResult.success) {
         throw canAddResult.error;
       }
@@ -173,6 +173,46 @@ export class ChannelService {
   }
 
   /**
+   * Move a channel from one agent to another
+   */
+  async moveChannel(tenantId: string, channelId: string, currentAgentId: string, targetAgentId: string): Promise<Result<void>> {
+    try {
+      if (currentAgentId === targetAgentId) return { success: true, data: undefined };
+
+      // 1. Get existing channel data
+      const channelResult = await this.getChannel(tenantId, channelId, currentAgentId);
+      if (!channelResult.success) return { success: false, error: channelResult.error };
+
+      const channel = channelResult.data;
+
+      // 2. Create new document at target path
+      const updatedChannel = {
+        ...channel,
+        assignedAgentId: targetAgentId,
+        updatedAt: Timestamp.now()
+      };
+      await firebaseService.setDoc(this.getPath(targetAgentId), channelId, updatedChannel as any, tenantId);
+
+      // 3. Delete old document
+      await firebaseService.deleteDoc(this.getPath(currentAgentId), channelId, tenantId);
+
+      // 4. Update memory adapter if running
+      const adapter = channelManager.getAdapter(channelId);
+      if (adapter) {
+        // If the adapter has a way to update its internal tenant/agent path, we'd call it here.
+        // Most adapters use the fullPath for routing.
+        logger.info(`Channel ${channelId} moved in Firestore. Adapter may need restart for path-aware logic.`);
+      }
+
+      logger.info(`Channel ${channelId} moved from ${currentAgentId} to ${targetAgentId}`);
+      return { success: true, data: undefined };
+    } catch (error: any) {
+      logger.error(`Failed to move channel ${channelId}:`, error);
+      return { success: false, error };
+    }
+  }
+
+  /**
    * Start a channel instance (OpenClaw)
    */
   async startChannel(tenantId: string, channelId: string, agentId: string = 'system_default'): Promise<Result<void>> {
@@ -244,14 +284,14 @@ export class ChannelService {
         if (!token || !appId) throw new Error('Missing Discord token or appId');
 
         const adapter = new DiscordAdapter(tenantId, channelId, token); // DiscordAdapter constructor seems to take token as 3rd param in some versions, checking...
-        // Wait, I saw the constructor in DiscordAdapter.ts: constructor(tenantId: string, botId: string, token: string)
+        // Wait, I saw the constructor in DiscordAdapter.ts: constructor(tenantId: string, channelId: string, token: string)
         const dAdapter = new DiscordAdapter(tenantId, channelId, token);
 
         dAdapter.onMessage(async (event) => {
           const { ingressService } = await import('./IngressService.js');
           const context = await (await import('../lib/context.js')).default();
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-          
+
           await ingressService.handleCommonMessage(tenantId, channelId, {
             id: event.raw.id || crypto.randomUUID(),
             platform: 'discord',
@@ -396,6 +436,10 @@ export class ChannelService {
   async updateStatus(tenantId: string, channelId: string, status: Channel['status'], agentId: string = 'system_default'): Promise<void> {
     const result = await this.updateChannel(tenantId, channelId, { status }, agentId);
     if (!result.success) throw result.error;
+
+    // MASTERMIND Wiring: Real-time UI push
+    const { socketService } = await import('./socketService.js');
+    socketService.emitChannelStatus(tenantId, channelId, status);
   }
 
   /**

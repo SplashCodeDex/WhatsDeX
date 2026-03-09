@@ -7,8 +7,8 @@ export default {
     category: 'information',
     description: 'Get the contact details of the bot owner.',
     code: async (ctx: MessageContext) => {
-        const { tools, config, tenantConfigService } = ctx.bot.context as GlobalContext;
-        const tenantId = (ctx.bot as any).tenantId;
+        const { tools, config, tenantConfigService } = ctx.channel.context as GlobalContext;
+        const tenantId = (ctx.channel as any).tenantId;
 
         try {
             // Get tenant settings

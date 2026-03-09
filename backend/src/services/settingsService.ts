@@ -15,9 +15,9 @@ class SettingsService {
 
   initializeDefaultSettings() {
     const defaultSettings = {
-      'general.botName': { category: 'general', key: 'botName', value: 'WhatsDeX', valueType: 'string', description: 'Bot display name', isEncrypted: false },
-      'general.botDescription': { category: 'general', key: 'botDescription', value: 'Advanced WhatsApp Bot with AI Features', valueType: 'string', description: 'Bot description', isEncrypted: false },
-      'general.ownerName': { category: 'general', key: 'ownerName', value: 'CodeDeX', valueType: 'string', description: 'Bot owner name', isEncrypted: false },
+      'general.channelName': { category: 'general', key: 'channelName', value: 'WhatsDeX', valueType: 'string', description: 'Channel display name', isEncrypted: false },
+      'general.channelDescription': { category: 'general', key: 'channelDescription', value: 'Advanced WhatsApp Channel with AI Features', valueType: 'string', description: 'Channel description', isEncrypted: false },
+      'general.ownerName': { category: 'general', key: 'ownerName', value: 'CodeDeX', valueType: 'string', description: 'Channel owner name', isEncrypted: false },
       'general.timezone': { category: 'general', key: 'timezone', value: 'Africa/Accra', valueType: 'string', description: 'System timezone', isEncrypted: false },
 
       // Security

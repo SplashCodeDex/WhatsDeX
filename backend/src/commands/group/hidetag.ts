@@ -8,7 +8,7 @@ export default {
     group: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
+    const { formatter, tools } = ctx.channel.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || formatter.quote('👋 Halo, Dunia!');
 
     try {

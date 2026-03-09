@@ -114,6 +114,7 @@ export const API_ENDPOINTS = {
                 GET: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}` as const,
                 UPDATE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}` as const,
                 DELETE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}` as const,
+                MOVE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/move` as const,
                 CONNECT: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/connect` as const,
                 DISCONNECT: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/disconnect` as const,
                 QR_CODE: (agentId: string, id: string) => `/api/internal/agents/${agentId}/channels/${id}/qr` as const,

@@ -13,10 +13,10 @@ export class SignalAdapter implements ChannelAdapter {
 
   constructor(
     private tenantId: string,
-    private botId: string,
+    private channelId: string,
     private phoneNumber: string
   ) {
-    this.instanceId = botId;
+    this.instanceId = this.channelId;
   }
 
   async initialize(): Promise<void> {
@@ -24,7 +24,7 @@ export class SignalAdapter implements ChannelAdapter {
   }
 
   async connect(): Promise<void> {
-    logger.info(`[SignalAdapter] Connected for bot ${this.botId}`);
+    logger.info(`[SignalAdapter] Connected for channel ${this.channelId}`);
   }
 
   async disconnect(): Promise<void> {
@@ -38,7 +38,7 @@ export class SignalAdapter implements ChannelAdapter {
   async sendMessage(target: string, content: any): Promise<void> {
     const text = typeof content === 'string' ? content : content.text || JSON.stringify(content);
     await sendMessageSignal(target, text, {
-        accountId: this.phoneNumber // In OpenClaw Signal accountId is often the phone
+      accountId: this.phoneNumber // In OpenClaw Signal accountId is often the phone
     });
   }
 

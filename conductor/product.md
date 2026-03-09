@@ -4,7 +4,7 @@
 
 WhatsDeX is an enterprise-grade, omnichannel AI automation platform. Built upon the OpenClaw engine and Baileys Web API, it enables users to manage AI-powered interactions across WhatsApp, Telegram, Discord, and Slack through a unified system of **Channels** and **Agents**.
 
-The platform operates on a multi-tenant architecture where each customer's data, channels, and agents are isolated within their own workspace. It offers a tiered subscription model (Free vs. Premium), unlocking advanced features such as multiple connectivity slots, marketing campaign tools, Google Drive backups, and agentic AI reasoning.
+The platform operates on a multi-tenant architecture where each customer's data, channels, and agents are isolated within their own workspace. It offers a tiered subscription model (Free vs. Premium), unlocking advanced features such as multiple connectivity slots (supporting WhatsApp, Telegram, Discord, Slack, Signal, iMessage, IRC, and Google Chat), marketing campaign tools, Google Drive backups, and agentic AI reasoning.
 
 ## Target Audience
 
@@ -24,16 +24,18 @@ The platform operates on a multi-tenant architecture where each customer's data,
 ### 2. Channel Management
 
 - **Connectivity Slots:** Users can easily link their WhatsApp account via QR code, or connect Telegram, Discord, and Slack channels using API tokens.
+- **Expanded Reach:** Native support for Signal, iMessage, IRC, and Google Chat, ensuring true omnichannel coverage.
 - **Webhook Mode:** Support for connectivity-only use cases where incoming messages are forwarded to external webhooks without AI intervention (standard for Free Tier).
 - **Unified Agent Orchestration:** A consolidated "Brain + Phone" architecture where independent AI personas (Agents) act as the parent for one or more Channels (Connectivity Slots).
 - **Dynamic Binding:** Ability to hot-swap Agents across Channels instantly without disconnecting the underlying platform session.
+- **Advanced Lifecycle:** Fine-grained control over channel states with options to stop, delete, or archive (preserve history) connectivity slots.
 - **Deep Reasoning (Mastermind Phase 2):** High-intelligence multi-agent orchestration supporting up to **5 levels of nesting**. Agents can autonomously spawn researchers, fact-checkers, and synthesis nodes.
 - **Autonomous Multi-Agent Audit:** Integrated verification phase where specialized sub-agents critique and verify primary research findings before delivery, ensuring high accuracy and preventing hallucinations.
 - **Media Fidelity:** Support for **Opus-encoded WhatsApp voice notes** for superior audio quality and compatibility.
 
 ### 3. Messaging & Automation
 
-- **Omnichannel Unified Inbox:** A single, filtered interface for viewing and managing conversation history across all connected platforms, tracked by channel type and assigned agent.
+- **Omnichannel Unified Inbox:** A single, filtered interface for viewing and managing conversation history across all connected platforms (WhatsApp, Telegram, Discord, Slack, Signal, Google Chat, iMessage, and IRC), tracked by channel type and assigned agent.
 - **Broadcast/Marketing:** High-performance engine using **BullMQ** for reliable background processing. Supports **Hybrid Distribution** (Single Bot vs Multi-Bot Pooling) and **Intelligent Throttling** with randomized delays to maximize deliverability.
 - **Visual Automation (FlowBuilder 2.0):** No-code visual orchestrator for designing complex, multi-step conversation logic. Supports **Skill Nodes** for triggering agentic AI tools (Web Search, Image Gen) with dynamic parameter configuration directly on the canvas.
 - **Rich Templates:** Manage media-heavy templates with dynamic variable injection (`{{name}}`, `{{phone}}`) and **AI Message Spinning** (Enterprise only) to prevent account bans.

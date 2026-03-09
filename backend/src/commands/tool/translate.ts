@@ -17,7 +17,7 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, config } = ctx.bot.context as GlobalContext;
+    const { formatter, config } = ctx.channel.context as GlobalContext;
 
     try {
       const langCode = ctx.args[0]?.length === 2 ? ctx.args[0] : 'id';

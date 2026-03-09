@@ -21,7 +21,7 @@ export * from './performanceMonitor.js';
 
 // Helpers
 export * from './baileysUtils.js';
-export { createBotContext } from './createBotContext.js';
+export { createChannelContext } from './createChannelContext.js';
 export { levenshteinDistance as levenshtein } from './levenshtein.js';
 export * from './security.js';
 

@@ -8,7 +8,7 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, database: db } = ctx.bot.context;
+    const { formatter, tools, database: db } = ctx.channel.context;
     const groupJid = ctx.isGroup()
       ? ctx.id
       : ctx.args[0]
@@ -53,7 +53,7 @@ export default {
         await db.set(`group.${groupId}.sewaExpiration`, expirationDate);
 
         if (!silent && groupOwner) {
-          await ctx.bot.sendMessage(groupOwner, {
+          await ctx.channel.sendMessage(groupOwner, {
             text: formatter.quote(
               `📢 Bot berhasil disewakan ke grup ${groupName} (@${groupJid}) selama ${daysAmount} hari!`
             ),
@@ -69,7 +69,7 @@ export default {
         await db.delete(`group.${groupId}.sewaExpiration`);
 
         if (!silent && groupOwner) {
-          await ctx.bot.sendMessage(groupOwner, {
+          await ctx.channel.sendMessage(groupOwner, {
             text: formatter.quote(
               `📢 Bot berhasil disewakan ke grup ${groupName} (@${groupJid}) selamanya!`
             ),

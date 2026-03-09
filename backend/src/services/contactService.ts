@@ -35,7 +35,7 @@ export class ContactService {
   public async importContacts(
     tenantId: string,
     filePath: string,
-    botId?: string
+    channelId?: string
   ): Promise<Result<{ count: number; errors: string[]; contactIds: string[] }>> {
     const errors: string[] = [];
     const contactIds: string[] = [];
@@ -133,24 +133,24 @@ export class ContactService {
         logger.error('Failed to record import history', historyError);
       }
 
-      // Update bot statistics (contactsCount)
+      // Update channel statistics (contactsCount)
       if (count > 0) {
         try {
-          if (botId) {
-            // Update specific bot
-            await firebaseService.setDoc<'tenants/{tenantId}/bots'>(
-              'bots',
-              botId,
+          if (channelId) {
+            // Update specific channel
+            await firebaseService.setDoc<'tenants/{tenantId}/channels'>(
+              'channels',
+              channelId,
               { 'stats.contactsCount': FieldValue.increment(count) } as any,
               tenantId,
               true
             );
           } else {
-            const bots = await firebaseService.getCollection<'tenants/{tenantId}/bots'>('bots', tenantId);
-            const statsPromises = bots.map(bot =>
-              firebaseService.setDoc<'tenants/{tenantId}/bots'>(
-                'bots',
-                bot.id,
+            const channels = await firebaseService.getCollection<'tenants/{tenantId}/channels'>('channels', tenantId);
+            const statsPromises = channels.map(channel =>
+              firebaseService.setDoc<'tenants/{tenantId}/channels'>(
+                'channels',
+                channel.id,
                 { 'stats.contactsCount': FieldValue.increment(count) } as any,
                 tenantId,
                 true
@@ -159,7 +159,7 @@ export class ContactService {
             await Promise.all(statsPromises);
           }
         } catch (statsError) {
-          logger.error('Failed to update bot stats after import', statsError);
+          logger.error('Failed to update channel stats after import', statsError);
         }
       }
 
@@ -318,14 +318,14 @@ export class ContactService {
         updatedAt: FieldValue.serverTimestamp()
       });
 
-      // Update bot stats (decrement)
+      // Update channel stats (decrement)
       if (historyData.importedCount > 0) {
         try {
-          const bots = await firebaseService.getCollection<'tenants/{tenantId}/bots'>('bots', tenantId);
-          const statsPromises = bots.map(bot =>
-            firebaseService.setDoc<'tenants/{tenantId}/bots'>(
-              'bots',
-              bot.id,
+          const channels = await firebaseService.getCollection<'tenants/{tenantId}/channels'>('channels', tenantId);
+          const statsPromises = channels.map(channel =>
+            firebaseService.setDoc<'tenants/{tenantId}/channels'>(
+              'channels',
+              channel.id,
               { 'stats.contactsCount': FieldValue.increment(-historyData.importedCount) } as any,
               tenantId,
               true
@@ -333,7 +333,7 @@ export class ContactService {
           );
           await Promise.all(statsPromises);
         } catch (statsError) {
-          logger.error('Failed to decrement bot stats after undo', statsError);
+          logger.error('Failed to decrement channel stats after undo', statsError);
         }
       }
 

@@ -5,15 +5,15 @@ export default {
   category: 'group',
   permissions: {
     admin: true,
-    botAdmin: true,
+    channelAdmin: true,
     group: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
+    const { formatter, tools, config, database: db } = ctx.channel.context;
     const groupId = ctx.getId(ctx.id);
 
     if (ctx.args[0]?.toLowerCase() === 'bot') {
-      await db.set(`group.${groupId}.mutebot`, false);
+      await db.set(`group.${groupId}.mutechannel`, false);
       return await ctx.reply(formatter.quote('✅ Berhasil me-unmute grup ini dari bot!'));
     }
 
@@ -34,7 +34,7 @@ export default {
 
     const accountId = ctx.getId(accountJid);
 
-    if (accountId === config.bot.id)
+    if (accountId === config.channel.id)
       return await ctx.reply(
         formatter.quote(
           `❎ Ketik ${formatter.inlineCode(`${ctx.used.prefix + ctx.used.command} bot`)} untuk me-unmute bot.`

@@ -5,11 +5,11 @@ export default {
   name: 'simulate',
   category: 'group',
   permissions: {
-    botAdmin: true,
+    channelAdmin: true,
     group: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
+    const { formatter, tools } = ctx.channel.context;
     const input = ctx.args.join(' ') || null;
 
     if (!input)

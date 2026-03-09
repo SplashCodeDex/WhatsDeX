@@ -6,7 +6,7 @@ export default {
     category: 'information',
     description: 'Check how long the bot has been running.',
     code: async (ctx: MessageContext) => {
-        const { formatter, config } = ctx.bot.context;
-        await ctx.reply(formatter.quote(`🚀 Bot has been active for ${config.bot.uptime || 'unknown'}.`));
+        const { formatter, config } = ctx.channel.context;
+        await ctx.reply(formatter.quote(`🚀 Bot has been active for ${config.channel.uptime || 'unknown'}.`));
     },
 };

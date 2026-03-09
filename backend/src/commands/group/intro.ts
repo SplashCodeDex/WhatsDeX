@@ -3,11 +3,11 @@ export default {
   name: 'intro',
   category: 'group',
   permissions: {
-    botAdmin: true,
+    channelAdmin: true,
     group: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, database: db } = ctx.bot.context;
+    const { formatter, tools, database: db } = ctx.channel.context;
     try {
       const groupId = ctx.getId(ctx.id);
       const introText =

@@ -1,5 +1,5 @@
 import { toolRegistry, ToolDefinition } from './toolRegistry.js';
-import { Bot, Command } from '../types/index.js';
+import { Channel, Command } from '../types/index.js';
 import logger from '../utils/logger.js';
 
 /**
@@ -10,7 +10,7 @@ export class WhatsDeXToolBridge {
   /**
    * Registers a subset of high-value WhatsDeX commands as AI tools.
    */
-  public static registerCommands(bot: Bot): void {
+  public static registerCommands(channel: Channel): void {
     const highValueCommands = [
       'youtubevideo', 'youtubeaudio', 'instagramdl', 'tiktokdl', 'facebookdl',
       'dalle', 'animagine', 'editimage', 'upscale', 'removebg',
@@ -21,16 +21,16 @@ export class WhatsDeXToolBridge {
 
     for (const name of highValueCommands) {
       console.log(`>>> [MASTERMIND] Bridging command: ${name}`);
-      const command = bot.cmd.get(name);
+      const command = (channel as any).cmd.get(name);
       if (command) {
-        this.bridgeCommand(name, command, bot);
+        this.bridgeCommand(name, command, channel);
       } else {
         console.warn(`>>> [MASTERMIND] Command not found: ${name}`);
       }
     }
   }
 
-  private static bridgeCommand(name: string, command: Command, bot: Bot): void {
+  private static bridgeCommand(name: string, command: Command, channel: Channel): void {
     const tool: ToolDefinition = {
       name,
       description: command.description || `Execute ${name} command`,
@@ -50,7 +50,7 @@ export class WhatsDeXToolBridge {
         if (handler) {
           let blocked = true;
           // Security enforcement via Middleware (Permissions, Cooldowns, etc.)
-          await (bot as any).executeMiddleware(mockCtx as any, async () => {
+          await (channel as any).executeMiddleware(mockCtx as any, async () => {
             blocked = false;
             await handler(mockCtx as any);
           });

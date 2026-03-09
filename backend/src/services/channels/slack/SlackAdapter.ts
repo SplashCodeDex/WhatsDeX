@@ -13,20 +13,20 @@ export class SlackAdapter implements ChannelAdapter {
 
   constructor(
     private tenantId: string,
-    private botId: string,
+    private channelId: string,
     private token: string
   ) {
-    this.instanceId = botId;
+    this.instanceId = this.channelId;
   }
 
   async initialize(): Promise<void> {
-    logger.info(`[SlackAdapter] Initializing for ${this.botId}`);
+    logger.info(`[SlackAdapter] Initializing for ${this.channelId}`);
   }
 
   async connect(): Promise<void> {
     // In OpenClaw, Slack is often handled via the gateway or direct calls.
     // For a persistent listener, we might need to hook into OpenClaw's monitor.
-    logger.info(`[SlackAdapter] Connected for bot ${this.botId}`);
+    logger.info(`[SlackAdapter] Connected for channel ${this.channelId}`);
   }
 
   async disconnect(): Promise<void> {
@@ -40,7 +40,7 @@ export class SlackAdapter implements ChannelAdapter {
   async sendMessage(target: string, content: any): Promise<void> {
     const text = typeof content === 'string' ? content : content.text || JSON.stringify(content);
     await sendMessageSlack(target, text, {
-        token: this.token
+      token: this.token
     });
   }
 

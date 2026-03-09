@@ -13,7 +13,7 @@ export default {
       formatter,
       config,
       tools: { msg, cmd, api, mime },
-    } = ctx.bot.context;
+    } = ctx.channel.context;
     const url = ctx.args[0] || null;
 
     if (!url)

@@ -12,18 +12,18 @@ export class IRCAdapter implements ChannelAdapter {
 
   constructor(
     private tenantId: string,
-    private botId: string,
+    private channelId: string,
     private config: Record<string, any>
   ) {
-    this.instanceId = botId;
+    this.instanceId = this.channelId;
   }
 
   async initialize(): Promise<void> {
-    logger.info(`[IRCAdapter] Initializing for ${this.botId}`);
+    logger.info(`[IRCAdapter] Initializing for ${this.channelId}`);
   }
 
   async connect(): Promise<void> {
-    logger.info(`[IRCAdapter] Connected for bot ${this.botId}`);
+    logger.info(`[IRCAdapter] Connected for channel ${this.channelId}`);
   }
 
   async disconnect(): Promise<void> {

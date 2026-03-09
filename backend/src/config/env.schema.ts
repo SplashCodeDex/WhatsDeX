@@ -5,10 +5,10 @@ export const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   // DATABASE_URL removed as we use Firestore exclusively
 
-  // Bot Config
-  BOT_NAME: z.string().default('whatsdex'),
-  BOT_PREFIX: z.string().default('^[.#!?]'),
-  BOT_PHONE_NUMBER: z.string().optional(),
+  // Channel Config
+  CHANNEL_NAME: z.string().default('whatsdex'),
+  CHANNEL_PREFIX: z.string().default('^[.#!?]'),
+  CHANNEL_PHONE_NUMBER: z.string().optional(),
   GROUP_JID: z.string().optional(),
   NEWSLETTER_JID: z.string().default('120363416372653441@newsletter'),
   SESSION_ID: z.string().default('default'),
@@ -48,9 +48,9 @@ export const envSchema = z.object({
 
   // System
   USE_SERVER: z.coerce.boolean().default(true),
-  BOT_COOLDOWN_MS: z.coerce.number().default(10000),
+  CHANNEL_COOLDOWN_MS: z.coerce.number().default(10000),
   TIME_ZONE: z.string().default('Africa/Accra'),
-  REQUIRE_BOT_GROUP_MEMBERSHIP: z.coerce.boolean().default(false),
+  REQUIRE_CHANNEL_GROUP_MEMBERSHIP: z.coerce.boolean().default(false),
   REQUIRE_GROUP_SEWA: z.coerce.boolean().default(false),
   UNAVAILABLE_AT_NIGHT: z.coerce.boolean().default(false),
   PRIVATE_PREMIUM_ONLY: z.coerce.boolean().default(false),

@@ -151,7 +151,7 @@ export class FlowEngine {
 
   private async executeSkillNode(node: any, context: any) {
     const { data } = node;
-    const { unifiedAI, bot, tenantId } = context;
+    const { unifiedAI, channel, tenantId } = context;
 
     if (!unifiedAI) {
       logger.warn('FlowEngine: unifiedAI not found in context, skipping skill node');
@@ -184,7 +184,7 @@ export class FlowEngine {
   private async trackNodeExecution(tenantId: string, nodeId: string, type: string, metadata: any = {}) {
     try {
       logger.debug(`[METRIC] Flow Node Executed: ${nodeId} [Type: ${type}] Tenant: ${tenantId}`, metadata);
-      
+
       // Persist to Firestore for monetization/usage tracking
       await db.collection('tenants')
         .doc(tenantId)
@@ -261,7 +261,7 @@ Return ONLY the label of the best matching category (e.g., "${data.options[0]?.l
 
   private async executeActionNode(node: any, context: any) {
     const { data } = node;
-    const tenantId = context.tenantId || context.bot?.tenantId;
+    const tenantId = context.tenantId || context.channel?.tenantId;
 
     if (data.templateId && tenantId) {
       const templateService = TemplateService.getInstance();
@@ -280,7 +280,7 @@ Return ONLY the label of the best matching category (e.g., "${data.options[0]?.l
 
   private async executeAINode(node: any, context: any) {
     const { data } = node;
-    const { unifiedAI, bot, tenantId } = context;
+    const { unifiedAI, channel, tenantId } = context;
 
     if (!unifiedAI) {
       logger.warn('FlowEngine: unifiedAI not found in context, skipping AI node');
@@ -293,14 +293,14 @@ Return ONLY the label of the best matching category (e.g., "${data.options[0]?.l
         id: context.id,
         platform: context.platform || 'whatsapp',
         from: context.sender?.jid,
-        to: bot?.botId,
+        to: channel?.channelId,
         content: { text: context.body || '' },
         timestamp: Date.now()
       };
 
       const result = await unifiedAI.processOmnichannelMessage(
-        tenantId || bot?.tenantId,
-        bot?.botId,
+        tenantId || channel?.tenantId,
+        channel?.channelId,
         commonMsg
       );
 

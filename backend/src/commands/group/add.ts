@@ -5,11 +5,11 @@ export default {
   category: 'group',
   permissions: {
     admin: true,
-    botAdmin: true,
+    channelAdmin: true,
     group: true
   },
   code: async (ctx: MessageContext) => {
-    const { formatter } = ctx.bot.context;
+    const { formatter } = ctx.channel.context;
     const input = ctx.args.join('');
 
     if (!input) {
@@ -22,8 +22,8 @@ export default {
 
     try {
       // Verify user exists on WhatsApp using bot socket
-      if (ctx.bot.onWhatsApp) {
-        const results = await ctx.bot.onWhatsApp(accountJid);
+      if (ctx.channel.onWhatsApp) {
+        const results = await ctx.channel.onWhatsApp(accountJid);
         if (!results || results.length === 0 || !results[0].exists) {
           return await ctx.reply(formatter.quote('❎ Only numbers registered on WhatsApp can be added.'));
         }
@@ -34,7 +34,7 @@ export default {
 
     } catch (error: unknown) {
       const err = error instanceof Error ? error.message : String(error);
-      ctx.bot.context.logger.error('Add command failed', { error: err });
+      ctx.channel.context.logger.error('Add command failed', { error: err });
       await ctx.reply(formatter.quote(`❌ Failed to add user: ${err}`));
     }
   },

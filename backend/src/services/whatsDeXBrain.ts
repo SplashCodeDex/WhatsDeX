@@ -6,7 +6,7 @@
  */
 
 import { GeminiAI } from './geminiAI.js';
-import { Bot, GlobalContext, MessageContext, Result } from '../types/index.js';
+import { ActiveChannel, GlobalContext, MessageContext, Result } from '../types/index.js';
 import logger from '../utils/logger.js';
 
 /**
@@ -14,10 +14,10 @@ import logger from '../utils/logger.js';
  */
 export class WhatsDeXBrain {
     private ai: GeminiAI;
-    private bot: Bot;
+    private channel: ActiveChannel;
 
-    constructor(bot: Bot, context: GlobalContext) {
-        this.bot = bot;
+    constructor(channel: ActiveChannel, context: GlobalContext) {
+        this.channel = channel;
         this.ai = new GeminiAI(context);
         logger.debug('[WhatsDeXBrain] Initialized (wrapping GeminiAI)');
     }
@@ -26,7 +26,7 @@ export class WhatsDeXBrain {
      * Process message using GeminiAI
      */
     async processMessage(ctx: MessageContext): Promise<Result<void>> {
-        return this.ai.processMessage(this.bot, ctx);
+        return this.ai.processMessage(this.channel, ctx);
     }
 }
 

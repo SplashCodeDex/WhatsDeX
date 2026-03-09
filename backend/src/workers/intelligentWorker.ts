@@ -1,14 +1,14 @@
 import { EnhancedAIBrain } from '../services/index.js';
-import { createBotContext } from '../utils/createBotContext.js';
+import { createChannelContext } from '../utils/createChannelContext.js';
 import logger from '../utils/logger.js';
-import { Bot, GlobalContext } from '../types/index.js';
+import { ActiveChannel, GlobalContext } from '../types/index.js';
 
 /**
  * Intelligent Worker - Processes messages with AI intelligence
  */
 class IntelligentWorker {
   private processor: EnhancedAIBrain | null = null;
-  private bot: Bot | null = null;
+  private channel: ActiveChannel | null = null;
   private context: GlobalContext | null = null;
   private messagesProcessed: number = 0;
   private errorsCount: number = 0;
@@ -19,10 +19,10 @@ class IntelligentWorker {
   }
 
   /**
-   * Initialize with bot context
+   * Initialize with channel context
    */
-  async initialize(bot: Bot, context: GlobalContext) {
-    this.bot = bot;
+  async initialize(channel: ActiveChannel, context: GlobalContext) {
+    this.channel = channel;
     this.context = context;
     this.processor = new EnhancedAIBrain(context);
     logger.info('Intelligent Worker ready for message processing');
@@ -35,18 +35,18 @@ class IntelligentWorker {
     if (!this.processor) {
       throw new Error('Intelligent processor not initialized');
     }
-    if (!this.bot) {
-      throw new Error('Bot not initialized');
+    if (!this.channel) {
+      throw new Error('Channel not initialized');
     }
 
-    const { messageData, botContext } = job.data;
+    const { messageData, channelContext } = job.data;
 
     try {
       // Create enhanced context for the message
-      const ctx = await this.createEnhancedContext(messageData, botContext);
+      const ctx = await this.createEnhancedContext(messageData, channelContext);
 
       // Process with intelligent system
-      await this.processor.processMessage(this.bot, ctx);
+      await this.processor.processMessage(this.channel, ctx);
       this.messagesProcessed++;
 
       logger.debug('Message processed intelligently', {
@@ -67,11 +67,11 @@ class IntelligentWorker {
   /**
    * Create enhanced context from message data
    */
-  async createEnhancedContext(messageData: any, botContext: any) {
+  async createEnhancedContext(messageData: any, channelContext: any) {
     if (!this.context) throw new Error('Global context not initialized');
-    if (!this.bot) throw new Error('Bot not initialized');
+    if (!this.channel) throw new Error('Channel not initialized');
 
-    const ctx = await createBotContext(this.bot, messageData, this.context);
+    const ctx = await createChannelContext(this.channel, messageData, this.context);
 
     // Add intelligent enhancements
     ctx.intelligentMode = true;

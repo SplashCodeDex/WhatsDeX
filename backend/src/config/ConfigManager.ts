@@ -12,6 +12,7 @@ export interface Config {
     cooldown: number;
     antiCall: boolean;
     selfMode: boolean;
+    requireChannelGroupMembership: boolean;
     [key: string]: any;
   };
   owner: {
@@ -64,7 +65,7 @@ export interface Config {
     skipSuccessfulRequests: boolean;
     skipFailedRequests: boolean;
   };
-  bot: {
+  channel: {
     name: string;
     browser: [string, string, string];
     prefix: string[];
@@ -171,9 +172,10 @@ export class ConfigManager {
         port: this.env.PORT,
         timeZone: this.env.TIME_ZONE,
         maxListeners: this.env.MAX_LISTENERS,
-        cooldown: this.env.BOT_COOLDOWN_MS,
+        cooldown: this.env.CHANNEL_COOLDOWN_MS,
         antiCall: true,
         selfMode: this.env.SELF_OWNER,
+        requireChannelGroupMembership: this.env.REQUIRE_CHANNEL_GROUP_MEMBERSHIP,
       },
       owner: {
         name: process.env.OWNER_NAME || 'Owner',
@@ -233,15 +235,15 @@ export class ConfigManager {
         skipFailedRequests: false
       },
 
-      // Bot Configuration
-      bot: {
-        name: this.env.BOT_NAME,
+      // Channel Configuration
+      channel: {
+        name: this.env.CHANNEL_NAME,
         browser: ['WhatsDeX', 'Chrome', '1.0.0'],
-        prefix: this.env.BOT_PREFIX.startsWith('^') ? [this.env.BOT_PREFIX] : this.env.BOT_PREFIX.split(''),
+        prefix: this.env.CHANNEL_PREFIX.startsWith('^') ? [this.env.CHANNEL_PREFIX] : this.env.CHANNEL_PREFIX.split(''),
         mode: 'public',
         selfMode: this.env.SELF_OWNER,
         maxCommandsPerMinute: 60,
-        cooldownMs: this.env.BOT_COOLDOWN_MS,
+        cooldownMs: this.env.CHANNEL_COOLDOWN_MS,
         maintenance: false,
         autoReconnect: true,
         sessionPath: './sessions',

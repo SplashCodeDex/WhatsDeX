@@ -8,7 +8,7 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, database: db } = ctx.bot.context;
+    const { formatter, tools, database: db } = ctx.channel.context;
     const groupJid = ctx.isGroup()
       ? ctx.id
       : ctx.args[0]
@@ -50,7 +50,7 @@ export default {
       const groupName = await group.name();
 
       if (!silent && groupOwner) {
-        await ctx.bot.sendMessage(groupOwner, {
+        await ctx.channel.sendMessage(groupOwner, {
           text: formatter.quote(
             `📢 Sewa bot untuk grup ${groupName} (@${groupJid}) telah dihentikan oleh Owner!`
           ),

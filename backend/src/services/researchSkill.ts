@@ -38,15 +38,15 @@ export class ResearchSkill {
 
   private static async executeResearch(args: any, context: any): Promise<any> {
     const { topic, depth = 3, intensive = false } = args;
-    const { tenantId, botId } = context;
+    const { tenantId, channelId } = context;
 
     logger.info(`Starting deep research for tenant ${tenantId}: ${topic} (Depth: ${depth}, Intensive: ${intensive})`);
 
     try {
       // 1. Spawning Phase: The Researcher (Level 1)
       logger.info('[ResearchSkill] Spawning Researcher Agent...');
-      
-      const researcherTask = intensive 
+
+      const researcherTask = intensive
         ? `Research "${topic}" exhaustively. Spawn multiple sub-searchers if needed to cover different angles. Return a comprehensive data dump.`
         : `Research "${topic}" in depth. Provide a detailed report with facts and sources.`;
 
@@ -62,12 +62,12 @@ export class ResearchSkill {
 
       // 2. Audit Phase: The Critique Agent (Autonomous Verification)
       logger.info('[ResearchSkill] Spawning Critique Agent for verification...');
-      
-      const critiqueTask = `CRITICAL AUDIT: Fact-check the following research findings for accuracy and hallucinations. 
+
+      const critiqueTask = `CRITICAL AUDIT: Fact-check the following research findings for accuracy and hallucinations.
       Topic: "${topic}"
       Findings:
       ${researchFindings}
-      
+
       If you find errors, state them clearly. If accurate, suggest improvements for synthesis.
       Return your verdict and any corrected facts.`;
 
@@ -83,12 +83,12 @@ export class ResearchSkill {
 
       // 3. Synthesis Phase: The Mastermind Synthesis (Final Tier)
       logger.info('[ResearchSkill] Finalizing synthesis...');
-      
+
       const synthesisTask = `Synthesize the following research data and audit feedback into a professional, cohesive final report.
       Topic: "${topic}"
       Research: ${researchFindings}
       Audit Verdict: ${auditFeedback}
-      
+
       Requirements:
       - Eliminate any facts flagged as incorrect by the auditor.
       - Maintain a professional, objective tone.

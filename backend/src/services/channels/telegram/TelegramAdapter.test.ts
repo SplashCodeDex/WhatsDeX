@@ -27,12 +27,12 @@ vi.mock('openclaw', async (importOriginal) => {
 describe('TelegramAdapter', () => {
   let adapter: TelegramAdapter;
   const tenantId = 'tenant-123';
-  const botId = 'bot-tg';
+  const channelId = 'channel-tg';
   const token = '123456:ABC-DEF';
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    adapter = new TelegramAdapter(tenantId, botId, token);
+    adapter = new TelegramAdapter(tenantId, channelId, token);
     await adapter.initialize();
   });
 
@@ -40,8 +40,8 @@ describe('TelegramAdapter', () => {
     expect(adapter.id).toBe('telegram');
   });
 
-  it('should have instanceId equal to botId', () => {
-    expect(adapter.instanceId).toBe(botId);
+  it('should have instanceId equal to channelId', () => {
+    expect(adapter.instanceId).toBe(channelId);
   });
 
   it('should initialize and connect', async () => {
@@ -95,8 +95,8 @@ describe('TelegramAdapter', () => {
 
     expect(handler).toHaveBeenCalledWith(expect.objectContaining({
       tenantId,
-      botId,
-      channelId: 'telegram',
+      channelId,
+      channelType: 'telegram',
       sender: 'user1',
       content: 'hi bot'
     }));

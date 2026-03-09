@@ -14,10 +14,10 @@ export class DiscordAdapter implements ChannelAdapter {
 
   constructor(
     private tenantId: string,
-    private botId: string,
+    private channelId: string,
     private token: string
   ) {
-    this.instanceId = botId;
+    this.instanceId = channelId;
   }
 
   async initialize(): Promise<void> {
@@ -37,12 +37,12 @@ export class DiscordAdapter implements ChannelAdapter {
 
     this.client.on("messageCreate", async (message) => {
       if (message.author.bot) return;
-      
+
       if (this.messageHandler) {
         await this.messageHandler({
           tenantId: this.tenantId,
-          channelId: this.id,
-          botId: this.botId,
+          channelId: this.channelId,
+          channelType: this.id,
           sender: message.author.username,
           content: message.content,
           timestamp: message.createdAt,

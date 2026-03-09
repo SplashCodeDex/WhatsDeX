@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 export type Feature = 'ai' | 'backups' | 'broadcast' | 'analytics';
 
 export interface PlanLimits {
-  maxBots: number;
+  maxChannels: number;
   maxBroadcasts: number;
   aiType: 'basic' | 'advanced' | 'none';
   analyticsLevel: 'basic' | 'advanced' | 'enterprise';
@@ -41,14 +41,14 @@ export const getPlanLimits = (plan: 'starter' | 'pro' | 'enterprise'): PlanLimit
   switch (plan) {
     case 'enterprise':
       return {
-        maxBots: 10,
+        maxChannels: 10,
         maxBroadcasts: Infinity,
         aiType: 'advanced',
         analyticsLevel: 'enterprise'
       };
     case 'pro':
       return {
-        maxBots: 3,
+        maxChannels: 3,
         maxBroadcasts: 5000,
         aiType: 'advanced',
         analyticsLevel: 'advanced'
@@ -56,7 +56,7 @@ export const getPlanLimits = (plan: 'starter' | 'pro' | 'enterprise'): PlanLimit
     case 'starter':
     default:
       return {
-        maxBots: 1,
+        maxChannels: 1,
         maxBroadcasts: 500,
         aiType: 'basic',
         analyticsLevel: 'basic'

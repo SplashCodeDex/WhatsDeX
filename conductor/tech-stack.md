@@ -29,8 +29,12 @@
 - **WhatsApp API:** Baileys 7.0.0 (via OpenClaw Adapter)
 - **Telegram API:** grammY 1.40.0 (via OpenClaw Adapter)
 - **Discord API:** discord.js 14.18.0 (via OpenClaw Adapter)
+- **Signal API:** OpenClaw Signal Module
+- **iMessage API:** OpenClaw iMessage Module
+- **IRC API:** OpenClaw IRC Extension
+- **Google Chat API:** OpenClaw Google Chat Extension
 - **Job Queues:** BullMQ / BullMQ Pro (Group Isolation for Multi-Tenancy)
-- **Real-time:** WebSockets (Socket.io 4.8.3 & socket.io-client)
+- **Real-time:** WebSockets (Socket.io 4.8.3 & socket.io-client) with support for granular Channel Status Push
 - **Observability:** OpenTelemetry (Tracing & Metrics, Low-overhead auto-instrumentation)
 - **Logging:** Pino (High-performance, JSON structured)
 - **Testing:** Node.js Native Test Runner (`node --test`) & Vitest 4.0

@@ -7,7 +7,7 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.channel.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
     if (!input)

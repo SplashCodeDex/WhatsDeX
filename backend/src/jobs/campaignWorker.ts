@@ -167,7 +167,7 @@ class CampaignWorker {
         }
 
         if (sent + failed < total) {
-            let delayTime = currentCampaign.antiBan.batchSize > 0 
+            let delayTime = currentCampaign.antiBan.batchSize > 0
                 ? Math.floor(gaussianRandom(currentCampaign.antiBan.batchPauseMin, currentCampaign.antiBan.batchPauseMax) * 60 * 1000)
                 : Math.floor(gaussianRandom(currentCampaign.antiBan.minDelay, currentCampaign.antiBan.maxDelay) * 1000);
 
@@ -247,8 +247,9 @@ class CampaignWorker {
     private getAvailableChannelIds(tenantId: string, distribution: Campaign['distribution']): string[] {
         const keys = channelManager.getRegisteredChannelKeys();
         // Simplified filter: in 2026 production, we'd verify tenantId ownership via ChannelService
-        if (distribution.type === 'single' && distribution.botId) {
-            return keys.includes(distribution.botId) ? [distribution.botId] : [];
+        const targetId = distribution.channelId || (distribution as any).botId;
+        if (distribution.type === 'single' && targetId) {
+            return keys.includes(targetId) ? [targetId] : [];
         }
         return keys;
     }

@@ -6,14 +6,14 @@ export default {
     category: 'information',
     description: 'Support the bot developer through donations.',
     code: async (ctx: MessageContext) => {
-        const { formatter, tools, config, database: db } = ctx.bot.context;
+        const { formatter, tools, config, database: db } = ctx.channel.context;
         try {
             const qrisLink = (await db.get<string>('bot.text.qris')) || null;
             const customText = (await db.get<string>('bot.text.donate')) || null;
             const text = customText
                 ? customText
                     .replace(/%tag%/g, `@${ctx.getId(ctx.sender.jid)}`)
-                    .replace(/%name%/g, config.bot.name)
+                    .replace(/%name%/g, config.channel.name)
                     .replace(/%prefix%/g, ctx.used.prefix)
                     .replace(/%command%/g, ctx.used.command)
                     .replace(/%footer%/g, config.msg.footer)

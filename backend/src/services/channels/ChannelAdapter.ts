@@ -77,11 +77,11 @@ export interface ChannelAdapter {
  */
 export interface InboundMessageEvent {
   tenantId: string;
-  channelId: string;
-  botId: string;
-  fullPath?: string; // Full Firestore path for path-aware routing
+  channelId: string; // The specific instance ID (was botId)
+  channelType: ChannelId; // 'whatsapp', 'telegram', etc.
+  fullPath?: string;
   sender: string;
   content: any;
   timestamp: Date;
-  raw: any; // Original channel-specific message object
+  raw: any;
 }

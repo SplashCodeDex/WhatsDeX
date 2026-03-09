@@ -7,7 +7,7 @@ export default {
     category: 'information',
     description: 'Check the bot\'s response time.',
     code: async (ctx: MessageContext) => {
-        const { formatter } = ctx.bot.context;
+        const { formatter } = ctx.channel.context;
         try {
             const startTime = performance.now();
             const pongMsg = await ctx.reply(formatter.quote('🏓 Pong!'));

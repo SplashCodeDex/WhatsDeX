@@ -14,7 +14,7 @@ export default {
     coin: 10,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
+    const { formatter, tools } = ctx.channel.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
       tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
       tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, 'image'),

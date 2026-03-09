@@ -6,13 +6,13 @@ import channelService from './ChannelService.js';
 
 /**
  * Agent Service
- * 
- * Manages AI Agents (Brains) and provides the parent scope for Channels.
+ *
+ * Manages AI Agents (Brains) and provides the parent scope for Active Channels.
  */
 export class AgentService {
   private static instance: AgentService;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): AgentService {
     if (!AgentService.instance) {
@@ -29,7 +29,7 @@ export class AgentService {
     try {
       const systemAgentId = 'system_default';
       const existing = await firebaseService.getDoc<'tenants/{tenantId}/agents'>('agents', systemAgentId, tenantId);
-      
+
       if (existing) {
         return { success: true, data: existing as Agent };
       }
@@ -129,7 +129,7 @@ export class AgentService {
 
       // 3. Delete the agent itself
       await firebaseService.deleteDoc<'tenants/{tenantId}/agents'>('agents', agentId, tenantId);
-      
+
       logger.info(`Agent ${agentId} deleted for tenant ${tenantId}`);
       return { success: true, data: undefined };
     } catch (error: any) {

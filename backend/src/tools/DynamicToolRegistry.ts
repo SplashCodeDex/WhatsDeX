@@ -1,5 +1,5 @@
 import logger from '../utils/logger.js';
-import { Bot, Command, Result } from '../types/index.js';
+import { ActiveChannel, Command, Result } from '../types/index.js';
 
 interface ToolSchema {
   type: string;
@@ -25,13 +25,13 @@ interface ToolInfo {
 }
 
 export class DynamicToolRegistry {
-  private bot: Bot;
+  private channel: ActiveChannel;
   private tools: Map<string, ToolInfo>;
   private categories: Map<string, string[]>;
   private toolSchemas: ToolSchema[];
 
-  constructor(bot: Bot) {
-    this.bot = bot;
+  constructor(channel: ActiveChannel) {
+    this.channel = channel;
     this.tools = new Map();
     this.categories = new Map();
     this.toolSchemas = [];
@@ -40,7 +40,7 @@ export class DynamicToolRegistry {
 
   async registerAllCommands(): Promise<number> {
     let registered = 0;
-    for (const [name, command] of this.bot.cmd) {
+    for (const [name, command] of this.channel.cmd) {
       try {
         const schema = await this.createToolSchema(name, command);
         this.tools.set(name, {

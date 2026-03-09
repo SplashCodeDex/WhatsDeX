@@ -47,7 +47,7 @@ export const TenantSchema = z.object({
   createdAt: TimestampSchema.nullish(),
   updatedAt: TimestampSchema.nullish(),
   settings: z.preprocess((val) => val ?? {}, z.object({
-    maxBots: z.preprocess((val) => val ?? undefined, z.number().int().min(1).default(1)),
+    maxChannels: z.preprocess((val) => val ?? undefined, z.number().int().min(1).default(1)),
     aiEnabled: z.preprocess((val) => val ?? undefined, z.boolean().default(false)),
     customPairingCode: z.string().nullish(),
     timezone: z.string().default('UTC').nullish()
@@ -135,15 +135,15 @@ export const AgentSchema = z.object({
 export type Agent = z.infer<typeof AgentSchema>;
 
 /**
- * Bot Instance Schema ('tenants/{tenantId}/bots' subcollection)
+ * Channel Instance Schema ('tenants/{tenantId}/channels' subcollection)
  * @deprecated Use ChannelSchema instead.
  */
-export const BotInstanceSchema = ChannelSchema;
+export const ChannelInstanceSchema = ChannelSchema;
 
 /**
  * @deprecated Use Channel instead.
  */
-export type BotInstance = z.infer<typeof BotInstanceSchema>;
+export type ChannelInstance = z.infer<typeof ChannelInstanceSchema>;
 
 /**
  * Moderation Item Schema
@@ -186,7 +186,7 @@ export type Violation = z.infer<typeof ViolationSchema>;
  */
 export const CommandPermissionsSchema = z.object({
   admin: z.boolean().optional(),
-  botAdmin: z.boolean().optional(),
+  channelAdmin: z.boolean().optional(),
   owner: z.boolean().optional(),
   group: z.boolean().optional(),
   private: z.boolean().optional(),
@@ -206,9 +206,9 @@ export const CommandSchema = z.object({
 export type CommandDefinition = z.infer<typeof CommandSchema>;
 
 /**
- * Bot Member Schema ('tenants/{tenantId}/members' subcollection)
+ * Channel Member Schema ('tenants/{tenantId}/members' subcollection)
  */
-export const BotMemberSchema = z.object({
+export const ChannelMemberSchema = z.object({
   id: z.string(),
   username: z.string().optional(),
   coin: z.number().default(0),
@@ -228,7 +228,7 @@ export const BotMemberSchema = z.object({
   updatedAt: TimestampSchema
 }).readonly();
 
-export type BotMember = z.infer<typeof BotMemberSchema>;
+export type ChannelMember = z.infer<typeof ChannelMemberSchema>;
 
 /**
  * Group Data Schema ('tenants/{tenantId}/groups' subcollection)
@@ -258,8 +258,8 @@ export const GroupSchema = z.object({
 }).readonly();
 
 export type GroupData = z.infer<typeof GroupSchema>;
-export type BotGroup = GroupData; // Alias for backward compatibility
-export const BotGroupSchema = GroupSchema;
+export type ChannelGroup = GroupData; // Alias for backward compatibility
+export const ChannelGroupSchema = GroupSchema;
 
 /**
  * Subscription Schema ('tenants/{tenantId}/subscriptions' subcollection)
@@ -309,7 +309,7 @@ export const CampaignSchema = z.object({
   }),
   distribution: z.object({
     type: z.enum(['single', 'pool']),
-    botId: z.string().optional(), // Used if type is 'single'
+    channelId: z.string().optional(), // Used if type is 'single'
   }),
   antiBan: z.object({
     uuid: z.string().optional(), // Strategy identifier
@@ -351,9 +351,9 @@ export type Campaign = z.infer<typeof CampaignSchema>;
 export const WebhookEventSchema = z.enum([
   'message.received',
   'message.sent',
-  'bot.connected',
-  'bot.disconnected',
-  'bot.error',
+  'channel.connected',
+  'channel.disconnected',
+  'channel.error',
   'campaign.completed',
   'flow.executed'
 ]);
@@ -450,7 +450,7 @@ export const TemplateSchema = z.object({
 export type MessageTemplate = z.infer<typeof TemplateSchema>;
 
 /**
- * Baileys Auth State Schema ('tenants/{tenantId}/bots/{botId}/auth' subcollection)
+ * Baileys Auth State Schema ('tenants/{tenantId}/channels/{channelId}/auth' subcollection)
  * Stores session credentials and keys
  */
 export const AuthSchema = z.object({

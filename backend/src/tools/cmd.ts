@@ -63,7 +63,7 @@ export const isOwner = (owners: string[], senderId: string, ...args: any[]) => {
 };
 
 export const handleError = async (ctx: MessageContext, error: unknown, reply: boolean = true, ...args: any[]) => {
-    const { formatter } = ctx.bot.context;
+    const { formatter } = ctx.channel.context;
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('Command Execution Error:', {
         command: ctx.command,

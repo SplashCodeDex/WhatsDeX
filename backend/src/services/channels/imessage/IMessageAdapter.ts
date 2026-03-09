@@ -13,10 +13,10 @@ export class IMessageAdapter implements ChannelAdapter {
 
   constructor(
     private tenantId: string,
-    private botId: string,
+    private channelId: string,
     private identifier: string
   ) {
-    this.instanceId = botId;
+    this.instanceId = this.channelId;
   }
 
   async initialize(): Promise<void> {
@@ -24,7 +24,7 @@ export class IMessageAdapter implements ChannelAdapter {
   }
 
   async connect(): Promise<void> {
-    logger.info(`[IMessageAdapter] Connected for bot ${this.botId}`);
+    logger.info(`[IMessageAdapter] Connected for channel ${this.channelId}`);
   }
 
   async disconnect(): Promise<void> {
@@ -38,7 +38,7 @@ export class IMessageAdapter implements ChannelAdapter {
   async sendMessage(target: string, content: any): Promise<void> {
     const text = typeof content === 'string' ? content : content.text || JSON.stringify(content);
     await sendMessageIMessage(target, text, {
-        accountId: this.identifier
+      accountId: this.identifier
     });
   }
 

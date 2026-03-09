@@ -2,7 +2,7 @@
  * Omnichannel Frontend Types
  */
 
-export type ChannelType = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal';
+export type ChannelType = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'irc' | 'imessage' | 'googlechat';
 
 export type ChannelStatus =
     | 'connected'

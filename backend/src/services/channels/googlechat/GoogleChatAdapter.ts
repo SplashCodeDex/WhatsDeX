@@ -12,18 +12,18 @@ export class GoogleChatAdapter implements ChannelAdapter {
 
   constructor(
     private tenantId: string,
-    private botId: string,
+    private channelId: string,
     private credentials: Record<string, any>
   ) {
-    this.instanceId = botId;
+    this.instanceId = this.channelId;
   }
 
   async initialize(): Promise<void> {
-    logger.info(`[GoogleChatAdapter] Initializing for ${this.botId}`);
+    logger.info(`[GoogleChatAdapter] Initializing for ${this.channelId}`);
   }
 
   async connect(): Promise<void> {
-    logger.info(`[GoogleChatAdapter] Connected for bot ${this.botId}`);
+    logger.info(`[GoogleChatAdapter] Connected for channel ${this.channelId}`);
   }
 
   async disconnect(): Promise<void> {
@@ -36,7 +36,7 @@ export class GoogleChatAdapter implements ChannelAdapter {
 
   async sendMessage(target: string, content: any): Promise<void> {
     const text = typeof content === 'string' ? content : content.text || JSON.stringify(content);
-    
+
     // Google Chat usually requires OAuth2 or Webhooks.
     // This is a placeholder for the actual API call using the credentials.
     logger.info(`[GoogleChatAdapter] Would send to ${target}: ${text}`);

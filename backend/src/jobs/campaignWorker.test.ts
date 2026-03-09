@@ -44,7 +44,7 @@ vi.mock('../services/campaignSocketService.js', () => ({
 
 // Mock BullMQ Worker
 vi.mock('bullmq', () => ({
-  Worker: vi.fn().mockImplementation(function() {
+  Worker: vi.fn().mockImplementation(function () {
     return { on: vi.fn() };
   })
 }));
@@ -65,7 +65,7 @@ describe('CampaignWorker throttling', () => {
       id: 'camp_1',
       templateId: 'tpl_1',
       audience: { type: 'audience', targetId: 'aud_1' },
-      distribution: { type: 'single', botId: 'chan_1' },
+      distribution: { type: 'single', channelId: 'chan_1' },
       antiBan: { minDelay: 1, maxDelay: 2, aiSpinning: false, batchSize: 0 },
       stats: { sent: 0, failed: 0 }
     };
@@ -77,33 +77,33 @@ describe('CampaignWorker throttling', () => {
 
     mockFirebase.getDoc.mockResolvedValue(campaign);
     mockFirebase.getCollection.mockImplementation(async (col) => {
-        if (col === 'contacts') return mockContacts;
-        return [];
+      if (col === 'contacts') return mockContacts;
+      return [];
     });
 
     mockTemplateService.getTemplate.mockResolvedValue({ success: true, data: { content: 'Hi' } });
-    
+
     const mockAdapter = {
-        sendMessage: vi.fn().mockResolvedValue(undefined)
+      sendMessage: vi.fn().mockResolvedValue(undefined)
     };
     mockChannelManager.getAdapter.mockReturnValue(mockAdapter);
     mockChannelManager.getRegisteredChannelKeys.mockReturnValue(['chan_1']);
 
     // Use getter for the lazy singleton
     const worker = getCampaignWorker() as any;
-    
+
     // Start processing
     const promise = worker.processCampaign({ data: { tenantId, campaign } } as any);
 
     // Wait for first message and delay start
-    await vi.advanceTimersByTimeAsync(0); 
+    await vi.advanceTimersByTimeAsync(0);
     expect(mockAdapter.sendMessage).toHaveBeenCalledTimes(1);
 
     // Advance past the first delay (1-2s)
     await vi.advanceTimersByTimeAsync(2000);
-    
+
     // Should have sent the second message
-    await promise; 
+    await promise;
     expect(mockAdapter.sendMessage).toHaveBeenCalledTimes(2);
   });
 });

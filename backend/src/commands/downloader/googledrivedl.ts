@@ -9,7 +9,7 @@ export default {
     premium: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.channel.context;
     const url = ctx.args[0] || null;
 
     if (!url)

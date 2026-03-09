@@ -4,7 +4,7 @@ export default {
   aliases: ['thanksto'],
   category: 'information',
   code: async (ctx: MessageContext) => {
-    const { formatter, config } = ctx.bot.context;
+    const { formatter, config } = ctx.channel.context;
     await ctx.reply({
       text:
         `${formatter.quote('CodeDeX (https://github.com/SplashCodeDex)')}\n` +

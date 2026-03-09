@@ -1,12 +1,12 @@
 import { db } from '../lib/firebase.js';
 import { downloadContentFromMessage, getContentType, type proto } from 'baileys';
 import { getJid, getSender, getGroup } from './baileysUtils.js';
-import type { Bot, GlobalContext, MessageContext } from '../types/index.js';
+import type { ActiveChannel, GlobalContext, MessageContext } from '../types/index.js';
 import type { TenantSettings } from '../types/tenantConfig.js';
 import { DeliberationService } from './deliberation.js';
 
-const createBotContext = async (
-  botInstance: Bot,
+const createChannelContext = async (
+  channelInstance: ActiveChannel,
   rawBaileysMessage: proto.IWebMessageInfo,
   originalContext: GlobalContext,
   requestInfo: any = {}
@@ -23,34 +23,45 @@ const createBotContext = async (
   const useDirectBaileys = process.env.USE_BAILEYS_DIRECT === 'true' || process.env.NODE_ENV === 'production';
 
   // Fetch tenant settings strictly
-  const tenantResult = await originalContext.tenantConfigService.getTenantSettings(botInstance.tenantId);
+  const tenantResult = await originalContext.tenantConfigService.getTenantSettings(channelInstance.tenantId);
   if (!tenantResult.success) {
     // In strict mode, we might want to throw, but for resilience, we'll log and use defaults if possible,
     // or arguably failing to create context is better than running with bad config.
     // Given Zero-Trust, we should probably fail safe.
-    originalContext.logger.error(`Failed to load tenant settings for ${botInstance.tenantId}`, tenantResult.error);
+    originalContext.logger.error(`Failed to load tenant settings for ${channelInstance.tenantId}`, tenantResult.error);
     throw new Error('Failed to load tenant configuration');
   }
   const tenantSettings: TenantSettings = tenantResult.data;
 
+  // Surgical Migration: Resolve Agent-Channel Configuration
+  // This bridges the legacy "Bot" concept with the new hierarchy.
+  const resolvedResult = await originalContext.tenantConfigService.resolveAgentChannelConfig(channelInstance.tenantId, channelInstance.channelId);
+  if (resolvedResult.success) {
+    // Inject resolved config into channelInstance for downstream consumers (AI, Commands)
+    channelInstance.config = resolvedResult.data;
+    originalContext.logger.info(`[createChannelContext] Resolved Agent-Channel config for ${channelInstance.channelId}`);
+  } else {
+    originalContext.logger.warn(`[createChannelContext] Config resolution failed for ${channelInstance.channelId}, using fallback.`, resolvedResult.error);
+  }
+
   // Reply via Baileys in production; fallback to HTTP simulation
   const reply = async (content: any) => {
     const messageContent = typeof content === 'string' ? { text: content } : content;
-    if (useDirectBaileys && botInstance?.sendMessage) {
-      return await botInstance.sendMessage(remoteJid, messageContent, { quoted: rawBaileysMessage });
+    if (useDirectBaileys && channelInstance?.sendMessage) {
+      return await channelInstance.sendMessage(remoteJid, messageContent, { quoted: rawBaileysMessage });
     }
   };
 
   const replyReact = async (emoji: string) => {
-    if (useDirectBaileys && botInstance?.sendMessage) {
-      return await botInstance.sendMessage(remoteJid, { react: { text: emoji, key: rawBaileysMessage.key } });
+    if (useDirectBaileys && channelInstance?.sendMessage) {
+      return await channelInstance.sendMessage(remoteJid, { react: { text: emoji, key: rawBaileysMessage.key } });
     }
   };
 
   const simulateTyping = async (text?: string | number) => {
-    if (useDirectBaileys && botInstance?.sendPresenceUpdate) {
+    if (useDirectBaileys && channelInstance?.sendPresenceUpdate) {
       try {
-        await botInstance.sendPresenceUpdate('composing', remoteJid);
+        await channelInstance.sendPresenceUpdate('composing', remoteJid);
 
         let delay = 1500;
         if (typeof text === 'string') {
@@ -61,15 +72,15 @@ const createBotContext = async (
           delay = DeliberationService.getThinkingJitter();
         }
 
-        setTimeout(() => botInstance.sendPresenceUpdate?.('paused', remoteJid).catch(() => { }), delay);
+        setTimeout(() => channelInstance.sendPresenceUpdate?.('paused', remoteJid).catch(() => { }), delay);
       } catch (_) { /* ignore */ }
     }
   };
 
   const sendPresenceUpdate = async (presence: any, jid: string = remoteJid) => {
-    if (useDirectBaileys && botInstance?.sendPresenceUpdate) {
+    if (useDirectBaileys && channelInstance?.sendPresenceUpdate) {
       try {
-        await botInstance.sendPresenceUpdate(presence, jid);
+        await channelInstance.sendPresenceUpdate(presence, jid);
       } catch (_) { /* ignore */ }
     }
   };
@@ -78,9 +89,9 @@ const createBotContext = async (
   const group = (jid = groupId) => ({
     isAdmin: async (userJid: string = senderId) => {
       // @ts-ignore
-      if (!jid || !botInstance.tenantId) return false;
+      if (!jid || !channelInstance.tenantId) return false;
       try {
-        const memberSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
+        const memberSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
         if (memberSnapshot.exists) {
           const role = memberSnapshot.data()?.role;
           return role === 'admin' || role === 'superadmin';
@@ -88,13 +99,13 @@ const createBotContext = async (
       } catch (e) { }
       return false;
     },
-    isBotAdmin: async () => {
+    isChannelAdmin: async () => {
       // @ts-ignore
-      if (!jid || !botInstance.tenantId) return false;
-      const botJid = botInstance.user?.id?.split(':')[0] + '@s.whatsapp.net'; // derive from bot user
-      if (!botJid) return false;
+      if (!jid || !channelInstance.tenantId) return false;
+      const channelJid = channelInstance.user?.id?.split(':')[0] + '@s.whatsapp.net'; // derive from channel user
+      if (!channelJid) return false;
       try {
-        const memberSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').doc(botJid).get();
+        const memberSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').doc(channelJid).get();
         if (memberSnapshot.exists) {
           const role = memberSnapshot.data()?.role;
           return role === 'admin' || role === 'superadmin';
@@ -104,53 +115,53 @@ const createBotContext = async (
     },
     members: async () => {
       // @ts-ignore
-      if (!jid || !botInstance.tenantId) return [];
+      if (!jid || !channelInstance.tenantId) return [];
       try {
-        const membersSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').get();
+        const membersSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').get();
         return membersSnapshot.docs.map(doc => doc.id);
       } catch (e) { return []; }
     },
     metadata: async () => {
       // @ts-ignore - baileys type mismatch workaround
-      if (!jid || !botInstance?.groupMetadata) return null;
-      return await botInstance.groupMetadata(jid);
+      if (!jid || !channelInstance?.groupMetadata) return null;
+      return await channelInstance.groupMetadata(jid);
     },
     owner: async () => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupMetadata) return null;
-      const meta = await botInstance.groupMetadata(jid);
+      if (!jid || !channelInstance?.groupMetadata) return null;
+      const meta = await channelInstance.groupMetadata(jid);
       return meta.owner || null;
     },
     name: async () => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupMetadata) return '';
-      const meta = await botInstance.groupMetadata(jid);
+      if (!jid || !channelInstance?.groupMetadata) return '';
+      const meta = await channelInstance.groupMetadata(jid);
       return meta.subject || '';
     },
     add: async (jids: string[]) => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupParticipantsUpdate) return null;
-      return await botInstance.groupParticipantsUpdate(jid, jids, 'add');
+      if (!jid || !channelInstance?.groupParticipantsUpdate) return null;
+      return await channelInstance.groupParticipantsUpdate(jid, jids, 'add');
     },
     kick: async (jids: string[]) => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupParticipantsUpdate) return null;
-      return await botInstance.groupParticipantsUpdate(jid, jids, 'remove');
+      if (!jid || !channelInstance?.groupParticipantsUpdate) return null;
+      return await channelInstance.groupParticipantsUpdate(jid, jids, 'remove');
     },
     promote: async (jids: string[]) => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupParticipantsUpdate) return null;
-      return await botInstance.groupParticipantsUpdate(jid, jids, 'promote');
+      if (!jid || !channelInstance?.groupParticipantsUpdate) return null;
+      return await channelInstance.groupParticipantsUpdate(jid, jids, 'promote');
     },
     demote: async (jids: string[]) => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupParticipantsUpdate) return null;
-      return await botInstance.groupParticipantsUpdate(jid, jids, 'demote');
+      if (!jid || !channelInstance?.groupParticipantsUpdate) return null;
+      return await channelInstance.groupParticipantsUpdate(jid, jids, 'demote');
     },
     inviteCode: async () => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupInviteCode) return '';
-      const code = await botInstance.groupInviteCode(jid);
+      if (!jid || !channelInstance?.groupInviteCode) return '';
+      const code = await channelInstance.groupInviteCode(jid);
       return code || '';
     },
     pendingMembers: async () => [],
@@ -158,56 +169,56 @@ const createBotContext = async (
     rejectPendingMembers: async (jids: string[]) => null,
     updateDescription: async (desc: string) => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupUpdateDescription) return null;
-      return await botInstance.groupUpdateDescription(jid, desc);
+      if (!jid || !channelInstance?.groupUpdateDescription) return null;
+      return await channelInstance.groupUpdateDescription(jid, desc);
     },
     updateSubject: async (subject: string) => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupUpdateSubject) return null;
-      return await botInstance.groupUpdateSubject(jid, subject);
+      if (!jid || !channelInstance?.groupUpdateSubject) return null;
+      return await channelInstance.groupUpdateSubject(jid, subject);
     },
     joinApproval: async (mode: 'on' | 'off') => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupJoinApprovalMode) return null;
-      return await botInstance.groupJoinApprovalMode(jid, mode);
+      if (!jid || !channelInstance?.groupJoinApprovalMode) return null;
+      return await channelInstance.groupJoinApprovalMode(jid, mode);
     },
     membersCanAddMemberMode: async (mode: 'on' | 'off') => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupMemberAddMode) return null;
+      if (!jid || !channelInstance?.groupMemberAddMode) return null;
       const val = mode === 'on' ? 'all_member_add' : 'admin_add';
-      return await botInstance.groupMemberAddMode(jid, val);
+      return await channelInstance.groupMemberAddMode(jid, val);
     },
     open: async () => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupSettingUpdate) return null;
-      return await botInstance.groupSettingUpdate(jid, 'not_announcement');
+      if (!jid || !channelInstance?.groupSettingUpdate) return null;
+      return await channelInstance.groupSettingUpdate(jid, 'not_announcement');
     },
     close: async () => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupSettingUpdate) return null;
-      return await botInstance.groupSettingUpdate(jid, 'announcement');
+      if (!jid || !channelInstance?.groupSettingUpdate) return null;
+      return await channelInstance.groupSettingUpdate(jid, 'announcement');
     },
     unlock: async () => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupSettingUpdate) return null;
-      return await botInstance.groupSettingUpdate(jid, 'unlocked');
+      if (!jid || !channelInstance?.groupSettingUpdate) return null;
+      return await channelInstance.groupSettingUpdate(jid, 'unlocked');
     },
     lock: async () => {
       // @ts-ignore
-      if (!jid || !botInstance?.groupSettingUpdate) return null;
-      return await botInstance.groupSettingUpdate(jid, 'locked');
+      if (!jid || !channelInstance?.groupSettingUpdate) return null;
+      return await channelInstance.groupSettingUpdate(jid, 'locked');
     },
     isOwner: async (userJid: string = senderId) => {
       // @ts-ignore
-      if (!jid || !botInstance.tenantId || !botInstance.groupMetadata) return false;
-      const meta = await botInstance.groupMetadata(jid);
+      if (!jid || !channelInstance.tenantId || !channelInstance.groupMetadata) return false;
+      const meta = await channelInstance.groupMetadata(jid);
       return meta.owner === userJid;
     },
     matchAdmin: async (userJid: string) => {
       // Logic same as isAdmin for now
-      if (!jid || !botInstance.tenantId) return false;
+      if (!jid || !channelInstance.tenantId) return false;
       try {
-        const memberSnapshot = await db.collection('tenants').doc(botInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
+        const memberSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
         if (memberSnapshot.exists) {
           const role = memberSnapshot.data()?.role;
           return role === 'admin' || role === 'superadmin';
@@ -217,8 +228,8 @@ const createBotContext = async (
     }
   });
 
-  // Determine the prefix to use: Priority given to BotConfig
-  const prefixes = botInstance.config?.prefix || [config.bot.prefix];
+  // Determine the prefix to use: Priority given to ChannelConfig
+  const prefixes = channelInstance.config?.prefix || [config.channel.prefix];
   const messageBody = rawBaileysMessage.message?.conversation ||
     rawBaileysMessage.message?.extendedTextMessage?.text || '';
 
@@ -231,8 +242,8 @@ const createBotContext = async (
   }
 
   // Handle Auto Read if configured
-  if (botInstance.config?.autoRead && rawBaileysMessage.key?.remoteJid && botInstance.readMessages) { // Fixed: safely access key and method
-    botInstance.readMessages([rawBaileysMessage.key]).catch(() => { });
+  if (channelInstance.config?.autoRead && rawBaileysMessage.key?.remoteJid && channelInstance.readMessages) { // Fixed: safely access key and method
+    channelInstance.readMessages([rawBaileysMessage.key]).catch(() => { });
   }
 
   // Simulate ctx.used (command parsing)
@@ -246,7 +257,7 @@ const createBotContext = async (
   };
 
   const getCommand = (commandName: string) =>
-    originalContext.bot?.cmd?.get(commandName);
+    originalContext.channel?.cmd?.get(commandName);
 
   // Validate Owner
   // Use tenantSettings.ownerNumber if available
@@ -257,7 +268,7 @@ const createBotContext = async (
   const isAdmin = isGroup ? await group().isAdmin(senderId) : false;
 
   const ctx: MessageContext = {
-    bot: botInstance,
+    channel: channelInstance,
     msg: rawBaileysMessage,
     isGroup: () => isGroup,
     // isPrivate: () => !isGroup, // removed as it wasn't in interface
@@ -285,8 +296,8 @@ const createBotContext = async (
     isAdmin,
     cooldown: {},
     sendMessage: async (jid: string, content: any, options: any = {}) => {
-      if (botInstance?.sendMessage) {
-        return await botInstance.sendMessage(jid, content, options);
+      if (channelInstance?.sendMessage) {
+        return await channelInstance.sendMessage(jid, content, options);
       }
     },
     download: async () => {
@@ -317,5 +328,5 @@ const createBotContext = async (
   return ctx;
 };
 
-export { createBotContext };
-export default createBotContext;
+export { createChannelContext };
+export default createChannelContext;

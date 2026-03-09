@@ -12,7 +12,7 @@ export default {
     coin: 5,
   },
   code: async (ctx: MessageContext) => {
-    const { config } = ctx.bot.context;
+    const { config } = ctx.channel.context;
 
     try {
       const input = ctx.args.join(' ') || ctx.quoted?.content || '';
@@ -32,17 +32,17 @@ export default {
       // Note: ctx.author doesn't exist on MessageContext, referring to previous context issues.
       // Assuming userId is ctx.sender.jid based on recent fixes.
       const userId = ctx.sender.jid;
-      const tenantId = ctx.bot.tenantId;
+      const tenantId = ctx.channel.tenantId;
 
       // Fetch user's recent commands from cache for context
       const historyKey = `nlp:history:${tenantId}:${userId}`;
       const historyResult = await cacheService.get<string[]>(historyKey);
       const recentCommands = historyResult.success && historyResult.data ? historyResult.data : [];
 
-      const userDb = await ctx.bot.context.database.user.get(userId, tenantId);
+      const userDb = await ctx.channel.context.database.user.get(userId, tenantId);
 
       // Fetch owner number from tenant settings
-      const tenantResult = await ctx.bot.context.tenantConfigService.getTenantSettings(tenantId);
+      const tenantResult = await ctx.channel.context.tenantConfigService.getTenantSettings(tenantId);
       const ownerNumber = (tenantResult.success ? tenantResult.data.ownerNumber : 'system') || 'system';
 
       // Process the input
@@ -51,7 +51,7 @@ export default {
         recentCommands,
         isGroup: ctx.isGroup(),
         isAdmin: ctx.isGroup() ? await ctx.group().isAdmin(ctx.sender.jid) : false,
-        isOwner: ctx.bot.context.tools.cmd.isOwner(
+        isOwner: ctx.channel.context.tools.cmd.isOwner(
           [ownerNumber],
           ctx.getId(ctx.sender.jid),
           ctx.msg.key?.id

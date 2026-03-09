@@ -4,11 +4,11 @@ export default {
   category: 'group',
   permissions: {
     admin: true,
-    botAdmin: true,
+    channelAdmin: true,
     group: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
+    const { formatter, tools } = ctx.channel.context;
     const input = ctx.args.join(' ') || ctx.quoted?.content || null;
 
     if (!input)

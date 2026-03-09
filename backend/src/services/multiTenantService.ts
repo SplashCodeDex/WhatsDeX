@@ -55,7 +55,7 @@ export class MultiTenantService {
           updatedAt: Timestamp.now(),
           trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
           settings: {
-            maxBots: limits.maxBots,
+            maxChannels: limits.maxChannels,
             aiEnabled: plan !== 'starter',
             timezone: 'UTC'
           }
@@ -112,7 +112,7 @@ export class MultiTenantService {
     try {
       const plan = tenantData.plan || 'starter';
       const limits = getPlanLimits(plan);
-      const maxBots = limits.maxBots;
+      const maxChannels = limits.maxChannels;
 
       const rawData = {
         id: tenantData.id,
@@ -126,7 +126,7 @@ export class MultiTenantService {
         updatedAt: Timestamp.now(),
         trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)), // 7 days trial
         settings: {
-          maxBots: maxBots,
+          maxChannels: maxChannels,
           aiEnabled: plan !== 'starter',
           timezone: 'UTC',
           ...tenantData.settings
@@ -198,24 +198,25 @@ export class MultiTenantService {
   /**
    * Check if tenant has reached bot limit
    */
-  async canAddBot(tenantId: string): Promise<Result<boolean>> {
+  async canAddChannel(tenantId: string): Promise<Result<boolean>> {
     const tenantResult = await this.getTenant(tenantId);
     if (!tenantResult.success) {
-      logger.error(`MultiTenantService.canAddBot failed to get tenant [${tenantId}]:`, tenantResult.error);
+      logger.error(`MultiTenantService.canAddChannel failed to get tenant [${tenantId}]:`, tenantResult.error);
       return tenantResult as Result<never>;
     }
 
     const tenant = tenantResult.data;
     const plan = tenant.plan || 'starter';
     const limits = getPlanLimits(plan);
-    const maxBots = limits.maxBots;
+    const maxChannels = limits.maxChannels;
 
     try {
-      // Get all bots for this tenant
-      const botDocs = await firebaseService.getCollection('bots' as any, tenantId);
-      const currentBotCount = botDocs.length;
+      // Get all channels for this tenant
+      const { channelService } = await import('./ChannelService.js');
+      const channelsResult = await channelService.getAllChannelsAcrossAgents(tenantId);
+      const currentChannelCount = channelsResult.success ? channelsResult.data.length : 0;
 
-      if (currentBotCount >= maxBots) {
+      if (currentChannelCount >= maxChannels) {
         return {
           success: true,
           data: false

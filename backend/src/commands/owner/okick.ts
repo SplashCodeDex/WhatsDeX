@@ -3,13 +3,13 @@ export default {
   name: 'okick',
   category: 'owner',
   permissions: {
-    botAdmin: true,
+    channelAdmin: true,
     group: true,
     owner: true,
     restrict: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context;
+    const { formatter, tools } = ctx.channel.context;
     const accountJid = ctx.quoted?.senderJid || (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) || null;
 
     if (!accountJid)

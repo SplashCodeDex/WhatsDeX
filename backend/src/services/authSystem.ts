@@ -8,7 +8,7 @@ import { Result } from '../types/index.js';
 import { AppError } from './errorHandler.js';
 
 interface AuthConfig {
-  bot: {
+  channel: {
     phoneNumber?: string;
     sessionId?: string;
   };
@@ -59,7 +59,7 @@ class AuthSystem extends EventEmitter {
 
   async connect(): Promise<Result<WASocket>> {
     this.authState = 'connecting';
-    const method = this.config.bot.phoneNumber ? 'pairing' : 'qr';
+    const method = this.config.channel.phoneNumber ? 'pairing' : 'qr';
     this._recordAttempt(method);
 
     try {
@@ -190,7 +190,7 @@ class AuthSystem extends EventEmitter {
 
   async getSmartAuthMethod(config: any): Promise<{ method: 'qr' | 'pairing'; confidence: number }> {
     // Logic to determine best auth method
-    if (config?.bot?.phoneNumber || this.config.bot.phoneNumber) {
+    if (config?.channel?.phoneNumber || this.config.channel.phoneNumber) {
       return { method: 'pairing', confidence: 1.0 };
     }
     return { method: 'qr', confidence: 0.9 };
@@ -204,7 +204,7 @@ class AuthSystem extends EventEmitter {
       pairing: async (config: any) => {
         const conn = await this.connect();
         if (conn.success && conn.data) {
-          const phoneNumber = config?.bot?.phoneNumber || this.config.bot.phoneNumber;
+          const phoneNumber = config?.channel?.phoneNumber || this.config.channel.phoneNumber;
           if (phoneNumber) {
             const code = await this.getPairingCode(phoneNumber);
             return { ...conn, pairingCode: code.success ? code.data : null };

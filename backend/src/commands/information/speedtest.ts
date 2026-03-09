@@ -7,7 +7,7 @@ export default {
   aliases: ['speed'],
   category: 'information',
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.channel.context;
     try {
       const latencyStart = performance.now();
 

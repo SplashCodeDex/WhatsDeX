@@ -10,7 +10,7 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter } = ctx.bot.context as GlobalContext;
+    const { formatter } = ctx.channel.context as GlobalContext;
 
     try {
       await ctx.replyReact('📊');

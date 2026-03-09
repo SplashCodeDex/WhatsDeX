@@ -208,11 +208,11 @@ router.get(['/channels', '/bots'], async (req: Request, res: Response) => {
 /**
  * Get a single channel by ID
  */
-router.get(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
+router.get(['/agents/:agentId/channels/:id', '/channels/:id'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
         const agentId = (req.params.agentId || 'system_default') as string;
-        const id = (req.params.id || req.params.botId) as string;
+        const id = req.params.id as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -232,11 +232,11 @@ router.get(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Reques
 /**
  * Update a channel
  */
-router.patch(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
+router.patch(['/agents/:agentId/channels/:id', '/channels/:id'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
         const agentId = (req.params.agentId || 'system_default') as string;
-        const id = (req.params.id || req.params.botId) as string;
+        const id = req.params.id as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -256,11 +256,11 @@ router.patch(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Requ
 /**
  * Delete a channel
  */
-router.delete(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Request, res: Response) => {
+router.delete(['/agents/:agentId/channels/:id', '/channels/:id'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
         const agentId = (req.params.agentId || 'system_default') as string;
-        const id = (req.params.id || req.params.botId) as string;
+        const id = req.params.id as string;
         const archive = req.query.archive === 'true';
 
         if (!tenantId) {
@@ -280,7 +280,7 @@ router.delete(['/agents/:agentId/channels/:id', '/bots/:botId'], async (req: Req
 });
 
 /**
- * Get available bot commands grouped by category
+ * Get available channel commands grouped by category
  */
 router.get(['/agents/:agentId/commands', '/bots/commands'], async (req: Request, res: Response) => {
     try {
@@ -302,11 +302,11 @@ router.get(['/agents/:agentId/commands', '/bots/commands'], async (req: Request,
 /**
  * Connect a channel (starts QR generation)
  */
-router.post(['/agents/:agentId/channels/:id/connect', '/bots/:botId/connect'], async (req: Request, res: Response) => {
+router.post(['/agents/:agentId/channels/:id/connect', '/channels/:id/connect'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
         const agentId = (req.params.agentId || 'system_default') as string;
-        const id = (req.params.id || req.params.botId) as string;
+        const id = req.params.id as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -326,11 +326,11 @@ router.post(['/agents/:agentId/channels/:id/connect', '/bots/:botId/connect'], a
 /**
  * Disconnect a channel
  */
-router.post(['/agents/:agentId/channels/:id/disconnect', '/bots/:botId/disconnect'], async (req: Request, res: Response) => {
+router.post(['/agents/:agentId/channels/:id/disconnect', '/channels/:id/disconnect'], async (req: Request, res: Response) => {
     try {
         const tenantId = req.user?.tenantId as string;
         const agentId = (req.params.agentId || 'system_default') as string;
-        const id = (req.params.id || req.params.botId) as string;
+        const id = req.params.id as string;
         if (!tenantId) {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
@@ -397,6 +397,31 @@ router.post(['/agents/:agentId/channels/:id/pairing-code', '/bots/:botId/pairing
         }
     } catch (error: any) {
         logger.error('Route pairing-code POST error', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * Move a channel between agents
+ */
+router.post('/agents/:agentId/channels/:id/move', async (req: Request, res: Response) => {
+    try {
+        const tenantId = req.user?.tenantId as string;
+        const currentAgentId = req.params.agentId;
+        const channelId = req.params.id;
+        const { targetAgentId } = req.body;
+
+        if (!tenantId) return res.status(401).json({ success: false, error: 'Authentication required' });
+        if (!targetAgentId) return res.status(400).json({ success: false, error: 'Target Agent ID is required' });
+
+        const result = await channelService.moveChannel(tenantId, channelId as string, currentAgentId as string, targetAgentId as string);
+        if (result.success) {
+            res.json({ success: true, data: { message: 'Channel moved successfully' } });
+        } else {
+            res.status(400).json({ success: false, error: result.error?.message || 'Move failed' });
+        }
+    } catch (error: any) {
+        logger.error('Route /channels/:id/move POST error', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });

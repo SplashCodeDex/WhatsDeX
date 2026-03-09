@@ -18,8 +18,7 @@ export const TenantSettingsSchema = z.object({
     ownerName: z.string().optional(),
     organization: z.string().optional(),
 
-    // Bot Defaults (applied to new bots)
-    botDefaults: z.object({
+    channelDefaults: z.object({
         prefix: z.array(z.string()).default(['.', '!', '/']),
         mode: z.enum(['public', 'private', 'group-only']).default('public'),
         autoReconnect: z.boolean().default(true),
@@ -37,24 +36,24 @@ export const TenantSettingsSchema = z.object({
         campaignsEnabled: z.boolean().default(false),
         analyticsEnabled: z.boolean().default(true),
         webhooksEnabled: z.boolean().default(false),
-        maxBots: z.number().min(1).default(1),
+        maxChannels: z.number().min(1).default(1),
     }).default(() => ({
         aiEnabled: false,
         campaignsEnabled: false,
         analyticsEnabled: true,
         webhooksEnabled: false,
-        maxBots: 1,
+        maxChannels: 1,
     })),
 
     // Notification Preferences
     notifications: z.object({
         email: z.boolean().default(true),
         webhookUrl: z.string().url().optional(),
-        notifyOnBotDisconnect: z.boolean().default(true),
+        notifyOnChannelDisconnect: z.boolean().default(true),
         notifyOnErrors: z.boolean().default(true),
     }).default(() => ({
         email: true,
-        notifyOnBotDisconnect: true,
+        notifyOnChannelDisconnect: true,
         notifyOnErrors: true,
     })),
 
@@ -66,12 +65,12 @@ export const TenantSettingsSchema = z.object({
 export type TenantSettings = z.infer<typeof TenantSettingsSchema>;
 
 // =============================================================================
-// Bot Configuration Schema (stored in tenants/{tenantId}/bots/{botId})
+// Channel Configuration Schema (stored in tenants/{tenantId}/channels/{channelId})
 // =============================================================================
 
-export const BotConfigSchema = z.object({
+export const ChannelConfigSchema = z.object({
     // Identity
-    name: z.string().min(1).default('My Bot'),
+    name: z.string().min(1).default('My Channel'),
     phoneNumber: z.string().optional(),
 
     // Behavior
@@ -114,14 +113,14 @@ export const BotConfigSchema = z.object({
     updatedAt: z.date().optional(),
 });
 
-export type BotConfig = z.infer<typeof BotConfigSchema>;
+export type ChannelConfig = z.infer<typeof ChannelConfigSchema>;
 
 // =============================================================================
 // Default Values (used when creating new tenants/bots)
 // =============================================================================
 
 export const DEFAULT_TENANT_SETTINGS: Partial<TenantSettings> = {
-    botDefaults: {
+    channelDefaults: {
         prefix: ['.', '!', '/'],
         mode: 'public',
         autoReconnect: true,
@@ -132,18 +131,18 @@ export const DEFAULT_TENANT_SETTINGS: Partial<TenantSettings> = {
         campaignsEnabled: false,
         analyticsEnabled: true,
         webhooksEnabled: false,
-        maxBots: 1,
+        maxChannels: 1,
     },
     notifications: {
         email: true,
-        notifyOnBotDisconnect: true,
+        notifyOnChannelDisconnect: true,
         notifyOnErrors: true,
     },
     ownerNumber: '+1234567890',
 };
 
-export const DEFAULT_BOT_CONFIG: Partial<BotConfig> = {
-    name: 'My Bot',
+export const DEFAULT_CHANNEL_CONFIG: Partial<ChannelConfig> = {
+    name: 'My Channel',
     prefix: ['.', '!', '/'],
     mode: 'public',
     selfMode: false,

@@ -37,9 +37,14 @@ export function OmnichannelSocketManager() {
         });
 
         // 4. Subscribe to Connection Status Updates
-        const cleanupStatus = on('bot_status_update', (data: { botId: string, status: any }) => {
-            logger.info('[Omnichannel] Status Update:', data);
+        const cleanupBotStatus = on('bot_status_update', (data: { botId: string, status: any }) => {
+            logger.info('[Omnichannel] Bot Status Update:', data);
             updateChannelStatus(data.botId, data.status);
+        });
+
+        const cleanupChannelStatus = on('channel_status_update', (data: { channelId: string, status: any }) => {
+            logger.info('[Omnichannel] Channel Status Update:', data);
+            updateChannelStatus(data.channelId, data.status);
         });
 
         // 5. Subscribe to Logs
@@ -56,7 +61,8 @@ export function OmnichannelSocketManager() {
         return () => {
             cleanupProgress();
             cleanupActivity();
-            cleanupStatus();
+            cleanupBotStatus();
+            cleanupChannelStatus();
             cleanupLogs();
         };
     }, [on, fetchChannels, handleProgressUpdate, addActivityEvent, updateChannelStatus]);

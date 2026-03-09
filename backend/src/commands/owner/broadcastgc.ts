@@ -8,7 +8,7 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context as GlobalContext;
+    const { formatter, tools, config, database: db } = ctx.channel.context as GlobalContext;
     const input = ctx.args.join(' ') || (ctx.quoted as any)?.content || null;
 
     if (!input) {
@@ -36,7 +36,7 @@ ${formatter.quote(example)}`
     }
 
     try {
-      const groups = ctx.bot.groupFetchAllParticipating ? await ctx.bot.groupFetchAllParticipating() : {};
+      const groups = ctx.channel.groupFetchAllParticipating ? await ctx.channel.groupFetchAllParticipating() : {};
       const groupIds = Object.values(groups).map((group: any) => group.id as string);
 
       const blacklist = (await db.get<string[]>('bot.blacklistBroadcast')) || [];
@@ -54,7 +54,7 @@ ${formatter.quote(example)}`
       for (const groupId of filteredGroupIds) {
         await delay(500);
         try {
-          await ctx.bot.sendMessage(groupId, { text: input });
+          await ctx.channel.sendMessage(groupId, { text: input });
         } catch (error: unknown) {
           failedGroupIds.push(groupId);
         }

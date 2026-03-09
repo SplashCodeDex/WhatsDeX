@@ -17,7 +17,7 @@ export interface TenantDocument {
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
   settings: {
-    maxBots: number;
+    maxChannels: number;
     aiEnabled: boolean;
     customPairingCode?: string;
     timezone: string;
@@ -87,15 +87,15 @@ export interface AgentDocument {
 }
 
 /**
- * 'tenants/{tenantId}/bots' subcollection document
+ * 'tenants/{tenantId}/channels' subcollection document
  * @deprecated Use ChannelDocument instead.
  */
-export type BotInstanceDocument = ChannelDocument;
+export type ChannelInstanceDocument = ChannelDocument;
 
 /**
  * 'tenants/{tenantId}/members' subcollection document (WhatsApp users)
  */
-export interface BotMemberDocument {
+export interface ChannelMemberDocument {
   id: string; // JID
   username?: string;
   coin: number;
@@ -118,7 +118,7 @@ export interface BotMemberDocument {
 /**
  * 'tenants/{tenantId}/groups' subcollection document
  */
-export interface BotGroupDocument {
+export interface ChannelGroupDocument {
   id: string; // Group JID
   name: string;
   isBanned: boolean;
@@ -163,14 +163,13 @@ export interface SubscriptionDocument {
 export interface FirestoreSchema {
   tenants: TenantDocument;
   'tenants/{tenantId}/users': TenantUserDocument;
-  'tenants/{tenantId}/bots': ChannelDocument;
   'tenants/{tenantId}/channels': ChannelDocument;
   'tenants/{tenantId}/agents': AgentDocument;
   'tenants/{tenantId}/agents/{agentId}/channels': ChannelDocument;
   'tenants/{tenantId}/agents/{agentId}/channels/{channelId}/auth': { value: any };
-  'tenants/{tenantId}/slots': BotInstanceDocument;
-  'tenants/{tenantId}/members': BotMemberDocument;
-  'tenants/{tenantId}/groups': BotGroupDocument;
+  'tenants/{tenantId}/slots': ChannelInstanceDocument;
+  'tenants/{tenantId}/members': ChannelMemberDocument;
+  'tenants/{tenantId}/groups': ChannelGroupDocument;
   'tenants/{tenantId}/subscriptions': SubscriptionDocument;
   'tenants/{tenantId}/moderation': ModerationItem;
   'tenants/{tenantId}/violations': Violation;
@@ -179,7 +178,6 @@ export interface FirestoreSchema {
   'tenants/{tenantId}/contacts': Contact;
   'tenants/{tenantId}/audiences': Audience;
   'tenants/{tenantId}/templates': MessageTemplate;
-  'tenants/{tenantId}/bots/{botId}/auth': { value: any };
   'tenants/{tenantId}/channels/{channelId}/auth': { value: any };
   'tenants/{tenantId}/learning': LearningData;
   'tenants/{tenantId}/analytics': AnalyticsData;

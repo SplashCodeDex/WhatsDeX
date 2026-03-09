@@ -14,7 +14,7 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context as GlobalContext;
+    const { formatter, tools } = ctx.channel.context as GlobalContext;
     if (!tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ['viewOnce'])) {
       return await ctx.reply(
         formatter.quote(tools.msg.generateInstruction(['reply'], ['viewOnce']))

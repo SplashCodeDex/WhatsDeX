@@ -7,8 +7,8 @@ export default {
     category: 'main',
     description: 'Display the bot\'s command menu.',
     code: async (ctx: MessageContext) => {
-        const { config, formatter, state, tenantConfigService } = ctx.bot.context as GlobalContext;
-        const tenantId = (ctx.bot as any).tenantId;
+        const { config, formatter, state, tenantConfigService } = ctx.channel.context as GlobalContext;
+        const tenantId = (ctx.channel as any).tenantId;
 
         try {
             const tenantResult = await tenantConfigService.getTenantSettings(tenantId);
@@ -34,11 +34,11 @@ export default {
                 main: 'Main',
             };
 
-            const allCommands = Array.from(ctx.bot.cmd.values()) as Command[];
-            const disabledCommands = ctx.bot.config?.disabledCommands || [];
+            const allCommands = Array.from(ctx.channel.cmd.values()) as Command[];
+            const disabledCommands = ctx.channel.config?.disabledCommands || [];
 
             const text =
-                `Hello, @${ctx.getId(ctx.sender.jid)}! I am a WhatsApp bot named ${config.bot.name}, owned by ${ownerName}. I can perform many commands, such as creating stickers, using AI for specific tasks, and other useful commands.\n` +
+                `Hello, @${ctx.getId(ctx.sender.jid)}! I am a WhatsApp bot named ${config.channel.name}, owned by ${ownerName}. I can perform many commands, such as creating stickers, using AI for specific tasks, and other useful commands.\n` +
                 '\n' +
                 `${formatter.quote(`Date: ${moment.tz(config.system.timeZone).locale('en').format('dddd, DD MMMM YYYY')}`)}
 ` +

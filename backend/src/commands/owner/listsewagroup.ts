@@ -13,7 +13,7 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
+    const { formatter, tools, config, database: db } = ctx.channel.context;
     try {
       const groups = await db.get<Record<string, SewaGroup>>('group') || {};
       const sewaGroups = [];

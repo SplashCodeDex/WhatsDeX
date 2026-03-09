@@ -12,7 +12,7 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context as GlobalContext;
+    const { formatter, tools, config, database: db } = ctx.channel.context as GlobalContext;
     try {
       const users = await db.get<Record<string, BannedUser>>('user') || {};
       const bannedUsers: string[] = [];

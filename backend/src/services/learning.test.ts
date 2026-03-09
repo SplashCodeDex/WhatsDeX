@@ -12,7 +12,7 @@ const { mockGeminiService } = vi.hoisted(() => ({
 // Mock dependencies
 vi.mock('./gemini.js', () => {
   return {
-    default: vi.fn().mockImplementation(function() {
+    default: vi.fn().mockImplementation(function () {
       return mockGeminiService;
     })
   };
@@ -55,7 +55,7 @@ describe('GeminiAI Learning', () => {
   let ai: GeminiAI;
   const mockBot = {
     tenantId: 'tenant_1',
-    botId: 'bot_1',
+    channelId: 'channel_1',
     user: { name: 'TestBot' },
     config: { aiPersonality: 'friendly' }
   } as any;
@@ -68,7 +68,14 @@ describe('GeminiAI Learning', () => {
   it('should extract and store facts during learnFromInteraction', async () => {
     const userId = 'user_1@s.whatsapp.net';
     const message = 'My name is Jules and I like pizza.';
-    const intelligence = { confidence: 0.9 };
+    const intelligence = {
+      confidence: 0.9,
+      intents: [],
+      actions: [],
+      reasoning: 'Test reasoning',
+      toolsNeeded: [],
+      responseType: 'conversational'
+    } as any;
     const ctx = {
       isGroup: vi.fn(() => false),
       msg: { contentType: 'textMessage' }

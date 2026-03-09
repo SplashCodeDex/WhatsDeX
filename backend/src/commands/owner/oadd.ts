@@ -4,13 +4,13 @@ export default {
   name: 'oadd',
   category: 'owner',
   permissions: {
-    botAdmin: true,
+    channelAdmin: true,
     group: true,
     owner: true,
     restrict: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools } = ctx.bot.context as GlobalContext;
+    const { formatter, tools } = ctx.channel.context as GlobalContext;
     const input = ctx.args.join(' ') || null;
 
     if (!input) {

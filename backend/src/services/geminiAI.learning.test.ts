@@ -29,7 +29,6 @@ vi.mock('./multiTenantService.js', () => ({
 vi.mock('./database.js', () => ({
   databaseService: {
     user: { get: vi.fn() },
-    bot: { get: vi.fn() },
   },
 }));
 
@@ -133,10 +132,17 @@ describe('GeminiAI.learnFromInteraction', () => {
     });
 
     await ai.learnFromInteraction(
-      { tenantId } as any,
+      { channelId: 'channel-test', tenantId } as any,
       userId,
       message,
-      { confidence: 0.9 } as any,
+      {
+        confidence: 0.9,
+        intents: [],
+        actions: [],
+        reasoning: 'test',
+        toolsNeeded: [],
+        responseType: 'conversational'
+      } as any,
       {} as any
     );
 
@@ -165,7 +171,7 @@ describe('GeminiAI.processOmnichannelMessage - Fact Injection', () => {
 
   it('should inject learned facts into the system prompt', async () => {
     const tenantId = 'tenant-456';
-    const botId = 'bot-789';
+    const channelId = 'channel-789';
     const userId = 'user-123';
     const messageText = 'What should I drink?';
 
@@ -173,7 +179,7 @@ describe('GeminiAI.processOmnichannelMessage - Fact Injection', () => {
       id: 'msg-1',
       platform: 'whatsapp',
       from: userId,
-      to: botId,
+      to: channelId,
       content: { text: messageText },
       timestamp: Date.now()
     };
@@ -187,13 +193,14 @@ describe('GeminiAI.processOmnichannelMessage - Fact Injection', () => {
     });
 
     (memoryService.retrieveRelevantContext as any).mockResolvedValue({ success: true, data: [] });
-    (databaseService.bot.get as any).mockResolvedValue({ aiPersonality: 'a helpful bot' });
+    // Agent is handled by AgentService mock defined at top of file
+    // (agentService.getAgent mockResolvedValue at line 38)
 
     const mockExecute = vi.fn().mockResolvedValue('You should have a cold brew!');
     // @ts-ignore
     ai.gemini.getManager = vi.fn(() => ({ execute: mockExecute }));
 
-    await ai.processOmnichannelMessage(tenantId, botId, mockMessage as any);
+    await ai.processOmnichannelMessage(tenantId, channelId, mockMessage as any);
 
     // Verify that the prompt passed to execute contains the learned facts
     // Actually, execute takes a callback. We need to verify what happens inside that callback.

@@ -6,11 +6,11 @@ export default {
   category: 'group',
   permissions: {
     admin: true,
-    botAdmin: true,
+    channelAdmin: true,
     group: true
   },
   code: async (ctx: MessageContext) => {
-    const { formatter } = ctx.bot.context;
+    const { formatter } = ctx.channel.context;
 
     // Resolve target JID from quoted message or mentions
     const mentions = ctx.msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
@@ -35,7 +35,7 @@ export default {
       await ctx.reply(formatter.quote('✅ User kicked successfully!'));
     } catch (error: unknown) {
       const err = error instanceof Error ? error.message : String(error);
-      ctx.bot.context.logger.error('Kick command failed', { error: err });
+      ctx.channel.context.logger.error('Kick command failed', { error: err });
       await ctx.reply(formatter.quote(`❌ Failed to kick user: ${err}`));
     }
   },

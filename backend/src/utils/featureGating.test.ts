@@ -38,19 +38,19 @@ describe('Feature Gating Utility', () => {
   describe('getPlanLimits', () => {
     it('should return starter limits', () => {
       const limits = getPlanLimits('starter');
-      expect(limits.maxBots).toBe(1);
+      expect(limits.maxChannels).toBe(1);
       expect(limits.aiType).toBe('basic');
     });
 
     it('should return pro limits', () => {
       const limits = getPlanLimits('pro');
-      expect(limits.maxBots).toBe(3);
+      expect(limits.maxChannels).toBe(3);
       expect(limits.aiType).toBe('advanced');
     });
 
     it('should return enterprise limits', () => {
       const limits = getPlanLimits('enterprise');
-      expect(limits.maxBots).toBe(10);
+      expect(limits.maxChannels).toBe(10);
       expect(limits.maxBroadcasts).toBe(Infinity);
     });
   });

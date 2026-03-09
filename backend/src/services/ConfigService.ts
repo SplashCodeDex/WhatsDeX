@@ -17,11 +17,11 @@ export class ConfigService {
   }
 
   /**
-   * Sets the bot's WhatsApp JID at connection time.
+   * Sets the channel's WhatsApp JID at connection time.
    */
   public setJid(jid: string): void {
     this._jid = jid;
-    logger.info(`ConfigService: Bot JID set to ${jid}`);
+    logger.info(`ConfigService: Channel JID set to ${jid}`);
   }
 
   public static getInstance(): ConfigService {
@@ -49,11 +49,11 @@ export class ConfigService {
   }
 
   /**
-   * Getter for bot-specific configuration.
+   * Getter for channel-specific configuration.
    */
-  public get bot() {
+  public get channel() {
     return {
-      ...this.config.bot,
+      ...this.config.channel,
       jid: this._jid,
       id: this._jid,
       groupJid: this.get('GROUP_JID'),
@@ -69,19 +69,19 @@ export class ConfigService {
    */
   public get msg(): import('../types/index.js').Config['msg'] {
     return {
-      name: this.config.bot.name,
-      footer: `© ${new Date().getFullYear()} ${this.config.bot.name}`,
+      name: this.config.channel.name,
+      footer: `© ${new Date().getFullYear()} ${this.config.channel.name}`,
       notFound: '❎ Result not found!',
       readmore: String.fromCharCode(8206).repeat(4001),
       wait: '⏳ Please wait...',
       error: '❌ Internal Error',
       success: '✅ Success',
       admin: '⚠️ You are not an admin!',
-      botAdmin: '⚠️ I am not an admin!',
+      channelAdmin: '⚠️ I am not an admin!',
       owner: '⚠️ Owner only command!',
       group: '⚠️ Group only command!',
       private: '⚠️ Private chat only command!',
-      bot: '⚠️ Bot only command!',
+      channel: '⚠️ Channel only command!',
       premium: '⚠️ Premium only!',
       nsfw: '🔞 NSFW disabled!',
       banned: '❌ You are banned!',
@@ -89,7 +89,7 @@ export class ConfigService {
       privatePremiumOnly: '💎 Premium only feature!',
       groupPremiumOnly: '💎 Group premium only!',
       urlInvalid: '🔗 Invalid URL provided!',
-      botGroupMembership: '🚫 You must join our official group first!',
+      channelGroupMembership: '🚫 You must join our official group first!',
       groupSewa: '🔒 This group is not registered for full access!',
       unavailableAtNight: '😴 The bot is sleeping, try again tomorrow!',
       coin: '🪙 Not enough coins!',
@@ -103,7 +103,7 @@ export class ConfigService {
   public get system() {
     return {
       ...this.config.system,
-      requireBotGroupMembership: this.get('REQUIRE_BOT_GROUP_MEMBERSHIP'),
+      requireChannelGroupMembership: this.get('system.requireChannelGroupMembership'),
       requireGroupSewa: this.get('REQUIRE_GROUP_SEWA'),
       unavailableAtNight: this.get('UNAVAILABLE_AT_NIGHT'),
       privatePremiumOnly: this.get('PRIVATE_PREMIUM_ONLY'),

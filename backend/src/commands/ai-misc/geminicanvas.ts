@@ -10,7 +10,7 @@ export default {
     premium: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config } = ctx.bot.context;
+    const { formatter, tools, config } = ctx.channel.context;
     const input = ctx.args.join(' ') || null;
 
     if (!input)

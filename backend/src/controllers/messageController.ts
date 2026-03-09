@@ -6,7 +6,7 @@ import { db } from '../lib/firebase.js';
 
 // Validation Schemas
 const sendMessageSchema = z.object({
-    botId: z.string().min(1),
+    channelId: z.string().min(1),
     to: z.string().min(5),
     message: z.string().optional(),
     type: z.enum(['text', 'image', 'video', 'document']).default('text'),
@@ -60,7 +60,7 @@ export class MessageController {
                 .doc(tenantId)
                 .collection('messages')
                 .doc(messageId);
-            
+
             const messageSnap = await messageRef.get();
 
             if (!messageSnap.exists) {
@@ -68,7 +68,7 @@ export class MessageController {
             }
 
             const originalMessage = messageSnap.data() as any;
-            const channelId = originalMessage.channelId || originalMessage.botId;
+            const channelId = originalMessage.channelId;
 
             // 2. Send via the SAME channel
             const adapter = channelManager.getAdapter(channelId);
@@ -90,7 +90,7 @@ export class MessageController {
     }
 
     /**
-     * Send a message via a specific channel (bot)
+     * Send a message via a specific channel
      */
     static async sendMessage(req: Request, res: Response) {
         try {
@@ -100,7 +100,7 @@ export class MessageController {
             const payload = sendMessageSchema.parse(req.body);
 
             // 1. Resolve Adapter
-            const adapter = channelManager.getAdapter(payload.botId);
+            const adapter = channelManager.getAdapter(payload.channelId);
             if (!adapter) {
                 return res.status(400).json({ success: false, error: 'Channel not active' });
             }

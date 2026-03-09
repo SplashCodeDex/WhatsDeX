@@ -28,12 +28,12 @@ vi.mock('./queueService.js', () => ({
 
 // Mock logger
 vi.mock('../utils/logger.js', () => ({
-    default: {
-        info: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn(),
-        debug: vi.fn()
-    }
+  default: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn()
+  }
 }));
 
 describe('CampaignService', () => {
@@ -51,7 +51,7 @@ describe('CampaignService', () => {
     name: 'Test',
     templateId: 'tpl_1',
     audience: { type: 'contacts', targetId: 'aud_1' },
-    distribution: { type: 'single', botId: 'bot_1' },
+    distribution: { type: 'single', channelId: 'chan_1' },
     antiBan: { aiSpinning: false, minDelay: 1, maxDelay: 5 },
     schedule: { type: 'immediate' },
     stats: { total: 0, sent: 0, failed: 0, pending: 0 },

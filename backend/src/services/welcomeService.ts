@@ -5,7 +5,7 @@
  * Stateless service that reads configuration from Firestore.
  */
 
-import { Bot } from '../types/index.js';
+import { ActiveChannel } from '../types/index.js';
 import logger from '../utils/logger.js';
 import { GroupData } from '../types/contracts.js';
 
@@ -14,16 +14,16 @@ export class WelcomeService {
     /**
      * Handle participant updates (add/remove)
      */
-    async handleGroupParticipantsUpdate(bot: Bot, update: { id: string; participants: string[]; action: string }): Promise<void> {
+    async handleGroupParticipantsUpdate(channel: ActiveChannel, update: { id: string; participants: string[]; action: string }): Promise<void> {
         const { id, participants, action } = update;
-        const { databaseService } = bot.context;
+        const { databaseService } = channel.context;
 
         if (!databaseService) return;
 
         try {
             // 1. Fetch Group Settings from Tenant DB
             // Path: tenants/{tenantId}/groups/{groupJid}
-            const groupDoc = await databaseService.getDoc<GroupData>('groups', id, bot.tenantId);
+            const groupDoc = await databaseService.getDoc<GroupData>('groups', id, channel.tenantId);
 
             if (!groupDoc || !groupDoc.settings?.welcome?.enabled) {
                 return;
@@ -53,7 +53,7 @@ export class WelcomeService {
                     desc: groupDesc
                 });
 
-                await bot.sendMessage(id, {
+                await channel.sendMessage(id, {
                     text: message,
                     mentions: [participant]
                 });

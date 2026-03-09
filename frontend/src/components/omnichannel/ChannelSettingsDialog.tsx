@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
     Settings2, 
     Power, 
     Trash2, 
     AlertTriangle,
     Loader2,
-    ShieldAlert
+    ShieldAlert,
+    UserCircle2
 } from 'lucide-react';
 import { 
     Dialog, 
@@ -24,6 +25,13 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from '@/components/ui/select';
 
 interface ChannelSettingsDialogProps {
     channel: any;
@@ -35,9 +43,20 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [shouldArchive, setShouldArchive] = useState(true);
-    const { disconnectChannel, deleteChannel } = useOmnichannelStore();
+    const { disconnectChannel, deleteChannel, moveChannel, agentsResult, fetchAgents } = useOmnichannelStore();
 
     const agentId = channel.assignedAgentId || 'system_default';
+    const [selectedTargetAgent, setSelectedTargetAgent] = useState(agentId);
+
+    useEffect(() => {
+        if (isOpen) fetchAgents();
+    }, [isOpen, fetchAgents]);
+
+    useEffect(() => {
+        setSelectedTargetAgent(agentId);
+    }, [agentId, isOpen]);
+
+    const agents = agentsResult?.agents || [];
 
     const handleDisconnect = async () => {
         setIsActionLoading(true);
@@ -69,6 +88,22 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
         }
     };
 
+    const handleMove = async () => {
+        if (selectedTargetAgent === agentId) return;
+        setIsActionLoading(true);
+        try {
+            const success = await moveChannel(channel.id, agentId, selectedTargetAgent);
+            if (success) {
+                toast.success(`Channel reassigned successfully`);
+                onOpenChange(false);
+            } else {
+                toast.error('Failed to move channel');
+            }
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[450px] border-border/50 bg-card/95 backdrop-blur-xl">
@@ -85,6 +120,44 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                 </DialogHeader>
 
                 <div className="py-6 space-y-6">
+                    {/* Agent Assignment */}
+                    <div className="space-y-3">
+                        <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-2">
+                            <UserCircle2 className="h-3 w-3" />
+                            Assigned Agent
+                        </Label>
+                        <div className="flex gap-2">
+                            <Select value={selectedTargetAgent} onValueChange={setSelectedTargetAgent}>
+                                <SelectTrigger className="bg-muted/30 border-border/50 flex-1">
+                                    <SelectValue placeholder="Select Agent" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {agents.length === 0 ? (
+                                        <SelectItem value="system_default">System Default Agent</SelectItem>
+                                    ) : (
+                                        agents.map((agent: any) => (
+                                            <SelectItem key={agent.id} value={agent.id}>
+                                                {agent.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectContent>
+                            </Select>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="px-3"
+                                disabled={isActionLoading || selectedTargetAgent === agentId}
+                                onClick={handleMove}
+                            >
+                                {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Move'}
+                            </Button>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground italic">
+                            Moving a channel re-routes all incoming messages to the target agent's logic.
+                        </p>
+                    </div>
+
                     {/* Status Overview */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50">
                         <div className="space-y-1">
@@ -109,7 +182,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                     variant="outline" 
                                     className="w-full justify-between h-12 border-orange-500/20 hover:bg-orange-500/10 hover:text-orange-600 hover:border-orange-500/50 group-hover:shadow-md transition-all"
                                     onClick={handleDisconnect}
-                                    disabled={isActionLoading || channel.status === 'disconnected'}
+                                    disabled={isActionLoading || channel.status === 'disconnected' || channel.status === 'archived'}
                                 >
                                     <div className="flex items-center gap-3">
                                         <Power className="h-4 w-4" />
@@ -132,8 +205,8 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                     <div className="flex items-center gap-3">
                                         <Trash2 className="h-4 w-4" />
                                         <div className="text-left">
-                                            <p className="font-bold text-sm text-destructive">Delete Channel</p>
-                                            <p className="text-[10px] text-muted-foreground">Permanently remove this slot</p>
+                                            <p className="font-bold text-sm text-destructive">Delete / Archive</p>
+                                            <p className="text-[10px] text-muted-foreground">Remove slot or preserve history</p>
                                         </div>
                                     </div>
                                 </Button>

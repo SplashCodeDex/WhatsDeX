@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import GeminiService from './gemini.js';
 import logger from '../utils/logger.js';
 import { EventEmitter } from 'events';
-import { Bot, GlobalContext, MessageContext, Result, Agent } from '../types/index.js';
+import { ActiveChannel, GlobalContext, MessageContext, Result, Agent } from '../types/index.js';
 import { CommonMessage } from '../types/omnichannel.js';
 import { databaseService } from './database.js';
 import { cacheService } from './cache.js';
@@ -47,7 +47,7 @@ interface AIAnalysis {
  * 2026 Mastermind Edition - Memoized (Rule 5)
  */
 export class GeminiAI extends EventEmitter {
-  private bot: Bot | null = null;
+  private channel: ActiveChannel | null = null;
   private context: GlobalContext;
   private gemini: GeminiService;
   private decisionEngine: AIDecisionEngine;
@@ -71,13 +71,13 @@ export class GeminiAI extends EventEmitter {
   /**
    * Main message processing - handles ANY message intelligently
    */
-  async processMessage(bot: Bot, ctx: MessageContext): Promise<Result<void>> {
+  async processMessage(channel: ActiveChannel, ctx: MessageContext): Promise<Result<void>> {
     try {
       const commonMsg: CommonMessage = {
         id: ctx.id,
         platform: 'whatsapp',
         from: ctx.sender.jid,
-        to: bot.botId,
+        to: channel.channelId,
         content: {
           text: ctx.body || ''
         },
@@ -90,7 +90,7 @@ export class GeminiAI extends EventEmitter {
         }
       };
 
-      const result = await this.processOmnichannelMessage(bot.tenantId, bot.botId, commonMsg);
+      const result = await this.processOmnichannelMessage(channel.tenantId, channel.channelId, commonMsg);
 
       if (result.success && result.data && result.data.content.text) {
         await ctx.reply(result.data.content.text);
@@ -114,7 +114,7 @@ export class GeminiAI extends EventEmitter {
   /**
    * Universal message processing engine - platform agnostic (2026 Edition)
    */
-  async processOmnichannelMessage(tenantId: string, botId: string, message: CommonMessage): Promise<Result<CommonMessage>> {
+  async processOmnichannelMessage(tenantId: string, channelId: string, message: CommonMessage): Promise<Result<CommonMessage>> {
     const startTime = Date.now(); // Track request start time for analytics
     try {
       // MASTERMIND: Perception Phase (Reading the message)
@@ -131,7 +131,7 @@ export class GeminiAI extends EventEmitter {
       const platform = message.platform;
 
       // Build context
-      const context = await this.buildGenericContext(tenantId, botId, userId, text, message);
+      const context = await this.buildGenericContext(tenantId, channelId, userId, text, message);
       const tenantResult = await multiTenantService.getTenant(tenantId);
       const plan = tenantResult.success ? tenantResult.data.plan : 'starter';
 
@@ -195,7 +195,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         const maxLoops = this.decisionEngine.maxToolCalls;
 
         while (loopCount < maxLoops) {
-          socketService.emitActivity(tenantId, botId, platform, 'agent_thinking', 'Agent is thinking...');
+          socketService.emitActivity(tenantId, channelId, platform, 'agent_thinking', 'Agent is thinking...');
           if (message.metadata?.simulateTyping) {
             await message.metadata.simulateTyping();
           }
@@ -230,7 +230,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                   };
                 }
 
-                socketService.emitActivity(tenantId, botId, platform, 'tool_start', `Using tool: ${toolCall.function.name}`);
+                socketService.emitActivity(tenantId, channelId, platform, 'tool_start', `Using tool: ${toolCall.function.name}`);
                 if (message.metadata?.simulateTyping) {
                   await message.metadata.simulateTyping();
                 }
@@ -243,19 +243,19 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                 const result = await toolRegistry.executeTool(toolCall.function.name, args, {
                   ...context,
                   tenantId,
-                  botId,
+                  channelId,
                   platform: message.platform,
                   userId
                 });
 
-                socketService.emitActivity(tenantId, botId, platform, 'tool_end', `Tool ${toolCall.function.name} completed.`);
+                socketService.emitActivity(tenantId, channelId, platform, 'tool_end', `Tool ${toolCall.function.name} completed.`);
                 return {
                   role: 'tool',
                   tool_call_id: toolCall.id,
                   content: typeof result === 'string' ? result : JSON.stringify(result)
                 };
               } catch (toolError: any) {
-                socketService.emitActivity(tenantId, botId, platform, 'system', `Tool ${toolCall.function.name} failed.`);
+                socketService.emitActivity(tenantId, channelId, platform, 'system', `Tool ${toolCall.function.name} failed.`);
                 return {
                   role: 'tool',
                   tool_call_id: toolCall.id,
@@ -280,7 +280,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
       });
 
       // Learn from interaction (Persistent Learning)
-      this.learnFromInteractionGeneric(tenantId, botId, userId, text, {
+      this.learnFromInteractionGeneric(tenantId, channelId, userId, text, {
         intents: [],
         confidence: 0.9,
         actions: [],
@@ -291,7 +291,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
 
       // Store in Scoped Vector Memory
       await memoryService.storeConversation(userId, text, {
-        botId: botId,
+        channelId: channelId,
         response: finalResponse,
         interactionType: 'human-ai',
         platform: message.platform,
@@ -314,7 +314,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
       const responseMsg: CommonMessage = {
         id: crypto.randomUUID(),
         platform: message.platform,
-        from: botId,
+        from: channelId,
         to: userId,
         content: {
           text: finalResponse
@@ -347,7 +347,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
   /**
    * Generic context builder
    */
-  async buildGenericContext(tenantId: string, botId: string, userId: string, text: string, message: CommonMessage) {
+  async buildGenericContext(tenantId: string, channelId: string, userId: string, text: string, message: CommonMessage) {
     const userProfile = await databaseService.user.get(userId, tenantId);
     const learningResult = await this.getPersistentLearning(userId, tenantId);
     const learnedFacts = learningResult.success && learningResult.data ? learningResult.data.facts : [];
@@ -376,12 +376,12 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
   /**
    * Refactored legacy context builder to use generic one
    */
-  async buildEnhancedContext(bot: Bot, userId: string, message: string, ctx: MessageContext) {
+  async buildEnhancedContext(channel: ActiveChannel, userId: string, message: string, ctx: MessageContext) {
     const commonMsg: CommonMessage = {
       id: ctx.id,
       platform: 'whatsapp',
       from: userId,
-      to: bot.botId,
+      to: channel.channelId,
       content: { text: message },
       timestamp: Date.now(),
       metadata: {
@@ -389,13 +389,13 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         mediaType: this.detectMediaType(ctx)
       }
     };
-    return this.buildGenericContext(bot.tenantId, bot.botId, userId, message, commonMsg);
+    return this.buildGenericContext(channel.tenantId, channel.channelId, userId, message, commonMsg);
   }
 
   /**
    * Generic intelligence analysis
    */
-  async analyzeGenericIntelligence(tenantId: string, botId: string, message: string, context: any): Promise<AIAnalysis> {
+  async analyzeGenericIntelligence(tenantId: string, channelId: string, message: string, context: any): Promise<AIAnalysis> {
     // Implementation mostly reused from analyzeWithMultiLayerIntelligence
     const analysis: AIAnalysis = {
       intents: [],
@@ -424,7 +424,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
       (intents.length > 0 ? await this.assessContextualRelevance(intents[0], context) : 0);
 
     // Contextual decisions
-    const decisions = await this.makeContextualDecisionsGeneric(tenantId, botId, intents, context);
+    const decisions = await this.makeContextualDecisionsGeneric(tenantId, channelId, intents, context);
     analysis.actions = decisions.actions;
     analysis.confidence = decisions.confidence;
 
@@ -440,19 +440,19 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
   /**
    * Generic action executor
    */
-  async executeGenericResponse(tenantId: string, botId: string, intelligence: AIAnalysis, message: CommonMessage, context: any): Promise<{ finalResponse: string, actionResults: any[] }> {
+  async executeGenericResponse(tenantId: string, channelId: string, intelligence: AIAnalysis, message: CommonMessage, context: any): Promise<{ finalResponse: string, actionResults: any[] }> {
     const { actions, confidence } = intelligence;
     let finalResponse = '';
     const actionResults: any[] = [];
 
     if (actions.length === 0 || confidence < this.decisionEngine.confidenceThreshold) {
-      finalResponse = await this.handleConversationalResponseGeneric(tenantId, botId, message, context, intelligence);
+      finalResponse = await this.handleConversationalResponseGeneric(tenantId, channelId, message, context, intelligence);
       return { finalResponse, actionResults };
     }
 
     // High confidence actions
     if (actions.length === 1) {
-      const result = await this.executeSingleActionGeneric(tenantId, botId, actions[0], message, context);
+      const result = await this.executeSingleActionGeneric(tenantId, channelId, actions[0], message, context);
       actionResults.push(result);
       const typedResult = result as unknown as { response?: string };
       finalResponse = typedResult?.response || "Action completed.";
@@ -466,7 +466,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
   /**
    * Generic conversational handler
    */
-  async handleConversationalResponseGeneric(tenantId: string, botId: string, message: CommonMessage, context: any, _intelligence: any): Promise<string> {
+  async handleConversationalResponseGeneric(tenantId: string, channelId: string, message: CommonMessage, context: any, _intelligence: any): Promise<string> {
     const userId = message.from;
     const historyResult = await memoryService.retrieveRelevantContext(userId, message.content.text || '');
     let historicalContext = '';
@@ -476,8 +476,8 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         historyResult.data.map(h => `- ${h.content} (on ${new Date(h.timestamp).toLocaleDateString()})`).join("\n");
     }
 
-    // Fetch bot-specific personality from configuration
-    const channelResult = await this.context.channelService.getChannel(tenantId, botId);
+    // Fetch channel-specific personality from configuration
+    const channelResult = await this.context.channelService.getChannel(tenantId, channelId);
     const channelDoc = channelResult.success ? channelResult.data as any : null;
     const personality = channelDoc?.config?.aiPersonality || channelDoc?.aiPersonality || 'a professional and helpful assistant';
 
@@ -509,7 +509,7 @@ USER CONTEXT:
     }
   }
 
-  async makeContextualDecisionsGeneric(tenantId: string, botId: string, intents: any[], context: any) {
+  async makeContextualDecisionsGeneric(tenantId: string, channelId: string, intents: any[], context: any) {
     const decisions = {
       actions: [] as AIAction[],
       confidence: 0,
@@ -594,12 +594,12 @@ USER CONTEXT:
     };
   }
 
-  async executeSingleActionGeneric(tenantId: string, botId: string, action: AIAction, message: CommonMessage, context: any) {
+  async executeSingleActionGeneric(tenantId: string, channelId: string, action: AIAction, message: CommonMessage, context: any) {
     // Placeholder - actions will be handled by ToolRegistry
     return { response: "Action execution is being wired in Phase 3." };
   }
 
-  async learnFromInteractionGeneric(tenantId: string, botId: string, userId: string, message: string, intelligence: AIAnalysis) {
+  async learnFromInteractionGeneric(tenantId: string, channelId: string, userId: string, message: string, intelligence: AIAnalysis) {
     if (!this.decisionEngine.learningEnabled) return;
     // Implementation reused from learnFromInteraction but withoutctx
     const learned = await this.extractFacts(message, { memory: await this.getPersistentLearning(userId, tenantId) });
@@ -634,7 +634,7 @@ USER CONTEXT:
   /**
    * Multi-layer intelligence analysis
    */
-  async analyzeWithMultiLayerIntelligence(bot: Bot, message: string, context: any): Promise<AIAnalysis> {
+  async analyzeWithMultiLayerIntelligence(channel: ActiveChannel, message: string, context: any): Promise<AIAnalysis> {
     const analysis: AIAnalysis = {
       intents: [],
       confidence: 0,
@@ -666,7 +666,7 @@ USER CONTEXT:
     analysis.intents = intents;
 
     // Layer 2: Context-Aware Decision Making
-    const decisions = await this.makeContextualDecisions(bot, intents, context);
+    const decisions = await this.makeContextualDecisions(channel, intents, context);
     analysis.actions = decisions.actions;
     analysis.confidence = decisions.confidence;
 
@@ -731,7 +731,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Make contextual decisions based on intents and user context
    */
-  async makeContextualDecisions(bot: Bot, intents: any[], context: any) {
+  async makeContextualDecisions(channel: ActiveChannel, intents: any[], context: any) {
     const decisions = {
       actions: [] as AIAction[],
       confidence: 0,
@@ -743,7 +743,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
       const contextualRelevance = await this.assessContextualRelevance(intent, context);
 
       if (contextualRelevance > 0.5) {
-        const action = await this.intentToAction(bot, intent, context);
+        const action = await this.intentToAction(channel, intent, context);
         if (action) {
           decisions.actions.push({
             ...action,
@@ -768,7 +768,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Convert intent to actionable command
    */
-  async intentToAction(bot: Bot, intent: any, context: any): Promise<AIAction | null> {
+  async intentToAction(channel: ActiveChannel, intent: any, context: any): Promise<AIAction | null> {
     const intentMapping: Record<string, string> = {
       // Media & Downloads
       'download_youtube': 'youtubevideo',
@@ -810,7 +810,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
       return null;
     }
 
-    const command = bot.cmd.get(commandName);
+    const command = channel.cmd.get(commandName);
     if (!command) {
       // logger.warn(`Command not found for intent: ${intent.intent} -> ${commandName}`);
       return null;
@@ -828,26 +828,26 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Execute intelligent response based on analysis
    */
-  async executeIntelligentResponse(bot: Bot, intelligence: AIAnalysis, ctx: MessageContext, context: any): Promise<{ finalResponse: string, actionResults: any[] }> {
+  async executeIntelligentResponse(channel: ActiveChannel, intelligence: AIAnalysis, ctx: MessageContext, context: any): Promise<{ finalResponse: string, actionResults: any[] }> {
     const { actions, confidence } = intelligence;
     let finalResponse = '';
     const actionResults: any[] = [];
 
     if (actions.length === 0 || confidence < this.decisionEngine.confidenceThreshold) {
       // Conversational AI response
-      finalResponse = await this.handleConversationalResponse(bot, ctx, context, intelligence);
+      finalResponse = await this.handleConversationalResponse(channel, ctx, context, intelligence);
       return { finalResponse, actionResults };
     }
 
     // Execute high-confidence actions
     if (actions.length === 1) {
-      const result = await this.executeSingleAction(bot, actions[0], ctx, context);
+      const result = await this.executeSingleAction(channel, actions[0], ctx, context);
       actionResults.push(result);
       // Cast safely knowing result structure
       const typedResult = result as unknown as { response?: string };
       finalResponse = typedResult?.response || "Action completed.";
     } else {
-      const results = await this.executeMultipleActions(bot, actions, ctx, context) ?? [];
+      const results = await (this as any).executeMultipleActions(channel, actions, ctx, context) ?? [];
       actionResults.push(...results);
       finalResponse = "Multiple actions executed.";
     }
@@ -857,7 +857,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
   /**
    * Handle conversational AI response with full context
    */
-  async handleConversationalResponse(bot: Bot, ctx: MessageContext, context: any, intelligence: any): Promise<string> {
+  async handleConversationalResponse(channel: ActiveChannel, ctx: MessageContext, context: any, intelligence: any): Promise<string> {
     // 1. Retrieve Historical Context (RAG)
     const jid = ctx.sender.jid;
     const historyResult = await memoryService.retrieveRelevantContext(jid, context.message.text);
@@ -870,7 +870,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
     }
 
     // 2. Intelligence Layer: Advanced Reasoning
-    const personality = bot.config.aiPersonality || 'a professional assistant';
+    const personality = channel.config.aiPersonality || 'a professional assistant';
 
     const learnedContext = context.learnedFacts?.length > 0
       ? "\n[WHAT I'VE LEARNED ABOUT THIS USER]:\n" + context.learnedFacts.map((f: any) => `- ${f.content}`).join('\n')
@@ -878,7 +878,7 @@ Be intelligent - understand implied requests, context clues, and natural languag
 
     const systemPrompt = `You are a high-intelligence AI agent.
 Role: ${personality}
-Context: Acting on behalf of ${bot.user?.name ?? 'WhatsDeX'}.
+Context: Acting on behalf of ${channel.user?.name ?? 'WhatsDeX'}.
 Current Time: ${new Date().toLocaleString()}
 Work on behalf of the customer. Use the tools provided when necessary.
 ${historicalContext}
@@ -914,7 +914,7 @@ Respond in the user's language if they're not using English.
     try {
       const response = await this.gemini.getChatCompletion(conversationPrompt);
       await ctx.reply(response);
-      await this.updateConversationMemory(ctx.sender.jid, bot.tenantId, ctx.body, response);
+      await this.updateConversationMemory(ctx.sender.jid, channel.tenantId, ctx.body, response);
       return response;
     } catch (error: unknown) {
       logger.error('Conversational AI error:', error);
@@ -927,10 +927,10 @@ Respond in the user's language if they're not using English.
   /**
    * Execute a single action intelligently
    */
-  async executeSingleAction(bot: Bot, action: AIAction, ctx: MessageContext, context: any) {
+  async executeSingleAction(channel: ActiveChannel, action: AIAction, ctx: MessageContext, context: any) {
     try {
       if (!action.command) throw new Error('Command not specified');
-      const command = bot.cmd.get(action.command);
+      const command = channel.cmd.get(action.command);
       if (!command) {
         throw new Error(`Command not found: ${action.command}`);
       }
@@ -944,7 +944,7 @@ Respond in the user's language if they're not using English.
       }
 
       // Follow up with AI explanation if helpful
-      await this.provideIntelligentFollowUp(bot, action, ctx, context);
+      await this.provideIntelligentFollowUp(channel, action, ctx, context);
 
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1018,17 +1018,17 @@ Respond in the user's language if they're not using English.
 
     // Default: split message into words, skip command-like words
     return message.split(' ').filter(word =>
-      !['please', 'can', 'you', 'could', 'would', 'help', 'me', 'bot'].includes(word.toLowerCase())
+      !['please', 'can', 'you', 'could', 'would', 'help', 'me', 'channel', 'agent'].includes(word.toLowerCase())
     );
   }
 
   /**
-   * Register all bot commands as AI tools (Per bot basis now)
+   * Register all channel's commands as AI tools (Per channel basis now)
    */
-  getCommandsAsTools(bot: Bot) {
+  getCommandsAsTools(channel: ActiveChannel) {
     const tools = new Map<string, any>();
-    if (bot.cmd) {
-      Array.from(bot.cmd.entries()).forEach(([name, command]) => {
+    if (channel.cmd) {
+      Array.from(channel.cmd.entries()).forEach(([name, command]: [string, any]) => {
         tools.set(name, {
           name,
           description: command.description || `Execute ${name} command`,
@@ -1051,16 +1051,16 @@ Respond in the user's language if they're not using English.
   /**
    * Learn from user interactions to improve responses
    */
-  async learnFromInteraction(bot: Bot, userId: string, message: string, intelligence: AIAnalysis, _ctx: MessageContext) {
+  async learnFromInteraction(channel: ActiveChannel, userId: string, message: string, intelligence: AIAnalysis, _ctx: MessageContext) {
     if (!this.decisionEngine.learningEnabled) return;
 
     try {
       // 1. Extract facts from the current interaction
-      const learned = await this.extractFacts(message, { memory: await this.getPersistentLearning(userId, bot.tenantId) });
+      const learned = await this.extractFacts(message, { memory: await this.getPersistentLearning(userId, channel.tenantId) });
 
       if (learned.facts.length > 0 || Object.keys(learned.preferences).length > 0) {
         // 2. Load existing learning data
-        const existingResult = await this.getPersistentLearning(userId, bot.tenantId);
+        const existingResult = await this.getPersistentLearning(userId, channel.tenantId);
         const existing = existingResult.success && existingResult.data
           ? existingResult.data
           : { userId, facts: [], preferences: {}, lastInteraction: new Date() as any };
@@ -1087,7 +1087,7 @@ Respond in the user's language if they're not using English.
           facts: mergedFacts,
           preferences: mergedPreferences,
           lastInteraction: new Date()
-        }, bot.tenantId);
+        }, channel.tenantId);
 
         logger.info(`Agentic Brain learned ${learned.facts.length} new facts for ${userId}`);
       }
@@ -1103,7 +1103,7 @@ Respond in the user's language if they're not using English.
     const prompt = `
 Analyze the following message and extract any persistent facts or preferences about the user.
 Facts include personal info, interests, important dates, or recurring needs.
-Preferences include how they like to be addressed, preferred languages, or specific bot behavior settings.
+Preferences include how they like to be addressed, preferred languages, or specific channel behavior settings.
 
 Message: "${message}"
 Current Memory: ${JSON.stringify(context.memory || {})}
@@ -1292,7 +1292,7 @@ Message: "${content}"
   /**
    * Calculate success metrics for learning from interaction
    */
-  async calculateSuccessMetrics(bot: Bot, intelligence: any, ctx: MessageContext) {
+  async calculateSuccessMetrics(channel: ActiveChannel, intelligence: any, ctx: MessageContext) {
     const startTime = Date.now();
     const metrics: any = {
       actionResults: [] as any[],
@@ -1309,7 +1309,7 @@ Message: "${content}"
         for (const action of intelligence.actions) {
           try {
             // Check if action was executed successfully
-            const actionSuccess = await this.validateActionExecution(bot, action, ctx);
+            const actionSuccess = await this.validateActionExecution(channel, action, ctx);
             metrics.actionResults.push({
               action: action.command || action.type,
               success: actionSuccess,
@@ -1359,10 +1359,10 @@ Message: "${content}"
   /**
    * Validate if an action was executed successfully
    */
-  async validateActionExecution(bot: Bot, action: any, ctx: any) {
+  async validateActionExecution(channel: ActiveChannel, action: any, ctx: any) {
     // Check if the action type exists and was callable
     if (action.type === 'command' && action.command) {
-      const command = bot.cmd.get(action.command);
+      const command = channel.cmd.get(action.command);
       return command !== undefined;
     }
 
@@ -1440,8 +1440,8 @@ Message: "${content}"
   async assessContextualRelevance(intent: any, context: any) { return 0.8; }
   async planWorkflow(actions: any[], context: any) { return { tools: [] as any[], reasoning: '' }; }
   async selectResponseStrategy(analysis: any, context: any) { return 'conversational'; }
-  async executeMultipleActions(bot: Bot, actions: any[], ctx: any, context: any) { return []; }
-  async provideIntelligentFollowUp(bot: Bot, action: any, ctx: any, context: any) { }
+  async executeMultipleActions(channel: ActiveChannel, actions: any[], ctx: any, context: any) { return []; }
+  async provideIntelligentFollowUp(channel: ActiveChannel, action: any, ctx: any, context: any) { }
   inferCommandParameters(command: any) { return {}; }
   async getActiveConversations(userId: string) { return []; }
   async getGroupContext(groupId: string) { return null; }

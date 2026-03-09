@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { db } from '../lib/firebase.js';
 import logger from '../utils/logger.js';
 import monitoringService from '../services/monitoring.js';
+import { channelService } from '../services/ChannelService.js';
 
 export class AnalyticsController {
     /**
@@ -14,13 +15,10 @@ export class AnalyticsController {
                 return res.status(401).json({ success: false, error: 'Authentication required' });
             }
 
-            // 1. Fetch Bots for this tenant
-            const botsSnapshot = await db.collection('tenants')
-                .doc(tenantId)
-                .collection('bots')
-                .get();
+            // 1. Fetch Channels for this tenant (Modern Replacement for Bots)
+            const channelsResult = await channelService.getAllChannelsAcrossAgents(tenantId);
+            const bots = channelsResult.success ? channelsResult.data : [];
 
-            const bots = botsSnapshot.docs.map(doc => doc.data());
             const totalBots = bots.length;
             const activeBots = bots.filter(b => b.status === 'connected' || b.status === 'connecting').length;
 
@@ -48,7 +46,7 @@ export class AnalyticsController {
             const tenantData = tenantDoc.data() || {};
             const plan = (tenantData.plan || 'starter') as string;
             const monthlyUsage = tenantData.stats?.totalMessagesSent || 0;
-            
+
             const { usageGuard } = await import('../services/UsageGuard.js');
             const monthlyLimit = usageGuard.getMonthlyLimit(plan as any);
 

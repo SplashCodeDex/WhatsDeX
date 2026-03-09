@@ -32,12 +32,12 @@ vi.mock('discord.js', () => ({
 describe('DiscordAdapter', () => {
   let adapter: DiscordAdapter;
   const tenantId = 'tenant-123';
-  const botId = 'bot-discord';
+  const channelId = 'channel-discord';
   const token = 'MTA...';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    adapter = new DiscordAdapter(tenantId, botId, token);
+    adapter = new DiscordAdapter(tenantId, channelId, token);
   });
 
   it('should have id "discord"', () => {
@@ -51,7 +51,7 @@ describe('DiscordAdapter', () => {
 
   it('should send a common message as an embed', async () => {
     const mockSend = vi.fn().mockResolvedValue({ id: 'msg-1' });
-    mockClient.channels = {
+    (mockClient as any).channels = {
       fetch: vi.fn().mockResolvedValue({ send: mockSend })
     };
 
@@ -74,9 +74,9 @@ describe('DiscordAdapter', () => {
   it('should trigger onMessage handler', async () => {
     const handler = vi.fn();
     adapter.onMessage(handler);
-    
+
     await adapter.connect();
-    
+
     const registeredHandler = mockClient.on.mock.calls.find(call => call[0] === 'messageCreate')?.[1];
     expect(registeredHandler).toBeDefined();
 
@@ -91,8 +91,8 @@ describe('DiscordAdapter', () => {
 
     expect(handler).toHaveBeenCalledWith(expect.objectContaining({
       tenantId,
-      botId,
-      channelId: 'discord',
+      channelId,
+      channelType: 'discord',
       sender: 'discorduser'
     }));
   });

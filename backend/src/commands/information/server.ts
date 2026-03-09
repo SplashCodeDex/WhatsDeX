@@ -7,7 +7,7 @@ export default {
     category: 'information',
     description: 'Get information about the server running the bot.',
     code: async (ctx: MessageContext) => {
-        const { formatter, tools, config } = ctx.bot.context;
+        const { formatter, tools, config } = ctx.channel.context;
         try {
             const memory = process.memoryUsage();
             const totalMem = os.totalmem();
@@ -57,9 +57,9 @@ export default {
 ` +
                     `${formatter.quote('· · ─ ·✶· ─ · ·')}
 ` +
-                    `${formatter.quote(`Bot Uptime: ${config.bot.uptime}`)}
+                    `${formatter.quote(`Bot Uptime: ${config.channel.uptime}`)}
 ` +
-                    `${formatter.quote(`Database: ${config.bot.dbSize} (Simpl.DB - JSON)`)}
+                    `${formatter.quote(`Database: ${config.channel.dbSize} (Simpl.DB - JSON)`)}
 ${formatter.quote(
                         'Library: baileys'
                     )}`,                footer: config.msg.footer,

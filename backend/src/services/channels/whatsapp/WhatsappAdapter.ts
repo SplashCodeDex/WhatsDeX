@@ -6,7 +6,7 @@ import { eventHandler } from '@/services/eventHandler.js';
 import QRCode from 'qrcode';
 import { MiddlewareSystem } from '@/services/middlewareSystem.js';
 import { Channel } from '../../../types/contracts.js';
-import { Bot, MessageContext, Middleware } from '../../../types/index.js';
+import { ActiveChannel, MessageContext, Middleware } from '../../../types/index.js';
 
 // Import from openclaw workspace package
 import {
@@ -22,7 +22,7 @@ import {
  * WhatsappAdapter wraps the existing WhatsDeX Baileys/AuthSystem logic
  * to conform to the ChannelAdapter interface.
  */
-export class WhatsappAdapter implements ChannelAdapter, Partial<Bot> {
+export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public readonly id = 'whatsapp';
   public readonly instanceId: string;
   public readonly fullPath?: string;
@@ -32,13 +32,13 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<Bot> {
   private qrCodeUrl: string | null = null;
   private middlewareSystem = new MiddlewareSystem();
   public config: any = {}; // Holds channel settings like selfMode, alwaysOnline
-  public botId: string; // Map instanceId to botId for index.ts Bot type
+  public channelId: string; // Map instanceId to channelId for index.ts Channel type
   public context: any; // Injected GlobalContext
   private presenceInterval: NodeJS.Timeout | null = null;
 
-  constructor(public tenantId: string, private channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
+  constructor(public tenantId: string, channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
     this.instanceId = channelId;
-    this.botId = channelId;
+    this.channelId = channelId;
     this.fullPath = fullPath;
     this.config = channelData?.config || {};
 
@@ -50,10 +50,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<Bot> {
       collectionOrPath = `agents/${parts[3]}/channels`;
     }
 
-    this.authSystem = new AuthSystem({ bot: {} }, tenantId, channelId, collectionOrPath);
+    this.authSystem = new AuthSystem({ channel: {} }, tenantId, channelId, collectionOrPath);
   }
 
-  // BOT INTERFACE IMPLEMENTATION
+  // CHANNEL INTERFACE IMPLEMENTATION
   public use(middleware: Middleware): void {
     this.middlewareSystem.use(middleware);
   }
@@ -200,7 +200,6 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<Bot> {
           await this.messageHandler({
             tenantId: this.tenantId,
             channelId: this.id,
-            botId: this.channelId, // Keep botId in event for backward compat or update interface later
             fullPath: this.fullPath,
             sender: message.key.remoteJid,
             content: message.message,

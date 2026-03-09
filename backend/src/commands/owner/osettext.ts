@@ -7,7 +7,7 @@ export default {
     owner: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context;
+    const { formatter, tools, config, database: db } = ctx.channel.context;
     const key = ctx.args[0] || null;
     const text = ctx.args.slice(1).join(' ') || ctx.quoted?.content || null;
 

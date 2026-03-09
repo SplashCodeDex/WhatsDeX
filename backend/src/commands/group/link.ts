@@ -6,11 +6,11 @@ export default {
     category: 'group',
     description: 'Get the invite link for the current group.',
     permissions: {
-        botAdmin: true,
+        channelAdmin: true,
         group: true,
     },
     code: async (ctx: MessageContext) => {
-        const { formatter, tools } = ctx.bot.context;
+        const { formatter, tools } = ctx.channel.context;
         try {
             const code = await ctx.group().inviteCode();
             await ctx.reply(formatter.quote(`https://chat.whatsapp.com/${code}`));

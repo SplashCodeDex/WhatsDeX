@@ -12,7 +12,7 @@ export default {
         owner: true,
     },
     code: async (ctx: MessageContext) => {
-        const { formatter, tools, config, database: db } = ctx.bot.context;
+        const { formatter, tools, config, database: db } = ctx.channel.context;
         if (!process.env.PM2_HOME)
             return await ctx.reply(
                 formatter.quote('❎ Bot is not running under PM2! Manual restart required.')
@@ -20,7 +20,7 @@ export default {
 
         try {
             const waitMsg = await ctx.reply(config.msg.wait);
-            await db.set('bot.restart', {
+            await db.set('channel.restart', {
                 jid: ctx.id,
                 key: waitMsg.key,
                 timestamp: Date.now(),

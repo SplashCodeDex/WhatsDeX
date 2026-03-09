@@ -12,8 +12,8 @@ export class TelegramAdapter implements ChannelAdapter {
   private bot: Bot;
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
 
-  constructor(private tenantId: string, private botId: string, private token: string) {
-    this.instanceId = botId;
+  constructor(private tenantId: string, private channelId: string, private token: string) {
+    this.instanceId = channelId;
     this.bot = new Bot(token);
   }
 
@@ -27,15 +27,15 @@ export class TelegramAdapter implements ChannelAdapter {
         // Increment received stats
         try {
           const { channelService } = await import('@/services/ChannelService.js');
-          await channelService.incrementChannelStat(this.tenantId, this.botId, 'messagesReceived');
+          await channelService.incrementChannelStat(this.tenantId, this.channelId, 'messagesReceived');
         } catch (e) {
           logger.warn('Failed to increment stats in TelegramAdapter', e);
         }
 
         await this.messageHandler({
           tenantId: this.tenantId,
-          channelId: this.id,
-          botId: this.botId,
+          channelId: this.channelId,
+          channelType: this.id,
           sender: ctx.from?.username || ctx.from?.id.toString() || 'unknown',
           content: ctx.message.text,
           timestamp: new Date(ctx.message.date * 1000),
@@ -48,7 +48,7 @@ export class TelegramAdapter implements ChannelAdapter {
   public async connect(): Promise<void> {
     // For long-polling or webhook.
     // In our multi-tenant server, we use webhooks.
-    logger.info(`TelegramAdapter for ${this.botId} initialized.`);
+    logger.info(`TelegramAdapter for ${this.channelId} initialized.`);
   }
 
   public async disconnect(): Promise<void> {
@@ -70,7 +70,7 @@ export class TelegramAdapter implements ChannelAdapter {
     // Track stats
     try {
       const { channelService } = await import('@/services/ChannelService.js');
-      await channelService.incrementChannelStat(this.tenantId, this.botId, 'messagesSent');
+      await channelService.incrementChannelStat(this.tenantId, this.channelId, 'messagesSent');
     } catch (e) {
       logger.warn('Failed to increment stats in TelegramAdapter', e);
     }

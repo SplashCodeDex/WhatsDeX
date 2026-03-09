@@ -1,16 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Slack, ShieldCheck, Loader2, MessageSquare, Hash } from 'lucide-react';
+import { Slack, ShieldCheck, Loader2, MessageSquare, Hash, UserCircle2 } from 'lucide-react';
 import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { toast } from 'sonner';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 interface ChannelConnectionFormProps {
   type: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat';
@@ -19,10 +27,17 @@ interface ChannelConnectionFormProps {
   onCancel?: () => void;
 }
 
-export function ChannelConnectionForm({ type, agentId = 'system_default', onSuccess, onCancel }: ChannelConnectionFormProps) {
+export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess, onCancel }: ChannelConnectionFormProps) {
   const [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
-  const { fetchChannels } = useOmnichannelStore();
+  const [selectedAgentId, setSelectedAgentId] = useState(initialAgentId || 'system_default');
+  const { fetchChannels, fetchAgents, agentsResult } = useOmnichannelStore();
+
+  useEffect(() => {
+    fetchAgents();
+  }, [fetchAgents]);
+
+  const agents = agentsResult?.agents || [];
 
   const config = {
     whatsapp: {
@@ -99,7 +114,7 @@ export function ChannelConnectionForm({ type, agentId = 'system_default', onSucc
     setLoading(true);
 
     try {
-      const response = await api.post(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.CREATE(agentId), {
+      const response = await api.post(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.CREATE(selectedAgentId), {
         type,
         name: `${type.charAt(0).toUpperCase() + type.slice(1)} Channel`,
         credentials
@@ -107,7 +122,7 @@ export function ChannelConnectionForm({ type, agentId = 'system_default', onSucc
 
       if (response.success) {
         toast.success(`Connection initiated for ${type}. Check the hub for status.`);
-        await fetchChannels();
+        await fetchChannels(selectedAgentId);
         onSuccess?.();
       } else {
         toast.error(response.error.message || 'Failed to connect channel');
@@ -123,33 +138,55 @@ export function ChannelConnectionForm({ type, agentId = 'system_default', onSucc
     <Card className="w-full max-w-md shadow-lg border-primary/10 bg-card text-foreground">
       <CardHeader>
         <div className="flex items-center space-x-2 mb-2">
-          <Icon className={config.color} />
+          <Icon className={cn("h-6 w-6", config.color)} />
           <CardTitle>{config.title}</CardTitle>
         </div>
         <CardDescription>{config.description}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="agent-select" className="text-xs uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-2">
+              <UserCircle2 className="h-3 w-3" />
+              Assign to Agent
+            </Label>
+            <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+              <SelectTrigger id="agent-select" className="bg-background/50">
+                <SelectValue placeholder="Select an Agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {agents.length === 0 ? (
+                  <SelectItem value="system_default">System Default Agent</SelectItem>
+                ) : (
+                  agents.map((agent: any) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">
+              The agent provides the "brain" and intelligence for this connectivity slot.
+            </p>
+          </div>
+
           {config.fields.map((field) => (
             <div key={field.id} className="space-y-2">
               <Label htmlFor={field.id}>{field.label}</Label>
               <Input
                 id={field.id}
                 placeholder={field.placeholder}
+                value={credentials[field.id] || ''}
+                onChange={(e) => setCredentials({ ...credentials, [field.id]: e.target.value })}
                 required
-                onChange={(e) => setCredentials(prev => ({ ...prev, [field.id]: e.target.value }))}
+                className="bg-background/50"
               />
             </div>
           ))}
-          <div className="rounded-lg bg-muted/50 p-3 flex items-start space-x-2">
-            <ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-            <p className="text-xs text-muted-foreground font-foreground">
-              Your credentials are encrypted and stored securely. WhatsDeX never logs sensitive tokens.
-            </p>
-          </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
+          <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
           <Button type="submit" disabled={loading}>

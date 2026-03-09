@@ -10,12 +10,12 @@ export default {
   category: 'group',
   permissions: {
     admin: true,
-    botAdmin: true,
+    channelAdmin: true,
     group: true,
     restrict: true,
   },
   code: async (ctx: MessageContext) => {
-    const { formatter, tools, config, database: db } = ctx.bot.context as GlobalContext;
+    const { formatter, tools, config, database: db } = ctx.channel.context as GlobalContext;
     const accountJid = ctx.quoted?.senderJid || (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) || null;
     if (!accountJid) {
       return await ctx.reply({
@@ -32,7 +32,7 @@ export default {
 
     const accountId = ctx.getId(accountJid);
 
-    if (accountId === config.bot.id)
+    if (accountId === config.channel.id)
       return await ctx.reply(formatter.quote(`❎ Tidak bisa memberikan warning ke bot!`));
     if (await ctx.group().isOwner(accountJid))
       return await ctx.reply(formatter.quote('❎ Tidak bisa memberikan warning ke admin grup!'));

@@ -113,17 +113,24 @@ export class SocketService {
     }
 
     /**
-     * Emit granular bot connection progress
+     * Emit granular channel connection progress
      */
-    public emitBotProgress(tenantId: string, botId: string, step: string, status: 'pending' | 'in_progress' | 'complete' | 'error'): Result<void> {
-        return this.emitToTenant(tenantId, 'bot_progress_update', { botId, step, status });
+    public emitChannelProgress(tenantId: string, channelId: string, step: string, status: 'pending' | 'in_progress' | 'complete' | 'error'): Result<void> {
+        return this.emitToTenant(tenantId, 'channel_progress_update', { channelId, step, status });
     }
 
     /**
-     * Emit bot activity event (message received, skill triggered, etc.)
+     * Emit channel lifecycle status change
      */
-    public emitActivity(tenantId: string, botId: string, channel: string, type: string, message: string, metadata?: any): Result<void> {
-        return this.emitToTenant(tenantId, 'activity_event', { botId, channel, type, message, metadata });
+    public emitChannelStatus(tenantId: string, channelId: string, status: string): Result<void> {
+        return this.emitToTenant(tenantId, 'channel_status_update', { channelId, status });
+    }
+
+    /**
+     * Emit channel activity event (message received, skill triggered, etc.)
+     */
+    public emitActivity(tenantId: string, channelId: string, platform: string, type: string, message: string, metadata?: any): Result<void> {
+        return this.emitToTenant(tenantId, 'activity_event', { channelId, platform, type, message, metadata });
     }
 
     /**

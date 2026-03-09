@@ -1,9 +1,9 @@
 import type { WASocket, proto } from 'baileys';
 import type { ConfigService } from '../services/ConfigService.js';
-import type { BotConfig } from './tenantConfig.js';
+import type { ChannelConfig } from './tenantConfig.js';
 
 export interface Config {
-    bot: {
+    channel: {
         name: string;
         prefix: string;
         phoneNumber?: string;
@@ -26,14 +26,14 @@ export interface Config {
         error: string;
         success: string;
         admin: string;
-        botAdmin: string;
+        channelAdmin: string;
         owner: string;
         group: string;
         private: string;
-        bot: string;
+        channel: string;
         premium: string;
         nsfw: string;
-        botGroupMembership?: string;
+        channelGroupMembership?: string;
         groupSewa?: string;
         unavailableAtNight?: string;
         coin?: string;
@@ -51,21 +51,22 @@ export interface Config {
     };
 }
 
-export interface Bot extends Partial<WASocket> {
+export interface ActiveChannel extends Partial<WASocket> {
     user: {
         id: string;
         name?: string;
     };
     phoneNumber?: string;
     tenantId: string;
-    botId: string;
-    config: BotConfig;
+    channelId: string;
+    config: import('./tenantConfig.js').ChannelConfig;
     context: GlobalContext;
     ev: NonNullable<WASocket['ev']>;
 
     sendMessage: (jid: string, content: any, options?: any) => Promise<any>;
     decodeJid: (jid: string) => string;
     cmd: Map<string, Command>;
+
 
     // Middleware
     use: (middleware: Middleware) => void;
@@ -89,7 +90,7 @@ export interface GroupFunctions {
     isAdmin: (userJid?: string) => Promise<boolean>;
     matchAdmin: (userJid: string) => Promise<boolean>;
     members: () => Promise<string[]>;
-    isBotAdmin: () => Promise<boolean>;
+    isChannelAdmin: () => Promise<boolean>;
     metadata: () => Promise<any>;
     owner: () => Promise<string | null>;
     name: () => Promise<string>;
@@ -152,7 +153,7 @@ export interface MessageContext {
     command: string;
     prefix: string;
     commandDef?: Command;
-    bot: Bot;
+    channel: ActiveChannel;
     getId: (jid: string) => string;
     getMentioned?: () => Promise<string[]>;
     simulateTyping: (text?: string | number) => Promise<void>;
@@ -188,7 +189,7 @@ export interface MessageContext {
 
 export interface CommandPermissions {
     admin?: boolean;
-    botAdmin?: boolean;
+    channelAdmin?: boolean;
     owner?: boolean;
     group?: boolean;
     private?: boolean;
@@ -247,7 +248,7 @@ export interface GlobalContext {
     ingressService: import('../services/IngressService.js').IngressService;
     userService: import('../services/userService.js').UserService;
     tenantConfigService: import('../services/tenantConfigService.js').TenantConfigService;
-    bot?: Bot;
+    channel?: ActiveChannel;
     state?: any;
     [key: string]: any;
 }

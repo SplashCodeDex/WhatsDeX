@@ -9,7 +9,7 @@
  * 1. Infrastructure (.env) - Platform operator only
  * 2. Platform Defaults (code) - Fallback values
  * 3. Tenant Settings (Firestore) - Customer controlled
- * 4. Bot Settings (Firestore) - Per-bot overrides
+ * 4. Channel Settings (Firestore) - Per-channel overrides
  */
 
 import { db } from '../lib/firebase.js';
@@ -17,12 +17,12 @@ import logger from '../utils/logger.js';
 import {
     TenantSettings,
     TenantSettingsSchema,
-    BotConfig,
-    BotConfigSchema,
+    ChannelConfig,
+    ChannelConfigSchema,
     DEFAULT_TENANT_SETTINGS,
-    DEFAULT_BOT_CONFIG,
+    DEFAULT_CHANNEL_CONFIG,
 } from '../types/tenantConfig.js';
-import type { Result } from '../types/contracts.js';
+import type { Result, Channel, Agent } from '../types/contracts.js';
 
 // =============================================================================
 // TenantConfigService
@@ -33,7 +33,7 @@ export class TenantConfigService {
 
     // In-memory cache for frequently accessed settings
     private settingsCache: Map<string, { data: TenantSettings; expiry: number }> = new Map();
-    private botConfigCache: Map<string, { data: BotConfig; expiry: number }> = new Map();
+    private channelConfigCache: Map<string, { data: ChannelConfig; expiry: number }> = new Map();
     private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
     private constructor() { }
@@ -158,40 +158,40 @@ export class TenantConfigService {
     }
 
     // ===========================================================================
-    // Bot Configuration
+    // Channel Configuration
     // ===========================================================================
 
     /**
-     * Get bot configuration from Firestore.
+     * Get channel configuration from Firestore.
      */
-    async getBotConfig(tenantId: string, botId: string): Promise<Result<BotConfig>> {
+    async getChannelConfig(tenantId: string, channelId: string): Promise<Result<ChannelConfig>> {
         try {
-            const cacheKey = `${tenantId}:${botId}`;
+            const cacheKey = `${tenantId}:${channelId}`;
 
             // Check cache
-            const cached = this.botConfigCache.get(cacheKey);
+            const cached = this.channelConfigCache.get(cacheKey);
             if (cached && Date.now() < cached.expiry) {
                 return { success: true, data: cached.data };
             }
 
             // Fetch from Firestore
-            const docRef = db.collection('tenants').doc(tenantId).collection('bots').doc(botId);
+            const docRef = db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
             const doc = await docRef.get();
 
-            let config: BotConfig;
+            let config: ChannelConfig;
             if (doc.exists) {
                 const rawData = doc.data();
-                config = BotConfigSchema.parse({
-                    ...DEFAULT_BOT_CONFIG,
+                config = ChannelConfigSchema.parse({
+                    ...DEFAULT_CHANNEL_CONFIG,
                     ...rawData,
                 });
             } else {
                 // Return defaults
-                config = BotConfigSchema.parse(DEFAULT_BOT_CONFIG);
+                config = ChannelConfigSchema.parse(DEFAULT_CHANNEL_CONFIG);
             }
 
             // Update cache
-            this.botConfigCache.set(cacheKey, {
+            this.channelConfigCache.set(cacheKey, {
                 data: config,
                 expiry: Date.now() + this.CACHE_TTL_MS,
             });
@@ -199,30 +199,30 @@ export class TenantConfigService {
             return { success: true, data: config };
         } catch (error) {
             const err = error instanceof Error ? error : new Error(String(error));
-            logger.error(`[TenantConfigService] Failed to get bot config:`, err);
+            logger.error(`[TenantConfigService] Failed to get channel config:`, err);
             return { success: false, error: err };
         }
     }
 
     /**
-     * Update bot configuration.
+     * Update channel configuration.
      */
-    async updateBotConfig(
+    async updateChannelConfig(
         tenantId: string,
-        botId: string,
-        updates: Partial<BotConfig>
-    ): Promise<Result<BotConfig>> {
+        channelId: string,
+        updates: Partial<ChannelConfig>
+    ): Promise<Result<ChannelConfig>> {
         try {
-            const docRef = db.collection('tenants').doc(tenantId).collection('bots').doc(botId);
+            const docRef = db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
 
             // Get current config
-            const currentResult = await this.getBotConfig(tenantId, botId);
+            const currentResult = await this.getChannelConfig(tenantId, channelId);
             if (!currentResult.success) {
                 return currentResult;
             }
 
             // Merge and validate
-            const merged = BotConfigSchema.parse({
+            const merged = ChannelConfigSchema.parse({
                 ...currentResult.data,
                 ...updates,
                 updatedAt: new Date(),
@@ -232,13 +232,79 @@ export class TenantConfigService {
             await docRef.set(merged, { merge: true });
 
             // Invalidate cache
-            this.botConfigCache.delete(`${tenantId}:${botId}`);
+            this.channelConfigCache.delete(`${tenantId}:${channelId}`);
 
-            logger.info(`[TenantConfigService] Updated config for bot ${botId}`);
+            logger.info(`[TenantConfigService] Updated config for channel ${channelId}`);
             return { success: true, data: merged };
         } catch (error) {
             const err = error instanceof Error ? error : new Error(String(error));
-            logger.error(`[TenantConfigService] Failed to update bot config:`, err);
+            logger.error(`[TenantConfigService] Failed to update channel config:`, err);
+            return { success: false, error: err };
+        }
+    }
+
+    /**
+     * Resolves the configuration for a specific Channel by merging it with its assigned Agent.
+     */
+    async resolveAgentChannelConfig(tenantId: string, channelId: string): Promise<Result<ChannelConfig>> {
+        try {
+            const cacheKey = `resolved:${tenantId}:${channelId}`;
+
+            // Check cache
+            const cached = this.channelConfigCache.get(cacheKey);
+            if (cached && Date.now() < cached.expiry) {
+                return { success: true, data: cached.data };
+            }
+
+            // 1. Fetch Channel
+            const channelRef = db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
+            const channelDoc = await channelRef.get();
+            if (!channelDoc.exists) {
+                return { success: false, error: new Error(`Channel ${channelId} not found`) };
+            }
+            const channelData = channelDoc.data() as Channel;
+
+            // 2. Fetch Agent
+            const agentId = channelData.assignedAgentId;
+            if (!agentId) {
+                return { success: false, error: new Error(`Channel ${channelId} has no assigned Agent`) };
+            }
+
+            const agentRef = db.collection('tenants').doc(tenantId).collection('agents').doc(agentId);
+            const agentDoc = await agentRef.get();
+            if (!agentDoc.exists) {
+                return { success: false, error: new Error(`Agent ${agentId} not found`) };
+            }
+            const agentData = agentDoc.data() as Agent;
+
+            // 3. Merge into ChannelConfig shape
+            // Intelligence (prefix, personality) comes from Agent
+            // Connectivity (status, phone) comes from Channel
+            const baseConfig = {
+                ...DEFAULT_CHANNEL_CONFIG,
+                name: channelData.name || agentData.name,
+                phoneNumber: channelData.phoneNumber || undefined,
+                aiPersonality: agentData.personality || undefined,
+                aiEnabled: true, // Agents are always AI enabled
+                status: channelData.status === 'connected' ? 'online' : 'offline',
+                ...(agentData.metadata || {}),
+                ...(channelData.config || {}),
+                updatedAt: new Date(),
+            };
+
+            // Validate against ChannelConfigSchema
+            const resolvedConfig = ChannelConfigSchema.parse(baseConfig);
+
+            // Update cache
+            this.channelConfigCache.set(cacheKey, {
+                data: resolvedConfig,
+                expiry: Date.now() + this.CACHE_TTL_MS,
+            });
+
+            return { success: true, data: resolvedConfig };
+        } catch (error) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error(`[TenantConfigService] Failed to resolve Agent/Channel config for ${channelId}:`, err);
             return { success: false, error: err };
         }
     }
@@ -260,7 +326,7 @@ export class TenantConfigService {
 
     /**
    * Check if a feature is enabled for a tenant.
-   * Only checks boolean features (not maxBots which is a number).
+   * Only checks boolean features (not maxChannels which is a number).
    */
     async isFeatureEnabled(
         tenantId: string,
@@ -278,7 +344,7 @@ export class TenantConfigService {
      */
     clearCache(): void {
         this.settingsCache.clear();
-        this.botConfigCache.clear();
+        this.channelConfigCache.clear();
     }
 }
 
