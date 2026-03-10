@@ -9,7 +9,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 ### [ ] Track: Agentic Performance & Intelligence Optimization (Phase 5)
 *Link: [./conductor/tracks/agentic_optimization_20260310/](./tracks/agentic_optimization_20260310/)*
 
-### [~] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
+### [x] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
 *Link: [./tracks/fix_connection_flaws_20260310/](./tracks/fix_connection_flaws_20260310/)*
 
 ---
