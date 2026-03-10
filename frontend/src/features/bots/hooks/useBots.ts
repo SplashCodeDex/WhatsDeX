@@ -67,7 +67,26 @@ export function useBot(botId: string, agentId: string = 'system_default'): Retur
 /**
  * Fetch QR code for bot connection
  */
+import { useSocket } from '@/hooks/useSocket';
+import { useQueryClient } from '@tanstack/react-query';
+
 export function useBotQR(botId: string, enabled: boolean = true, agentId: string = 'system_default'): ReturnType<typeof useQuery<QRCodeResponse>> {
+    const queryClient = useQueryClient();
+    const { on } = useSocket();
+
+    // MASTERMIND Goodie: Real-time Socket Update for QR
+    useEffect(() => {
+        if (!enabled || !botId) return;
+
+        const cleanup = on('channel_qr_update', (data: any) => {
+            if (data.channelId === botId || data.channelId === `chan_${botId}`) {
+                queryClient.setQueryData(botKeys.qr(agentId, botId), { qrCode: data.qrCode });
+            }
+        });
+
+        return cleanup;
+    }, [botId, enabled, on, queryClient, agentId]);
+
     return useQuery({
         queryKey: botKeys.qr(agentId, botId),
         queryFn: async () => {
@@ -78,9 +97,9 @@ export function useBotQR(botId: string, enabled: boolean = true, agentId: string
             throw new Error(response.error.message);
         },
         enabled: enabled && !!botId,
-        // QR codes expire, so refetch frequently
-        refetchInterval: 30000,
-        staleTime: 20000,
+        // QR codes expire, so refetch frequently (Fallback)
+        refetchInterval: 10000,
+        staleTime: 5000,
     });
 }
 

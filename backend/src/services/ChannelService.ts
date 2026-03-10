@@ -343,9 +343,8 @@ export class ChannelService {
         return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
       }
 
-      // Only mark as connected if it's not already in qr_pending (managed by AuthSystem/WhatsappAdapter)
-      const currentChannel = await this.getChannel(tenantId, channelId, agentId);
-      if (!(channel.type === 'whatsapp' && currentChannel.success && currentChannel.data.status === 'qr_pending')) {
+      // Only mark as connected if it's not managed by the adapter itself (like WhatsApp)
+      if (channel.type !== 'whatsapp') {
         await this.updateStatus(tenantId, channelId, 'connected', agentId);
       }
       
