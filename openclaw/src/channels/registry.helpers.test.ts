@@ -3,9 +3,26 @@ import {
   formatChannelSelectionLine,
   listChatChannels,
   normalizeChatChannelId,
+  listChatChannelAliases,
+  getChatChannelMeta,
 } from "./registry.js";
 
 describe("channel registry helpers", () => {
+  it("lists aliases correctly", () => {
+    const aliases = listChatChannelAliases();
+    expect(aliases).toContain("imsg");
+    expect(aliases).toContain("gchat");
+  });
+
+  it("retrieves meta by ID", () => {
+    const meta = getChatChannelMeta("telegram");
+    expect(meta.label).toBe("Telegram");
+  });
+
+  it("throws on unknown ID", () => {
+    expect(() => getChatChannelMeta("unknown" as any)).toThrow(/Unknown chat channel ID/);
+  });
+
   it("normalizes aliases + trims whitespace", () => {
     expect(normalizeChatChannelId(" imsg ")).toBe("imessage");
     expect(normalizeChatChannelId("gchat")).toBe("googlechat");
