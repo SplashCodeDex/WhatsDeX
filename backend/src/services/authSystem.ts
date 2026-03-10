@@ -33,6 +33,8 @@ class AuthSystem extends EventEmitter {
   private client: WASocket | null;
   private currentQrCode: string | null;
   private stats: AuthStats;
+  private reconnectAttempts: number = 0;
+  private reconnectTimer: NodeJS.Timeout | null = null;
 
   constructor(config: AuthConfig, tenantId: string, channelId: string, collectionOrPath: string = 'channels') {
     super();
@@ -58,6 +60,11 @@ class AuthSystem extends EventEmitter {
   }
 
   async connect(): Promise<Result<WASocket>> {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     this.authState = 'connecting';
     const method = this.config.channel.phoneNumber ? 'pairing' : 'qr';
     this._recordAttempt(method);
@@ -83,6 +90,7 @@ class AuthSystem extends EventEmitter {
         if (qr) {
           this.currentQrCode = qr;
           this.emit('qr', qr);
+          this.emit('status', 'qr_pending'); // Inform status change
           this.stats.methodStats.qr.attempts++;
         }
 
@@ -98,13 +106,22 @@ class AuthSystem extends EventEmitter {
           this.emit('disconnected', error);
 
           if (shouldReconnect) {
-            this.connect(); // Auto-reconnect
+            this.reconnectAttempts++;
+            // Exponential backoff: 1s, 2s, 4s, 8s... capped at 1 minute
+            const delay = Math.min(Math.pow(2, this.reconnectAttempts - 1) * 1000, 60 * 1000);
+            logger.info(`Scheduling reconnect in ${delay}ms (Attempt ${this.reconnectAttempts})`);
+            
+            this.reconnectTimer = setTimeout(() => {
+              this.connect();
+            }, delay);
           }
         } else if (connection === 'open') {
           this.authState = 'connected';
+          this.reconnectAttempts = 0; // Reset backoff on success
           this.stats.activeSessions = 1;
           this.stats.successes++;
           this.emit('connected');
+          this.emit('status', 'connected');
         }
       });
 
@@ -119,6 +136,10 @@ class AuthSystem extends EventEmitter {
   }
 
   async disconnect(): Promise<Result<void>> {
+    if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+    }
     if (this.client) {
       try {
         this.client.end(undefined); // Correct way to close baileys socket

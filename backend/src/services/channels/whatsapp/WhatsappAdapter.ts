@@ -95,6 +95,20 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       }
     });
 
+    // MASTERMIND Goodie: Forward AuthSystem status updates to ChannelService
+    this.authSystem.on('status', async (status) => {
+      try {
+        const { channelService } = await import('@/services/ChannelService.js');
+        let agentId = 'system_default';
+        if (this.fullPath && this.fullPath.includes('/agents/')) {
+          agentId = this.fullPath.split('/')[3];
+        }
+        await channelService.updateStatus(this.tenantId, this.channelId, status, agentId);
+      } catch (err) {
+        logger.error(`Failed to forward status '${status}' for ${this.channelId}`, err);
+      }
+    });
+
     // MASTERMIND Goodie: Automatic Phone Number Discovery
     this.socket.ev.on('connection.update', async (update: any) => {
       if (update.connection === 'open' && update.me?.id) {
