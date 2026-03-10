@@ -90,14 +90,20 @@ class AuthSystem extends EventEmitter {
       this.client = makeWASocket({
         version,
         auth: state,
-        printQRInTerminal: false, // Disabled to prevent console spam and warnings
+        printQRInTerminal: false,
         logger: pinoLogger as any,
         browser: Browsers.macOS('Desktop'),
+        // Phase 3: Resource Optimization - Ignore history for non-essential JIDs
+        shouldIgnoreJid: (jid) => jid.endsWith('@broadcast') || jid.endsWith('@newsletter'),
+        // Prevent storing full history in memory to avoid bloat
+        getMessage: async (key) => {
+          return undefined; // We don't need to return old messages from memory
+        }
       });
 
       this.client.ev.on('creds.update', saveCreds);
 
-      this.client.ev.on('connection.update', (update) => {
+      this.client.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
@@ -114,14 +120,29 @@ class AuthSystem extends EventEmitter {
 
           const error = lastDisconnect?.error;
           const statusCode = (error as Boom)?.output?.statusCode;
-          const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+          const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+          const shouldReconnect = !isLoggedOut;
 
           logger.warn(`[AuthSystem] Connection closed for ${this.channelId}. Reconnect: ${shouldReconnect}`, { error, statusCode });
+
+          if (isLoggedOut) {
+            logger.error(`[AuthSystem] SESSION LOGGED OUT for ${this.channelId}. Cleaning up Firestore auth state...`);
+            try {
+              // Perform a hard reset of the local creds and trigger a clear in Firestore
+              const { clearAuthState } = await useFirestoreAuthState(this.tenantId, this.channelId, this.collectionOrPath);
+              await clearAuthState();
+              this.currentQrCode = null;
+              this.emit('status', 'logged_out');
+            } catch (err) {
+              logger.error(`[AuthSystem] Failed to clear auth state during logout:`, err);
+            }
+          }
+
           this.emit('disconnected', error);
 
           if (shouldReconnect) {
             this.reconnectAttempts++;
-            // Exponential backoff: 1s, 2s, 4s, 8s... capped at 1 minute
+            // Exponential backoff: 1s, 2s, 4s, 8s, 16s... capped at 1 minute
             const delay = Math.min(Math.pow(2, this.reconnectAttempts - 1) * 1000, 60 * 1000);
             logger.info(`[AuthSystem] Scheduling reconnect in ${delay}ms (Attempt ${this.reconnectAttempts})`);
 

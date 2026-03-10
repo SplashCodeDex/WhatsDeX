@@ -25,7 +25,7 @@ import {
 export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public readonly id = 'whatsapp';
   public readonly instanceId: string;
-  public readonly fullPath?: string;
+  public fullPath?: string;
   private authSystem: AuthSystem;
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
   private socket: any = null;
@@ -230,7 +230,8 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
           }
           await this.messageHandler({
             tenantId: this.tenantId,
-            channelId: this.id,
+            channelId: this.channelId,
+            channelType: 'whatsapp',
             fullPath: this.fullPath,
             sender: message.key.remoteJid,
             content: message.message,
@@ -256,33 +257,42 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     await this.disconnect();
   }
 
+  /**
+   * Public sendMessage pushes to a background queue to prevent bans
+   */
   public async sendMessage(target: string, content: any): Promise<void> {
+    const jid = target.includes('@s.whatsapp.net') ? target : `${target}@s.whatsapp.net`;
+    const { jobQueueService } = await import('@/services/jobQueue.js');
+
+    logger.info(`Queuing outbound WhatsApp message for ${jid}`);
+
+    await jobQueueService.addJob('whatsapp-outbound', 'send-message', {
+      tenantId: this.tenantId,
+      channelId: this.channelId,
+      jid,
+      message: content,
+      options: {
+        verbose: false,
+        accountId: this.channelId,
+      }
+    });
+  }
+
+  /**
+   * Internal method used by the worker to actually dispatch the message
+   * after the human-like delay has passed.
+   */
+  public async _directSendMessage(target: string, content: any, options: any): Promise<void> {
     if (!this.socket) {
       throw new Error('Adapter not connected');
     }
 
-    const jid = target.includes('@s.whatsapp.net') ? target : `${target}@s.whatsapp.net`;
-
     const text = typeof content === 'string' ? content : (content.text || '');
     const mediaUrl = content.mediaUrl;
 
-    // MASTERMIND Goodie: Human-like Presence (Typing Simulation)
-    if (text && text.length > 0) {
-      // Calculate delay: ~50ms per character, capped at 3 seconds
-      const typingDelay = Math.min(text.length * 50, 3000);
-      try {
-        await this.socket.sendPresenceUpdate('composing', jid);
-        await new Promise(r => setTimeout(r, typingDelay));
-        await this.socket.sendPresenceUpdate('paused', jid);
-      } catch (e) {
-        logger.warn(`Failed to send presence update for ${jid}`, e);
-      }
-    }
-
-    // Leverage OpenClaw's rich pipeline
-    await sendMessageWhatsApp(jid, text, {
-      verbose: false,
-      accountId: this.channelId,
+    // Dispatch via OpenClaw's pipeline
+    await sendMessageWhatsApp(target, text, {
+      ...options,
       mediaUrl
     });
 
@@ -297,6 +307,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     } catch (e) {
       logger.warn('Failed to increment stats in WhatsappAdapter', e);
     }
+  }
+
+  public getSocket() {
+    return this.socket;
   }
 
   public async sendReaction(chatJid: string, messageId: string, emoji: string): Promise<void> {
