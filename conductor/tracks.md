@@ -6,6 +6,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
+### [ ] Track: Agentic Performance & Intelligence Optimization (Phase 5)
+*Link: [./conductor/tracks/agentic_optimization_20260310/](./tracks/agentic_optimization_20260310/)*
+
+### [ ] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
+*Link: [./tracks/fix_connection_flaws_20260310/](./tracks/fix_connection_flaws_20260310/)*
+
 ---
 
 ## Archived Tracks
@@ -23,13 +29,13 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link: [./conductor/archive/openclaw_hardening_20260305/](./openclaw_hardening_20260305/)*
 
 ### [x] Track: Phase 2: Nested Agentic Research
-*Link: [./conductor/archive/nested_research_20260304/](./nested_research_20260304/)*
+*Link: [./conductor/archive/nested_research_20260304/](./archive/nested_research_20260304/)*
 
 ### [x] Track: Upstream Engine Synchronization (2026.2.24)
 *Link: [./conductor/archive/openclaw_sync_20260228/](./openclaw_sync_20260228/)*
 
 ### [x] Track: Phase 2: Visual Skill Orchestration
-*Link: [./conductor/archive/skill_orchestration_20260228/](./skill_orchestration_20260228/)*
+*Link: [./conductor/archive/skill_orchestration_20260228/](./archive/skill_orchestration_20260228/)*
 
 ### [x] Track: System Stabilization & Core Wiring (Auth -> Dashboard)
 *Link: [./conductor/archive/stabilization_20260115/](./archive/stabilization_20260115/)*
