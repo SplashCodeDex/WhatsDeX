@@ -1,63 +1,75 @@
-# WhatsApp Resilience: 50+ Conflict Registry
+# WhatsApp Resilience Registry (50+ Defeating Scenarios)
 
-This document tracks all "What If" scenarios for the WhatsApp integration. Each item must be marked as `[x] Resolved` only after automated tests and manual verification.
+This registry tracks the identification and resolution of critical "Conflict Zones" in the WhatsApp integration.
 
-## Conflict Zone 1: Connection & Hardware Stress (1-15)
-- [ ] **1. Sudden Death:** Socket closes abruptly during initial handshake.
-- [ ] **2. Pairing Paralysis:** User provides phone number, but pairing code request fails on WhatsApp side.
-- [ ] **3. Internet Ghosting:** QR generated, but server internet drops before scan.
-- [ ] **4. Event Storm:** Baileys emits 5+ `qr` events in < 1 second.
-- [ ] **5. Data Corruption:** Firestore `creds` document contains invalid JSON.
-- [ ] **6. The "Gap" Restart:** Server restarts after `open` event but before status update.
-- [ ] **7. Network Flip:** Phone switches from WiFi to LTE mid-transmission.
-- [ ] **8. The Ban Hammer:** WhatsApp account is banned while system is polling.
-- [ ] **9. Fragmented Auth:** `auth` collection has keys but missing `creds` document.
-- [ ] **10. TUI Overlap:** TUI and Dashboard try to auth same channel at once.
-- [ ] **11. Clock Drift:** Server clock drifts by 5 minutes, breaking session tokens.
-- [ ] **12. Alien Reason:** Baileys emits `close` with undocumented status code.
-- [ ] **13. Database Lag:** `updateStatus` hangs for 10s during reconnection.
-- [ ] **14. User Interruption:** User clicks "Stop" while backoff timer is active.
-- [ ] **15. Zombie Session:** Previous session lock exists but process is dead.
+## Wave 1: Connection Stability (Scenarios 1-15)
 
-## Conflict Zone 2: Concurrency & Load (16-30)
-- [ ] **16. Thundering Herd (Local):** 100+ inbound messages for 1 channel in 1s.
-- [ ] **17. Global Surge:** 500+ inbound messages across 50 tenants.
-- [ ] **18. The Clicker:** User clicks "Generate QR" 10 times in a row.
-- [ ] **19. Mid-Flight Delete:** User clicks "Delete" while channel is "Connecting".
-- [ ] **20. Atomic Race:** Two API requests call `startChannel` at exact same ms.
-- [ ] **21. Broadcast Clash:** Background worker sends while user toggles adapter.
-- [ ] **22. The 10MB Choke:** Processing massive video while 50 other texts are queued.
-- [ ] **23. Memory Spike:** Socket service hits 5,000 active connections.
-- [ ] **24. AI Bottleneck:** AI reasoning takes 30s while 10 new messages arrive.
-- [ ] **25. OS Exhaustion:** System runs out of file descriptors (too many sockets).
-- [ ] **26. Cache Desync:** Redis shows "Connected", Firestore shows "Disconnected".
-- [ ] **27. Batch Move:** 20 agents reassigned across 20 channels in one transaction.
-- [ ] **28. Cold Boot Herd:** 1,000 channels attempt `resumeActiveChannels` at once.
-- [ ] **29. Slow Webhook:** Target webhook server takes 5s to respond.
-- [ ] **30. Queue Overflow:** BullMQ hits 10,000 pending tasks for one tenant.
+| ID | Scenario Description | Expected Outcome | Status |
+|:---|:---|:---|:---|
+| 1 | Socket abrupt close during handshake | System retries with exponential backoff | [ ] |
+| 2 | Firestore timeout during credential write | Transaction rolls back, session stays active in memory | [ ] |
+| 3 | Baileys '401 Unauthorized' (Session Expired) | Force logout, cleanup Firestore auth, notify frontend | [ ] |
+| 4 | Rapid network switching (Wifi <-> 5G) | Socket rebinds without losing message state | [ ] |
+| 5 | Credential corruption (malformed JSON in DB) | Auto-heal by clearing corrupted keys and requesting new QR | [ ] |
+| 6 | System clock skew > 5 minutes | Log warning, adjust timestamp logic for message deduplication | [ ] |
+| 7 | Handshake hang (no event from Baileys for 30s) | Timeout trigger, kill socket, restart flow | [ ] |
+| 8 | Multiple simultaneous connection attempts for one channel | Mutex lock prevents "Double Socket" zombie state | [ ] |
+| 9 | Device logout from phone app | Detect 'logged_out' status, cleanup and update UI | [ ] |
+| 10 | 'Stream Closed' error mid-transmission | Re-queue outbound message, reconnect | [ ] |
+| 11 | Empty `auth_info` in Firestore but status 'connected' | Detect inconsistency, trigger re-authentication | [ ] |
+| 12 | Database write failure during 'QR_RECEIVED' event | Re-attempt write once, then reset connection | [ ] |
+| 13 | Baileys update available (minor version mismatch) | Log warning, ensure backward compatibility | [ ] |
+| 14 | Proxied connection failure (if proxy configured) | Fallback to direct or mark as error | [ ] |
+| 15 | Battery Optimization/Sleep during sync | Keepalive heartbeats maintain socket integrity | [ ] |
 
-## Conflict Zone 3: Gating & Security (31-40)
-- [ ] **31. Limit Perfection:** Message sent when `messagesSent` is exactly at limit.
-- [ ] **32. Double Dip:** Two concurrent sends when only 1 slot remaining.
-- [ ] **33. Subscription Snap:** Plan expires while channel is in active chat.
-- [ ] **34. Path Forgery:** Attacker sends forged `agentId` in API path.
-- [ ] **35. Cross-Tenant Leak:** Tenant A uses Channel ID belonging to Tenant B.
-- [ ] **36. Path Injection:** `fullPath` manipulated to point to internal agent.
-- [ ] **37. Zod Bypass:** Malformed Unicode in message content.
-- [ ] **38. ID Spoofing:** User tries to create channel with duplicate ID.
-- [ ] **39. Usage Hammer:** 1,000 `usage/totals` requests/min from one IP.
-- [ ] **40. AI Hijack:** Tenant `aiEnabled` flag flipped to `false` mid-reasoning.
+## Wave 2: Concurrency & Load (Scenarios 16-30)
 
-## Conflict Zone 4: Workflow & Logic (41-50+)
-- [ ] **41. Moving Target:** Agent moved while mid-way through 5-step flow.
-- [ ] **42. Orphaned Sub-Agent:** Channel disconnects while nested researcher is working.
-- [ ] **43. Tool Timeout:** Research skill hangs for 60s on dead URL.
-- [ ] **44. The Blob:** AI returns response exceeding WhatsApp text limits.
-- [ ] **45. Ghost Move:** Firestore updates agent path but adapter update fails.
-- [ ] **46. Archived Ghost:** Message received for channel marked "Archived".
-- [ ] **47. Reaction Failure:** Reacting to message already deleted by user.
-- [ ] **48. Prompt Injection:** User sends "Ignore instructions" via WhatsApp.
-- [ ] **49. UTF-8 Nightmare:** Tool results contain null bytes.
-- [ ] **50. Notification Failure:** User-In-Loop socket fails during backend error.
-- [ ] **51. Persistence Check:** Server crashes mid-reasoning; resumes on restart.
-- [ ] **52. Skill Hot-Swap:** Skill updated while agent is calling it.
+| ID | Scenario Description | Expected Outcome | Status |
+|:---|:---|:---|:---|
+| 16 | "Thundering Herd": 100+ incoming messages in 1s | BullMQ handles ingestion, IngressService doesn't crash | [ ] |
+| 17 | Rapid QR Clicking: "Generate QR" clicked 10 times | Throttle requests, return existing session if active | [ ] |
+| 18 | Delete-while-starting: Delete channel during `connect()` | Abort connection immediately, prevent orphaned memory leak | [ ] |
+| 19 | Stop-while-sending: Stop bot while uploading 20MB video | Kill upload stream, cleanup temp files | [ ] |
+| 20 | Dual-Tenant Race: Two tenants update same system config | Optimistic locking prevents config corruption | [ ] |
+| 21 | Redis crash during message queuing | Fallback to immediate processing or temporary memory queue | [ ] |
+| 22 | BullMQ Worker starvation (long-running skills) | Proper worker scaling or skill timeouts | [ ] |
+| 23 | Parallel media downloads (5+ large files) | Memory limits enforced, prevent OOM crash | [ ] |
+| 24 | "Message Loop": Bot replies to its own message | Deduplication/isFromMe logic prevents infinite loop | [ ] |
+| 25 | Inbound burst while updating Tenant tier | UsageGuard applies new limits mid-stream | [ ] |
+| 26 | Firestore rate limit hit (too many writes) | Batching and retry logic prevents data loss | [ ] |
+| 27 | Large group sync (5000+ contacts) | Non-blocking sync, process in background | [ ] |
+| 28 | Concurrent webhook delivery failures | Circuit breaker opens, prevents worker exhaustion | [ ] |
+| 29 | Parallel "Sync Memory Status" calls | Atomic sync ensures consistent state | [ ] |
+| 30 | Socket pressure: 1000+ unread messages on boot | Stream processing prevents memory spike | [ ] |
+
+## Wave 3: Gating & Security (Scenarios 31-40)
+
+| ID | Scenario Description | Expected Outcome | Status |
+|:---|:---|:---|:---|
+| 31 | Message burst exceeding Plan limit | Hard drop after limit + 10% buffer | [ ] |
+| 32 | Malformed JID spoofing (trying to send to '0') | Validation blocks illegal destinations | [ ] |
+| 33 | `fullPath` manipulation attempt | Path validator blocks traversal or "undefined" segments | [ ] |
+| 34 | Tenant-A attempts to stop Tenant-B's channel | Ownership check blocks request | [ ] |
+| 35 | Secret leakage in logs (API keys, session info) | Logger sanitization redacts sensitive data | [ ] |
+| 36 | Rapid Plan switching (Free -> Pro -> Free) | Immediate feature toggle/gating update | [ ] |
+| 37 | Invalid Zod schema in incoming Baileys raw data | Log error, skip message, don't crash Ingress | [ ] |
+| 38 | Spoofed "isOwner" flag in request | Token validation/Context check overrides spoof | [ ] |
+| 39 | Direct Firestore subcollection access attempt | Firestore rules block non-owner access | [ ] |
+| 40 | Concurrent Agent creation > Plan limit | Transaction prevents over-provisioning | [ ] |
+
+## Wave 4: Workflow & Logic (Scenarios 41-50+)
+
+| ID | Scenario Description | Expected Outcome | Status |
+|:---|:---|:---|:---|
+| 41 | Hot Reassignment: Move channel while media uploading | Finish upload, then transition adapter state | [ ] |
+| 42 | Skill Timeout: Research agent hangs for 120s | Workflow aborts, notifies user of timeout | [ ] |
+| 43 | Empty prompt from AI model | Fallback to "I don't understand" or default reply | [ ] |
+| 44 | Quoted message context lost in translation | Fallback to root message, log context loss | [ ] |
+| 45 | Platform-specific media format (e.g. .opus) | Auto-conversion to standard format or graceful skip | [ ] |
+| 46 | Channel moved to agent without required skills | Block move or log warning, disable skill calls | [ ] |
+| 47 | AI Model rate limit hit | Exponential backoff for AI calls, notify user | [ ] |
+| 48 | Webhook endpoint returns 404/500 | Retry once, then log and notify tenant | [ ] |
+| 49 | Group metadata sync fails (bot kicked from group) | Mark as disconnected/error, cleanup group cache | [ ] |
+| 50 | Mixed Baileys/CommonMessage stream | Unified Context handles both seamlessly (Remediated) | [ ] |
+| 51 | Unrecoverable auth error (Permanent Ban) | Final status update 'banned', notify owner | [ ] |
+| 52 | Server shutdown while message in-flight | Graceful shutdown waits for active jobs or persists state | [ ] |

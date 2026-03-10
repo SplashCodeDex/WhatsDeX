@@ -2,10 +2,11 @@
 
 ## Phase 1: Resilience Harness & Connection Testing
 
-- [ ] **Task: Initialize Resilience Registry**
-    - [ ] Create `conductor/tracks/whatsapp_resilience_20260310/scenarios.md` with 50+ scripted scenarios.
-- [ ] **Task: Build Resilience Mock Harness**
-    - [ ] Create `backend/src/tests/resilienceHarness.ts` to simulate Baileys socket failures.
+- [x] **Task: Initialize Resilience Registry**
+    - [x] Create `conductor/tracks/whatsapp_resilience_20260310/scenarios.md` with 50+ scripted scenarios.
+- [x] **Task: Build Resilience Mock Harness**
+    - [x] Create `backend/src/utils/resilienceHarness.ts` to simulate Baileys socket failures.
+
 - [ ] **Task: Connection Stability Tests (1-15)**
     - [ ] Implement tests for socket timeouts, credential corruption, and network jitters.
     - [ ] **Fixes:** Implement self-healing logic for detected corruption.
