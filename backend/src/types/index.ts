@@ -134,12 +134,12 @@ export interface MessageContext {
     chat?: {
         id: string;
     };
-    msg: proto.IWebMessageInfo & {
+    msg: (proto.IWebMessageInfo & {
         contentType?: string;
         media?: any;
         body?: string;
         content?: string;
-    };
+    }) | import('./omnichannel.js').CommonMessage;
     quoted?: {
         content: string;
         contentType: string;

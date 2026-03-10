@@ -49,9 +49,14 @@ export class IngressService {
         activeAgent = agentResult.success ? agentResult.data : null;
       }
 
-      // 2. Prepare AI Context (Bridge between CommonMessage and internal AI Logic)
-      // Note: In a full refactor, createChannelContext should also accept CommonMessage.
-      // For now, we simulate a minimal context if we can't build a full one.
+      // 2. Prepare AI Context (Decoupled from platform-specifics)
+      const channelResult = await channelService.getChannel(tenantId, channelId, activeAgent?.id);
+      if (!channelResult.success) {
+          logger.warn(`[Ingress] Channel ${channelId} not found in Firestore, using mock instance.`);
+      }
+      
+      const channelInstance = channelResult.success ? channelResult.data : { tenantId, channelId } as any;
+      const aiCtx = await createChannelContext(channelInstance, message, context);
 
       const isAiEnabled = await tenantConfigService.isFeatureEnabled(tenantId, 'aiEnabled');
 
@@ -61,7 +66,7 @@ export class IngressService {
         if (!message.metadata) message.metadata = {};
         message.metadata.fullPath = fullPath;
 
-        await (context.unifiedAI as any).processOmnichannelMessage(tenantId, channelId, message);
+        await (context.unifiedAI as any).processMessage(channelInstance, aiCtx);
       } else {
         logger.info(`[Ingress] Webhook forwarding for ${message.platform} message.`);
         await webhookService.dispatch(tenantId, 'message.received', message);

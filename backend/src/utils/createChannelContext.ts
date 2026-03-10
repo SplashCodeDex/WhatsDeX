@@ -3,63 +3,89 @@ import { downloadContentFromMessage, getContentType, type proto } from 'baileys'
 import { getJid, getSender, getGroup } from './baileysUtils.js';
 import type { ActiveChannel, GlobalContext, MessageContext } from '../types/index.js';
 import type { TenantSettings } from '../types/tenantConfig.js';
+import type { CommonMessage } from '../types/omnichannel.js';
 import { DeliberationService } from './deliberation.js';
 
+/**
+ * Unified Context Builder
+ * 
+ * Creates a standard MessageContext from either a legacy Baileys message 
+ * or a modern platform-agnostic CommonMessage.
+ */
 const createChannelContext = async (
   channelInstance: ActiveChannel,
-  rawBaileysMessage: proto.IWebMessageInfo,
+  messageSource: proto.IWebMessageInfo | CommonMessage,
   originalContext: GlobalContext,
   requestInfo: any = {}
 ): Promise<MessageContext> => {
   const { tools, config } = originalContext;
 
-  const senderJid = getSender(rawBaileysMessage);
-  const senderId = getSender(rawBaileysMessage);
-  const remoteJid = rawBaileysMessage.key?.remoteJid || '';
-  const isGroup = remoteJid.endsWith('@g.us');
-  const groupJid = getGroup(rawBaileysMessage);
-  const groupId = getGroup(rawBaileysMessage);
+  // Determine message type
+  const isCommonMessage = (msg: any): msg is CommonMessage => 'platform' in msg;
+  
+  let senderJid: string;
+  let remoteJid: string;
+  let isGroup: boolean;
+  let groupId: string | undefined;
+  let messageBody: string;
+  let pushName: string | null = null;
 
-  const useDirectBaileys = process.env.USE_BAILEYS_DIRECT === 'true' || process.env.NODE_ENV === 'production';
+  if (isCommonMessage(messageSource)) {
+    senderJid = messageSource.from;
+    remoteJid = messageSource.to; // In common message, 'to' is the destination (could be group or user)
+    // For now we assume if 'to' ends with @g.us or similar platform specific group patterns
+    isGroup = messageSource.metadata?.isGroup || false;
+    groupId = isGroup ? remoteJid : undefined;
+    messageBody = messageSource.content.text || '';
+    pushName = messageSource.metadata?.pushName || 'User';
+  } else {
+    senderJid = getSender(messageSource);
+    remoteJid = messageSource.key?.remoteJid || '';
+    isGroup = remoteJid.endsWith('@g.us');
+    groupId = getGroup(messageSource);
+    messageBody = messageSource.message?.conversation || 
+                  messageSource.message?.extendedTextMessage?.text || '';
+    pushName = messageSource.pushName || null;
+  }
+
+  const senderId = senderJid;
+  const useDirectBaileys = (process.env.USE_BAILEYS_DIRECT === 'true' || process.env.NODE_ENV === 'production') && channelInstance.channelId.startsWith('wa_');
 
   // Fetch tenant settings strictly
   const tenantResult = await originalContext.tenantConfigService.getTenantSettings(channelInstance.tenantId);
   if (!tenantResult.success) {
-    // In strict mode, we might want to throw, but for resilience, we'll log and use defaults if possible,
-    // or arguably failing to create context is better than running with bad config.
-    // Given Zero-Trust, we should probably fail safe.
     originalContext.logger.error(`Failed to load tenant settings for ${channelInstance.tenantId}`, tenantResult.error);
     throw new Error('Failed to load tenant configuration');
   }
   const tenantSettings: TenantSettings = tenantResult.data;
 
   // Surgical Migration: Resolve Agent-Channel Configuration
-  // This bridges the legacy "Bot" concept with the new hierarchy.
   const resolvedResult = await originalContext.tenantConfigService.resolveAgentChannelConfig(channelInstance.tenantId, channelInstance.channelId);
   if (resolvedResult.success) {
-    // Inject resolved config into channelInstance for downstream consumers (AI, Commands)
     channelInstance.config = resolvedResult.data;
-    originalContext.logger.info(`[createChannelContext] Resolved Agent-Channel config for ${channelInstance.channelId}`);
-  } else {
-    originalContext.logger.warn(`[createChannelContext] Config resolution failed for ${channelInstance.channelId}, using fallback.`, resolvedResult.error);
   }
 
-  // Reply via Baileys in production; fallback to HTTP simulation
+  // Unified Reply
   const reply = async (content: any) => {
     const messageContent = typeof content === 'string' ? { text: content } : content;
-    if (useDirectBaileys && channelInstance?.sendMessage) {
-      return await channelInstance.sendMessage(remoteJid, messageContent, { quoted: rawBaileysMessage });
+    
+    // If it's a running adapter in memory, use its sendMessage
+    if (channelInstance?.sendMessage) {
+        return await channelInstance.sendMessage(remoteJid, messageContent, { quoted: !isCommonMessage(messageSource) ? messageSource : undefined });
     }
+    
+    // Fallback: If no direct adapter, could use a global send message utility
+    originalContext.logger.warn(`[createChannelContext] No direct adapter found for reply on ${channelInstance.channelId}`);
   };
 
   const replyReact = async (emoji: string) => {
-    if (useDirectBaileys && channelInstance?.sendMessage) {
-      return await channelInstance.sendMessage(remoteJid, { react: { text: emoji, key: rawBaileysMessage.key } });
+    if (channelInstance?.sendMessage) {
+      return await channelInstance.sendMessage(remoteJid, { react: { text: emoji, key: !isCommonMessage(messageSource) ? messageSource.key : undefined } });
     }
   };
 
   const simulateTyping = async (text?: string | number) => {
-    if (useDirectBaileys && channelInstance?.sendPresenceUpdate) {
+    if (channelInstance?.sendPresenceUpdate) {
       try {
         await channelInstance.sendPresenceUpdate('composing', remoteJid);
 
@@ -74,21 +100,25 @@ const createChannelContext = async (
 
         setTimeout(() => channelInstance.sendPresenceUpdate?.('paused', remoteJid).catch(() => { }), delay);
       } catch (_) { /* ignore */ }
+    } else if (isCommonMessage(messageSource) && messageSource.metadata?.simulateTyping) {
+        // Support metadata-driven simulation if provided by adapter
+        await messageSource.metadata.simulateTyping(text);
     }
   };
 
   const sendPresenceUpdate = async (presence: any, jid: string = remoteJid) => {
-    if (useDirectBaileys && channelInstance?.sendPresenceUpdate) {
+    if (channelInstance?.sendPresenceUpdate) {
       try {
         await channelInstance.sendPresenceUpdate(presence, jid);
       } catch (_) { /* ignore */ }
+    } else if (isCommonMessage(messageSource) && messageSource.metadata?.sendPresenceUpdate) {
+        await messageSource.metadata.sendPresenceUpdate(presence, jid);
     }
   };
 
   // Implement ctx.group() methods
   const group = (jid = groupId) => ({
     isAdmin: async (userJid: string = senderId) => {
-      // @ts-ignore
       if (!jid || !channelInstance.tenantId) return false;
       try {
         const memberSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
@@ -99,13 +129,10 @@ const createChannelContext = async (
       } catch (e) { }
       return false;
     },
-    isChannelAdmin: async () => {
-      // @ts-ignore
+    matchAdmin: async (userJid: string) => {
       if (!jid || !channelInstance.tenantId) return false;
-      const channelJid = channelInstance.user?.id?.split(':')[0] + '@s.whatsapp.net'; // derive from channel user
-      if (!channelJid) return false;
       try {
-        const memberSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').doc(channelJid).get();
+        const memberSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
         if (memberSnapshot.exists) {
           const role = memberSnapshot.data()?.role;
           return role === 'admin' || role === 'superadmin';
@@ -113,8 +140,11 @@ const createChannelContext = async (
       } catch (e) { }
       return false;
     },
+    isActiveChannelAdmin: async () => {
+        // Deriving from adapter if available
+        return false; // Stub
+    },
     members: async () => {
-      // @ts-ignore
       if (!jid || !channelInstance.tenantId) return [];
       try {
         const membersSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').get();
@@ -122,117 +152,85 @@ const createChannelContext = async (
       } catch (e) { return []; }
     },
     metadata: async () => {
-      // @ts-ignore - baileys type mismatch workaround
       if (!jid || !channelInstance?.groupMetadata) return null;
       return await channelInstance.groupMetadata(jid);
     },
     owner: async () => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupMetadata) return null;
       const meta = await channelInstance.groupMetadata(jid);
       return meta.owner || null;
     },
     name: async () => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupMetadata) return '';
       const meta = await channelInstance.groupMetadata(jid);
       return meta.subject || '';
     },
+    open: async () => {
+      if (!jid || !channelInstance?.groupSettingUpdate) return null;
+      return await channelInstance.groupSettingUpdate(jid, 'not_announcement');
+    },
+    close: async () => {
+      if (!jid || !channelInstance?.groupSettingUpdate) return null;
+      return await channelInstance.groupSettingUpdate(jid, 'announcement');
+    },
+    unlock: async () => {
+      if (!jid || !channelInstance?.groupSettingUpdate) return null;
+      return await channelInstance.groupSettingUpdate(jid, 'unlocked');
+    },
+    lock: async () => {
+      if (!jid || !channelInstance?.groupSettingUpdate) return null;
+      return await channelInstance.groupSettingUpdate(jid, 'locked');
+    },
     add: async (jids: string[]) => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupParticipantsUpdate) return null;
       return await channelInstance.groupParticipantsUpdate(jid, jids, 'add');
     },
     kick: async (jids: string[]) => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupParticipantsUpdate) return null;
       return await channelInstance.groupParticipantsUpdate(jid, jids, 'remove');
     },
     promote: async (jids: string[]) => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupParticipantsUpdate) return null;
       return await channelInstance.groupParticipantsUpdate(jid, jids, 'promote');
     },
     demote: async (jids: string[]) => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupParticipantsUpdate) return null;
       return await channelInstance.groupParticipantsUpdate(jid, jids, 'demote');
     },
     inviteCode: async () => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupInviteCode) return '';
-      const code = await channelInstance.groupInviteCode(jid);
-      return code || '';
+      return await channelInstance.groupInviteCode(jid) || '';
     },
     pendingMembers: async () => [],
     approvePendingMembers: async (jids: string[]) => null,
     rejectPendingMembers: async (jids: string[]) => null,
     updateDescription: async (desc: string) => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupUpdateDescription) return null;
       return await channelInstance.groupUpdateDescription(jid, desc);
     },
     updateSubject: async (subject: string) => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupUpdateSubject) return null;
       return await channelInstance.groupUpdateSubject(jid, subject);
     },
     joinApproval: async (mode: 'on' | 'off') => {
-      // @ts-ignore
       if (!jid || !channelInstance?.groupJoinApprovalMode) return null;
       return await channelInstance.groupJoinApprovalMode(jid, mode);
     },
-    membersCanAddMemberMode: async (mode: 'on' | 'off') => {
-      // @ts-ignore
+    membersCanAddMemberMode: async (mode: any) => {
       if (!jid || !channelInstance?.groupMemberAddMode) return null;
       const val = mode === 'on' ? 'all_member_add' : 'admin_add';
       return await channelInstance.groupMemberAddMode(jid, val);
     },
-    open: async () => {
-      // @ts-ignore
-      if (!jid || !channelInstance?.groupSettingUpdate) return null;
-      return await channelInstance.groupSettingUpdate(jid, 'not_announcement');
-    },
-    close: async () => {
-      // @ts-ignore
-      if (!jid || !channelInstance?.groupSettingUpdate) return null;
-      return await channelInstance.groupSettingUpdate(jid, 'announcement');
-    },
-    unlock: async () => {
-      // @ts-ignore
-      if (!jid || !channelInstance?.groupSettingUpdate) return null;
-      return await channelInstance.groupSettingUpdate(jid, 'unlocked');
-    },
-    lock: async () => {
-      // @ts-ignore
-      if (!jid || !channelInstance?.groupSettingUpdate) return null;
-      return await channelInstance.groupSettingUpdate(jid, 'locked');
-    },
     isOwner: async (userJid: string = senderId) => {
-      // @ts-ignore
       if (!jid || !channelInstance.tenantId || !channelInstance.groupMetadata) return false;
       const meta = await channelInstance.groupMetadata(jid);
       return meta.owner === userJid;
-    },
-    matchAdmin: async (userJid: string) => {
-      // Logic same as isAdmin for now
-      if (!jid || !channelInstance.tenantId) return false;
-      try {
-        const memberSnapshot = await db.collection('tenants').doc(channelInstance.tenantId).collection('groups').doc(jid).collection('members').doc(userJid).get();
-        if (memberSnapshot.exists) {
-          const role = memberSnapshot.data()?.role;
-          return role === 'admin' || role === 'superadmin';
-        }
-      } catch (e) { }
-      return false;
     }
   });
 
-  // Determine the prefix to use: Priority given to ChannelConfig
+  // Determine the prefix to use
   const prefixes = channelInstance.config?.prefix || [config.channel.prefix];
-  const messageBody = rawBaileysMessage.message?.conversation ||
-    rawBaileysMessage.message?.extendedTextMessage?.text || '';
-
+  
   let detectedPrefix = '';
   for (const p of prefixes) {
     if (messageBody.startsWith(p)) {
@@ -241,12 +239,12 @@ const createChannelContext = async (
     }
   }
 
-  // Handle Auto Read if configured
-  if (channelInstance.config?.autoRead && rawBaileysMessage.key?.remoteJid && channelInstance.readMessages) { // Fixed: safely access key and method
-    channelInstance.readMessages([rawBaileysMessage.key]).catch(() => { });
+  // Handle Auto Read if configured (WhatsApp only)
+  if (!isCommonMessage(messageSource) && channelInstance.config?.autoRead && messageSource.key?.remoteJid && channelInstance.readMessages) {
+    channelInstance.readMessages([messageSource.key]).catch(() => { });
   }
 
-  // Simulate ctx.used (command parsing)
+  // Command parsing
   const used = {
     command: detectedPrefix ?
       messageBody.split(' ')[0].toLowerCase().substring(detectedPrefix.length) :
@@ -256,27 +254,21 @@ const createChannelContext = async (
     text: messageBody,
   };
 
-  const getCommand = (commandName: string) =>
-    originalContext.channel?.cmd?.get(commandName);
-
   // Validate Owner
-  // Use tenantSettings.ownerNumber if available
   const ownerNumber = tenantSettings.ownerNumber || 'system';
-  const isOwner = tools.cmd.isOwner([ownerNumber], senderId, rawBaileysMessage.key?.id || ''); // Fixed: unsafe key access
+  const isOwner = tools.cmd.isOwner([ownerNumber], senderId, !isCommonMessage(messageSource) ? (messageSource.key?.id || '') : messageSource.id);
 
-  // Resolve null mismatch by properly calling the function
   const isAdmin = isGroup ? await group().isAdmin(senderId) : false;
 
   const ctx: MessageContext = {
     channel: channelInstance,
-    msg: rawBaileysMessage,
+    msg: messageSource as any, // Cast to any to satisfy the union type
     isGroup: () => isGroup,
-    // isPrivate: () => !isGroup, // removed as it wasn't in interface
-    id: groupId || remoteJid, // Use group ID or remote JID
+    id: groupId || remoteJid,
     sender: {
       jid: senderJid,
-      name: rawBaileysMessage.pushName || 'Unknown',
-      pushName: rawBaileysMessage.pushName,
+      name: pushName || 'Unknown',
+      pushName: pushName,
       isOwner,
       isAdmin
     },
@@ -291,7 +283,7 @@ const createChannelContext = async (
     prefix: used.prefix,
     args: used.args,
     body: messageBody,
-    tenant: tenantSettings, // 2026: Inject Tenant Settings directly
+    tenant: tenantSettings,
     isOwner,
     isAdmin,
     cooldown: {},
@@ -301,11 +293,15 @@ const createChannelContext = async (
       }
     },
     download: async () => {
-      const quotedMsg = rawBaileysMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      // Fixed: Implicit any indexing
+      if (isCommonMessage(messageSource)) {
+          // TODO: Implement download for CommonMessage (likely from URL or base64)
+          throw new Error('Media download not yet implemented for omnichannel platforms');
+      }
+
+      const quotedMsg = messageSource.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const messageToDownload = quotedMsg ?
         { [Object.keys(quotedMsg)[0]]: (quotedMsg as any)[Object.keys(quotedMsg)[0]] } :
-        rawBaileysMessage.message;
+        messageSource.message;
 
       if (!messageToDownload) throw new Error('No media found to download');
 

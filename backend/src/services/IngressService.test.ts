@@ -74,4 +74,40 @@ describe('IngressService', () => {
       message: 'hello'
     }));
   });
+
+  describe('handleCommonMessage', () => {
+    const commonMsg: any = {
+      id: 'msg-1',
+      platform: 'telegram',
+      from: 'user-789',
+      to: channelId,
+      content: { text: 'hi agent' },
+      timestamp: Date.now()
+    };
+
+    it('should route common message to AI Agent', async () => {
+      vi.mocked(agentService.getAgent).mockResolvedValue({
+        success: true,
+        data: { id: 'agent-1', name: 'AI Agent' } as any
+      });
+
+      await service.handleCommonMessage(tenantId, channelId, commonMsg, mockContext, fullPath);
+
+      expect(mockContext.unifiedAI.processMessage).toHaveBeenCalled();
+      expect(webhookService.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('should forward common message to webhook if AI disabled', async () => {
+      vi.mocked(agentService.getAgent).mockResolvedValue({
+        success: true,
+        data: { id: 'agent-1', name: 'AI Agent' } as any
+      });
+      vi.mocked(tenantConfigService.isFeatureEnabled).mockResolvedValue(false);
+
+      await service.handleCommonMessage(tenantId, channelId, commonMsg, mockContext, fullPath);
+
+      expect(mockContext.unifiedAI.processMessage).not.toHaveBeenCalled();
+      expect(webhookService.dispatch).toHaveBeenCalledWith(tenantId, 'message.received', commonMsg);
+    });
+  });
 });
