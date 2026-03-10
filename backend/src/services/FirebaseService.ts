@@ -244,6 +244,33 @@ export class FirebaseService {
       throw err;
     }
   }
+
+  /**
+   * Recursive deletion of a collection and all its documents.
+   * Useful for cleaning up auth subcollections.
+   */
+  public async deleteCollection(collectionPath: string, tenantId?: string): Promise<void> {
+    try {
+      const { path } = this.getCollectionInfo(collectionPath, tenantId);
+      const colRef = db.collection(path);
+      
+      // Get all documents in the collection
+      const snapshot = await colRef.get();
+      
+      // Delete each document
+      const batch = db.batch();
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      
+      await batch.commit();
+      logger.info(`Firestore collection deleted recursively: ${path}`);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Firestore deleteCollection error [${collectionPath}] (Tenant: ${tenantId}):`, err);
+      // We don't throw here to allow partial cleanup to continue, but we log it
+    }
+  }
 }
 
 export const firebaseService = FirebaseService.getInstance();

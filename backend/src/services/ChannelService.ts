@@ -387,7 +387,13 @@ export class ChannelService {
       } else {
         // 2b. Remove from Firestore
         await firebaseService.deleteDoc(this.getPath(agentId), channelId, tenantId);
-        logger.info(`Channel deleted: ${channelId} from tenant ${tenantId} under Agent ${agentId}`);
+        
+        // 2c. MASTERMIND Goodie: Cleanup Baileys Auth Credentials (Strict Integrity)
+        // Path matches useFirestoreAuthState pattern
+        const authPath = `agents/${agentId}/channels/${channelId}/auth`;
+        await firebaseService.deleteCollection(authPath, tenantId);
+        
+        logger.info(`Channel deleted: ${channelId} from tenant ${tenantId} under Agent ${agentId} (with auth cleanup)`);
       }
 
       return { success: true, data: undefined };
