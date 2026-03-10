@@ -1,21 +1,29 @@
-import { db } from './src/lib/firebase.js';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
 async function testFirebase() {
     try {
-        console.log('Fetching tenants...');
-        const tenants = await db.collection('tenants').get();
-        console.log(`Found ${tenants.size} tenants.`);
+        const saPath = resolve('w:/CodeDeX/DeXMart/backend/service-account.json');
+        const sa = JSON.parse(readFileSync(saPath, 'utf-8'));
 
-        for (const tenant of tenants.docs) {
-            console.log(`Tenant: ${tenant.id} (${tenant.data().name})`);
-            const bots = await db.collection('tenants').doc(tenant.id).collection('bots').get();
-            console.log(` - Bots: ${bots.size}`);
-            for (const bot of bots.docs) {
-                console.log(`   - Bot: ${bot.id} (${bot.data().name}) [Status: ${bot.data().status}]`);
-            }
+        console.log(`Testing connection to project: ${sa.project_id}`);
+
+        if (getApps().length === 0) {
+            initializeApp({
+                credential: cert(sa)
+            });
         }
-    } catch (e) {
-        console.error('Firebase Error:', e);
+
+        const db = getFirestore();
+        // Just try to list collections or get a dummy doc to verify auth
+        const collections = await db.listCollections();
+        console.log(`Success! Found ${collections.length} collections.`);
+        process.exit(0);
+    } catch (error) {
+        console.error('Firebase Check Failed:', error.message);
+        process.exit(1);
     }
 }
 
