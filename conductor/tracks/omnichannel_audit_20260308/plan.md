@@ -10,9 +10,9 @@
 - [x] **WhatsApp Pairing Code**: Update `ChannelConnectionForm` to allow choosing between QR and Pairing Code for WhatsApp. [8c4181e]
 
 ## Phase 3: AI Context Decoupling
-- [ ] **Platform-Agnostic Context**: Update `createBotContext.ts` to handle `CommonMessage` instead of just Baileys `proto`.
-- [ ] **Ingress Standardization**: Migrate all remaining logic in `IngressService.ts` to `handleCommonMessage`.
+- [x] **Platform-Agnostic Context**: Update `createBotContext.ts` to handle `CommonMessage` instead of just Baileys `proto`. [28d1d13]
+- [x] **Ingress Standardization**: Migrate all remaining logic in `IngressService.ts` to `handleCommonMessage`. [28d1d13]
 
 ## Phase 4: Frontend Surface Enhancement
-- [ ] **Channel Settings Dialog**: Create a settings modal accessible from "Manage connection" to configure AI Personality and other channel-specific flags.
-- [ ] **Agent Assignment UI**: Allow moving a channel from one Agent to another in the settings.
+- [x] **Channel Settings Dialog**: Create a settings modal accessible from "Manage connection" to configure AI Personality and other channel-specific flags. [28d1d13]
+- [x] **Agent Assignment UI**: Allow moving a channel from one Agent to another in the settings. [28d1d13]
