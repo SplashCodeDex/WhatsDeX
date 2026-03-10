@@ -263,6 +263,25 @@ const createChannelContext = async (
 
   const isAdmin = isGroup ? await group().isAdmin(senderId) : false;
 
+  // Extract quoted message if available
+  let quotedContext: any = undefined;
+  if (!isCommonMessage(messageSource)) {
+    const quotedMsg = messageSource.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    if (quotedMsg) {
+      quotedContext = {
+        content: quotedMsg.conversation || quotedMsg.extendedTextMessage?.text || quotedMsg.imageMessage?.caption || '',
+        contentType: getContentType(quotedMsg) || Object.keys(quotedMsg)[0],
+        senderJid: messageSource.message?.extendedTextMessage?.contextInfo?.participant || '',
+        media: quotedMsg.imageMessage || quotedMsg.videoMessage || quotedMsg.audioMessage || quotedMsg.stickerMessage || quotedMsg.documentMessage,
+        key: {
+          id: messageSource.message?.extendedTextMessage?.contextInfo?.stanzaId,
+          remoteJid: remoteJid,
+          participant: messageSource.message?.extendedTextMessage?.contextInfo?.participant
+        }
+      };
+    }
+  }
+
   const ctx: MessageContext = {
     channel: channelInstance,
     core: channelInstance, // Legacy support
@@ -292,6 +311,24 @@ const createChannelContext = async (
     isOwner,
     isAdmin,
     cooldown: {},
+    getContentType: () => {
+      if (isCommonMessage(messageSource)) {
+        return messageSource.content.attachments?.[0]?.type || 'text';
+      }
+      return getContentType(messageSource.message) || '';
+    },
+    getBody: () => messageBody,
+    getMedia: () => {
+      if (isCommonMessage(messageSource)) {
+        return messageSource.content.attachments?.[0];
+      }
+      const type = getContentType(messageSource.message);
+      return type ? (messageSource.message as any)[type] : undefined;
+    },
+    getPlatform: () => isCommonMessage(messageSource) ? messageSource.platform : 'whatsapp',
+    getSenderJid: () => senderJid,
+    getQuoted: () => quotedContext as any,
+    isFromMe: () => !isCommonMessage(messageSource) ? !!messageSource.key?.fromMe : false,
     sendMessage: async (jid: string, content: any, options: any = {}) => {
       if (channelInstance?.sendMessage) {
         return await channelInstance.sendMessage(jid, content, options);

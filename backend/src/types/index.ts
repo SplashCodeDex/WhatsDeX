@@ -137,20 +137,21 @@ export interface MessageContext {
         id: string;
     };
     msg: (proto.IWebMessageInfo & {
-        contentType?: string;
-        media?: any;
-        body?: string;
-        content?: string;
         key: proto.IMessageKey;
         message?: proto.IMessage | null;
     }) | (import('./omnichannel.js').CommonMessage & {
-        contentType?: string;
-        media?: any;
-        body?: string;
-        content?: string;
         key?: proto.IMessageKey;
         message?: proto.IMessage | null;
     });
+    
+    // Platform-Agnostic Safe Accessors
+    getContentType: () => string;
+    getBody: () => string;
+    getMedia: () => any;
+    getPlatform: () => import('./omnichannel.js').Platform;
+    getSenderJid: () => string;
+    getQuoted: () => any;
+    isFromMe: () => boolean;
     quoted?: {
         content: string;
         contentType: string;

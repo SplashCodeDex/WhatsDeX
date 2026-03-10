@@ -1,7 +1,7 @@
 # Implementation Plan: Audit Remediation 2026
 
 ## Phase 1: Omnichannel Type Safety & Backend Refactoring
-- [ ] Task: Create type guards `isCommonMessage` and `isBaileysMessage` in `backend/src/utils/typeGuards.ts`.
+- [~] Task: Create type guards `isCommonMessage` and `isBaileysMessage` in `backend/src/utils/typeGuards.ts`.
 - [ ] Task: Add safe content accessors (`getBody`, `getMedia`, `getContentType`) to the `MessageContext` interface in `backend/src/types/index.ts`.
 - [ ] Task: Implement these accessors in the `MessageContext` factory/constructor.
 - [ ] Task: Refactor `backend/src/commands/ai-misc/editimage.ts` to use the new `MessageContext` accessors.

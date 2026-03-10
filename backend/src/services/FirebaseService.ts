@@ -79,16 +79,37 @@ export class FirebaseService {
   }
 
   /**
+   * Validate a Firestore path to ensure it doesn't contain illegal segments (empty, undefined, null)
+   * which would cause the SDK to hang or throw.
+   */
+  private validatePath(path: string): void {
+    if (!path) {
+      throw new Error('Firestore path is required');
+    }
+
+    const segments = path.split('/');
+    for (const segment of segments) {
+      if (!segment || segment === 'undefined' || segment === 'null' || segment.trim() === '') {
+        throw new Error(`Invalid Firestore path segment detected in "${path}": "${segment}"`);
+      }
+    }
+  }
+
+  /**
    * Resolve a collection name to its full path and schema
    */
   private getCollectionInfo(collection: string, tenantId?: string) {
     let path: string;
     let schemaKey: CollectionKey;
 
-    if (tenantId) {
+    if (typeof tenantId === 'string') {
+      this.validatePath(tenantId);
       // Special handling for nested subcollections
       if (collection.includes('/')) {
         const parts = collection.split('/');
+        
+        // Ensure all parts are valid before interpolation
+        parts.forEach(p => this.validatePath(p));
 
         // Pattern: agents/{agentId}/channels/{channelId}/auth
         if (parts[0] === 'agents' && parts[2] === 'channels' && parts[4] === 'auth') {
@@ -109,14 +130,17 @@ export class FirebaseService {
           path = `tenants/${tenantId}/slots`;
           schemaKey = `tenants/{tenantId}/slots` as CollectionKey;
         } else {
+          this.validatePath(collection);
           path = `tenants/${tenantId}/${collection}`;
           schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
         }
       } else {
+        this.validatePath(collection);
         path = `tenants/${tenantId}/${collection}`;
         schemaKey = `tenants/{tenantId}/${collection}` as CollectionKey;
       }
     } else {
+      this.validatePath(collection);
       path = collection;
       schemaKey = collection as CollectionKey;
     }
@@ -138,6 +162,7 @@ export class FirebaseService {
     tenantId?: string
   ): Promise<FirestoreSchema[K] | null> {
     try {
+      this.validatePath(docId);
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
       const docRef = db.collection(path).doc(docId);
       const doc = await docRef.get();
@@ -167,6 +192,7 @@ export class FirebaseService {
     merge = true
   ): Promise<void> {
     try {
+      this.validatePath(docId);
       const { path, schema } = this.getCollectionInfo(collection, tenantId);
 
       // Validation (Zero-Trust)
@@ -235,6 +261,7 @@ export class FirebaseService {
     tenantId?: string
   ): Promise<void> {
     try {
+      this.validatePath(docId);
       const { path } = this.getCollectionInfo(collection, tenantId);
       const docRef = db.collection(path).doc(docId);
       await docRef.delete();

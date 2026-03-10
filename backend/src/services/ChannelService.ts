@@ -332,12 +332,12 @@ export class ChannelService {
         await adapter.connect();
         channelManager.registerAdapter(adapter);
       } else if (channel.type === 'irc') {
-        const { IRCAdapter } = await import('./channels/irc/IRCAdapter.ts' as any);
+        const { IRCAdapter } = await import('./channels/irc/IRCAdapter.js');
         const adapter = new IRCAdapter(tenantId, channelId, channel.credentials || {});
         await adapter.connect();
         channelManager.registerAdapter(adapter);
       } else if (channel.type === 'googlechat') {
-        const { GoogleChatAdapter } = await import('./channels/googlechat/GoogleChatAdapter.ts' as any);
+        const { GoogleChatAdapter } = await import('./channels/googlechat/GoogleChatAdapter.js');
         const adapter = new GoogleChatAdapter(tenantId, channelId, channel.credentials || {});
         await adapter.connect();
         channelManager.registerAdapter(adapter);

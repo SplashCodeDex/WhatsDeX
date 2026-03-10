@@ -45,9 +45,9 @@ const mainMiddleware = (channel: ActiveChannel, context: GlobalContext) => {
         await brain.processMessage(ctx);
 
         // Log incoming command
-        if (isGroup && !ctx.msg.key?.fromMe) {
+        if (isGroup && !ctx.isFromMe()) {
             context.logger.info(`Incoming command: ${ctx.used.command} from group: ${groupId} by: ${senderId}`);
-        } else if (isPrivate && !ctx.msg.key?.fromMe) {
+        } else if (isPrivate && !ctx.isFromMe()) {
             context.logger.info(`Incoming command: ${ctx.used.command} from: ${senderId}`);
         }
 

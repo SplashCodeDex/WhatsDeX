@@ -303,6 +303,16 @@ export class CommandSystem {
       quoted: quotedContext as any,
       msg: messageData as any,
       channel: bot,
+      getContentType: () => getContentType(messageData.message) || '',
+      getBody: () => text,
+      getMedia: () => {
+        const type = getContentType(messageData.message);
+        return type ? (messageData.message as any)[type] : undefined;
+      },
+      getPlatform: () => 'whatsapp', // Baileys specific createContext
+      getSenderJid: () => jid,
+      getQuoted: () => quotedContext as any,
+      isFromMe: () => !!messageData.key?.fromMe,
       reply: async (msg: string | { text?: string;[key: string]: unknown }) => {
         const content = typeof msg === 'string' ? { text: msg } : msg;
         return await bot.sendMessage(jid, content, { quoted: messageData });

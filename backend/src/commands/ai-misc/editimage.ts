@@ -18,8 +18,8 @@ export default {
       );
 
     const [checkMedia, checkQuotedMedia] = await Promise.all([
-      tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
-      tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, 'image'),
+      tools.cmd.checkMedia(ctx.getContentType(), 'image'),
+      tools.cmd.checkQuotedMedia(ctx.getQuoted()?.contentType, 'image'),
     ]);
 
     if (!checkMedia && !checkQuotedMedia)
@@ -28,7 +28,9 @@ export default {
       );
 
     try {
-      const buffer = (await ctx.msg.media.toBuffer()) || (await ctx.quoted?.media.toBuffer());
+      const media = ctx.getMedia();
+      const quotedMedia = ctx.getQuoted()?.media;
+      const buffer = (await media?.toBuffer?.()) || (await quotedMedia?.toBuffer?.());
       const uploadUrl = await tools.api.uploadImage(buffer);
       const result = tools.api.createUrl('zell', '/ai/editimg', {
         imageUrl: uploadUrl,
