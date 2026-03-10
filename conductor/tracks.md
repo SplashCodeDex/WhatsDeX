@@ -9,12 +9,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 ### [ ] Track: Agentic Performance & Intelligence Optimization (Phase 5)
 *Link: [./conductor/tracks/agentic_optimization_20260310/](./tracks/agentic_optimization_20260310/)*
 
-### [x] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
-*Link: [./tracks/fix_connection_flaws_20260310/](./tracks/fix_connection_flaws_20260310/)*
-
 ---
 
 ## Archived Tracks
+
+### [x] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
+*Link: [./archive/fix_connection_flaws_20260310/](./archive/fix_connection_flaws_20260310/)*
 
 ### [x] Track: Omnichannel Orphan Logic Audit & Wiring
 *Link: [./conductor/archive/omnichannel_audit_20260308/](./archive/omnichannel_audit_20260308/)*
