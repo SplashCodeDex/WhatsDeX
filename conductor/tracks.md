@@ -73,7 +73,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 ### [x] Track: System Stabilization (Initial)
 *Link: [./conductor/archive/stabilization_20260108/](./archive/stabilization_20260108/)*
 
----
-
-- [x] **Track: Audit Remediation 2026**
-*Link: [./tracks/audit_remediation_20260310/](./tracks/audit_remediation_20260310/)*
+### [x] Track: Audit Remediation 2026
+*Link: [./archive/audit_remediation_20260310/](./archive/audit_remediation_20260310/)*
