@@ -142,6 +142,10 @@ class AuthSystem extends EventEmitter {
         }
 
         if (connection === 'close') {
+          if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+          }
           this.authState = 'disconnected';
           this.stats.activeSessions = 0;
 
@@ -189,6 +193,18 @@ class AuthSystem extends EventEmitter {
           this.stats.successes++;
           this.emit('connected');
           this.emit('status', 'connected');
+
+          // Scenario 15: Heartbeat to prevent sleep/battery kill
+          if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+          this.heartbeatInterval = setInterval(async () => {
+            try {
+              if (this.client && this.authState === 'connected') {
+                await this.client.sendPresenceUpdate('available');
+              }
+            } catch (e) {
+              logger.warn(`[AuthSystem] Heartbeat failed for ${this.channelId}`, e);
+            }
+          }, 30 * 1000); // 30 seconds
         }
       });
 
@@ -210,6 +226,10 @@ class AuthSystem extends EventEmitter {
     if (this.connectTimeout) {
       clearTimeout(this.connectTimeout);
       this.connectTimeout = null;
+    }
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
     if (this.client) {
       try {

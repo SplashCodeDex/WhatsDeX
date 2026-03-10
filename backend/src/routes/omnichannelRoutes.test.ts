@@ -61,4 +61,34 @@ describe('Omnichannel Routes', () => {
       expect(res.body.error).toContain('Channel not active');
     });
   });
+
+  describe('GET /gateway/health', () => {
+    it('should return gateway health status', async () => {
+      const { OpenClawGateway } = await import('../services/openClawGateway.js');
+      vi.spyOn(OpenClawGateway, 'getInstance').mockReturnValue({
+        getHealth: vi.fn().mockResolvedValue({ status: 'healthy', version: '1.0.0' })
+      } as any);
+
+      const res = await request(app).get('/gateway/health');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toEqual({ status: 'healthy', version: '1.0.0' });
+    });
+  });
+
+  describe('GET /status', () => {
+    it('should return gateway status', async () => {
+      const { OpenClawGateway } = await import('../services/openClawGateway.js');
+      vi.spyOn(OpenClawGateway, 'getInstance').mockReturnValue({
+        isInitialized: vi.fn().mockReturnValue(true)
+      } as any);
+
+      const res = await request(app).get('/status');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.gatewayInitialized).toBe(true);
+    });
+  });
 });

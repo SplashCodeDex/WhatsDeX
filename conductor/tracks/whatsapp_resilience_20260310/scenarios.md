@@ -19,8 +19,8 @@ This registry tracks the identification and resolution of critical "Conflict Zon
 | 11 | Empty `auth_info` in Firestore but status 'connected' | Detect inconsistency, trigger re-authentication | [x] |
 | 12 | Database write failure during 'QR_RECEIVED' event | Re-attempt write once, then reset connection | [x] |
 | 13 | Baileys update available (minor version mismatch) | Log warning, ensure backward compatibility | [x] |
-| 14 | Proxied connection failure (if proxy configured) | Fallback to direct or mark as error | [ ] |
-| 15 | Battery Optimization/Sleep during sync | Keepalive heartbeats maintain socket integrity | [ ] |
+| 14 | Proxied connection failure (if proxy configured) | Fallback to direct or mark as error | [x] |
+| 15 | Battery Optimization/Sleep during sync | Keepalive heartbeats maintain socket integrity | [x] |
 
 ## Wave 2: Concurrency & Load (Scenarios 16-30)
 

@@ -7,10 +7,10 @@
 - [x] **Task: Build Resilience Mock Harness**
     - [x] Create `backend/src/utils/resilienceHarness.ts` to simulate Baileys socket failures.
 
-- [~] **Task: Connection Stability Tests (1-15)**
+- [x] **Task: Connection Stability Tests (1-15)**
     - [x] Implement tests for socket timeouts, credential corruption, and network jitters.
     - [x] **Fixes:** Implement self-healing logic for detected corruption.
-    - [~] Mark Scenarios 1-15 as Resolved in `scenarios.md`.
+    - [x] Mark Scenarios 1-15 as Resolved in `scenarios.md`.
 - [ ] **Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)**
 
 ## Phase 2: Concurrency & Gating
