@@ -6,12 +6,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-### [x] Track: Omnichannel Orphan Logic Audit & Wiring
-*Link: [./conductor/tracks/omnichannel_audit_20260308/](./tracks/omnichannel_audit_20260308/)*
-
 ---
 
 ## Archived Tracks
+
+### [x] Track: Omnichannel Orphan Logic Audit & Wiring
+*Link: [./conductor/archive/omnichannel_audit_20260308/](./archive/omnichannel_audit_20260308/)*
 
 ### [x] Track: Connection Management Gaps (Audit Fix Phase 1)
 *Link: [./conductor/archive/conn_mgmt_gaps_20260308/](./conn_mgmt_gaps_20260308/)*
@@ -32,34 +32,34 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link: [./conductor/archive/skill_orchestration_20260228/](./skill_orchestration_20260228/)*
 
 ### [x] Track: System Stabilization & Core Wiring (Auth -> Dashboard)
-*Link: [./conductor/archive/stabilization_20260115/](./conductor/archive/stabilization_20260115/)*
+*Link: [./conductor/archive/stabilization_20260115/](./archive/stabilization_20260115/)*
 
 ### [x] Track: Implement plans and billing with Stripe
-*Link: [./conductor/archive/plans_billing_20260115/](./conductor/archive/plans_billing_20260115/)*
+*Link: [./conductor/archive/plans_billing_20260115/](./archive/plans_billing_20260115/)*
 
 ### [x] Track: Omnichannel Dashboard Fusion
-*Link: [./conductor/archive/dashboard_fusion_20260217/](./conductor/archive/dashboard_fusion_20260217/)*
+*Link: [./conductor/archive/dashboard_fusion_20260217/](./archive/dashboard_fusion_20260217/)*
 
 ### [x] Track: Auth Flow Robustness & State Preservation
-*Link: [./conductor/archive/auth_robustness_20260219/](./conductor/archive/auth_robustness_20260219/)*
+*Link: [./conductor/archive/auth_robustness_20260219/](./archive/auth_robustness_20260219/)*
 
 ### [x] Track: Resolve Systemic Frontend Build Failures
-*Link: [./conductor/archive/frontend_build_fix_20260226/](./conductor/archive/frontend_build_fix_20260226/)*
+*Link: [./conductor/archive/frontend_build_fix_20260226/](./archive/frontend_build_fix_20260226/)*
 
 ### [-] Track: Frontend SSR Optimization & Build Stabilization
-*Link: [./conductor/archive/frontend_ssr_optimization_20260228/](./conductor/archive/frontend_ssr_optimization_20260228/)*
+*Link: [./conductor/archive/frontend_ssr_optimization_20260228/](./archive/frontend_ssr_optimization_20260228/)*
 
 ### [x] Track: Foundation Cleanup
-*Link: [./conductor/archive/foundation_cleanup_20260115/](./conductor/archive/foundation_cleanup_20260115/)*
+*Link: [./conductor/archive/foundation_cleanup_20260115/](./archive/foundation_cleanup_20260115/)*
 
 ### [x] Track: Frontend Integration
-*Link: [./conductor/archive/frontend_integration_20260122/](./conductor/archive/frontend_integration_20260122/)*
+*Link: [./conductor/archive/frontend_integration_20260122/](./archive/frontend_integration_20260122/)*
 
 ### [x] Track: Non-Wired Features
-*Link: [./conductor/archive/non_wired_features_20260123/](./conductor/archive/non_wired_features_20260123/)*
+*Link: [./conductor/archive/non_wired_features_20260123/](./archive/non_wired_features_20260123/)*
 
 ### [x] Track: Project Refactor
-*Link: [./conductor/archive/refactor_20260108/](./conductor/archive/refactor_20260108/)*
+*Link: [./conductor/archive/refactor_20260108/](./archive/refactor_20260108/)*
 
 ### [x] Track: System Stabilization (Initial)
-*Link: [./conductor/archive/stabilization_20260108/](./conductor/archive/stabilization_20260108/)*
+*Link: [./conductor/archive/stabilization_20260108/](./archive/stabilization_20260108/)*
