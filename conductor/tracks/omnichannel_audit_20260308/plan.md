@@ -1,7 +1,7 @@
 # Implementation Plan: Omnichannel Wiring & Surfacing
 
 ## Phase 1: Hierarchy & Configuration Alignment
-- [ ] **Unified Config Paths**: Update `TenantConfigService.ts` to support the `agents/A/channels/C` path for all omnichannel settings.
+- [x] **Unified Config Paths**: Update `TenantConfigService.ts` to support the `agents/A/channels/C` path for all omnichannel settings. [250b6e2]
 - [ ] **Dynamic Tool Bridging**: Refactor `DeXMartToolBridge` to dynamically load OpenClaw tools based on channel configuration rather than a hardcoded list.
 
 ## Phase 2: Connection Management Wiring
