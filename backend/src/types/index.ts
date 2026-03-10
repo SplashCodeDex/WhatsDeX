@@ -71,6 +71,7 @@ export interface ActiveChannel extends Partial<WASocket> {
     // Middleware
     use: (middleware: Middleware) => void;
     executeMiddleware: (ctx: MessageContext, next: () => Promise<void>) => Promise<void>;
+    getSocket: () => any;
 }
 
 export type Middleware = (ctx: MessageContext, next: () => Promise<void>) => any;
@@ -91,6 +92,7 @@ export interface GroupFunctions {
     matchAdmin: (userJid: string) => Promise<boolean>;
     members: () => Promise<string[]>;
     isActiveChannelAdmin: () => Promise<boolean>;
+    isChannelAdmin: () => Promise<boolean>;
     metadata: () => Promise<any>;
     owner: () => Promise<string | null>;
     name: () => Promise<string>;
@@ -139,13 +141,23 @@ export interface MessageContext {
         media?: any;
         body?: string;
         content?: string;
-    }) | import('./omnichannel.js').CommonMessage;
+        key: proto.IMessageKey;
+        message?: proto.IMessage | null;
+    }) | (import('./omnichannel.js').CommonMessage & {
+        contentType?: string;
+        media?: any;
+        body?: string;
+        content?: string;
+        key?: proto.IMessageKey;
+        message?: proto.IMessage | null;
+    });
     quoted?: {
         content: string;
         contentType: string;
         senderJid: string;
         media: any;
         key: any;
+        msg?: any;
     };
     message?: any;
     body: string;
@@ -166,6 +178,8 @@ export interface MessageContext {
     };
     cooldown: any;
     core?: any;
+    bot?: any;
+    botNumber?: string;
 
     // Tenant & Permissions
     tenant: import('./tenantConfig.js').TenantSettings;

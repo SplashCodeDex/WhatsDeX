@@ -31,6 +31,7 @@ interface ChannelCardProps {
     icon: React.ElementType;
     color: string;
     lastProgress?: Channel['lastProgress'];
+    assignedAgentId?: string | null;
 }
 
 const TYPE_CONFIG = {
@@ -44,7 +45,7 @@ const TYPE_CONFIG = {
     googlechat: { icon: MessageSquare, color: 'bg-yellow-500' }
 };
 
-function ChannelCard({ name, status, account, icon: Icon, color, lastProgress }: ChannelCardProps) {
+function ChannelCard({ id, name, status, account, icon: Icon, color, lastProgress, assignedAgentId }: ChannelCardProps) {
     const isConnecting = status === 'connecting' || status === 'initializing' || status === 'qr_pending';
 
     return (
@@ -70,6 +71,8 @@ function ChannelCard({ name, status, account, icon: Icon, color, lastProgress }:
             <CardContent className="pt-4">
                 {isConnecting && lastProgress ? (
                     <ChannelProgressStepper
+                        channelId={id}
+                        agentId={assignedAgentId || ''}
                         currentStep={lastProgress.step}
                         status={lastProgress.status}
                     />

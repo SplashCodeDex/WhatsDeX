@@ -32,6 +32,8 @@ import AnalyticsService from '../services/analytics.js';
 import { socketService } from '../services/socketService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
+import { csrfProtection, securityHeaders } from '../middleware/httpSecurity.js';
+
 
 export class MultiTenantApp {
   private app: express.Application;
@@ -109,7 +111,17 @@ export class MultiTenantApp {
           imgSrc: ["'self'", "data:", "https:"],
         },
       },
+      frameguard: { action: 'deny' },
+      xssFilter: true,
+      noSniff: true,
     }));
+
+    // Global Security Headers (Custom fallback)
+    this.app.use(securityHeaders);
+
+    // CSRF Protection (Mandatory for Cookie-based sessions)
+    this.app.use(csrfProtection);
+
 
     // CORS (2026 Strict Mode)
     this.app.use(cors({

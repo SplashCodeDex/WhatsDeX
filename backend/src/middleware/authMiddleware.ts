@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import logger from '../utils/logger.js';
 import { ConfigService } from '../services/ConfigService.js';
 import { cacheService } from '../services/cache.js';
+import { parseDuration } from '../utils/time.js';
 
 interface UserPayload {
     userId: string;
@@ -84,6 +85,41 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         try {
             const decoded = jwt.verify(token, secret) as UserPayload;
             req.user = decoded;
+
+            // --- PILOT: Sliding Window Implementation ---
+            // If the token is close to expiry (e.g., < 30% left), we reissue the cookie to extend it.
+            // This only applies to COOKIE based auth.
+            if (source === 'cookie' && decoded.exp && decoded.iat) {
+                const totalLifetime = decoded.exp - decoded.iat;
+                const remaining = decoded.exp - Math.floor(Date.now() / 1000);
+                const threshold = totalLifetime * 0.3; // 30% threshold
+
+                if (remaining < threshold) {
+                    const jwtExpires = config.get('auth.jwtExpires') || '24h';
+                    const jwtLifetimeMs = parseDuration(jwtExpires);
+
+                    const newToken = jwt.sign(
+                        {
+                            userId: decoded.userId,
+                            tenantId: decoded.tenantId,
+                            role: decoded.role,
+                            email: decoded.email
+                        },
+                        secret,
+                        { expiresIn: jwtExpires }
+                    );
+
+                    res.cookie('token', newToken, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'strict',
+                        maxAge: jwtLifetimeMs
+                    });
+
+                    logger.debug('Auth Middleware: Session sliding window extended', { userId: decoded.userId });
+                }
+            }
+
             return next();
         } catch (jwtError: unknown) {
             const name = jwtError instanceof Error ? jwtError.name : 'UnknownError';

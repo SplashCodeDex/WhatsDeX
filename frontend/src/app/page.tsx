@@ -1,8 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import { SplineRobot } from '@/components/landing/SplineRobot';
+
+const SplineRobot = dynamic(() => import('@/components/landing/SplineRobot').then(mod => mod.SplineRobot), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 w-full h-full bg-background" />
+});
 
 export default function HomePage(): React.JSX.Element {
     return (

@@ -16,6 +16,8 @@ interface AuthStoreState {
     isLoading: boolean;
     isAuthenticated: boolean;
     error: string | null;
+    lastFetchAttempt: number | null;
+    retryCount: number;
 }
 
 interface AuthStoreActions {
@@ -23,6 +25,9 @@ interface AuthStoreActions {
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
     clearError: () => void;
+    incrementRetryCount: () => void;
+    resetRetryCount: () => void;
+    setLastFetchAttempt: (time: number) => void;
     reset: () => void;
 }
 
@@ -33,6 +38,8 @@ const initialState: AuthStoreState = {
     isLoading: false,
     isAuthenticated: false,
     error: null,
+    lastFetchAttempt: null,
+    retryCount: 0,
 };
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -50,6 +57,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
     setError: (error) => set({ error }),
 
     clearError: () => set({ error: null }),
+
+    incrementRetryCount: () => set((state) => ({ retryCount: state.retryCount + 1 })),
+
+    resetRetryCount: () => set({ retryCount: 0 }),
+
+    setLastFetchAttempt: (lastFetchAttempt) => set({ lastFetchAttempt }),
 
     reset: () => set(initialState),
 }));

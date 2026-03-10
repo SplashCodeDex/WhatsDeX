@@ -34,6 +34,8 @@ export class JobQueueService {
       notification: { concurrency: 5, priority: 5 },
       analytics: { concurrency: 1, priority: 3 },
       cleanup: { concurrency: 1, priority: 1 },
+      'whatsapp-outbound': { concurrency: 1, priority: 10 },
+      'group-sync': { concurrency: 2, priority: 1 }, // Default low, but individual jobs can override priority
     };
 
     this.redisOptions = {

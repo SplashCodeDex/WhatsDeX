@@ -7,6 +7,7 @@
 
 import { GroupMetadata } from 'baileys';
 import { ActiveChannel as Channel, GroupFunctions } from '../types/index.js';
+import { Timestamp } from 'firebase-admin/firestore';
 import logger from '../utils/logger.js';
 
 export class GroupService {
@@ -19,6 +20,7 @@ export class GroupService {
             isAdmin: async (targetJid = senderJid) => this.isAdmin(channel, groupJid, targetJid),
             matchAdmin: async (targetId: string) => this.matchAdmin(channel, groupJid, targetId),
             members: async () => this.getMembers(channel, groupJid),
+            isActiveChannelAdmin: async () => this.isChannelAdmin(channel, groupJid),
             isChannelAdmin: async () => this.isChannelAdmin(channel, groupJid),
             metadata: async () => this.getMetadata(channel, groupJid),
             owner: async () => this.getOwner(channel, groupJid),
@@ -240,7 +242,49 @@ export class GroupService {
         }
     }
 
-    // --- Persistence & Sync ---
+    /**
+     * Delta-Sync: Syncs group metadata only if it's stale or missing.
+     * @param channel The active WhatsApp channel
+     * @param groupJids List of JIDs to check
+     * @param options Sync options (force, priority)
+     */
+    async syncDelta(channel: Channel, groupJids: string[], options: { force?: boolean } = {}): Promise<void> {
+        try {
+            const { databaseService } = channel.context;
+            if (!databaseService) return;
+
+            logger.info(`[GroupService] Starting Delta-Sync for ${groupJids?.length || 'all'} groups on ${channel.channelId}`);
+
+            const jidsToSync = groupJids && groupJids.length > 0
+                ? groupJids
+                : (channel.getSocket()?.store?.chats?.all() || [])
+                    .filter((c: any) => c.id.endsWith('@g.us'))
+                    .map((c: any) => c.id);
+
+            for (const jid of jidsToSync) {
+                // 1. Check if we already have a recent sync
+                const existing = await databaseService.getGroup(channel.tenantId, jid);
+
+                if (!options.force && existing) {
+                    const lastSynced = existing.syncedAt instanceof Timestamp
+                        ? existing.syncedAt.toDate()
+                        : (existing.syncedAt ? new Date(existing.syncedAt as any) : new Date(0));
+                    const now = new Date();
+                    const diffMinutes = (now.getTime() - lastSynced.getTime()) / (1000 * 60);
+
+                    // If synced within the last 4 hours, skip
+                    if (diffMinutes < 240) {
+                        logger.debug(`[GroupService] Skipping sync for ${jid} - last sync was ${Math.round(diffMinutes)}m ago`);
+                        continue;
+                    }
+                }
+
+                await this.syncGroup(channel, jid);
+            }
+        } catch (error) {
+            logger.error(`[GroupService] Delta-Sync failed for ${channel.channelId}`, error);
+        }
+    }
 
     /**
      * Syncs group metadata from Baileys to Firestore

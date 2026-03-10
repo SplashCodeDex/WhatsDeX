@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import { MiddlewareSystem } from '@/services/middlewareSystem.js';
 import { Channel } from '../../../types/contracts.js';
 import { ActiveChannel, MessageContext, Middleware } from '../../../types/index.js';
+import { jobQueueService } from '@/services/jobQueue.js';
 
 // Import from openclaw workspace package
 import {
@@ -34,6 +35,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public config: any = {}; // Holds channel settings like selfMode, alwaysOnline
   public channelId: string; // Map instanceId to channelId for index.ts Channel type
   public context: any; // Injected GlobalContext
+  public status: string = 'disconnected';
   private presenceInterval: NodeJS.Timeout | null = null;
 
   constructor(public tenantId: string, channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
@@ -51,6 +53,39 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     }
 
     this.authSystem = new AuthSystem({ channel: {} }, tenantId, channelId, collectionOrPath);
+  }
+
+  /**
+   * Triggers a Mastermind Delta-Sync for groups.
+   * This queues a background job with priority for active chats.
+   */
+  private async triggerGroupSync() {
+    if (!this.socket) return;
+
+    logger.info(`[WhatsappAdapter] Triggering Group Sync for ${this.channelId}`);
+
+    // 1. Get chats to identify "hot" groups
+    const chats = this.socket.store?.chats?.all() || [];
+    const groupJids = chats
+      .filter((c: any) => c.id.endsWith('@g.us'))
+      .map((c: any) => c.id);
+
+    // 2. Queue Priority Job for these groups
+    if (groupJids.length > 0) {
+      await (jobQueueService as any).addJob('group-sync', 'sync-priority', {
+        tenantId: this.tenantId,
+        channelId: this.channelId,
+        groupJids,
+        type: 'priority'
+      }, { priority: 1 });
+    }
+
+    // 3. Queue Cold Sync for all other potential groups (background)
+    await (jobQueueService as any).addJob('group-sync', 'sync-cold', {
+      tenantId: this.tenantId,
+      channelId: this.channelId,
+      type: 'cold'
+    }, { priority: 10 });
   }
 
   // CHANNEL INTERFACE IMPLEMENTATION
@@ -97,28 +132,29 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     });
 
     // MASTERMIND Goodie: Forward AuthSystem status updates to ChannelService
-    this.authSystem.on('status', async (status) => {
+    this.authSystem.on('status', async (status: string) => {
+      this.status = status;
       try {
         const { channelService } = await import('@/services/ChannelService.js');
         let agentId = 'system_default';
         if (this.fullPath && this.fullPath.includes('/agents/')) {
           agentId = this.fullPath.split('/')[3];
         }
-        await channelService.updateStatus(this.tenantId, this.channelId, status, agentId);
-      } catch (err) {
+        await channelService.updateStatus(this.tenantId, this.channelId, status as any, agentId);
+      } catch (err: any) {
         logger.error(`Failed to forward status '${status}' for ${this.channelId}`, err);
       }
     });
 
     const connectResult = await this.authSystem.connect(forceNewSession);
     if (!connectResult.success) {
-      throw connectResult.error;
+      throw (connectResult as any).error;
     }
 
     this.socket = connectResult.data;
 
     // MASTERMIND Goodie: Bind EventHandler for Anti-Call and Group Sync
-    eventHandler.bind(this.socket);
+    eventHandler.bind(this.socket as any);
 
     // Sync any existing QR captured during connection establishment
     const existingQr = await this.authSystem.getQRCode();
@@ -148,6 +184,12 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
             }
           }, 5 * 60 * 1000); // 5 minutes
         }
+
+        // --- DELTA-SYNC TRIGGER ---
+        // Trigger non-blocking priority group sync after connection
+        this.triggerGroupSync().catch((err: any) =>
+          logger.error(`[WhatsappAdapter] Failed to trigger group sync for ${this.channelId}`, err)
+        );
 
         try {
           const { channelService } = await import('@/services/ChannelService.js');

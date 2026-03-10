@@ -30,6 +30,7 @@ describe('useCreateAgent', () => {
     const mockAgentData = {
         name: 'Test Agent',
         emoji: '🤖',
+        iconName: 'bot',
         systemPrompt: 'You are a test agent.',
         model: 'gemini-1.5-flash' as const,
     };

@@ -8,8 +8,8 @@ import { DeliberationService } from './deliberation.js';
 
 /**
  * Unified Context Builder
- * 
- * Creates a standard MessageContext from either a legacy Baileys message 
+ *
+ * Creates a standard MessageContext from either a legacy Baileys message
  * or a modern platform-agnostic CommonMessage.
  */
 const createChannelContext = async (
@@ -22,7 +22,7 @@ const createChannelContext = async (
 
   // Determine message type
   const isCommonMessage = (msg: any): msg is CommonMessage => 'platform' in msg;
-  
+
   let senderJid: string;
   let remoteJid: string;
   let isGroup: boolean;
@@ -42,9 +42,9 @@ const createChannelContext = async (
     senderJid = getSender(messageSource);
     remoteJid = messageSource.key?.remoteJid || '';
     isGroup = remoteJid.endsWith('@g.us');
-    groupId = getGroup(messageSource);
-    messageBody = messageSource.message?.conversation || 
-                  messageSource.message?.extendedTextMessage?.text || '';
+    groupId = getGroup(messageSource) || undefined;
+    messageBody = messageSource.message?.conversation ||
+      messageSource.message?.extendedTextMessage?.text || '';
     pushName = messageSource.pushName || null;
   }
 
@@ -68,12 +68,12 @@ const createChannelContext = async (
   // Unified Reply
   const reply = async (content: any) => {
     const messageContent = typeof content === 'string' ? { text: content } : content;
-    
+
     // If it's a running adapter in memory, use its sendMessage
     if (channelInstance?.sendMessage) {
-        return await channelInstance.sendMessage(remoteJid, messageContent, { quoted: !isCommonMessage(messageSource) ? messageSource : undefined });
+      return await channelInstance.sendMessage(remoteJid, messageContent, { quoted: !isCommonMessage(messageSource) ? messageSource : undefined });
     }
-    
+
     // Fallback: If no direct adapter, could use a global send message utility
     originalContext.logger.warn(`[createChannelContext] No direct adapter found for reply on ${channelInstance.channelId}`);
   };
@@ -101,8 +101,8 @@ const createChannelContext = async (
         setTimeout(() => channelInstance.sendPresenceUpdate?.('paused', remoteJid).catch(() => { }), delay);
       } catch (_) { /* ignore */ }
     } else if (isCommonMessage(messageSource) && messageSource.metadata?.simulateTyping) {
-        // Support metadata-driven simulation if provided by adapter
-        await messageSource.metadata.simulateTyping(text);
+      // Support metadata-driven simulation if provided by adapter
+      await messageSource.metadata.simulateTyping(text);
     }
   };
 
@@ -112,7 +112,7 @@ const createChannelContext = async (
         await channelInstance.sendPresenceUpdate(presence, jid);
       } catch (_) { /* ignore */ }
     } else if (isCommonMessage(messageSource) && messageSource.metadata?.sendPresenceUpdate) {
-        await messageSource.metadata.sendPresenceUpdate(presence, jid);
+      await messageSource.metadata.sendPresenceUpdate(presence, jid);
     }
   };
 
@@ -141,8 +141,11 @@ const createChannelContext = async (
       return false;
     },
     isActiveChannelAdmin: async () => {
-        // Deriving from adapter if available
-        return false; // Stub
+      // Deriving from adapter if available
+      return false; // Stub
+    },
+    isChannelAdmin: async () => {
+      return false; // Stub for now, can be linked to isActiveChannelAdmin
     },
     members: async () => {
       if (!jid || !channelInstance.tenantId) return [];
@@ -230,7 +233,7 @@ const createChannelContext = async (
 
   // Determine the prefix to use
   const prefixes = channelInstance.config?.prefix || [config.channel.prefix];
-  
+
   let detectedPrefix = '';
   for (const p of prefixes) {
     if (messageBody.startsWith(p)) {
@@ -262,9 +265,11 @@ const createChannelContext = async (
 
   const ctx: MessageContext = {
     channel: channelInstance,
+    core: channelInstance, // Legacy support
     msg: messageSource as any, // Cast to any to satisfy the union type
-    isGroup: () => isGroup,
+    message: !isCommonMessage(messageSource) ? messageSource.message : undefined,
     id: groupId || remoteJid,
+    isGroup: () => isGroup,
     sender: {
       jid: senderJid,
       name: pushName || 'Unknown',
@@ -294,8 +299,8 @@ const createChannelContext = async (
     },
     download: async () => {
       if (isCommonMessage(messageSource)) {
-          // TODO: Implement download for CommonMessage (likely from URL or base64)
-          throw new Error('Media download not yet implemented for omnichannel platforms');
+        // TODO: Implement download for CommonMessage (likely from URL or base64)
+        throw new Error('Media download not yet implemented for omnichannel platforms');
       }
 
       const quotedMsg = messageSource.message?.extendedTextMessage?.contextInfo?.quotedMessage;

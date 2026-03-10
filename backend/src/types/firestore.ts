@@ -133,6 +133,7 @@ export interface ChannelGroupDocument {
     [key: string]: unknown;
   };
   metadata?: Record<string, unknown>;
+  syncedAt?: Timestamp | Date;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

@@ -12,6 +12,8 @@ export interface ChannelAdapter {
    * Unique identifier for the channel type (e.g., 'whatsapp', 'telegram').
    */
   readonly id: ChannelId;
+  readonly status?: string;
+  getSocket?(): any;
 
   /**
    * Optional unique identifier for the specific channel instance.

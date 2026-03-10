@@ -4,12 +4,13 @@ import { z } from 'zod';
 import crypto from 'node:crypto';
 import { db, admin } from '@/lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
-import { ConfigService } from '@/services/ConfigService.js';
+import { ConfigService, config } from '@/services/ConfigService.js';
 import auditService from '@/services/auditService.js';
 import logger from '@/utils/logger.js';
 import { multiTenantService } from '@/services/multiTenantService.js';
 import { firebaseService } from '@/services/FirebaseService.js';
 import { cacheService } from '@/services/cache.js';
+import { parseDuration } from '@/utils/time.js';
 
 interface AuthUserPayload {
     userId: string;
@@ -169,20 +170,26 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         const config = ConfigService.getInstance();
         const jwtSecret = config.get('JWT_SECRET');
 
+        const jwtExpires = config.get('auth.jwtExpires') || '24h';
+        const refreshExpires = config.get('auth.refreshExpires') || '30d';
+
         const token = jwt.sign(
             { userId: uid, tenantId, role, email },
             jwtSecret,
-            { expiresIn: '1h' }
+            { expiresIn: jwtExpires }
         );
 
         // Refresh Token Rotation Implementation
         const familyId = crypto.randomUUID();
         const refreshToken = crypto.randomBytes(40).toString('hex');
+        const refreshLifetimeMs = parseDuration(refreshExpires);
+        const jwtLifetimeMs = parseDuration(jwtExpires);
+
         await db.collection('refreshTokens').doc(refreshToken).set({
             userId: uid,
             tenantId,
             familyId,
-            expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            expiresAt: Timestamp.fromDate(new Date(Date.now() + refreshLifetimeMs)),
             createdAt: Timestamp.now()
         });
 
@@ -192,7 +199,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 1000
+            maxAge: jwtLifetimeMs
         });
 
         res.cookie('refreshToken', refreshToken, {
@@ -200,7 +207,7 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             path: '/api/auth/refresh',
-            maxAge: 30 * 24 * 60 * 60 * 1000
+            maxAge: refreshLifetimeMs
         });
 
         // Update last login (and photoURL if available)
@@ -290,20 +297,26 @@ export const signup = async (req: Request, res: Response) => {
         const config = ConfigService.getInstance();
         const jwtSecret = config.get('JWT_SECRET');
 
+        const jwtExpires = config.get('auth.jwtExpires') || '24h';
+        const refreshExpires = config.get('auth.refreshExpires') || '30d';
+
         const token = jwt.sign(
             { userId, tenantId: tenant.id, role: 'owner', email },
             jwtSecret,
-            { expiresIn: '1h' }
+            { expiresIn: jwtExpires }
         );
 
         // Refresh Token Rotation Implementation
         const familyId = crypto.randomUUID();
         const refreshToken = crypto.randomBytes(40).toString('hex');
+        const refreshLifetimeMs = parseDuration(refreshExpires);
+        const jwtLifetimeMs = parseDuration(jwtExpires);
+
         await db.collection('refreshTokens').doc(refreshToken).set({
             userId,
             tenantId: tenant.id,
             familyId,
-            expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            expiresAt: Timestamp.fromDate(new Date(Date.now() + refreshLifetimeMs)),
             createdAt: Timestamp.now()
         });
 
@@ -314,7 +327,7 @@ export const signup = async (req: Request, res: Response) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 1000
+            maxAge: jwtLifetimeMs
         });
 
         res.cookie('refreshToken', refreshToken, {
@@ -322,7 +335,7 @@ export const signup = async (req: Request, res: Response) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             path: '/api/auth/refresh',
-            maxAge: 30 * 24 * 60 * 60 * 1000
+            maxAge: refreshLifetimeMs
         });
 
         const firebaseToken = await admin.auth().createCustomToken(userId, { tenantId: tenant.id, role: 'owner' });
@@ -410,20 +423,26 @@ export const login = async (req: Request, res: Response) => {
         const config = ConfigService.getInstance();
         const jwtSecret = config.get('JWT_SECRET');
 
+        const jwtExpires = config.get('auth.jwtExpires') || '24h';
+        const refreshExpires = config.get('auth.refreshExpires') || '30d';
+
         const token = jwt.sign(
             { userId: uid, tenantId, role, email: user.email },
             jwtSecret,
-            { expiresIn: '1h' }
+            { expiresIn: jwtExpires }
         );
 
         // Refresh Token Rotation Implementation
         const familyId = crypto.randomUUID();
         const refreshToken = crypto.randomBytes(40).toString('hex');
+        const refreshLifetimeMs = parseDuration(refreshExpires);
+        const jwtLifetimeMs = parseDuration(jwtExpires);
+
         await db.collection('refreshTokens').doc(refreshToken).set({
             userId: uid,
             tenantId,
             familyId,
-            expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            expiresAt: Timestamp.fromDate(new Date(Date.now() + refreshLifetimeMs)),
             createdAt: Timestamp.now()
         });
 
@@ -435,7 +454,7 @@ export const login = async (req: Request, res: Response) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 1000
+            maxAge: jwtLifetimeMs
         });
 
         res.cookie('refreshToken', refreshToken, {
@@ -443,7 +462,7 @@ export const login = async (req: Request, res: Response) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             path: '/api/auth/refresh',
-            maxAge: 30 * 24 * 60 * 60 * 1000
+            maxAge: refreshLifetimeMs
         });
 
         res.json({
@@ -519,6 +538,11 @@ export const refresh = async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Refresh session expired' });
         }
 
+        const jwtExpires = config.get('auth.jwtExpires') || '24h';
+        const refreshExpires = config.get('auth.refreshExpires') || '30d';
+        const refreshLifetimeMs = parseDuration(refreshExpires);
+        const jwtLifetimeMs = parseDuration(jwtExpires);
+
         // ROTATE: Issue new pair
         const newRefreshToken = crypto.randomBytes(40).toString('hex');
 
@@ -529,7 +553,7 @@ export const refresh = async (req: Request, res: Response) => {
             userId,
             tenantId,
             familyId,
-            expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            expiresAt: Timestamp.fromDate(new Date(Date.now() + refreshLifetimeMs)),
             createdAt: Timestamp.now()
         });
         await batch.commit();
@@ -538,20 +562,19 @@ export const refresh = async (req: Request, res: Response) => {
         if (!userLookup.exists) return res.status(404).json({ success: false, error: 'User link lost' });
         const { email, role } = userLookup.data()!;
 
-        const config = ConfigService.getInstance();
         const jwtSecret = config.get('JWT_SECRET');
 
         const newAccessToken = jwt.sign(
             { userId, tenantId, role, email },
             jwtSecret,
-            { expiresIn: '1h' }
+            { expiresIn: jwtExpires }
         );
 
         res.cookie('token', newAccessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 60 * 60 * 1000
+            maxAge: jwtLifetimeMs
         });
 
         res.cookie('refreshToken', newRefreshToken, {
@@ -559,7 +582,7 @@ export const refresh = async (req: Request, res: Response) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             path: '/api/auth/refresh',
-            maxAge: 30 * 24 * 60 * 60 * 1000
+            maxAge: refreshLifetimeMs
         });
 
         res.json({

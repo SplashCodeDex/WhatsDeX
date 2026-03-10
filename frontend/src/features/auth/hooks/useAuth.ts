@@ -2,7 +2,7 @@
 
 /**
  * useAuth Hook (Refactored for SSR Safety & React 19)
- * 
+ *
  * STRICT: No direct 'window' or 'document' access during render.
  * Redirection logic is deferred to useEffect.
  */
@@ -29,13 +29,39 @@ export interface UseAuthReturn {
 }
 
 export function useAuth(): UseAuthReturn {
-    const { user, isLoading, isAuthenticated, error, setUser, setLoading, setError, clearError } =
-        useAuthStore();
+    const {
+        user,
+        isLoading,
+        isAuthenticated,
+        error,
+        setUser,
+        setLoading,
+        setError,
+        clearError,
+        retryCount,
+        lastFetchAttempt,
+        incrementRetryCount,
+        resetRetryCount,
+        setLastFetchAttempt
+    } = useAuthStore();
     const router = useRouter();
     const pathname = usePathname();
 
     const verifySession = useCallback(async () => {
+        // Cooldown & Backoff Guard
+        const now = Date.now();
+        const baseDelay = 2000; // 2 seconds
+        // Exponential backoff: 2s, 4s, 8s, 16s, max 30s
+        const backoffDelay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
+
+        if (lastFetchAttempt && now - lastFetchAttempt < backoffDelay) {
+            logger.debug(`Auth verification throttled. Waiting ${Math.ceil((backoffDelay - (now - lastFetchAttempt)) / 1000)}s`);
+            return;
+        }
+
         setLoading(true);
+        setLastFetchAttempt(now);
+
         try {
             const response = await api.get<{ user: AuthUser }>(API_ENDPOINTS.AUTH.VERIFY);
             if (response.success && response.data) {
@@ -55,15 +81,18 @@ export function useAuth(): UseAuthReturn {
                 }
 
                 setUser(userData);
+                resetRetryCount();
             } else {
                 setUser(null);
+                incrementRetryCount();
             }
         } catch (err) {
             setUser(null);
+            incrementRetryCount();
         } finally {
             setLoading(false);
         }
-    }, [setUser, setLoading]);
+    }, [setUser, setLoading, retryCount, lastFetchAttempt, incrementRetryCount, resetRetryCount, setLastFetchAttempt]);
 
     const refreshSession = useCallback(async () => {
         try {
@@ -116,7 +145,7 @@ export function useAuth(): UseAuthReturn {
             await fetch('/api/auth/logout', { method: 'POST' });
             setUser(null);
             router.push(ROUTES.LOGIN);
-            router.refresh(); 
+            router.refresh();
         } catch (signOutError) {
             logger.error('Sign out error:', signOutError);
         }

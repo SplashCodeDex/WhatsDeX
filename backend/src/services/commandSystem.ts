@@ -11,6 +11,7 @@ import { trace, SpanStatusCode } from '@opentelemetry/api';
 import performanceMonitor from '../utils/performanceMonitor.js';
 import { proto, downloadContentFromMessage, getContentType } from 'baileys';
 import { type ActiveChannel, type Command, type MessageContext, type GlobalContext, type GroupFunctions } from '../types/index.js';
+import { MessageNormalizer } from '../utils/messageNormalizer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -248,7 +249,7 @@ export class CommandSystem {
   }
 
   async createContext(bot: ActiveChannel, messageData: proto.IWebMessageInfo, commandInfo: { args: string[]; prefix: string }, command: Command): Promise<MessageContext> {
-    const text = this.extractText(messageData);
+    const text = MessageNormalizer.getText(messageData);
     const jid = messageData.key?.remoteJid || '';
 
     const getGroupFunctions = (targetJid?: string): GroupFunctions => {
@@ -300,10 +301,7 @@ export class CommandSystem {
         id: jid // Legacy alias for sender.jid
       },
       quoted: quotedContext as any,
-      msg: {
-        key: messageData.key,
-        ...messageData.message
-      },
+      msg: messageData as any,
       channel: bot,
       reply: async (msg: string | { text?: string;[key: string]: unknown }) => {
         const content = typeof msg === 'string' ? { text: msg } : msg;
@@ -367,10 +365,7 @@ export class CommandSystem {
   }
 
   extractText(messageData: proto.IWebMessageInfo) {
-    return messageData.message?.conversation ||
-      messageData.message?.extendedTextMessage?.text ||
-      messageData.message?.imageMessage?.caption ||
-      messageData.message?.videoMessage?.caption || '';
+    return MessageNormalizer.getText(messageData);
   }
 }
 

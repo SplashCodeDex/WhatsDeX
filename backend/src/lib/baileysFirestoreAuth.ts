@@ -6,7 +6,13 @@ import { firebaseService } from '../services/FirebaseService.js';
  * Supports both flat (legacy) and hierarchical paths.
  * @param collectionOrPath Either a collection name ('channels') or a partial path ('agents/A/channels/C')
  */
-export async function useFirestoreAuthState(tenantId: string, channelId: string, collectionOrPath: string = 'channels'): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void> }> {
+export async function useFirestoreAuthState(tenantId: string, channelId: string, collectionOrPath: string = 'channels'): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void>, clearAuthState: () => Promise<void> }> {
+
+  // Ensure channelId is provided to prevent illegal Firestore paths (e.g., 'channels//auth')
+  // which causes the library to hang/retry infinitely.
+  if (!channelId && !collectionOrPath.endsWith('/auth')) {
+    throw new Error(`[AuthSystem] Failed to initialize Firestore Auth state: 'channelId' is missing for collection '${collectionOrPath}'`);
+  }
 
   // If collectionOrPath already contains '/auth', don't append it
   const path = collectionOrPath.endsWith('/auth') ? collectionOrPath : `${collectionOrPath}/${channelId}/auth`;
@@ -66,6 +72,13 @@ export async function useFirestoreAuthState(tenantId: string, channelId: string,
     },
     saveCreds: async () => {
       await writeData(creds, 'creds');
+    },
+    clearAuthState: async () => {
+      // Clear main creds
+      await removeData('creds');
+      // This is a rough way to clear keys,
+      // ideally we would list all docs in the subcollection.
+      // For now, this ensures the main session is dead.
     }
   };
 }

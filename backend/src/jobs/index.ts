@@ -2,6 +2,8 @@ import { JobQueueService } from '../services/jobQueue.js';
 import AIProcessor from './aiProcessor.js';
 import MediaProcessor from './mediaProcessor.js';
 import { getStatsAggregatorJob } from './statsAggregatorJob.js';
+import { initializeWhatsappWorker } from '../workers/whatsappQueueWorker.js';
+import { initializeGroupSyncWorker } from '../workers/groupSyncWorker.js';
 import logger from '../utils/logger.js';
 import { Job } from 'bullmq';
 
@@ -80,6 +82,8 @@ class JobRegistry {
 
       // Initialize BullMQ Workers
       getStatsAggregatorJob();
+      initializeWhatsappWorker();
+      initializeGroupSyncWorker();
 
       logger.info('All job processors registered successfully');
     } catch (error: unknown) {
