@@ -1,7 +1,8 @@
 'use client';
 
-import { CheckCircle2, Circle, Loader2, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, XCircle, QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useChannelStatus } from '@/hooks/useChannelStatus';
 
 interface Step {
     id: string;
@@ -16,17 +17,18 @@ const STEPS: Step[] = [
 ];
 
 interface ChannelProgressStepperProps {
+    channelId: string;
+    agentId: string;
     currentStep: string;
     status: 'pending' | 'in_progress' | 'complete' | 'error';
     className?: string;
 }
 
-export function ChannelProgressStepper({ currentStep, status, className }: ChannelProgressStepperProps) {
-    // Map backend step names to our display steps if necessary
-    // For now, we assume backend sends friendly step names or we handle mapping
+export function ChannelProgressStepper({ channelId, agentId, currentStep, status, className }: ChannelProgressStepperProps) {
+    const { qrCode, isLoading: isStatusLoading } = useChannelStatus(channelId, agentId, status === 'in_progress' || status === 'pending');
 
     return (
-        <div className={cn("space-y-3", className)}>
+        <div className={cn("space-y-4", className)}>
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Connection Progress
@@ -39,6 +41,21 @@ export function ChannelProgressStepper({ currentStep, status, className }: Chann
                 </span>
             </div>
 
+            {/* QR Code Surfacing */}
+            {qrCode && (
+                <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-border shadow-inner animate-in fade-in zoom-in duration-300">
+                    <img 
+                        src={qrCode} 
+                        alt="Channel QR Code" 
+                        className="w-40 h-40 object-contain"
+                    />
+                    <div className="mt-3 flex items-center gap-2 text-[10px] text-zinc-500 font-medium">
+                        <QrCode className="h-3 w-3" />
+                        Scan with your mobile app
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center space-x-1">
                 {[1, 2, 3, 4].map((i) => (
                     <div
@@ -47,7 +64,7 @@ export function ChannelProgressStepper({ currentStep, status, className }: Chann
                             "h-1.5 flex-1 rounded-full bg-muted transition-all duration-500",
                             status === 'complete' && "bg-green-500",
                             status === 'error' && "bg-destructive",
-                            status === 'in_progress' && i <= 2 && "bg-primary/60", // Rough estimation for visualization
+                            status === 'in_progress' && i <= 2 && "bg-primary/60",
                             status === 'in_progress' && i === 3 && "bg-primary animate-pulse"
                         )}
                     />
@@ -65,7 +82,7 @@ export function ChannelProgressStepper({ currentStep, status, className }: Chann
                 <span className="truncate">
                     {status === 'error' ? 'Connection failed' :
                         status === 'complete' ? 'Connection successful' :
-                            `Step: ${currentStep}`}
+                            qrCode ? 'Awaiting Scan...' : `Step: ${currentStep}`}
                 </span>
             </div>
         </div>

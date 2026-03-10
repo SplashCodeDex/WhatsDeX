@@ -60,7 +60,8 @@ const COLOR_MAP = {
 
 function ChannelCard({ channel }: { channel: any }) {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const { agentsResult } = useOmnichannelStore();
+    const [isDisconnecting, setIsDisconnecting] = useState(false);
+    const { agentsResult, disconnectChannel } = useOmnichannelStore();
     const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
     const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
 
@@ -68,6 +69,23 @@ function ChannelCard({ channel }: { channel: any }) {
     
     const agent = agentsResult?.agents.find(a => a.id === (channel.assignedAgentId || 'system_default'));
     const agentName = agent?.name || (channel.assignedAgentId === 'system_default' ? 'System Agent' : 'Unknown Agent');
+
+    const handleDirectDisconnect = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isDisconnecting) return;
+        
+        setIsDisconnecting(true);
+        try {
+            const agentId = channel.assignedAgentId || 'system_default';
+            const success = await disconnectChannel(agentId, channel.id);
+            if (success) {
+                // Success toast handled by component or store? 
+                // SettingsDialog handles its own, let's keep it consistent.
+            }
+        } finally {
+            setIsDisconnecting(false);
+        }
+    };
 
     return (
         <>
@@ -98,8 +116,10 @@ function ChannelCard({ channel }: { channel: any }) {
                 <CardContent className="pt-4 flex-1">
                     {isConnecting ? (
                         <ChannelProgressStepper
-                            currentStep="Starting Connection"
-                            status="in_progress"
+                            channelId={channel.id}
+                            agentId={channel.assignedAgentId || 'system_default'}
+                            currentStep={channel.lastProgress?.step || "Starting Connection"}
+                            status={channel.lastProgress?.status || "in_progress"}
                         />
                     ) : (
                         <div className="flex items-center text-sm text-muted-foreground">
@@ -114,16 +134,28 @@ function ChannelCard({ channel }: { channel: any }) {
                         </div>
                     )}
                 </CardContent>
-                <CardFooter className="bg-muted/30 border-t border-border/50 py-3 mt-auto">
+                <CardFooter className="bg-muted/30 border-t border-border/50 py-2 mt-auto flex gap-2">
                     <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="w-full justify-between font-normal"
+                        className="flex-1 justify-between font-normal"
                         onClick={() => setIsSettingsOpen(true)}
                     >
                         <span>Manage connection</span>
                         <Settings2 className="h-4 w-4" />
                     </Button>
+                    {channel.status === 'connected' && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 shrink-0"
+                            onClick={handleDirectDisconnect}
+                            disabled={isDisconnecting}
+                            title="Disconnect Bot"
+                        >
+                            {isDisconnecting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
+                        </Button>
+                    )}
                 </CardFooter>
             </Card>
 
