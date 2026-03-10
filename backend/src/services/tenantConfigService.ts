@@ -164,9 +164,9 @@ export class TenantConfigService {
     /**
      * Get channel configuration from Firestore.
      */
-    async getChannelConfig(tenantId: string, channelId: string): Promise<Result<ChannelConfig>> {
+    async getChannelConfig(tenantId: string, channelId: string, agentId?: string): Promise<Result<ChannelConfig>> {
         try {
-            const cacheKey = `${tenantId}:${channelId}`;
+            const cacheKey = agentId ? `${tenantId}:${agentId}:${channelId}` : `${tenantId}:${channelId}`;
 
             // Check cache
             const cached = this.channelConfigCache.get(cacheKey);
@@ -175,7 +175,10 @@ export class TenantConfigService {
             }
 
             // Fetch from Firestore
-            const docRef = db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
+            const docRef = agentId
+                ? db.collection('tenants').doc(tenantId).collection('agents').doc(agentId).collection('channels').doc(channelId)
+                : db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
+            
             const doc = await docRef.get();
 
             let config: ChannelConfig;
@@ -210,13 +213,16 @@ export class TenantConfigService {
     async updateChannelConfig(
         tenantId: string,
         channelId: string,
-        updates: Partial<ChannelConfig>
+        updates: Partial<ChannelConfig>,
+        agentId?: string
     ): Promise<Result<ChannelConfig>> {
         try {
-            const docRef = db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
+            const docRef = agentId
+                ? db.collection('tenants').doc(tenantId).collection('agents').doc(agentId).collection('channels').doc(channelId)
+                : db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
 
             // Get current config
-            const currentResult = await this.getChannelConfig(tenantId, channelId);
+            const currentResult = await this.getChannelConfig(tenantId, channelId, agentId);
             if (!currentResult.success) {
                 return currentResult;
             }
@@ -232,7 +238,8 @@ export class TenantConfigService {
             await docRef.set(merged, { merge: true });
 
             // Invalidate cache
-            this.channelConfigCache.delete(`${tenantId}:${channelId}`);
+            const cacheKey = agentId ? `${tenantId}:${agentId}:${channelId}` : `${tenantId}:${channelId}`;
+            this.channelConfigCache.delete(cacheKey);
 
             logger.info(`[TenantConfigService] Updated config for channel ${channelId}`);
             return { success: true, data: merged };
@@ -246,9 +253,9 @@ export class TenantConfigService {
     /**
      * Resolves the configuration for a specific Channel by merging it with its assigned Agent.
      */
-    async resolveAgentChannelConfig(tenantId: string, channelId: string): Promise<Result<ChannelConfig>> {
+    async resolveAgentChannelConfig(tenantId: string, channelId: string, agentId?: string): Promise<Result<ChannelConfig>> {
         try {
-            const cacheKey = `resolved:${tenantId}:${channelId}`;
+            const cacheKey = agentId ? `resolved:${tenantId}:${agentId}:${channelId}` : `resolved:${tenantId}:${channelId}`;
 
             // Check cache
             const cached = this.channelConfigCache.get(cacheKey);
@@ -257,7 +264,10 @@ export class TenantConfigService {
             }
 
             // 1. Fetch Channel
-            const channelRef = db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
+            const channelRef = agentId
+                ? db.collection('tenants').doc(tenantId).collection('agents').doc(agentId).collection('channels').doc(channelId)
+                : db.collection('tenants').doc(tenantId).collection('channels').doc(channelId);
+            
             const channelDoc = await channelRef.get();
             if (!channelDoc.exists) {
                 return { success: false, error: new Error(`Channel ${channelId} not found`) };
@@ -265,15 +275,15 @@ export class TenantConfigService {
             const channelData = channelDoc.data() as Channel;
 
             // 2. Fetch Agent
-            const agentId = channelData.assignedAgentId;
-            if (!agentId) {
+            const effectiveAgentId = agentId || channelData.assignedAgentId;
+            if (!effectiveAgentId) {
                 return { success: false, error: new Error(`Channel ${channelId} has no assigned Agent`) };
             }
 
-            const agentRef = db.collection('tenants').doc(tenantId).collection('agents').doc(agentId);
+            const agentRef = db.collection('tenants').doc(tenantId).collection('agents').doc(effectiveAgentId);
             const agentDoc = await agentRef.get();
             if (!agentDoc.exists) {
-                return { success: false, error: new Error(`Agent ${agentId} not found`) };
+                return { success: false, error: new Error(`Agent ${effectiveAgentId} not found`) };
             }
             const agentData = agentDoc.data() as Agent;
 
