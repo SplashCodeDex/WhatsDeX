@@ -5,6 +5,7 @@ import {
   type ChatChannelId,
   normalizeChannelId,
   normalizeChatChannelId,
+  listChatChannelAliases,
 } from "./identifiers.js";
 import { requireActivePluginRegistry } from "../plugins/runtime.js";
 import type { ChannelMeta } from "./plugins/types.js";
@@ -17,6 +18,7 @@ export {
   type ChatChannelId,
   normalizeChannelId,
   normalizeChatChannelId,
+  listChatChannelAliases,
 };
 
 const normalizeChannelKey = (raw?: string | null): string | undefined => {
@@ -141,6 +143,18 @@ export function normalizeAnyChannelId(raw?: string | null): ChannelId | null {
     return (entry.plugin.meta.aliases ?? []).some((alias) => alias.trim().toLowerCase() === key);
   });
   return hit?.plugin.id ?? null;
+}
+
+export function getChatChannelMeta(id: ChatChannelId): ChatChannelMeta {
+  const meta = CHAT_CHANNEL_META[id];
+  if (!meta) {
+    throw new Error(`Unknown chat channel ID: ${id}`);
+  }
+  return meta;
+}
+
+export function listChatChannels(): ChatChannelMeta[] {
+  return CHAT_CHANNEL_ORDER.map(getChatChannelMeta);
 }
 
 export function formatChannelPrimerLine(meta: ChatChannelMeta): string {

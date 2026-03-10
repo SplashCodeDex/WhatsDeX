@@ -15,7 +15,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@DeXMart/shared/*": ["../shared/*"]
+      "@DeXMart/shared/*": ["../shared/*"],
+      "openclaw": ["../openclaw/src/index.ts"],
+      "openclaw/*": ["../openclaw/src/*"]
     },
     "allowJs": false,
     "checkJs": false

@@ -20,6 +20,8 @@ export const CHAT_CHANNEL_ALIASES: Record<string, ChatChannelId> = {
   gchat: "googlechat",
 };
 
+export const listChatChannelAliases = (): string[] => Object.keys(CHAT_CHANNEL_ALIASES);
+
 const normalizeChannelKey = (raw?: string | null): string | undefined => {
   const normalized = raw?.trim().toLowerCase();
   return normalized || undefined;
