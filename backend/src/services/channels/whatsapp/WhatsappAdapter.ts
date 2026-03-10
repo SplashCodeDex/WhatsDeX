@@ -76,17 +76,8 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public async connect(): Promise<void> {
     logger.info(`Connecting WhatsappAdapter for channel ${this.channelId} (Path: ${this.fullPath || 'legacy'})`);
 
-    const connectResult = await this.authSystem.connect();
-    if (!connectResult.success) {
-      throw connectResult.error;
-    }
-
-    this.socket = connectResult.data;
-
-    // MASTERMIND Goodie: Bind EventHandler for Anti-Call and Group Sync
-    eventHandler.bind(this.socket);
-
     // MASTERMIND Goodie: Listen for QR codes and convert to DataURL for UI
+    // MUST be attached before connect() to catch early events
     this.authSystem.on('qr', async (qr) => {
       try {
         this.qrCodeUrl = await QRCode.toDataURL(qr);
@@ -108,6 +99,22 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
         logger.error(`Failed to forward status '${status}' for ${this.channelId}`, err);
       }
     });
+
+    const connectResult = await this.authSystem.connect();
+    if (!connectResult.success) {
+      throw connectResult.error;
+    }
+
+    this.socket = connectResult.data;
+
+    // MASTERMIND Goodie: Bind EventHandler for Anti-Call and Group Sync
+    eventHandler.bind(this.socket);
+
+    // Sync any existing QR captured during connection establishment
+    const existingQr = await this.authSystem.getQRCode();
+    if (existingQr.success && existingQr.data) {
+      this.qrCodeUrl = await QRCode.toDataURL(existingQr.data);
+    }
 
     // MASTERMIND Goodie: Automatic Phone Number Discovery
     this.socket.ev.on('connection.update', async (update: any) => {
