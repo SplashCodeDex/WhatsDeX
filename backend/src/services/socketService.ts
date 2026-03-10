@@ -36,16 +36,23 @@ export class SocketService {
             cors: {
                 origin: (origin, callback) => {
                     const allowedOrigin = this.config.get('NEXT_PUBLIC_APP_URL');
-                    if (!origin || origin.includes('localhost') || origin === allowedOrigin) {
+                    // In 2026, we allow local development and the configured app URL
+                    if (!origin || 
+                        origin === 'http://localhost:3000' || 
+                        origin === 'http://127.0.0.1:3000' ||
+                        origin === allowedOrigin ||
+                        origin.includes('localhost')) {
                         callback(null, true);
                     } else {
+                        logger.warn(`[Socket] CORS blocked for origin: ${origin}`);
                         callback(new Error('Not allowed by CORS'));
                     }
                 },
                 methods: ['GET', 'POST'],
                 credentials: true
             },
-            path: '/api/socket'
+            path: '/api/socket',
+            addTrailingSlash: false // STRICT: Prevent /api/socket/ vs /api/socket mismatch
         });
 
         // Authentication Middleware

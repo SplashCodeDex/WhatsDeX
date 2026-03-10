@@ -52,6 +52,7 @@ router.get('/skills/report', async (_req: Request, res: Response) => {
 });
 
 router.get('/skills', OmnichannelController.getSkills);
+router.patch('/skills/:id/toggle', OmnichannelController.toggleSkill);
 
 // ═══════════════════════════════════════════════════════
 //  AGENTS

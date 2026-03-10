@@ -65,7 +65,7 @@ interface OmnichannelState {
     updateChannelStatus: (botId: string, status: Channel['status']) => void;
     addActivityEvent: (event: Omit<ActivityEvent, 'id'>) => void;
     handleProgressUpdate: (update: BotProgressUpdate) => void;
-    
+
     // Sub-agent Trace Actions
     addTraceNode: (trace: Omit<NestedAgentTrace, 'timestamp'>) => void;
     clearTrace: () => void;
@@ -371,7 +371,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
 
     toggleSkill: async (key, enabled) => {
         try {
-            const response = await api.post(API_ENDPOINTS.OMNICHANNEL.SKILLS.TOGGLE(key), { enabled });
+            const response = await api.patch(API_ENDPOINTS.OMNICHANNEL.SKILLS.TOGGLE(key), { enabled });
             if (response.success) {
                 await get().fetchSkillReport();
                 await get().fetchSkills();

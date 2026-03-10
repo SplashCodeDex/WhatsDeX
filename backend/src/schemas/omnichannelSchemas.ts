@@ -13,7 +13,11 @@ export const getAgentIdentitySchema = z.object({
 
 export const usageQuerySchema = z.object({
     query: z.object({
-        days: z.preprocess((val) => parseInt(val as string, 10), z.number().int().positive().default(30)),
+        days: z.preprocess((val) => {
+            if (val === undefined || val === null || val === '') return 30;
+            const parsed = parseInt(val as string, 10);
+            return isNaN(parsed) ? 30 : parsed;
+        }, z.number().int().positive().default(30)).optional(),
     }),
 });
 
@@ -38,3 +42,14 @@ export const agentIdentityResponseSchema = z.object({
 });
 
 export type AgentIdentityResponse = z.infer<typeof agentIdentityResponseSchema>;
+
+export const toggleSkillSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, 'Skill ID is required'),
+    }),
+    body: z.object({
+        enabled: z.boolean(),
+    }),
+});
+
+export type ToggleSkillRequest = z.infer<typeof toggleSkillSchema>;

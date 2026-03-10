@@ -145,7 +145,7 @@ export function SkillsDashboard() {
                         const statusInfo = skillReport?.skills.find(s => s.skillKey === skillKey || s.name === skill.name);
 
                         const isInstalled = statusInfo ? statusInfo.missing.bins.length === 0 : true;
-                        const isDisabled = statusInfo ? statusInfo.disabled : false;
+                        const isDisabled = statusInfo ? statusInfo.disabled : (skill.enabled === false);
                         const needsKey = Boolean(statusInfo?.primaryEnv || skill.primaryEnv);
 
                         return (

@@ -6,7 +6,8 @@ import {
     getAgentIdentitySchema,
     agentIdentityResponseSchema,
     usageQuerySchema,
-    sessionLogsParamsSchema
+    sessionLogsParamsSchema,
+    toggleSkillSchema
 } from '../schemas/omnichannelSchemas.js';
 
 /**
@@ -425,10 +426,10 @@ export class OmnichannelController {
             const tenantId = req.user?.tenantId;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-            const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-            const tier = tenantDoc.data()?.plan || 'starter';
+            const doc = await db.collection('tenants').doc(tenantId).get();
+            const tier = doc.data()?.plan || 'starter';
 
-            const allSkills = await skillsManager.listAvailableSkills();
+            const allSkills = await skillsManager.listAvailableSkills(tenantId);
 
             const data = await Promise.all(allSkills.map(async (skill) => {
                 const isEligible = await skillsManager.isTenantEligible(tenantId, skill.id, tier);
@@ -487,6 +488,26 @@ export class OmnichannelController {
             if (!res.headersSent) {
                 res.status(500).json({ success: false, error: error.message });
             }
+        }
+    }
+
+    /** PATCH /api/omnichannel/skills/:id/toggle */
+    static async toggleSkill(req: Request, res: Response) {
+        try {
+            const { params, body } = toggleSkillSchema.parse({ params: req.params, body: req.body });
+            const { skillsManager } = await import('../services/skillsManager.js');
+
+            const tenantId = req.user?.tenantId;
+            if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+            const result = await skillsManager.toggleSkill(tenantId, params.id, body.enabled);
+            res.json({ success: true, data: result });
+        } catch (error: any) {
+            logger.error('OmnichannelController.toggleSkill', error);
+            if (error.name === 'ZodError') {
+                return res.status(400).json({ success: false, error: 'Invalid request data', details: error.errors });
+            }
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 }

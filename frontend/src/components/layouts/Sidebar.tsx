@@ -49,7 +49,7 @@ const NAV_ITEMS = [
     { title: 'Flows', href: '/dashboard/flows', icon: Zap, type: 'messages' as const },
     { title: 'Contacts', href: '/dashboard/contacts', icon: Users, type: 'contacts' as const },
     { title: 'Agents', href: '/dashboard/agents', icon: Bot, type: 'bots' as const },
-    { title: 'Skills Store', href: '/dashboard/omnichannel/skills', icon: Send, type: 'bots' as const },
+    { title: 'Skills Store', href: '/dashboard/skills', icon: Send, type: 'bots' as const },
     { title: 'Cron Jobs', href: '/dashboard/cron', icon: Clock, type: 'bots' as const },
     { title: 'Webhooks', href: '/dashboard/webhooks', icon: Zap, type: 'settings' as const },
     { title: 'Sessions', href: '/dashboard/sessions', icon: History, type: 'messages' as const },
