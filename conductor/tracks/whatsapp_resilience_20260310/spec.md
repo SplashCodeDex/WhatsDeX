@@ -17,8 +17,14 @@ This track focuses on engineering extreme resilience for the WhatsApp integratio
     *   Test "Hot Reassignment": Moving a channel to a new agent while a 10MB media file is still being processed.
     *   Handle Skill Timeouts: What if a research agent hangs for 2 minutes on a WhatsApp request?
 
+5.  **Resilience Registry & Documentation:**
+    *   Maintain a live artifact (`scenarios.md`) documenting all 50+ identified "Conflict Zones".
+    *   Each scenario must be marked as "Resolved" only after passing both automated unit tests and manual verification.
+    *   This registry will serve as the baseline for all future "What If" waves to prevent regression and duplication.
+
 **Acceptance Criteria:**
 *   A dedicated test suite (`whatsappResilience.test.ts`) covering 50+ distinct failure cases.
+*   A completed `scenarios.md` file with all 50+ items marked as resolved.
 *   System remains stable (no crashes) during all scenarios.
 *   User-In-Loop: Every failure that requires user intervention must trigger a clear, actionable notification/status update.
 *   Zero cross-tenant data leakage confirmed via isolated mock tests.
