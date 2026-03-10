@@ -249,8 +249,8 @@ export class ChannelService {
           await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
         });
 
-        await adapter.connect();
         channelManager.registerAdapter(adapter);
+        await adapter.connect();
       } else if (channel.type === 'telegram') {
         const { TelegramAdapter } = await import('./channels/telegram/TelegramAdapter.js');
         const token = channel.credentials?.token;
@@ -343,7 +343,12 @@ export class ChannelService {
         return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
       }
 
-      await this.updateStatus(tenantId, channelId, 'connected', agentId);
+      // Only mark as connected if it's not already in qr_pending (managed by AuthSystem/WhatsappAdapter)
+      const currentChannel = await this.getChannel(tenantId, channelId, agentId);
+      if (!(channel.type === 'whatsapp' && currentChannel.success && currentChannel.data.status === 'qr_pending')) {
+        await this.updateStatus(tenantId, channelId, 'connected', agentId);
+      }
+      
       return { success: true, data: undefined };
     } catch (error: any) {
       logger.error(`Failed to start channel ${channelId}:`, error);
