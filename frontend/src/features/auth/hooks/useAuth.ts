@@ -118,10 +118,10 @@ export function useAuth(): UseAuthReturn {
 
     // Initial hydration
     useEffect(() => {
-        if (!user && !isLoading) {
+        if (!user) {
             verifySession();
         }
-    }, [verifySession, user, isLoading]);
+    }, [verifySession, user]);
 
     // Redirection Logic (SSR Safe)
     useEffect(() => {

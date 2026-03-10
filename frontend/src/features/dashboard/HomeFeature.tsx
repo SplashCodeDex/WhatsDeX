@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { GatewayMetrics } from './components/GatewayMetrics';
+import { useAuthStore } from '@/features/auth/store';
 import { NestedResearchTrace } from './components/NestedResearchTrace';
 import { ActivityFeed } from '../omnichannel/components/ActivityFeed';
 import {
@@ -23,11 +23,16 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export function HomeFeature() {
-    const { fetchGatewayHealth, activity } = useOmnichannelStore();
+    const { fetchGatewayHealth, gatewayHealth, getSkillCount } = useOmnichannelStore();
+    const { user } = useAuthStore();
 
     useEffect(() => {
         fetchGatewayHealth();
     }, [fetchGatewayHealth]);
+
+    const firstName = user?.name ? user.name.split(' ')[0] : 'User';
+    const skillCount = getSkillCount();
+    const activeAgents = gatewayHealth?.agents?.length || 0;
 
     return (
         <div className="space-y-8 pb-10">
@@ -39,10 +44,10 @@ export function HomeFeature() {
                         DeXMart 2026 Mastermind Edition
                     </Badge>
                     <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-foreground mb-6 leading-[0.9]">
-                        WELCOME BACK, <span className="text-primary">ADEMA.</span>
+                        WELCOME BACK, <span className="text-primary truncate">{firstName.toUpperCase()}.</span>
                     </h1>
                     <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-md">
-                        Your autonomous commerce engine is operational. 51 active skills are currently crawling, analyzing, and executing trades across the omnichannel mesh.
+                        Your autonomous commerce engine is operational. {skillCount} active skills are currently crawling, analyzing, and executing trades across the omnichannel mesh.
                     </p>
                     <div className="flex flex-wrap gap-4">
                         <Button className="rounded-full px-8 h-12 font-bold uppercase tracking-tight shadow-lg shadow-primary/20 group">
@@ -64,17 +69,6 @@ export function HomeFeature() {
                 <BrainCircuit className="absolute top-1/2 right-12 -translate-y-1/2 w-64 h-64 text-primary/10 opacity-50 hidden lg:block" />
             </div>
 
-            {/* Metrics Grid */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-orange-500" />
-                        Core Infrastructure
-                    </h2>
-                    <Badge variant="outline" className="text-[10px] font-mono">Real-time Syncing</Badge>
-                </div>
-                <GatewayMetrics />
-            </div>
 
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Left Column: Trace & Intelligence */}
@@ -88,7 +82,6 @@ export function HomeFeature() {
                         </div>
                         <NestedResearchTrace />
                     </div>
-
                     <div className="grid md:grid-cols-2 gap-4">
                         <Card className="border-border/40 bg-card/60 backdrop-blur-sm group hover:border-primary/30 transition-all">
                             <CardHeader className="pb-2">
@@ -97,23 +90,9 @@ export function HomeFeature() {
                                 <CardDescription>Isolated secure environments</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-black">12 ACTIVE</div>
+                                <div className="text-2xl font-black">{activeAgents} ACTIVE</div>
                                 <div className="mt-2 h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500 w-[65%]" />
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-border/40 bg-card/60 backdrop-blur-sm group hover:border-orange-500/30 transition-all text-foreground">
-                            <CardHeader className="pb-2">
-                                <History className="w-5 h-5 text-orange-500 mb-2" />
-                                <CardTitle className="text-lg">Skill Execution</CardTitle>
-                                <CardDescription>Success rate last 24h</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-black">99.8%</div>
-                                <div className="mt-2 h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                    <div className="h-full bg-orange-500 w-[99.8%]" />
+                                    <div className="h-full bg-blue-500" style={{ width: `${Math.min(activeAgents * 10, 100)}%` }} />
                                 </div>
                             </CardContent>
                         </Card>

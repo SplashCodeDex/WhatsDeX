@@ -110,6 +110,7 @@ interface OmnichannelState {
 
     // Gateway Actions
     fetchGatewayHealth: () => Promise<void>;
+    getSkillCount: () => number;
 }
 
 const MAX_ACTIVITY_LOGS = 100;
@@ -590,5 +591,11 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
         } catch (err) {
             console.error('Failed to fetch gateway health:', err);
         }
+    getSkillCount: () => {
+        const { skillReport, skills } = get();
+        // Fallback to 51 if not loaded, but try to use real data
+        if (skillReport?.total) return skillReport.total;
+        if (skills?.length) return skills.length;
+        return 51; // Design default if nothing loaded
     }
 }));

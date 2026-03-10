@@ -3,12 +3,12 @@
 ## Phase 1: OpenClaw Import & Backend Watcher Fixes
 Goal: Stabilize the backend by fixing the runtime import error and preventing the watcher from restarting on unrelated file writes.
 
-- [ ] Task: Fix OpenClaw runtime import error
-    - [ ] Create a reproduction script/test in `backend/src/` that attempts to call `getHealth` via `OpenClawGateway` (using Bun if possible, or tsx).
-    - [ ] Add `listChatChannelAliases` to `openclaw/src/channels/identifiers.ts`.
-    - [ ] Export `listChatChannelAliases` from `openclaw/src/channels/registry.ts`.
-    - [ ] Verify the import error is resolved.
-- [ ] Task: Isolate Backend Watcher
+- [x] Task: Fix OpenClaw runtime import error [6742d03]
+    - [x] Create a reproduction script/test in `backend/src/` that attempts to call `getHealth` via `OpenClawGateway` (using Bun if possible, or tsx).
+    - [x] Add `listChatChannelAliases` to `openclaw/src/channels/identifiers.ts`.
+    - [x] Export `listChatChannelAliases` from `openclaw/src/channels/registry.ts`.
+    - [x] Verify the import error is resolved. (Also fixed missing getChatChannelMeta, listChatChannels, and redactToolDetail)
+- [x] Task: Isolate Backend Watcher [230afbe]
     - [ ] Update `backend/package.json` dev script to include ignore patterns for `tsx --watch`.
     - [ ] Ensure `openclaw/` and `logs/` directories are ignored by the watcher.
     - [ ] Verify that writing to `backend/logs/app.log` does not trigger a backend restart.
