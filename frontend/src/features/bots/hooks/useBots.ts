@@ -6,6 +6,7 @@
  * TanStack Query-based hook for bot data fetching and mutations.
  */
 
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { doc } from 'firebase/firestore';
 
@@ -17,6 +18,7 @@ import { isApiSuccess } from '@/types';
 import type { Bot, BotListItem, BotStatus, BotConfig, QRCodeResponse } from '../types';
 import type { CreateBotInput, UpdateBotInput } from '../schemas';
 import { useAuth } from '@/features/auth';
+import { useSocket } from '@/hooks/useSocket';
 
 /**
  * Query key factory for bots
@@ -67,9 +69,6 @@ export function useBot(botId: string, agentId: string = 'system_default'): Retur
 /**
  * Fetch QR code for bot connection
  */
-import { useSocket } from '@/hooks/useSocket';
-import { useQueryClient } from '@tanstack/react-query';
-
 export function useBotQR(botId: string, enabled: boolean = true, agentId: string = 'system_default'): ReturnType<typeof useQuery<QRCodeResponse>> {
     const queryClient = useQueryClient();
     const { on } = useSocket();
