@@ -82,6 +82,13 @@ export function useAuth(): UseAuthReturn {
 
                 setUser(userData);
                 resetRetryCount();
+
+                // Sync login across tabs
+                if (typeof window !== 'undefined') {
+                    const authChannel = new BroadcastChannel('auth_sync');
+                    authChannel.postMessage({ type: 'LOGIN_SUCCESS', payload: { user: userData } });
+                    authChannel.close();
+                }
             } else {
                 setUser(null);
                 incrementRetryCount();
@@ -121,28 +128,147 @@ export function useAuth(): UseAuthReturn {
         // Only redirect once loading is finished and we've confirmed null user
         if (!isLoading && !user) {
             const isAuthPage = pathname === ROUTES.LOGIN || pathname === ROUTES.REGISTER;
-            if (!isAuthPage) {
+            const isDashboardPage = pathname?.startsWith('/dashboard');
+
+            if (isDashboardPage && !isAuthPage) {
+                console.log('[Auth] Guest on protected dashboard route, redirecting to login');
                 router.push(ROUTES.LOGIN);
             }
         }
     }, [user, isLoading, pathname, router]);
 
-    // Background refresh timer
+    // --- Multi-Tab Coordination (BroadcastChannel) ---
     useEffect(() => {
-        if (isAuthenticated && user) {
-            const REFRESH_INTERVAL = 45 * 60 * 1000;
-            const timer = setInterval(() => {
-                refreshSession();
-            }, REFRESH_INTERVAL);
+        if (typeof window === 'undefined') return;
 
-            return () => clearInterval(timer);
+        const authChannel = new BroadcastChannel('auth_sync');
+
+        authChannel.onmessage = (event) => {
+            const { type, payload } = event.data;
+            logger.debug(`[Auth Sync] Received message: ${type}`);
+
+            switch (type) {
+                case 'LOGOUT':
+                    setUser(null);
+                    router.push(ROUTES.LOGIN);
+                    break;
+                case 'LOGIN_SUCCESS':
+                    if (payload?.user) {
+                        setUser(payload.user);
+                        const isAuthPage = pathname === ROUTES.LOGIN || pathname === ROUTES.REGISTER;
+                        if (isAuthPage) {
+                            router.push(ROUTES.DASHBOARD_HOME || '/dashboard/home');
+                        }
+                    }
+                    break;
+                case 'SESSION_REFRESHED':
+                    // Use payload user data if provided to avoid redundant API call
+                    if (payload?.user) {
+                        setUser(payload.user);
+                    } else {
+                        verifySession();
+                    }
+                    break;
+                case 'REFRESHING':
+                    // Another tab is already refreshing
+                    break;
+            }
+        };
+
+        return () => authChannel.close();
+    }, [setUser, router, verifySession, pathname]);
+
+    // Background refresh timer & Activity Monitoring for Sliding Window
+    useEffect(() => {
+        if (!isAuthenticated || !user) return;
+
+        const authChannel = new BroadcastChannel('auth_sync');
+        // JITTER: Add 0-5 mins of randomness to prevent concurrent "Auth Storms"
+        const REFRESH_INTERVAL = (45 * 60 * 1000) + (Math.random() * 5 * 60 * 1000); 
+        let lastActivity = Date.now();
+        let refreshTimer: NodeJS.Timeout;
+
+        const handleActivity = () => {
+            const now = Date.now();
+            if (now - lastActivity > 5 * 60 * 1000) {
+                lastActivity = now;
+                logger.debug('User activity detected');
+            }
+        };
+
+        const performRefresh = async () => {
+            // Signal to other tabs that we are handling the refresh
+            authChannel.postMessage({ type: 'REFRESHING' });
+            
+            try {
+                const response = await api.post(API_ENDPOINTS.AUTH.REFRESH);
+                if (response.success && (response.data as any)?.user) {
+                    const userData = (response.data as any).user;
+                    authChannel.postMessage({ 
+                        type: 'SESSION_REFRESHED', 
+                        payload: { user: userData } 
+                    });
+                    setUser(userData);
+                } else {
+                    await verifySession();
+                    authChannel.postMessage({ type: 'SESSION_REFRESHED' });
+                }
+            } catch (err) {
+                logger.error('Background refresh failed:', err);
+            }
+        };
+
+        const startTimer = () => {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(() => {
+                const now = Date.now();
+                // Only refresh if active in the last 2 hours
+                if (now - lastActivity < 2 * 60 * 60 * 1000) {
+                    performRefresh();
+                }
+            }, REFRESH_INTERVAL);
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                logger.debug('Tab became visible, resuming auth timers');
+                startTimer();
+            } else {
+                logger.debug('Tab hidden, pausing auth timers');
+                if (refreshTimer) clearInterval(refreshTimer);
+            }
+        };
+
+        window.addEventListener('mousemove', handleActivity);
+        window.addEventListener('keydown', handleActivity);
+        window.addEventListener('scroll', handleActivity);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        if (document.visibilityState === 'visible') {
+            startTimer();
         }
-        return undefined;
-    }, [isAuthenticated, user, refreshSession]);
+
+        return () => {
+            if (refreshTimer) clearInterval(refreshTimer);
+            authChannel.close();
+            window.removeEventListener('mousemove', handleActivity);
+            window.removeEventListener('keydown', handleActivity);
+            window.removeEventListener('scroll', handleActivity);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [isAuthenticated, user, verifySession, setUser]);
 
     const signOut = useCallback(async (): Promise<void> => {
         try {
-            await fetch('/api/auth/logout', { method: 'POST' });
+            await api.post(API_ENDPOINTS.AUTH.LOGOUT);
+            
+            // Notify other tabs
+            if (typeof window !== 'undefined') {
+                const authChannel = new BroadcastChannel('auth_sync');
+                authChannel.postMessage({ type: 'LOGOUT' });
+                authChannel.close();
+            }
+
             setUser(null);
             router.push(ROUTES.LOGIN);
             router.refresh();

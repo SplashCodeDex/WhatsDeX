@@ -544,7 +544,60 @@ export const refresh = async (req: Request, res: Response) => {
             return res.status(403).json({ success: false, error: 'Invalid refresh session' });
         }
 
-        const { userId, tenantId, familyId, expiresAt } = rtDoc.data()!;
+        const { userId, tenantId, familyId, expiresAt, rotatedAt, replacedBy } = rtDoc.data()!;
+
+        // Check if token was recently rotated (Grace Period for multi-tab sync)
+        if (rotatedAt) {
+            const rotatedTime = rotatedAt.toDate().getTime();
+            const now = Date.now();
+            const GRACE_PERIOD_MS = 10 * 1000; // 10 seconds
+
+            if (now - rotatedTime < GRACE_PERIOD_MS && replacedBy) {
+                logger.info('Refresh: Using grace period for recently rotated token', { userId, familyId });
+                
+                // Fetch the new token to get its current expiry or just re-issue with standard expiry
+                // For simplicity and speed in the grace window, we can just fetch the replacement doc
+                const replacementDoc = await db.collection('refreshTokens').doc(replacedBy).get();
+                if (replacementDoc.exists) {
+                    const replacementData = replacementDoc.data()!;
+                    const jwtSecret = config.get('JWT_SECRET');
+                    const userLookup = await db.collection('users').doc(userId).get();
+                    if (!userLookup.exists) return res.status(404).json({ success: false, error: 'User link lost' });
+                    const { email, role } = userLookup.data()!;
+
+                    const jwtExpires = config.get('auth.jwtExpires') || '4h';
+                    const newAccessToken = jwt.sign(
+                        { userId, tenantId, role, email },
+                        jwtSecret,
+                        { expiresIn: jwtExpires }
+                    );
+
+                    res.cookie('token', newAccessToken, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'strict',
+                        maxAge: parseDuration(jwtExpires)
+                    });
+
+                    res.cookie('refreshToken', replacedBy, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'strict',
+                        path: '/api/auth/refresh',
+                        maxAge: (replacementData.expiresAt.toDate().getTime() - Date.now())
+                    });
+
+                    return res.json({
+                        success: true,
+                        data: { token: newAccessToken }
+                    });
+                }
+            }
+            
+            // If outside grace period, it's a real replay
+            logger.security('Refresh Failure: Token used after rotation grace period (Possible Replay)', null, { userId, token: oldRefreshToken.substring(0, 10) + '...' });
+            return res.status(403).json({ success: false, error: 'Invalid refresh session' });
+        }
 
         // Check expiry
         if (expiresAt.toDate() < new Date()) {
@@ -552,17 +605,23 @@ export const refresh = async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Refresh session expired' });
         }
 
-        const jwtExpires = config.get('auth.jwtExpires') || '24h';
-        const refreshExpires = config.get('auth.refreshExpires') || '30d';
+        const jwtExpires = config.get('auth.jwtExpires') || '4h';
+        const refreshExpires = config.get('auth.refreshExpires') || '7d';
         const refreshLifetimeMs = parseDuration(refreshExpires);
         const jwtLifetimeMs = parseDuration(jwtExpires);
 
         // ROTATE: Issue new pair
         const newRefreshToken = crypto.randomBytes(40).toString('hex');
 
-        // Transactional rotation (Batch)
+        // Transactional rotation: Mark old as rotated, create new
         const batch = db.batch();
-        batch.delete(rtDoc.ref);
+        batch.update(rtDoc.ref, {
+            rotatedAt: Timestamp.now(),
+            replacedBy: newRefreshToken,
+            // Set a future deletion time (e.g., 1 minute from now) to keep DB clean
+            deleteAt: Timestamp.fromDate(new Date(Date.now() + 60000))
+        });
+        
         batch.set(db.collection('refreshTokens').doc(newRefreshToken), {
             userId,
             tenantId,

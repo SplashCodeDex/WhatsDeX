@@ -86,37 +86,49 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             const decoded = jwt.verify(token, secret) as UserPayload;
             req.user = decoded;
 
-            // --- PILOT: Sliding Window Implementation ---
-            // If the token is close to expiry (e.g., < 30% left), we reissue the cookie to extend it.
-            // This only applies to COOKIE based auth.
+            // --- Sliding Window Implementation ---
+            // If the token is halfway to expiry (50% remains), we reissue the cookie to extend it.
+            // This ensures active users rarely hit the 401/expired state.
             if (source === 'cookie' && decoded.exp && decoded.iat) {
                 const totalLifetime = decoded.exp - decoded.iat;
-                const remaining = decoded.exp - Math.floor(Date.now() / 1000);
-                const threshold = totalLifetime * 0.3; // 30% threshold
+                const currentTime = Math.floor(Date.now() / 1000);
+                const remaining = decoded.exp - currentTime;
+                const threshold = totalLifetime * 0.5; // 50% threshold for renewal
 
                 if (remaining < threshold) {
-                    const jwtExpires = config.get('auth.jwtExpires') || '24h';
-                    const jwtLifetimeMs = parseDuration(jwtExpires);
+                    // Optimized: Only renew if the token is at least 30 minutes old
+                    // to prevent "burst" renewals from parallel requests.
+                    const ageSeconds = currentTime - decoded.iat;
+                    const MIN_RENEWAL_AGE_SEC = 30 * 60; // 30 minutes
 
-                    const newToken = jwt.sign(
-                        {
+                    if (ageSeconds > MIN_RENEWAL_AGE_SEC) {
+                        const jwtExpires = config.get('auth.jwtExpires') || '4h';
+                        const jwtLifetimeMs = parseDuration(jwtExpires);
+
+                        const newToken = jwt.sign(
+                            {
+                                userId: decoded.userId,
+                                tenantId: decoded.tenantId,
+                                role: decoded.role,
+                                email: decoded.email
+                            },
+                            secret,
+                            { expiresIn: jwtExpires }
+                        );
+
+                        res.cookie('token', newToken, {
+                            httpOnly: true,
+                            secure: process.env.NODE_ENV === 'production',
+                            sameSite: 'strict',
+                            maxAge: jwtLifetimeMs
+                        });
+
+                        logger.debug('Auth Middleware: Session sliding window extended (Threshold reached)', {
                             userId: decoded.userId,
-                            tenantId: decoded.tenantId,
-                            role: decoded.role,
-                            email: decoded.email
-                        },
-                        secret,
-                        { expiresIn: jwtExpires }
-                    );
-
-                    res.cookie('token', newToken, {
-                        httpOnly: true,
-                        secure: process.env.NODE_ENV === 'production',
-                        sameSite: 'strict',
-                        maxAge: jwtLifetimeMs
-                    });
-
-                    logger.debug('Auth Middleware: Session sliding window extended', { userId: decoded.userId });
+                            remainingSeconds: remaining,
+                            tokenAge: ageSeconds
+                        });
+                    }
                 }
             }
 

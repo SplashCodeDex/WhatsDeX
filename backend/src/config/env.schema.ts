@@ -30,7 +30,7 @@ export const envSchema = z.object({
   FIREBASE_WEB_API_KEY: z.string().optional(), // Required for Firebase Auth REST API login
 
   // App URL & Frontend
-  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+  NEXT_PUBLIC_APP_URL: z.string().url().default('http://127.0.0.1:3000'),
   JWT_SECRET: z.string().default('secret'),
 
   // Rate Limiting

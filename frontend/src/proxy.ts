@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { decodeJwt } from 'jose';
+import { decodeJwt, jwtVerify } from 'jose';
+
+const JWT_SECRET = new TextEncoder().encode(
+    process.env.JWT_SECRET || 'static-placeholder-do-not-use-in-prod-7f9d8a2b'
+);
 
 /**
  * Proxy (Next.js 16)
  *
  * Provides optimistic authentication redirects, CSRF protection, and RBAC.
- * Deep verification is still handled by Server Components (requireAuth).
+ * Deep verification is also performed here to prevent redirect loops.
  */
 
 const PROTECTED_ROUTES = ['/dashboard'];
@@ -14,7 +18,7 @@ const AUTH_ROUTES = ['/login', '/register', '/forgot-password'];
 const ADMIN_ROUTES = ['/dashboard/settings']; // Routes requiring admin/owner role
 
 // Ensure API requests come from our own origin
-const ALLOWED_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const ALLOWED_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000';
 
 interface JwtPayload {
     exp?: number;
@@ -33,13 +37,16 @@ function getTokenPayload(token: string): JwtPayload | null {
     }
 }
 
-function isTokenValid(payload: JwtPayload | null): boolean {
-    if (!payload?.exp) return false;
-    const currentTime = Math.floor(Date.now() / 1000);
-    return payload.exp >= currentTime;
+async function verifyToken(token: string): Promise<boolean> {
+    try {
+        await jwtVerify(token, JWT_SECRET);
+        return true;
+    } catch {
+        return false;
+    }
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
     const { pathname } = request.nextUrl;
 
@@ -61,7 +68,7 @@ export function proxy(request: NextRequest) {
     }
 
     const payload = token ? getTokenPayload(token) : null;
-    const hasValidToken = token && isTokenValid(payload);
+    const hasValidToken = token ? await verifyToken(token) : false;
     const userRole = payload?.role || 'viewer';
 
     // ---------------------------------------------------------------------------

@@ -74,8 +74,8 @@ export const API_ENDPOINTS = {
         PROFILE: '/api/settings/profile',
         NOTIFICATIONS: '/api/settings/notifications',
         API_KEYS: '/api/settings/api-keys',
-        GET_TENANT: '/api/settings/tenant',
-        UPDATE_TENANT: '/api/settings/tenant',
+        GET_TENANT: '/api/tenant/settings',
+        UPDATE_TENANT: '/api/tenant/settings',
     },
 
     // Billing

@@ -5,7 +5,7 @@
 export const APP_CONFIG = {
     name: 'DeXMart',
     description: 'WhatsApp Bot Management Platform',
-    url: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+    url: process.env.NEXT_PUBLIC_APP_URL ?? 'http://127.0.0.1:3000',
     apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:3001',
     contactEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@DeXMart.com',
 } as const;

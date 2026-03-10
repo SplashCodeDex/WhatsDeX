@@ -6,6 +6,7 @@
  */
 
 import { APP_CONFIG } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 import type { ApiResponse, ApiSuccessResponse, ApiErrorResponse } from '@/types';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -56,24 +57,12 @@ function createUrl(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>
 ): string {
-    // Rely on Next.js Rewrite Proxy: Just use the relative path.
-    // Ensure it starts with /api if it's an API call (logic moved to caller or standard endpoints)
-    // Endpoints in endpoints.ts already include /api prefix or /internal which maps to /api/internal
-    // Actually, endpoints in endpoints.ts are like '/auth/login'.
-    // We need to ensure they hit '/api/auth/login' so the proxy catches them.
-    // Previous refactor added /api prefix to endpoints.
-    // So we just need to return the path.
-
-    // Use environment variable or default to 127.0.0.1 to avoid Node IPv6 localhost resolution issues.
-    // This allows changing the port in .env without code changes.
     const baseUrl = typeof window === 'undefined'
         ? (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:3001')
         : '';
-    // Server-side fetch needs absolute URL (internal docker/localhost).
-    // Client-side fetch uses relative URL to hit proxy.
 
     let path = endpoint;
-    const url = new URL(path, baseUrl || 'http://dummy.com'); // Dummy base for relative path construction
+    const url = new URL(path, baseUrl || 'http://dummy.com');
 
     if (params) {
         Object.entries(params).forEach(([key, value]) => {
@@ -83,14 +72,9 @@ function createUrl(
         });
     }
 
-    // Return relative path for client, absolute for server
     return typeof window === 'undefined' ? url.toString() : url.pathname + url.search;
 }
 
-/**
- * Get authorization header from session (SERVER-SIDE ONLY)
- * On client side, the browser sends the cookie automatically.
- */
 async function getAuthHeader(): Promise<string | null> {
     if (typeof window !== 'undefined') {
         return null;
@@ -102,10 +86,31 @@ async function getAuthHeader(): Promise<string | null> {
     return token?.value ?? null;
 }
 
-/**
- * Intelligent Error Feedback Mapper
- * Maps specific error codes or status codes to proactive user suggestions.
- */
+// --- Global Refresh State (Across all calls in one tab and across tabs) ---
+let isRefreshing = false;
+let isExternalRefreshing = false;
+let refreshQueue: Array<(token: string | null) => void> = [];
+
+// Initialize cross-tab sync for the API client
+if (typeof window !== 'undefined') {
+    const syncChannel = new BroadcastChannel('auth_sync');
+    syncChannel.onmessage = (event) => {
+        const { type, payload } = event.data;
+        if (type === 'REFRESHING') {
+            isExternalRefreshing = true;
+        } else if (type === 'SESSION_REFRESHED' || type === 'LOGOUT') {
+            isExternalRefreshing = false;
+            isRefreshing = false;
+            processQueue(type === 'SESSION_REFRESHED' ? (payload?.token || 'synced') : null);
+        }
+    };
+}
+
+function processQueue(token: string | null) {
+    refreshQueue.forEach((cb) => cb(token));
+    refreshQueue = [];
+}
+
 const ERROR_SUGGESTIONS: Record<string, { message: string; linkLabel?: string; linkHref?: string }> = {
     'insufficient_permissions': {
         message: 'This feature is not available on your current plan.',
@@ -155,7 +160,6 @@ async function apiClient<TData, TBody = unknown>(
         ...headers,
     };
 
-    // Only attach Bearer token on Server Side where cookies aren't automatic
     if (authToken) {
         requestHeaders['Authorization'] = `Bearer ${authToken}`;
     }
@@ -166,24 +170,91 @@ async function apiClient<TData, TBody = unknown>(
         credentials: 'include',
     };
 
-    if (body !== undefined) {
-        fetchOptions.body = JSON.stringify(body);
-    }
-
-    if (cache !== undefined) {
-        fetchOptions.cache = cache;
-    }
-
-    if (next !== undefined) {
-        fetchOptions.next = next;
-    }
-
-    if (signal !== undefined) {
-        fetchOptions.signal = signal;
-    }
+    if (body !== undefined) fetchOptions.body = JSON.stringify(body);
+    if (cache !== undefined) fetchOptions.cache = cache;
+    if (next !== undefined) fetchOptions.next = next;
+    if (signal !== undefined) fetchOptions.signal = signal;
 
     try {
         const response = await fetch(url, fetchOptions);
+
+        // --- 401 Interceptor Logic (Client Side Only) ---
+        if (
+            response.status === 401 && 
+            typeof window !== 'undefined' && 
+            !endpoint.includes('/auth/refresh') && 
+            !endpoint.includes('/auth/login')
+        ) {
+            if (isRefreshing || isExternalRefreshing) {
+                return new Promise((resolve) => {
+                    refreshQueue.push((newToken) => {
+                        if (newToken) {
+                            resolve(apiClient<TData, TBody>(endpoint, config));
+                        } else {
+                            resolve({
+                                success: false,
+                                error: { code: 'auth_required', message: 'Session expired' }
+                            } as ApiErrorResponse);
+                        }
+                    });
+                });
+            }
+
+            isRefreshing = true;
+            
+            // Broadcast that this tab is starting the refresh
+            const authChannel = new BroadcastChannel('auth_sync');
+            authChannel.postMessage({ type: 'REFRESHING' });
+            authChannel.close();
+
+            try {
+                logger.debug('401 detected, attempting silent refresh...');
+                const refreshResponse = await fetch('/api/auth/refresh', { 
+                    method: 'POST', 
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (refreshResponse.ok) {
+                    const result = await refreshResponse.json();
+                    const userData = result.data?.user;
+                    
+                    isRefreshing = false;
+                    processQueue('synced');
+                    
+                    if (typeof window !== 'undefined') {
+                        const authChannel = new BroadcastChannel('auth_sync');
+                        authChannel.postMessage({ 
+                            type: 'SESSION_REFRESHED', 
+                            payload: { user: userData } 
+                        });
+                        authChannel.close();
+                    }
+
+                    logger.info('Silent refresh successful, retrying original request');
+                    return apiClient<TData, TBody>(endpoint, config);
+                } else {
+                    isRefreshing = false;
+                    processQueue(null);
+
+                    if (typeof window !== 'undefined') {
+                        const authChannel = new BroadcastChannel('auth_sync');
+                        authChannel.postMessage({ type: 'LOGOUT' });
+                        authChannel.close();
+                    }
+                }
+            } catch (refreshErr) {
+                logger.error('Error during silent refresh:', refreshErr);
+                isRefreshing = false;
+                processQueue(null);
+
+                if (typeof window !== 'undefined') {
+                    const authChannel = new BroadcastChannel('auth_sync');
+                    authChannel.postMessage({ type: 'LOGOUT' });
+                    authChannel.close();
+                }
+            }
+        }
 
         let data: any;
         const contentType = response.headers.get('content-type');
@@ -201,15 +272,12 @@ async function apiClient<TData, TBody = unknown>(
                     },
                 } as ApiErrorResponse;
             }
-            data = text; // Or handle other types if needed
+            data = text;
         }
 
         if (!response.ok) {
-            // If backend returned a structured error, use it.
-            // Otherwise, fallback to status codes and generic messages.
             const errorObj = data?.error;
             const code = errorObj?.code ?? (typeof data?.error === 'string' ? 'legacy_error' : `http_${response.status}`);
-
             let message = errorObj?.message ?? (typeof data?.error === 'string' ? data.error : (data?.message ?? ''));
             const details = errorObj?.details ?? data?.details;
 
@@ -221,66 +289,57 @@ async function apiClient<TData, TBody = unknown>(
                 else message = 'An unexpected error occurred';
             }
 
-            // Apply intelligent suggestion if available
             const suggestion = ERROR_SUGGESTIONS[code] || ERROR_SUGGESTIONS[`http_${response.status}`];
 
             return {
                 success: false,
-                error: {
-                    code,
-                    message,
-                    details,
-                    suggestion
-                },
+                error: { code, message, details, suggestion },
             } as ApiErrorResponse;
         }
 
         return {
             success: true,
-            data: data.data ?? data, // Handle wrapped vs unwrapped data
+            data: data.data ?? data,
             meta: data.meta,
         } as ApiSuccessResponse<TData>;
     } catch (err) {
-        console.error('[API Client Error]', { endpoint, url, error: err });
+        return handleApiError(err, endpoint, url);
+    }
+}
 
-        if (err instanceof Error) {
-            if (err.name === 'AbortError') {
-                return {
-                    success: false,
-                    error: {
-                        code: 'request_aborted',
-                        message: 'Request was cancelled',
-                    },
-                };
-            }
+async function handleApiError(err: unknown, endpoint: string, url: string): Promise<ApiErrorResponse> {
+    console.error('[API Client Error]', { endpoint, url, error: err });
+
+    if (err instanceof Error) {
+        if (err.name === 'AbortError') {
             return {
                 success: false,
-                error: {
-                    code: 'network_error',
-                    message: err.message || 'Unable to connect to server',
-                    details: { originalError: err.toString() }
-                },
+                error: { code: 'request_aborted', message: 'Request was cancelled' },
             };
         }
         return {
             success: false,
             error: {
-                code: 'unknown_error',
-                message: 'An unexpected error occurred during the request',
-                details: { error: String(err) }
+                code: 'network_error',
+                message: err.message || 'Unable to connect to server',
+                details: { originalError: err.toString() }
             },
         };
     }
+    return {
+        success: false,
+        error: {
+            code: 'unknown_error',
+            message: 'An unexpected error occurred during the request',
+            details: { error: String(err) }
+        },
+    };
 }
 
 export const api = {
     get<TData>(endpoint: string, params?: Record<string, any>, config?: RequestConfig) {
-        const url = params ? createUrl(endpoint, params).replace(new URL(createUrl(endpoint)).origin, '') : endpoint; // Hacky url fix? No, simpler to just pass endpoint
-        // Actually createUrl builds full URL, but apiClient calls createUrl again.
-        // Let's refactor createUrl usage to be efficient.
-        // If we pass full URL to apiClient, it might duplicate base.
-        // Let's keep it simple: api.get passes filtered params to client
-        return apiClient<TData>(endpoint, { ...config, method: 'GET' });
+        const url = params ? createUrl(endpoint, params).replace(new URL(createUrl(endpoint)).origin, '') : endpoint;
+        return apiClient<TData>(url, { ...config, method: 'GET' });
     },
     post<TData, TBody = unknown>(endpoint: string, body?: TBody, config?: RequestConfig<TBody>) {
         return apiClient<TData, TBody>(endpoint, { ...config, method: 'POST', body });

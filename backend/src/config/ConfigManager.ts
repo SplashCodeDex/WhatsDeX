@@ -185,11 +185,11 @@ export class ConfigManager {
       // Server Configuration
       server: {
         port: this.env.PORT,
-        host: process.env.HOST || 'localhost',
+        host: process.env.HOST || '127.0.0.1',
         environment: this.environment,
         maxRequestSize: process.env.MAX_REQUEST_SIZE || '50mb',
         cors: {
-          origins: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim()),
+          origins: (process.env.CORS_ORIGINS || 'http://127.0.0.1:3000').split(',').map(o => o.trim()),
           credentials: true
         }
       },
@@ -217,11 +217,11 @@ export class ConfigManager {
       // Authentication & Security
       auth: {
         jwtSecret: this.env.JWT_SECRET,
-        jwtExpires: '24h',
+        jwtExpires: '4h',
         refreshSecret: process.env.JWT_REFRESH_SECRET,
         refreshExpires: '7d',
         sessionSecret: process.env.SESSION_SECRET,
-        sessionMaxAge: 86400000,
+        sessionMaxAge: 7 * 24 * 60 * 60 * 1000,
         bcryptRounds: 12,
         ownerNumber: process.env.OWNER_NUMBER,
         adminNumbers: (process.env.ADMIN_NUMBERS || '').split(',').map(n => n.trim()).filter(Boolean)
