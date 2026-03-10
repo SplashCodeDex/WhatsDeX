@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, Circle, Loader2, XCircle, QrCode } from 'lucide-react';
+import { CheckCircle2, Loader2, XCircle, QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChannelStatus } from '@/hooks/useChannelStatus';
 
@@ -44,9 +44,9 @@ export function ChannelProgressStepper({ channelId, agentId, currentStep, status
             {/* QR Code Surfacing */}
             {qrCode && (
                 <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-border shadow-inner animate-in fade-in zoom-in duration-300">
-                    <img 
-                        src={qrCode} 
-                        alt="Channel QR Code" 
+                    <img
+                        src={qrCode}
+                        alt="Channel QR Code"
                         className="w-40 h-40 object-contain"
                     />
                     <div className="mt-3 flex items-center gap-2 text-[10px] text-zinc-500 font-medium">

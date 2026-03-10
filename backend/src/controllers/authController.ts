@@ -151,12 +151,26 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
             await admin.auth().setCustomUserClaims(uid, { tenantId, role });
         } else {
             // 5. Existing User
-            const data = lookupDoc.data()!;
+            const data = lookupDoc.data();
+            if (!data || !data.tenantId) {
+                logger.error('Google Login: Existing user lookup missing tenantId', { uid, email });
+                return res.status(403).json({
+                    success: false,
+                    error: 'Your account configuration is incomplete (missing Workspace ID). Please contact support.',
+                    code: 'auth/missing-tenant-id'
+                });
+            }
             tenantId = data.tenantId;
-            role = data.role;
+            role = data.role || 'user';
         }
 
         // 6. Get Full Data & Set Session
+        // Validation: Ensure tenantId is valid before building paths
+        if (!tenantId) {
+            logger.error('Google Login: tenantId is null or undefined before data fetch', { uid, email });
+            return res.status(500).json({ success: false, error: 'Internal Server Error: Missing Workspace Context' });
+        }
+
         const userDoc = await db.collection('tenants').doc(tenantId).collection('users').doc(uid).get();
         const tenantDoc = await db.collection('tenants').doc(tenantId).get();
 

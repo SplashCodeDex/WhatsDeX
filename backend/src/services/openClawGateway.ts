@@ -1,4 +1,8 @@
 import { startGatewayServer } from 'openclaw';
+import AuditService from './auditService.js';
+import MultiTenantService from './multiTenantService.js';
+import { getPlanLimits } from '../utils/featureGating.js';
+import BillingService from './billingService.js';
 
 /**
  * OpenClawGateway is a singleton service that manages the lifecycle
@@ -505,6 +509,134 @@ export class OpenClawGateway {
     } catch (error: any) {
       console.error('streamLogs error:', error.message);
       return null;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  CONTROL PLANE (FUSION)
+  // ═══════════════════════════════════════════════════════
+
+  /**
+   * Returns the current live configuration of the OpenClaw engine.
+   */
+  public async getLiveConfig(): Promise<any> {
+    try {
+      const snapshot = await this.loadConfig();
+      return snapshot;
+    } catch (error: any) {
+      console.error('getLiveConfig error:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Patches the OpenClaw configuration with multi-tenant isolation,
+   * enterprise gating, and audit logging.
+   */
+  public async patchConfig(tenantId: string, patch: any, metadata: { actor: string; ip?: string }): Promise<any> {
+    try {
+      // 1. Enterprise Gating: Check plan limits
+      const tenant = await MultiTenantService.getTenant(tenantId);
+      if (!tenant) throw new Error(`Tenant ${tenantId} not found`);
+
+      const subscriptionResult = await BillingService.getSubscription(tenantId);
+      if (!subscriptionResult.success) {
+        throw new Error(`Failed to verify billing status for ${tenantId}`);
+      }
+      const subscription = subscriptionResult.data;
+      const planLimits = getPlanLimits(subscription.plan as any);
+
+      // Simple gating example: Webhook limit check if patch contains 'hooks'
+      if (patch.hooks && Array.isArray(patch.hooks)) {
+        if (subscription.plan !== 'enterprise') { // Simple gating example
+           if (patch.hooks.length > planLimits.maxChannels) {
+             throw new Error(`Plan ${subscription.plan} limit exceeded for webhooks`);
+           }
+        }
+      }
+
+      // 2. Safe Patch Implementation (OpenClaw Bridge)
+      const configMod = await this.safeImport('../../../openclaw/src/config/config.js');
+      const mergeMod = await this.safeImport('../../../openclaw/src/config/merge-patch.js');
+      const restartMod = await this.safeImport('../../../openclaw/src/infra/restart.js');
+      const legacyMod = await this.safeImport('../../../openclaw/src/config/legacy.js');
+
+      if (!configMod || !mergeMod || !restartMod) {
+        throw new Error('OpenClaw core configuration modules are missing');
+      }
+
+      const { readConfigFileSnapshotForWrite, writeConfigFile, validateConfigObjectWithPlugins } = configMod;
+      const { applyMergePatch } = mergeMod;
+      const { scheduleGatewaySigusr1Restart } = restartMod;
+      const { applyLegacyMigrations } = legacyMod;
+
+      const { snapshot, writeOptions } = await readConfigFileSnapshotForWrite();
+
+      // Deep Merge
+      const merged = applyMergePatch(snapshot.config, patch, {
+        mergeObjectArraysById: true,
+      });
+
+      // Migrations & Validation
+      const migrated = applyLegacyMigrations ? applyLegacyMigrations(merged) : { next: merged };
+      const resolved = migrated.next ?? merged;
+      const validated = validateConfigObjectWithPlugins(resolved);
+
+      if (!validated.ok) {
+        throw new Error(`Config validation failed: ${JSON.stringify(validated.issues)}`);
+      }
+
+      // 3. Persistence (Primary)
+      await writeConfigFile(validated.config, writeOptions);
+
+      // 4. Audit Logging
+      await AuditService.logEvent({
+        eventType: 'CONTROL_PLANE_PATCH',
+        actor: metadata.actor,
+        action: 'PATCH_ENGINE_CONFIG',
+        resource: 'engine_config',
+        resourceId: tenantId,
+        riskLevel: 'LOW',
+        ipAddress: metadata.ip,
+        metadata: {
+          patch,
+          target: 'engine_config'
+        }
+      });
+
+      // 5. Signal Restart (Hot Reload)
+      const restart = scheduleGatewaySigusr1Restart({
+        delayMs: 500,
+        reason: 'dexmart_control_plane_patch',
+        audit: {
+          actor: metadata.actor,
+          clientIp: metadata.ip || 'internal',
+        },
+      });
+
+      return {
+        ok: true,
+        restart,
+        config: validated.config
+      };
+
+    } catch (error: any) {
+      console.error('patchConfig error:', error.message);
+      
+      // Log failed attempt
+      await AuditService.logEvent({
+        eventType: 'CONTROL_PLANE_PATCH_ERROR',
+        actor: metadata.actor,
+        action: 'PATCH_ENGINE_CONFIG',
+        resource: 'engine_config',
+        resourceId: tenantId,
+        riskLevel: 'MEDIUM',
+        ipAddress: metadata.ip,
+        details: { error: error.message },
+        metadata: { patch }
+      }).catch(() => {});
+
+      throw error;
     }
   }
 }

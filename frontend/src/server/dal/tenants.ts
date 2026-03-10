@@ -1,31 +1,59 @@
+import { tenantApi } from '@/lib/api/tenant';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { api } from '@/lib/api/client';
+import type { Webhook, TenantSettings } from '@/types/contracts';
+
 /**
- * Data Access Layer - Tenants
- *
- * Server-side operations for tenant documents and multi-tenancy.
+ * Get tenant settings
  */
+export async function getTenantSettings(): Promise<TenantSettings> {
+    return await tenantApi.getSettings();
+}
+
+/**
+ * Update tenant settings
+ */
+export async function updateTenantSettings(settings: Partial<TenantSettings>): Promise<TenantSettings> {
+    return await tenantApi.updateSettings(settings);
+}
+
+/**
+ * Get webhooks for the current tenant
+ */
+export async function getWebhooks(): Promise<Webhook[]> {
+    const response = await api.get<Webhook[]>(API_ENDPOINTS.WEBHOOKS.LIST);
+    if (!response.success) {
+        throw new Error(typeof response.error === 'string' ? response.error : response.error.message);
+    }
+    return response.data;
+}
+
+/**
+ * Create a new webhook
+ */
+export async function createWebhook(data: Partial<Webhook>): Promise<Webhook> {
+    const response = await api.post<Webhook>(API_ENDPOINTS.WEBHOOKS.CREATE, data);
+    if (!response.success) {
+        throw new Error(typeof response.error === 'string' ? response.error : response.error.message);
+    }
+    return response.data;
+}
+
+/**
+ * Delete a webhook
+ */
+export async function deleteWebhook(id: string): Promise<void> {
+    const response = await api.delete(API_ENDPOINTS.WEBHOOKS.DELETE(id));
+    if (!response.success) {
+        throw new Error(typeof response.error === 'string' ? response.error : response.error.message);
+    }
+}
 
 /**
  * Get tenant by ID
  */
 export async function getTenantById(_tenantId: string): Promise<null> {
-    // Implementation will fetch tenant document
+    // Implementation will fetch tenant document via backend
     return null;
 }
 
-/**
- * Get tenant by slug
- */
-export async function getTenantBySlug(_slug: string): Promise<null> {
-    // Implementation will query tenants by slug field
-    return null;
-}
-
-/**
- * Create new tenant
- */
-export async function createTenant(
-    _data: { name: string; ownerId: string }
-): Promise<string> {
-    // Implementation will create tenant document
-    return '';
-}

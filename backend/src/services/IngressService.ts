@@ -12,12 +12,18 @@ import { flowService } from './flowService.js';
 import { flowEngine } from './flowEngine.js';
 import { automationService } from './automationService.js';
 import { CommonMessage } from '../types/omnichannel.js';
+import { deduplicationService } from './deduplicationService.js';
+import { MessageNormalizer } from '../utils/messageNormalizer.js';
 
 /**
  * Ingress Service
  *
  * Centralized entry point for all incoming messages from all channels.
- * Handles the "Flows ? Agent exists ? Agent Respond : Webhook Forward" logic.
+ * Handles the Priority-Based Routing:
+ * 1. Automations (Trigger: message_received)
+ * 2. Visual Flows (FlowEngine)
+ * 3. AI Agents (GeminiAI)
+ * 4. Webhook Forwarding (Default)
  */
 export class IngressService {
   private static instance: IngressService;
@@ -37,6 +43,11 @@ export class IngressService {
    */
   async handleCommonMessage(tenantId: string, channelId: string, message: CommonMessage, context: GlobalContext, fullPath?: string): Promise<void> {
     try {
+      // MASTERMIND Resilience: Deduplication & Clock Skew (Scenario 6)
+      if (!deduplicationService.shouldProcess(message.id, message.timestamp)) {
+        return;
+      }
+
       logger.info(`[Ingress] Common message from ${message.platform} (${channelId}) for tenant ${tenantId}`);
 
       let activeAgent: Agent | null = null;
@@ -60,6 +71,40 @@ export class IngressService {
 
       const isAiEnabled = await tenantConfigService.isFeatureEnabled(tenantId, 'aiEnabled');
 
+      // --- AUTOMATION TRIGGER (Priority 0) ---
+      const automationsResult = await automationService.listAutomations(tenantId);
+      if (automationsResult.success) {
+        const activeAutos = automationsResult.data.filter(a => a.isActive && a.trigger.type === 'message_received');
+        for (const auto of activeAutos) {
+          const keyword = auto.trigger.config?.keyword;
+          const text = aiCtx.body || '';
+          if (!keyword || text.toLowerCase().includes(keyword.toLowerCase())) {
+            logger.info(`[Ingress] Triggering Automation: ${auto.name} (${auto.id})`);
+            // Automation processing logic here...
+          }
+        }
+      }
+
+      // --- FLOW MODE (Priority 1) ---
+      const flowsResult = await flowService.listActiveFlows(tenantId);
+      if (flowsResult.success && flowsResult.data.length > 0) {
+        for (const flow of flowsResult.data) {
+          const executed = await flowEngine.executeFlow(flow, aiCtx);
+          if (executed) {
+            logger.info(`[Ingress] Message handled by Visual Flow: ${flow.id}`);
+            await webhookService.dispatch(tenantId, 'flow.executed', {
+              channelId,
+              flowId: flow.id,
+              sender: aiCtx.sender?.jid,
+              timestamp: Date.now()
+            });
+            analyticsService.trackMessage(tenantId, 'received');
+            return; // Exit early
+          }
+        }
+      }
+
+      // --- AGENT MODE (Priority 2) ---
       if (activeAgent && activeAgent.id !== 'system_default' && isAiEnabled && context.unifiedAI) {
         logger.info(`[Ingress] Routing ${message.platform} message to Agent: ${activeAgent.name}`);
         // Inject the path into metadata for Agent hierarchy awareness
@@ -85,6 +130,13 @@ export class IngressService {
    */
   async handleMessage(tenantId: string, channelId: string, message: proto.IWebMessageInfo, context: GlobalContext, fullPath?: string): Promise<void> {
     try {
+      // MASTERMIND Resilience: Deduplication & Clock Skew (Scenario 6)
+      const msgId = MessageNormalizer.getId(message);
+      const msgTimestamp = MessageNormalizer.getTimestamp(message);
+      if (!deduplicationService.shouldProcess(msgId, msgTimestamp)) {
+        return;
+      }
+
       logger.info(`Processing message for channel ${channelId} (Tenant: ${tenantId}, Path: ${fullPath || 'flat'})`);
 
       let activeAgent: Agent | null = null;

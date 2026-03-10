@@ -17,19 +17,19 @@ export const API_ENDPOINTS = {
         REFRESH: '/api/auth/refresh',
     },
 
-    // Bots (Protected via /api/internal)
-    BOTS: {
+    // Agents (Protected via /api/internal)
+    AGENTS: {
         LIST: '/api/internal/bots',
         COMMANDS: '/api/internal/bots/commands',
-        GET: (botId: string) => `/api/internal/bots/${botId}` as const,
+        GET: (agentId: string) => `/api/internal/bots/${agentId}` as const,
         CREATE: '/api/internal/bots',
-        UPDATE: (botId: string) => `/api/internal/bots/${botId}` as const,
-        DELETE: (botId: string) => `/api/internal/bots/${botId}` as const,
-        CONNECT: (botId: string) => `/api/internal/bots/${botId}/connect` as const,
-        DISCONNECT: (botId: string) => `/api/internal/bots/${botId}/disconnect` as const,
-        QR_CODE: (botId: string) => `/api/internal/bots/${botId}/qr` as const,
-        PAIRING_CODE: (botId: string) => `/api/internal/bots/${botId}/pairing-code` as const,
-        STATUS: (botId: string) => `/api/internal/bots/${botId}/status` as const,
+        UPDATE: (agentId: string) => `/api/internal/bots/${agentId}` as const,
+        DELETE: (agentId: string) => `/api/internal/bots/${agentId}` as const,
+        CONNECT: (agentId: string) => `/api/internal/bots/${agentId}/connect` as const,
+        DISCONNECT: (agentId: string) => `/api/internal/bots/${agentId}/disconnect` as const,
+        QR_CODE: (agentId: string) => `/api/internal/bots/${agentId}/qr` as const,
+        PAIRING_CODE: (agentId: string) => `/api/internal/bots/${agentId}/pairing-code` as const,
+        STATUS: (agentId: string) => `/api/internal/bots/${agentId}/status` as const,
     },
 
     // Messages
@@ -59,7 +59,14 @@ export const API_ENDPOINTS = {
     ANALYTICS: {
         DASHBOARD: '/api/analytics/dashboard',
         MESSAGES: '/api/analytics/messages',
-        BOTS: '/api/analytics/bots',
+        AGENTS: '/api/analytics/bots',
+    },
+
+    // Webhooks
+    WEBHOOKS: {
+        LIST: '/api/webhooks',
+        CREATE: '/api/webhooks',
+        DELETE: (id: string) => `/api/webhooks/${id}` as const,
     },
 
     // Settings
@@ -67,6 +74,8 @@ export const API_ENDPOINTS = {
         PROFILE: '/api/settings/profile',
         NOTIFICATIONS: '/api/settings/notifications',
         API_KEYS: '/api/settings/api-keys',
+        GET_TENANT: '/api/settings/tenant',
+        UPDATE_TENANT: '/api/settings/tenant',
     },
 
     // Billing
@@ -80,6 +89,11 @@ export const API_ENDPOINTS = {
 
     // Health
     HEALTH: '/api/health',
+
+    // Tenant
+    TENANT: {
+        SETTINGS: '/api/tenant/settings',
+    },
 
     // Omnichannel
     OMNICHANNEL: {

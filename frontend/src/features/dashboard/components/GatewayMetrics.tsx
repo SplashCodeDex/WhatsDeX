@@ -2,13 +2,13 @@
 
 import { useEffect } from 'react';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { 
-    Clock, 
-    Monitor, 
-    Zap, 
-    Wifi, 
-    ShieldCheck, 
-    RefreshCw 
+import {
+    Clock,
+    Monitor,
+    Zap,
+    Wifi,
+    ShieldCheck,
+    RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

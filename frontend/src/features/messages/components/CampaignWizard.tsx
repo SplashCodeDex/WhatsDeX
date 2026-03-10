@@ -3,7 +3,7 @@
 import React, { useState, useActionState, useEffect, startTransition } from 'react';
 import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
 import { useAudiences } from '../hooks/useAudiences';
-import { useBots } from '@/features/bots/hooks/useBots';
+import { useAgents } from '@/features/agents/hooks/useAgents';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,7 @@ interface CampaignFormData {
     targetId: string;
     audienceType: 'audience' | 'contacts' | 'groups';
     distributionType: 'single' | 'pool';
-    botId: string;
+    agentId: string;
     aiSpinning: boolean;
     minDelay: number;
     maxDelay: number;
@@ -65,7 +65,7 @@ export function CampaignWizard() {
     const [step, setStep] = useState<Step>('audience');
     const { data: audiences } = useAudiences();
     const { data: templates } = useTemplates();
-    const { data: bots } = useBots('system_default');
+    const { data: agents } = useAgents('system_default');
 
     const [state, dispatch, isPending] = useActionState(createCampaign, null);
 
@@ -75,7 +75,7 @@ export function CampaignWizard() {
         targetId: '',
         audienceType: 'audience',
         distributionType: 'single',
-        botId: '',
+        agentId: '',
         aiSpinning: false,
         minDelay: 10,
         maxDelay: 30,
@@ -125,7 +125,7 @@ export function CampaignWizard() {
             name: formData.name || `Campaign ${new Date().toLocaleDateString()}`,
             templateId: formData.templateId,
             audience: { type: formData.audienceType, targetId: formData.targetId },
-            distribution: { type: formData.distributionType, botId: formData.botId },
+            distribution: { type: formData.distributionType, agentId: formData.agentId },
             antiBan: {
                 aiSpinning: formData.aiSpinning,
                 minDelay: formData.minDelay,
@@ -288,7 +288,7 @@ export function CampaignWizard() {
                                                 <Layout className="w-4 h-4" />
                                             </div>
                                             <div>
-                                                <div className="font-bold">Single Bot</div>
+                                                <div className="font-bold">Single Agent</div>
                                                 <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Recommended for Starter</div>
                                             </div>
                                         </div>
@@ -306,7 +306,7 @@ export function CampaignWizard() {
                                                 <Sparkles className="w-4 h-4" />
                                             </div>
                                             <div>
-                                                <div className="font-bold">Multi-Bot Pool</div>
+                                                <div className="font-bold">Multi-Agent Pool</div>
                                                 <div className="text-[10px] text-primary uppercase font-bold tracking-tighter">Enterprise Mode</div>
                                             </div>
                                         </div>
@@ -489,18 +489,18 @@ export function CampaignWizard() {
 
                         {formData.distributionType === 'single' && (
                             <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-muted-foreground">Select Sending Bot</Label>
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Select Sending Agent</Label>
                                 <Select
-                                    value={formData.botId}
-                                    onValueChange={(val: string) => setFormData(prev => ({ ...prev, botId: val }))}
+                                    value={formData.agentId}
+                                    onValueChange={(val: string) => setFormData(prev => ({ ...prev, agentId: val }))}
                                     disabled={isPending}
                                 >
                                     <SelectTrigger className="h-12">
-                                        <SelectValue placeholder="Choose a bot" />
+                                        <SelectValue placeholder="Choose an agent" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {bots?.filter((b: any) => b.status === 'connected').map((bot: any) => (
-                                            <SelectItem key={bot.id} value={bot.id}>{bot.name} ({bot.phoneNumber})</SelectItem>
+                                        {agents?.filter((b: any) => b.status === 'connected').map((agent: any) => (
+                                            <SelectItem key={agent.id} value={agent.id}>{agent.name} ({agent.phoneNumber})</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -561,7 +561,7 @@ export function CampaignWizard() {
                         disabled={
                             (step === 'audience' && !formData.targetId) ||
                             (step === 'template' && !formData.templateId) ||
-                            (step === 'distribution' && formData.distributionType === 'single' && !formData.botId) ||
+                            (step === 'distribution' && formData.distributionType === 'single' && !formData.agentId) ||
                             isPending
                         }
                     >

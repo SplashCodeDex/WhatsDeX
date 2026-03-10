@@ -6,19 +6,19 @@ This registry tracks the identification and resolution of critical "Conflict Zon
 
 | ID | Scenario Description | Expected Outcome | Status |
 |:---|:---|:---|:---|
-| 1 | Socket abrupt close during handshake | System retries with exponential backoff | [ ] |
-| 2 | Firestore timeout during credential write | Transaction rolls back, session stays active in memory | [ ] |
-| 3 | Baileys '401 Unauthorized' (Session Expired) | Force logout, cleanup Firestore auth, notify frontend | [ ] |
-| 4 | Rapid network switching (Wifi <-> 5G) | Socket rebinds without losing message state | [ ] |
-| 5 | Credential corruption (malformed JSON in DB) | Auto-heal by clearing corrupted keys and requesting new QR | [ ] |
-| 6 | System clock skew > 5 minutes | Log warning, adjust timestamp logic for message deduplication | [ ] |
-| 7 | Handshake hang (no event from Baileys for 30s) | Timeout trigger, kill socket, restart flow | [ ] |
-| 8 | Multiple simultaneous connection attempts for one channel | Mutex lock prevents "Double Socket" zombie state | [ ] |
-| 9 | Device logout from phone app | Detect 'logged_out' status, cleanup and update UI | [ ] |
-| 10 | 'Stream Closed' error mid-transmission | Re-queue outbound message, reconnect | [ ] |
-| 11 | Empty `auth_info` in Firestore but status 'connected' | Detect inconsistency, trigger re-authentication | [ ] |
-| 12 | Database write failure during 'QR_RECEIVED' event | Re-attempt write once, then reset connection | [ ] |
-| 13 | Baileys update available (minor version mismatch) | Log warning, ensure backward compatibility | [ ] |
+| 1 | Socket abrupt close during handshake | System retries with exponential backoff | [x] |
+| 2 | Firestore timeout during credential write | Transaction rolls back, session stays active in memory | [x] |
+| 3 | Baileys '401 Unauthorized' (Session Expired) | Force logout, cleanup Firestore auth, notify frontend | [x] |
+| 4 | Rapid network switching (Wifi <-> 5G) | Socket rebinds without losing message state | [x] |
+| 5 | Credential corruption (malformed JSON in DB) | Auto-heal by clearing corrupted keys and requesting new QR | [x] |
+| 6 | System clock skew > 5 minutes | Log warning, adjust timestamp logic for message deduplication | [x] |
+| 7 | Handshake hang (no event from Baileys for 30s) | Timeout trigger, kill socket, restart flow | [x] |
+| 8 | Multiple simultaneous connection attempts for one channel | Mutex lock prevents "Double Socket" zombie state | [x] |
+| 9 | Device logout from phone app | Detect 'logged_out' status, cleanup and update UI | [x] |
+| 10 | 'Stream Closed' error mid-transmission | Re-queue outbound message, reconnect | [x] |
+| 11 | Empty `auth_info` in Firestore but status 'connected' | Detect inconsistency, trigger re-authentication | [x] |
+| 12 | Database write failure during 'QR_RECEIVED' event | Re-attempt write once, then reset connection | [x] |
+| 13 | Baileys update available (minor version mismatch) | Log warning, ensure backward compatibility | [x] |
 | 14 | Proxied connection failure (if proxy configured) | Fallback to direct or mark as error | [ ] |
 | 15 | Battery Optimization/Sleep during sync | Keepalive heartbeats maintain socket integrity | [ ] |
 
@@ -26,15 +26,15 @@ This registry tracks the identification and resolution of critical "Conflict Zon
 
 | ID | Scenario Description | Expected Outcome | Status |
 |:---|:---|:---|:---|
-| 16 | "Thundering Herd": 100+ incoming messages in 1s | BullMQ handles ingestion, IngressService doesn't crash | [ ] |
+| 16 | "Thundering Herd": 100+ incoming messages in 1s | BullMQ handles ingestion, IngressService doesn't crash | [x] |
 | 17 | Rapid QR Clicking: "Generate QR" clicked 10 times | Throttle requests, return existing session if active | [ ] |
-| 18 | Delete-while-starting: Delete channel during `connect()` | Abort connection immediately, prevent orphaned memory leak | [ ] |
+| 18 | Delete-while-starting: Delete channel during `connect()` | Abort connection immediately, prevent orphaned memory leak | [x] |
 | 19 | Stop-while-sending: Stop bot while uploading 20MB video | Kill upload stream, cleanup temp files | [ ] |
 | 20 | Dual-Tenant Race: Two tenants update same system config | Optimistic locking prevents config corruption | [ ] |
 | 21 | Redis crash during message queuing | Fallback to immediate processing or temporary memory queue | [ ] |
 | 22 | BullMQ Worker starvation (long-running skills) | Proper worker scaling or skill timeouts | [ ] |
 | 23 | Parallel media downloads (5+ large files) | Memory limits enforced, prevent OOM crash | [ ] |
-| 24 | "Message Loop": Bot replies to its own message | Deduplication/isFromMe logic prevents infinite loop | [ ] |
+| 24 | "Message Loop": Bot replies to its own message | Deduplication/isFromMe logic prevents infinite loop | [x] |
 | 25 | Inbound burst while updating Tenant tier | UsageGuard applies new limits mid-stream | [ ] |
 | 26 | Firestore rate limit hit (too many writes) | Batching and retry logic prevents data loss | [ ] |
 | 27 | Large group sync (5000+ contacts) | Non-blocking sync, process in background | [ ] |

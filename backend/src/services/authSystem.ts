@@ -35,6 +35,8 @@ class AuthSystem extends EventEmitter {
   private stats: AuthStats;
   private reconnectAttempts: number = 0;
   private reconnectTimer: NodeJS.Timeout | null = null;
+  private connectTimeout: NodeJS.Timeout | null = null;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
 
   constructor(config: AuthConfig, tenantId: string, channelId: string, collectionOrPath: string = 'channels') {
     super();
@@ -65,6 +67,24 @@ class AuthSystem extends EventEmitter {
       this.reconnectTimer = null;
     }
 
+    if (this.connectTimeout) {
+      clearTimeout(this.connectTimeout);
+      this.connectTimeout = null;
+    }
+
+    // Scenario 7: Handshake hang protection (30s)
+    this.connectTimeout = setTimeout(() => {
+      if (this.authState === 'connecting') {
+        logger.warn(`[AuthSystem] Connection handshake timed out for ${this.channelId}. Killing socket.`);
+        if (this.client) {
+          try { this.client.end(undefined); } catch (e) { }
+          this.client = null;
+        }
+        this.authState = 'disconnected';
+        this.emit('disconnected', new Error('Handshake Timeout'));
+      }
+    }, 30 * 1000);
+
     this.authState = 'connecting';
     const method = this.config.channel.phoneNumber ? 'pairing' : 'qr';
     this._recordAttempt(method);
@@ -85,7 +105,10 @@ class AuthSystem extends EventEmitter {
 
       const pinoLogger = pino({ level: 'silent' });
 
-      const { version } = await fetchLatestBaileysVersion();
+      const { version, isLatest } = await fetchLatestBaileysVersion();
+      if (!isLatest) {
+        logger.warn(`[AuthSystem] A newer version of Baileys is available: ${version.join('.')}. Current session might need update.`);
+      }
 
       this.client = makeWASocket({
         version,
@@ -107,6 +130,10 @@ class AuthSystem extends EventEmitter {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
+          if (this.connectTimeout) {
+            clearTimeout(this.connectTimeout);
+            this.connectTimeout = null;
+          }
           logger.info(`[AuthSystem] QR RECEIVED for ${this.channelId}. Length: ${qr.length}`);
           this.currentQrCode = qr;
           this.emit('qr', qr);
@@ -151,6 +178,10 @@ class AuthSystem extends EventEmitter {
             }, delay);
           }
         } else if (connection === 'open') {
+          if (this.connectTimeout) {
+            clearTimeout(this.connectTimeout);
+            this.connectTimeout = null;
+          }
           logger.info(`[AuthSystem] CONNECTION OPEN for ${this.channelId}`);
           this.authState = 'connected';
           this.reconnectAttempts = 0; // Reset backoff on success
@@ -175,6 +206,10 @@ class AuthSystem extends EventEmitter {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
+    }
+    if (this.connectTimeout) {
+      clearTimeout(this.connectTimeout);
+      this.connectTimeout = null;
     }
     if (this.client) {
       try {

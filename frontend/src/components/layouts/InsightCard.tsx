@@ -2,26 +2,26 @@
 
 import { Bot, CreditCard, MessageSquare, ShieldCheck, Activity } from 'lucide-react';
 
-import { useBots } from '@/features/bots/hooks/useBots';
+import { useAgents } from '@/features/agents/hooks/useAgents';
 import { useSubscription } from '@/features/billing/hooks/useSubscription';
 import { useContacts } from '@/features/contacts/hooks/useContacts';
 import { useAudiences } from '@/features/messages/hooks/useAudiences';
 
 interface InsightCardProps {
-    type: 'dashboard' | 'bots' | 'messages' | 'billing' | 'contacts' | 'settings';
+    type: 'dashboard' | 'agents' | 'messages' | 'billing' | 'contacts' | 'settings';
 }
 
 export function InsightCard({ type }: InsightCardProps) {
-    const { data: bots } = useBots();
+    const { data: agents } = useAgents();
     const { subscription, limits } = useSubscription();
     const { data: contacts } = useContacts();
     const { data: audiences } = useAudiences();
 
     const stats = {
-        bots: {
-            connected: bots?.filter(b => b.status === 'connected').length || 0,
-            total: bots?.length || 0,
-            disconnected: bots?.filter(b => b.status !== 'connected').length || 0,
+        agents: {
+            connected: agents?.filter(b => b.status === 'connected').length || 0,
+            total: agents?.length || 0,
+            disconnected: agents?.filter(b => b.status !== 'connected').length || 0,
         },
         billing: {
             plan: subscription?.plan || 'Starter',
@@ -29,7 +29,7 @@ export function InsightCard({ type }: InsightCardProps) {
             status: subscription?.status || 'active',
         },
         messages: {
-            total: bots?.reduce((acc, b) => acc + (b.messageCount || 0), 0) || 0,
+            total: agents?.reduce((acc, b) => acc + (b.messageCount || 0), 0) || 0,
             limit: 5000,
         },
         contacts: {
@@ -40,24 +40,24 @@ export function InsightCard({ type }: InsightCardProps) {
 
     const renderContent = () => {
         switch (type) {
-            case 'bots':
+            case 'agents':
                 return (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex items-center gap-2">
                                 <Bot className="h-4 w-4 text-primary" />
-                                <span className="font-semibold text-sm">Bot Status</span>
+                                <span className="font-semibold text-sm">Agent Status</span>
                             </div>
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Live</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             <div className="bg-muted/50 p-2 rounded-lg border border-border/50">
                                 <div className="text-[10px] text-muted-foreground uppercase">Connected</div>
-                                <div className="text-lg font-bold text-primary">{stats.bots.connected}</div>
+                                <div className="text-lg font-bold text-primary">{stats.agents.connected}</div>
                             </div>
                             <div className="bg-muted/50 p-2 rounded-lg border border-border/50">
                                 <div className="text-[10px] text-muted-foreground uppercase">Offline</div>
-                                <div className="text-lg font-bold text-destructive">{stats.bots.disconnected}</div>
+                                <div className="text-lg font-bold text-destructive">{stats.agents.disconnected}</div>
                             </div>
                         </div>
                     </div>
@@ -77,12 +77,12 @@ export function InsightCard({ type }: InsightCardProps) {
                             <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-primary"
-                                    style={{ width: `${(stats.bots.total / stats.billing.limit) * 100}%` }}
+                                    style={{ width: `${(stats.agents.total / stats.billing.limit) * 100}%` }}
                                 />
                             </div>
                             <div className="flex justify-between text-[10px] text-muted-foreground">
-                                <span>{stats.bots.total} of {stats.billing.limit} bots</span>
-                                <span>{Math.round((stats.bots.total / stats.billing.limit) * 100)}%</span>
+                                <span>{stats.agents.total} of {stats.billing.limit} agents</span>
+                                <span>{Math.round((stats.agents.total / stats.billing.limit) * 100)}%</span>
                             </div>
                         </div>
                     </div>
@@ -131,7 +131,7 @@ export function InsightCard({ type }: InsightCardProps) {
             default:
                 return (
                     <div className="text-center py-2">
-                        <span className="text-xs text-muted-foreground italic">Quick access to {type}</span>
+                        <span className="text-xs text-muted-foreground italic">Quick access to agents</span>
                     </div>
                 );
         }

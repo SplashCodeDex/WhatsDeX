@@ -37,6 +37,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public context: any; // Injected GlobalContext
   public status: string = 'disconnected';
   private presenceInterval: NodeJS.Timeout | null = null;
+  private isDisconnecting: boolean = false;
 
   constructor(public tenantId: string, channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
     this.instanceId = channelId;
@@ -115,6 +116,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
 
   public async connect(forceNewSession: boolean = false): Promise<void> {
     logger.info(`Connecting WhatsappAdapter for channel ${this.channelId}. Force: ${forceNewSession}`);
+    this.isDisconnecting = false;
 
     // MASTERMIND Goodie: Listen for QR codes and convert to DataURL for UI
     // MUST be attached before connect() to catch early events
@@ -147,11 +149,26 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     });
 
     const connectResult = await this.authSystem.connect(forceNewSession);
+    
+    // MASTERMIND Resilience: If disconnect() was called while we were waiting
+    if (this.isDisconnecting) {
+      logger.warn(`[WhatsappAdapter] Connection aborted for ${this.channelId} due to concurrent disconnect`);
+      if (connectResult.success && connectResult.data) {
+        try { connectResult.data.end(undefined); } catch (e) { }
+      }
+      return;
+    }
+
     if (!connectResult.success) {
       throw (connectResult as any).error;
     }
 
     this.socket = connectResult.data;
+
+    if (!this.socket) {
+      logger.warn(`[WhatsappAdapter] Socket lost during connection phase for ${this.channelId}`);
+      return;
+    }
 
     // MASTERMIND Goodie: Bind EventHandler for Anti-Call and Group Sync
     eventHandler.bind(this.socket as any);
@@ -164,6 +181,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
 
     // MASTERMIND Goodie: Automatic Phone Number Discovery
     this.socket.ev.on('connection.update', async (update: any) => {
+      if (!this.socket) return;
       if (update.connection === 'open' && update.me?.id) {
         this.qrCodeUrl = null; // Clear QR on success
         const phoneNumber = update.me.id.split(':')[0];
@@ -227,7 +245,27 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
         } else {
           payload.text = text;
         }
-        const result = await this.socket.sendMessage(to, payload);
+        let result: any;
+        let retryCount = 0;
+        const maxRetries = 2;
+
+        while (retryCount <= maxRetries) {
+          try {
+            if (!this.socket) throw new Error('Socket not initialized');
+            result = await this.socket.sendMessage(to, payload);
+            break; // Success
+          } catch (error: any) {
+            retryCount++;
+            const isStreamClosed = error?.message?.includes('Stream Closed') || error?.message?.includes('connection closed');
+            if (isStreamClosed && retryCount <= maxRetries) {
+              logger.warn(`[WhatsappAdapter] sendMessage failed (Stream Closed). Retrying ${retryCount}/${maxRetries}...`);
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+              // Note: Reconnection logic in AuthSystem should ideally be firing in parallel
+              continue;
+            }
+            throw error;
+          }
+        }
 
         // Track stats
         try {
@@ -286,6 +324,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   }
 
   public async disconnect(): Promise<void> {
+    this.isDisconnecting = true;
     if (this.presenceInterval) {
       clearInterval(this.presenceInterval);
       this.presenceInterval = null;

@@ -21,7 +21,7 @@ import { configService } from '../services/ConfigService.js';
 
 export default {
   // Basic bot information
-  bot: configService.bot,
+  bot: configService.get('channel') || {},
 
   // Custom bot messages for specific situations
   msg: configService.msg,

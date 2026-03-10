@@ -6,12 +6,13 @@ import { Timestamp } from 'firebase-admin/firestore';
 import logger from '../utils/logger.js';
 
 import { tenantConfigService } from './tenantConfigService.js';
+import { OpenClawGateway } from './openClawGateway.js';
 
 export class WebhookService {
     /**
      * Create a new webhook for a tenant
      */
-    async createWebhook(tenantId: string, data: Partial<Webhook>): Promise<Result<Webhook>> {
+    async createWebhook(tenantId: string, data: Partial<Webhook>, metadata: { actor: string; ip?: string } = { actor: 'system' }): Promise<Result<Webhook>> {
         try {
             const webhookId = `wh_${Date.now()}`;
             const secret = crypto.randomBytes(32).toString('hex');
@@ -30,6 +31,29 @@ export class WebhookService {
 
             const webhook = WebhookSchema.parse(rawWebhook);
             await firebaseService.setDoc<'tenants/{tenantId}/webhooks'>('webhooks', webhookId, webhook as any, tenantId);
+
+            // FUSION: Sync with OpenClaw engine
+            try {
+                const gateway = OpenClawGateway.getInstance();
+                if (gateway.isInitialized()) {
+                    const liveConfig = await gateway.getLiveConfig();
+                    const currentHooks = liveConfig.hooks?.mappings || [];
+                    
+                    await gateway.patchConfig(tenantId, {
+                        hooks: {
+                            mappings: [...currentHooks, {
+                                id: webhook.id,
+                                name: webhook.name,
+                                url: webhook.url,
+                                events: webhook.events,
+                                isActive: webhook.isActive
+                            }]
+                        }
+                    }, metadata);
+                }
+            } catch (fusionError) {
+                logger.error(`[WebhookService] Engine sync failed for ${webhookId}:`, fusionError);
+            }
 
             return { success: true, data: webhook };
         } catch (error: unknown) {
@@ -128,9 +152,27 @@ export class WebhookService {
     /**
      * Delete a webhook
      */
-    async deleteWebhook(tenantId: string, webhookId: string): Promise<Result<void>> {
+    async deleteWebhook(tenantId: string, webhookId: string, metadata: { actor: string; ip?: string } = { actor: 'system' }): Promise<Result<void>> {
         try {
             await firebaseService.deleteDoc<'tenants/{tenantId}/webhooks'>('webhooks', webhookId, tenantId);
+
+            // FUSION: Sync with OpenClaw engine
+            try {
+                const gateway = OpenClawGateway.getInstance();
+                if (gateway.isInitialized()) {
+                    const liveConfig = await gateway.getLiveConfig();
+                    const filteredHooks = (liveConfig.hooks?.mappings || []).filter((h: any) => h.id !== webhookId);
+                    
+                    await gateway.patchConfig(tenantId, {
+                        hooks: {
+                            mappings: filteredHooks
+                        }
+                    }, metadata);
+                }
+            } catch (fusionError) {
+                logger.error(`[WebhookService] Engine removal failed for ${webhookId}:`, fusionError);
+            }
+
             return { success: true, data: undefined };
         } catch (error: unknown) {
             return { success: false, error: error instanceof Error ? error : new Error(String(error)) };

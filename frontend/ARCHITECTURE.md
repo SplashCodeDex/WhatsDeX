@@ -65,7 +65,7 @@ src/
 │   │   └── register/page.tsx
 │   └── (dashboard)/              # Dashboard route group
 │       ├── layout.tsx            # Dashboard shell
-│       └── bots/page.tsx
+│       └── agents/page.tsx
 │
 ├── features/                     # 🔷 BUSINESS DOMAINS
 │   │                             # Self-contained feature modules
@@ -75,7 +75,7 @@ src/
 │   │   ├── actions.ts            # Server Actions
 │   │   ├── schemas.ts            # Zod schemas
 │   │   └── index.ts              # Public API
-│   ├── bots/                     # Bot management
+│   ├── agents/                   # Agent management
 │   ├── messages/                 # Messaging
 │   ├── dashboard/                # Dashboard widgets
 │   ├── billing/                  # Subscriptions
@@ -128,16 +128,16 @@ Route pages in `app/` should ONLY:
 - NO business logic
 
 ```tsx
-// ✅ Correct: app/(dashboard)/bots/page.tsx
-import { BotList } from '@/features/bots';
+// ✅ Correct: app/(dashboard)/agents/page.tsx
+import { AgentList } from '@/features/agents';
 
-export default function BotsPage() {
-  return <BotList />;
+export default function AgentsPage() {
+  return <AgentList />;
 }
 
 // ❌ Wrong: Logic in page file
-export default function BotsPage() {
-  const [bots, setBots] = useState([]);
+export default function AgentsPage() {
+  const [agents, setAgents] = useState([]);
   useEffect(() => {
     /* fetch */
   }, []);
@@ -169,12 +169,12 @@ function BotActions() {
 Each feature is a self-contained module with predictable structure:
 
 ```
-features/bots/
+features/agents/
 ├── components/           # UI specific to this feature
-│   ├── BotCard.tsx
-│   └── BotList.tsx
+│   ├── AgentCard.tsx
+│   └── AgentList.tsx
 ├── hooks/                # Feature-specific hooks
-│   └── useBots.ts
+│   └── useAgents.ts
 ├── actions.ts            # Server Actions for mutations
 ├── schemas.ts            # Zod validation schemas
 ├── types.ts              # Feature-specific types
@@ -299,18 +299,18 @@ async function Dashboard() {
 ### Server Actions (Mutations)
 
 ```tsx
-// features/bots/actions.ts
+// features/agents/actions.ts
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
-const CreateBotSchema = z.object({
+const CreateAgentSchema = z.object({
   name: z.string().min(1).max(100),
 });
 
-export async function createBot(formData: FormData) {
-  const parsed = CreateBotSchema.safeParse({
+export async function createAgent(formData: FormData) {
+  const parsed = CreateAgentSchema.safeParse({
     name: formData.get('name'),
   });
 
@@ -318,10 +318,10 @@ export async function createBot(formData: FormData) {
     return { success: false, error: parsed.error.flatten() };
   }
 
-  // Create bot in database
-  await db.collection('bots').add(parsed.data);
+  // Create agent in database
+  await db.collection('agents').add(parsed.data);
 
-  revalidatePath('/bots');
+  revalidatePath('/agents');
   return { success: true };
 }
 ```
@@ -377,8 +377,8 @@ features/bots/
 │   ├── BotCard.tsx
 │   └── BotCard.test.tsx    # Co-located
 ├── hooks/
-│   ├── useBots.ts
-│   └── useBots.test.ts     # Co-located
+│   ├── useAgents.ts
+│   └── useAgents.test.ts     # Co-located
 ```
 
 ### Commands

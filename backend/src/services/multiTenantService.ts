@@ -150,6 +150,9 @@ export class MultiTenantService {
    * Get tenant by ID
    */
   async getTenant(tenantId: string): Promise<Result<Tenant>> {
+    if (!tenantId) {
+      return { success: false, error: new Error('Tenant ID is required for lookup') };
+    }
     try {
       const doc = await firebaseService.getDoc('tenants', tenantId);
       if (!doc) {

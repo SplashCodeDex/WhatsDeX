@@ -14,6 +14,7 @@
 
 import { db } from '../lib/firebase.js';
 import logger from '../utils/logger.js';
+import { OpenClawGateway } from './openClawGateway.js';
 import {
     TenantSettings,
     TenantSettingsSchema,
@@ -97,25 +98,44 @@ export class TenantConfigService {
      */
     async updateTenantSettings(
         tenantId: string,
-        updates: Partial<TenantSettings>
+        updates: Partial<TenantSettings>,
+        metadata: { actor: string; ip?: string } = { actor: 'system' }
     ): Promise<Result<TenantSettings>> {
         try {
             const docRef = db.collection('tenants').doc(tenantId).collection('settings').doc('general');
 
-            // Get current settings
+            // 1. Fetch current settings
             const currentResult = await this.getTenantSettings(tenantId);
             if (!currentResult.success) {
                 return currentResult;
             }
 
-            // Merge and validate
+            // 2. Merge and validate for Firestore
             const merged = TenantSettingsSchema.parse({
                 ...currentResult.data,
                 ...updates,
                 updatedAt: new Date(),
             });
 
-            // Save to Firestore
+            // 3. FUSION: Patch OpenClaw Engine (Primary Source of Truth)
+            try {
+                const gateway = OpenClawGateway.getInstance();
+                if (gateway.isInitialized()) {
+                    await gateway.patchConfig(tenantId, {
+                        acp: {
+                            tenantSettings: {
+                                [tenantId]: merged
+                            }
+                        }
+                    }, metadata);
+                }
+            } catch (fusionError) {
+                logger.error(`[TenantConfigService] Fusion patch failed for ${tenantId}:`, fusionError);
+                // We continue to Firestore sync even if engine patch fails, 
+                // but we might want to flag this for retry later.
+            }
+
+            // 4. Persistence: Sync to Firestore (Read Replica)
             await docRef.set(merged, { merge: true });
 
             // Invalidate cache
@@ -147,6 +167,22 @@ export class TenantConfigService {
 
             const docRef = db.collection('tenants').doc(tenantId).collection('settings').doc('general');
             await docRef.set(settings);
+
+            // 3. FUSION: Patch OpenClaw Engine
+            try {
+                const gateway = OpenClawGateway.getInstance();
+                if (gateway.isInitialized()) {
+                    await gateway.patchConfig(tenantId, {
+                        acp: {
+                            tenantSettings: {
+                                [tenantId]: settings
+                            }
+                        }
+                    }, { actor: 'system-init' });
+                }
+            } catch (fusionError) {
+                logger.error(`[TenantConfigService] Fusion initialization failed for ${tenantId}:`, fusionError);
+            }
 
             logger.info(`[TenantConfigService] Initialized settings for new tenant ${tenantId}`);
             return { success: true, data: settings };

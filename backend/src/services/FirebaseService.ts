@@ -82,15 +82,18 @@ export class FirebaseService {
    * Validate a Firestore path to ensure it doesn't contain illegal segments (empty, undefined, null)
    * which would cause the SDK to hang or throw.
    */
-  private validatePath(path: string): void {
+  private validatePath(path: string | undefined | null): void {
     if (!path) {
+      logger.error('Firestore path is missing or empty', { path });
       throw new Error('Firestore path is required');
     }
 
     const segments = path.split('/');
     for (const segment of segments) {
       if (!segment || segment === 'undefined' || segment === 'null' || segment.trim() === '') {
-        throw new Error(`Invalid Firestore path segment detected in "${path}": "${segment}"`);
+        const errorMsg = `Invalid Firestore path segment detected in "${path}": "${segment}"`;
+        logger.error(`[FirebaseService] ${errorMsg}`);
+        throw new Error(errorMsg);
       }
     }
   }
@@ -107,7 +110,7 @@ export class FirebaseService {
       // Special handling for nested subcollections
       if (collection.includes('/')) {
         const parts = collection.split('/');
-        
+
         // Ensure all parts are valid before interpolation
         parts.forEach(p => this.validatePath(p));
 
@@ -169,7 +172,10 @@ export class FirebaseService {
 
       if (!doc.exists) return null;
 
-      const data = doc.data();
+      const data = {
+        ...doc.data(),
+        id: doc.id
+      };
       return schema.parse(data) as FirestoreSchema[K];
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -238,11 +244,15 @@ export class FirebaseService {
       const snapshot = await colRef.get();
 
       return snapshot.docs.map(doc => {
+        const data = {
+          ...doc.data(),
+          id: doc.id
+        };
         try {
-          return schema.parse(doc.data()) as FirestoreSchema[K];
+          return schema.parse(data) as FirestoreSchema[K];
         } catch (parsingError) {
           logger.warn(`Firestore parsing error in getCollection [${path}/${doc.id}]:`, parsingError);
-          return doc.data() as FirestoreSchema[K]; // Fallback to raw data in production but log warning
+          return data as FirestoreSchema[K]; // Fallback to raw data with ID in production but log warning
         }
       });
     } catch (error: unknown) {
@@ -280,16 +290,16 @@ export class FirebaseService {
     try {
       const { path } = this.getCollectionInfo(collectionPath, tenantId);
       const colRef = db.collection(path);
-      
+
       // Get all documents in the collection
       const snapshot = await colRef.get();
-      
+
       // Delete each document
       const batch = db.batch();
       snapshot.docs.forEach((doc) => {
         batch.delete(doc.ref);
       });
-      
+
       await batch.commit();
       logger.info(`Firestore collection deleted recursively: ${path}`);
     } catch (error: unknown) {

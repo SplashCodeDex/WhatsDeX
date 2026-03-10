@@ -44,7 +44,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
         toast.promise(
             // To link in hierarchy, we move the channel document
             // We'll need a backend endpoint for "moveChannel" or just use updateChannel
-            api.patch(API_ENDPOINTS.BOTS.UPDATE(channelId), { assignedAgentId: agentId }),
+            api.patch(API_ENDPOINTS.AGENTS.UPDATE(channelId), { assignedAgentId: agentId }),
             {
                 loading: 'Linking agent to connection...',
                 success: () => {
@@ -58,7 +58,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
 
     const handleUnlink = async (channelId: string) => {
         toast.promise(
-            api.patch(API_ENDPOINTS.BOTS.UPDATE(channelId), { assignedAgentId: 'system_default' }),
+            api.patch(API_ENDPOINTS.AGENTS.UPDATE(channelId), { assignedAgentId: 'system_default' }),
             {
                 loading: 'Unlinking agent...',
                 success: () => {

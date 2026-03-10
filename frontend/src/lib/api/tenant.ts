@@ -1,4 +1,4 @@
-import { TenantSettings } from '@/types/tenantConfig';
+import { TenantSettings } from '@/types/contracts';
 import { api } from './client';
 
 export const tenantApi = {

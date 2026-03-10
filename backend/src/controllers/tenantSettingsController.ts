@@ -33,6 +33,9 @@ export class TenantSettingsController {
     static async updateSettings(req: Request, res: Response) {
         try {
             const tenantId = req.user?.tenantId;
+            const actor = Array.isArray(req.user?.userId) ? req.user.userId[0] : (req.user?.userId || 'unknown');
+            const ip = req.ip;
+
             if (!tenantId) {
                 return res.status(401).json({ success: false, error: 'Authentication required' });
             }
@@ -48,7 +51,7 @@ export class TenantSettingsController {
                 });
             }
 
-            const result = await tenantConfigService.updateTenantSettings(tenantId, parseResult.data);
+            const result = await tenantConfigService.updateTenantSettings(tenantId, parseResult.data, { actor, ip });
 
             if (result.success) {
                 res.json({ success: true, data: result.data });
