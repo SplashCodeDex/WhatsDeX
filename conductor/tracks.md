@@ -9,12 +9,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 ### [ ] Track: Omnichannel Orphan Logic Audit & Wiring
 *Link: [./conductor/tracks/omnichannel_audit_20260308/](./tracks/omnichannel_audit_20260308/)*
 
-### [x] Track: Connection Management Gaps (Audit Fix Phase 1)
-*Link: [./conductor/tracks/conn_mgmt_gaps_20260308/](./tracks/conn_mgmt_gaps_20260308/)*
-
 ---
 
 ## Archived Tracks
+
+### [x] Track: Connection Management Gaps (Audit Fix Phase 1)
+*Link: [./conductor/archive/conn_mgmt_gaps_20260308/](./conn_mgmt_gaps_20260308/)*
 
 ### [~] Track: Integrating Critical Upstream Patching (Telegram Proxy, Discord IDs, Anthropic Haiku)
 *Link: [./conductor/archive/openclaw_channel_fixes_20260305/](./openclaw_channel_fixes_20260305/)*
