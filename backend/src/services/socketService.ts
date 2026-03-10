@@ -134,6 +134,13 @@ export class SocketService {
     }
 
     /**
+     * Emit QR Code update
+     */
+    public emitQRCode(tenantId: string, channelId: string, qrCode: string): Result<void> {
+        return this.emitToTenant(tenantId, 'channel_qr_update', { channelId, qrCode });
+    }
+
+    /**
      * Emit channel activity event (message received, skill triggered, etc.)
      */
     public emitActivity(tenantId: string, channelId: string, platform: string, type: string, message: string, metadata?: any): Result<void> {

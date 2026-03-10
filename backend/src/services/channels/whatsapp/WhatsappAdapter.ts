@@ -80,7 +80,12 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     // MUST be attached before connect() to catch early events
     this.authSystem.on('qr', async (qr) => {
       try {
-        this.qrCodeUrl = await QRCode.toDataURL(qr);
+        const dataUrl = await QRCode.toDataURL(qr);
+        this.qrCodeUrl = dataUrl;
+
+        // MASTERMIND Goodie: Real-time Socket Push
+        const { socketService } = await import('@/services/socketService.js');
+        socketService.emitQRCode(this.tenantId, this.channelId, dataUrl);
       } catch (err) {
         logger.error('Failed to generate QR DataURL', err);
       }

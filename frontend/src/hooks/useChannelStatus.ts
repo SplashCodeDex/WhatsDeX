@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { useSocket } from './useSocket';
 
 export function useChannelStatus(channelId: string, agentId: string = 'system_default', enabled: boolean = false) {
     const [status, setStatus] = useState<any>(null);
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { on } = useSocket();
 
     useEffect(() => {
         if (!enabled || !channelId) {
@@ -14,6 +16,19 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
             setQrCode(null);
             return;
         }
+
+        // MASTERMIND Goodie: Real-time Socket Updates
+        const cleanupQrListener = on('channel_qr_update', (data: any) => {
+            if (data.channelId === channelId) {
+                setQrCode(data.qrCode);
+            }
+        });
+
+        const cleanupStatusListener = on('channel_status_update', (data: any) => {
+            if (data.channelId === channelId) {
+                setStatus((prev: any) => ({ ...prev, status: data.status }));
+            }
+        });
 
         let interval: NodeJS.Timeout;
         let isMounted = true;
@@ -32,7 +47,10 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
                     setError(null);
                     
                     // If we need QR (connecting status or explicitly has QR)
-                    if (statusRes.data.status === 'connecting' || statusRes.data.status === 'initializing' || statusRes.data.hasQR) {
+                    if (statusRes.data.status === 'connecting' || 
+                        statusRes.data.status === 'initializing' || 
+                        statusRes.data.status === 'qr_pending' ||
+                        statusRes.data.hasQR) {
                         const qrRes = await api.get<any>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.QR_CODE(agentId, channelId));
                         
                         if (!isMounted) return;
@@ -66,8 +84,10 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
         return () => {
             isMounted = false;
             clearInterval(interval);
+            cleanupQrListener();
+            cleanupStatusListener();
         };
-    }, [channelId, agentId, enabled]);
+    }, [channelId, agentId, enabled, on]);
 
     return { status, qrCode, isLoading, error };
 }
