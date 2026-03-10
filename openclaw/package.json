@@ -57,6 +57,22 @@
       "types": "./src/telegram/send.ts",
       "default": "./dist/telegram/send.js"
     },
+    "./discord/send": {
+      "types": "./src/discord/send.ts",
+      "default": "./dist/discord/send.js"
+    },
+    "./slack/send": {
+      "types": "./src/slack/send.ts",
+      "default": "./dist/slack/send.js"
+    },
+    "./signal/send": {
+      "types": "./src/signal/send.ts",
+      "default": "./dist/signal/send.js"
+    },
+    "./imessage/send": {
+      "types": "./src/imessage/send.ts",
+      "default": "./dist/imessage/send.js"
+    },
     "./web/active-listener": {
       "types": "./src/web/active-listener.ts",
       "default": "./dist/web/active-listener.js"

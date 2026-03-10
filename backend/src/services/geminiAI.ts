@@ -1226,10 +1226,10 @@ Message: "${content}"
   }
 
   detectMediaType(ctx: MessageContext) {
-    if (ctx.msg.contentType === 'imageMessage') return 'image';
-    if (ctx.msg.contentType === 'videoMessage') return 'video';
-    if (ctx.msg.contentType === 'audioMessage') return 'audio';
-    if (ctx.msg.contentType === 'documentMessage') return 'document';
+    if (ctx.getContentType() === 'imageMessage') return 'image';
+    if (ctx.getContentType() === 'videoMessage') return 'video';
+    if (ctx.getContentType() === 'audioMessage') return 'audio';
+    if (ctx.getContentType() === 'documentMessage') return 'document';
     return 'text';
   }
 

@@ -17,7 +17,7 @@ export default {
     }
 
     const [checkMedia, checkQuotedMedia] = await Promise.all([
-      tools.cmd.checkMedia(ctx.msg.contentType, ['image', 'gif', 'video']),
+      tools.cmd.checkMedia(ctx.getContentType(), ['image', 'gif', 'video']),
       tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, ['image', 'gif', 'video']),
     ]);
 
@@ -41,7 +41,7 @@ export default {
       const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
       const failedGroupIds: string[] = [];
 
-      const rawType = ctx.msg.contentType || ctx.quoted?.contentType || '';
+      const rawType = ctx.getContentType() || ctx.quoted?.contentType || '';
       const mediaKey = rawType.includes('image') ? 'image' : rawType.includes('video') ? 'video' : 'document';
 
       const buffer = await (ctx.msg as any).media?.toBuffer() || await (ctx.quoted as any)?.media?.toBuffer();

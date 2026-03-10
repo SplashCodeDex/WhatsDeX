@@ -20,7 +20,7 @@ export default {
       );
 
     const [checkMedia, checkQuotedMedia] = await Promise.all([
-      tools.cmd.checkMedia(ctx.msg.contentType, 'image'),
+      tools.cmd.checkMedia(ctx.getContentType(), 'image'),
       tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, 'image'),
     ]);
 
@@ -30,7 +30,7 @@ export default {
       );
 
     try {
-      const buffer = (await ctx.msg.media.toBuffer()) || (await ctx.quoted?.media.toBuffer());
+      const buffer = (await ctx.getMedia()?.toBuffer?.()) || (await ctx.getQuoted()?.media?.toBuffer?.());
       const uploadUrl = await tools.api.uploadImage(buffer);
       const result = tools.api.createUrl('izumi', '/ai-image/geminiedt', {
         prompt: input,

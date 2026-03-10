@@ -15,7 +15,7 @@ export default {
   code: async (ctx: MessageContext) => {
     const { formatter, tools, config } = ctx.channel.context;
     const [checkMedia, checkQuotedMedia] = await Promise.all([
-      tools.cmd.checkMedia(ctx.msg.contentType, ['audio', 'document', 'image', 'video', 'sticker']),
+      tools.cmd.checkMedia(ctx.getContentType(), ['audio', 'document', 'image', 'video', 'sticker']),
       tools.cmd.checkQuotedMedia(ctx.quoted?.contentType, [
         'audio',
         'document',
@@ -36,8 +36,8 @@ export default {
       );
 
     try {
-      const buffer = (await ctx.msg.media.toBuffer()) || (await ctx.quoted?.media.toBuffer());
-      const filename = `file.${tools.mime.extension(ctx.msg.media.mimetype || ctx.quoted?.media.mimetype)}`;
+      const buffer = (await ctx.getMedia()?.toBuffer?.()) || (await ctx.getQuoted()?.media?.toBuffer?.());
+      const filename = `file.${tools.mime.extension(ctx.getMedia().mimetype || ctx.quoted?.media.mimetype)}`;
       const result = await tools.api.uploadFile(buffer, filename);
 
       await ctx.reply({
