@@ -1,6 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { toolRegistry, ToolDefinition } from './toolRegistry.js';
+// @ts-ignore
+import { loadWorkspaceSkillEntries } from 'openclaw/agents/skills/workspace';
 import { createOpenClawTools, handleWhatsAppAction, handleTelegramAction } from 'openclaw';
 import logger from '../utils/logger.js';
 import configManager from '../config/ConfigManager.js';
@@ -50,6 +52,39 @@ export class OpenClawSkillBridge {
         this.bridgeOpenClawTool(ocTool);
       }
       logger.info(`✅ Successfully bridged ${ocTools.length} OpenClaw tools.`);
+
+      // Bridge native prompt-based skills
+      logger.info('🧠 Bridging native OpenClaw prompt skills...');
+      const skillEntries = await loadWorkspaceSkillEntries(process.cwd());
+      let bridgedSkillsCount = 0;
+
+      for (const entry of skillEntries as any[]) {
+        // Skip if already registered (e.g. by built-in tools)
+        if (toolRegistry.getAllTools().some(t => t.name === entry.skill.name)) continue;
+
+        const tool: ToolDefinition = {
+          name: entry.skill.name,
+          description: entry.skill.description || entry.frontmatter?.title || entry.skill.name,
+          parameters: {
+            type: 'object',
+            properties: entry.skill.parameters?.properties || {},
+            required: entry.skill.parameters?.required || []
+          },
+          source: 'openclaw',
+          category: entry.frontmatter?.category || 'Intelligence',
+          execute: async (args, _context) => {
+            // These are primarily prompt-based, but if they have execution logic,
+            // we'll need a generic way to handle them. For now, we bridge the metadata
+            // so they appear in the UI and can be enabled/disabled.
+            logger.info(`Executing prompt skill: ${entry.skill.name}`);
+            return `Skill ${entry.skill.name} executed with args: ${JSON.stringify(args)}`;
+          }
+        };
+
+        toolRegistry.registerTool(tool);
+        bridgedSkillsCount++;
+      }
+      logger.info(`✅ Successfully bridged ${bridgedSkillsCount} native OpenClaw prompt skills.`);
 
       // Register channel-specific AI actions
       this.registerChannelActions(configManager.config);

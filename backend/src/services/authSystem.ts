@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
-import { makeWASocket, DisconnectReason, type WASocket } from 'baileys';
+import { makeWASocket, DisconnectReason, type WASocket, initAuthCreds, Browsers, fetchLatestBaileysVersion } from 'baileys';
 import logger from '../utils/logger.js';
 import { useFirestoreAuthState } from '../lib/baileysFirestoreAuth.js';
 import { Result } from '../types/index.js';
@@ -59,7 +59,7 @@ class AuthSystem extends EventEmitter {
     logger.info(`AuthSystem initialized for Channel: ${channelId} (Tenant: ${tenantId}, Path: ${collectionOrPath})`);
   }
 
-  async connect(): Promise<Result<WASocket>> {
+  async connect(forceNewSession: boolean = false): Promise<Result<WASocket>> {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -69,17 +69,30 @@ class AuthSystem extends EventEmitter {
     const method = this.config.channel.phoneNumber ? 'pairing' : 'qr';
     this._recordAttempt(method);
 
+    logger.info(`[AuthSystem] Starting connection attempt for ${this.channelId}. Force: ${forceNewSession}`);
+
     try {
       // Fix: Correctly pass tenantId, channelId and collectionOrPath to the auth adapter
       const { state, saveCreds } = await useFirestoreAuthState(this.tenantId, this.channelId, this.collectionOrPath);
 
+      if (forceNewSession) {
+        logger.warn(`[AuthSystem] FORCING new session for ${this.channelId}. Clearing old creds.`);
+        state.creds = initAuthCreds();
+        this.currentQrCode = null;
+      }
+
+      logger.info(`[AuthSystem] Auth state loaded for ${this.channelId}. Has Me: ${!!state.creds.me}`);
+
       const pinoLogger = pino({ level: 'silent' });
 
+      const { version } = await fetchLatestBaileysVersion();
+
       this.client = makeWASocket({
+        version,
         auth: state,
-        printQRInTerminal: true, // We might want to disable this in production/SaaS mode
+        printQRInTerminal: false, // Disabled to prevent console spam and warnings
         logger: pinoLogger as any,
-        browser: ['DeXMart', 'Chrome', '1.0.0'],
+        browser: Browsers.macOS('Desktop'),
       });
 
       this.client.ev.on('creds.update', saveCreds);
@@ -88,6 +101,7 @@ class AuthSystem extends EventEmitter {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
+          logger.info(`[AuthSystem] QR RECEIVED for ${this.channelId}. Length: ${qr.length}`);
           this.currentQrCode = qr;
           this.emit('qr', qr);
           this.emit('status', 'qr_pending'); // Inform status change
@@ -102,20 +116,21 @@ class AuthSystem extends EventEmitter {
           const statusCode = (error as Boom)?.output?.statusCode;
           const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-          logger.warn(`Connection closed. Reconnect: ${shouldReconnect}`, { error, statusCode });
+          logger.warn(`[AuthSystem] Connection closed for ${this.channelId}. Reconnect: ${shouldReconnect}`, { error, statusCode });
           this.emit('disconnected', error);
 
           if (shouldReconnect) {
             this.reconnectAttempts++;
             // Exponential backoff: 1s, 2s, 4s, 8s... capped at 1 minute
             const delay = Math.min(Math.pow(2, this.reconnectAttempts - 1) * 1000, 60 * 1000);
-            logger.info(`Scheduling reconnect in ${delay}ms (Attempt ${this.reconnectAttempts})`);
-            
+            logger.info(`[AuthSystem] Scheduling reconnect in ${delay}ms (Attempt ${this.reconnectAttempts})`);
+
             this.reconnectTimer = setTimeout(() => {
               this.connect();
             }, delay);
           }
         } else if (connection === 'open') {
+          logger.info(`[AuthSystem] CONNECTION OPEN for ${this.channelId}`);
           this.authState = 'connected';
           this.reconnectAttempts = 0; // Reset backoff on success
           this.stats.activeSessions = 1;
@@ -137,8 +152,8 @@ class AuthSystem extends EventEmitter {
 
   async disconnect(): Promise<Result<void>> {
     if (this.reconnectTimer) {
-        clearTimeout(this.reconnectTimer);
-        this.reconnectTimer = null;
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
     if (this.client) {
       try {
@@ -147,8 +162,8 @@ class AuthSystem extends EventEmitter {
         this.authState = 'disconnected';
         this.stats.activeSessions = 0;
         return { success: true, data: undefined };
-      } catch (error: unknown) {
-        return { success: false, error: error instanceof Error ? error : new Error('Disconnect failed') };
+      } catch (error: any) {
+        return { success: false, error };
       }
     }
     return { success: true, data: undefined };
@@ -181,6 +196,8 @@ class AuthSystem extends EventEmitter {
     }
     return { success: true, data: this.currentQrCode };
   }
+
+
 
   async detectExistingSession(): Promise<{ hasSession: boolean; isValid: boolean }> {
     try {

@@ -69,12 +69,17 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     this.context = context;
   }
 
+  public updatePath(newPath: string): void {
+    logger.info(`WhatsappAdapter ${this.channelId} path updated from ${this.fullPath} to ${newPath}`);
+    this.fullPath = newPath;
+  }
+
   public async initialize(): Promise<void> {
     // Basic init if needed
   }
 
-  public async connect(): Promise<void> {
-    logger.info(`Connecting WhatsappAdapter for channel ${this.channelId} (Path: ${this.fullPath || 'legacy'})`);
+  public async connect(forceNewSession: boolean = false): Promise<void> {
+    logger.info(`Connecting WhatsappAdapter for channel ${this.channelId}. Force: ${forceNewSession}`);
 
     // MASTERMIND Goodie: Listen for QR codes and convert to DataURL for UI
     // MUST be attached before connect() to catch early events
@@ -105,7 +110,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       }
     });
 
-    const connectResult = await this.authSystem.connect();
+    const connectResult = await this.authSystem.connect(forceNewSession);
     if (!connectResult.success) {
       throw connectResult.error;
     }

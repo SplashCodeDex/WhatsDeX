@@ -99,6 +99,11 @@ router.post(['/agents/:agentId/channels', '/channels', '/bots'], async (req: Req
         const result = await channelService.createChannel(tenantId, req.body, agentId);
 
         if (result.success) {
+            // Auto-start the channel connection in the background.
+            // This triggers WhatsApp QR generation, Telegram bot polling, etc.
+            channelService.startChannel(tenantId, result.data.id, agentId, true)
+                .catch(err => logger.error(`Auto-start failed for channel ${result.data.id}:`, err));
+
             res.json({ success: true, data: result.data });
         } else {
             res.status(400).json({ success: false, error: result.error.message });
@@ -311,7 +316,7 @@ router.post(['/agents/:agentId/channels/:id/connect', '/channels/:id/connect'], 
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const result = await channelService.startChannel(tenantId, id, agentId);
+        const result = await channelService.startChannel(tenantId, id, agentId, true);
         if (result.success) {
             res.json({ success: true, data: { message: 'Connection initiated' } });
         } else {

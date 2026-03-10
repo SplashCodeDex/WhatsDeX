@@ -37,6 +37,7 @@ export class ChannelService {
    */
   async createChannel(tenantId: string, channelData: Partial<Channel>, agentId: string = 'system_default'): Promise<Result<Channel>> {
     try {
+      const { multiTenantService } = await import('@/services/multiTenantService.js');
       const canAddResult = await multiTenantService.canAddChannel(tenantId);
       if (!canAddResult.success) {
         throw canAddResult.error;
@@ -142,7 +143,8 @@ export class ChannelService {
     const isInMemory = !!channelManager.getAdapter(channel.id);
     let status = channel.status;
 
-    if (isInMemory && (status === 'disconnected' || status === 'error')) {
+    // Do not force 'connected' for WhatsApp channels as they emit accurate fine-grained statuses (qr_pending, disconnected, error)
+    if (isInMemory && channel.type !== 'whatsapp' && (status === 'disconnected' || status === 'error')) {
       status = 'connected'; // Sync UP
     } else if (!isInMemory && status === 'connected') {
       status = 'disconnected'; // Sync DOWN (stale from crash)
@@ -198,10 +200,10 @@ export class ChannelService {
 
       // 4. Update memory adapter if running
       const adapter = channelManager.getAdapter(channelId);
-      if (adapter) {
-        // If the adapter has a way to update its internal tenant/agent path, we'd call it here.
-        // Most adapters use the fullPath for routing.
-        logger.info(`Channel ${channelId} moved in Firestore. Adapter may need restart for path-aware logic.`);
+      if (adapter && adapter.updatePath) {
+        const newPath = `tenants/${tenantId}/agents/${targetAgentId}/channels/${channelId}`;
+        adapter.updatePath(newPath);
+        logger.info(`Channel ${channelId} adapter path updated to ${newPath}`);
       }
 
       logger.info(`Channel ${channelId} moved from ${currentAgentId} to ${targetAgentId}`);
@@ -215,7 +217,7 @@ export class ChannelService {
   /**
    * Start a channel instance (OpenClaw)
    */
-  async startChannel(tenantId: string, channelId: string, agentId: string = 'system_default'): Promise<Result<void>> {
+  async startChannel(tenantId: string, channelId: string, agentId: string = 'system_default', force: boolean = false): Promise<Result<void>> {
     try {
       if (channelManager.getAdapter(channelId)) {
         logger.info(`Channel ${channelId} is already running`);
@@ -250,7 +252,7 @@ export class ChannelService {
         });
 
         channelManager.registerAdapter(adapter);
-        await adapter.connect();
+        await adapter.connect(force);
       } else if (channel.type === 'telegram') {
         const { TelegramAdapter } = await import('./channels/telegram/TelegramAdapter.js');
         const token = channel.credentials?.token;
@@ -347,7 +349,7 @@ export class ChannelService {
       if (channel.type !== 'whatsapp') {
         await this.updateStatus(tenantId, channelId, 'connected', agentId);
       }
-      
+
       return { success: true, data: undefined };
     } catch (error: any) {
       logger.error(`Failed to start channel ${channelId}:`, error);

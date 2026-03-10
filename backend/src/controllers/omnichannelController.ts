@@ -429,15 +429,13 @@ export class OmnichannelController {
             const doc = await db.collection('tenants').doc(tenantId).get();
             const tier = doc.data()?.plan || 'starter';
 
-            const allSkills = await skillsManager.listAvailableSkills(tenantId);
+            const allSkills = await (await import('../services/skillsManager.js')).skillsManager.listAvailableSkills(tenantId);
 
             const data = await Promise.all(allSkills.map(async (skill) => {
-                const isEligible = await skillsManager.isTenantEligible(tenantId, skill.id, tier);
+                const isEligible = await (await import('../services/skillsManager.js')).skillsManager.isTenantEligible(tenantId, skill.id, tier);
                 return {
                     ...skill,
-                    isEligible,
-                    requiredTier: ['web-search', 'firecrawl', 'brave-search', 'perplexity'].includes(skill.id) ? 'pro' :
-                        ['coding-agent', 'custom-hooks'].includes(skill.id) ? 'enterprise' : 'starter'
+                    isEligible
                 };
             }));
 

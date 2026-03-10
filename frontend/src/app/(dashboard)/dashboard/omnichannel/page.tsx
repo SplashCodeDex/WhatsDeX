@@ -5,6 +5,7 @@ import {
     Slack,
     LayoutGrid,
     Plus,
+    Power,
     Activity,
     Wifi,
     WifiOff,
@@ -65,21 +66,21 @@ function ChannelCard({ channel }: { channel: any }) {
     const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
     const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
 
-    const isConnecting = channel.status === 'connecting' || channel.status === 'initializing';
-    
+    const isConnecting = channel.status === 'connecting' || channel.status === 'initializing' || channel.status === 'qr_pending';
+
     const agent = agentsResult?.agents.find(a => a.id === (channel.assignedAgentId || 'system_default'));
     const agentName = agent?.name || (channel.assignedAgentId === 'system_default' ? 'System Agent' : 'Unknown Agent');
 
     const handleDirectDisconnect = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (isDisconnecting) return;
-        
+
         setIsDisconnecting(true);
         try {
             const agentId = channel.assignedAgentId || 'system_default';
             const success = await disconnectChannel(agentId, channel.id);
             if (success) {
-                // Success toast handled by component or store? 
+                // Success toast handled by component or store?
                 // SettingsDialog handles its own, let's keep it consistent.
             }
         } finally {
@@ -135,9 +136,9 @@ function ChannelCard({ channel }: { channel: any }) {
                     )}
                 </CardContent>
                 <CardFooter className="bg-muted/30 border-t border-border/50 py-2 mt-auto flex gap-2">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         className="flex-1 justify-between font-normal"
                         onClick={() => setIsSettingsOpen(true)}
                     >
@@ -159,10 +160,10 @@ function ChannelCard({ channel }: { channel: any }) {
                 </CardFooter>
             </Card>
 
-            <ChannelSettingsDialog 
-                channel={channel} 
-                isOpen={isSettingsOpen} 
-                onOpenChange={setIsSettingsOpen} 
+            <ChannelSettingsDialog
+                channel={channel}
+                isOpen={isSettingsOpen}
+                onOpenChange={setIsSettingsOpen}
             />
         </>
     );
@@ -179,7 +180,7 @@ export default function OmnichannelHubPage() {
         fetchAllChannels();
     }, [fetchAllChannels]);
 
-    const PLATFORMS: Array<{id: Platform, label: string, icon: any, color: string}> = [
+    const PLATFORMS: Array<{ id: Platform, label: string, icon: any, color: string }> = [
         { id: 'whatsapp', label: 'WhatsApp', icon: SiWhatsapp, color: 'text-green-500' },
         { id: 'telegram', label: 'Telegram', icon: SiTelegram, color: 'text-blue-400' },
         { id: 'discord', label: 'Discord', icon: SiDiscord, color: 'text-indigo-500' },

@@ -13,7 +13,7 @@
 ## Phase 2: Path-Aware Routing Fix
 
 - [~] **Task: Update Adapter on Channel Move**
-    - [ ] Write Tests for `ChannelService.moveChannel` Adapter Update
+    - [x] Write Tests for `ChannelService.moveChannel` Adapter Update
     - [ ] Update `ChannelService.ts` to Restart or Update the Adapter
 - [ ] **Task: Verify Path-Aware Ingress Routing**
     - [ ] Write Tests for `IngressService` Path Resolution

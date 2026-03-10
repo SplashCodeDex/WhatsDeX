@@ -62,6 +62,12 @@ export interface ChannelAdapter {
   onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void;
 
   /**
+   * Updates the internal routing path for the adapter.
+   * Useful when a channel is moved between agents.
+   */
+  updatePath?(newPath: string): void;
+
+  /**
    * Sends a reaction to a message.
    */
   sendReaction?(chatJid: string, messageId: string, emoji: string): Promise<void>;

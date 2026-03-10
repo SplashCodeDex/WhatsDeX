@@ -32,7 +32,7 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [connectionMethod, setConnectionMethod] = useState<'qr' | 'pairing'>('qr');
   const [selectedAgentId, setSelectedAgentId] = useState(initialAgentId || 'system_default');
-  const { fetchChannels, fetchAgents, agentsResult } = useOmnichannelStore();
+  const { fetchAllChannels, fetchAgents, agentsResult } = useOmnichannelStore();
 
   useEffect(() => {
     fetchAgents();
@@ -125,7 +125,7 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
       if (type === 'whatsapp') {
         payload.metadata = { connectionMethod };
         if (connectionMethod === 'pairing' && credentials.phone) {
-            payload.phoneNumber = credentials.phone;
+          payload.phoneNumber = credentials.phone;
         }
       }
 
@@ -133,7 +133,7 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
 
       if (response.success) {
         toast.success(`Connection initiated for ${type}. Check the hub for status.`);
-        await fetchChannels(selectedAgentId);
+        await fetchAllChannels();
         onSuccess?.();
       } else {
         toast.error(response.error.message || 'Failed to connect channel');
@@ -194,26 +194,26 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
                 Connection Method
               </Label>
               <div className="grid grid-cols-2 gap-3">
-                <button 
+                <button
                   type="button"
                   onClick={() => setConnectionMethod('qr')}
                   className={cn(
                     "flex flex-col items-center justify-center p-3 rounded-xl border transition-all gap-2",
-                    connectionMethod === 'qr' 
-                      ? "bg-primary/10 border-primary text-primary shadow-sm" 
+                    connectionMethod === 'qr'
+                      ? "bg-primary/10 border-primary text-primary shadow-sm"
                       : "bg-background border-border/50 text-muted-foreground hover:bg-muted/50"
                   )}
                 >
                   <QrCode className="h-5 w-5" />
                   <span className="text-[10px] font-bold">QR Code</span>
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={() => setConnectionMethod('pairing')}
                   className={cn(
                     "flex flex-col items-center justify-center p-3 rounded-xl border transition-all gap-2",
-                    connectionMethod === 'pairing' 
-                      ? "bg-primary/10 border-primary text-primary shadow-sm" 
+                    connectionMethod === 'pairing'
+                      ? "bg-primary/10 border-primary text-primary shadow-sm"
                       : "bg-background border-border/50 text-muted-foreground hover:bg-muted/50"
                   )}
                 >
@@ -221,7 +221,7 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
                   <span className="text-[10px] font-bold">Pairing Code</span>
                 </button>
               </div>
-              
+
               {connectionMethod === 'pairing' && (
                 <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   <Label htmlFor="phone" className="text-xs">Phone Number</Label>

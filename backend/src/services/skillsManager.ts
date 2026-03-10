@@ -29,7 +29,7 @@ export class SkillsManager {
       const tools = toolRegistry.getAllTools();
 
       // Also get the status report for installation/dependency info
-      const statusEntries = await (loadWorkspaceSkillEntries as any)();
+      const statusEntries = await loadWorkspaceSkillEntries(process.cwd());
 
       // Get tenant-specific skill configuration if available
       let skillsConfig: Record<string, { enabled: boolean }> = {};
@@ -39,23 +39,30 @@ export class SkillsManager {
         skillsConfig = tenantDoc.data()?.skillsConfig || {};
       }
 
+      const premiumSkills = ['web-search', 'firecrawl', 'brave-search', 'perplexity', 'youtube-video', 'youtube-audio', 'instagram-dl', 'tiktok-dl', 'facebook-dl'];
+      const enterpriseSkills = ['coding-agent', 'custom-hooks', 'dalle'];
+
       return tools.map(tool => {
-        const status = statusEntries.find((s: any) => s.name === tool.name || s.skillKey === tool.name);
-        const config = skillsConfig[tool.name];
+        const id = String(tool.name);
+        const status = statusEntries.find((s: any) => s.skill?.name === id || s.metadata?.skillKey === id);
+        const config = skillsConfig[id];
+
+        const requiredTier = enterpriseSkills.includes(id) ? 'enterprise' :
+          premiumSkills.includes(id) ? 'pro' : 'starter';
 
         return {
-          id: String(tool.name),
-          name: String(tool.name),
+          id,
+          name: id,
           description: String(tool.description),
           parameters: tool.parameters,
           source: tool.source,
           category: tool.category || (tool.source === 'openclaw' ? 'Intelligence' : 'System'),
-          emoji: status?.emoji || (tool.source === 'openclaw' ? '🧠' : '⚙️'),
-          enabled: config !== undefined ? config.enabled : !(status?.disabled),
+          emoji: status?.metadata?.emoji || (tool.source === 'openclaw' ? '🧠' : '⚙️'),
+          enabled: config !== undefined ? config.enabled : false, // Default to false (Disabled by Default)
+          requiredTier,
           status: status ? {
-            disabled: status.disabled,
-            missing: status.missing,
-            install: status.install
+            disabled: config !== undefined ? !config.enabled : true,
+            install: status.metadata?.install
           } : undefined
         };
       });
@@ -69,15 +76,14 @@ export class SkillsManager {
    * Checks if a tenant is eligible for a specific skill based on their tier.
    */
   public async isTenantEligible(tenantId: string, skillId: string, tier: 'starter' | 'pro' | 'enterprise'): Promise<boolean> {
-    // Define premium-only skills
-    const premiumSkills = ['web-search', 'firecrawl', 'brave-search', 'perplexity'];
-
+    // Pro: Intelligence + Social Media Tools
+    const premiumSkills = ['web-search', 'firecrawl', 'brave-search', 'perplexity', 'youtube-video', 'youtube-audio', 'instagram-dl', 'tiktok-dl', 'facebook-dl'];
     if (premiumSkills.includes(skillId)) {
       return tier === 'pro' || tier === 'enterprise';
     }
 
-    // Enterprise-only skills
-    const enterpriseSkills = ['coding-agent', 'custom-hooks'];
+    // Enterprise: High-Impact AI (Coding, Image Gen)
+    const enterpriseSkills = ['coding-agent', 'custom-hooks', 'dalle'];
     if (enterpriseSkills.includes(skillId)) {
       return tier === 'enterprise';
     }
