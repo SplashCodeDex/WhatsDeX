@@ -5,42 +5,42 @@
 export type ChannelType = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'irc' | 'imessage' | 'googlechat';
 
 export type ChannelStatus =
-    | 'connected'
-    | 'connecting'
-    | 'disconnected'
-    | 'error'
-    | 'qr_pending'
-    | 'initializing';
+  | 'connected'
+  | 'connecting'
+  | 'disconnected'
+  | 'error'
+  | 'qr_pending'
+  | 'initializing';
 
 export interface Channel {
-    id: string;
-    name: string;
-    type: ChannelType;
-    status: ChannelStatus;
-    account: string | null;
-    lastActiveAt?: string | Date;
-    assignedAgentId?: string | null;
-    lastProgress?: {
-        step: string;
-        status: BotProgressUpdate['status'];
-    };
+  id: string;
+  name: string;
+  type: ChannelType;
+  status: ChannelStatus;
+  account: string | null;
+  lastActiveAt?: string | Date;
+  assignedAgentId?: string | null;
+  lastProgress?: {
+    step: string;
+    status: BotProgressUpdate['status'];
+  };
 }
 
 export interface ActivityEvent {
-    id: string;
-    botId: string;
-    channel: string;
-    type: 'inbound' | 'outbound' | 'system' | 'skill' | 'agent_thinking' | 'tool_start' | 'tool_end';
-    message: string;
-    timestamp: string;
-    metadata?: Record<string, unknown>;
+  id: string;
+  botId: string;
+  channel: string;
+  type: 'inbound' | 'outbound' | 'system' | 'skill' | 'agent_thinking' | 'tool_start' | 'tool_end';
+  message: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface BotProgressUpdate {
-    botId: string;
-    step: string;
-    status: 'pending' | 'in_progress' | 'complete' | 'error';
-    timestamp: string;
+  botId: string;
+  step: string;
+  status: 'pending' | 'in_progress' | 'complete' | 'error';
+  timestamp: string;
 }
 
 // --- Cron Types (Ported from OpenClaw) ---
@@ -56,11 +56,11 @@ export type CronWakeMode = "next-heartbeat" | "now";
 export type CronPayload =
   | { kind: "systemEvent"; text: string }
   | {
-      kind: "agentTurn";
-      message: string;
-      thinking?: string;
-      timeoutSeconds?: number;
-    };
+    kind: "agentTurn";
+    message: string;
+    thinking?: string;
+    timeoutSeconds?: number;
+  };
 
 export type CronDelivery = {
   mode: "none" | "announce";
@@ -191,6 +191,7 @@ export interface AgentIdentityResult {
   name: string;
   avatar: string;
   emoji?: string;
+  linkedChannels?: Channel[];
 }
 
 export interface AgentFileEntry {

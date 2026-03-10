@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 import { OpenClawGateway } from '../services/openClawGateway.js';
 import logger from '../utils/logger.js';
+import { channelService } from '../services/ChannelService.js';
+import {
+    getAgentIdentitySchema,
+    agentIdentityResponseSchema,
+    usageQuerySchema,
+    sessionLogsParamsSchema
+} from '../schemas/omnichannelSchemas.js';
 
 /**
  * OmnichannelController
@@ -115,14 +122,79 @@ export class OmnichannelController {
     }
 
     // ═══════════════════════════════════════════════════════
+    //  AGENTS
+    // ═══════════════════════════════════════════════════════
+
+    /** GET /api/omnichannel/agents/:id/identity */
+    static async getAgentIdentity(req: Request, res: Response) {
+        try {
+            const { params } = getAgentIdentitySchema.parse({ params: req.params });
+            const id = params.id;
+
+            const gw = OmnichannelController.getGateway();
+            const tenantId = req.user?.tenantId || 'system_default';
+
+            // Fetch all agents and find the one that matches or return the first one if 'main'
+            const agentsResult = await gw.getAgents();
+            const agents: any[] = agentsResult?.agents || [];
+
+            let agent = agents.find(a => a.id === id);
+
+            // Fallback for 'main' or 'default'
+            if (!agent && (id === 'main' || id === 'default' || id === agentsResult?.defaultId)) {
+                // If the result has a defaultId, try to find that one
+                const defaultId = agentsResult?.defaultId || 'main';
+                agent = agents.find(a => a.id === defaultId) || agents[0];
+            }
+
+            if (!agent) {
+                return res.status(404).json({ success: false, error: 'Agent not found' });
+            }
+
+            // Fetch linked channels
+            const channelsResult = await channelService.getChannelsForAgent(tenantId, agent.id);
+            const linkedChannels = channelsResult.success ? channelsResult.data : [];
+
+            // Adheres to Rule 181: No Emojis in UI logic. Fallback to undefined/null for frontend handle.
+            const resultData = {
+                agentId: agent.id,
+                name: agent.name || agent.identity?.name || 'DeX Mart AI',
+                avatar: agent.identity?.avatar,
+                emoji: undefined, // Explicitly remove emoji fallbacks
+                linkedChannels: linkedChannels.map((c: any) => ({
+                    id: c.id,
+                    name: c.name,
+                    type: c.type,
+                    status: c.status,
+                    account: c.account
+                }))
+            };
+
+            // Rule 1: Validate response contract
+            const result = agentIdentityResponseSchema.parse(resultData);
+
+            res.json({ success: true, data: result });
+        } catch (error: any) {
+            logger.error('OmnichannelController.getAgentIdentity', error);
+
+            if (error.name === 'ZodError') {
+                return res.status(400).json({ success: false, error: 'Invalid request data', details: error.errors });
+            }
+
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
     //  USAGE
     // ═══════════════════════════════════════════════════════
 
     /** GET /api/omnichannel/usage/totals */
     static async getUsageTotals(req: Request, res: Response) {
         try {
+            const { query } = usageQuerySchema.parse({ query: req.query });
             const gw = OmnichannelController.getGateway();
-            const days = parseInt(req.query.days as string) || 30;
+            const days = query.days;
             const result = await gw.getUsageTotals(days);
 
             // Add tenant-specific limits and actual usage
@@ -145,6 +217,9 @@ export class OmnichannelController {
             res.json({ success: true, data: result });
         } catch (error: any) {
             logger.error('OmnichannelController.getUsageTotals', error);
+            if (error.name === 'ZodError') {
+                return res.status(400).json({ success: false, error: 'Invalid query parameters', details: error.errors });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -152,12 +227,16 @@ export class OmnichannelController {
     /** GET /api/omnichannel/usage/daily */
     static async getUsageDaily(req: Request, res: Response) {
         try {
+            const { query } = usageQuerySchema.parse({ query: req.query });
             const gw = OmnichannelController.getGateway();
-            const days = parseInt(req.query.days as string) || 30;
+            const days = query.days;
             const result = await gw.getUsageDaily(days);
             res.json({ success: true, data: result });
         } catch (error: any) {
             logger.error('OmnichannelController.getUsageDaily', error);
+            if (error.name === 'ZodError') {
+                return res.status(400).json({ success: false, error: 'Invalid query parameters', details: error.errors });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -165,12 +244,16 @@ export class OmnichannelController {
     /** GET /api/omnichannel/usage/sessions */
     static async getUsageSessions(req: Request, res: Response) {
         try {
+            const { query } = usageQuerySchema.parse({ query: req.query });
             const gw = OmnichannelController.getGateway();
-            const days = parseInt(req.query.days as string) || 30;
+            const days = query.days;
             const result = await gw.getUsageSessions(days);
             res.json({ success: true, data: result });
         } catch (error: any) {
             logger.error('OmnichannelController.getUsageSessions', error);
+            if (error.name === 'ZodError') {
+                return res.status(400).json({ success: false, error: 'Invalid query parameters', details: error.errors });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }
@@ -178,12 +261,16 @@ export class OmnichannelController {
     /** GET /api/omnichannel/usage/sessions/:key/logs */
     static async getSessionLogs(req: Request, res: Response) {
         try {
+            const { params } = sessionLogsParamsSchema.parse({ params: req.params });
             const gw = OmnichannelController.getGateway();
-            const key = String(req.params.key);
+            const key = params.key;
             const result = await gw.getSessionLogs(key);
             res.json({ success: true, data: result });
         } catch (error: any) {
             logger.error('OmnichannelController.getSessionLogs', error);
+            if (error.name === 'ZodError') {
+                return res.status(400).json({ success: false, error: 'Invalid path parameters', details: error.errors });
+            }
             res.status(500).json({ success: false, error: error.message });
         }
     }

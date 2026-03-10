@@ -39,7 +39,13 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
                 return res.status(200).json({ success: true, data: { user: null } });
             }
             logger.security('Auth Middleware: Missing token', null, { ip: req.ip });
-            return res.status(401).json({ success: false, error: 'Access token required' });
+            return res.status(401).json({
+                success: false,
+                error: {
+                    code: 'missing_token',
+                    message: 'Access token required. Please log in again.'
+                }
+            });
         }
 
         const config = ConfigService.getInstance();
@@ -47,7 +53,13 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
         if (!secret) {
             logger.security('Auth Middleware: JWT_SECRET not configured', null, { ip: req.ip });
-            return res.status(401).json({ success: false, error: 'Authentication system misconfigured' });
+            return res.status(401).json({
+                success: false,
+                error: {
+                    code: 'server_configuration_error',
+                    message: 'Authentication system misconfigured. Please contact support.'
+                }
+            });
         }
 
         // Check Blacklist - Resilient
@@ -55,7 +67,13 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             const isBlacklisted = await cacheService.isTokenBlacklisted(token);
             if (isBlacklisted.success && isBlacklisted.data) {
                 logger.security('Auth Middleware: Blacklisted token', null, { token: token.substring(0, 10) + '...', ip: req.ip });
-                return res.status(401).json({ success: false, error: 'Token has been revoked' });
+                return res.status(401).json({
+                    success: false,
+                    error: {
+                        code: 'token_revoked',
+                        message: 'Your session has been revoked. Please log in again.'
+                    }
+                });
             }
         } catch (cacheError) {
             // Log but don't fail auth if cache is down
@@ -83,9 +101,22 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             });
 
             if (name === 'TokenExpiredError') {
-                return res.status(401).json({ success: false, error: 'Token expired' });
+                return res.status(401).json({
+                    success: false,
+                    error: {
+                        code: 'token_expired',
+                        message: 'Your session has expired. Please log in again.'
+                    }
+                });
             }
-            return res.status(403).json({ success: false, error: `Auth error: ${name}` });
+            return res.status(403).json({
+                success: false,
+                error: {
+                    code: 'invalid_token',
+                    message: `Authentication failed: ${name}`,
+                    details: 'The provided token is invalid or has been tampered with.'
+                }
+            });
         }
 
     } catch (error: unknown) {
@@ -102,12 +133,35 @@ export const authorizeRole = (roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const user = req.user;
 
-        if (!user || !roles.includes(user.role)) {
-            logger.security('Auth Middleware: Insufficient permissions', user?.userId, {
-                requiredRoles: roles,
-                userRole: user?.role
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                error: {
+                    code: 'unauthorized',
+                    message: 'Authentication required to access this resource.'
+                }
             });
-            return res.status(403).json({ success: false, error: 'Insufficient permissions' });
+        }
+
+        if (!roles.includes(user.role)) {
+            logger.security('Auth Middleware: Insufficient permissions', user.userId, {
+                requiredRoles: roles,
+                userRole: user.role
+            });
+
+            const needsAdmin = roles.includes('admin');
+            const message = needsAdmin
+                ? 'This action requires Administrative privileges. Please contact your system administrator if you believe this is an error.'
+                : `This action requires a higher permission level (${roles.join(' or ')}). Your current role is ${user.role}.`;
+
+            return res.status(403).json({
+                success: false,
+                error: {
+                    code: 'insufficient_permissions',
+                    message: 'Access Denied',
+                    details: message
+                }
+            });
         }
 
         next();

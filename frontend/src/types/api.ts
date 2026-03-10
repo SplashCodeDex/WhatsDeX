@@ -28,6 +28,11 @@ export interface ApiErrorResponse {
         code: string;
         message: string;
         details?: Record<string, unknown>;
+        suggestion?: {
+            message: string;
+            linkLabel?: string;
+            linkHref?: string;
+        };
     };
 }
 

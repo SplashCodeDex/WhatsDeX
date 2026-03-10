@@ -24,7 +24,7 @@ export type AIModel = z.infer<typeof AIModelSchema>;
 export const AgentSchema = z.object({
     id: z.string(),
     name: z.string().min(1, 'Name is required'),
-    emoji: z.string().default('🤖'),
+    iconName: z.string().default('bot'),
     systemPrompt: z.string().min(1, 'System prompt is required'),
     model: AIModelSchema,
     skills: z.array(z.string()).default([]),
@@ -50,7 +50,7 @@ export const AgentTemplateSchema = z.object({
     id: z.string(),
     title: z.string(),
     description: z.string(),
-    emoji: z.string(),
+    iconName: z.string(),
     defaultSystemPrompt: z.string(),
     suggestedModel: AIModelSchema,
     requiredTier: PlanSchema,

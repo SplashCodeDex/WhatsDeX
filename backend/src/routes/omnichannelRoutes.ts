@@ -68,6 +68,8 @@ router.get('/agents', async (_req: Request, res: Response) => {
   }
 });
 
+router.get('/agents/:id/identity', OmnichannelController.getAgentIdentity);
+
 // ═══════════════════════════════════════════════════════
 //  CRON JOBS
 // ═══════════════════════════════════════════════════════

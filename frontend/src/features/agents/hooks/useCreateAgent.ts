@@ -22,7 +22,7 @@ const TIER_LIMITS = {
 
 interface CreateAgentInput {
     name: string;
-    emoji: string;
+    iconName: string;
     systemPrompt: string;
     model: AIModel;
 }
@@ -37,10 +37,10 @@ export function useCreateAgent() {
     const createAgent = useCallback(async (
         input: CreateAgentInput
     ): Promise<Result<string>> => {
-        if (!user) {
+        if (!user || !user.id) {
             return {
                 success: false,
-                error: { code: 'unauthorized', message: 'User must be authenticated' }
+                error: { code: 'unauthorized', message: 'User session not fully loaded. Please wait or refresh.' }
             };
         }
 

@@ -8,6 +8,7 @@ import { AGENT_TEMPLATES } from '../data/templates';
 import { type AgentTemplate, type PlanTier } from '../types';
 import { cn } from '@/lib/utils';
 import { Sparkles, Lock } from 'lucide-react';
+import { getIcon } from '@/lib/icons';
 
 interface TemplateSelectorProps {
     onSelect: (template: AgentTemplate) => void;
@@ -54,8 +55,8 @@ export function TemplateSelector({ onSelect, className }: TemplateSelectorProps)
 
                             <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-2xl shadow-inner">
-                                        {template.emoji}
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted shadow-inner">
+                                        {getIcon(template.iconName)}
                                     </div>
                                     {isLocked && (
                                         <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1">

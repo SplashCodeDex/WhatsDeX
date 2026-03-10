@@ -102,6 +102,38 @@ async function getAuthHeader(): Promise<string | null> {
     return token?.value ?? null;
 }
 
+/**
+ * Intelligent Error Feedback Mapper
+ * Maps specific error codes or status codes to proactive user suggestions.
+ */
+const ERROR_SUGGESTIONS: Record<string, { message: string; linkLabel?: string; linkHref?: string }> = {
+    'insufficient_permissions': {
+        message: 'This feature is not available on your current plan.',
+        linkLabel: 'Upgrade Plan',
+        linkHref: '/dashboard/settings/billing'
+    },
+    'http_403': {
+        message: 'Access Denied. You might need a higher permission level or a different subscription.',
+        linkLabel: 'View Plans',
+        linkHref: '/dashboard/settings/billing'
+    },
+    'rate_limit_exceeded': {
+        message: 'You have reached your request limit for this period.',
+        linkLabel: 'Upgrade for higher limits',
+        linkHref: '/dashboard/settings/billing'
+    },
+    'tenant_inactive': {
+        message: 'Your organization account is currently inactive.',
+        linkLabel: 'Manage Subscription',
+        linkHref: '/dashboard/settings/billing'
+    },
+    'auth_required': {
+        message: 'Your session has expired or is invalid.',
+        linkLabel: 'Login Again',
+        linkHref: '/auth/login'
+    }
+};
+
 async function apiClient<TData, TBody = unknown>(
     endpoint: string,
     config: RequestConfig<TBody> = {}
@@ -173,12 +205,32 @@ async function apiClient<TData, TBody = unknown>(
         }
 
         if (!response.ok) {
+            // If backend returned a structured error, use it.
+            // Otherwise, fallback to status codes and generic messages.
+            const errorObj = data?.error;
+            const code = errorObj?.code ?? (typeof data?.error === 'string' ? 'legacy_error' : `http_${response.status}`);
+
+            let message = errorObj?.message ?? (typeof data?.error === 'string' ? data.error : (data?.message ?? ''));
+            const details = errorObj?.details ?? data?.details;
+
+            if (!message) {
+                if (response.status === 401) message = 'Authentication required. Please log in.';
+                else if (response.status === 403) message = 'Access Denied. You do not have the required permissions.';
+                else if (response.status === 404) message = 'The requested resource was not found.';
+                else if (response.status >= 500) message = 'A server error occurred. Please try again later.';
+                else message = 'An unexpected error occurred';
+            }
+
+            // Apply intelligent suggestion if available
+            const suggestion = ERROR_SUGGESTIONS[code] || ERROR_SUGGESTIONS[`http_${response.status}`];
+
             return {
                 success: false,
                 error: {
-                    code: data?.error?.code ?? 'unknown_error',
-                    message: typeof data?.error === 'string' ? data.error : (data?.error?.message ?? data?.message ?? 'An unexpected error occurred'),
-                    details: data?.error?.details,
+                    code,
+                    message,
+                    details,
+                    suggestion
                 },
             } as ApiErrorResponse;
         }
