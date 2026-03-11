@@ -6,6 +6,7 @@
  */
 
 import { APP_CONFIG } from '@/lib/constants';
+import { ROUTES } from '@/lib/constants/routes';
 import { logger } from '@/lib/logger';
 import type { ApiResponse, ApiSuccessResponse, ApiErrorResponse } from '@/types';
 
@@ -238,9 +239,12 @@ async function apiClient<TData, TBody = unknown>(
                     processQueue(null);
 
                     if (typeof window !== 'undefined') {
-                        const authChannel = new BroadcastChannel('auth_sync');
-                        authChannel.postMessage({ type: 'LOGOUT' });
-                        authChannel.close();
+                        const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.REGISTER;
+                        if (!isAuthPage) {
+                            const authChannel = new BroadcastChannel('auth_sync');
+                            authChannel.postMessage({ type: 'LOGOUT' });
+                            authChannel.close();
+                        }
                     }
                 }
             } catch (refreshErr) {
@@ -249,9 +253,12 @@ async function apiClient<TData, TBody = unknown>(
                 processQueue(null);
 
                 if (typeof window !== 'undefined') {
-                    const authChannel = new BroadcastChannel('auth_sync');
-                    authChannel.postMessage({ type: 'LOGOUT' });
-                    authChannel.close();
+                    const isAuthPage = window.location.pathname === ROUTES.LOGIN || window.location.pathname === ROUTES.REGISTER;
+                    if (!isAuthPage) {
+                        const authChannel = new BroadcastChannel('auth_sync');
+                        authChannel.postMessage({ type: 'LOGOUT' });
+                        authChannel.close();
+                    }
                 }
             }
         }
