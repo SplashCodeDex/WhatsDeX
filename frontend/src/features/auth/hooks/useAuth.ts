@@ -118,10 +118,16 @@ export function useAuth(): UseAuthReturn {
 
     // Initial hydration
     useEffect(() => {
+        const isAuthPage = pathname === ROUTES.LOGIN || pathname === ROUTES.REGISTER;
+        
         if (!user) {
-            verifySession();
+            if (isAuthPage) {
+                setLoading(false);
+            } else {
+                verifySession();
+            }
         }
-    }, [verifySession, user]);
+    }, [verifySession, user, pathname, setLoading]);
 
     // Redirection Logic (SSR Safe)
     useEffect(() => {

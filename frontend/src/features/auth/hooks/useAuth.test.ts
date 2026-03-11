@@ -48,6 +48,9 @@ describe('useAuth hook', () => {
     const mockRouter = { push: vi.fn(), refresh: vi.fn() };
     const mockSetUser = vi.fn();
     const mockSetLoading = vi.fn();
+    const mockSetLastFetchAttempt = vi.fn();
+    const mockIncrementRetryCount = vi.fn();
+    const mockResetRetryCount = vi.fn();
     const mockUser = { id: 'user_1', email: 'test@example.com' };
 
     beforeEach(() => {
@@ -58,8 +61,13 @@ describe('useAuth hook', () => {
             user: null,
             isLoading: false,
             isAuthenticated: false,
+            retryCount: 0,
+            lastFetchAttempt: 0,
             setUser: mockSetUser,
             setLoading: mockSetLoading,
+            setLastFetchAttempt: mockSetLastFetchAttempt,
+            incrementRetryCount: mockIncrementRetryCount,
+            resetRetryCount: mockResetRetryCount,
         });
     });
 
@@ -81,8 +89,13 @@ describe('useAuth hook', () => {
             user: null,
             isLoading: false,
             isAuthenticated: false,
+            retryCount: 0,
+            lastFetchAttempt: 0,
             setUser: mockSetUser,
             setLoading: mockSetLoading,
+            setLastFetchAttempt: mockSetLastFetchAttempt,
+            incrementRetryCount: mockIncrementRetryCount,
+            resetRetryCount: mockResetRetryCount,
         });
         (usePathname as any).mockReturnValue('/dashboard');
 
@@ -97,13 +110,28 @@ describe('useAuth hook', () => {
             user: null,
             isLoading: false,
             isAuthenticated: false,
+            retryCount: 0,
+            lastFetchAttempt: 0,
             setUser: mockSetUser,
             setLoading: mockSetLoading,
+            setLastFetchAttempt: mockSetLastFetchAttempt,
+            incrementRetryCount: mockIncrementRetryCount,
+            resetRetryCount: mockResetRetryCount,
         });
         (usePathname as any).mockReturnValue(ROUTES.LOGIN);
 
         renderHook(() => useAuth());
 
         expect(mockRouter.push).not.toHaveBeenCalled();
+    });
+
+    it('should NOT trigger verifySession if on login page', async () => {
+        (usePathname as any).mockReturnValue(ROUTES.LOGIN);
+        (api.get as any).mockResolvedValue({ success: true, data: mockUser });
+
+        renderHook(() => useAuth());
+
+        // verifySession should not be called, so setLoading(true) should not happen
+        expect(mockSetLoading).not.toHaveBeenCalledWith(true);
     });
 });
