@@ -12,14 +12,14 @@ Goal: Audit and wire the most critical system and configuration pages.
     - [x] Scan `frontend/src/app/(dashboard)/dashboard/config/page.tsx`.
     - [x] Identify simulated environment variables or system toggles.
     - [x] Implement real-time configuration fetching and updating.
-- [~] Task: Audit & Wire 'Nodes'
-    - [ ] Scan `frontend/src/app/(dashboard)/dashboard/nodes/page.tsx`.
-    - [ ] Replace static node lists with live data from OpenClaw gateway.
-    - [ ] Implement node restart/management actions.
-- [ ] Task: Audit & Wire 'System Logs'
-    - [ ] Identify log viewer component (likely within `dashboard/omnichannel` or shared).
-    - [ ] Replace static log entries with live stream from `/api/omnichannel/logs/stream`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
+- [x] Task: Audit & Wire 'Nodes'
+    - [x] Scan `frontend/src/app/(dashboard)/dashboard/nodes/page.tsx`.
+    - [x] Replace static node lists with live data from OpenClaw gateway.
+    - [x] Implement node restart/management actions.
+- [x] Task: Audit & Wire 'System Logs'
+    - [x] Identify log viewer component (likely within `dashboard/omnichannel` or shared).
+    - [x] Replace static log entries with live stream from `/api/omnichannel/logs/stream`.
+- [x] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Core Functional Audit (Group B)
 Goal: Ensure the primary automation and messaging modules are fully functional.

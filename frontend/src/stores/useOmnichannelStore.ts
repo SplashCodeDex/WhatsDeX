@@ -105,15 +105,19 @@ interface OmnichannelState {
     fetchNodes: () => Promise<void>;
     fetchDevices: () => Promise<void>;
     fetchLogs: () => Promise<void>;
+    streamLogs: () => () => void;
     approveDevice: (id: string) => Promise<boolean>;
     rejectDevice: (id: string) => Promise<boolean>;
+    revokeDevice: (id: string) => Promise<boolean>;
 
     // Gateway Actions
     fetchGatewayHealth: () => Promise<void>;
     getSkillCount: () => number;
+    addLogEntry: (entry: LogEntry) => void;
 }
 
 const MAX_ACTIVITY_LOGS = 100;
+const MAX_SYSTEM_LOGS = 500;
 
 /**
  * Omnichannel Store
@@ -554,6 +558,39 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
         }
     },
 
+    streamLogs: () => {
+        if (typeof window === 'undefined') return () => {};
+
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:3001';
+        const url = `${baseUrl}${API_ENDPOINTS.OMNICHANNEL.LOGS.STREAM}`;
+        
+        const eventSource = new EventSource(url, { withCredentials: true });
+
+        eventSource.onmessage = (event) => {
+            try {
+                const entry = JSON.parse(event.data);
+                get().addLogEntry(entry);
+            } catch (err) {
+                console.error('Failed to parse log entry:', err);
+            }
+        };
+
+        eventSource.onerror = (err) => {
+            console.error('Log stream error:', err);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    },
+
+    addLogEntry: (entry) => {
+        set((state) => ({
+            logs: [entry, ...state.logs].slice(0, MAX_SYSTEM_LOGS)
+        }));
+    },
+
     approveDevice: async (id) => {
         try {
             const response = await api.post(API_ENDPOINTS.OMNICHANNEL.NODES.APPROVE(id), {});
@@ -576,6 +613,19 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
             }
         } catch (err) {
             console.error(`Failed to reject device ${id}:`, err);
+        }
+        return false;
+    },
+
+    revokeDevice: async (id) => {
+        try {
+            const response = await api.post(API_ENDPOINTS.OMNICHANNEL.NODES.REVOKE(id), {});
+            if (response.success) {
+                await get().fetchDevices();
+                return true;
+            }
+        } catch (err) {
+            console.error(`Failed to revoke device ${id}:`, err);
         }
         return false;
     },
