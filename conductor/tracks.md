@@ -14,6 +14,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
+- [ ] **Track: Comprehensive Dashboard Audit & Functional Wiring**
+*Link: [./tracks/dashboard_audit_20260310/](./tracks/dashboard_audit_20260310/)*
+
+---
+
 ## Archived Tracks
 
 ### [x] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
