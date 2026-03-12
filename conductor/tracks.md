@@ -6,6 +6,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
+### [ ] Track: Agents Page Audit & Enhancement
+*Link: [./tracks/agents_audit_20260312/](./tracks/agents_audit_20260312/)*
+
 ### [ ] Track: Agentic Performance & Intelligence Optimization (Phase 5)
 *Link: [./conductor/tracks/agentic_optimization_20260310/](./tracks/agentic_optimization_20260310/)*
 
