@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { isSkillAllowed } from './SkillGating';
 
 describe('SkillGating Logic', () => {

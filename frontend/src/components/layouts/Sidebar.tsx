@@ -1,8 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard,
     Bot,
@@ -24,12 +22,14 @@ import {
     Monitor,
     ScrollText,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
 
-import { cn } from '@/lib/utils';
+import { InsightCard } from './InsightCard';
+
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/features/auth';
-import { useUIStore } from '@/stores/useUIStore';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Sheet,
     SheetContent,
@@ -38,8 +38,9 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { InsightCard } from './InsightCard';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/features/auth';
+import { cn } from '@/lib/utils';
+import { useUIStore } from '@/stores/useUIStore';
 
 const NAV_ITEMS = [
     { title: 'Overview', href: '/dashboard', icon: LayoutDashboard, type: 'messages' as const },
@@ -66,8 +67,8 @@ export function Sidebar() {
     const { signOut } = useAuth();
     const { isSidebarCollapsed, setSidebarCollapsed } = useUIStore();
 
-    const NavContent = (isMobile = false) => (
-        <TooltipProvider delayDuration={0}>
+    function NavContent(isMobile = false) {
+  return <TooltipProvider delayDuration={0}>
             <ScrollArea showFades={!isMobile} viewportClassName="px-3 pt-4 pb-8">
                 <div className="space-y-1">
                     <ul className="space-y-1">
@@ -100,11 +101,9 @@ export function Sidebar() {
                                                             ? 'text-primary'
                                                             : 'text-muted-foreground group-hover:text-foreground'
                                                     )} />
-                                                    {(!isSidebarCollapsed || isMobile) && (
-                                                        <span className="ml-3 font-medium text-sm whitespace-nowrap overflow-hidden">
+                                                    {(!isSidebarCollapsed || isMobile) ? <span className="ml-3 font-medium text-sm whitespace-nowrap overflow-hidden">
                                                             {item.title}
-                                                        </span>
-                                                    )}
+                                                        </span> : null}
                                                 </div>
                                             </Link>
                                         </TooltipTrigger>
@@ -134,7 +133,7 @@ export function Sidebar() {
                 </div>
             </ScrollArea>
         </TooltipProvider>
-    );
+}
 
     return (
         <>

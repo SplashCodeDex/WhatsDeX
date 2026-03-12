@@ -1,9 +1,11 @@
 'use client';
 
-import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
+import * as React from 'react';
+
+import { cn } from '@/lib/utils';
+
 
 export interface CheckboxProps
     extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -76,8 +78,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         )}
                     >
                         <AnimatePresence>
-                            {isChecked && (
-                                <motion.div
+                            {isChecked ? <motion.div
                                     initial={{ opacity: 0, scale: 0.5 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.5 }}
@@ -107,23 +108,20 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                                             }}
                                         />
                                     </svg>
-                                </motion.div>
-                            )}
+                                </motion.div> : null}
                         </AnimatePresence>
                     </motion.div>
 
                 </div>
 
-                {label && (
-                    <span className={cn(
+                {label ? <span className={cn(
                         "text-sm font-medium transition-colors duration-200",
                         isChecked ? "text-foreground" : "text-muted-foreground",
                         "group-hover:text-foreground",
                         "peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     )}>
                         {label}
-                    </span>
-                )}
+                    </span> : null}
             </label>
         );
     }

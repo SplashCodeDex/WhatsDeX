@@ -1,8 +1,5 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { useAuth } from '@/features/auth';
-import { getClientFirestore } from '@/lib/firebase/client';
 import {
     runTransaction,
     doc,
@@ -10,9 +7,14 @@ import {
     serverTimestamp,
     type Transaction
 } from 'firebase/firestore';
+import { useState, useCallback } from 'react';
+
 import { type Agent, type AIModel } from '../types';
-import { type ActionResult } from '@/types/api';
+
+import { useAuth } from '@/features/auth';
+import { getClientFirestore } from '@/lib/firebase/client';
 import { logger } from '@/lib/logger';
+import { type ActionResult } from '@/types/api';
 
 const TIER_LIMITS = {
     starter: 1,

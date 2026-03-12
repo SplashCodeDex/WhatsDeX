@@ -1,9 +1,10 @@
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import nextPlugin from "@next/eslint-plugin-next";
-import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
 import importPlugin from "eslint-plugin-import";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +17,7 @@ const eslintConfig = [
             "@next/next": nextPlugin,
             "@typescript-eslint": tsPlugin,
             "react": reactPlugin,
+            "react-hooks": reactHooksPlugin,
             "import": importPlugin,
         },
         languageOptions: {
@@ -30,6 +32,7 @@ const eslintConfig = [
             ...nextPlugin.configs.recommended.rules,
             ...nextPlugin.configs["core-web-vitals"].rules,
             ...tsPlugin.configs.recommended.rules,
+            ...reactHooksPlugin.configs.recommended.rules,
 
             // Enforce strict TypeScript
             '@typescript-eslint/no-explicit-any': 'error',
@@ -76,6 +79,11 @@ const eslintConfig = [
             'no-console': ['warn', { allow: ['warn', 'error'] }],
             eqeqeq: ['error', 'always'],
             'prefer-const': 'error',
+        },
+        settings: {
+            react: {
+                version: "detect",
+            },
         },
     },
     {

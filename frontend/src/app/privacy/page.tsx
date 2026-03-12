@@ -1,7 +1,8 @@
-import React from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
 import { APP_CONFIG } from '@/lib/constants/config';
 
 export const metadata = {

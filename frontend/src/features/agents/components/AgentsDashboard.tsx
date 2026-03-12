@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
     Bot,
     RefreshCw,
@@ -21,25 +20,27 @@ import {
     DollarSign,
     MessageSquare
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { useAuth } from '@/features/auth';
-import { toast } from 'sonner';
 import {
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
 } from '@/components/ui/tabs';
-import { TemplateSelector } from '@/features/agents/components/TemplateSelector';
 import { ChannelLinker } from '@/features/agents/components/ChannelLinker';
 import { SkillToggle } from '@/features/agents/components/SkillToggle';
+import { TemplateSelector } from '@/features/agents/components/TemplateSelector';
 import { useCreateAgent } from '@/features/agents/hooks/useCreateAgent';
 import { AgentTemplate } from '@/features/agents/types';
+import { useAuth } from '@/features/auth';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 /**
  * AgentsDashboard Component

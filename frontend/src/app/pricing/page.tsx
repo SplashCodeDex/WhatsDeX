@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { PricingTable } from '@/features/billing/components/PricingTable';
 
 export const metadata = {

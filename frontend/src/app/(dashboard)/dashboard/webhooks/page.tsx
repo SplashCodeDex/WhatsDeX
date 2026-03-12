@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+
 import { WebhookManager } from '@/features/webhooks';
 
 export const metadata: Metadata = {

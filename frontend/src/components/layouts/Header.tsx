@@ -8,10 +8,10 @@
  */
 
 import { Bell, User, LogOut, Settings as SettingsIcon, CreditCard } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import Link from 'next/link';
+
 import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
-import { useAuth } from '@/features/auth';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,7 +20,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import Link from 'next/link';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useAuth } from '@/features/auth';
+
 
 export function Header() {
     const { user, signOut, isLoading } = useAuth();

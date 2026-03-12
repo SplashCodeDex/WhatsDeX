@@ -1,10 +1,12 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+import { Audience } from '../types';
+
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { isApiSuccess } from '@/types';
-import { Audience } from '../types';
-import { toast } from 'sonner';
 
 export const audienceKeys = {
   all: ['audiences'] as const,

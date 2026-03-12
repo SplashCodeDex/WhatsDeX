@@ -1,6 +1,6 @@
+import { decodeJwt, jwtVerify } from 'jose';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { decodeJwt, jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || 'static-placeholder-do-not-use-in-prod-7f9d8a2b'

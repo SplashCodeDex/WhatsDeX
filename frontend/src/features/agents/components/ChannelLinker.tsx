@@ -1,18 +1,21 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { useAuth } from '@/features/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Smartphone, Link as LinkIcon, Link2Off, QrCode, RefreshCw, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { canAddChannelSlot, getSlotLimit } from '../utils/ChannelSlotGuard';
 import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { canAddChannelSlot, getSlotLimit } from '../utils/ChannelSlotGuard';
+
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useAuth } from '@/features/auth';
 import { api, API_ENDPOINTS } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 interface ChannelLinkerProps {
     agentId: string;
@@ -136,11 +139,9 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                                             )}
                                         </div>
                                     </div>
-                                    {isLinkedToThisAgent && (
-                                        <div className="bg-primary/5 px-4 py-2 text-[10px] font-bold text-primary uppercase tracking-widest border-t border-primary/10">
+                                    {isLinkedToThisAgent ? <div className="bg-primary/5 px-4 py-2 text-[10px] font-bold text-primary uppercase tracking-widest border-t border-primary/10">
                                             Currently Linked to this Brain
-                                        </div>
-                                    )}
+                                        </div> : null}
                                 </CardContent>
                             </Card>
                         );

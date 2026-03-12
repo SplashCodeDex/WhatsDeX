@@ -5,13 +5,15 @@
  * Target: 80%+ coverage
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { InvoiceHistory } from './InvoiceHistory';
+import type { Invoice } from '../schemas';
+
 import { api } from '@/lib/api';
 import type { ApiSuccessResponse, ApiErrorResponse } from '@/types';
-import type { Invoice } from '../schemas';
 
 // Mock dependencies
 vi.mock('@/lib/api', () => ({

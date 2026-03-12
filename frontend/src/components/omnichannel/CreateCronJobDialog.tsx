@@ -1,7 +1,9 @@
 'use client';
 
+import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -21,8 +23,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
-import { Loader2, Plus } from 'lucide-react';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import type { CronJob, CronSchedule, CronPayload } from '@/types';
 
 interface CreateCronJobDialogProps {
@@ -208,7 +209,7 @@ export function CreateCronJobDialog({ open, onOpenChange }: CreateCronJobDialogP
                             Cancel
                         </Button>
                         <Button type="submit" disabled={loading}>
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Create Job
                         </Button>
                     </DialogFooter>

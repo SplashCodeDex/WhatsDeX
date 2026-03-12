@@ -1,9 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import { toast } from 'sonner';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { TemplateManagement } from './TemplateManagement';
 import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
+
 import { useAuth } from '@/features/auth';
-import { toast } from 'sonner';
+
 
 // Mock dependencies
 vi.mock('../hooks/useTemplates', () => ({

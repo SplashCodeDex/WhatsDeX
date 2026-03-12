@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import type {

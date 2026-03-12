@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
 import { CheckCircle2, AlertCircle, Loader2, PartyPopper, RotateCcw } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import React from 'react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 
 interface ImportStepProps {
     readonly isPending: boolean;
@@ -32,8 +33,7 @@ export function ImportStep({
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             {/* Importing State */}
-            {isPending && (
-                <div className="flex flex-col items-center justify-center py-8 space-y-6">
+            {isPending ? <div className="flex flex-col items-center justify-center py-8 space-y-6">
                     <div className="relative">
                         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                             <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -50,12 +50,10 @@ export function ImportStep({
                             {importedCount} / {totalCount}
                         </p>
                     </div>
-                </div>
-            )}
+                </div> : null}
 
             {/* Success State */}
-            {isSuccess && (
-                <div className="flex flex-col items-center justify-center py-8 space-y-6 animate-in fade-in zoom-in-95 duration-500">
+            {isSuccess ? <div className="flex flex-col items-center justify-center py-8 space-y-6 animate-in fade-in zoom-in-95 duration-500">
                     <div className="relative">
                         <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center">
                             <PartyPopper className="w-12 h-12 text-emerald-400" />
@@ -76,12 +74,10 @@ export function ImportStep({
                     >
                         Done
                     </Button>
-                </div>
-            )}
+                </div> : null}
 
             {/* Error State */}
-            {isError && (
-                <div className="flex flex-col items-center justify-center py-8 space-y-6 animate-in fade-in zoom-in-95 duration-500">
+            {isError ? <div className="flex flex-col items-center justify-center py-8 space-y-6 animate-in fade-in zoom-in-95 duration-500">
                     <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center">
                         <AlertCircle className="w-10 h-10 text-red-400" />
                     </div>
@@ -112,8 +108,7 @@ export function ImportStep({
                             Close
                         </Button>
                     </div>
-                </div>
-            )}
+                </div> : null}
         </div>
     );
 }

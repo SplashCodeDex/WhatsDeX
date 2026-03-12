@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { 
     Monitor, 
     RefreshCw, 
@@ -15,12 +14,12 @@ import {
     Cpu,
     ExternalLink
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { toast } from 'sonner';
 import {
     Table,
     TableBody,
@@ -29,6 +28,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 export default function NodesPage() {
     const { 

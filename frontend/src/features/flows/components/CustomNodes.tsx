@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
-import { BaseNode } from './BaseNode';
 import { MessageSquare, Zap, GitBranch, Sparkles, Wrench, Route } from 'lucide-react';
+import React from 'react';
+
+import { BaseNode } from './BaseNode';
 
 export function TriggerNode({ data, selected }: any) {
   return (

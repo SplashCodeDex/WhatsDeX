@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
-import { TemplateManagement } from '@/features/messages';
 import { Layout, Info } from 'lucide-react';
+import React from 'react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { TemplateManagement } from '@/features/messages';
 
 export default function TemplatesPage() {
     return (

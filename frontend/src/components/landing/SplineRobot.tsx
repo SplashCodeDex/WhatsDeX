@@ -3,8 +3,9 @@
 import Spline from '@splinetool/react-spline';
 import type { Application } from '@splinetool/runtime';
 import { useRef, useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+import { cn } from '@/lib/utils';
 
 interface SplineRobotProps {
     className?: string;
@@ -40,11 +41,9 @@ export function SplineRobot({
     return (
         <div className={cn("relative overflow-hidden", className)}>
             {/* Loading Placeholder */}
-            {isLoading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+            {isLoading ? <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/20 backdrop-blur-sm">
                     <div className="h-12 w-12 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-                </div>
-            )}
+                </div> : null}
             
             <div className="h-full w-full">
                 <Spline

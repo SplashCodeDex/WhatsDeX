@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { CreditCard, FileText, Package } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { toast } from 'sonner';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BillingSettings, 
   PricingTable, 
   InvoiceHistory, 
   PaymentMethods 
 } from '@/features/billing';
-import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, FileText, Package } from 'lucide-react';
+
 
 export default function BillingPage() {
   const searchParams = useSearchParams();

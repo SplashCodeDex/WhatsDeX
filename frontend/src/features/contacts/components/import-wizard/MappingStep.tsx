@@ -1,16 +1,10 @@
 'use client';
 
-import React, { type ReactNode } from 'react';
 import { ArrowRight, Wand2, Eye, User, Phone, Mail, Tag, SkipForward } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Save, FolderHeart, Trash2, Plus } from 'lucide-react';
+import React, { type ReactNode } from 'react';
+import { toast } from 'sonner';
+
 import {
     type FieldMapping,
     type TargetField,
@@ -19,10 +13,20 @@ import {
     saveMappingProfile,
     deleteMappingProfile,
 } from './wizardUtils';
-import { toast } from 'sonner';
-import { Save, FolderHeart, Trash2, Plus } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+
+
 
 interface MappingStepProps {
     readonly mappings: readonly FieldMapping[];

@@ -1,6 +1,15 @@
 'use client';
 
+import { formatDistanceToNow } from 'date-fns';
+import { User, Phone, Mail, Tag, Calendar, MessageSquare, Edit2, Save, X as XIcon, Plus } from 'lucide-react';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
+
+import { useUpdateContact } from '../hooks/useContacts';
+import { Contact } from '../types';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -8,15 +17,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Contact } from '../types';
-import { User, Phone, Mail, Tag, Calendar, MessageSquare, Edit2, Save, X as XIcon, Plus } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { formatDistanceToNow } from 'date-fns';
-import { toast } from 'sonner';
-import { useUpdateContact } from '../hooks/useContacts';
+
+
 
 interface ContactDetailModalProps {
     contact: Contact | null;
@@ -121,12 +125,10 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
                             <Phone className="mr-2 h-4 w-4" />
                             Call
                         </Button>
-                        {contact.email && (
-                            <Button onClick={handleEmail} variant="outline" size="sm" className="flex-1">
+                        {contact.email ? <Button onClick={handleEmail} variant="outline" size="sm" className="flex-1">
                                 <Mail className="mr-2 h-4 w-4" />
                                 Email
-                            </Button>
-                        )}
+                            </Button> : null}
                         <Button onClick={handleWhatsApp} variant="outline" size="sm" className="flex-1">
                             <MessageSquare className="mr-2 h-4 w-4" />
                             WhatsApp
@@ -146,12 +148,10 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
                                 <span className="text-muted-foreground">Phone:</span>
                                 <span className="font-medium">{contact.phone}</span>
                             </div>
-                            {contact.email && (
-                                <div className="flex justify-between">
+                            {contact.email ? <div className="flex justify-between">
                                     <span className="text-muted-foreground">Email:</span>
                                     <span className="font-medium">{contact.email}</span>
-                                </div>
-                            )}
+                                </div> : null}
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Created:</span>
                                 <span className="font-medium">
@@ -162,8 +162,7 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
                     </div>
 
                     {/* Tags */}
-                    {contact.tags && contact.tags.length > 0 && (
-                        <>
+                    {contact.tags && contact.tags.length > 0 ? <>
                             <Separator />
                             <div className="space-y-3">
                                 <h3 className="font-semibold flex items-center gap-2">
@@ -178,8 +177,7 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
                                     ))}
                                 </div>
                             </div>
-                        </>
-                    )}
+                        </> : null}
 
                     {/* Custom Fields */}
                     <Separator />
@@ -234,22 +232,19 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
                                             <span className="text-muted-foreground font-medium">{key}:</span>{' '}
                                             <span>{String(value)}</span>
                                         </div>
-                                        {isEditingCustomFields && (
-                                            <Button
+                                        {isEditingCustomFields ? <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handleRemoveCustomField(key)}
                                             >
                                                 <XIcon className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        )}
+                                            </Button> : null}
                                     </div>
                                 ))}
                             </div>
                         )}
 
-                        {isEditingCustomFields && (
-                            <div className="flex gap-2">
+                        {isEditingCustomFields ? <div className="flex gap-2">
                                 <Input
                                     placeholder="Field name"
                                     value={newFieldKey}
@@ -265,8 +260,7 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
                                 <Button onClick={handleAddCustomField} size="sm">
                                     <Plus className="h-4 w-4" />
                                 </Button>
-                            </div>
-                        )}
+                            </div> : null}
                     </div>
                 </div>
             </DialogContent>

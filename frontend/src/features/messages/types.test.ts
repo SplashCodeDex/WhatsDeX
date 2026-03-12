@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { OmnichannelMessageSchema } from './types';
 
 describe('Omnichannel Message Schema', () => {

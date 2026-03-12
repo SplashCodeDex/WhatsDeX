@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { Activity, MessageSquare, Send, Hash, Slack, Smartphone, Settings, Brain, Zap, Terminal, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 const ICON_MAP = {
     whatsapp: MessageSquare,

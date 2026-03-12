@@ -1,4 +1,3 @@
-import React from 'react';
 import {
     Zap,
     Search,
@@ -16,6 +15,7 @@ import {
     FileSearch,
     Cpu
 } from 'lucide-react';
+import React from 'react';
 
 export const ICON_MAP: Record<string, React.ReactNode> = {
     // Agent Templates

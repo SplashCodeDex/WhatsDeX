@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+
 import { cn } from "@/lib/utils";
 
 interface StaggeredEnterProps {
@@ -10,12 +11,12 @@ interface StaggeredEnterProps {
     staggerDelay?: number;
 }
 
-export const StaggeredEnter = ({
+export function StaggeredEnter({
     children,
     className,
     delay = 0,
     staggerDelay = 0.05,
-}: StaggeredEnterProps) => {
+}: StaggeredEnterProps) {
     return (
         <motion.div
             initial="hidden"
@@ -33,15 +34,15 @@ export const StaggeredEnter = ({
             {children}
         </motion.div>
     );
-};
+}
 
-export const StaggeredItem = ({
+export function StaggeredItem({
     children,
     className,
 }: {
     children: React.ReactNode;
     className?: string;
-}) => {
+}) {
     return (
         <motion.div
             variants={{
@@ -53,4 +54,4 @@ export const StaggeredItem = ({
             {children}
         </motion.div>
     );
-};
+}

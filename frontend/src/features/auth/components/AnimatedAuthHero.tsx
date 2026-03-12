@@ -7,9 +7,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Bot, BarChart3, Rocket, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
 import type { Particle } from '../utils';
 
 // Animation durations per PROJECT_RULES

@@ -1,11 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { useAuthStore } from '@/features/auth/store';
-import { NestedResearchTrace } from './components/NestedResearchTrace';
-import { GatewayMetrics } from './components/GatewayMetrics';
-import { ActivityFeed } from '../omnichannel/components/ActivityFeed';
 import {
     LayoutDashboard,
     ArrowUpRight,
@@ -17,11 +11,20 @@ import {
     Sparkles,
     Activity
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useEffect } from 'react';
+
+import { GatewayMetrics } from './components/GatewayMetrics';
+import { NestedResearchTrace } from './components/NestedResearchTrace';
+import { ActivityFeed } from '../omnichannel/components/ActivityFeed';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useAuthStore } from '@/features/auth/store';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+
 
 export function HomeFeature() {
     const { fetchGatewayHealth, fetchSkillReport, gatewayHealth, getSkillCount } = useOmnichannelStore();

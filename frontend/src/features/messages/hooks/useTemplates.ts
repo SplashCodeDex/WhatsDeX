@@ -1,8 +1,10 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+
 import { MessageTemplate } from '../types';
+
+import { api } from '@/lib/api/client';
 
 export const templateKeys = {
     all: ['templates'] as const,

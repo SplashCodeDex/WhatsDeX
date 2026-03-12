@@ -1,21 +1,13 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, type ReactNode } from 'react';
 import { Upload, FileText, ArrowLeft, ArrowRight, FolderUp, Link2, ShieldCheck, Rocket, Check } from 'lucide-react';
 import Papa from 'papaparse';
-import { useImportContacts } from '../../hooks/useContacts';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogTrigger,
-} from '@/components/ui/dialog';
+import React, { useState, useCallback, useMemo, type ReactNode } from 'react';
 
-import { UploadStep } from './UploadStep';
-import { MappingStep } from './MappingStep';
-import { ValidationStep } from './ValidationStep';
 import { ImportStep } from './ImportStep';
+import { MappingStep } from './MappingStep';
+import { UploadStep } from './UploadStep';
+import { ValidationStep } from './ValidationStep';
 import {
     type WizardState,
     type TargetField,
@@ -29,6 +21,16 @@ import {
     findMatchingProfile,
     getValidationStats,
 } from './wizardUtils';
+import { useImportContacts } from '../../hooks/useContacts';
+
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+
 
 // ─── Step Definitions ─────────────────────────────────────────────
 const STEPS: readonly { readonly id: number; readonly label: string; readonly icon: ReactNode }[] = [

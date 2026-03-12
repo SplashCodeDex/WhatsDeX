@@ -1,18 +1,19 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useActionState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-import { Button, Input, PasswordInput, Checkbox } from '@/components/ui';
-import { StaggeredEnter, StaggeredItem } from '@/components/ui/motion';
-import { GoogleIcon } from '@/components/ui/icons';
-import { getClientAuth } from '@/lib/firebase/client';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { logger } from '@/lib/logger';
 import { signUp, googleAuthAction } from '../actions';
+
+import { Button, Input, PasswordInput, Checkbox } from '@/components/ui';
+import { GoogleIcon } from '@/components/ui/icons';
+import { StaggeredEnter, StaggeredItem } from '@/components/ui/motion';
+import { getClientAuth } from '@/lib/firebase/client';
+import { logger } from '@/lib/logger';
 
 export function RegisterForm() {
     const router = useRouter();
@@ -198,7 +199,7 @@ export function RegisterForm() {
                         </div>
 
                         <Button disabled={isPending} className="w-full">
-                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Create Account
                         </Button>
                     </div>

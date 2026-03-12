@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
-import { logger } from '@/lib/logger';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { useEffect } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/logger';
 
 interface ErrorProps {
     error: Error & { digest?: string };
@@ -40,11 +41,9 @@ export default function Error({ error, reset }: ErrorProps): React.JSX.Element {
                         <a href="/dashboard">Return Home</a>
                     </Button>
                 </div>
-                {error.digest && (
-                    <p className="mt-12 text-[10px] font-mono text-muted-foreground uppercase tracking-widest opacity-50">
+                {error.digest ? <p className="mt-12 text-[10px] font-mono text-muted-foreground uppercase tracking-widest opacity-50">
                         Error ID: {error.digest}
-                    </p>
-                )}
+                    </p> : null}
             </div>
         </div>
     );

@@ -1,8 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { ChannelLinker } from './ChannelLinker';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+
 import { useAuth } from '@/features/auth';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 // Mock the store
 vi.mock('@/stores/useOmnichannelStore', () => ({

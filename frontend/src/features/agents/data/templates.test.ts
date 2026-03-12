@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { AGENT_TEMPLATES } from './templates';
 import { AgentTemplateSchema } from '../types';
 

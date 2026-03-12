@@ -1,6 +1,13 @@
 'use client';
 
+import { Target, Plus, Trash2, Users, Filter } from 'lucide-react';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
+
+import { useAudiences, useCreateAudience, useDeleteAudience } from '../hooks/useAudiences';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -8,12 +15,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Target, Plus, Trash2, Users, Filter } from 'lucide-react';
-import { useAudiences, useCreateAudience, useDeleteAudience } from '../hooks/useAudiences';
-import { toast } from 'sonner';
 import {
     Table,
     TableBody,

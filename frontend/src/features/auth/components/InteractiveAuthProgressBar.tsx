@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Zap, Globe, Lock, Cpu } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const LOADING_STEPS = [
     {

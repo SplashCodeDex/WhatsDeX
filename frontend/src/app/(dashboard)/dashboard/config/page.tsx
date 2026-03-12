@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+
 import { ConfigManager } from '@/features/config';
 
 export const metadata: Metadata = {

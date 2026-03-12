@@ -1,13 +1,15 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { AnimatedAuthHero } from "./AnimatedAuthHero";
-import { Particle } from "../utils";
-import { cn } from "@/lib/utils";
-import { StaggeredEnter, StaggeredItem } from "@/components/ui/motion";
+import { usePathname } from "next/navigation";
 
+import { AnimatedAuthHero } from "./AnimatedAuthHero";
 import { useAuth } from "../hooks";
+import { Particle } from "../utils";
+
+import { StaggeredEnter, StaggeredItem } from "@/components/ui/motion";
+import { cn } from "@/lib/utils";
+
 
 interface AuthTransitionLayoutProps {
     children: React.ReactNode;
@@ -73,9 +75,7 @@ export function AuthTransitionLayout({ children, particles }: AuthTransitionLayo
                                 isRegister && "rounded-2xl bg-white/90 p-8 shadow-2xl backdrop-blur-sm sm:p-10 dark:bg-card/90"
                             )}>
                                 {/* Subtle Animated Gradient Border for Register Card */}
-                                {isRegister && (
-                                    <div className="absolute -inset-[1px] -z-10 rounded-2xl bg-gradient-to-r from-transparent via-primary-500/20 to-transparent opacity-50 blur-sm" />
-                                )}
+                                {isRegister ? <div className="absolute -inset-[1px] -z-10 rounded-2xl bg-gradient-to-r from-transparent via-primary-500/20 to-transparent opacity-50 blur-sm" /> : null}
 
                                 <StaggeredEnter>
                                     <StaggeredItem>

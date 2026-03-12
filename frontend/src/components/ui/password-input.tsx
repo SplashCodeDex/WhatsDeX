@@ -1,10 +1,11 @@
 'use client';
 
-import * as React from 'react';
-import { Eye, EyeOff, ArrowBigUpDash, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, EyeOff, ArrowBigUpDash, Check, X } from 'lucide-react';
+import * as React from 'react';
 
 import { Input, type InputProps } from './input';
+
 import { cn } from '@/lib/utils';
 
 interface PasswordStrength {
@@ -79,8 +80,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, InputProps>(
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
                         {/* Caps Lock Indicator */}
                         <AnimatePresence>
-                            {isCapsLockOn && (
-                                <motion.div
+                            {isCapsLockOn ? <motion.div
                                     initial={{ opacity: 0, x: 10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: 10 }}
@@ -88,8 +88,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, InputProps>(
                                     title="Caps Lock is ON"
                                 >
                                     <ArrowBigUpDash className="h-4 w-4" />
-                                </motion.div>
-                            )}
+                                </motion.div> : null}
                         </AnimatePresence>
 
                         {/* Visibility Toggle */}

@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
+import React from 'react';
+
 import { FlowsDashboard } from '@/features/flows/components/FlowsDashboard';
 
 /**

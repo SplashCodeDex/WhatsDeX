@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+
 import { useAuth } from '@/features/auth';
 import { logger } from '@/lib/logger';
 

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 
 import { Providers } from './providers';
+
 import { LiquidGlassFilters } from '@/components/effects/LiquidGlassFilters';
 import './globals.css';
 

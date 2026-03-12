@@ -1,12 +1,6 @@
 'use client';
 
-import React from 'react';
-import { useCampaign } from '../hooks/useCampaigns';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
 import {
     ArrowLeft,
     Send,
@@ -23,7 +17,15 @@ import {
     Settings2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
+import React from 'react';
+
+import { useCampaign } from '../hooks/useCampaigns';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 interface CampaignDetailProps {
@@ -179,12 +181,10 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
                                 </div>
                             </div>
 
-                            {campaign.antiBan.aiSpinning && (
-                                <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary">
+                            {campaign.antiBan.aiSpinning ? <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary">
                                     <Sparkles className="w-4 h-4" />
                                     <span className="text-xs font-black uppercase tracking-widest">AI Spinning Active</span>
-                                </div>
-                            )}
+                                </div> : null}
                         </div>
                     </CardContent>
                 </Card>

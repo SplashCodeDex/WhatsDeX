@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
     Slack,
     Plus,
@@ -12,26 +11,29 @@ import {
     MessageSquare,
     Hash
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { ChannelConnectionForm } from '@/components/omnichannel/ChannelConnectionForm';
-import { ChannelSettingsDialog } from '@/components/omnichannel/ChannelSettingsDialog';
+import { ActivityFeed } from './components/ActivityFeed';
 import { ChannelProgressStepper } from './components/ChannelProgressStepper';
 import { OmnichannelSocketManager } from './components/OmnichannelSocketManager';
-import { ActivityFeed } from './components/ActivityFeed';
+
+import { ChannelConnectionForm } from '@/components/omnichannel/ChannelConnectionForm';
+import { ChannelSettingsDialog } from '@/components/omnichannel/ChannelSettingsDialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+
 
 // Helper for accessibility
-const VisuallyHidden = ({ children }: { children: React.ReactNode }) => (
-    <span className="absolute w-[1px] h-[1px] p-0 -m-[1px] overflow-hidden clip-[rect(0,0,0,0)] whitespace-nowrap border-0">
+function VisuallyHidden({ children }: { children: React.ReactNode }) {
+  return <span className="absolute w-[1px] h-[1px] p-0 -m-[1px] overflow-hidden clip-[rect(0,0,0,0)] whitespace-nowrap border-0">
         {children}
     </span>
-);
+}
 
 const ICON_MAP = {
     whatsapp: SiWhatsapp,

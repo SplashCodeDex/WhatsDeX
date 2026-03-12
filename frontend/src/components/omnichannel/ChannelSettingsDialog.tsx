@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { 
     Settings2, 
     Power, 
@@ -10,6 +9,11 @@ import {
     ShieldAlert,
     UserCircle2
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
     Dialog, 
     DialogContent, 
@@ -18,13 +22,7 @@ import {
     DialogTitle,
     DialogFooter
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { 
     Select, 
     SelectContent, 
@@ -32,6 +30,9 @@ import {
     SelectTrigger, 
     SelectValue 
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 interface ChannelSettingsDialogProps {
     channel: any;
@@ -191,7 +192,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                             <p className="text-[10px] text-muted-foreground">Shut down the live connection</p>
                                         </div>
                                     </div>
-                                    {isActionLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                                    {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                                 </Button>
                             </div>
 

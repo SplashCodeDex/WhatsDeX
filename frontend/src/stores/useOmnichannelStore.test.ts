@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { useOmnichannelStore } from './useOmnichannelStore';
+
 import { api } from '@/lib/api/client';
 
 // Mock the api client

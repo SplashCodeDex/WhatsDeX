@@ -5,10 +5,12 @@
  * Target: 80%+ coverage
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { PricingTable } from './PricingTable';
+
 import { billingApi } from '@/lib/api/billing';
 
 // Mock dependencies

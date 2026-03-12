@@ -4,8 +4,9 @@
  * TypeScript types for authentication state and operations.
  */
 
-import type { ActionResult } from '@/types/api';
 import type { User as FirebaseUser } from 'firebase/auth';
+
+import type { ActionResult } from '@/types/api';
 
 /**
  * Authenticated user data (client-side safe)

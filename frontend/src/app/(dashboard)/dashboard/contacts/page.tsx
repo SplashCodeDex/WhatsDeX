@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
 import { Users, Info, Target } from 'lucide-react';
-import { ContactsTable, ImportContactsDialog, ImportHistoryPanel } from '@/features/contacts';
-import { AudienceManager } from '@/features/contacts/components/AudienceManager';
+import React, { useState } from 'react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { ContactsTable, ImportContactsDialog, ImportHistoryPanel } from '@/features/contacts';
+import { AudienceManager } from '@/features/contacts/components/AudienceManager';
 
 export default function ContactsPage() {
     const [showAudienceManager, setShowAudienceManager] = useState(false);

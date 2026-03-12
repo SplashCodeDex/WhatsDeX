@@ -1,10 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useMessageHistory } from '../hooks/useMessageHistory';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatDistanceToNow } from 'date-fns';
 import { 
     Loader2, 
     MessageSquare, 
@@ -20,13 +16,19 @@ import {
     Hash,
     Slack
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
-import { formatDistanceToNow } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { api } from '@/lib/api/client';
 import { toast } from 'sonner';
-import { Input } from '@/components/ui/input';
+
+import { useMessageHistory } from '../hooks/useMessageHistory';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { api } from '@/lib/api/client';
+import { cn } from '@/lib/utils';
 
 export function UnifiedInbox() {
     const { data: messages, isLoading, error, refetch } = useMessageHistory();
@@ -152,12 +154,10 @@ export function UnifiedInbox() {
                                                 <User className="h-3 w-3 text-muted-foreground" />
                                                 {msg.remoteJid}
                                             </span>
-                                            {msg.agentId && (
-                                                <Badge variant="outline" className="text-[10px] h-4 gap-1 border-primary/20 text-primary">
+                                            {msg.agentId ? <Badge variant="outline" className="text-[10px] h-4 gap-1 border-primary/20 text-primary">
                                                     <Bot className="h-2 w-2" />
                                                     {msg.agentId}
-                                                </Badge>
-                                            )}
+                                                </Badge> : null}
                                         </div>
                                         <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                             <Clock className="h-3 w-3" />

@@ -7,15 +7,17 @@
  * Redirection logic is deferred to useEffect.
  */
 
-import { useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-
 import { signInWithCustomToken } from 'firebase/auth';
+import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useCallback } from 'react';
+
+
 import { useAuthStore } from '../store';
 import { type AuthUser } from '../types';
+
 import { api, API_ENDPOINTS } from '@/lib/api';
-import { getClientAuth } from '@/lib/firebase/client';
 import { ROUTES } from '@/lib/constants';
+import { getClientAuth } from '@/lib/firebase/client';
 import { logger } from '@/lib/logger';
 
 export interface UseAuthReturn {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import {
     onSnapshot,
     type DocumentReference,
@@ -8,7 +8,7 @@ import {
     type DocumentSnapshot,
     type QuerySnapshot
 } from 'firebase/firestore';
-import { useQueryClient, type QueryKey } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 /**
  * useFirestoreLive

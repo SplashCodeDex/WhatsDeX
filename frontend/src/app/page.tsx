@@ -1,5 +1,6 @@
-import { LandingFeature } from '@/features/landing/LandingFeature';
 import { Metadata } from 'next';
+
+import { LandingFeature } from '@/features/landing/LandingFeature';
 
 export const metadata: Metadata = {
     title: 'DeXMart | Advanced WhatsApp Automation',

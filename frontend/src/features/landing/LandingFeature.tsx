@@ -1,15 +1,17 @@
 'use client';
 
-import Link from 'next/link';
-import Image from 'next/image';
-import dynamic from 'next/dynamic';
-import { Button } from '@/components/ui/button';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { useState } from 'react';
 import { MessageSquare, ArrowRight } from 'lucide-react';
-import { TrustMarquee } from './components/TrustMarquee';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useState } from 'react';
+
 import { BentoFeatures } from './components/BentoFeatures';
 import { SocialProof } from './components/SocialProof';
+import { TrustMarquee } from './components/TrustMarquee';
+
+import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const SplineRobot = dynamic(() => import('@/components/landing/SplineRobot').then(mod => mod.SplineRobot), {

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+
+import { useSocket } from './useSocket';
+
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
-import { useSocket } from './useSocket';
 
 export function useChannelStatus(channelId: string, agentId: string = 'system_default', enabled: boolean = false) {
     const [status, setStatus] = useState<any>(null);

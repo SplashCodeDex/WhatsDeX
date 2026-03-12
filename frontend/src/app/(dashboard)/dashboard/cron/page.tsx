@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { 
     Clock, 
     Plus, 
@@ -15,18 +14,13 @@ import {
     CheckCircle2,
     Timer
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { CreateCronJobDialog } from '@/components/omnichannel/CreateCronJobDialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import {
     Sheet,
     SheetContent,
@@ -35,9 +29,17 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { CreateCronJobDialog } from '@/components/omnichannel/CreateCronJobDialog';
-import { toast } from 'sonner';
+
 
 function formatSchedule(schedule: any): string {
     if (schedule.kind === 'every') return `Every ${schedule.everyMs / 1000}s`;
@@ -75,7 +77,7 @@ function RunHistory({ jobId }: { jobId: string }) {
                                 )}
                                 <div>
                                     <p className="font-medium">{new Date(run.ts).toLocaleString()}</p>
-                                    {run.error && <p className="text-xs text-destructive line-clamp-1">{run.error}</p>}
+                                    {run.error ? <p className="text-xs text-destructive line-clamp-1">{run.error}</p> : null}
                                 </div>
                             </div>
                             <Badge variant="outline" className="text-[10px]">

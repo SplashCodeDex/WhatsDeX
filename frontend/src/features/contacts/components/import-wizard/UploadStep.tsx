@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
 import { Upload, FileText, Download, FileSpreadsheet, Contact } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useCallback, useState } from 'react';
+
 import { downloadSampleCSV, type WizardState } from './wizardUtils';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
 
 interface UploadStepProps {
     readonly onFileAccepted: (file: File) => void;

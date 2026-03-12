@@ -1,9 +1,9 @@
 'use client';
 
-import { useActionState } from 'react';
-import Link from 'next/link';
-import { Loader2, ArrowLeft, MailCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, ArrowLeft, MailCheck } from 'lucide-react';
+import Link from 'next/link';
+import { useActionState } from 'react';
 
 import { Button, Input } from '@/components/ui';
 import { requestPasswordReset, getAuthErrorMessage } from '@/features/auth';
@@ -59,14 +59,12 @@ export function ForgotPasswordForm() {
                                         />
                                     </div>
 
-                                    {state?.error && (
-                                        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                                    {state?.error ? <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
                                             {state.error.message || getAuthErrorMessage(state.error.code)}
-                                        </div>
-                                    )}
+                                        </div> : null}
 
                                     <Button disabled={isPending}>
-                                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                         Send Reset Link
                                     </Button>
                                 </div>

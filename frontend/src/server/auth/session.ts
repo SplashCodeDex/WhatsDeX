@@ -1,7 +1,7 @@
 import 'server-only';
+import { jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || 'static-placeholder-do-not-use-in-prod-7f9d8a2b'

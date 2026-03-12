@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
 import { CreditCard, Plus, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { PaymentMethodListSchema, type PaymentMethod } from '../schemas';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,10 +16,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { isApiSuccess } from '@/types';
-import { toast } from 'sonner';
-import { PaymentMethodListSchema, type PaymentMethod } from '../schemas';
+
+
 
 export function PaymentMethods() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -157,12 +161,10 @@ export function PaymentMethods() {
                         <p className="font-medium">
                           {method.brand} •••• {method.last4}
                         </p>
-                        {method.isDefault && (
-                          <Badge variant="default" className="text-xs">
+                        {method.isDefault ? <Badge variant="default" className="text-xs">
                             <CheckCircle2 className="mr-1 h-3 w-3" />
                             Default
-                          </Badge>
-                        )}
+                          </Badge> : null}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         Expires {method.expiryMonth.toString().padStart(2, '0')}/{method.expiryYear}

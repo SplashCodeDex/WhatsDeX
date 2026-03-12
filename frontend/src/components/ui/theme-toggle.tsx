@@ -1,11 +1,13 @@
 'use client';
 
-import * as React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Moon, Sun } from 'lucide-react';
+import * as React from 'react';
+
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+
 
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme();

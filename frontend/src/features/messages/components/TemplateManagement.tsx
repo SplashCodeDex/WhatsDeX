@@ -1,10 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
     Loader2,
     Plus,
@@ -17,10 +12,17 @@ import {
     Search,
     Sparkles
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+
+import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth';
+import { cn } from '@/lib/utils';
 
 /**
  * TemplateManagement Component

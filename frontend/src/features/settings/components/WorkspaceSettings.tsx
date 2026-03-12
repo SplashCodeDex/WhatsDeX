@@ -1,16 +1,20 @@
 'use client';
 
-import { useSettings } from '../hooks/useSettings';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { Loader2, Save, Building2, Zap } from 'lucide-react';
 import { useState, useEffect, useActionState, startTransition } from 'react';
-import { updateTenantSettings } from '../actions';
 import { toast } from 'sonner';
+
+import { updateTenantSettings } from '../actions';
+import { useSettings } from '../hooks/useSettings';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+
+
 
 export function WorkspaceSettings() {
     const { settings, isLoading } = useSettings();

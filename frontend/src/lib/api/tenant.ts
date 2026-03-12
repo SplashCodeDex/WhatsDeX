@@ -1,5 +1,6 @@
-import { TenantSettings } from '@/types/contracts';
 import { api } from './client';
+
+import { TenantSettings } from '@/types/contracts';
 
 export const tenantApi = {
     getSettings: async () => {

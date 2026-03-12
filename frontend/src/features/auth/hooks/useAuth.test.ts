@@ -1,8 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import { useRouter, usePathname } from 'next/navigation';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { useAuth } from './useAuth';
 import { useAuthStore } from '../store';
-import { useRouter, usePathname } from 'next/navigation';
+
+
 import { api } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
 

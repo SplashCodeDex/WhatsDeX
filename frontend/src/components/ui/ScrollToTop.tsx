@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { ChevronUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function ScrollToTop() {
     const [isVisible, setIsVisible] = useState(false);
@@ -33,8 +34,7 @@ export function ScrollToTop() {
 
     return (
         <AnimatePresence>
-            {isVisible && (
-                <motion.div
+            {isVisible ? <motion.div
                     initial={{ opacity: 0, scale: 0.8, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.8, y: 20 }}
@@ -67,8 +67,7 @@ export function ScrollToTop() {
                             <span className="absolute inset-0 rounded-xl animate-ping bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </Button>
                     </LiquidGlassWrapper>
-                </motion.div>
-            )}
+                </motion.div> : null}
         </AnimatePresence>
     );
 }

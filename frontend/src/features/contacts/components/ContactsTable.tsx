@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
 import { User, Phone, Mail, Tag, Trash2, MoreVertical, Search, Filter, ChevronLeft, ChevronRight, Eye, Download, CheckSquare, Square } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { toast } from 'sonner';
+
 import { useContacts, useDeleteContact } from '../hooks/useContacts';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Contact } from '../types';
+import { ContactDetailModal } from './ContactDetailModal';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,9 +17,10 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Contact } from '../types';
-import { toast } from 'sonner';
-import { ContactDetailModal } from './ContactDetailModal';
+import { Input } from '@/components/ui/input';
+
+
+
 
 const ITEMS_PER_PAGE = 10;
 
@@ -293,11 +298,9 @@ export function ContactsTable() {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-sm tracking-tight">{contact.name}</div>
-                                                {contact.email && (
-                                                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                {contact.email ? <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                                                         <Mail className="w-3 h-3" /> {contact.email}
-                                                    </div>
-                                                )}
+                                                    </div> : null}
                                             </div>
                                         </div>
                                     </td>

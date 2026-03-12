@@ -1,7 +1,5 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import {
     Clock,
     Search,
@@ -12,7 +10,10 @@ import {
     AlertCircle,
     CheckCircle2
 } from 'lucide-react';
+import React, { useMemo } from 'react';
+
 import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 interface TraceNodeProps {
     node: any;
@@ -20,7 +21,7 @@ interface TraceNodeProps {
     isLast: boolean;
 }
 
-const TraceNode = ({ node, depth, isLast }: TraceNodeProps) => {
+function TraceNode({ node, depth, isLast }: TraceNodeProps) {
     const Icon = node.label === 'Researcher' || node.label === 'Lead Researcher' ? Search :
         node.label === 'Fact-Checker' ? ShieldCheck :
             node.label === 'Mastermind Synthesis' ? BrainCircuit : GitBranch;
@@ -58,11 +59,9 @@ const TraceNode = ({ node, depth, isLast }: TraceNodeProps) => {
                         </div>
                     </div>
 
-                    {node.task && (
-                        <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 italic">
+                    {node.task ? <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 italic">
                             &quot;{node.task}&quot;
-                        </p>
-                    )}
+                        </p> : null}
 
                     <div className="flex items-center gap-2 mt-2">
                         {node.status === 'thinking' ? (
@@ -86,9 +85,9 @@ const TraceNode = ({ node, depth, isLast }: TraceNodeProps) => {
             </div>
         </div>
     );
-};
+}
 
-export const NestedResearchTrace = () => {
+export function NestedResearchTrace() {
     const { nestedTrace, clearTrace } = useOmnichannelStore();
 
     if (nestedTrace.length === 0) return null;
@@ -129,4 +128,4 @@ export const NestedResearchTrace = () => {
             </div>
         </div>
     );
-};
+}

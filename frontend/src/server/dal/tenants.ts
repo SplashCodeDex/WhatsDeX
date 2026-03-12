@@ -1,6 +1,6 @@
-import { tenantApi } from '@/lib/api/tenant';
-import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { api } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { tenantApi } from '@/lib/api/tenant';
 import type { Webhook, TenantSettings } from '@/types/contracts';
 
 /**

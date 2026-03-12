@@ -1,9 +1,11 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+
 import { Campaign } from '../types';
 import { useCampaignSocket } from './useCampaignSocket';
+
+import { api } from '@/lib/api/client';
 
 export const campaignKeys = {
     all: ['campaigns'] as const,

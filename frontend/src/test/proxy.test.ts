@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { proxy } from '../proxy';
 import { NextRequest, NextResponse } from 'next/server';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { proxy } from '../proxy';
 
 // Mock NextResponse
 vi.mock('next/server', async () => {

@@ -1,4 +1,5 @@
 import { api } from './client';
+
 import { CheckoutSessionResponse, SubscriptionInfo } from '@/types/billing';
 
 export const billingApi = {

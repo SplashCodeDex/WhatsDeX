@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Bot, RefreshCw, Zap, TrendingUp, Users, ShieldCheck } from 'lucide-react';
+import { useRef } from 'react';
 
 export function BentoFeatures() {
     const sectionRef = useRef<HTMLDivElement>(null);

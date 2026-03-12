@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
     Zap,
     Search,
@@ -12,14 +11,13 @@ import {
     ExternalLink,
     Key
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Brain, Globe, Laptop, ShoppingCart, Share2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { useAuth } from '@/features/auth';
-import { toast } from 'sonner';
 import {
     Dialog,
     DialogContent,
@@ -28,10 +26,14 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getIcon } from '@/lib/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Globe, Laptop, ShoppingCart, Share2 } from 'lucide-react';
+import { useAuth } from '@/features/auth';
+import { getIcon } from '@/lib/icons';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+
 
 /**
  * SkillsDashboard Component
@@ -229,12 +231,10 @@ export function SkillsDashboard() {
                                                         Missing dependency: {bin}
                                                     </div>
                                                 ))}
-                                                {isInstalled && (
-                                                    <div className="flex items-center text-[10px] text-green-500">
+                                                {isInstalled ? <div className="flex items-center text-[10px] text-green-500">
                                                         <CheckCircle2 className="mr-1 h-3 w-3" />
                                                         All dependencies satisfied
-                                                    </div>
-                                                )}
+                                                    </div> : null}
                                             </div>
                                         </CardContent>
                                         <CardFooter className="border-t bg-muted/30 pt-4 flex flex-col space-y-2">
@@ -261,16 +261,14 @@ export function SkillsDashboard() {
                                                                 </Button>
                                                             )
                                                         )}
-                                                        {needsKey && (
-                                                            <Button
+                                                        {needsKey ? <Button
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 onClick={() => { setSelectedSkillKey(skillKey); setKeyDialogOpen(true); }}
                                                                 title="Configure API Key"
                                                             >
                                                                 <Key className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
+                                                            </Button> : null}
                                                     </>
                                                 ) : (
                                                     <Button variant="secondary" className="flex-1 w-full" asChild>
@@ -278,16 +276,14 @@ export function SkillsDashboard() {
                                                     </Button>
                                                 )}
                                             </div>
-                                            {(skill.homepage || statusInfo?.homepage) && (
-                                                <a
+                                            {(skill.homepage || statusInfo?.homepage) ? <a
                                                     href={skill.homepage || statusInfo?.homepage}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="text-[10px] text-muted-foreground hover:text-primary flex items-center self-center"
                                                 >
                                                     Documentation <ExternalLink className="ml-1 h-2 w-2" />
-                                                </a>
-                                            )}
+                                                </a> : null}
                                         </CardFooter>
                                     </Card>
                                 );

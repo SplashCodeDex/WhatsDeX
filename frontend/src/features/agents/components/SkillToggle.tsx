@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/features/auth';
-import { isSkillAllowed } from '../utils/SkillGating';
 import { Lock, HelpCircle } from 'lucide-react';
+import React from 'react';
+
+import { isSkillAllowed } from '../utils/SkillGating';
+
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/features/auth';
 import { cn } from '@/lib/utils';
 
 interface Skill {
@@ -79,7 +81,7 @@ export function SkillToggle({ enabledSkills, onToggle }: SkillToggleProps) {
                             </div>
                             <Switch
                                 id={`skill-${skill.id}`}
-                                checked={isAllowed && isEnabled}
+                                checked={isAllowed ? isEnabled : null}
                                 onCheckedChange={(checked) => isAllowed && onToggle(skill.id, checked)}
                                 disabled={!isAllowed}
                                 className={cn(

@@ -1,5 +1,5 @@
-import { requireAuth } from '@/server/auth/session';
 import { DashboardShell } from '@/components/layouts/DashboardShell';
+import { requireAuth } from '@/server/auth/session';
 
 export default async function DashboardLayout({
     children,

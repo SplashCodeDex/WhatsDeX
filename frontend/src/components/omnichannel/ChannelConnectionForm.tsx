@@ -1,16 +1,14 @@
 'use client';
 
+import { Slack, ShieldCheck, Loader2, MessageSquare, Hash, UserCircle2, QrCode, KeyRound } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Slack, ShieldCheck, Loader2, MessageSquare, Hash, UserCircle2, QrCode, KeyRound } from 'lucide-react';
-import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
-import { api } from '@/lib/api/client';
-import { API_ENDPOINTS } from '@/lib/api/endpoints';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -18,7 +16,10 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { api } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 interface ChannelConnectionFormProps {
   type: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat';
@@ -264,7 +265,7 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
             Cancel
           </Button>
           <Button type="submit" size="sm" disabled={loading} className="font-bold">
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Connect Channel
           </Button>
         </CardFooter>

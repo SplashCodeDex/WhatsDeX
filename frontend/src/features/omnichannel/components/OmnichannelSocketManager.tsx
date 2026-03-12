@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
+
 import { useSocket } from '@/hooks/useSocket';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { logger } from '@/lib/logger';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 /**
  * OmnichannelSocketManager

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import {
     Zap,
     Plus,
@@ -12,14 +11,15 @@ import {
     Copy,
     RefreshCw
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-import { api, API_ENDPOINTS } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Webhook, WEBHOOK_EVENTS, WebhookEvent } from '../types';
+
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -29,9 +29,11 @@ import {
     DialogTitle,
     DialogTrigger
 } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Webhook, WEBHOOK_EVENTS, WebhookEvent } from '../types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { api, API_ENDPOINTS } from '@/lib/api';
+
 
 export function WebhookManager() {
     const [webhooks, setWebhooks] = useState<Webhook[]>([]);

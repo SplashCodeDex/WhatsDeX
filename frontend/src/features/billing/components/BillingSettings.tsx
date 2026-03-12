@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, Rocket, Clock, CheckCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { SubscriptionInfoSchema, type SubscriptionInfo } from '../schemas';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { billingApi } from '@/lib/api/billing';
-import { SubscriptionInfoSchema, type SubscriptionInfo } from '../schemas';
-import { toast } from 'sonner';
 
 export function BillingSettings() {
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);

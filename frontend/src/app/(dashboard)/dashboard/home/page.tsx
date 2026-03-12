@@ -1,5 +1,6 @@
-import { HomeFeature } from '@/features/dashboard/HomeFeature';
 import { Metadata } from 'next';
+
+import { HomeFeature } from '@/features/dashboard/HomeFeature';
 
 export const metadata: Metadata = {
     title: 'Dashboard | DeXMart 2026',

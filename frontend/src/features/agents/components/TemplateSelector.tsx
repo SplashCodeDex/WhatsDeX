@@ -1,14 +1,16 @@
 'use client';
 
+import { Sparkles, Lock } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/features/auth';
+
 import { AGENT_TEMPLATES } from '../data/templates';
 import { type AgentTemplate, type PlanTier } from '../types';
-import { cn } from '@/lib/utils';
-import { Sparkles, Lock } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/features/auth';
 import { getIcon } from '@/lib/icons';
+import { cn } from '@/lib/utils';
 
 interface TemplateSelectorProps {
     onSelect: (template: AgentTemplate) => void;
@@ -58,12 +60,10 @@ export function TemplateSelector({ onSelect, className }: TemplateSelectorProps)
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted shadow-inner">
                                         {getIcon(template.iconName)}
                                     </div>
-                                    {isLocked && (
-                                        <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1">
+                                    {isLocked ? <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1">
                                             <Lock className="h-3 w-3" />
                                             {template.requiredTier.toUpperCase()}
-                                        </Badge>
-                                    )}
+                                        </Badge> : null}
                                     {!isLocked && template.requiredTier !== 'starter' && (
                                         <Badge variant="default" className="gap-1">
                                             <Sparkles className="h-3 w-3" />

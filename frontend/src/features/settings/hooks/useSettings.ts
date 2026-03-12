@@ -1,9 +1,11 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import type { TenantSettings } from '../types';
 import { toast } from 'sonner';
+
+import type { TenantSettings } from '../types';
+
+import { api } from '@/lib/api';
 
 export function useSettings() {
     const queryClient = useQueryClient();

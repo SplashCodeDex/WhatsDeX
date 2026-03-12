@@ -1,13 +1,5 @@
 'use client';
 
-import React, { useState, useActionState, useEffect, startTransition } from 'react';
-import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
-import { useAudiences } from '../hooks/useAudiences';
-import { useAgents } from '@/features/agents/hooks/useAgents';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Users,
     MessageSquare,
@@ -22,7 +14,18 @@ import {
     Clock,
     Loader2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState, useActionState, useEffect, startTransition } from 'react';
+import { toast } from 'sonner';
+
+import { createCampaign } from '../actions';
+import { useAudiences } from '../hooks/useAudiences';
+import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -31,9 +34,10 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { createCampaign } from '../actions';
-import { toast } from 'sonner';
+import { useAgents } from '@/features/agents/hooks/useAgents';
+import { cn } from '@/lib/utils';
+
+
 
 type Step = 'audience' | 'template' | 'distribution' | 'review';
 
@@ -247,8 +251,7 @@ export function CampaignWizard() {
                             </Select>
                         </div>
 
-                        {formData.templateId && (
-                            <div className="p-6 rounded-2xl border border-primary/20 bg-primary/5 relative">
+                        {formData.templateId ? <div className="p-6 rounded-2xl border border-primary/20 bg-primary/5 relative">
                                 <Badge className="absolute -top-3 left-4 bg-primary text-primary-foreground">Preview</Badge>
                                 <div className="text-lg leading-relaxed">
                                     {templates?.find(t => t.id === formData.templateId)?.content}
@@ -264,8 +267,7 @@ export function CampaignWizard() {
                                         disabled={isPending}
                                     />
                                 </div>
-                            </div>
-                        )}
+                            </div> : null}
                     </div>
                 )}
 
@@ -402,8 +404,7 @@ export function CampaignWizard() {
                                     disabled={isPending}
                                 />
                             </div>
-                            {formData.workingHoursEnabled && (
-                                <div className="mt-4 grid grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
+                            {formData.workingHoursEnabled ? <div className="mt-4 grid grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
                                     <div className="space-y-1.5">
                                         <Label className="text-[10px] uppercase font-bold text-muted-foreground text-center block">Timezone</Label>
                                         <Select
@@ -446,8 +447,7 @@ export function CampaignWizard() {
                                             disabled={isPending}
                                         />
                                     </div>
-                                </div>
-                            )}
+                                </div> : null}
                         </div>
 
                         <div className="p-4 rounded-2xl bg-warning/5 border border-warning/20">
@@ -467,8 +467,7 @@ export function CampaignWizard() {
                                     disabled={isPending}
                                 />
                             </div>
-                            {formData.typingSimulation && (
-                                <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2">
+                            {formData.typingSimulation ? <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2">
                                     <div className="flex justify-between items-center text-[10px] font-bold uppercase text-muted-foreground mb-1">
                                         <span>Max Typing Delay (Seconds)</span>
                                         <span className="text-warning font-mono">{formData.maxTypingDelay}s</span>
@@ -483,8 +482,7 @@ export function CampaignWizard() {
                                         className="h-4 accent-warning"
                                         disabled={isPending}
                                     />
-                                </div>
-                            )}
+                                </div> : null}
                         </div>
 
                         {formData.distributionType === 'single' && (
@@ -533,12 +531,10 @@ export function CampaignWizard() {
                             <div className="text-lg leading-relaxed">
                                 {templates?.find(t => t.id === formData.templateId)?.content}
                             </div>
-                            {formData.aiSpinning && (
-                                <div className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase text-primary bg-primary/10 w-fit px-2 py-1 rounded-md">
+                            {formData.aiSpinning ? <div className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase text-primary bg-primary/10 w-fit px-2 py-1 rounded-md">
                                     <Sparkles className="w-3 h-3" />
                                     AI Variation Enabled
-                                </div>
-                            )}
+                                </div> : null}
                         </div>
                     </div>
                 )}

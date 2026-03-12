@@ -62,7 +62,7 @@ function createUrl(
         ? (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:3001')
         : '';
 
-    let path = endpoint;
+    const path = endpoint;
     const url = new URL(path, baseUrl || 'http://dummy.com');
 
     if (params) {

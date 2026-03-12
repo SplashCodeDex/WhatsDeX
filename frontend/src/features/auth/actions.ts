@@ -10,10 +10,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-import { ROUTES } from '@/lib/constants';
-import { api, API_ENDPOINTS } from '@/lib/api';
-import { logger } from '@/lib/logger';
-
 import {
     loginSchema,
     registerSchema,
@@ -21,6 +17,10 @@ import {
     resetPasswordSchema,
 } from './schemas';
 import type { AuthUser } from './types';
+
+import { api, API_ENDPOINTS } from '@/lib/api';
+import { ROUTES } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 import type { ActionResult } from '@/types/api';
 
 // Session cookie configuration (Must match backend expectation)

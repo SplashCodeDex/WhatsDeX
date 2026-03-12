@@ -16,11 +16,10 @@ import {
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
-import { TriggerNode, ActionNode, LogicNode, AINode, SkillNode, AIRouterNode } from '@/features/flows/components/CustomNodes';
 import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2, Send, Lock, Wrench, Route } from 'lucide-react';
-import { api } from '@/lib/api/client';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -30,11 +29,7 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useTemplates } from '@/features/messages/hooks/useTemplates';
-import { useSubscription } from '@/features/billing';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import {
     Select,
     SelectContent,
@@ -42,7 +37,13 @@ import {
     SelectTrigger,
     SelectValue
 } from '@/components/ui/select';
+import { useSubscription } from '@/features/billing';
+import { TriggerNode, ActionNode, LogicNode, AINode, SkillNode, AIRouterNode } from '@/features/flows/components/CustomNodes';
+import { useTemplates } from '@/features/messages/hooks/useTemplates';
+import { api } from '@/lib/api/client';
 import { getIcon } from '@/lib/icons';
+import { cn } from '@/lib/utils';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 const initialNodes: Node[] = [
     {
@@ -180,7 +181,7 @@ export function FlowsDashboard() {
 
         setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, executing: false } })));
 
-        let currentNodeId = trigger.id;
+        const currentNodeId = trigger.id;
         await executeSimulationStep(currentNodeId);
     };
 
@@ -389,8 +390,7 @@ export function FlowsDashboard() {
             </div>
 
             {/* Properties Panel */}
-            {selectedNode && (
-                <div className="w-80 border border-border/40 rounded-xl bg-card/30 backdrop-blur-md p-4 flex flex-col gap-6 animate-in slide-in-from-right duration-300 overflow-y-auto">
+            {selectedNode ? <div className="w-80 border border-border/40 rounded-xl bg-card/30 backdrop-blur-md p-4 flex flex-col gap-6 animate-in slide-in-from-right duration-300 overflow-y-auto">
                     <div>
                         <h2 className="text-xs font-black uppercase tracking-tighter text-primary mb-4">Node Properties</h2>
                         <div className="space-y-4">
@@ -494,7 +494,7 @@ export function FlowsDashboard() {
                                                             <div className="flex items-center gap-2">
                                                                 {getIcon(skill.id)}
                                                                 <span className="truncate">{skill.name}</span>
-                                                                {isLocked && <Lock className="w-3 h-3 ml-auto text-muted-foreground" />}
+                                                                {isLocked ? <Lock className="w-3 h-3 ml-auto text-muted-foreground" /> : null}
                                                             </div>
                                                         </SelectItem>
                                                     );
@@ -503,8 +503,7 @@ export function FlowsDashboard() {
                                         </Select>
                                     </div>
 
-                                    {selectedSkill && (
-                                        <div className="space-y-4 pt-4 border-t border-border/20">
+                                    {selectedSkill ? <div className="space-y-4 pt-4 border-t border-border/20">
                                             <div className="flex items-center justify-between">
                                                 <Label className="text-[10px] font-bold uppercase">Deep Reasoning (Nesting)</Label>
                                                 <input
@@ -530,20 +529,18 @@ export function FlowsDashboard() {
                                                             });
                                                         }}
                                                     />
-                                                    {prop.description && <p className="text-[9px] text-muted-foreground leading-tight">{prop.description}</p>}
+                                                    {prop.description ? <p className="text-[9px] text-muted-foreground leading-tight">{prop.description}</p> : null}
                                                 </div>
                                             ))}
                                             {Object.keys(selectedSkill.parameters?.properties || {}).length === 0 && (
                                                 <p className="text-[10px] text-muted-foreground italic">No parameters required for this skill.</p>
                                             )}
-                                        </div>
-                                    )}
+                                        </div> : null}
                                 </div>
                             )}
                         </div>
                     </div>
-                </div>
-            )}
+                </div> : null}
 
             {/* Test Flow Modal */}
             <Dialog open={isTesting} onOpenChange={setIsTesting}>

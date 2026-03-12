@@ -1,6 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { ActivityFeed } from './ActivityFeed';
+
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 // Mock the store

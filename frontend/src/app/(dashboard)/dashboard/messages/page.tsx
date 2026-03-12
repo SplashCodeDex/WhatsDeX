@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { CampaignList, CampaignWizard, UnifiedInbox } from '@/features/messages/index';
 import { Send, Info, Plus, ListFilter, X, Inbox, MessageSquare } from 'lucide-react';
+import React, { useState } from 'react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CampaignList, CampaignWizard, UnifiedInbox } from '@/features/messages/index';
 
 export default function MessagesPage() {
     const [showWizard, setShowWizard] = useState(false);

@@ -1,12 +1,15 @@
 'use client';
 
-import { Sidebar } from './Sidebar';
-import { Header } from './Header';
-import { ScrollToTop } from '../ui/ScrollToTop';
-import { useUIStore } from '@/stores/useUIStore';
-import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+
+import { Header } from './Header';
+import { Sidebar } from './Sidebar';
+import { ScrollToTop } from '../ui/ScrollToTop';
 import { ScrollArea } from '../ui/scroll-area';
+
+import { cn } from '@/lib/utils';
+import { useUIStore } from '@/stores/useUIStore';
+
 
 export function DashboardShell({
     children,

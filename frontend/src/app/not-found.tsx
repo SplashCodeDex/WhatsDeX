@@ -1,7 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { SearchIcon } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 
 /**
  * 404 - Not Found Page

@@ -1,10 +1,10 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useActionState, useEffect } from 'react';
 
 import { Button, PasswordInput } from '@/components/ui';
 import { resetPassword, getAuthErrorMessage } from '@/features/auth';
@@ -104,14 +104,12 @@ export function ResetPasswordForm() {
                                     />
                                 </div>
 
-                                {state?.error && (
-                                    <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                                {state?.error ? <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
                                         {state.error.message || getAuthErrorMessage(state.error.code)}
-                                    </div>
-                                )}
+                                    </div> : null}
 
                                 <Button disabled={isPending}>
-                                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Reset Password
                                 </Button>
                             </div>

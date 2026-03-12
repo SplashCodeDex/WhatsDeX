@@ -1,14 +1,17 @@
 'use client';
 
-import React from 'react';
 import { CheckCircle2, AlertTriangle, XCircle, Tag, Shield } from 'lucide-react';
+import React from 'react';
+
+import type { ValidationResult } from './wizardUtils';
+import { getValidationStats } from './wizardUtils';
+
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { useCheckDuplicates } from '@/features/contacts/hooks/useContacts';
-import type { ValidationResult } from './wizardUtils';
-import { getValidationStats } from './wizardUtils';
+
 
 interface ValidationStepProps {
     readonly validatedRows: readonly ValidationResult[];
@@ -132,14 +135,12 @@ export function ValidationStep({
                                         </div>
                                         <div className="font-mono text-muted-foreground truncate pr-2 flex items-center gap-2">
                                             {result.row.phone || '—'}
-                                            {result.row.phone && duplicates.has(result.row.phone) && (
-                                                <Badge
+                                            {result.row.phone && duplicates.has(result.row.phone) ? <Badge
                                                     variant="secondary"
                                                     className="h-3.5 px-1 text-[8px] font-black uppercase bg-amber-500/20 text-amber-500 border-amber-500/30 shrink-0"
                                                 >
                                                     Existing
-                                                </Badge>
-                                            )}
+                                                </Badge> : null}
                                         </div>
                                         <div className="text-muted-foreground truncate pr-2">
                                             {result.row.email || '—'}

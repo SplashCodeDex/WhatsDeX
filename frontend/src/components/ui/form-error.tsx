@@ -18,8 +18,7 @@ interface FormErrorProps {
 export function FormError({ message, className }: FormErrorProps) {
     return (
         <AnimatePresence mode="wait">
-            {message && (
-                <motion.div
+            {message ? <motion.div
                     initial={{ opacity: 0, height: 0, y: -10 }}
                     animate={{ opacity: 1, height: "auto", y: 0 }}
                     exit={{ opacity: 0, height: 0, y: -10 }}
@@ -45,8 +44,7 @@ export function FormError({ message, className }: FormErrorProps) {
                             {message}
                         </p>
                     </div>
-                </motion.div>
-            )}
+                </motion.div> : null}
         </AnimatePresence>
     );
 }

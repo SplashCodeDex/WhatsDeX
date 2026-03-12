@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Rocket, Zap, Shield, Sparkles, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { billingApi } from '@/lib/api/billing';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 type PlanId = 'starter' | 'pro' | 'enterprise';
@@ -137,11 +138,9 @@ export function PricingTable() {
               "relative flex h-full flex-col overflow-hidden border-2",
               plan.popular ? 'border-primary shadow-xl' : 'border-border'
             )}>
-              {plan.popular && (
-                <div className="absolute right-0 top-0 rounded-bl-xl bg-primary px-4 py-1 text-xs font-bold text-primary-foreground shadow-sm">
+              {plan.popular ? <div className="absolute right-0 top-0 rounded-bl-xl bg-primary px-4 py-1 text-xs font-bold text-primary-foreground shadow-sm">
                   MOST POPULAR
-                </div>
-              )}
+                </div> : null}
 
               <CardHeader>
                 <div className={cn(

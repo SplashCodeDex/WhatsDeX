@@ -1,7 +1,8 @@
+import { Loader2 } from 'lucide-react';
 import { type Metadata } from 'next';
 import { Suspense } from 'react';
+
 import { ResetPasswordForm } from '@/features/auth';
-import { Loader2 } from 'lucide-react';
 
 export const metadata: Metadata = {
     title: 'Reset Password | DeXMart',

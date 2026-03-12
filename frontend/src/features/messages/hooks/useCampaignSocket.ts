@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSocket } from '@/hooks/useSocket';
+import { useEffect, useCallback } from 'react';
+
 import { Campaign } from '@/features/messages/types';
+import { useSocket } from '@/hooks/useSocket';
 
 /**
  * Hook to manage campaign WebSocket connection and real-time updates
