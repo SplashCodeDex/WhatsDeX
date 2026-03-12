@@ -14,11 +14,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Fix Logout Infinite Reload & Backend Restart Loop**
-*Link: [./tracks/logout_fix_20260310/](./tracks/logout_fix_20260310/)*
-
----
-
 ## Archived Tracks
 
 ### [x] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
