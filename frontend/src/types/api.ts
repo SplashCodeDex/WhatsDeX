@@ -45,7 +45,6 @@ export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
  * Standard Result type for Server Actions (2026 Mastermind Edition)
  */
 export type ActionResult<T = void> = ApiResponse<T>;
-export type Result<T = void> = ActionResult<T>;
 
 
 /**

@@ -99,7 +99,7 @@ interface OmnichannelState {
     fetchUsageTotals: () => Promise<void>;
     fetchUsageDaily: () => Promise<void>;
     fetchUsageSessions: () => Promise<void>;
-    fetchSessionsList: () => Promise<void>;
+    fetchSessions: () => Promise<void>;
 
     // Nodes & Logs Actions
     fetchNodes: () => Promise<void>;
@@ -512,7 +512,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
         }
     },
 
-    fetchSessionsList: async () => {
+    fetchSessions: async () => {
         try {
             const response = await api.get<SessionsListResult>(API_ENDPOINTS.OMNICHANNEL.SESSIONS.LIST);
             if (response.success) {
@@ -645,7 +645,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     getSkillCount: () => {
         const { skillReport, skills } = get();
         // Fallback to 51 if not loaded, but try to use real data
-        if (skillReport?.total) return skillReport.total;
+        if (skillReport?.skills) return skillReport.skills.length;
         if (skills?.length) return skills.length;
         return 51; // Design default if nothing loaded
     }

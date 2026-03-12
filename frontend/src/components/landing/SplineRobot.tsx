@@ -1,133 +1,59 @@
 'use client';
 
-import { Suspense, Component, useState, useCallback, useEffect, useRef } from 'react';
-import type { ReactNode, ErrorInfo } from 'react';
-import Image from 'next/image';
 import Spline from '@splinetool/react-spline';
 import type { Application } from '@splinetool/runtime';
-
-// ── Error Boundary ──────────────────────────────────────────────────────
-class SplineErrorBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {
-    constructor(props: { fallback: ReactNode; children: ReactNode }) {
-        super(props);
-        this.state = { hasError: false };
-    }
-
-    static getDerivedStateFromError(): { hasError: boolean } {
-        return { hasError: true };
-    }
-
-    componentDidCatch(error: Error, info: ErrorInfo): void {
-        console.warn('[SplineRobot] Runtime error caught by boundary:', error.message);
-    }
-
-    render() {
-        if (this.state.hasError) return this.props.fallback;
-        return this.props.children;
-    }
-}
-
-// ── SplineRobot Component ───────────────────────────────────────────────
+import { useRef, useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface SplineRobotProps {
-    sceneUrl: string;
     className?: string;
     onSplineLoad?: (app: Application) => void;
+    sceneUrl?: string;
 }
 
-export function SplineRobot({ sceneUrl, className = '', onSplineLoad }: SplineRobotProps) {
-    const [hasError, setHasError] = useState(false);
+export function SplineRobot({ 
+    className, 
+    onSplineLoad,
+    sceneUrl = "https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
+}: SplineRobotProps) {
     const [isLoading, setIsLoading] = useState(true);
-    const [isMounted, setIsMounted] = useState(false);
     const splineAppRef = useRef<Application | null>(null);
 
-    // Ensure we only render on the client
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    const handleLoad = useCallback((splineApp: Application) => {
-        console.log('[SplineRobot] Scene loaded');
+    const handleLoad = (splineApp: Application) => {
+        console.log("Spline: Scene Loaded Successfully");
         splineAppRef.current = splineApp;
         setIsLoading(false);
+        
         if (onSplineLoad) {
             onSplineLoad(splineApp);
         }
-    }, [onSplineLoad]);
+    };
 
-    const handleError = useCallback(() => {
-        console.warn('[SplineRobot] Spline failed to initialize');
-        setHasError(true);
+    const handleError = () => {
         setIsLoading(false);
-    }, []);
-
-    const fallbackUI = (
-        <div className="flex h-full w-full items-center justify-center bg-background">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500">
-                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" />
-                    </svg>
-                </div>
-                <p className="text-sm text-muted-foreground">3D scene unavailable</p>
-            </div>
-        </div>
-    );
-
-    if (!isMounted) return <div className={className} />;
-    if (hasError) return <div className={className}>{fallbackUI}</div>;
+        toast.error("Failed to load 3D assets.", {
+            description: "Please check your connection or refresh the page."
+        });
+    };
 
     return (
-        <div className={className}>
-            <SplineErrorBoundary fallback={fallbackUI}>
-                <div className="relative w-full h-full overflow-hidden">
-                    {/* Visual Placeholder for instant feedback */}
-                    {isLoading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background z-10 transition-opacity duration-1000">
-                            {/* Robot Placeholder Image */}
-                            <div className="relative w-full h-full flex items-center justify-center">
-                                <Image
-                                    src="/assets/illustrations/bot-automation.png"
-                                    alt="DeXMart Assistant Loading..."
-                                    fill
-                                    className="object-contain opacity-20 scale-90 blur-sm animate-pulse"
-                                    priority
-                                />
-
-                                {/* Loading Indicator Overlay */}
-                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-transparent via-background/40 to-background">
-                                    <div className="flex flex-col items-center gap-6">
-                                        <div className="relative">
-                                            <div className="w-16 h-16 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
-                                            <div className="absolute inset-0 w-16 h-16 bg-primary-500/10 blur-xl rounded-full animate-pulse"></div>
-                                        </div>
-                                        <div className="space-y-1 text-center">
-                                            <p className="text-sm font-bold tracking-widest text-primary-500 uppercase animate-pulse">
-                                                Initializing Neural Link
-                                            </p>
-                                            <p className="text-[10px] text-muted-foreground uppercase tracking-tighter">
-                                                Loading 3D Studio Engine...
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    <Suspense fallback={null}>
-                        <Spline
-                            key={sceneUrl}
-                            scene={sceneUrl}
-                            onLoad={handleLoad}
-                            onError={handleError}
-                            style={{ width: '100%', height: '100%' }}
-                        />
-                    </Suspense>
+        <div className={cn("relative overflow-hidden", className)}>
+            {/* Loading Placeholder */}
+            {isLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+                    <div className="h-12 w-12 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
                 </div>
-            </SplineErrorBoundary>
-
-            {/* Ambient Base Glow */}
-            <div className="absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[80%] h-[30%] bg-primary-500/20 blur-[100px] -z-10 rounded-full pointer-events-none"></div>
+            )}
+            
+            <div className="h-full w-full">
+                <Spline
+                    scene={sceneUrl}
+                    style={{ height: '100%', width: '100%' }}
+                    onLoad={handleLoad}
+                    onError={handleError}
+                />
+            </div>
         </div>
     );
 }

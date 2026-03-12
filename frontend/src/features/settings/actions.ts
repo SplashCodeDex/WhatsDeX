@@ -2,15 +2,15 @@
 
 import { revalidatePath } from 'next/cache';
 import { api, API_ENDPOINTS } from '@/lib/api';
-import type { Result } from '@/types/api';
+import type { ActionResult } from '@/types/api';
 
 /**
  * Update tenant settings
  */
 export async function updateTenantSettings(
-    prevState: Result<any> | null,
+    prevState: ActionResult<any> | null,
     formData: FormData
-): Promise<Result<any>> {
+): Promise<ActionResult<any>> {
     const jsonData = formData.get('data');
     if (!jsonData || typeof jsonData !== 'string') {
         return {

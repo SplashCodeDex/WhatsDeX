@@ -2,15 +2,15 @@
 
 import { revalidatePath } from 'next/cache';
 import { api } from '@/lib/api';
-import type { Result } from '@/types/api';
+import type { ActionResult } from '@/types/api';
 
 /**
  * Create a new campaign
  */
 export async function createCampaign(
-    prevState: Result<any> | null,
+    prevState: ActionResult<any> | null,
     formData: FormData
-): Promise<Result<any>> {
+): Promise<ActionResult<any>> {
     const jsonData = formData.get('data');
     if (!jsonData || typeof jsonData !== 'string') {
         return {
@@ -45,7 +45,7 @@ export async function createCampaign(
 /**
  * Start a campaign
  */
-export async function startCampaignAction(id: string): Promise<Result<{ message: string }>> {
+export async function startCampaignAction(id: string): Promise<ActionResult<{ message: string }>> {
     const response = await api.post<{ message: string }>(`/api/campaigns/${id}/start`, {});
     if (!response.success) return { success: false, error: response.error };
     revalidatePath('/dashboard/campaigns');
@@ -55,7 +55,7 @@ export async function startCampaignAction(id: string): Promise<Result<{ message:
 /**
  * Pause a campaign
  */
-export async function pauseCampaignAction(id: string): Promise<Result<{ message: string }>> {
+export async function pauseCampaignAction(id: string): Promise<ActionResult<{ message: string }>> {
     const response = await api.post<{ message: string }>(`/api/campaigns/${id}/pause`, {});
     if (!response.success) return { success: false, error: response.error };
     revalidatePath('/dashboard/campaigns');

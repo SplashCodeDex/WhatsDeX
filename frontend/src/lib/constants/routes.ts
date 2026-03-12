@@ -13,6 +13,7 @@ export const ROUTES = {
 
     // Dashboard routes
     DASHBOARD: '/dashboard',
+    DASHBOARD_HOME: '/dashboard/home',
     BOTS: '/bots',
     BOT_DETAIL: (botId: string) => `/bots/${botId}` as const,
     BOT_SETTINGS: (botId: string) => `/bots/${botId}/settings` as const,

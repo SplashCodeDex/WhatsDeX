@@ -450,9 +450,10 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * SPLINE 3D CONTAINER - Interactive 3D Canvas
+ * UTILITIES
  * ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Spline 3D Container */
 .spline-container {
   width: 100%;
   height: 100vh;
@@ -464,20 +465,6 @@
   background: transparent;
 }
 
-/* Float Animation for subtle breathing effect on the container */
-@keyframes spline-float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-spline-float {
-  animation: spline-float 6s ease-in-out infinite;
-}
-
 /* Hide scrollbars but keep scrolling functionality */
 .no-scrollbar {
   -ms-overflow-style: none; /* IE and Edge */
@@ -486,14 +473,4 @@
 
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
-}
-
-/* Hide Spline Logo Watermark */
-#spline-logo,
-a[href*="splinetool.com"],
-a[href*="spline.design"],
-.spline-watermark {
-    display: none !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
 }

@@ -4,7 +4,7 @@ import { useCreateAgent } from './useCreateAgent';
 import { useAuth } from '@/features/auth';
 import { getClientFirestore } from '@/lib/firebase/client';
 import { runTransaction } from 'firebase/firestore';
-import { type Result } from '@/types/api';
+import { type ActionResult } from '@/types/api';
 
 // Mock Auth
 vi.mock('@/features/auth', () => ({
@@ -44,7 +44,7 @@ describe('useCreateAgent', () => {
         (useAuth as any).mockReturnValue({ user: null });
         const { result } = renderHook(() => useCreateAgent());
 
-        let response: Result<string> | undefined;
+        let response: ActionResult<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);
         });
@@ -71,7 +71,7 @@ describe('useCreateAgent', () => {
 
         const { result } = renderHook(() => useCreateAgent());
 
-        let response: Result<string> | undefined;
+        let response: ActionResult<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);
         });
@@ -100,7 +100,7 @@ describe('useCreateAgent', () => {
 
         const { result } = renderHook(() => useCreateAgent());
 
-        let response: Result<string> | undefined;
+        let response: ActionResult<string> | undefined;
         await act(async () => {
             response = await result.current.createAgent(mockAgentData);
         });

@@ -2,15 +2,15 @@
 
 import { redirect } from 'next/navigation';
 import { api, API_ENDPOINTS } from '@/lib/api';
-import type { Result } from '@/types/api';
+import type { ActionResult } from '@/types/api';
 
 /**
  * Create a checkout session
  */
 export async function createCheckoutSession(
-    prevState: Result<{ url: string }> | null,
+    prevState: ActionResult<{ url: string }> | null,
     formData: FormData
-): Promise<Result<{ url: string }>> {
+): Promise<ActionResult<{ url: string }>> {
     const priceId = formData.get('priceId');
     const interval = formData.get('interval');
 
@@ -39,7 +39,7 @@ export async function createCheckoutSession(
 /**
  * Create a portal session
  */
-export async function createPortalSession(): Promise<Result<{ url: string }>> {
+export async function createPortalSession(): Promise<ActionResult<{ url: string }>> {
     const response = await api.post<{ url: string }>('/api/billing/portal', {});
 
     if (!response.success) {

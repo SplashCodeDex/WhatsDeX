@@ -11,7 +11,7 @@ import {
     type Transaction
 } from 'firebase/firestore';
 import { type Agent, type AIModel } from '../types';
-import { type Result } from '@/types/api';
+import { type ActionResult } from '@/types/api';
 import { logger } from '@/lib/logger';
 
 const TIER_LIMITS = {
@@ -36,7 +36,7 @@ export function useCreateAgent() {
 
     const createAgent = useCallback(async (
         input: CreateAgentInput
-    ): Promise<Result<string>> => {
+    ): Promise<ActionResult<string>> => {
         if (!user || !user.id) {
             return {
                 success: false,

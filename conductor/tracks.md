@@ -14,7 +14,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: System Health & Technical Debt Remediation**
+- [~] **Track: System Health & Technical Debt Remediation**
 *Link: [./tracks/system_health_20260312/](./tracks/system_health_20260312/)*
 
 ---

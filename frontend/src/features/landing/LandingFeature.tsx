@@ -14,13 +14,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const SplineRobot = dynamic(() => import('@/components/landing/SplineRobot').then(mod => mod.SplineRobot), {
     ssr: false,
-    loading: () => (
-        <div className="absolute inset-0 w-full h-full bg-background flex items-center justify-center">
-            {/* Shimmer Loader Placeholder */}
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-primary-500/10 to-transparent w-[200%] animate-[shimmer_2s_infinite]" />
-            <div className="z-10 h-64 w-64 rounded-full border border-primary-500/20 bg-primary-500/5 animate-pulse blur-xl" />
-        </div>
-    )
+    loading: () => <div className="absolute inset-0 bg-background/20 backdrop-blur-sm" />
 });
 
 export function LandingFeature() {
@@ -37,13 +31,13 @@ export function LandingFeature() {
     });
 
     return (
-        <div className="flex min-h-screen flex-col relative">
-            {/* Interactive 3D Hero Section */}
-            <section className="relative h-screen w-full flex-col bg-background">
-                {/* 3D Background */}
-                <SplineRobot
+        <div className="flex min-h-screen flex-col relative overflow-x-hidden">
+            {/* Quantum Hero Section */}
+            <section className="relative h-screen w-full flex items-center justify-center bg-background overflow-hidden px-4">
+                {/* 3D Asset Background - Raw Mode */}
+                <SplineRobot 
+                    className="absolute inset-0 z-0 h-full w-full"
                     sceneUrl="https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
-                    className="absolute inset-0 w-full h-full z-0"
                 />
 
                 {/* Floating Navigation */}

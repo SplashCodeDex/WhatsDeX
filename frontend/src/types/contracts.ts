@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 /**
- * Result Type for Functional Error Handling
+ * Result Type for Functional Error Handling (Contracts)
  */
-export type Result<T, E = Error> =
+export type ContractResult<T, E = Error> =
   | { readonly success: true; readonly data: T }
   | { readonly success: false; readonly error: E };
 

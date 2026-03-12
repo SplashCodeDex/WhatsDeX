@@ -3,7 +3,7 @@
 ## Phase 1: Frontend Type-Check & Lint Fixes
 Goal: Restore frontend build stability.
 
-- [ ] Task: Fix Frontend Type Errors
+- [~] Task: Fix Frontend Type Errors
     - [ ] Fix duplicate `Result` and `TenantSettings` exports in `frontend/src/types/index.ts`.
     - [ ] Add `fetchSessions` to `useOmnichannelStore` and ensure all used actions are declared.
     - [ ] Fix `Terminal` icon import in `LogsPage.tsx`.

@@ -105,7 +105,7 @@ export function AgentsDashboard() {
         if (!selectedAgent) return;
 
         try {
-            const success = await toggleSkill(selectedAgent.id, skillId, enabled);
+            const success = await toggleSkill(skillId, enabled);
             if (success) {
                 toast.success(`Skill ${enabled ? 'enabled' : 'disabled'} successfully`);
                 // Refresh identity to get updated skills

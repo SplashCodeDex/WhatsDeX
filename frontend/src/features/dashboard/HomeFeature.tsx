@@ -32,7 +32,7 @@ export function HomeFeature() {
         fetchSkillReport();
     }, [fetchGatewayHealth, fetchSkillReport]);
 
-    const firstName = user?.name ? user.name.split(' ')[0] : 'User';
+    const firstName = (user?.name ? user.name.split(' ')[0] : 'User') || 'User';
     const skillCount = getSkillCount();
     const activeAgents = gatewayHealth?.agents?.length || 0;
 
