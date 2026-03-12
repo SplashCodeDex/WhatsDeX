@@ -6,9 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-### [x] Track: Mastermind Event Stream
-*Link: [./tracks/mastermind_stream_20260312/](./tracks/mastermind_stream_20260312/)*
-
 ### [x] Track: Agents Page Audit & Enhancement
 *Link: [./tracks/agents_audit_20260312/](./tracks/agents_audit_20260312/)*
 
@@ -21,6 +18,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 ---
 
 ## Archived Tracks
+
+### [x] Track: Mastermind Event Stream
+*Link: [./archive/mastermind_stream_20260312/](./archive/mastermind_stream_20260312/)*
 
 ### [x] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
 *Link: [./archive/fix_connection_flaws_20260310/](./archive/fix_connection_flaws_20260310/)*
