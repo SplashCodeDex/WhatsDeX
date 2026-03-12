@@ -6,6 +6,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
+### [ ] Track: Mastermind Event Stream
+*Link: [./tracks/mastermind_stream_20260312/](./tracks/mastermind_stream_20260312/)*
+
 ### [x] Track: Agents Page Audit & Enhancement
 *Link: [./tracks/agents_audit_20260312/](./tracks/agents_audit_20260312/)*
 
