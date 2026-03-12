@@ -4,74 +4,40 @@ import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { useState } from 'react';
+import { MessageSquare, ArrowRight } from 'lucide-react';
+import { TrustMarquee } from './components/TrustMarquee';
+import { BentoFeatures } from './components/BentoFeatures';
+import { SocialProof } from './components/SocialProof';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const SplineRobot = dynamic(() => import('@/components/landing/SplineRobot').then(mod => mod.SplineRobot), {
     ssr: false,
-    loading: () => <div className="absolute inset-0 w-full h-full bg-background" />
+    loading: () => (
+        <div className="absolute inset-0 w-full h-full bg-background flex items-center justify-center">
+            {/* Shimmer Loader Placeholder */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-primary-500/10 to-transparent w-[200%] animate-[shimmer_2s_infinite]" />
+            <div className="z-10 h-64 w-64 rounded-full border border-primary-500/20 bg-primary-500/5 animate-pulse blur-xl" />
+        </div>
+    )
 });
 
-const features = [
-    {
-        title: 'Multi-Bot Management',
-        description: 'Connect and manage multiple WhatsApp accounts from a single dashboard.',
-        icon: (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-        ),
-    },
-    {
-        title: 'Real-time Sync',
-        description: 'Messages sync instantly across all your devices and bots in real-time.',
-        icon: (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-        ),
-    },
-    {
-        title: 'Automation Rules',
-        description: 'Set up powerful automation rules to respond to messages automatically.',
-        icon: (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-        ),
-    },
-    {
-        title: 'Analytics Dashboard',
-        description: 'Track message delivery, engagement, and bot performance with detailed analytics.',
-        icon: (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-        ),
-    },
-    {
-        title: 'Team Collaboration',
-        description: 'Invite team members and collaborate on bot management with role-based access.',
-        icon: (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-        ),
-    },
-    {
-        title: 'Secure & Compliant',
-        description: 'Enterprise-grade security with end-to-end encryption and data compliance.',
-        icon: (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-        ),
-    },
-];
-
 export function LandingFeature() {
+    const { scrollY } = useScroll();
+    const [showStickyCTA, setShowStickyCTA] = useState(false);
+
+    useMotionValueEvent(scrollY, "change", (latest) => {
+        // Show sticky CTA after scrolling down 600px (past the hero)
+        if (latest > 600) {
+            setShowStickyCTA(true);
+        } else {
+            setShowStickyCTA(false);
+        }
+    });
+
     return (
-        <div className="flex min-h-screen flex-col">
+        <div className="flex min-h-screen flex-col relative">
             {/* Interactive 3D Hero Section */}
             <section className="relative h-screen w-full flex-col bg-background">
                 {/* 3D Background */}
@@ -93,63 +59,65 @@ export function LandingFeature() {
                         />
                     </Link>
 
-                    <div className="flex items-center gap-6 pointer-events-auto">
+                    <div className="flex items-center gap-4 md:gap-6 pointer-events-auto">
                         <Link href="/faq" className="hidden text-sm font-medium text-foreground/80 hover:text-primary-400 transition-colors md:block drop-shadow-sm">
                             FAQs
                         </Link>
                         <Link href="/login" className="hidden text-sm font-medium text-foreground/80 hover:text-primary-400 transition-colors md:block drop-shadow-sm">
                             Login
                         </Link>
-                        <Button className="rounded-full shadow-lg hover:shadow-primary-500/25 transition-shadow" asChild>
+                        <ThemeToggle />
+                        <Button className="rounded-full shadow-lg hover:shadow-primary-500/25 transition-shadow hidden md:inline-flex" asChild>
                             <Link href="/register">Get Started</Link>
                         </Button>
                     </div>
                 </nav>
             </section>
 
-            {/* Features Section with Animations */}
-            <section className="border-t border-border bg-muted/30 px-4 py-24">
-                <div className="mx-auto max-w-6xl">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5 }}
-                        className="mb-16 text-center"
-                    >
-                        <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                            Everything You Need
-                        </h2>
-                        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                            Powerful features to supercharge your WhatsApp automation
-                        </p>
-                    </motion.div>
+            {/* Continuous Marquee */}
+            <TrustMarquee />
 
-                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                        {features.map((feature, index) => (
-                            <motion.div
-                                key={feature.title}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className="rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary-500/50"
-                            >
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                                    {feature.icon}
-                                </div>
-                                <h3 className="mb-2 text-lg font-semibold text-foreground">
-                                    {feature.title}
-                                </h3>
-                                <p className="text-muted-foreground">{feature.description}</p>
-                            </motion.div>
-                        ))}
+            {/* Premium Bento Grid Features */}
+            <BentoFeatures />
+
+            {/* Social Proof */}
+            <SocialProof />
+
+            {/* Context-Aware Sticky Navigation Bar */}
+            <motion.div
+                initial={{ y: -100, opacity: 0 }}
+                animate={showStickyCTA ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                className="fixed top-4 left-1/2 z-50 -translate-x-1/2 transform pointer-events-none w-[90%] max-w-4xl"
+            >
+                <div className="pointer-events-auto flex items-center justify-between rounded-full border border-white/10 bg-background/80 px-6 py-3 shadow-2xl backdrop-blur-xl dark:bg-black/60">
+                    <Link href="/" className="flex items-center gap-3">
+                        <Image src="/logo.png" alt="DeXMart" width={32} height={32} className="h-8 w-8" />
+                        <span className="hidden font-bold tracking-tight text-foreground sm:inline-block">DeXMart</span>
+                    </Link>
+
+                    <div className="flex items-center gap-4">
+                        <Link href="/faq" className="hidden text-sm font-medium text-muted-foreground hover:text-foreground md:block transition-colors">
+                            FAQs
+                        </Link>
+                        <Link href="/login" className="hidden text-sm font-medium text-muted-foreground hover:text-foreground md:block transition-colors">
+                            Login
+                        </Link>
+                        <div className="h-4 w-px bg-border hidden md:block" />
+                        <ThemeToggle />
+                        <Button className="rounded-full px-6 shadow-lg group" asChild>
+                            <Link href="/register">
+                                {/* Dynamic Text based on user's instruction to be 'Get Started' but allowing room for morphing later */}
+                                <span>Get Started</span>
+                                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            </Link>
+                        </Button>
                     </div>
                 </div>
-            </section>
+            </motion.div>
 
             {/* Footer */}
-            <footer className="border-t border-border px-4 py-8">
+            <footer className="border-t border-border bg-background px-4 py-8 relative z-10">
                 <div className="mx-auto flex max-w-6xl items-center justify-between">
                     <p className="text-sm text-muted-foreground">
                         © 2026 DeXMart. All rights reserved.

@@ -1,9 +1,10 @@
 'use client';
 
-import { Suspense, Component, useState, useCallback, useEffect } from 'react';
+import { Suspense, Component, useState, useCallback, useEffect, useRef } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import Image from 'next/image';
 import Spline from '@splinetool/react-spline';
+import type { Application } from '@splinetool/runtime';
 
 // ── Error Boundary ──────────────────────────────────────────────────────
 class SplineErrorBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {
@@ -31,22 +32,28 @@ class SplineErrorBoundary extends Component<{ fallback: ReactNode; children: Rea
 interface SplineRobotProps {
     sceneUrl: string;
     className?: string;
+    onSplineLoad?: (app: Application) => void;
 }
 
-export function SplineRobot({ sceneUrl, className = '' }: SplineRobotProps) {
+export function SplineRobot({ sceneUrl, className = '', onSplineLoad }: SplineRobotProps) {
     const [hasError, setHasError] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
+    const splineAppRef = useRef<Application | null>(null);
 
     // Ensure we only render on the client
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
-    const handleLoad = useCallback(() => {
+    const handleLoad = useCallback((splineApp: Application) => {
         console.log('[SplineRobot] Scene loaded');
+        splineAppRef.current = splineApp;
         setIsLoading(false);
-    }, []);
+        if (onSplineLoad) {
+            onSplineLoad(splineApp);
+        }
+    }, [onSplineLoad]);
 
     const handleError = useCallback(() => {
         console.warn('[SplineRobot] Spline failed to initialize');

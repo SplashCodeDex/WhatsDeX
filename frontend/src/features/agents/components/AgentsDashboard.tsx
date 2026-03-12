@@ -55,6 +55,7 @@ export function AgentsDashboard() {
         fetchAgentIdentity,
         fetchUsageTotals,
         disconnectChannel,
+        toggleSkill,
         isLoading
     } = useOmnichannelStore();
     const { user } = useAuth();
@@ -98,6 +99,23 @@ export function AgentsDashboard() {
             },
             error: (err) => err.message || 'Failed to create agent',
         });
+    };
+
+    const handleToggleSkill = async (skillId: string, enabled: boolean) => {
+        if (!selectedAgent) return;
+
+        try {
+            const success = await toggleSkill(selectedAgent.id, skillId, enabled);
+            if (success) {
+                toast.success(`Skill ${enabled ? 'enabled' : 'disabled'} successfully`);
+                // Refresh identity to get updated skills
+                fetchAgentIdentity(selectedAgent.id);
+            } else {
+                toast.error(`Failed to ${enabled ? 'enable' : 'disable'} skill`);
+            }
+        } catch (error) {
+            toast.error('Network error while toggling skill');
+        }
     };
 
     const handleAction = async (action: string, id: string) => {
@@ -434,9 +452,7 @@ export function AgentsDashboard() {
                                             </div>
                                             <SkillToggle
                                                 enabledSkills={selectedAgent.skills || []}
-                                                onToggle={(id, enabled) => {
-                                                    toast.info(`${enabled ? 'Enabling' : 'Disabling'} skill: ${id}`);
-                                                }}
+                                                onToggle={handleToggleSkill}
                                             />
                                         </div>
                                     </TabsContent>

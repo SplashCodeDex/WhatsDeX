@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { useAuthStore } from '@/features/auth/store';
 import { NestedResearchTrace } from './components/NestedResearchTrace';
+import { GatewayMetrics } from './components/GatewayMetrics';
 import { ActivityFeed } from '../omnichannel/components/ActivityFeed';
 import {
     LayoutDashboard,
@@ -23,12 +24,13 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export function HomeFeature() {
-    const { fetchGatewayHealth, gatewayHealth, getSkillCount } = useOmnichannelStore();
+    const { fetchGatewayHealth, fetchSkillReport, gatewayHealth, getSkillCount } = useOmnichannelStore();
     const { user } = useAuthStore();
 
     useEffect(() => {
         fetchGatewayHealth();
-    }, [fetchGatewayHealth]);
+        fetchSkillReport();
+    }, [fetchGatewayHealth, fetchSkillReport]);
 
     const firstName = user?.name ? user.name.split(' ')[0] : 'User';
     const skillCount = getSkillCount();
@@ -73,6 +75,8 @@ export function HomeFeature() {
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Left Column: Trace & Intelligence */}
                 <div className="lg:col-span-2 space-y-8">
+                    <GatewayMetrics />
+
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
@@ -81,21 +85,6 @@ export function HomeFeature() {
                             </h2>
                         </div>
                         <NestedResearchTrace />
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <Card className="border-border/40 bg-card/60 backdrop-blur-sm group hover:border-primary/30 transition-all">
-                            <CardHeader className="pb-2">
-                                <Users className="w-5 h-5 text-blue-500 mb-2" />
-                                <CardTitle className="text-lg">Multi-Tenant Status</CardTitle>
-                                <CardDescription>Isolated secure environments</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-black">{activeAgents} ACTIVE</div>
-                                <div className="mt-2 h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500" style={{ width: `${Math.min(activeAgents * 10, 100)}%` }} />
-                                </div>
-                            </CardContent>
-                        </Card>
                     </div>
                 </div>
 
