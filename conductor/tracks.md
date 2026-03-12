@@ -14,11 +14,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: System Health & Technical Debt Remediation**
-*Link: [./tracks/system_health_20260312/](./tracks/system_health_20260312/)*
-
----
-
 ## Archived Tracks
 
 ### [x] Track: Fix critical connection flaws (stale path routing, inaccurate status, reconnection loop, auth cleanup)
