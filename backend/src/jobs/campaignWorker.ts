@@ -7,6 +7,7 @@ import { webhookService } from '../services/webhookService.js';
 import { socketService } from '../services/socketService.js';
 import { TemplateService } from '../services/templateService.js';
 import { GeminiAI } from '../services/geminiAI.js';
+import { antiBanService } from '../services/antiBanService.js';
 import logger from '../utils/logger.js';
 import moment from 'moment-timezone';
 import configManager from '../config/ConfigManager.js';
@@ -68,7 +69,7 @@ class CampaignWorker {
             logger.error(`Campaign Job ${job?.id} failed:`, err);
         });
 
-        logger.info('CampaignWorker initialized with Omnichannel Adapter support');
+        logger.info('CampaignWorker initialized with Omnichannel Adapter + Anti-Ban Engine');
     }
 
     public async processCampaign(job: Job<CampaignJobData>): Promise<void> {
@@ -146,6 +147,23 @@ class CampaignWorker {
                 if (!adapter) throw new Error(`Adapter for ${channelId} disconnected during campaign`);
 
                 const content = await this.prepareMessage(tenantId, template, contact, currentCampaign.antiBan.aiSpinning);
+
+                // ─── ANTI-BAN: CONTENT RULE CHECK ────────────────────
+                // Hash the rendered message body. If we see too many identical
+                // messages in this campaign, pause it to prevent WhatsApp flagging.
+                const shouldPause = await antiBanService.checkContentHash(tenantId, id, content);
+                if (shouldPause) {
+                    await antiBanService.triggerCooldown(
+                        tenantId,
+                        id,
+                        `Content similarity threshold exceeded. ${sent} identical messages detected. ` +
+                        `Enable AI Spinning in campaign settings to vary message copy automatically.`
+                    );
+                    // Save progress before exiting
+                    await this.updateCampaignStats(tenantId, id, { sent, failed, pending: total - (sent + failed) });
+                    return;
+                }
+                // ─────────────────────────────────────────────────────
 
                 await adapter.sendMessage(contact.phone, { text: content });
                 sent++;

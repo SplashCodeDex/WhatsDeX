@@ -3,12 +3,18 @@ import jobQueueService from '../services/jobQueue.js';
 import logger from '../utils/logger.js';
 import { channelManager } from '../services/channels/ChannelManager.js';
 import { WhatsappAdapter } from '../services/channels/whatsapp/WhatsappAdapter.js';
+import { antiBanService } from '../services/antiBanService.js';
 
 /**
  * Worker to process outbound WhatsApp messages with human-like delays
+ * and Anti-Ban velocity enforcement.
+ * 
+ * This is the ONLY exit point for ALL WhatsApp messages (AI replies,
+ * campaigns, direct sends). The Velocity Rule gate here protects
+ * the server IP from being flagged by WhatsApp.
  */
 export const initializeWhatsappWorker = () => {
-    logger.info('Initializing WhatsApp Outbound Worker...');
+    logger.info('Initializing WhatsApp Outbound Worker (Anti-Ban enabled)...');
 
     jobQueueService.process('whatsapp-outbound', async (job: Job) => {
         const { tenantId, channelId, jid, message, options } = job.data;
@@ -20,6 +26,19 @@ export const initializeWhatsappWorker = () => {
             if (!adapter) {
                 throw new Error(`Adapter for channel ${channelId} not found in memory`);
             }
+
+            // ─── ANTI-BAN: VELOCITY RULE GATE ───────────────────────
+            // Enforce minimum 5-7s gap between messages per tenant.
+            // This catches ALL traffic: AI replies, campaigns, direct sends.
+            const velocityDelay = await antiBanService.getVelocityDelay(tenantId);
+            if (velocityDelay > 0) {
+                logger.debug(
+                    `[AntiBan] Velocity gate: delaying ${Math.round(velocityDelay)}ms ` +
+                    `for tenant ${tenantId} before sending to ${jid}`
+                );
+                await new Promise(resolve => setTimeout(resolve, velocityDelay));
+            }
+            // ─────────────────────────────────────────────────────────
 
             // 1. Calculate a human-like delay based on message length
             // Base delay 2s + 50ms per character, capped at 10s
@@ -39,9 +58,13 @@ export const initializeWhatsappWorker = () => {
             // 4. Stop typing and send
             await adapter.getSocket()?.sendPresenceUpdate('paused', jid);
 
-            // Use the internal send method to actually dispatch
-            // Note: We'll modify WhatsappAdapter to have a _directSend method
+            // 5. Dispatch the message
             await (adapter as any)._directSendMessage(jid, message, options);
+
+            // ─── ANTI-BAN: RECORD SEND TIMESTAMP ────────────────────
+            // Record that a message was just sent (for future velocity checks)
+            await antiBanService.recordMessageSent(tenantId);
+            // ─────────────────────────────────────────────────────────
 
             logger.info(`Successfully dispatched message to ${jid} via queue`);
             return { success: true };

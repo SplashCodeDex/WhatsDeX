@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 
 import { Campaign } from '@/features/messages/types';
 import { useSocket } from '@/hooks/useSocket';
@@ -31,12 +32,66 @@ export function useCampaignSocket() {
         });
     }, [queryClient]);
 
+    const handleAntiBanAlert = useCallback((data: { 
+        campaignId: string, 
+        action: string, 
+        reason: string, 
+        cooldownSeconds: number,
+        message: string 
+    }) => {
+        // Show warning toast
+        toast.warning('Anti-Ban Protection Triggered', {
+            description: data.message,
+            duration: 10000, // Show for 10 seconds
+        });
+
+        // Update campaign status to paused and inject cooldown metadata
+        const updateCache = (old: any) => {
+            if (!old) return old;
+            const updateFn = (c: Campaign) => {
+                if (c.id === data.campaignId) {
+                    return {
+                        ...c,
+                        status: 'paused' as const,
+                        metadata: {
+                            ...c.metadata,
+                            antiban: {
+                                reason: data.reason,
+                                pausedAt: Date.now(),
+                                cooldownSeconds: data.cooldownSeconds,
+                                expiresAt: Date.now() + (data.cooldownSeconds * 1000)
+                            }
+                        }
+                    };
+                }
+                return c;
+            };
+
+            if (Array.isArray(old)) return old.map(updateFn);
+            return updateFn(old);
+        };
+
+        queryClient.setQueryData(['campaigns'], updateCache);
+        queryClient.setQueryData(['campaign', data.campaignId], updateCache);
+        
+        // Also invalidate to be sure we are in sync with Firebase soon
+        queryClient.invalidateQueries({ queryKey: ['campaign', data.campaignId] });
+    }, [queryClient]);
+
     useEffect(() => {
         // Listen for campaign updates from the unified socket
-        const cleanup = on('campaign_update', (data) => {
+        const cleanupUpdate = on('campaign_update', (data) => {
             handleUpdate(data);
         });
 
-        return cleanup;
-    }, [on, handleUpdate]);
+        // Listen for anti-ban alerts
+        const cleanupAntiBan = on('antiban_alert', (data) => {
+            handleAntiBanAlert(data);
+        });
+
+        return () => {
+            cleanupUpdate();
+            cleanupAntiBan();
+        };
+    }, [on, handleUpdate, handleAntiBanAlert]);
 }

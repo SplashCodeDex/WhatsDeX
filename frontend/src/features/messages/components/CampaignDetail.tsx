@@ -19,7 +19,8 @@ import {
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
-import { useCampaign } from '../hooks/useCampaigns';
+import { useCampaign, useResumeCampaign } from '../hooks/useCampaigns';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,32 @@ interface CampaignDetailProps {
 export function CampaignDetail({ id }: CampaignDetailProps) {
     const router = useRouter();
     const { data: campaign, isLoading, error } = useCampaign(id);
+    const { user } = useAuth();
+    const { mutate: resumeCampaign, isPending: isResuming } = useResumeCampaign();
+
+    const [cooldownRemaining, setCooldownRemaining] = React.useState<number>(0);
+
+    // Countdown logic for Anti-Ban cooldowns
+    React.useEffect(() => {
+        let interval: NodeJS.Timeout | undefined;
+        const antiban = campaign?.metadata?.antiban;
+
+        if (campaign?.status === 'paused' && antiban?.expiresAt) {
+            const updateTimer = () => {
+                const remaining = Math.max(0, Math.ceil((antiban.expiresAt - Date.now()) / 1000));
+                setCooldownRemaining(remaining);
+            };
+
+            updateTimer();
+            interval = setInterval(updateTimer, 1000);
+        } else {
+            setCooldownRemaining(0);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [campaign?.status, campaign?.metadata?.antiban]);
 
     if (isLoading) return (
         <div className="max-w-5xl mx-auto p-8 space-y-8">
@@ -71,6 +98,9 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
         }
     };
 
+    const isAntiBanCooldown = campaign.status === 'paused' && cooldownRemaining > 0;
+    const isPremium = user?.plan === 'pro' || user?.plan === 'enterprise';
+
     return (
         <div className="max-w-5xl mx-auto p-8 space-y-8 animate-in fade-in duration-700">
             {/* Header */}
@@ -97,13 +127,58 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
                             <Pause className="w-4 h-4 mr-2" /> Pause Broadcast
                         </Button>
                     )}
-                    {campaign.status === 'paused' && (
-                        <Button className="bg-primary hover:bg-primary/90 font-bold h-12 px-6 shadow-lg shadow-primary/20">
-                            <Play className="w-4 h-4 mr-2" /> Resume Work
+                    {(campaign.status === 'paused' || campaign.status === 'draft') && !isAntiBanCooldown && (
+                        <Button 
+                            variant="default"
+                            disabled={isResuming}
+                            onClick={() => resumeCampaign(id)}
+                            className="bg-primary hover:bg-primary/90 font-bold h-12 px-6 shadow-lg shadow-primary/20"
+                        >
+                            <Play className="w-4 h-4 mr-2" /> {campaign.status === 'draft' ? 'Start Broadcast' : 'Resume Work'}
                         </Button>
+                    )}
+                    {isAntiBanCooldown && (
+                        <div className="flex flex-col items-end gap-1">
+                            <Button 
+                                disabled 
+                                className="bg-muted text-muted-foreground font-bold h-12 px-6 cursor-not-allowed opacity-50"
+                            >
+                                <Clock className="w-4 h-4 mr-2" /> 0{Math.floor(cooldownRemaining / 60)}:{String(cooldownRemaining % 60).padStart(2, '0')}
+                            </Button>
+                            <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">In Cooldown</span>
+                        </div>
                     )}
                 </div>
             </div>
+
+            {/* Anti-Ban Alert Banner */}
+            {isAntiBanCooldown && (
+                <div className="relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-yellow-500/10 blur-xl group-hover:bg-yellow-500/15 transition-all duration-500" />
+                    <div className="relative border border-yellow-500/20 bg-background/40 backdrop-blur-xl p-6 rounded-2xl flex flex-col md:flex-row items-center gap-6">
+                        <div className="bg-yellow-500/20 p-4 rounded-full">
+                            <Zap className="w-6 h-6 text-yellow-500 animate-pulse" />
+                        </div>
+                        <div className="flex-1 text-center md:text-left space-y-1">
+                            <h3 className="text-lg font-black tracking-tight text-foreground flex items-center justify-center md:justify-start gap-2">
+                                Anti-Ban Shield Active
+                                {isPremium && <Badge className="bg-primary text-primary-foreground text-[10px] h-5">PRO</Badge>}
+                            </h3>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                We've temporarily paused your campaign because WhatsApp detected a high volume of identical messages. 
+                                <strong> This protection prevents your number from being banned.</strong> 
+                                {isPremium ? " Your Pro access includes Auto-Resume once the safety window clears." : " Click Resume manually once the timer hits zero."}
+                            </p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="text-4xl font-black tabular-nums text-yellow-500">
+                                {Math.floor(cooldownRemaining / 60)}:{String(cooldownRemaining % 60).padStart(2, '0')}
+                            </div>
+                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Safety Delay</div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">

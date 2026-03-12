@@ -60,7 +60,10 @@ DeXMart features a multi-layer intelligence system (GeminiAI) that acts as the "
 1.  **Intent Detection**: Context-aware analysis of user messages to identify multiple goals.
 2.  **Strategic Planning**: Formulates a multi-step workflow to fulfill detected intents using available bot commands as tools.
 3.  **RAG (Retrieval-Augmented Generation)**: Uses vector memory to inject relevant historical context into the reasoning loop.
-4.  **Anti-Ban Engine**: AI-powered message spinning to ensure natural variations in broadcast content.
+4.  **Anti-Ban Engine**: Advanced protection layer with three core rules:
+    - **Velocity Rule**: Protects against message bursts using a sliding window.
+    - **Content Rule**: Detects repetitive templates and enforces AI spinning.
+    - **Cooldown System**: Real-time campaign pausing with tier-based automatic or manual resume logic.
 
 ### Agentic Workflow (2026 Edition)
 - **Reflection**: The brain reviews its own plans before execution.
