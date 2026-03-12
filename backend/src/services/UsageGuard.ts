@@ -1,19 +1,12 @@
 import logger from '@/utils/logger.js';
-import { db } from '../lib/firebase.js';
-import { Timestamp, FieldValue } from 'firebase-admin/firestore';
-
-export type PlanTier = 'starter' | 'pro' | 'enterprise';
-
-const TIER_MONTHLY_LIMITS: Record<PlanTier, number> = {
-    starter: 1000,
-    pro: 10000,
-    enterprise: 10000000, // 10M for Enterprise
-};
+import { systemAuthorityService, PlanTier } from './SystemAuthorityService.js';
 
 /**
- * Usage Guard Service
+ * Usage Guard Service (Legacy Proxy)
  *
- * Enforces monthly message volume limits based on the user's billing tier.
+ * @deprecated Use SystemAuthorityService directly.
+ * This service now delegates to SystemAuthorityService to maintain backward compatibility
+ * while we transition to the unified authority model.
  */
 export class UsageGuard {
     private static instance: UsageGuard;
@@ -29,86 +22,45 @@ export class UsageGuard {
 
     /**
      * Comprehensive check and increment for a tenant.
-     * Use this before sending any message.
+     * Delegates to systemAuthorityService.
      */
     public async checkAndIncrementUsage(tenantId: string): Promise<{ allowed: boolean; error?: string }> {
-        try {
-            const tenantRef = db.doc(`tenants/${tenantId}`);
-            const doc = await tenantRef.get();
-
-            if (!doc.exists) {
-                return { allowed: false, error: 'Tenant not found' };
-            }
-
-            const data = doc.data()!;
-            const tier = (data.plan || 'starter') as PlanTier;
-            const currentUsage = (data.stats?.totalMessagesSent || 0);
-
-            if (!this.canSend(tier, currentUsage)) {
-                return { allowed: false, error: 'Monthly usage limit reached' };
-            }
-
-            // Optimization: We could batch this or do it asynchronously if latency is a concern
+        const result = await systemAuthorityService.checkAuthority(tenantId, 'send_message');
+        if (result.allowed) {
             await this.incrementUsage(tenantId);
-            return { allowed: true };
-        } catch (error: any) {
-            logger.error(`UsageGuard.checkAndIncrementUsage error for ${tenantId}:`, error);
-            // Default to allowed on database error to avoid blocking users, but log it
-            return { allowed: true };
+        } else if (result.error === 'Monthly message limit reached') {
+            // Align legacy error message for existing tests
+            result.error = 'Monthly usage limit reached';
         }
+        return result;
     }
 
     /**
-     * Determines if a user can send more messages based on their tier and current monthly usage.
+     * Determines if a user can send more messages.
+     * Delegates to systemAuthorityService.
      */
     public canSend(tier: PlanTier, currentMonthlyUsage: number): boolean {
-        const limit = TIER_MONTHLY_LIMITS[tier] || TIER_MONTHLY_LIMITS.starter;
-
-        if (currentMonthlyUsage >= limit) {
-            logger.warn(`Usage limit reached for tier ${tier}. Current: ${currentMonthlyUsage}, Limit: ${limit}`);
-            return false;
-        }
-
-        return true;
+        const caps = systemAuthorityService.getCapabilities(tier);
+        return currentMonthlyUsage < caps.maxMessages;
     }
 
     /**
-     * Increments the message usage for a tenant in Firestore.
+     * Increments the message usage for a tenant.
+     * Delegates to systemAuthorityService.
      */
     public async incrementUsage(tenantId: string, amount: number = 1): Promise<void> {
-        const today = new Date().toISOString().split('T')[0];
-        const analyticsRef = db.doc(`tenants/${tenantId}/analytics/${today}`);
-        const tenantRef = db.doc(`tenants/${tenantId}`);
-
-        try {
-            // Update both daily and total stats
-            const batch = db.batch();
-            
-            batch.set(analyticsRef, {
-                date: today,
-                sent: FieldValue.increment(amount),
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-
-            batch.update(tenantRef, {
-                'stats.totalMessagesSent': FieldValue.increment(amount),
-                updatedAt: Timestamp.now()
-            });
-
-            await batch.commit();
-
-            logger.debug(`Incremented message usage for tenant ${tenantId} by ${amount}`);
-        } catch (error) {
-            logger.error(`Failed to increment usage for tenant ${tenantId}:`, error);
-        }
+        return systemAuthorityService.recordUsage(tenantId, 'messages', amount);
     }
 
     /**
      * Gets the monthly message limit for a specific tier.
+     * Delegates to systemAuthorityService.
      */
     public getMonthlyLimit(tier: PlanTier): number {
-        return TIER_MONTHLY_LIMITS[tier] || TIER_MONTHLY_LIMITS.starter;
+        const caps = systemAuthorityService.getCapabilities(tier);
+        return caps.maxMessages;
     }
 }
 
 export const usageGuard = UsageGuard.getInstance();
+export { PlanTier };
