@@ -11,7 +11,8 @@ import {
     Users,
     Layers,
     Lock,
-    RefreshCw
+    RefreshCw,
+    Terminal
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,6 +24,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 import { TenantSettings } from '../types';
 
 export function ConfigManager() {
@@ -53,12 +55,13 @@ export function ConfigManager() {
 
         setIsSaving(true);
         try {
-            const response = await api.post(API_ENDPOINTS.SETTINGS.UPDATE_TENANT, settings);
+            // Backend expects PATCH for update
+            const response = await api.patch(API_ENDPOINTS.SETTINGS.UPDATE_TENANT, settings);
             if (response.success) {
-                toast.success('Settings updated successfully');
+                toast.success('Configuration saved');
             }
         } catch (error) {
-            toast.error('Failed to update settings');
+            toast.error('Failed to update configuration');
         } finally {
             setIsSaving(false);
         }
@@ -73,7 +76,11 @@ export function ConfigManager() {
 
         for (let i = 0; i < keys.length - 1; i++) {
             const key = keys[i];
-            if (key) current = current[key];
+            if (key) {
+                // Ensure the nested object exists
+                if (!current[key]) current[key] = {};
+                current = current[key];
+            }
         }
         
         const lastKey = keys[keys.length - 1];
@@ -104,7 +111,7 @@ export function ConfigManager() {
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">Platform Configuration</h2>
                     <p className="text-muted-foreground">
-                        Manage your tenant-wide settings, feature flags, and system limits.
+                        Manage your tenant-wide settings, feature flags, and channel policies.
                     </p>
                 </div>
                 <Button
@@ -113,7 +120,7 @@ export function ConfigManager() {
                     className="rounded-xl shadow-lg ring-1 ring-primary/20"
                 >
                     {isSaving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Changes
+                    Save Configuration
                 </Button>
             </div>
 
@@ -121,36 +128,37 @@ export function ConfigManager() {
                 <TabsList className="bg-muted/30 p-1 rounded-xl border border-border/50">
                     <TabsTrigger value="general" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                         <Globe className="h-4 w-4 mr-2" />
-                        General
+                        Organization
                     </TabsTrigger>
                     <TabsTrigger value="features" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                         <Cpu className="h-4 w-4 mr-2" />
-                        AI & Features
+                        Feature Gating
                     </TabsTrigger>
-                    <TabsTrigger value="limits" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                        <Layers className="h-4 w-4 mr-2" />
-                        Limits & Usage
+                    <TabsTrigger value="defaults" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        <Terminal className="h-4 w-4 mr-2" />
+                        Channel Defaults
                     </TabsTrigger>
                     <TabsTrigger value="security" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                         <Shield className="h-4 w-4 mr-2" />
-                        Safety
+                        System Policy
                     </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-4">
                     <Card className="border-border/50 bg-card/50">
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Business Profile</CardTitle>
-                            <CardDescription>Basic information about your organization.</CardDescription>
+                            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Identity</CardTitle>
+                            <CardDescription>Official tenant profile details.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Organization Name</Label>
+                                <Label htmlFor="organization">Organization Name</Label>
                                 <Input
-                                    id="name"
-                                    value={settings.name}
-                                    onChange={(e) => setSettings({ ...settings, name: e.target.value })}
+                                    id="organization"
+                                    value={settings.organization || ''}
+                                    onChange={(e) => setSettings({ ...settings, organization: e.target.value })}
                                     className="bg-background/50"
+                                    placeholder="Acme Corp"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -161,15 +169,17 @@ export function ConfigManager() {
                                         value={settings.ownerName || ''}
                                         onChange={(e) => setSettings({ ...settings, ownerName: e.target.value })}
                                         className="bg-background/50"
+                                        placeholder="John Doe"
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="timezone">Timezone</Label>
+                                    <Label htmlFor="number">Primary Number</Label>
                                     <Input
-                                        id="timezone"
-                                        value={settings.timezone || 'UTC'}
-                                        onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
-                                        className="bg-background/50"
+                                        id="number"
+                                        value={settings.ownerNumber || ''}
+                                        onChange={(e) => setSettings({ ...settings, ownerNumber: e.target.value })}
+                                        className="bg-muted font-mono"
+                                        disabled
                                     />
                                 </div>
                             </div>
@@ -178,19 +188,29 @@ export function ConfigManager() {
 
                     <Card className="border-border/50 bg-card/50">
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Notifications</CardTitle>
-                            <CardDescription>Configure where you receive system alerts.</CardDescription>
+                            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Notifications</CardTitle>
+                            <CardDescription>Outbound alert destinations.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Alert Email</Label>
+                                <Label htmlFor="webhook">Global Webhook URL</Label>
                                 <Input
-                                    id="email"
-                                    type="email"
-                                    value={settings.notifications.alertEmail || ''}
-                                    onChange={(e) => updateNestedSetting('notifications.alertEmail', e.target.value)}
+                                    id="webhook"
+                                    type="url"
+                                    value={settings.notifications.webhookUrl || ''}
+                                    onChange={(e) => updateNestedSetting('notifications.webhookUrl', e.target.value)}
                                     className="bg-background/50"
-                                    placeholder="alerts@yourdomain.com"
+                                    placeholder="https://hooks.yourdomain.com/dexmart"
+                                />
+                            </div>
+                            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-background/30">
+                                <div className="space-y-0.5">
+                                    <Label>Email Alerts</Label>
+                                    <p className="text-xs text-muted-foreground">Send critical system notifications via email.</p>
+                                </div>
+                                <Switch
+                                    checked={settings.notifications.email}
+                                    onCheckedChange={(val) => updateNestedSetting('notifications.email', val)}
                                 />
                             </div>
                         </CardContent>
@@ -200,15 +220,15 @@ export function ConfigManager() {
                 <TabsContent value="features" className="space-y-4">
                     <Card className="border-border/50 bg-card/50">
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Core Intelligence</CardTitle>
-                            <CardDescription>Enable or disable advanced system capabilities.</CardDescription>
+                            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Premium Capabilities</CardTitle>
+                            <CardDescription>Gated features based on your current tier.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <Label className="text-base">AI Intent Detection</Label>
+                                    <Label className="text-base">AI Engine (Gemini)</Label>
                                     <p className="text-sm text-muted-foreground">
-                                        Use LLMs to classify incoming messages and extract intent.
+                                        Enable Large Language Model processing for all channels.
                                     </p>
                                 </div>
                                 <Switch
@@ -216,11 +236,12 @@ export function ConfigManager() {
                                     onCheckedChange={(val) => updateNestedSetting('features.aiEnabled', val)}
                                 />
                             </div>
+                            <Separator className="bg-border/50" />
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <Label className="text-base">Marketing Campaigns</Label>
+                                    <Label className="text-base">Mass Campaigns</Label>
                                     <p className="text-sm text-muted-foreground">
-                                        Enable mass messaging and campaign scheduling tools.
+                                        Unlock scheduling and bulk message distribution tools.
                                     </p>
                                 </div>
                                 <Switch
@@ -228,73 +249,94 @@ export function ConfigManager() {
                                     onCheckedChange={(val) => updateNestedSetting('features.campaignsEnabled', val)}
                                 />
                             </div>
+                            <Separator className="bg-border/50" />
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <Label className="text-base">Omnichannel Bridge</Label>
+                                    <Label className="text-base">Analytics Engine</Label>
                                     <p className="text-sm text-muted-foreground">
-                                        Allow cross-platform message routing and synchronization.
+                                        Real-time cost and performance metrics for the swarm.
                                     </p>
                                 </div>
                                 <Switch
-                                    checked={settings.features.omnichannelEnabled}
-                                    onCheckedChange={(val) => updateNestedSetting('features.omnichannelEnabled', val)}
+                                    checked={settings.features.analyticsEnabled}
+                                    onCheckedChange={(val) => updateNestedSetting('features.analyticsEnabled', val)}
                                 />
                             </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="limits" className="space-y-4">
+                <TabsContent value="defaults" className="space-y-4">
                     <Card className="border-border/50 bg-card/50">
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Resources & Quotas</CardTitle>
-                            <CardDescription>Hardware and account level restrictions.</CardDescription>
+                            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Inherited Behavior</CardTitle>
+                            <CardDescription>Default settings for newly provisioned channels.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-6">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <Label className="flex items-center">
-                                        <Layers className="h-3 w-3 mr-2 text-primary" />
-                                        Max Active Channels
-                                    </Label>
-                                    <div className="flex items-center space-x-3">
-                                        <Input
-                                            type="number"
-                                            value={settings.limits.maxChannels}
-                                            readOnly={true}
-                                            className="bg-muted/50 cursor-not-allowed w-24 text-center font-bold"
-                                        />
-                                        <span className="text-xs text-muted-foreground">Fixed by your current plan tier</span>
-                                    </div>
+                                    <Label>Default Operation Mode</Label>
+                                    <select
+                                        className="w-full rounded-xl border border-border/50 bg-background/50 px-3 py-2 text-sm"
+                                        value={settings.channelDefaults.mode}
+                                        onChange={(e) => updateNestedSetting('channelDefaults.mode', e.target.value)}
+                                    >
+                                        <option value="public">Public (Everyone)</option>
+                                        <option value="private">Private (Owner Only)</option>
+                                        <option value="group-only">Groups Only</option>
+                                    </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="flex items-center">
-                                        <Users className="h-3 w-3 mr-2 text-primary" />
-                                        Max Team Members
-                                    </Label>
-                                    <div className="flex items-center space-x-3">
-                                        <Input
-                                            type="number"
-                                            value={settings.limits.maxUsers}
-                                            readOnly={true}
-                                            className="bg-muted/50 cursor-not-allowed w-24 text-center font-bold"
-                                        />
-                                        <span className="text-xs text-muted-foreground">Scales with enterprise license</span>
-                                    </div>
+                                    <Label>Command Prefixes</Label>
+                                    <Input
+                                        value={settings.channelDefaults.prefix.join(', ')}
+                                        onChange={(e) => updateNestedSetting('channelDefaults.prefix', e.target.value.split(',').map(s => s.trim()))}
+                                        className="bg-background/50"
+                                        placeholder="., !, /"
+                                    />
                                 </div>
                             </div>
-
-                            <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
-                                <div className="flex items-start space-x-3">
-                                    <Lock className="h-4 w-4 text-primary mt-1" />
-                                    <div>
-                                        <p className="text-sm font-semibold">Quota Management</p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            Resource limits are automatically provisioned based on your subscription.
-                                            Contact support to increase your capacity.
-                                        </p>
-                                    </div>
+                            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-background/30">
+                                <div className="space-y-0.5">
+                                    <Label>Auto Reconnect</Label>
+                                    <p className="text-xs text-muted-foreground">Automatically restore dropped WebSocket sessions.</p>
                                 </div>
+                                <Switch
+                                    checked={settings.channelDefaults.autoReconnect}
+                                    onCheckedChange={(val) => updateNestedSetting('channelDefaults.autoReconnect', val)}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="security" className="space-y-4">
+                    <Card className="border-border/50 bg-card/50">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Safety Controls</CardTitle>
+                            <CardDescription>Tenant-wide protection and logging policies.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label className="text-base">Disconnect Alerts</Label>
+                                    <p className="text-sm text-muted-foreground">Notify when any node or channel goes offline.</p>
+                                </div>
+                                <Switch
+                                    checked={settings.notifications.notifyOnChannelDisconnect}
+                                    onCheckedChange={(val) => updateNestedSetting('notifications.notifyOnChannelDisconnect', val)}
+                                />
+                            </div>
+                            <Separator className="bg-border/50" />
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label className="text-base">Error Reporting</Label>
+                                    <p className="text-sm text-muted-foreground">Broadcast critical processing errors to all admins.</p>
+                                </div>
+                                <Switch
+                                    checked={settings.notifications.notifyOnErrors}
+                                    onCheckedChange={(val) => updateNestedSetting('notifications.notifyOnErrors', val)}
+                                />
                             </div>
                         </CardContent>
                     </Card>

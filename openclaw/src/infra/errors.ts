@@ -1,4 +1,4 @@
-import { redactSensitiveText } from "../logging/identifiers.js";
+import { redactSensitiveText } from "../logging/redact.js";
 
 export function extractErrorCode(err: unknown): string | undefined {
   if (!err || typeof err !== "object") {

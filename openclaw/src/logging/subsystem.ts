@@ -1,7 +1,6 @@
 import { Chalk } from "chalk";
 import type { Logger as TsLogger } from "tslog";
-import { CHAT_CHANNEL_ORDER, normalizeChatChannelId } from "../channels/identifiers.js";
-import { defaultSlotIdForKey } from "../plugins/identifiers.js";
+import { CHAT_CHANNEL_ORDER } from "../channels/identifiers.js";
 import { isVerbose } from "../globals.js";
 import { defaultRuntime, type RuntimeEnv } from "../runtime.js";
 import { clearActiveProgressLine } from "../terminal/progress-line.js";

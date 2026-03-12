@@ -1,32 +1,23 @@
-import {
-  CHANNEL_IDS,
-  CHAT_CHANNEL_ALIASES,
-  CHAT_CHANNEL_ORDER,
-  type ChatChannelId,
-  normalizeChannelId,
-  normalizeChatChannelId,
-  listChatChannelAliases,
-} from "./identifiers.js";
 import { requireActivePluginRegistry } from "../plugins/runtime.js";
 import type { ChannelMeta } from "./plugins/types.js";
 import type { ChannelId } from "./plugins/types.js";
 
+// Re-export lightweight identifiers so existing consumers keep working.
 export {
+  CHAT_CHANNEL_ORDER,
+  type ChatChannelId,
   CHANNEL_IDS,
+  CHAT_CHANNEL_ALIASES,
+  normalizeChatChannelId,
+  normalizeChannelId,
+} from "./identifiers.js";
+
+import {
   CHAT_CHANNEL_ALIASES,
   CHAT_CHANNEL_ORDER,
   type ChatChannelId,
-  normalizeChannelId,
-  normalizeChatChannelId,
-  listChatChannelAliases,
-};
-
-const normalizeChannelKey = (raw?: string | null): string | undefined => {
-  const normalized = raw?.trim().toLowerCase();
-  return normalized || undefined;
-};
-
-// Channel docking: add new core channels here (order + meta + aliases), then
+  normalizeChannelKey,
+} from "./identifiers.js";
 
 export type ChatChannelMeta = ChannelMeta;
 
@@ -118,9 +109,17 @@ const CHAT_CHANNEL_META: Record<ChatChannelId, ChannelMeta> = {
   },
 };
 
-// Channel docking: prefer this helper in shared code. Importing from
-// `src/channels/plugins/*` can eagerly load channel implementations.
-// (normalizeChannelId is now imported from ./identifiers.js)
+export function listChatChannels(): ChatChannelMeta[] {
+  return CHAT_CHANNEL_ORDER.map((id) => CHAT_CHANNEL_META[id]);
+}
+
+export function listChatChannelAliases(): string[] {
+  return Object.keys(CHAT_CHANNEL_ALIASES);
+}
+
+export function getChatChannelMeta(id: ChatChannelId): ChatChannelMeta {
+  return CHAT_CHANNEL_META[id];
+}
 
 // Normalizes registered channel plugins (bundled or external).
 //
@@ -143,18 +142,6 @@ export function normalizeAnyChannelId(raw?: string | null): ChannelId | null {
     return (entry.plugin.meta.aliases ?? []).some((alias) => alias.trim().toLowerCase() === key);
   });
   return hit?.plugin.id ?? null;
-}
-
-export function getChatChannelMeta(id: ChatChannelId): ChatChannelMeta {
-  const meta = CHAT_CHANNEL_META[id];
-  if (!meta) {
-    throw new Error(`Unknown chat channel ID: ${id}`);
-  }
-  return meta;
-}
-
-export function listChatChannels(): ChatChannelMeta[] {
-  return CHAT_CHANNEL_ORDER.map(getChatChannelMeta);
 }
 
 export function formatChannelPrimerLine(meta: ChatChannelMeta): string {

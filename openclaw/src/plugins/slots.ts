@@ -1,26 +1,32 @@
-import {
-  DEFAULT_SLOT_BY_KEY,
-  SLOT_BY_KIND,
-  defaultSlotIdForKey,
-  slotKeyForPluginKind,
-  type PluginSlotKey,
-} from "./identifiers.js";
 import type { OpenClawConfig } from "../config/config.js";
 import type { PluginSlotsConfig } from "../config/types.plugins.js";
 import type { PluginKind } from "./types.js";
+
+export type PluginSlotKey = keyof PluginSlotsConfig;
 
 type SlotPluginRecord = {
   id: string;
   kind?: PluginKind;
 };
 
-export {
-  DEFAULT_SLOT_BY_KEY,
-  SLOT_BY_KIND,
-  defaultSlotIdForKey,
-  slotKeyForPluginKind,
-  type PluginSlotKey,
+const SLOT_BY_KIND: Record<PluginKind, PluginSlotKey> = {
+  memory: "memory",
 };
+
+const DEFAULT_SLOT_BY_KEY: Record<PluginSlotKey, string> = {
+  memory: "memory-core",
+};
+
+export function slotKeyForPluginKind(kind?: PluginKind): PluginSlotKey | null {
+  if (!kind) {
+    return null;
+  }
+  return SLOT_BY_KIND[kind] ?? null;
+}
+
+export function defaultSlotIdForKey(slotKey: PluginSlotKey): string {
+  return DEFAULT_SLOT_BY_KEY[slotKey];
+}
 
 export type SlotSelectionResult = {
   config: OpenClawConfig;

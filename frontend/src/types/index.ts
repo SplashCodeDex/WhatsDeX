@@ -10,3 +10,5 @@ export * from './firebase';
 export * from './billing';
 export * from './tenantConfig';
 export * from './omnichannel';
+export * from './contracts';
+

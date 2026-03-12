@@ -136,13 +136,13 @@ export function WorkspaceSettings() {
                         <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
                                 <Label>Disconnect Warnings</Label>
-                                <p className="text-[12px] text-muted-foreground">Notify when a bot goes offline</p>
+                                <p className="text-[12px] text-muted-foreground">Notify when a channel goes offline</p>
                             </div>
                             <Switch
-                                checked={formData.notifications.notifyOnBotDisconnect}
+                                checked={formData.notifications.notifyOnChannelDisconnect}
                                 onCheckedChange={(val: boolean) => setFormData({
                                     ...formData,
-                                    notifications: { ...formData.notifications, notifyOnBotDisconnect: val }
+                                    notifications: { ...formData.notifications, notifyOnChannelDisconnect: val }
                                 })}
                                 disabled={isPending}
                             />
@@ -165,21 +165,21 @@ export function WorkspaceSettings() {
                     </CardContent>
                 </Card>
 
-                {/* Bot Defaults */}
-                <Card className="col-span-1 md:col-span-2">
+                {/* Channel Defaults */}
+                <Card className="col-span-1 md-col-span-2">
                     <CardHeader>
-                        <CardTitle className="text-lg">Bot Blueprint</CardTitle>
-                        <CardDescription>Default configuration for new instances</CardDescription>
+                        <CardTitle className="text-lg">Channel Blueprint</CardTitle>
+                        <CardDescription>Default configuration for new communication channels</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-6 md:grid-cols-3">
                         <div className="space-y-2">
                             <Label>Default Mode</Label>
                             <select
                                 className="w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-                                value={formData.botDefaults.mode}
+                                value={formData.channelDefaults.mode}
                                 onChange={(e) => setFormData({
                                     ...formData,
-                                    botDefaults: { ...formData.botDefaults, mode: e.target.value }
+                                    channelDefaults: { ...formData.channelDefaults, mode: e.target.value }
                                 })}
                                 disabled={isPending}
                             >
@@ -191,10 +191,10 @@ export function WorkspaceSettings() {
                         <div className="space-y-2">
                             <Label>Command Prefixes</Label>
                             <Input
-                                value={formData.botDefaults.prefix.join(' ')}
+                                value={formData.channelDefaults.prefix.join(' ')}
                                 onChange={(e) => setFormData({
                                     ...formData,
-                                    botDefaults: { ...formData.botDefaults, prefix: e.target.value.split(/\s+/) }
+                                    channelDefaults: { ...formData.channelDefaults, prefix: e.target.value.split(/\s+/) }
                                 })}
                                 placeholder=". ! /"
                                 disabled={isPending}
@@ -207,10 +207,10 @@ export function WorkspaceSettings() {
                                 <p className="text-[10px] text-muted-foreground">Retry on session drop</p>
                             </div>
                             <Switch
-                                checked={formData.botDefaults.autoReconnect}
+                                checked={formData.channelDefaults.autoReconnect}
                                 onCheckedChange={(val: boolean) => setFormData({
                                     ...formData,
-                                    botDefaults: { ...formData.botDefaults, autoReconnect: val }
+                                    channelDefaults: { ...formData.channelDefaults, autoReconnect: val }
                                 })}
                                 disabled={isPending}
                             />

@@ -15,9 +15,7 @@ import type { HookEntry } from "../hooks/types.js";
 import type { RuntimeEnv } from "../runtime.js";
 import type { WizardPrompter } from "../wizard/prompts.js";
 import type { PluginRuntime } from "./runtime/types.js";
-import type { PluginKind } from "./identifiers.js";
 
-export type { PluginKind };
 export type { PluginRuntime } from "./runtime/types.js";
 export type { AnyAgentTool } from "../agents/tools/common.js";
 
@@ -36,6 +34,8 @@ export type PluginConfigUiHint = {
   sensitive?: boolean;
   placeholder?: string;
 };
+
+export type PluginKind = "memory";
 
 export type PluginConfigValidation =
   | { ok: true; value?: unknown }

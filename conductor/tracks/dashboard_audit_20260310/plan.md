@@ -3,16 +3,16 @@
 ## Phase 1: High Priority Audit (Group A)
 Goal: Audit and wire the most critical system and configuration pages.
 
-- [ ] Task: Audit & Wire 'Settings'
-    - [ ] Scan `frontend/src/app/(dashboard)/dashboard/settings/page.tsx` and `frontend/src/app/(dashboard)/settings/page.tsx`.
-    - [ ] Identify hardcoded user profiles or organization settings.
-    - [ ] Write failing tests for profile updates and preference saving.
-    - [ ] Implement wiring to backend tenant/user services.
-- [ ] Task: Audit & Wire 'Config'
-    - [ ] Scan `frontend/src/app/(dashboard)/dashboard/config/page.tsx`.
-    - [ ] Identify simulated environment variables or system toggles.
-    - [ ] Implement real-time configuration fetching and updating.
-- [ ] Task: Audit & Wire 'Nodes'
+- [x] Task: Audit & Wire 'Settings'
+    - [x] Scan `frontend/src/app/(dashboard)/dashboard/settings/page.tsx` and `frontend/src/app/(dashboard)/settings/page.tsx`.
+    - [x] Identify hardcoded user profiles or organization settings.
+    - [x] Write failing tests for profile updates and preference saving.
+    - [x] Implement wiring to backend tenant/user services.
+- [x] Task: Audit & Wire 'Config'
+    - [x] Scan `frontend/src/app/(dashboard)/dashboard/config/page.tsx`.
+    - [x] Identify simulated environment variables or system toggles.
+    - [x] Implement real-time configuration fetching and updating.
+- [~] Task: Audit & Wire 'Nodes'
     - [ ] Scan `frontend/src/app/(dashboard)/dashboard/nodes/page.tsx`.
     - [ ] Replace static node lists with live data from OpenClaw gateway.
     - [ ] Implement node restart/management actions.
