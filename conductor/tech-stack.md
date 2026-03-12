@@ -2,7 +2,7 @@
 
 ## 1. Frontend
 
-- **Framework:** Next.js 16.1.2 (App Router, Turbopack, PPR Stable)
+- **Framework:** Next.js 16.1.6 (App Router, Turbopack, PPR Stable)
 - **Library:** React 19.2.3 (Server Components, Server Actions, React Compiler Enabled)
 - **Language:** TypeScript 5.9.3 (Strict Mode)
 - **Styling:** Tailwind CSS 4.1.18 (CSS-first `@theme` configuration, Zero Config)
@@ -22,7 +22,7 @@
 - **Runtime:** Node.js 24+ (Strict ESM, Permission Model Enabled)
 - **Framework:** Express 5.2.1 (Thin Controllers, Service-Oriented)
 - **Language:** TypeScript 5.9.3
-- **Execution:** `tsx` (TypeScript Execute) - **STRICT: DO NOT use ts-node**
+- **Execution:** `tsx watch` (with isolated ignore patterns) - **STRICT: DO NOT use ts-node**
 - **Omnichannel Engine:** OpenClaw 2026.2.27 (Hardened: SSRF protection, automated log rotation)
 - **Orchestration:** Unified Tool Registry (Bridging OpenClaw Skills & Internal Tools)
 - **Agentic Research:** Multi-agent autonomous research cycles (Researcher -> Auditor -> Synthesis)
@@ -50,7 +50,7 @@
 
 ## 4. Development & Tooling
 
-- **Testing:** Vitest 4.0 (Backend) / Vitest 3.2 (Frontend)
+- **Testing:** Vitest 4.0 (Unified)
 - **Linting:** ESLint 9+ (Flat Config), Prettier
 - **Git Hooks:** Husky, Lint-staged
 - **API Validation:** Zod (Mandatory for all contracts)
