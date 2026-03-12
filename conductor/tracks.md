@@ -6,6 +6,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
+### [ ] Track: Unified Dynamic Gating
+*Link: [./tracks/dynamic_gating_20260312/](./tracks/dynamic_gating_20260312/)*
+
 ### [x] Track: Agents Page Audit & Enhancement
 *Link: [./tracks/agents_audit_20260312/](./tracks/agents_audit_20260312/)*
 

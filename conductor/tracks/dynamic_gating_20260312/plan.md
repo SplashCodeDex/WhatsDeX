@@ -1,0 +1,26 @@
+# Implementation Plan: Unified Dynamic Gating (dynamic_gating_20260312)
+
+## Phase 1: Backend Authority Core
+- [ ] Task: Create `SystemAuthorityService.ts` with the master Capability Matrix
+- [ ] Task: Migrate logic from `UsageGuard.ts` into `SystemAuthorityService.ts`
+- [ ] Task: Implement `GET /api/authority/capabilities` endpoint
+- [ ] Task: Write unit tests for `SystemAuthorityService` verifying tier outputs
+- [ ] Task: Conductor - User Manual Verification 'Phase 1: Backend Authority Core' (Protocol in workflow.md)
+
+## Phase 2: Backend Enforcement
+- [ ] Task: Update `AgentService.ts` to use `SystemAuthorityService` for agent creation limits
+- [ ] Task: Update `ChannelService.ts` to use `SystemAuthorityService` for slot limits
+- [ ] Task: Update `GeminiAI.ts` and `SkillsManager.ts` to use `SystemAuthorityService` for skill gating
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: Backend Enforcement' (Protocol in workflow.md)
+
+## Phase 3: Frontend Authority Bridge
+- [ ] Task: Create `useAuthorityStore.ts` in Zustand to manage the fetched capability matrix
+- [ ] Task: Implement capability fetching in the root Dashboard layout
+- [ ] Task: Refactor `ChannelSlotGuard.ts` and `SkillGating.ts` to delegate to `useAuthorityStore`
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: Frontend Authority Bridge' (Protocol in workflow.md)
+
+## Phase 4: UI Cleanup & Verification
+- [ ] Task: Update `AgentsDashboard.tsx` and `TemplateSelector.tsx` to use dynamic model/feature flags
+- [ ] Task: Remove all deprecated hardcoded limit files from `frontend/src/features/agents/`
+- [ ] Task: Final end-to-end verification of tier-based restriction enforcement
+- [ ] Task: Conductor - User Manual Verification 'Phase 4: UI Cleanup & Verification' (Protocol in workflow.md)
