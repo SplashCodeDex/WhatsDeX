@@ -689,10 +689,13 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
         // Generate Custom Token for Firebase Client SDK
         const firebaseToken = await admin.auth().createCustomToken(userId, { tenantId, role: user.role });
 
+        const authHeader = req.headers['authorization'];
+        const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.token;
+
         res.json({
             success: true,
             data: {
-                user: { id: user.id, name: user.displayName, email: user.email, role: user.role, tenantId, photoURL: user.photoURL },
+                user: { id: user.id, name: user.displayName, email: user.email, role: user.role, tenantId, photoURL: user.photoURL, token },
                 tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
                 firebaseToken
             }

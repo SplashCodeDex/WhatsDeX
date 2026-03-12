@@ -1,3 +1,4 @@
+// @ts-ignore
 import { sendMessageSlack } from 'openclaw';
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
 import { CommonMessage } from "../../../types/omnichannel.js";

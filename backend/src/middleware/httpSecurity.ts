@@ -10,42 +10,49 @@ const config = ConfigService.getInstance();
  * Validates Origin and Referer headers against the allowed app URL.
  */
 export const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
-    // Only check for mutating methods
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
-        const origin = req.get('Origin');
-        const referer = req.get('Referer');
-        const allowedOrigin = config.get('NEXT_PUBLIC_APP_URL');
+    // 1. Skip check for non-mutating methods
+    if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+        return next();
+    }
 
-        // 1. Origin Check (Primary)
-        if (origin) {
-            const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
-            if (origin !== allowedOrigin && !isLocalhost) {
-                logger.warn(`Potential CSRF attack blocked: Origin mismatch. Origin: ${origin}, Expected: ${allowedOrigin}`);
-                return res.status(403).json({ success: false, error: 'Forbidden: CSRF protection' });
-            }
-        }
+    // 2. Skip check for logout (Safe destructive action)
+    if (req.path === '/logout' || req.originalUrl?.endsWith('/logout')) {
+        return next();
+    }
 
-        // 2. Referer Check (Fallback)
-        if (!origin && referer) {
-            try {
-                const refererUrl = new URL(referer);
-                const isLocalhost = refererUrl.origin.includes('localhost') || refererUrl.origin.includes('127.0.0.1');
-                if (refererUrl.origin !== allowedOrigin && !isLocalhost) {
-                    logger.warn(`Potential CSRF attack blocked: Referer mismatch. Referer: ${referer}, Expected: ${allowedOrigin}`);
-                    return res.status(403).json({ success: false, error: 'Forbidden: CSRF protection' });
-                }
-            } catch (e) {
-                logger.error('Error parsing referer for CSRF check', e);
-                return res.status(403).json({ success: false, error: 'Forbidden: CSRF protection (Invalid Referer)' });
-            }
-        }
+    const origin = req.get('Origin');
+    const referer = req.get('Referer');
+    const allowedOrigin = config.get('NEXT_PUBLIC_APP_URL');
 
-        // 3. Block if both are missing (Optional, but safer for API-only if stateful)
-        // For now, allow if both are missing but log it (some old browsers/proxies hide them)
-        if (!origin && !referer) {
-            logger.info('Mutating request without Origin/Referer header', { path: req.path });
+    // 1. Origin Check (Primary)
+    if (origin) {
+        const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+        if (origin !== allowedOrigin && !isLocalhost) {
+            logger.warn(`Potential CSRF attack blocked: Origin mismatch. Origin: ${origin}, Expected: ${allowedOrigin}`);
+            return res.status(403).json({ success: false, error: 'Forbidden: CSRF protection' });
         }
     }
+
+    // 2. Referer Check (Fallback)
+    if (!origin && referer) {
+        try {
+            const refererUrl = new URL(referer);
+            const isLocalhost = refererUrl.origin.includes('localhost') || refererUrl.origin.includes('127.0.0.1');
+            if (refererUrl.origin !== allowedOrigin && !isLocalhost) {
+                logger.warn(`Potential CSRF attack blocked: Referer mismatch. Referer: ${referer}, Expected: ${allowedOrigin}`);
+                return res.status(403).json({ success: false, error: 'Forbidden: CSRF protection' });
+            }
+        } catch (e) {
+            logger.error('Error parsing referer for CSRF check', e);
+            return res.status(403).json({ success: false, error: 'Forbidden: CSRF protection (Invalid Referer)' });
+        }
+    }
+
+    // 3. Block if both are missing (Optional, but safer for API-only if stateful)
+    if (!origin && !referer) {
+        logger.info('Mutating request without Origin/Referer header', { path: req.path });
+    }
+
     next();
 };
 

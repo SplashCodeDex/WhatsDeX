@@ -50,14 +50,24 @@ export function useAuth(): UseAuthReturn {
     const pathname = usePathname();
 
     const verifySession = useCallback(async () => {
+        const { 
+            retryCount: currentRetry, 
+            lastFetchAttempt: lastAttempt,
+            setLoading,
+            setLastFetchAttempt,
+            setUser,
+            incrementRetryCount,
+            resetRetryCount
+        } = useAuthStore.getState();
+
         // Cooldown & Backoff Guard
         const now = Date.now();
         const baseDelay = 2000; // 2 seconds
         // Exponential backoff: 2s, 4s, 8s, 16s, max 30s
-        const backoffDelay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
+        const backoffDelay = Math.min(baseDelay * Math.pow(2, currentRetry), 30000);
 
-        if (lastFetchAttempt && now - lastFetchAttempt < backoffDelay) {
-            logger.debug(`Auth verification throttled. Waiting ${Math.ceil((backoffDelay - (now - lastFetchAttempt)) / 1000)}s`);
+        if (lastAttempt && now - lastAttempt < backoffDelay) {
+            logger.debug(`Auth verification throttled. Waiting ${Math.ceil((backoffDelay - (now - lastAttempt)) / 1000)}s`);
             return;
         }
 
@@ -101,7 +111,7 @@ export function useAuth(): UseAuthReturn {
         } finally {
             setLoading(false);
         }
-    }, [setUser, setLoading, retryCount, lastFetchAttempt, incrementRetryCount, resetRetryCount, setLastFetchAttempt]);
+    }, []); // STABLE: No dependencies, uses store.getState() internally
 
     const refreshSession = useCallback(async () => {
         try {
@@ -157,7 +167,8 @@ export function useAuth(): UseAuthReturn {
 
             switch (type) {
                 case 'LOGOUT':
-                    setUser(null);
+                    getClientAuth().signOut();
+                    useAuthStore.getState().reset();
                     router.push(ROUTES.LOGIN);
                     break;
                 case 'LOGIN_SUCCESS':
@@ -268,22 +279,28 @@ export function useAuth(): UseAuthReturn {
 
     const signOut = useCallback(async (): Promise<void> => {
         try {
+            // 1. Sign out from Firebase Client (Critical to prevent auto re-login)
+            const auth = getClientAuth();
+            await auth.signOut();
+
+            // 2. Clear server-side session
             await api.post(API_ENDPOINTS.AUTH.LOGOUT);
             
-            // Notify other tabs
+            // 3. Notify other tabs
             if (typeof window !== 'undefined') {
                 const authChannel = new BroadcastChannel('auth_sync');
                 authChannel.postMessage({ type: 'LOGOUT' });
                 authChannel.close();
             }
 
-            setUser(null);
+            // 4. Clear local state and redirect
+            useAuthStore.getState().reset();
             router.push(ROUTES.LOGIN);
             router.refresh();
         } catch (signOutError) {
             logger.error('Sign out error:', signOutError);
         }
-    }, [setUser, router]);
+    }, [router]);
 
     return {
         user,

@@ -20,6 +20,16 @@ const ADMIN_ROUTES = ['/dashboard/settings']; // Routes requiring admin/owner ro
 // Ensure API requests come from our own origin
 const ALLOWED_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000';
 
+/**
+ * Normalize origin strings so that localhost and 127.0.0.1 are treated
+ * as equivalent.  This prevents CSRF false-positives in development
+ * when the user browses via a different loopback alias than the one
+ * configured in NEXT_PUBLIC_APP_URL.
+ */
+function normalizeOrigin(value: string): string {
+    return value.replace('://localhost', '://127.0.0.1');
+}
+
 interface JwtPayload {
     exp?: number;
     role?: string;
@@ -56,10 +66,14 @@ export async function proxy(request: NextRequest) {
     if (pathname.startsWith('/api/') && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
         const origin = request.headers.get('origin');
         const referer = request.headers.get('referer');
+        const normalizedAllowed = normalizeOrigin(ALLOWED_ORIGIN);
 
         // CSRF Check: Ensure request comes from our own origin
-        if ((origin && !origin.startsWith(ALLOWED_ORIGIN)) ||
-            (!origin && referer && !referer.startsWith(ALLOWED_ORIGIN))) {
+        // Normalize both sides so localhost ↔ 127.0.0.1 are treated as equivalent
+        const originMismatch = origin && !normalizeOrigin(origin).startsWith(normalizedAllowed);
+        const refererMismatch = !origin && referer && !normalizeOrigin(referer).startsWith(normalizedAllowed);
+
+        if (originMismatch || refererMismatch) {
             return new NextResponse(JSON.stringify({ error: 'CSRF validation failed' }), {
                 status: 403,
                 headers: { 'Content-Type': 'application/json' }

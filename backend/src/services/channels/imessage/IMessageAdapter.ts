@@ -1,4 +1,5 @@
-import { sendMessageIMessage } from 'openclaw/src/index.js';
+// @ts-ignore
+import { sendMessageIMessage } from 'openclaw';
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
 import { CommonMessage } from "../../../types/omnichannel.js";
 import logger from "@/utils/logger.js";

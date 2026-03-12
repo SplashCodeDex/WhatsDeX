@@ -100,8 +100,8 @@ export class OpenClawGateway {
       if (!workspace || typeof workspace.loadWorkspaceSkillEntries !== 'function') {
         throw new Error('OpenClaw loadWorkspaceSkillEntries is not available');
       }
-      const skills = await workspace.loadWorkspaceSkillEntries();
-      return { workspaceDir: '', managedSkillsDir: '', skills: skills || [] };
+      const skills = await workspace.loadWorkspaceSkillEntries(process.cwd());
+      return { workspaceDir: process.cwd(), managedSkillsDir: '', skills: skills || [] };
     } catch (error: any) {
       console.error('Failed to load OpenClaw skills:', error);
       return { skills: [], error: error.message };

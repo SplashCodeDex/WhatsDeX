@@ -44,10 +44,7 @@ export function HomeFeature() {
             {/* Hero Section */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-background to-background border border-border/50 p-8 md:p-12">
                 <div className="relative z-10 max-w-2xl">
-                    <Badge variant="outline" className="mb-4 bg-primary/5 text-primary border-primary/20 font-mono tracking-widest text-[10px] uppercase py-1 px-3">
-                        <Sparkles className="w-3 h-3 mr-2 inline-block" />
-                        DeXMart 2026 Mastermind Edition
-                    </Badge>
+
                     <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-foreground mb-6 leading-[0.9]">
                         WELCOME BACK, <span className="text-primary truncate">{firstName.toUpperCase()}.</span>
                     </h1>
@@ -75,23 +72,10 @@ export function HomeFeature() {
             </div>
 
 
-            <div className="grid lg:grid-cols-3 gap-8">
-                {/* Left Column: Trace & Intelligence */}
-                <div className="lg:col-span-2 space-y-8">
-                    <GatewayMetrics />
+            <GatewayMetrics />
 
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                <BrainCircuit className="w-4 h-4 text-primary" />
-                                Mastermind Intelligence
-                            </h2>
-                        </div>
-                        <NestedResearchTrace />
-                    </div>
-                </div>
-
-                {/* Right Column: Global Activity */}
+            <div className="space-y-8">
+                {/* Global Activity */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
@@ -100,6 +84,11 @@ export function HomeFeature() {
                         </h2>
                     </div>
                     <ActivityFeed />
+                </div>
+
+                {/* Research Trace */}
+                <div className="w-full">
+                    <NestedResearchTrace />
                 </div>
             </div>
         </div>

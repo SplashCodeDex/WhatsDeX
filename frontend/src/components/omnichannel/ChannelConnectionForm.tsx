@@ -1,6 +1,6 @@
 'use client';
 
-import { Slack, ShieldCheck, Loader2, MessageSquare, Hash, UserCircle2, QrCode, KeyRound } from 'lucide-react';
+import { Slack, ShieldCheck, Loader2, MessageSquare, Hash, QrCode, KeyRound } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -35,11 +35,10 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
   const [selectedAgentId, setSelectedAgentId] = useState(initialAgentId || 'system_default');
   const { fetchAllChannels, fetchAgents, agentsResult } = useOmnichannelStore();
 
+  // Fetching agents for metadata if needed, but UI select is removed per user request
   useEffect(() => {
     fetchAgents();
   }, [fetchAgents]);
-
-  const agents = agentsResult?.agents || [];
 
   const config = {
     whatsapp: {
@@ -161,31 +160,6 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6 pt-6">
-          <div className="space-y-2">
-            <Label htmlFor="agent-select" className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-2">
-              <UserCircle2 className="h-3 w-3" />
-              Assign to Agent
-            </Label>
-            <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
-              <SelectTrigger id="agent-select" className="bg-background/50 border-border/50">
-                <SelectValue placeholder="Select an Agent" />
-              </SelectTrigger>
-              <SelectContent>
-                {agents.length === 0 ? (
-                  <SelectItem value="system_default">System Default Agent</SelectItem>
-                ) : (
-                  agents.map((agent: any) => (
-                    <SelectItem key={agent.id} value={agent.id}>
-                      {agent.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-            <p className="text-[10px] text-muted-foreground italic">
-              The agent provides the "brain" and intelligence for this connectivity slot.
-            </p>
-          </div>
 
           {/* WhatsApp Specific Connection Method */}
           {type === 'whatsapp' && (

@@ -20,6 +20,7 @@ export interface AuthUser {
     tenantId?: string | null;
     plan?: 'starter' | 'pro' | 'enterprise';
     firebaseToken?: string | null;
+    token?: string;
     emailVerified?: boolean;
 }
 
