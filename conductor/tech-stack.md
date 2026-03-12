@@ -54,4 +54,6 @@
 - **Linting:** ESLint 9+ (Flat Config), Prettier
 - **Git Hooks:** Husky, Lint-staged
 - **API Validation:** Zod (Mandatory for all contracts)
+- **Real-time AI Streams:** Socket.io / WebSockets (Live Mastermind Reasoning event stream)
+- **Intelligence Core:** Gemini 2.0 (The Brain), OpenClaw (The Engine), Integrated Vector Store (Pinecone/OpenClaw Core for RAG)
 - **Automation:** Custom scripts in `backend/scripts/`

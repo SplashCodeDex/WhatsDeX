@@ -27,14 +27,15 @@ export const initializeWhatsappWorker = () => {
                 throw new Error(`Adapter for channel ${channelId} not found in memory`);
             }
 
-            // ─── ANTI-BAN: VELOCITY RULE GATE ───────────────────────
-            // Enforce minimum 5-7s gap between messages per tenant.
-            // This catches ALL traffic: AI replies, campaigns, direct sends.
-            const velocityDelay = await antiBanService.getVelocityDelay(tenantId);
+            // ─── ANTI-BAN: VELOCITY RULE GATE (ATOMIC) ───────────────
+            // Enforce minimum 5-7s gap between messages per channel (number).
+            // Key change: We now reserve an atomic slot based on channelId, 
+            // ensuring NO synchronized bursts even under high load.
+            const velocityDelay = await antiBanService.reserveVelocityDelay(channelId);
             if (velocityDelay > 0) {
                 logger.debug(
-                    `[AntiBan] Velocity gate: delaying ${Math.round(velocityDelay)}ms ` +
-                    `for tenant ${tenantId} before sending to ${jid}`
+                    `[AntiBan] Velocity gate: reserving slot and delaying ${Math.round(velocityDelay)}ms ` +
+                    `for channel ${channelId} (to ${jid})`
                 );
                 await new Promise(resolve => setTimeout(resolve, velocityDelay));
             }
@@ -60,11 +61,6 @@ export const initializeWhatsappWorker = () => {
 
             // 5. Dispatch the message
             await (adapter as any)._directSendMessage(jid, message, options);
-
-            // ─── ANTI-BAN: RECORD SEND TIMESTAMP ────────────────────
-            // Record that a message was just sent (for future velocity checks)
-            await antiBanService.recordMessageSent(tenantId);
-            // ─────────────────────────────────────────────────────────
 
             logger.info(`Successfully dispatched message to ${jid} via queue`);
             return { success: true };

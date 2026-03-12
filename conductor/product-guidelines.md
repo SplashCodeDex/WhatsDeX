@@ -6,6 +6,7 @@
 - **Clarity & Precision:** Use clear, concise, and business-oriented language. Labels, tooltips, and system messages must be unambiguous.
 - **Supportive Resilience:** When errors occur (e.g., bot disconnection), provide actionable solutions and clear guidance rather than just stating a failure.
 - **Transparancy:** Be honest about system status, especially regarding the limitations of the "Free" tier vs. "Premium" capabilities.
+- **Real-time Reasoning Transparency:** Prioritize live, granular monitoring of AI thought processes. Users should see each stage of reasoning (Researching, Auditing, Executing) as it happens, fostering trust through visibility.
 
 ## 2. Visual Identity & Aesthetic
 

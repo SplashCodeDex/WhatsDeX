@@ -4,6 +4,7 @@ import MediaProcessor from './mediaProcessor.js';
 import { getStatsAggregatorJob } from './statsAggregatorJob.js';
 import { initializeWhatsappWorker } from '../workers/whatsappQueueWorker.js';
 import { initializeGroupSyncWorker } from '../workers/groupSyncWorker.js';
+import { initializeAntiBanResumeWorker } from '../workers/antiBanResumeWorker.js';
 import logger from '../utils/logger.js';
 import { Job } from 'bullmq';
 
@@ -84,6 +85,7 @@ class JobRegistry {
       getStatsAggregatorJob();
       initializeWhatsappWorker();
       initializeGroupSyncWorker();
+      initializeAntiBanResumeWorker(); // 60s default interval
 
       logger.info('All job processors registered successfully');
     } catch (error: unknown) {

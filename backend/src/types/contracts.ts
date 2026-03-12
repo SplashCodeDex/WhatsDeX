@@ -329,6 +329,7 @@ export const CampaignSchema = z.object({
     timezone: z.string().default('UTC'), // Timezone for working hours
     typingSimulation: z.boolean().default(false), // Show typing status before sending
     maxTypingDelay: z.number().default(5), // max seconds to "type"
+    autoResume: z.boolean().default(false), // Automatically resume after cooldown
   }),
   schedule: z.object({
     type: z.enum(['immediate', 'scheduled']),

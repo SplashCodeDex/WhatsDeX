@@ -4,105 +4,207 @@
  * Header Component
  *
  * Top navigation bar for the dashboard.
- * Features breadcrumbs (TODO), notifications, and user profile.
+ * Features a dynamic, animated pill that rolls in controls on interaction.
  */
 
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, User, LogOut, Settings as SettingsIcon, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
 import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/features/auth';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export function Header() {
     const { user, signOut, isLoading } = useAuth();
+    const [isExpanded, setIsExpanded] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    return (
-        <div className="fixed top-4 right-4 md:right-8 z-40 flex items-center gap-2 pointer-events-none">
-            <div className="flex items-center gap-2 pointer-events-auto">
-                <LiquidGlassWrapper className="liquidGlass-control">
-                    <ThemeToggle />
-                </LiquidGlassWrapper>
+    // Collapse on click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsExpanded(false);
+            }
+        };
 
-                <LiquidGlassWrapper className="liquidGlass-control">
+        if (isExpanded) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isExpanded]);
+
+
+    const rollingControls = [
+        { key: 'theme', label: 'Theme', component: <ThemeToggle /> },
+        {
+            key: 'notifications',
+            label: 'Notifications',
+            component: (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none"
+                >
+                    <Bell className="h-5 w-5" />
+                </Button>
+            )
+        },
+        {
+            key: 'settings',
+            label: 'Settings',
+            component: (
+                <Link href="/dashboard/settings">
                     <Button
                         variant="ghost"
                         size="icon"
                         className="h-10 w-10 rounded-xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none"
                     >
-                        <Bell className="h-5 w-5" />
-                        <span className="sr-only">Notifications</span>
+                        <SettingsIcon className="h-5 w-5" />
                     </Button>
-                </LiquidGlassWrapper>
+                </Link>
+            )
+        },
+        {
+            key: 'billing',
+            label: 'Billing',
+            component: (
+                <Link href="/dashboard/billing">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none"
+                    >
+                        <CreditCard className="h-5 w-5" />
+                    </Button>
+                </Link>
+            )
+        },
+        {
+            key: 'logout',
+            label: 'Sign out',
+            component: (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => signOut()}
+                    className="h-10 w-10 rounded-xl bg-transparent hover:bg-transparent text-error hover:text-error/80 transition-all duration-300 shadow-none hover:shadow-none border-none"
+                >
+                    <LogOut className="h-5 w-5" />
+                </Button>
+            )
+        }
+    ];
 
-                <LiquidGlassWrapper className="liquidGlass-pill">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                className="relative flex items-center gap-3 p-1 pl-4 pr-1.5 h-10 rounded-2xl bg-transparent hover:bg-transparent text-muted-foreground transition-all duration-300 shadow-none hover:shadow-none border-none group"
-                            >
-                                <div className="hidden flex-col items-end md:flex max-w-[120px] lg:max-w-[150px]">
-                                    {isLoading ? (
-                                        <div className="flex flex-col items-end gap-1">
-                                            <div className="h-3 w-20 bg-muted/20 animate-pulse rounded" />
-                                            <div className="h-2 w-12 bg-muted/10 animate-pulse rounded" />
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <span className="block text-xs font-semibold text-foreground leading-none truncate w-full text-right" title={user?.name}>{user?.name}</span>
-                                            <span className="block text-[9px] text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70 group-hover:opacity-100 transition-opacity truncate w-full text-right" title={user?.role}>{user?.role}</span>
-                                        </>
+    const itemVariants = {
+        hidden: (i: number) => ({
+            width: 0,
+            opacity: 0,
+            scale: 0.8,
+            rotate: -45,
+            marginRight: 0,
+            overflow: 'hidden',
+            transition: {
+                type: "spring" as const,
+                stiffness: 300,
+                damping: 20,
+                delay: (rollingControls.length - 1 - i) * 0.05
+            }
+        }),
+        visible: (i: number) => ({
+            width: '40px',
+            opacity: 1,
+            scale: 1,
+            rotate: 0,
+            marginRight: '8px',
+            transition: {
+                type: "spring" as const,
+                stiffness: 300,
+                damping: 20,
+                delay: i * 0.05
+            }
+        })
+    };
+
+    return (
+        <div className="fixed top-4 right-4 md:right-8 z-40 flex items-center gap-2 pointer-events-none">
+            <div className="flex items-center gap-2 pointer-events-auto" ref={containerRef}>
+                <LiquidGlassWrapper className={cn(
+                    "transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden flex items-center",
+                    isExpanded ? "liquidGlass-pill" : "rounded-full [&>div]:rounded-full"
+                )}>
+                    <div className={cn(
+                        "flex items-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                        isExpanded ? "p-1 pl-2" : "p-0"
+                    )}>
+                        <AnimatePresence>
+                            {isExpanded && (
+                                rollingControls.map((control, idx) => (
+                                    <motion.div
+                                        key={control.key}
+                                        custom={idx}
+                                        variants={itemVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="hidden"
+                                    >
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="flex items-center justify-center">
+                                                    {control.component}
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="rounded-xl font-semibold">
+                                                {control.label}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </motion.div>
+                                ))
+                            )}
+                        </AnimatePresence>
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    className={cn(
+                                        "relative flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] bg-transparent hover:bg-transparent text-muted-foreground shadow-none hover:shadow-none border-none group overflow-hidden",
+                                        isExpanded
+                                            ? "p-1 h-10 w-10 rounded-full"
+                                            : "p-0 h-10 w-10 rounded-full hover:scale-105 active:scale-95"
                                     )}
-                                </div>
-                                <div className="h-7 w-7 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center text-primary border border-primary/20 transition-transform group-hover:scale-105">
-                                    {user?.photoURL ? (
-                                        <img src={user.photoURL} alt={user.name || "User avatar"} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                                    ) : (
-                                        <User className="h-3.5 w-3.5" />
-                                    )}
-                                </div>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 mt-2">
-                            <DropdownMenuLabel className="font-normal">
-                                <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium leading-none truncate" title={user?.name}>{user?.name}</p>
-                                    <p className="text-xs leading-none text-muted-foreground">
-                                        {user?.email}
-                                    </p>
-                                </div>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/settings" className="flex items-center">
-                                    <SettingsIcon className="mr-2 h-4 w-4" />
-                                    <span>Settings</span>
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/billing" className="flex items-center">
-                                    <CreditCard className="mr-2 h-4 w-4" />
-                                    <span>Billing</span>
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => signOut()} className="text-error focus:text-error focus:bg-error/10">
-                                <LogOut className="mr-2 h-4 w-4" />
-                                <span>Sign out</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                >
+                                    <div className={cn(
+                                        "rounded-full bg-primary/10 overflow-hidden flex items-center justify-center text-primary border border-primary/20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shrink-0",
+                                        isExpanded ? "h-7 w-7" : "h-10 w-10 border-2"
+                                    )}>
+                                        {user?.photoURL ? (
+                                            <img
+                                                src={user.photoURL}
+                                                alt={user.name || "User avatar"}
+                                                className={cn(
+                                                    "h-full w-full object-cover transition-transform duration-500",
+                                                    !isExpanded && "scale-110"
+                                                )}
+                                                referrerPolicy="no-referrer"
+                                            />
+                                        ) : (
+                                            <User className={cn("transition-all duration-500", isExpanded ? "h-3.5 w-3.5" : "h-5 w-5")} />
+                                        )}
+                                    </div>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="rounded-xl font-semibold">
+                                {isExpanded ? "Close" : user?.name || "Profile"}
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
                 </LiquidGlassWrapper>
             </div>
         </div>

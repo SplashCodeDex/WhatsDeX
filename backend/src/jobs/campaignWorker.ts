@@ -157,7 +157,8 @@ class CampaignWorker {
                         tenantId,
                         id,
                         `Content similarity threshold exceeded. ${sent} identical messages detected. ` +
-                        `Enable AI Spinning in campaign settings to vary message copy automatically.`
+                        `Enable AI Spinning in campaign settings to vary message copy automatically.`,
+                        currentCampaign.antiBan.autoResume
                     );
                     // Save progress before exiting
                     await this.updateCampaignStats(tenantId, id, { sent, failed, pending: total - (sent + failed) });

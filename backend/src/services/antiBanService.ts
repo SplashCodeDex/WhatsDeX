@@ -64,67 +64,81 @@ class AntiBanService {
     return AntiBanService.instance;
   }
 
+  /**
+   * Internal Lua script to book a velocity slot atomically.
+   * Ensures that even under high concurrency, messages are strictly
+   * serialized per number with NO overlaps.
+   */
+  private readonly RESERVE_SLOT_SCRIPT = `
+    local key = KEYS[1]
+    local now = tonumber(ARGV[1])
+    local delay = tonumber(ARGV[2])
+
+    local next_slot = redis.call('GET', key)
+    if not next_slot then
+        next_slot = 0
+    else
+        next_slot = tonumber(next_slot)
+    end
+
+    local wait_ms = 0
+    local new_slot = 0
+
+    if next_slot < now then
+        new_slot = now + delay
+        wait_ms = 0
+    else
+        new_slot = next_slot + delay
+        wait_ms = next_slot - now
+    end
+
+    redis.call('SET', key, new_slot, 'EX', 600)
+    return tostring(wait_ms)
+  `;
+
   // ─────────────────────────────────────────────────────────
-  // 1. VELOCITY RULE — Sliding Window Rate Limiter
+  // 1. VELOCITY RULE — Atomic Slot Booking
   // ─────────────────────────────────────────────────────────
 
   /**
-   * Calculates the required delay (in ms) before the next message
-   * can be sent for a given tenant.
+   * Reserva a velocity slot for a specific WhatsApp channel.
+   * Returns the number of milliseconds the worker MUST wait before sending.
    * 
-   * Uses a Redis key `antiban:velocity:{tenantId}` that stores the
-   * timestamp of the last dispatched message. If the elapsed time
-   * since the last message is less than the minimum delay, returns
-   * the remaining wait time. Otherwise returns 0 (send immediately).
+   * This is ATOMIC. Even if 100 workers call this at once, they will
+   * each get a unique, non-overlapping time slot.
    * 
-   * @returns Delay in milliseconds. 0 means safe to send now.
+   * @param channelId The unique ID of the WhatsApp number (channel)
+   * @returns Wait time in milliseconds.
    */
-  public async getVelocityDelay(tenantId: string): Promise<number> {
-    if (!this.redis) return 0; // Graceful degradation
+  public async reserveVelocityDelay(channelId: string): Promise<number> {
+    if (!this.redis) return 0;
 
-    const key = `antiban:velocity:${tenantId}`;
+    const key = `antiban:velocity:slot:${channelId}`;
+    const now = Date.now();
+    const delay = Math.floor(this.randomDelay() * 1000);
 
     try {
-      const lastSentStr = await this.redis.get(key);
+      // Define the script if not already loaded (ioredis handles caching)
+      const waitMsStr = await this.redis.eval(
+        this.RESERVE_SLOT_SCRIPT,
+        1,
+        key,
+        now.toString(),
+        delay.toString()
+      ) as string;
 
-      if (!lastSentStr) {
-        // No previous message — safe to send immediately
-        await this.redis.set(key, Date.now().toString(), 'EX', 120);
-        return 0;
-      }
-
-      const lastSentMs = parseInt(lastSentStr, 10);
-      const elapsedMs = Date.now() - lastSentMs;
-
-      // Randomize the required gap between DEFAULT_MIN and DEFAULT_MAX
-      const requiredGapMs = this.randomDelay() * 1000;
-
-      if (elapsedMs < requiredGapMs) {
-        // Too fast — return remaining wait time
-        return requiredGapMs - elapsedMs;
-      }
-
-      // Enough time has passed — safe to send
-      return 0;
+      return parseInt(waitMsStr, 10);
     } catch (err) {
-      logger.warn('[AntiBanService] Velocity check failed, allowing message:', err);
-      return 0; // Graceful degradation
+      logger.warn('[AntiBanService] Velocity reservation failed, falling back to instant send:', err);
+      return 0;
     }
   }
 
   /**
-   * Records that a message was just sent for a tenant.
-   * Must be called AFTER successful dispatch.
+   * @deprecated Slot is now reserved upfront in reserveVelocityDelay
    */
-  public async recordMessageSent(tenantId: string): Promise<void> {
-    if (!this.redis) return;
-
-    const key = `antiban:velocity:${tenantId}`;
-    try {
-      await this.redis.set(key, Date.now().toString(), 'EX', 120);
-    } catch (err) {
-      logger.warn('[AntiBanService] Failed to record message timestamp:', err);
-    }
+  public async recordMessageSent(_channelId: string): Promise<void> {
+    // No-op - slot is pre-booked
   }
 
   /**
@@ -189,14 +203,16 @@ class AntiBanService {
    * - Emits a real-time socket alert to the tenant's dashboard.
    * - Stores cooldown metadata in Redis for the "Resume" timer.
    * 
-   * @param tenantId   The tenant owning the campaign
-   * @param campaignId The campaign to pause
-   * @param reason     Human-readable reason for the pause
+   * @param tenantId    The tenant owning the campaign
+   * @param campaignId  The campaign to pause
+   * @param reason      Human-readable reason for the pause
+   * @param autoResume  Whether to automatically resume after cooldown (Premium feature)
    */
   public async triggerCooldown(
     tenantId: string,
     campaignId: string,
-    reason: string
+    reason: string,
+    autoResume: boolean = false
   ): Promise<void> {
     const cooldownSeconds = this.DEFAULT_COOLDOWN_SEC;
 
@@ -226,6 +242,8 @@ class AntiBanService {
           pausedAt: Date.now(),
           cooldownSeconds,
           expiresAt: Date.now() + (cooldownSeconds * 1000),
+          autoResume,
+          tenantId,
         }), 'EX', cooldownSeconds + 60); // Extra 60s buffer
       } catch (err) {
         logger.warn('[AntiBanService] Failed to store cooldown metadata:', err);
@@ -243,6 +261,43 @@ class AntiBanService {
         `Pausing helps WhatsApp see your traffic as normal human activity. ` +
         `You can resume in ${Math.ceil(cooldownSeconds / 60)} minutes.`,
     });
+  }
+
+  /**
+   * Scans for cooldowns that have reached their expiration time.
+   * Internal utility for the background resume worker.
+   */
+  public async getExpiredCooldowns(): Promise<any[]> {
+    if (!this.redis) return [];
+
+    const pattern = 'antiban:cooldown:*';
+    try {
+      const keys = await this.redis.keys(pattern);
+      const expired: any[] = [];
+
+      for (const key of keys) {
+        const data = await this.redis.get(key);
+        if (!data) continue;
+
+        const metadata = JSON.parse(data);
+        if (metadata.expiresAt <= Date.now()) {
+          expired.push({ ...metadata, redisKey: key });
+        }
+      }
+      return expired;
+    } catch (err) {
+      logger.error('[AntiBanService] Error scanning for expired cooldowns:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Explicitly remove a cooldown key from Redis.
+   */
+  public async removeCooldown(key: string): Promise<void> {
+    if (this.redis) {
+      await this.redis.del(key);
+    }
   }
 
   /**

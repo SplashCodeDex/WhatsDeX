@@ -29,9 +29,18 @@ The platform operates on a multi-tenant architecture where each customer's data,
 - **Unified Agent Orchestration:** A consolidated "Brain + Phone" architecture where independent AI personas (Agents) act as the parent for one or more Channels (Connectivity Slots).
 - **Dynamic Binding:** Ability to hot-swap Agents across Channels instantly without disconnecting the underlying platform session.
 - **Advanced Lifecycle:** Fine-grained control over channel states with options to stop, delete, or archive (preserve history) connectivity slots.
-- **Deep Reasoning (Mastermind Phase 2):** High-intelligence multi-agent orchestration supporting up to **5 levels of nesting**. Agents can autonomously spawn researchers, fact-checkers, and synthesis nodes.
-- **Autonomous Multi-Agent Audit:** Integrated verification phase where specialized sub-agents critique and verify primary research findings before delivery, ensuring high accuracy and preventing hallucinations.
+- **Autonomous Multi-Agent Orchestration:** High-intelligence orchestration supporting recursive reasoning loops and dynamic sub-agent spawning.
+- **Real-time AI Transparency:** Live streaming of AI thought processes, tool invocations, and reasoning stages via WebSockets, eliminating simulated delays.
+- **Active Knowledge Matrix (RAG):** Secure, tenant-specific semantic search and long-term memory for agents using integrated vector stores.
 - **Media Fidelity:** Support for **Opus-encoded WhatsApp voice notes** for superior audio quality and compatibility.
+
+### Core Pillars
+
+1. **Omnichannel Mastery:** Unified management of all messaging platforms within a single, coherent dashboard.
+2. **Mastermind Intelligence:** Leveraging Gemini 2.0/OpenClaw for adaptive reasoning, autonomous orchestration, and real-time execution.
+3. **Fact-Based Transparency:** Providing live, granular monitoring of AI reasoning to build user trust and ensure system integrity.
+4. **Active Knowledge Matrix:** Powering agents with real-world context and tenant-specific data via RAG.
+5. **Enterprise-Grade Infrastructure:** Built for high volume, multi-tenancy, and strict security compliance.
 
 ### 3. Messaging & Automation
 
