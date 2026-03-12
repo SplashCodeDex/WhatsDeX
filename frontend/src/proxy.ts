@@ -18,7 +18,7 @@ const AUTH_ROUTES = ['/login', '/register', '/forgot-password'];
 const ADMIN_ROUTES = ['/dashboard/settings']; // Routes requiring admin/owner role
 
 // Ensure API requests come from our own origin
-const ALLOWED_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000';
+const ALLOWED_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 /**
  * Normalize origin strings so that localhost and 127.0.0.1 are treated

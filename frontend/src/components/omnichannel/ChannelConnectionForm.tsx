@@ -46,7 +46,9 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
       description: 'Create a WhatsApp channel instance. You will link your device using a QR code or pairing code next.',
       icon: SiWhatsapp,
       color: 'text-green-500',
-      fields: []
+      fields: [
+        { id: 'deviceName', label: 'Device Name (Shows on Linked Devices)', placeholder: 'e.g., Acme Corp Support' }
+      ]
     },
     telegram: {
       title: 'Connect Telegram Bot',
@@ -118,7 +120,8 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
       const payload: any = {
         type,
         name: `${type.charAt(0).toUpperCase() + type.slice(1)} Channel`,
-        credentials
+        credentials: { ...credentials },
+        config: {}
       };
 
       // Add connection method for WhatsApp
@@ -126,6 +129,10 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
         payload.metadata = { connectionMethod };
         if (connectionMethod === 'pairing' && credentials.phone) {
           payload.phoneNumber = credentials.phone;
+        }
+        if (credentials.deviceName) {
+          payload.config.deviceName = credentials.deviceName;
+          delete payload.credentials.deviceName;
         }
       }
 

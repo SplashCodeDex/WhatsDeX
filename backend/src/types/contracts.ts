@@ -108,7 +108,10 @@ export const ChannelSchema = z.object({
     lastMessageAt: TimestampSchema.nullish(),
     errorsCount: z.number().default(0)
   }),
-  config: z.any().optional(),
+  config: z.object({
+    proxyUrl: z.string().url().optional(),
+    deviceName: z.string().optional()
+  }).catchall(z.any()).optional(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema
 }).readonly();

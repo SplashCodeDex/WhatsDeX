@@ -53,7 +53,12 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       collectionOrPath = `agents/${parts[3]}/channels`;
     }
 
-    this.authSystem = new AuthSystem({ channel: {} }, tenantId, channelId, collectionOrPath);
+    this.authSystem = new AuthSystem(
+      { channel: { deviceName: this.config.deviceName, proxyUrl: this.config.proxyUrl } },
+      tenantId,
+      channelId,
+      collectionOrPath
+    );
   }
 
   /**

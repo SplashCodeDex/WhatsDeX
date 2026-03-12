@@ -11,6 +11,8 @@ interface AuthConfig {
   channel: {
     phoneNumber?: string;
     sessionId?: string;
+    deviceName?: string;
+    proxyUrl?: string; // Optional HTTP proxy (e.g. http://username:password@ip:port)
   };
 }
 
@@ -110,12 +112,22 @@ class AuthSystem extends EventEmitter {
         logger.warn(`[AuthSystem] A newer version of Baileys is available: ${version.join('.')}. Current session might need update.`);
       }
 
+      // Setup proxy if configured (Phase 4 Anti-Ban Engine integration)
+      let customAgent;
+      if (this.config.channel.proxyUrl) {
+        logger.info(`[AuthSystem] Applying custom proxy IP for ${this.channelId}`);
+        // Dynamic import to avoid overhead if not used
+        const { HttpsProxyAgent } = await import('https-proxy-agent');
+        customAgent = new HttpsProxyAgent(this.config.channel.proxyUrl);
+      }
+
       this.client = makeWASocket({
         version,
         auth: state,
         printQRInTerminal: false,
         logger: pinoLogger as any,
-        browser: Browsers.macOS('Desktop'),
+        browser: [this.config.channel.deviceName || 'DeXMart', 'Desktop', '1.0.0'],
+        agent: customAgent,
         // Phase 3: Resource Optimization - Ignore history for non-essential JIDs
         shouldIgnoreJid: (jid) => jid.endsWith('@broadcast') || jid.endsWith('@newsletter'),
         // Prevent storing full history in memory to avoid bloat
