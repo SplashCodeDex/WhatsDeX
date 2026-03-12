@@ -34,6 +34,8 @@ import {
     TabsTrigger,
 } from '@/components/ui/tabs';
 import { ChannelLinker } from '@/features/agents/components/ChannelLinker';
+import { LiveStatusBadge } from '@/features/agents/components/LiveStatusBadge';
+import { RecursiveTraceView } from '@/features/agents/components/RecursiveTraceView';
 import { SkillToggle } from '@/features/agents/components/SkillToggle';
 import { TemplateSelector } from '@/features/agents/components/TemplateSelector';
 import { useCreateAgent } from '@/features/agents/hooks/useCreateAgent';
@@ -65,6 +67,7 @@ export function AgentsDashboard() {
     const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [showTrace, setShowTrace] = useState(false);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -210,7 +213,10 @@ export function AgentsDashboard() {
                                                 <Bot size={16} />
                                             </div>
                                             <div className="flex-1 overflow-hidden">
-                                                <div className="truncate text-xs font-semibold">{agentIdentity?.name || agent.name || agent.id}</div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="truncate text-xs font-semibold">{agentIdentity?.name || agent.name || agent.id}</div>
+                                                    <LiveStatusBadge agentId={agent.id} showText={false} className="h-3.5 px-1 gap-0.5" />
+                                                </div>
                                                 <div className="truncate text-[10px] opacity-60 font-mono italic">{agent.id}</div>
                                             </div>
                                             {agent.id === agentsResult?.defaultId && (
@@ -239,12 +245,22 @@ export function AgentsDashboard() {
                                     <div className="flex items-center space-x-3">
                                         <CardTitle className="text-3xl font-extrabold tracking-tight">{identity?.name || selectedAgent.name || selectedAgent.id}</CardTitle>
                                         <Badge variant="secondary" className="font-mono text-[10px] bg-muted/80">{selectedAgent.id}</Badge>
+                                        <LiveStatusBadge agentId={selectedAgent.id} className="h-6 px-3 text-xs" />
                                     </div>
                                     <CardDescription className="text-sm font-medium text-muted-foreground/80 mt-1">
                                         Agent Identity & Capability Orchestration
                                     </CardDescription>
                                 </div>
                                 <div className="flex space-x-2 pb-2">
+                                    <Button 
+                                        variant={showTrace ? "default" : "outline"} 
+                                        size="sm" 
+                                        className={cn("bg-background/50 backdrop-blur-sm transition-all", showTrace && "bg-primary text-primary-foreground shadow-inner")}
+                                        onClick={() => setShowTrace(!showTrace)}
+                                    >
+                                        <Activity className="mr-2 h-4 w-4" />
+                                        {showTrace ? "Hide Trace" : "Show Trace"}
+                                    </Button>
                                     <Button variant="outline" size="sm" className="bg-background/50 backdrop-blur-sm">
                                         <Eye className="mr-2 h-4 w-4" />
                                         Preview
@@ -265,6 +281,12 @@ export function AgentsDashboard() {
                                     </TabsList>
 
                                     <TabsContent value="overview" className="space-y-6 pt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        {showTrace && (
+                                            <div className="animate-in zoom-in-95 fade-in duration-500">
+                                                <RecursiveTraceView rootAgentId={selectedAgent.id} />
+                                            </div>
+                                        )}
+                                        
                                         <div className="grid gap-6 md:grid-cols-3">
                                             {/* Persona Data */}
                                             <div className="md:col-span-1 space-y-4">

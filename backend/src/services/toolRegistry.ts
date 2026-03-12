@@ -2,6 +2,7 @@ import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
 
 import { toolPersistenceService } from './toolPersistenceService.js';
+import { mastermindStreamService } from './MastermindStreamService.js';
 
 export interface ToolDefinition {
   name: string;
@@ -66,9 +67,22 @@ export class ToolRegistry {
       throw new Error(`Tool not found: ${name}`);
     }
 
+    const { tenantId, agentId = 'system_default' } = context;
+
     try {
       logger.info(`Executing tool: ${name} with args:`, args);
+      
+      // MASTERMIND: Emit tool invocation
+      if (tenantId) {
+        mastermindStreamService.invokeTool(tenantId, agentId, name, args);
+      }
+
       const result = await tool.execute(args, context);
+
+      // MASTERMIND: Emit tool result
+      if (tenantId) {
+        mastermindStreamService.toolResult(tenantId, agentId, name, result);
+      }
 
       // Persist result for chaining if context has enough info
       if (context.tenantId && context.platform && context.userId) {
@@ -85,8 +99,14 @@ export class ToolRegistry {
       }
 
       return result;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error executing tool ${name}:`, error);
+      
+      // MASTERMIND: Emit tool error
+      if (tenantId) {
+        mastermindStreamService.error(tenantId, agentId, `Tool ${name} execution failed: ${error.message || 'Unknown error'}`);
+      }
+
       throw error;
     }
   }

@@ -11,6 +11,7 @@
 import { Toaster } from 'sonner';
 
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { SocketProvider } from '@/components/providers/socket-provider';
 import { QueryProvider } from '@/lib/query';
 
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -32,22 +33,24 @@ export function Providers({ children }: ProvidersProps): React.JSX.Element {
     return (
         <QueryProvider>
             <ThemeProvider defaultTheme="system" storageKey="DeXMart-theme">
-                <TooltipProvider>
-                    <Toaster
-                        position="bottom-right"
-                        expand={true}
-                        richColors={true}
-                        closeButton
-                        theme="system"
-                        gap={12}
-                        offset={20}
-                        toastOptions={{
-                            className: 'group transition-all duration-500',
-                            duration: 6000,
-                        }}
-                    />
-                    {children}
-                </TooltipProvider>
+                <SocketProvider>
+                    <TooltipProvider>
+                        <Toaster
+                            position="bottom-right"
+                            expand={true}
+                            richColors={true}
+                            closeButton
+                            theme="system"
+                            gap={12}
+                            offset={20}
+                            toastOptions={{
+                                className: 'group transition-all duration-500',
+                                duration: 6000,
+                            }}
+                        />
+                        {children}
+                    </TooltipProvider>
+                </SocketProvider>
             </ThemeProvider>
         </QueryProvider>
     );

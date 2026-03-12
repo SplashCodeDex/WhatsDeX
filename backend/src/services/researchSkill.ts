@@ -1,5 +1,6 @@
 import { toolRegistry, ToolDefinition } from './toolRegistry.js';
 import logger from '../utils/logger.js';
+import { mastermindStreamService } from './MastermindStreamService.js';
 
 /**
  * ResearchSkill implements Phase 2 Nested Agentic Research.
@@ -38,17 +39,23 @@ export class ResearchSkill {
 
   private static async executeResearch(args: any, context: any): Promise<any> {
     const { topic, depth = 3, intensive = false } = args;
-    const { tenantId, channelId } = context;
+    const { tenantId, channelId, userId } = context;
+    // Extract parent agent ID if available in context
+    const agentId = context.agentId || 'system_default';
 
     logger.info(`Starting deep research for tenant ${tenantId}: ${topic} (Depth: ${depth}, Intensive: ${intensive})`);
+    mastermindStreamService.thought(tenantId, agentId, `Starting deep research cycle for topic: "${topic}"`, 'researching');
 
     try {
       // 1. Spawning Phase: The Researcher (Level 1)
       logger.info('[ResearchSkill] Spawning Researcher Agent...');
+      mastermindStreamService.thought(tenantId, agentId, 'Spawning Lead Researcher agent...', 'researching');
 
       const researcherTask = intensive
         ? `Research "${topic}" exhaustively. Spawn multiple sub-searchers if needed to cover different angles. Return a comprehensive data dump.`
         : `Research "${topic}" in depth. Provide a detailed report with facts and sources.`;
+
+      mastermindStreamService.spawnAgent(tenantId, agentId, 'researcher_node', researcherTask);
 
       const researcherResult = await toolRegistry.executeTool('sessions_spawn', {
         task: researcherTask,
@@ -59,9 +66,11 @@ export class ResearchSkill {
       }, context);
 
       const researchFindings = researcherResult.text || researcherResult.message || researcherResult.output || JSON.stringify(researcherResult);
+      mastermindStreamService.thought(tenantId, agentId, 'Lead Researcher findings retrieved. Transitioning to audit phase...', 'auditing');
 
       // 2. Audit Phase: The Critique Agent (Autonomous Verification)
       logger.info('[ResearchSkill] Spawning Critique Agent for verification...');
+      mastermindStreamService.thought(tenantId, agentId, 'Spawning Fact-Checker agent for autonomous audit...', 'auditing');
 
       const critiqueTask = `CRITICAL AUDIT: Fact-check the following research findings for accuracy and hallucinations.
       Topic: "${topic}"
@@ -70,6 +79,8 @@ export class ResearchSkill {
 
       If you find errors, state them clearly. If accurate, suggest improvements for synthesis.
       Return your verdict and any corrected facts.`;
+
+      mastermindStreamService.spawnAgent(tenantId, agentId, 'auditor_node', critiqueTask);
 
       const critiqueResult = await toolRegistry.executeTool('sessions_spawn', {
         task: critiqueTask,
@@ -80,10 +91,11 @@ export class ResearchSkill {
       }, context);
 
       const auditFeedback = critiqueResult.text || critiqueResult.message || critiqueResult.output || JSON.stringify(critiqueResult);
+      mastermindStreamService.thought(tenantId, agentId, 'Audit complete. Synthesizing final report...', 'synthesizing');
 
       // 3. Synthesis Phase: The Mastermind Synthesis (Final Tier)
       logger.info('[ResearchSkill] Finalizing synthesis...');
-
+      
       const synthesisTask = `Synthesize the following research data and audit feedback into a professional, cohesive final report.
       Topic: "${topic}"
       Research: ${researchFindings}
@@ -94,6 +106,8 @@ export class ResearchSkill {
       - Maintain a professional, objective tone.
       - Cite sources where provided.
       - Format with clear headings.`;
+
+      mastermindStreamService.spawnAgent(tenantId, agentId, 'synthesis_node', synthesisTask);
 
       const finalResult = await toolRegistry.executeTool('sessions_spawn', {
         task: synthesisTask,
@@ -106,6 +120,7 @@ export class ResearchSkill {
       const finalReport = finalResult.text || finalResult.message || finalResult.output || JSON.stringify(finalResult);
 
       logger.info(`[ResearchSkill] Deep research cycle complete for: ${topic}`);
+      mastermindStreamService.thought(tenantId, agentId, 'Research cycle successfully complete.', 'synthesizing');
 
       return {
         success: true,

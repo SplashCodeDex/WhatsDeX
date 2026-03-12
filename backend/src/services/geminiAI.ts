@@ -13,6 +13,7 @@ import { skillsManager } from './skillsManager.js';
 import { multiTenantService } from './multiTenantService.js';
 import { toolPersistenceService } from './toolPersistenceService.js';
 import { socketService } from './socketService.js';
+import { mastermindStreamService } from './MastermindStreamService.js';
 import { aiAnalyticsService } from './aiAnalytics.js';
 import { DeliberationService } from '../utils/deliberation.js';
 
@@ -117,6 +118,22 @@ export class GeminiAI extends EventEmitter {
   async processOmnichannelMessage(tenantId: string, channelId: string, message: CommonMessage): Promise<Result<CommonMessage>> {
     const startTime = Date.now(); // Track request start time for analytics
     try {
+      // Get Agent-specific identity from hierarchy (Refactored Phase 3)
+      const { agentService } = await import('./AgentService.js');
+
+      let agent: Agent | null = null;
+      let agentId = 'system_default';
+      if (message.metadata?.fullPath) {
+        const parts = message.metadata.fullPath.split('/');
+        agentId = parts[3];
+        const agentResult = await agentService.getAgent(tenantId, agentId);
+        agent = agentResult.success ? agentResult.data : null;
+      }
+
+      // MASTERMIND: Event Stream Start
+      mastermindStreamService.start(tenantId, agentId, message.id);
+      mastermindStreamService.thought(tenantId, agentId, 'Perceiving incoming message...', 'planning');
+
       // MASTERMIND: Perception Phase (Reading the message)
       const perceptionDelay = DeliberationService.getPerceptionDelay();
       await DeliberationService.wait(perceptionDelay);
@@ -149,17 +166,6 @@ export class GeminiAI extends EventEmitter {
       if (recentTools.length > 0) {
         toolContext = "\n[RECENT TOOL OUTPUTS]:\n" +
           recentTools.map(t => `- Tool: ${t.tool} | Result: ${typeof t.data === 'string' ? t.data : JSON.stringify(t.data)}`).join("\n");
-      }
-
-      // Get Agent-specific identity from hierarchy (Refactored Phase 3)
-      const { agentService } = await import('./AgentService.js');
-
-      let agent: Agent | null = null;
-      if (message.metadata?.fullPath) {
-        const parts = message.metadata.fullPath.split('/');
-        const agentId = parts[3];
-        const agentResult = await agentService.getAgent(tenantId, agentId);
-        agent = agentResult.success ? agentResult.data : null;
       }
 
       const personality = agent?.personality || agent?.soul || 'a professional and helpful assistant';
@@ -195,6 +201,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         const maxLoops = this.decisionEngine.maxToolCalls;
 
         while (loopCount < maxLoops) {
+          mastermindStreamService.thought(tenantId, agentId, `Analyzing context and planning next steps (Loop ${loopCount + 1})...`, 'planning');
           socketService.emitActivity(tenantId, channelId, platform, 'agent_thinking', 'Agent is thinking...');
           if (message.metadata?.simulateTyping) {
             await message.metadata.simulateTyping();
@@ -223,6 +230,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
 
                 if (!isEligible) {
                   logger.warn(`Tier Gating: Tenant ${tenantId} (${plan}) denied access to tool ${toolCall.function.name}`);
+                  mastermindStreamService.error(tenantId, agentId, `Access denied to tool ${toolCall.function.name}`);
                   return {
                     role: 'tool',
                     tool_call_id: toolCall.id,
@@ -230,6 +238,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                   };
                 }
 
+                mastermindStreamService.invokeTool(tenantId, agentId, toolCall.function.name, JSON.parse(toolCall.function.arguments));
                 socketService.emitActivity(tenantId, channelId, platform, 'tool_start', `Using tool: ${toolCall.function.name}`);
                 if (message.metadata?.simulateTyping) {
                   await message.metadata.simulateTyping();
@@ -248,6 +257,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                   userId
                 });
 
+                mastermindStreamService.toolResult(tenantId, agentId, toolCall.function.name, result);
                 socketService.emitActivity(tenantId, channelId, platform, 'tool_end', `Tool ${toolCall.function.name} completed.`);
                 return {
                   role: 'tool',
@@ -255,6 +265,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
                   content: typeof result === 'string' ? result : JSON.stringify(result)
                 };
               } catch (toolError: any) {
+                mastermindStreamService.error(tenantId, agentId, `Tool ${toolCall.function.name} failed: ${toolError.message}`);
                 socketService.emitActivity(tenantId, channelId, platform, 'system', `Tool ${toolCall.function.name} failed.`);
                 return {
                   role: 'tool',
@@ -269,6 +280,7 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
           } else {
             // Update history after successful completion
             await this.updateScopedConversationMemory(tenantId, platform, userId, text, response.message.content || '');
+            mastermindStreamService.complete(tenantId, agentId, response.message.content || '');
             return response.message.content;
           }
         }
