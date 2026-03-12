@@ -14,7 +14,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Fix Logout Infinite Reload & Backend Restart Loop**
+- [x] **Track: Fix Logout Infinite Reload & Backend Restart Loop**
 *Link: [./tracks/logout_fix_20260310/](./tracks/logout_fix_20260310/)*
 
 ---

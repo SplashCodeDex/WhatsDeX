@@ -591,6 +591,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
         } catch (err) {
             console.error('Failed to fetch gateway health:', err);
         }
+    },
     getSkillCount: () => {
         const { skillReport, skills } = get();
         // Fallback to 51 if not loaded, but try to use real data

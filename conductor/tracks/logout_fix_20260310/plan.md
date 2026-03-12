@@ -14,7 +14,7 @@ Goal: Stabilize the backend by fixing the runtime import error and preventing th
     - [x] Verify that writing to `backend/logs/app.log` does not trigger a backend restart.
 - [x] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md) [checkpoint: b66febc]
 
-## Phase 2: Frontend Auth Loop Prevention
+## Phase 2: Frontend Auth Loop Prevention [checkpoint: 5300f15]
 Goal: Modify the frontend to prevent infinite redirection and hydration loops during logout.
 
 - [x] Task: Update `useAuth` hook logic [5e21c87]
@@ -25,13 +25,13 @@ Goal: Modify the frontend to prevent infinite redirection and hydration loops du
     - [x] Write a unit test for `apiClient` verifying it does not broadcast `LOGOUT` if already on an auth route.
     - [x] Implement the check in `handleApiError` or the 401 interceptor.
     - [x] Verify that background 401s (e.g. from health checks) don't trigger reloads on the login page.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md) [checkpoint: 5300f15]
 
 ## Phase 3: Final Integration & Regression Testing
 Goal: Ensure the entire flow is seamless and robust against backend unavailability.
 
-- [ ] Task: End-to-End Logout Flow Verification
-    - [ ] Perform a full logout with the backend running.
-    - [ ] Perform a full logout with the backend stopped.
-    - [ ] Verify no infinite reloads occur in either scenario.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
+- [x] Task: End-to-End Logout Flow Verification
+    - [x] Perform a full logout with the backend running.
+    - [x] Perform a full logout with the backend stopped.
+    - [x] Verify no infinite reloads occur in either scenario.
+- [x] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)

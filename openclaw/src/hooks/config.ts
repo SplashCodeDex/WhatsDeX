@@ -1,4 +1,4 @@
-import type { OpenClawConfig, HookConfig } from "../config/config.js";
+import type { OpenClawConfig, HookConfig } from "../config/types.js";
 import {
   evaluateRuntimeEligibility,
   hasBinary,
