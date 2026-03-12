@@ -303,10 +303,10 @@ export class CommandSystem {
       quoted: quotedContext as any,
       msg: messageData as any,
       channel: bot,
-      getContentType: () => getContentType(messageData.message) || '',
+      getContentType: () => (messageData.message ? getContentType(messageData.message) : undefined) || '',
       getBody: () => text,
       getMedia: () => {
-        const type = getContentType(messageData.message);
+        const type = messageData.message ? getContentType(messageData.message) : undefined;
         return type ? (messageData.message as any)[type] : undefined;
       },
       getPlatform: () => 'whatsapp', // Baileys specific createContext

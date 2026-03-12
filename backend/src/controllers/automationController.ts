@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { automationService } from '../services/automationService.js';
 import logger from '../utils/logger.js';
+import { toggleAutomationSchema } from '../schemas/automationSchemas.js';
 
 export class AutomationController {
     static async createAutomation(req: Request, res: Response) {
@@ -35,15 +36,20 @@ export class AutomationController {
 
     static async toggleAutomation(req: Request, res: Response) {
         try {
+            const { params, body } = toggleAutomationSchema.parse({
+                params: req.params,
+                body: req.body
+            });
             const tenantId = req.user?.tenantId;
-            const { id } = req.params;
-            const { isActive } = req.body;
             if (!tenantId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-            const result = await automationService.toggleAutomation(tenantId, id, isActive);
+            const result = await automationService.toggleAutomation(tenantId, params.id, body.isActive);
             res.json(result);
         } catch (error: any) {
             logger.error('AutomationController.toggleAutomation error', error);
+            if (error.name === 'ZodError') {
+                return res.status(400).json({ success: false, error: 'Invalid request data', details: error.errors });
+            }
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }

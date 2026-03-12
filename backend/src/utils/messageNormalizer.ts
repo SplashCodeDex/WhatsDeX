@@ -29,7 +29,7 @@ export class MessageNormalizer {
      * Safely gets the message ID
      */
     static getId(msg: proto.IWebMessageInfo | CommonMessage): string {
-        if (this.isBaileys(msg)) return msg.key.id || '';
+        if (this.isBaileys(msg)) return msg.key?.id || '';
         return msg.id;
     }
 

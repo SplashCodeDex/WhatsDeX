@@ -315,14 +315,14 @@ const createChannelContext = async (
       if (isCommonMessage(messageSource)) {
         return messageSource.content.attachments?.[0]?.type || 'text';
       }
-      return getContentType(messageSource.message) || '';
+      return (messageSource.message ? getContentType(messageSource.message) : undefined) || '';
     },
     getBody: () => messageBody,
     getMedia: () => {
       if (isCommonMessage(messageSource)) {
         return messageSource.content.attachments?.[0];
       }
-      const type = getContentType(messageSource.message);
+      const type = messageSource.message ? getContentType(messageSource.message) : undefined;
       return type ? (messageSource.message as any)[type] : undefined;
     },
     getPlatform: () => isCommonMessage(messageSource) ? messageSource.platform : 'whatsapp',

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { webhookService } from '../services/webhookService.js';
 import logger from '../utils/logger.js';
+import { deleteWebhookSchema } from '../schemas/webhookSchemas.js';
 
 export class WebhookController {
     /**
@@ -33,7 +34,7 @@ export class WebhookController {
         try {
             const tenantId = req.user?.tenantId;
             const actor = Array.isArray(req.user?.userId) ? req.user.userId[0] : (req.user?.userId || 'unknown');
-            const ip = req.ip;
+            const ip = req.ip || 'unknown';
 
             if (!tenantId) {
                 return res.status(401).json({ success: false, error: 'Authentication required' });
@@ -57,20 +58,16 @@ export class WebhookController {
      */
     static async deleteWebhook(req: Request, res: Response) {
         try {
+            const { params } = deleteWebhookSchema.parse({ params: req.params });
             const tenantId = req.user?.tenantId;
             const actor = Array.isArray(req.user?.userId) ? req.user.userId[0] : (req.user?.userId || 'unknown');
-            const ip = req.ip;
-            const id = req.params.id;
+            const ip = req.ip || 'unknown';
 
             if (!tenantId) {
                 return res.status(401).json({ success: false, error: 'Authentication required' });
             }
 
-            if (!id) {
-                return res.status(400).json({ success: false, error: 'Webhook ID is required' });
-            }
-
-            const result = await webhookService.deleteWebhook(tenantId, id, { actor, ip });
+            const result = await webhookService.deleteWebhook(tenantId, params.id, { actor, ip });
 
             if (result.success) {
                 res.json({ success: true, data: { message: 'Webhook deleted' } });
@@ -79,6 +76,9 @@ export class WebhookController {
             }
         } catch (error: any) {
             logger.error('WebhookController.deleteWebhook error', error);
+            if (error.name === 'ZodError') {
+                return res.status(400).json({ success: false, error: 'Invalid request data', details: error.errors });
+            }
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }

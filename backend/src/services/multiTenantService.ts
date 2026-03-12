@@ -196,6 +196,13 @@ export class MultiTenantService {
   }
 
   /**
+   * Alias for canAddChannel to satisfy plan middleware naming conventions.
+   */
+  async canAddBot(tenantId: string): Promise<Result<boolean>> {
+    return this.canAddChannel(tenantId);
+  }
+
+  /**
    * Check if tenant has reached channel limit
    */
   async canAddChannel(tenantId: string): Promise<Result<boolean>> {
