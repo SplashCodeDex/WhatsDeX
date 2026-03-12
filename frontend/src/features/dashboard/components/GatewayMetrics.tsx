@@ -29,7 +29,8 @@ export function GatewayMetrics() {
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-border/40 bg-card/60 backdrop-blur-sm group hover:border-primary/30 transition-all">
+            <Card hoverable className="border-border/40 bg-card/60 backdrop-blur-sm">
+
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Gateway Status</CardTitle>
                     <Activity className={cn(
@@ -46,7 +47,8 @@ export function GatewayMetrics() {
                 </CardContent>
             </Card>
 
-            <Card className="border-border/40 bg-card/60 backdrop-blur-sm group hover:border-blue-500/30 transition-all">
+            <Card hoverable className="border-border/40 bg-card/60 backdrop-blur-sm">
+
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Active Agents</CardTitle>
                     <Server className="h-4 w-4 text-blue-500" />
@@ -59,7 +61,8 @@ export function GatewayMetrics() {
                 </CardContent>
             </Card>
 
-            <Card className="border-border/40 bg-card/60 backdrop-blur-sm group hover:border-purple-500/30 transition-all">
+            <Card hoverable className="border-border/40 bg-card/60 backdrop-blur-sm">
+
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Live Skills</CardTitle>
                     <Zap className="h-4 w-4 text-purple-500" />
@@ -72,7 +75,8 @@ export function GatewayMetrics() {
                 </CardContent>
             </Card>
 
-            <Card className="border-border/40 bg-card/60 backdrop-blur-sm group hover:border-emerald-500/30 transition-all">
+            <Card hoverable className="border-border/40 bg-card/60 backdrop-blur-sm">
+
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Swarm Presence</CardTitle>
                     <Network className="h-4 w-4 text-emerald-500" />

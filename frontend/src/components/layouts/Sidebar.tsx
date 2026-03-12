@@ -25,6 +25,8 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
+import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
+
 
 import { InsightCard } from './InsightCard';
 
@@ -101,11 +103,22 @@ export function Sidebar() {
                                                             ? 'text-primary'
                                                             : 'text-muted-foreground group-hover:text-foreground'
                                                     )} />
-                                                    {(!isSidebarCollapsed || isMobile) ? <span className="ml-3 font-medium text-sm whitespace-nowrap overflow-hidden">
-                                                            {item.title}
-                                                        </span> : null}
+                                                    <AnimatePresence mode="wait">
+                                                        {(!isSidebarCollapsed || isMobile) && (
+                                                            <motion.span 
+                                                                initial={{ opacity: 0, x: -10, width: 0 }}
+                                                                animate={{ opacity: 1, x: 0, width: 'auto' }}
+                                                                exit={{ opacity: 0, x: -10, width: 0 }}
+                                                                transition={BOUNCY_SPRING}
+                                                                className="ml-3 font-medium text-sm whitespace-nowrap overflow-hidden"
+                                                            >
+                                                                {item.title}
+                                                            </motion.span>
+                                                        )}
+                                                    </AnimatePresence>
                                                 </div>
                                             </Link>
+
                                         </TooltipTrigger>
                                         <TooltipContent
                                             side="right"
@@ -157,13 +170,20 @@ export function Sidebar() {
             </div>
 
             {/* Desktop Sidebar */}
-            <aside
+            <motion.aside
+                initial={false}
+                animate={{ 
+                    width: isSidebarCollapsed ? 72 : 256,
+                }}
+                transition={BOUNCY_SPRING}
                 className={cn(
-                    "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] transition-all duration-300 lg:block rounded-[1.5rem]",
-                    isSidebarCollapsed ? "w-[72px]" : "w-64"
+                    "fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] lg:block rounded-[1.5rem]"
                 )}
+                style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}
             >
-                <div className="liquidGlass-wrapper h-full w-full sidebar-liquid rounded-[1.5rem]">
+                <div className="liquidGlass-wrapper h-full w-full sidebar-liquid rounded-[1.5rem]" style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
+
+
                     <div className="liquidGlass-effect" />
                     <div className="liquidGlass-tint" />
                     <div className="liquidGlass-shine" />
@@ -172,7 +192,8 @@ export function Sidebar() {
                         <div className={cn(
                             "flex h-20 items-center justify-between shrink-0 transition-all duration-300 z-10",
                             isSidebarCollapsed ? "px-2" : "px-6"
-                        )}>
+                        )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
+
                             {!isSidebarCollapsed && (
                                 <motion.span
                                     initial={{ opacity: 0 }}
@@ -203,7 +224,8 @@ export function Sidebar() {
                         </div>
                     </div>
                 </div>
-            </aside>
+            </motion.aside>
+
         </>
     );
 }

@@ -1,21 +1,29 @@
 import * as React from "react";
-
+import { motion, HTMLMotionProps, TargetAndTransition } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { BOUNCY_HOVER, BOUNCY_TAP } from "@/lib/animations";
+
+
 
 const Card = React.forwardRef<
     HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-    <div
+    HTMLMotionProps<"div"> & { hoverable?: boolean }
+>(({ className, hoverable, ...props }, ref) => (
+    <motion.div
         ref={ref}
+        whileHover={hoverable ? (BOUNCY_HOVER as TargetAndTransition) : {}}
+        whileTap={hoverable ? (BOUNCY_TAP as TargetAndTransition) : {}}
         className={cn(
+
             "rounded-xl border border-border/50 bg-card/80 text-card-foreground shadow-sm backdrop-blur-sm transition-shadow",
+            hoverable && "hover:shadow-lg hover:border-primary/20",
             className
         )}
         {...props}
     />
 ));
 Card.displayName = "Card";
+
 
 const CardHeader = React.forwardRef<
     HTMLDivElement,

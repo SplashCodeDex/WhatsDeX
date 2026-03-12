@@ -11,6 +11,8 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, User, LogOut, Settings as SettingsIcon, CreditCard } from 'lucide-react';
 import Link from 'next/link';
+import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
+
 
 import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { Button } from '@/components/ui/button';
@@ -101,47 +103,21 @@ export function Header() {
         }
     ];
 
-    const itemVariants = {
-        hidden: (i: number) => ({
-            width: 0,
-            opacity: 0,
-            scale: 0.8,
-            rotate: -45,
-            marginRight: 0,
-            overflow: 'hidden',
-            transition: {
-                type: "spring" as const,
-                stiffness: 300,
-                damping: 20,
-                delay: (rollingControls.length - 1 - i) * 0.05
-            }
-        }),
-        visible: (i: number) => ({
-            width: '40px',
-            opacity: 1,
-            scale: 1,
-            rotate: 0,
-            marginRight: '8px',
-            transition: {
-                type: "spring" as const,
-                stiffness: 300,
-                damping: 20,
-                delay: i * 0.05
-            }
-        })
-    };
+    const itemVariants = createRollingVariants(rollingControls.length);
+
 
     return (
         <div className="fixed top-4 right-4 md:right-8 z-40 flex items-center gap-2 pointer-events-none">
             <div className="flex items-center gap-2 pointer-events-auto" ref={containerRef}>
                 <LiquidGlassWrapper className={cn(
-                    "transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden flex items-center",
+                    "transition-all duration-500 overflow-hidden flex items-center",
                     isExpanded ? "liquidGlass-pill" : "rounded-full [&>div]:rounded-full"
-                )}>
+                )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
                     <div className={cn(
-                        "flex items-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                        "flex items-center transition-all duration-500",
                         isExpanded ? "p-1 pl-2" : "p-0"
-                    )}>
+                    )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
+
                         <AnimatePresence>
                             {isExpanded && (
                                 rollingControls.map((control, idx) => (
@@ -174,16 +150,18 @@ export function Header() {
                                     variant="ghost"
                                     onClick={() => setIsExpanded(!isExpanded)}
                                     className={cn(
-                                        "relative flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] bg-transparent hover:bg-transparent text-muted-foreground shadow-none hover:shadow-none border-none group overflow-hidden",
+                                        "relative flex items-center justify-center transition-all duration-500 bg-transparent hover:bg-transparent text-muted-foreground shadow-none hover:shadow-none border-none group overflow-hidden",
                                         isExpanded
                                             ? "p-1 h-10 w-10 rounded-full"
                                             : "p-0 h-10 w-10 rounded-full hover:scale-105 active:scale-95"
                                     )}
+                                    style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}
                                 >
                                     <div className={cn(
-                                        "rounded-full bg-primary/10 overflow-hidden flex items-center justify-center text-primary border border-primary/20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shrink-0",
+                                        "rounded-full bg-primary/10 overflow-hidden flex items-center justify-center text-primary border border-primary/20 transition-all duration-500 shrink-0",
                                         isExpanded ? "h-7 w-7" : "h-10 w-10 border-2"
-                                    )}>
+                                    )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
+
                                         {user?.photoURL ? (
                                             <img
                                                 src={user.photoURL}

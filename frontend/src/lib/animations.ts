@@ -57,3 +57,41 @@ export const bouncyCollapseVariants: Variants = {
         transition: BOUNCY_SPRING
     }
 };
+
+/**
+ * Standard Bouncy Hover/Tap Interactions
+ */
+export const BOUNCY_HOVER = {
+    scale: 1.02,
+    transition: BOUNCY_SPRING
+};
+
+export const BOUNCY_TAP = {
+    scale: 0.98,
+    transition: BOUNCY_SPRING
+};
+
+/**
+ * Modal (Dialog/Sheet) Variants
+ */
+export const BOUNCY_MODAL_VARIANTS: Variants = {
+    hidden: {
+        opacity: 0,
+        scale: 0.95,
+        y: 20,
+        transition: BOUNCY_SPRING
+    },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        transition: BOUNCY_SPRING
+    },
+    exit: {
+        opacity: 0,
+        scale: 0.95,
+        y: 20,
+        transition: BOUNCY_SPRING
+    }
+};
+

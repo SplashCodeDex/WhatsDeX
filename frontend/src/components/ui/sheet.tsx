@@ -6,6 +6,9 @@ import { X } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BOUNCY_SPRING } from '@/lib/animations';
+
 
 const Sheet = DialogPrimitive.Root;
 
@@ -64,17 +67,37 @@ const SheetContent = React.forwardRef<
         <SheetOverlay />
         <DialogPrimitive.Content
             ref={ref}
-            className={cn(sheetVariants({ side }), className)}
+            className={cn(sheetVariants({ side }), className, "transition-none overflow-hidden")}
             {...props}
+            asChild
         >
-            {children}
-            <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-            </SheetClose>
+            <motion.div
+                initial={
+                    side === 'right' ? { x: '100%' } :
+                    side === 'left' ? { x: '-100%' } :
+                    side === 'top' ? { y: '-100%' } :
+                    { y: '100%' }
+                }
+                animate={{ x: 0, y: 0 }}
+                exit={
+                    side === 'right' ? { x: '100%' } :
+                    side === 'left' ? { x: '-100%' } :
+                    side === 'top' ? { y: '-100%' } :
+                    { y: '100%' }
+                }
+                transition={BOUNCY_SPRING}
+                className="h-full w-full"
+            >
+                {children}
+                <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                </SheetClose>
+            </motion.div>
         </DialogPrimitive.Content>
     </SheetPortal>
 ));
+
 SheetContent.displayName = DialogPrimitive.Content.displayName;
 
 function SheetHeader({

@@ -12,12 +12,13 @@ import { cn } from '@/lib/utils';
 export function LiquidGlassWrapper({
     children,
     className,
-}: {
+    ...props
+}: React.HTMLAttributes<HTMLDivElement> & {
     children: React.ReactNode;
-    className?: string;
 }) {
     return (
-        <div className={cn('liquidGlass-wrapper', className)}>
+        <div className={cn('liquidGlass-wrapper', className)} {...props}>
+
             <div className="liquidGlass-effect" />
             <div className="liquidGlass-tint" />
             <div className="liquidGlass-shine" />
