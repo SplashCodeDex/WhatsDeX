@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ChannelService } from './ChannelService.js';
 import { firebaseService } from '@/services/FirebaseService.js';
-import { multiTenantService } from '@/services/multiTenantService.js';
+import { systemAuthorityService } from './SystemAuthorityService.js';
 
 // Mock dependencies
 vi.mock('@/services/FirebaseService.js', () => ({
@@ -9,13 +9,16 @@ vi.mock('@/services/FirebaseService.js', () => ({
     getDoc: vi.fn(),
     setDoc: vi.fn(),
     getCollection: vi.fn(),
-    deleteDoc: vi.fn()
+    deleteDoc: vi.fn(),
+    deleteCollection: vi.fn()
   }
 }));
 
-vi.mock('@/services/multiTenantService.js', () => ({
-  multiTenantService: {
-    canAddBot: vi.fn()
+vi.mock('./SystemAuthorityService.js', () => ({
+  systemAuthorityService: {
+    checkAuthority: vi.fn(),
+    recordUsage: vi.fn(),
+    getCapabilities: vi.fn()
   }
 }));
 
@@ -33,7 +36,7 @@ describe('ChannelService', () => {
 
   describe('createChannel', () => {
     it('should create a new channel under system_default by default', async () => {
-      vi.mocked(multiTenantService.canAddBot).mockResolvedValue({ success: true, data: true });
+      vi.mocked(systemAuthorityService.checkAuthority).mockResolvedValue({ allowed: true });
       vi.mocked(firebaseService.setDoc).mockResolvedValue(undefined);
 
       const result = await service.createChannel(tenantId, { name: 'Test Channel', type: 'whatsapp' });
@@ -43,11 +46,12 @@ describe('ChannelService', () => {
         expect(result.data.name).toBe('Test Channel');
         expect(result.data.assignedAgentId).toBe('system_default');
         expect(firebaseService.setDoc).toHaveBeenCalledWith(systemPath, result.data.id, expect.any(Object), tenantId);
+        expect(systemAuthorityService.recordUsage).toHaveBeenCalledWith(tenantId, 'channels', 1);
       }
     });
 
     it('should create a new channel under a specific agent', async () => {
-      vi.mocked(multiTenantService.canAddBot).mockResolvedValue({ success: true, data: true });
+      vi.mocked(systemAuthorityService.checkAuthority).mockResolvedValue({ allowed: true });
       const agentId = 'custom-agent';
       const result = await service.createChannel(tenantId, { name: 'Agent Bot' }, agentId);
 
@@ -74,11 +78,13 @@ describe('ChannelService', () => {
   describe('deleteChannel', () => {
     it('should delete channel from nested path', async () => {
       vi.mocked(firebaseService.deleteDoc).mockResolvedValue(undefined);
+      vi.mocked(firebaseService.deleteCollection).mockResolvedValue(undefined);
 
       const result = await service.deleteChannel(tenantId, 'chan-1');
 
       expect(result.success).toBe(true);
       expect(firebaseService.deleteDoc).toHaveBeenCalledWith(systemPath, 'chan-1', tenantId);
+      expect(systemAuthorityService.recordUsage).toHaveBeenCalledWith(tenantId, 'channels', -1);
     });
   });
 });

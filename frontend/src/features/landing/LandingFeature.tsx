@@ -44,13 +44,21 @@ export function LandingFeature() {
 
                 {/* Floating Navigation */}
                 <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-6 md:px-12 md:py-8 pointer-events-none">
-                    <Link href="/" className="flex items-center gap-2 pointer-events-auto">
+                    <Link href="/" className="flex items-center gap-3 pointer-events-auto group">
                         <Image
-                            src="/logo.png"
+                            src="/assets/logos/logo.png"
+                            alt="DeXMart Logo"
+                            width={44}
+                            height={44}
+                            className="h-11 w-11 drop-shadow-md transition-transform group-hover:scale-110"
+                            priority
+                        />
+                        <Image 
+                            src="/assets/logos/Dexmart-no-logo-no-bg.png"
                             alt="DeXMart"
-                            width={40}
-                            height={40}
-                            className="h-15 w-15 drop-shadow-md"
+                            width={130}
+                            height={32}
+                            className="h-8 w-auto object-contain drop-shadow-sm dark:invert"
                             priority
                         />
                     </Link>
@@ -88,8 +96,14 @@ export function LandingFeature() {
             >
                 <div className="pointer-events-auto flex items-center justify-between rounded-full border border-white/10 bg-background/80 px-6 py-3 shadow-2xl backdrop-blur-xl dark:bg-black/60">
                     <Link href="/" className="flex items-center gap-3">
-                        <Image src="/logo.png" alt="DeXMart" width={32} height={32} className="h-8 w-8" />
-                        <span className="hidden font-bold tracking-tight text-foreground sm:inline-block">DeXMart</span>
+                        <Image src="/assets/logos/logo.png" alt="" width={32} height={32} className="h-8 w-8" />
+                        <Image 
+                            src="/assets/logos/Dexmart-no-logo-no-bg.png" 
+                            alt="DeXMart" 
+                            width={100} 
+                            height={24} 
+                            className="h-6 w-auto object-contain dark:invert" 
+                        />
                     </Link>
 
                     <div className="flex items-center gap-4">

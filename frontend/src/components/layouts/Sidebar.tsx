@@ -23,6 +23,7 @@ import {
     ScrollText,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
@@ -59,7 +60,6 @@ const NAV_ITEMS = [
     { title: 'Usage', href: '/dashboard/usage', icon: Activity, type: 'billing' as const },
     { title: 'Nodes', href: '/dashboard/nodes', icon: Monitor, type: 'agents' as const },
     { title: 'Billing', href: '/dashboard/billing', icon: CreditCard, type: 'billing' as const },
-    { title: 'Settings', href: '/dashboard/settings', icon: Settings, type: 'settings' as const },
     { title: 'Config', href: '/dashboard/config', icon: Settings, type: 'settings' as const },
     { title: 'System Logs', href: '/dashboard/logs', icon: ScrollText, type: 'settings' as const },
 ];
@@ -160,8 +160,21 @@ export function Sidebar() {
                     </SheetTrigger>
                     <SheetContent side="left" className="w-[85vw] max-w-80 p-0 border-r border-border bg-background shadow-2xl text-foreground">
                         <SheetHeader className="p-6 pb-4 border-b border-border">
-                            <SheetTitle className="text-2xl font-black text-primary">
-                                DeXMart
+                            <SheetTitle className="flex items-center gap-2">
+                                <Image
+                                    src="/assets/logos/logo.png"
+                                    alt=""
+                                    width={32}
+                                    height={32}
+                                    className="h-8 w-8 object-contain"
+                                />
+                                <Image
+                                    src="/assets/logos/Dexmart-no-logo-no-bg.png"
+                                    alt="DeXMart"
+                                    width={100}
+                                    height={24}
+                                    className="h-6 w-auto object-contain dark:invert"
+                                />
                             </SheetTitle>
                         </SheetHeader>
                         {NavContent(true)}
@@ -191,32 +204,63 @@ export function Sidebar() {
                     <div className="liquidGlass-content flex h-full flex-col">
                         <div className={cn(
                             "flex h-20 items-center justify-between shrink-0 transition-all duration-300 z-10",
-                            isSidebarCollapsed ? "px-2" : "px-6"
+                            isSidebarCollapsed ? "px-2 justify-center" : "px-6"
                         )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
 
+                            <Link href="/dashboard" className="flex items-center overflow-hidden">
+                                <AnimatePresence mode="wait">
+                                    {isSidebarCollapsed ? (
+                                        <motion.div
+                                            key="collapsed-logo"
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.8 }}
+                                            transition={BOUNCY_SPRING}
+                                            className="flex h-10 w-10 items-center justify-center p-0.5"
+                                        >
+                                            <Image
+                                                src="/assets/logos/logo.png"
+                                                alt="DeXMart"
+                                                width={36}
+                                                height={36}
+                                                className="h-full w-full object-contain"
+                                                priority
+                                            />
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="expanded-logo"
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -10 }}
+                                            transition={BOUNCY_SPRING}
+                                            className="shrink-0 py-1"
+                                        >
+                                            <Image
+                                                src="/assets/logos/Dexmart-no-logo-no-bg.png"
+                                                alt="DeXMart"
+                                                width={110}
+                                                height={28}
+                                                className="h-7 w-auto object-contain dark:invert"
+                                                priority
+                                            />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </Link>
+
                             {!isSidebarCollapsed && (
-                                <motion.span
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="text-2xl font-black text-primary tracking-tight"
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn(
+                                        "h-10 w-10 rounded-full bg-background/30 backdrop-blur-sm hover:bg-muted text-muted-foreground shadow-md transition-all duration-300"
+                                    )}
+                                    onClick={() => setSidebarCollapsed(true)}
                                 >
-                                    DeXMart
-                                </motion.span>
+                                    <ChevronLeft className="h-5 w-5" />
+                                </Button>
                             )}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className={cn(
-                                    "h-10 w-10 rounded-full bg-background/30 backdrop-blur-sm hover:bg-muted text-muted-foreground shadow-md transition-all duration-300",
-                                    isSidebarCollapsed ? "mx-auto" : ""
-                                )}
-                                onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
-                            >
-                                <ChevronLeft className={cn(
-                                    "h-5 w-5 transition-transform duration-500",
-                                    isSidebarCollapsed && "rotate-180"
-                                )} />
-                            </Button>
                         </div>
 
                         <div className="flex-1 flex flex-col min-h-0 overflow-hidden z-10">

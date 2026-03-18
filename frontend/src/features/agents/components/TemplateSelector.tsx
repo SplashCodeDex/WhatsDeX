@@ -8,9 +8,9 @@ import { type AgentTemplate, type PlanTier } from '../types';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/features/auth';
 import { getIcon } from '@/lib/icons';
 import { cn } from '@/lib/utils';
+import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
 interface TemplateSelectorProps {
     onSelect: (template: AgentTemplate) => void;
@@ -26,11 +26,11 @@ const TIER_ORDER: Record<PlanTier, number> = {
 /**
  * UI Component for selecting an Agent Template.
  * Displays "Premium" badges for templates requiring a higher tier than the user's current plan.
+ * Delegates to useAuthorityStore for the authoritative tier.
  */
 export function TemplateSelector({ onSelect, className }: TemplateSelectorProps) {
-    const { user } = useAuth();
-    const userTier = user?.plan || 'starter';
-    const userTierRank = TIER_ORDER[userTier];
+    const { tier: userTier } = useAuthorityStore();
+    const userTierRank = TIER_ORDER[userTier as PlanTier] || 0;
 
     return (
         <div className={cn("grid gap-4 md:grid-cols-3", className)}>
@@ -41,12 +41,16 @@ export function TemplateSelector({ onSelect, className }: TemplateSelectorProps)
                 return (
                     <button
                         key={template.id}
+                        disabled={isLocked}
                         onClick={() => onSelect(template)}
-                        className="text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
+                        className={cn(
+                            "text-left transition-all duration-300 group",
+                            isLocked ? "cursor-not-allowed" : "hover:scale-[1.02] active:scale-[0.98]"
+                        )}
                     >
                         <Card className={cn(
                             "h-full border-border/50 bg-card overflow-hidden relative",
-                            isLocked ? "opacity-80" : "hover:border-primary/50"
+                            isLocked ? "opacity-60 grayscale-[0.5]" : "hover:border-primary/50"
                         )}>
                             <div className={cn(
                                 "h-1.5 w-full bg-gradient-to-r",

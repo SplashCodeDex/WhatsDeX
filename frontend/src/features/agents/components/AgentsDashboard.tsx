@@ -43,6 +43,7 @@ import { AgentTemplate } from '@/features/agents/types';
 import { useAuth } from '@/features/auth';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
 /**
  * AgentsDashboard Component
@@ -62,6 +63,7 @@ export function AgentsDashboard() {
         isLoading
     } = useOmnichannelStore();
     const { user } = useAuth();
+    const { tier, getLimit } = useAuthorityStore();
     const { createAgent, isLoading: isCreating } = useCreateAgent();
 
     const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
@@ -148,6 +150,9 @@ export function AgentsDashboard() {
     const currentId = selectedAgentId || agentsResult?.defaultId || agents[0]?.id;
     const selectedAgent = agents.find(a => a.id === currentId);
 
+    const agentLimit = getLimit('maxAgents');
+    const isAtAgentLimit = agents.length >= agentLimit;
+
     useEffect(() => {
         if (currentId && !agentIdentities[currentId]) {
             fetchAgentIdentity(currentId);
@@ -169,9 +174,13 @@ export function AgentsDashboard() {
                     </p>
                 </div>
                 <div className="flex space-x-2">
-                    <Button onClick={() => setIsCreateOpen(true)}>
+                    <Button 
+                        onClick={() => setIsCreateOpen(true)}
+                        disabled={isAtAgentLimit}
+                        className={cn(isAtAgentLimit && "opacity-50 cursor-not-allowed")}
+                    >
                         <Plus className="mr-2 h-4 w-4" />
-                        Create Agent
+                        {isAtAgentLimit ? 'Limit Reached' : 'Create Agent'}
                     </Button>
                     <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
                         <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
@@ -326,7 +335,7 @@ export function AgentsDashboard() {
                                                     </div>
                                                     <div className="flex flex-col space-y-1">
                                                         <span className="text-[10px] font-semibold text-muted-foreground/60">Subscription Tier</span>
-                                                        <span className="text-xs font-bold capitalize">{user?.plan || 'Starter'}</span>
+                                                        <span className="text-xs font-bold capitalize">{tier || 'Starter'}</span>
                                                     </div>
                                                     <div className="flex flex-col space-y-1">
                                                         <span className="text-[10px] font-semibold text-muted-foreground/60">Latency Profile</span>
@@ -470,7 +479,7 @@ export function AgentsDashboard() {
                                                     <p className="text-[10px] text-muted-foreground font-medium">Toggle autonomous capabilities for this entity.</p>
                                                 </div>
                                                 <Badge variant="outline" className="font-mono text-[9px] font-bold bg-primary/5 uppercase border-primary/20 text-primary">
-                                                    {user?.plan || 'Starter'} Tier
+                                                    {tier || 'Starter'} Tier
                                                 </Badge>
                                             </div>
                                             <SkillToggle
@@ -497,9 +506,13 @@ export function AgentsDashboard() {
                         <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto leading-relaxed">
                             Select an active cognitive construct from the sidebar to begin orchestration and link performance.
                         </p>
-                        <Button onClick={() => setIsCreateOpen(true)} className="mt-6 shadow-md hover:shadow-lg transition-shadow px-6 font-bold">
+                        <Button 
+                            onClick={() => setIsCreateOpen(true)} 
+                            disabled={isAtAgentLimit}
+                            className="mt-6 shadow-md hover:shadow-lg transition-shadow px-6 font-bold"
+                        >
                             <Plus className="mr-2 h-4 w-4" />
-                            Construct New Agent
+                            {isAtAgentLimit ? 'Agent Limit Reached' : 'Construct New Agent'}
                         </Button>
                     </div>
                 )}

@@ -64,7 +64,10 @@ export const useMastermindStore = create<MastermindState>((set, get) => ({
             case 'reasoning:error': statusText = 'Error'; break;
             default: statusText = 'Processing...';
         }
-        newStatuses[agentId] = { status: statusText, stage: event.stage };
+        newStatuses[agentId] = { 
+            status: statusText, 
+            ...(event.stage ? { stage: event.stage } : {}) 
+        };
 
         // 3. Update hierarchy if it's a spawn
         if (type === 'agent:spawn' && parentAgentId) {

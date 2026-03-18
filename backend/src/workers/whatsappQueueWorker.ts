@@ -29,12 +29,28 @@ export const initializeWhatsappWorker = () => {
 
             // ─── ANTI-BAN: VELOCITY RULE GATE (ATOMIC) ───────────────
             // Enforce minimum 5-7s gap between messages per channel (number).
-            // Key change: We now reserve an atomic slot based on channelId, 
-            // ensuring NO synchronized bursts even under high load.
-            const velocityDelay = await antiBanService.reserveVelocityDelay(channelId);
+            let velocityDelay = 0;
+            
+            // If this job was already rescheduled for velocity, we skip the reservation
+            // but still allow the human-mimicry jitter below.
+            if (!job.data.skipVelocityReserve) {
+                velocityDelay = await antiBanService.reserveVelocityDelay(channelId);
+            }
+
+            // AVOID STALLED JOBS: If delay > 25s, re-queue as a native delayed job
+            // to free up this worker and prevent BullMQ from thinking we crashed.
+            if (velocityDelay > 25000) {
+                logger.info(`[AntiBan] Delay too long (${Math.round(velocityDelay)}ms). Rescheduling as delayed job...`);
+                await jobQueueService.addJob('whatsapp-outbound', job.name || 'rescheduled-send', {
+                    ...job.data,
+                    skipVelocityReserve: true // Don't book another 6s slot when we wake up
+                }, { delay: velocityDelay });
+                return { success: true, rescheduled: true };
+            }
+
             if (velocityDelay > 0) {
                 logger.debug(
-                    `[AntiBan] Velocity gate: reserving slot and delaying ${Math.round(velocityDelay)}ms ` +
+                    `[AntiBan] Velocity gate: delaying ${Math.round(velocityDelay)}ms ` +
                     `for channel ${channelId} (to ${jid})`
                 );
                 await new Promise(resolve => setTimeout(resolve, velocityDelay));

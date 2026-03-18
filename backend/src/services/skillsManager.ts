@@ -2,6 +2,7 @@
 import { loadWorkspaceSkillEntries } from 'openclaw/agents/skills/workspace';
 import { toolRegistry } from './toolRegistry.js';
 import logger from '@/utils/logger.js';
+import { systemAuthorityService, PlanTier } from './SystemAuthorityService.js';
 
 /**
  * SkillsManager wraps OpenClaw's skills platform and handles
@@ -33,22 +34,28 @@ export class SkillsManager {
 
       // Get tenant-specific skill configuration if available
       let skillsConfig: Record<string, { enabled: boolean }> = {};
+      let tier: PlanTier = 'starter';
+
       if (tenantId) {
         const { db } = await import('../lib/firebase.js');
         const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-        skillsConfig = tenantDoc.data()?.skillsConfig || {};
+        const data = tenantDoc.data();
+        skillsConfig = data?.skillsConfig || {};
+        tier = (data?.plan || 'starter') as PlanTier;
       }
 
-      const premiumSkills = ['web-search', 'firecrawl', 'brave-search', 'perplexity', 'youtube-video', 'youtube-audio', 'instagram-dl', 'tiktok-dl', 'facebook-dl'];
-      const enterpriseSkills = ['coding-agent', 'custom-hooks', 'dalle'];
+      const caps = systemAuthorityService.getCapabilities(tier);
 
       return tools.map(tool => {
         const id = String(tool.name);
         const status = statusEntries.find((s: any) => s.skill?.name === id || s.metadata?.skillKey === id);
         const config = skillsConfig[id];
 
-        const requiredTier = enterpriseSkills.includes(id) ? 'enterprise' :
-          premiumSkills.includes(id) ? 'pro' : 'starter';
+        // Determine required tier by checking where this skill first appears in the matrix
+        let requiredTier: PlanTier = 'starter';
+        if (!systemAuthorityService.isSkillAllowed('starter', id)) {
+          requiredTier = systemAuthorityService.isSkillAllowed('pro', id) ? 'pro' : 'enterprise';
+        }
 
         return {
           id,
@@ -75,21 +82,8 @@ export class SkillsManager {
   /**
    * Checks if a tenant is eligible for a specific skill based on their tier.
    */
-  public async isTenantEligible(tenantId: string, skillId: string, tier: 'starter' | 'pro' | 'enterprise'): Promise<boolean> {
-    // Pro: Intelligence + Social Media Tools
-    const premiumSkills = ['web-search', 'firecrawl', 'brave-search', 'perplexity', 'youtube-video', 'youtube-audio', 'instagram-dl', 'tiktok-dl', 'facebook-dl'];
-    if (premiumSkills.includes(skillId)) {
-      return tier === 'pro' || tier === 'enterprise';
-    }
-
-    // Enterprise: High-Impact AI (Coding, Image Gen)
-    const enterpriseSkills = ['coding-agent', 'custom-hooks', 'dalle'];
-    if (enterpriseSkills.includes(skillId)) {
-      return tier === 'enterprise';
-    }
-
-    // Default: all tiers have access to basic skills
-    return true;
+  public async isTenantEligible(tenantId: string, skillId: string, tier: PlanTier): Promise<boolean> {
+    return systemAuthorityService.isSkillAllowed(tier, skillId);
   }
 
   /**

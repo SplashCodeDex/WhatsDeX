@@ -1,14 +1,14 @@
 # Implementation Plan: Unified Dynamic Gating (dynamic_gating_20260312)
 
-## Phase 1: Backend Authority Core
-- [ ] Task: Create `SystemAuthorityService.ts` with the master Capability Matrix
-- [ ] Task: Migrate logic from `UsageGuard.ts` into `SystemAuthorityService.ts`
-- [ ] Task: Implement `GET /api/authority/capabilities` endpoint
-- [ ] Task: Write unit tests for `SystemAuthorityService` verifying tier outputs
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Backend Authority Core' (Protocol in workflow.md)
+## Phase 1: Backend Authority Core [checkpoint: f9a8580]
+- [x] Task: Create `SystemAuthorityService.ts` with the master Capability Matrix f9a8580
+- [x] Task: Migrate logic from `UsageGuard.ts` into `SystemAuthorityService.ts` f9a8580
+- [x] Task: Implement `GET /api/authority/capabilities` endpoint f9a8580
+- [x] Task: Write unit tests for `SystemAuthorityService` verifying tier outputs f9a8580
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Backend Authority Core' (Protocol in workflow.md) f9a8580
 
 ## Phase 2: Backend Enforcement
-- [ ] Task: Update `AgentService.ts` to use `SystemAuthorityService` for agent creation limits
+- [~] Task: Update `AgentService.ts` to use `SystemAuthorityService` for agent creation limits
 - [ ] Task: Update `ChannelService.ts` to use `SystemAuthorityService` for slot limits
 - [ ] Task: Update `GeminiAI.ts` and `SkillsManager.ts` to use `SystemAuthorityService` for skill gating
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Backend Enforcement' (Protocol in workflow.md)

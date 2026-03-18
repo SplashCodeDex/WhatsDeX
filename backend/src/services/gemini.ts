@@ -119,7 +119,7 @@ class GeminiService {
   /**
    * Get a chat completion from Google Gemini API with caching and key rotation
    */
-  async getChatCompletion(text: string, correlationId: string | null = null): Promise<string> {
+  async getChatCompletion(text: string, correlationId: string | null = null, preferredModel?: string): Promise<string> {
     if (!text) {
       throw new Error('Input text is required.');
     }
@@ -140,11 +140,12 @@ class GeminiService {
         logger.info('Gemini chat completion request', {
           correlationId,
           keyHint: `...${key.slice(-4)}`,
+          model: preferredModel || 'default'
         });
 
         const genAI = new GoogleGenerativeAI(key);
         const model = genAI.getGenerativeModel({
-          model: this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
+          model: preferredModel || this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
         });
 
         const result = await model.generateContent(text);
@@ -180,7 +181,7 @@ class GeminiService {
   /**
    * Get a chat completion with conversation history and caching
    */
-  async getChatCompletionWithHistory(messages: any[], correlationId: string | null = null) {
+  async getChatCompletionWithHistory(messages: any[], correlationId: string | null = null, preferredModel?: string) {
     if (!messages || messages.length === 0) {
       throw new Error('Messages array is required.');
     }
@@ -203,12 +204,13 @@ class GeminiService {
         logger.info('Gemini chat completion with history request', {
           correlationId,
           messageCount: messages.length,
-          keyHint: `...${key.slice(-4)}`
+          keyHint: `...${key.slice(-4)}`,
+          model: preferredModel || 'default'
         });
 
         const genAI = new GoogleGenerativeAI(key);
         const model = genAI.getGenerativeModel({
-          model: this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
+          model: preferredModel || this.config.get('GEMINI_MODEL') || 'gemini-1.5-flash',
         });
 
         const history = messages.slice(0, -1).map(msg => ({
@@ -246,15 +248,16 @@ class GeminiService {
    * Get a chat completion with function calling support and caching
    * @param {Array} messages - Array of message objects
    * @param {Array} tools - Array of tool definitions
+   * @param {string} preferredModel - Optional model to use
    * @returns {Promise<GeminiResponse>} The full response object with potential tool calls
    */
-  async getChatCompletionWithTools(messages: any[], tools: any[]): Promise<GeminiResponse> {
+  async getChatCompletionWithTools(messages: any[], tools: any[], preferredModel?: string): Promise<GeminiResponse> {
     if (!messages || messages.length === 0) {
       throw new Error('Messages are required.');
     }
 
     const toolKey = tools ? tools.map(t => t.function?.name).sort().join(',') : 'no-tools';
-    const conversationKey = `${messages.map(m => `${m.role}:${m.content}`).join('|')}|tools:${toolKey}`;
+    const conversationKey = `${messages.map(m => `${m.role}:${m.content}`).join('|')}|tools:${toolKey}|model:${preferredModel || 'default'}`;
     const cacheKey = this.generateCacheKey(conversationKey, 'tools');
 
     if (this.cache) {
@@ -270,13 +273,14 @@ class GeminiService {
         logger.debug('Sending chat completion with tools to Gemini', {
           messageCount: messages.length,
           toolCount: tools?.length || 0,
-          keyHint: `...${key.slice(-4)}`
+          keyHint: `...${key.slice(-4)}`,
+          model: preferredModel || 'gemini-2.0-flash-exp'
         });
 
         const genAI = new GoogleGenerativeAI(key);
         const geminiTools = tools ? this.convertToolsToGeminiFormat(tools) : [];
         const modelWithTools = genAI.getGenerativeModel({
-          model: 'gemini-2.0-flash-exp',
+          model: preferredModel || 'gemini-2.0-flash-exp',
           tools: geminiTools.length > 0 ? [{ functionDeclarations: geminiTools }] : [],
           generationConfig: {
             temperature: 0.7,

@@ -1,9 +1,11 @@
 import { type PlanTier } from '../types';
+import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
 /**
- * Defines which skills/tools are available for each billing tier.
+ * Fallback static knowledge for "what-if" checks (upsell UI).
+ * Used when the user is querying about a tier they are NOT currently on.
  */
-const TIER_SKILLS: Record<PlanTier, string[]> = {
+const STATIC_TIER_SKILLS: Record<PlanTier, string[]> = {
     starter: [
         'basic_reply',
         'summarize',
@@ -31,9 +33,18 @@ const TIER_SKILLS: Record<PlanTier, string[]> = {
 
 /**
  * Checks if a specific skill is allowed for a user's billing tier.
+ * Delegates to System Authority for the current tier.
  */
 export function isSkillAllowed(tier: PlanTier, skillId: string): boolean {
-    const allowedSkills = TIER_SKILLS[tier] || TIER_SKILLS.starter;
+    const store = useAuthorityStore.getState();
+
+    // If checking against the current user's tier, use the authoritative backend response
+    if (store.tier === tier && store.capabilities) {
+        return store.isSkillAllowed(skillId);
+    }
+
+    // Fallback to static knowledge
+    const allowedSkills = STATIC_TIER_SKILLS[tier] || STATIC_TIER_SKILLS.starter;
     return allowedSkills.includes(skillId);
 }
 
@@ -41,5 +52,11 @@ export function isSkillAllowed(tier: PlanTier, skillId: string): boolean {
  * Returns the list of skills allowed for a specific tier.
  */
 export function getAllowedSkills(tier: PlanTier): string[] {
-    return TIER_SKILLS[tier] || TIER_SKILLS.starter;
+    const store = useAuthorityStore.getState();
+
+    if (store.tier === tier && store.capabilities) {
+        return store.capabilities.allowedSkills;
+    }
+
+    return STATIC_TIER_SKILLS[tier] || STATIC_TIER_SKILLS.starter;
 }

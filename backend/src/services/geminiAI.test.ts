@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GeminiAI } from './geminiAI.js';
 import { cacheService } from './cache.js';
+import { systemAuthorityService } from './SystemAuthorityService.js';
+import { multiTenantService } from './multiTenantService.js';
 
 // Hoist mocks
 const { mockGeminiService } = vi.hoisted(() => ({
@@ -39,6 +41,24 @@ vi.mock('./cache.js', () => ({
     get: vi.fn(),
     set: vi.fn(),
     createKey: vi.fn((val) => `hash_${val}`)
+  }
+}));
+
+vi.mock('./SystemAuthorityService.js', () => ({
+  systemAuthorityService: {
+    checkAuthority: vi.fn(),
+    recordUsage: vi.fn(),
+    getCapabilities: vi.fn(() => ({
+      features: {
+        aiMessageSpinning: true
+      }
+    }))
+  }
+}));
+
+vi.mock('./multiTenantService.js', () => ({
+  multiTenantService: {
+    getTenant: vi.fn().mockResolvedValue({ success: true, data: { plan: 'pro' } })
   }
 }));
 

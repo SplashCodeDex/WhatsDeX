@@ -3,6 +3,7 @@ import { Agent, AgentSchema, Result } from '../types/contracts.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import logger from '@/utils/logger.js';
 import channelService from './ChannelService.js';
+import { systemAuthorityService } from './SystemAuthorityService.js';
 
 /**
  * Agent Service
@@ -88,6 +89,12 @@ export class AgentService {
    */
   async createAgent(tenantId: string, agentData: Partial<Agent>): Promise<Result<Agent>> {
     try {
+      // 1. Check authority for agent creation
+      const auth = await systemAuthorityService.checkAuthority(tenantId, 'create_agent');
+      if (!auth.allowed) {
+        return { success: false, error: new Error(auth.error || 'Agent creation limit reached') };
+      }
+
       const agentId = agentData.id || `agent_${Date.now()}`;
       const rawAgent = {
         ...agentData,
@@ -101,6 +108,9 @@ export class AgentService {
 
       const agent = AgentSchema.parse(rawAgent);
       await firebaseService.setDoc<'tenants/{tenantId}/agents'>('agents', agentId, agent as any, tenantId);
+
+      // 2. Record usage
+      await systemAuthorityService.recordUsage(tenantId, 'agents', 1);
 
       return { success: true, data: agent };
     } catch (error: any) {
@@ -129,6 +139,9 @@ export class AgentService {
 
       // 3. Delete the agent itself
       await firebaseService.deleteDoc<'tenants/{tenantId}/agents'>('agents', agentId, tenantId);
+
+      // 4. Record usage decrement
+      await systemAuthorityService.recordUsage(tenantId, 'agents', -1);
 
       logger.info(`Agent ${agentId} deleted for tenant ${tenantId}`);
       return { success: true, data: undefined };

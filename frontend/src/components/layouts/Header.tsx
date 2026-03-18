@@ -110,13 +110,13 @@ export function Header() {
         <div className="fixed top-4 right-4 md:right-8 z-40 flex items-center gap-2 pointer-events-none">
             <div className="flex items-center gap-2 pointer-events-auto" ref={containerRef}>
                 <LiquidGlassWrapper className={cn(
-                    "transition-all duration-500 overflow-hidden flex items-center",
-                    isExpanded ? "liquidGlass-pill" : "rounded-full [&>div]:rounded-full"
+                    "transition-all duration-500 overflow-hidden flex items-center rounded-full [&>div]:rounded-full"
                 )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
                     <div className={cn(
                         "flex items-center transition-all duration-500",
                         isExpanded ? "p-1 pl-2" : "p-0"
                     )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
+
 
                         <AnimatePresence>
                             {isExpanded && (

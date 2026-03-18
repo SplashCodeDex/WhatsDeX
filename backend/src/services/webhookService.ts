@@ -32,23 +32,22 @@ export class WebhookService {
             const webhook = WebhookSchema.parse(rawWebhook);
             await firebaseService.setDoc<'tenants/{tenantId}/webhooks'>('webhooks', webhookId, webhook as any, tenantId);
 
-            // FUSION: Sync with OpenClaw engine
+            // FUSION: Sync with OpenClaw engine (tenant-namespaced)
             try {
                 const gateway = OpenClawGateway.getInstance();
                 if (gateway.isInitialized()) {
-                    const liveConfig = await gateway.getLiveConfig();
-                    const currentHooks = liveConfig.hooks?.mappings || [];
+                    // Fetch only this tenant's existing hooks from Firestore (source of truth)
+                    const existingResult = await this.getWebhooks(tenantId);
+                    const existingHooks = existingResult.success ? existingResult.data : [];
                     
                     await gateway.patchConfig(tenantId, {
-                        hooks: {
-                            mappings: [...currentHooks, {
-                                id: webhook.id,
-                                name: webhook.name,
-                                url: webhook.url,
-                                events: webhook.events,
-                                isActive: webhook.isActive
-                            }]
-                        }
+                        webhooks: existingHooks.map(h => ({
+                            id: h.id,
+                            name: h.name,
+                            url: h.url,
+                            events: h.events,
+                            isActive: h.isActive
+                        }))
                     }, metadata);
                 }
             } catch (fusionError) {
@@ -156,17 +155,22 @@ export class WebhookService {
         try {
             await firebaseService.deleteDoc<'tenants/{tenantId}/webhooks'>('webhooks', webhookId, tenantId);
 
-            // FUSION: Sync with OpenClaw engine
+            // FUSION: Sync with OpenClaw engine (tenant-namespaced)
             try {
                 const gateway = OpenClawGateway.getInstance();
                 if (gateway.isInitialized()) {
-                    const liveConfig = await gateway.getLiveConfig();
-                    const filteredHooks = (liveConfig.hooks?.mappings || []).filter((h: any) => h.id !== webhookId);
+                    // Fetch this tenant's remaining hooks from Firestore (source of truth)
+                    const remainingResult = await this.getWebhooks(tenantId);
+                    const remainingHooks = remainingResult.success ? remainingResult.data : [];
                     
                     await gateway.patchConfig(tenantId, {
-                        hooks: {
-                            mappings: filteredHooks
-                        }
+                        webhooks: remainingHooks.map(h => ({
+                            id: h.id,
+                            name: h.name,
+                            url: h.url,
+                            events: h.events,
+                            isActive: h.isActive
+                        }))
                     }, metadata);
                 }
             } catch (fusionError) {

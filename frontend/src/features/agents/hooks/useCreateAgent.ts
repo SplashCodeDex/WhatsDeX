@@ -15,12 +15,7 @@ import { useAuth } from '@/features/auth';
 import { getClientFirestore } from '@/lib/firebase/client';
 import { logger } from '@/lib/logger';
 import { type ActionResult } from '@/types/api';
-
-const TIER_LIMITS = {
-    starter: 1,
-    pro: 5,
-    enterprise: 100, // Effectively unlimited
-};
+import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
 interface CreateAgentInput {
     name: string;
@@ -31,9 +26,11 @@ interface CreateAgentInput {
 
 /**
  * Hook for creating a new Unified Agent with tier-limit enforcement.
+ * Delegates to useAuthorityStore for authoritative tier-based limits.
  */
 export function useCreateAgent() {
     const { user } = useAuth();
+    const { tier, getLimit } = useAuthorityStore();
     const [isLoading, setIsLoading] = useState(false);
 
     const createAgent = useCallback(async (
@@ -47,8 +44,7 @@ export function useCreateAgent() {
         }
 
         const tenantId = user.tenantId || `user_${user.id}`;
-        const tier = user.plan || 'starter';
-        const limit = TIER_LIMITS[tier];
+        const limit = getLimit('maxAgents');
 
         setIsLoading(true);
         const db = getClientFirestore();
@@ -104,7 +100,7 @@ export function useCreateAgent() {
         } finally {
             setIsLoading(false);
         }
-    }, [user]);
+    }, [user, tier, getLimit]);
 
     return {
         createAgent,

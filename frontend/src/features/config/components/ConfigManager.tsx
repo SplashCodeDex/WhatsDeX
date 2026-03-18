@@ -60,7 +60,10 @@ export function ConfigManager() {
             // Backend expects PATCH for update
             const response = await api.patch(API_ENDPOINTS.SETTINGS.UPDATE_TENANT, settings);
             if (response.success) {
-                toast.success('Configuration saved');
+                toast.success('Config Live — Changes synced instantly', {
+                    description: 'No restart required. Your settings are active across all channels.',
+                    duration: 3000,
+                });
             }
         } catch (error) {
             toast.error('Failed to update configuration');
@@ -112,8 +115,8 @@ export function ConfigManager() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">Platform Configuration</h2>
-                    <p className="text-muted-foreground">
-                        Manage your tenant-wide settings, feature flags, and channel policies.
+                    <p className="text-muted-foreground text-sm">
+                        Manage your organization profile, default bot behavior, notifications, and system policies.
                     </p>
                 </div>
                 <Button
@@ -122,7 +125,7 @@ export function ConfigManager() {
                     className="rounded-xl shadow-lg ring-1 ring-primary/20"
                 >
                     {isSaving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save Configuration
+                    {isSaving ? 'Syncing...' : 'Save & Sync'}
                 </Button>
             </div>
 
@@ -208,11 +211,33 @@ export function ConfigManager() {
                             <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-background/30">
                                 <div className="space-y-0.5">
                                     <Label>Email Alerts</Label>
-                                    <p className="text-xs text-muted-foreground">Send critical system notifications via email.</p>
+                                    <p className="text-xs text-muted-foreground">Receive critical system updates via email.</p>
                                 </div>
                                 <Switch
                                     checked={settings.notifications.email}
                                     onCheckedChange={(val) => updateNestedSetting('notifications.email', val)}
+                                />
+                            </div>
+                            <Separator className="bg-border/50" />
+                            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-background/30">
+                                <div className="space-y-0.5">
+                                    <Label>Disconnect Warnings</Label>
+                                    <p className="text-xs text-muted-foreground">Notify when a channel or node goes offline.</p>
+                                </div>
+                                <Switch
+                                    checked={settings.notifications.notifyOnChannelDisconnect}
+                                    onCheckedChange={(val) => updateNestedSetting('notifications.notifyOnChannelDisconnect', val)}
+                                />
+                            </div>
+                            <Separator className="bg-border/50" />
+                            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-background/30">
+                                <div className="space-y-0.5">
+                                    <Label>Error Logs</Label>
+                                    <p className="text-xs text-muted-foreground">Notify on critical processing errors.</p>
+                                </div>
+                                <Switch
+                                    checked={settings.notifications.notifyOnErrors}
+                                    onCheckedChange={(val) => updateNestedSetting('notifications.notifyOnErrors', val)}
                                 />
                             </div>
                         </CardContent>

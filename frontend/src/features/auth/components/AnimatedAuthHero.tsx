@@ -9,6 +9,7 @@
 
 import { motion } from 'framer-motion';
 import { Bot, BarChart3, Rocket, Shield } from 'lucide-react';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
 import type { Particle } from '../utils';
@@ -176,26 +177,30 @@ export function AnimatedAuthHero({ hideContent = false, particles = [] }: Animat
 
                         {/* Headline */}
                         <motion.h2
-                            className="mb-4 text-4xl font-bold tracking-tight"
+                            className="mb-4 flex flex-col items-center gap-4 text-4xl font-bold tracking-tight"
                         >
-                            Welcome to{' '}
-                            <span className="inline-flex overflow-hidden">
-                                {Array.from("DeXMart").map((char, index) => (
-                                    <motion.span
-                                        key={index}
-                                        className="bg-gradient-to-r from-white via-primary-200 to-white bg-clip-text text-transparent"
-                                        initial={{ y: 20, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        transition={{
-                                            duration: 0.3,
-                                            delay: 1.5 + index * 0.08, // Start after other animations
-                                            ease: "easeOut"
-                                        }}
-                                    >
-                                        {char}
-                                    </motion.span>
-                                ))}
-                            </span>
+                            <span className="text-white/90">Welcome to</span>
+                            <motion.div 
+                                className="flex items-center gap-4 rounded-3xl bg-white/10 p-4 backdrop-blur-md border border-white/20 shadow-2xl"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.8, ease: "easeOut", delay: 1 }}
+                            >
+                                <Image
+                                    src="/assets/logos/logo.png"
+                                    alt=""
+                                    width={64}
+                                    height={64}
+                                    className="h-16 w-16 drop-shadow-lg"
+                                />
+                                <Image
+                                    src="/assets/logos/Dexmart-no-logo-no-bg.png"
+                                    alt="DeXMart"
+                                    width={180}
+                                    height={48}
+                                    className="h-12 w-auto object-contain brightness-0 invert"
+                                />
+                            </motion.div>
                         </motion.h2>
 
                         {/* Description */}

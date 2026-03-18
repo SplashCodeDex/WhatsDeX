@@ -264,16 +264,39 @@ class AntiBanService {
   }
 
   /**
+   * Non-blocking helper to find keys matching a pattern.
+   * Replaces the blocking O(N) KEYS command.
+   */
+  private async scanKeys(pattern: string): Promise<string[]> {
+    if (!this.redis) return [];
+    
+    let cursor = '0';
+    const foundKeys: string[] = [];
+    
+    try {
+      do {
+        const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = nextCursor;
+        foundKeys.push(...keys);
+      } while (cursor !== '0');
+      
+      return foundKeys;
+    } catch (err) {
+      logger.error('[AntiBanService] Redis SCAN failed:', err);
+      return [];
+    }
+  }
+
+  /**
    * Scans for cooldowns that have reached their expiration time.
    * Internal utility for the background resume worker.
    */
   public async getExpiredCooldowns(): Promise<any[]> {
     if (!this.redis) return [];
-
-    const pattern = 'antiban:cooldown:*';
+    
+    const expired: any[] = [];
     try {
-      const keys = await this.redis.keys(pattern);
-      const expired: any[] = [];
+      const keys = await this.scanKeys('antiban:cooldown:*');
 
       for (const key of keys) {
         const data = await this.redis.get(key);
@@ -327,8 +350,7 @@ class AntiBanService {
     if (!this.redis) return;
 
     try {
-      const pattern = `antiban:content:${tenantId}:${campaignId}:*`;
-      const keys = await this.redis.keys(pattern);
+      const keys = await this.scanKeys(`antiban:content:${tenantId}:${campaignId}:*`);
       if (keys.length > 0) {
         await this.redis.del(...keys);
       }

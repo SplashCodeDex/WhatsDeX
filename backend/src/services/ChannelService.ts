@@ -1,11 +1,11 @@
 import { firebaseService } from '@/services/FirebaseService.js';
-import { multiTenantService } from '@/services/multiTenantService.js';
 import { Channel, ChannelSchema, Result } from '../types/contracts.js';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import logger from '@/utils/logger.js';
 import crypto from 'crypto';
 import { channelManager } from './channels/ChannelManager.js';
 import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
+import { systemAuthorityService } from './SystemAuthorityService.js';
 
 /**
  * Channel Service
@@ -37,13 +37,10 @@ export class ChannelService {
    */
   async createChannel(tenantId: string, channelData: Partial<Channel>, agentId: string = 'system_default'): Promise<Result<Channel>> {
     try {
-      const { multiTenantService } = await import('@/services/multiTenantService.js');
-      const canAddResult = await multiTenantService.canAddChannel(tenantId);
-      if (!canAddResult.success) {
-        throw canAddResult.error;
-      }
-      if (!canAddResult.data) {
-        throw new Error('Channel limit exceeded for your current plan.');
+      // 1. Check authority for channel creation
+      const auth = await systemAuthorityService.checkAuthority(tenantId, 'add_channel');
+      if (!auth.allowed) {
+        throw new Error(auth.error || 'Channel slot limit reached for your current plan.');
       }
 
       const channelId = `chan_${crypto.randomUUID()}`;
@@ -68,6 +65,9 @@ export class ChannelService {
 
       const data = ChannelSchema.parse(rawData);
       await firebaseService.setDoc(this.getPath(agentId), channelId, data as any, tenantId);
+
+      // 2. Record usage
+      await systemAuthorityService.recordUsage(tenantId, 'channels', 1);
 
       logger.info(`Channel created: ${channelId} for tenant ${tenantId} under Agent ${agentId}`);
       return { success: true, data };
@@ -393,6 +393,9 @@ export class ChannelService {
         const authPath = `agents/${agentId}/channels/${channelId}/auth`;
         await firebaseService.deleteCollection(authPath, tenantId);
         
+        // 2d. Record usage decrement
+        await systemAuthorityService.recordUsage(tenantId, 'channels', -1);
+
         logger.info(`Channel deleted: ${channelId} from tenant ${tenantId} under Agent ${agentId} (with auth cleanup)`);
       }
 

@@ -16,6 +16,7 @@ import { socketService } from './socketService.js';
 import { mastermindStreamService } from './MastermindStreamService.js';
 import { aiAnalyticsService } from './aiAnalytics.js';
 import { DeliberationService } from '../utils/deliberation.js';
+import { systemAuthorityService, PlanTier } from './SystemAuthorityService.js';
 
 interface AIDecisionEngine {
   confidenceThreshold: number;
@@ -118,6 +119,15 @@ export class GeminiAI extends EventEmitter {
   async processOmnichannelMessage(tenantId: string, channelId: string, message: CommonMessage): Promise<Result<CommonMessage>> {
     const startTime = Date.now(); // Track request start time for analytics
     try {
+      // 1. Check authority for message processing (Limit Enforcement)
+      const auth = await systemAuthorityService.checkAuthority(tenantId, 'send_message');
+      if (!auth.allowed) {
+        return { 
+          success: false, 
+          error: new Error(auth.error || 'Monthly message limit reached. Please upgrade your plan.') 
+        };
+      }
+
       // Get Agent-specific identity from hierarchy (Refactored Phase 3)
       const { agentService } = await import('./AgentService.js');
 
@@ -150,7 +160,8 @@ export class GeminiAI extends EventEmitter {
       // Build context
       const context = await this.buildGenericContext(tenantId, channelId, userId, text, message);
       const tenantResult = await multiTenantService.getTenant(tenantId);
-      const plan = tenantResult.success ? tenantResult.data.plan : 'starter';
+      const plan = (tenantResult.success ? tenantResult.data.plan : 'starter') as PlanTier;
+      const caps = systemAuthorityService.getCapabilities(plan);
 
       // 1. Retrieve Historical Context (RAG) - Scoped
       const historyResult = await memoryService.retrieveRelevantContext(userId, text, { platform, chatId: userId });
@@ -211,13 +222,18 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
           const jitter = DeliberationService.getThinkingJitter();
           await DeliberationService.wait(jitter);
 
+          // Select authorized model based on tier
+          const preferredModel = caps.models.includes('gemini-2.0-flash-exp') 
+            ? 'gemini-2.0-flash-exp' 
+            : caps.models[0] || 'gemini-1.5-flash';
+
           const response = await this.gemini.getChatCompletionWithTools(messages, toolRegistry.getAllTools().map(t => ({
             function: {
               name: t.name,
               description: t.description,
               parameters: t.parameters
             }
-          })));
+          })), preferredModel);
 
           if (response.finish_reason === 'tool_calls' && response.message.tool_calls) {
             messages.push({ role: 'assistant', content: response.message.content || '', tool_calls: response.message.tool_calls });
@@ -309,6 +325,9 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
         platform: message.platform,
         chatId: userId
       });
+
+      // 5. Record message usage
+      await systemAuthorityService.recordUsage(tenantId, 'messages', 1);
 
       // Track AI analytics
       const responseTime = Date.now() - startTime;
@@ -1190,6 +1209,16 @@ Only include NEW or UPDATED information. If nothing significant is found, return
    */
   public static async spinMessage(content: string, tenantId: string): Promise<Result<string>> {
     try {
+      const { multiTenantService } = await import('./multiTenantService.js');
+      const tenantResult = await multiTenantService.getTenant(tenantId);
+      const plan = (tenantResult.success ? tenantResult.data.plan : 'starter') as PlanTier;
+      const caps = systemAuthorityService.getCapabilities(plan);
+
+      if (!caps.features.aiMessageSpinning) {
+        logger.warn(`AI Message Spinning denied for tenant ${tenantId} (${plan})`);
+        return { success: true, data: content }; // Graceful fallback: return original content
+      }
+
       const cacheKey = `ai:spin:${tenantId}:${cacheService.createKey(content)}`;
       const cached = await cacheService.get<string>(cacheKey);
 

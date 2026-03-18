@@ -1,5 +1,6 @@
 import { Tenant } from '../types/contracts.js';
 import { Timestamp } from 'firebase-admin/firestore';
+import { systemAuthorityService, PlanTier } from '../services/SystemAuthorityService.js';
 
 export type Feature = 'ai' | 'backups' | 'broadcast' | 'analytics';
 
@@ -11,10 +12,12 @@ export interface PlanLimits {
 }
 
 /**
- * Utility to check if a tenant has access to a specific feature
+ * Utility to check if a tenant has access to a specific feature.
+ * Delegates to SystemAuthorityService.
  */
 export const hasFeatureAccess = (tenant: Tenant, feature: Feature): boolean => {
-  const plan = tenant.plan || 'starter';
+  const plan = (tenant.plan || 'starter') as PlanTier;
+  const caps = systemAuthorityService.getCapabilities(plan);
 
   // Check if trial has expired and status is not active
   if (tenant.subscriptionStatus === 'canceled') return false;
@@ -22,53 +25,39 @@ export const hasFeatureAccess = (tenant: Tenant, feature: Feature): boolean => {
 
   switch (feature) {
     case 'ai':
-      return plan !== 'starter' || (tenant.settings?.aiEnabled ?? false);
+      return caps.models.length > 0;
     case 'backups':
-      return true; // Included in all tiers
+      return caps.features.backups;
     case 'broadcast':
-      return true; // All tiers, but limits differ
+      return caps.features.marketing;
     case 'analytics':
-      return true;
+      return true; // Analytics usually available in all tiers with diff levels
     default:
       return false;
   }
 };
 
 /**
- * Get limits associated with a plan
+ * Get limits associated with a plan.
+ * Map SystemAuthorityService capabilities back to legacy PlanLimits structure.
  */
 export const getPlanLimits = (plan: 'starter' | 'pro' | 'enterprise'): PlanLimits => {
-  switch (plan) {
-    case 'enterprise':
-      return {
-        maxChannels: 10,
-        maxBroadcasts: Infinity,
-        aiType: 'advanced',
-        analyticsLevel: 'enterprise'
-      };
-    case 'pro':
-      return {
-        maxChannels: 3,
-        maxBroadcasts: 5000,
-        aiType: 'advanced',
-        analyticsLevel: 'advanced'
-      };
-    case 'starter':
-    default:
-      return {
-        maxChannels: 1,
-        maxBroadcasts: 500,
-        aiType: 'basic',
-        analyticsLevel: 'basic'
-      };
-  }
+  const caps = systemAuthorityService.getCapabilities(plan);
+
+  return {
+    maxChannels: caps.maxChannelSlots,
+    maxBroadcasts: plan === 'enterprise' ? Infinity : plan === 'pro' ? 5000 : 500,
+    aiType: caps.features.aiReasoning ? 'advanced' : 'basic',
+    analyticsLevel: plan === 'enterprise' ? 'enterprise' : plan === 'pro' ? 'advanced' : 'basic'
+  };
 };
 
 /**
  * Check if the tenant is currently in a valid trial period
  */
 export const isTrialActive = (tenant: Tenant): boolean => {
-  if (tenant.subscriptionStatus !== 'trialing') return false;
+...
+
   if (!tenant.trialEndsAt) return false;
 
   const now = Date.now();

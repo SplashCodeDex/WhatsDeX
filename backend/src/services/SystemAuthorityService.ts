@@ -8,6 +8,7 @@ export interface Capabilities {
     maxMessages: number;
     maxAgents: number;
     maxChannelSlots: number;
+    minCronIntervalMs: number;
     allowedSkills: string[];
     features: {
         marketing: boolean;
@@ -23,6 +24,7 @@ const CAPABILITY_MATRIX: Record<PlanTier, Capabilities> = {
         maxMessages: 1000,
         maxAgents: 1,
         maxChannelSlots: 1,
+        minCronIntervalMs: 60 * 60 * 1000, // 1 hour
         allowedSkills: ['basic_reply', 'summarize', 'translate'],
         features: {
             marketing: false,
@@ -36,6 +38,7 @@ const CAPABILITY_MATRIX: Record<PlanTier, Capabilities> = {
         maxMessages: 10000,
         maxAgents: 5,
         maxChannelSlots: 3,
+        minCronIntervalMs: 15 * 60 * 1000, // 15 minutes
         allowedSkills: [
             'basic_reply', 'summarize', 'translate', 
             'web_search', 'file_analysis', 'image_generation'
@@ -52,6 +55,7 @@ const CAPABILITY_MATRIX: Record<PlanTier, Capabilities> = {
         maxMessages: 10000000,
         maxAgents: 100,
         maxChannelSlots: 100,
+        minCronIntervalMs: 1 * 60 * 1000, // 1 minute
         allowedSkills: [
             'basic_reply', 'summarize', 'translate', 
             'web_search', 'file_analysis', 'image_generation',
@@ -130,8 +134,11 @@ export class SystemAuthorityService {
                     const counterSnap = await counterRef.get();
                     
                     // Resilient snap handling for both mock and real Firestore
-                    const snapExists = typeof counterSnap.exists === 'function' ? counterSnap.exists() : (counterSnap as any).exists;
-                    const snapData = typeof counterSnap.data === 'function' ? counterSnap.data() : (counterSnap as any).data;
+                    const existsField = (counterSnap as any).exists;
+                    const snapExists = typeof existsField === 'function' ? existsField.call(counterSnap) : !!existsField;
+                    
+                    const dataField = (counterSnap as any).data;
+                    const snapData = typeof dataField === 'function' ? dataField.call(counterSnap) : dataField;
                     const currentCount = snapExists ? (snapData?.agentCount || 0) : 0;
                     
                     if (currentCount >= caps.maxAgents) {

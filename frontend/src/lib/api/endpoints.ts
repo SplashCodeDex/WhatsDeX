@@ -95,6 +95,11 @@ export const API_ENDPOINTS = {
         SETTINGS: '/api/tenant/settings',
     },
 
+    // Authority
+    AUTHORITY: {
+        CAPABILITIES: '/api/authority/capabilities',
+    },
+
     // Omnichannel
     OMNICHANNEL: {
         STATUS: '/api/omnichannel/status',

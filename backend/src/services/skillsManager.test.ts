@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SkillsManager } from './skillsManager.js';
 import { toolRegistry } from './toolRegistry.js';
+import { systemAuthorityService } from './SystemAuthorityService.js';
 
 // Mock toolRegistry
 vi.mock('./toolRegistry.js', () => ({
@@ -18,6 +19,20 @@ vi.mock('openclaw/agents/skills/workspace', () => ({
     { id: 'web-search', metadata: { title: 'Web Search' } },
     { id: 'math', metadata: { title: 'Mathematics' } }
   ])
+}));
+
+// Mock systemAuthorityService
+vi.mock('./SystemAuthorityService.js', () => ({
+  systemAuthorityService: {
+    isSkillAllowed: vi.fn((tier, skillId) => {
+      // Basic mock logic matching SystemAuthorityService.ts defaults
+      if (skillId === 'web-search') return tier === 'pro' || tier === 'enterprise';
+      return true;
+    }),
+    getCapabilities: vi.fn((tier) => ({
+      allowedSkills: tier === 'starter' ? ['math'] : ['web-search', 'math']
+    }))
+  }
 }));
 
 describe('SkillsManager', () => {

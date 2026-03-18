@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/features/auth';
 import { cn } from '@/lib/utils';
+import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
 interface Skill {
     id: string;
@@ -35,14 +36,13 @@ interface SkillToggleProps {
  * UI Component for managing Agent Skills with tier-based gating.
  */
 export function SkillToggle({ enabledSkills, onToggle }: SkillToggleProps) {
-    const { user } = useAuth();
-    const userTier = user?.plan || 'starter';
+    const { isSkillAllowed: checkSkill } = useAuthorityStore();
 
     return (
         <TooltipProvider>
             <div className="grid gap-6 sm:grid-cols-2">
                 {AVAILABLE_SKILLS.map((skill) => {
-                    const isAllowed = isSkillAllowed(userTier, skill.id);
+                    const isAllowed = checkSkill(skill.id);
                     const isEnabled = enabledSkills.includes(skill.id);
 
                     return (
@@ -81,7 +81,7 @@ export function SkillToggle({ enabledSkills, onToggle }: SkillToggleProps) {
                             </div>
                             <Switch
                                 id={`skill-${skill.id}`}
-                                checked={isAllowed ? isEnabled : null}
+                                checked={isAllowed ? isEnabled : false}
                                 onCheckedChange={(checked) => isAllowed && onToggle(skill.id, checked)}
                                 disabled={!isAllowed}
                                 className={cn(

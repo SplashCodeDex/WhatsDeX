@@ -16,6 +16,7 @@ import { useAuth } from '@/features/auth';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
 interface ChannelLinkerProps {
     agentId: string;
@@ -27,6 +28,7 @@ interface ChannelLinkerProps {
  */
 export function ChannelLinker({ agentId }: ChannelLinkerProps) {
     const { user } = useAuth();
+    const { tier: userTier, getLimit } = useAuthorityStore();
     const { channels, fetchAllChannels, isLoading } = useOmnichannelStore();
     const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
@@ -157,7 +159,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                             Upgrade Your Plan
                         </DialogTitle>
                         <DialogDescription className="pt-2">
-                            You've reached the active connection limit for your <strong>{userTier}</strong> plan ({getSlotLimit(userTier)} slot).
+                            You've reached the active connection limit for your <strong>{userTier}</strong> plan ({getLimit('maxChannelSlots')} slots).
                             Upgrade to Pro or Enterprise to link more agents to more channels simultaneously.
                         </DialogDescription>
                     </DialogHeader>

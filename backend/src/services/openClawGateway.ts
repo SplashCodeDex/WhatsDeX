@@ -69,6 +69,9 @@ export class OpenClawGateway {
       this.initialized = true;
       this.startTime = Date.now();
       console.log('OpenClaw Gateway initialized successfully.');
+      
+      // Hydrate tenant configurations into in-memory overrides
+      await this.hydrateOverrides();
     } catch (error) {
       console.error('Failed to initialize OpenClaw Gateway:', error);
       throw error;
@@ -513,6 +516,72 @@ export class OpenClawGateway {
   }
 
   // ═══════════════════════════════════════════════════════
+  //  BOOT-TIME HYDRATION
+  // ═══════════════════════════════════════════════════════
+
+  /**
+   * Hydrates the in-memory config override store from Firestore on boot.
+   * This ensures that tenant-specific configurations survive server restarts
+   * without relying on the config.json5 file for tenant data.
+   *
+   * Should be called once during gateway initialization, after the engine starts.
+   */
+  public async hydrateOverrides(): Promise<void> {
+    try {
+      const overridesMod = await this.safeImport('../../../openclaw/src/config/runtime-overrides.js');
+      if (!overridesMod) {
+        console.warn('[OpenClawGateway] runtime-overrides module unavailable — skipping hydration');
+        return;
+      }
+
+      const { setConfigOverride } = overridesMod;
+
+      // Fetch all active tenants
+      const tenants = await MultiTenantService.listTenants();
+      if (!tenants || tenants.length === 0) {
+        console.info('[OpenClawGateway] No tenants found for hydration');
+        return;
+      }
+
+      let hydratedCount = 0;
+      const { TenantConfigService } = await import('./tenantConfigService.js');
+      const configService = TenantConfigService.getInstance();
+
+      for (const tenant of tenants) {
+        try {
+          const settingsResult = await configService.getTenantSettings(tenant.id);
+          if (!settingsResult.success) continue;
+
+          // Flatten settings into dot-notation override paths
+          const flattenObj = (obj: Record<string, unknown>, prefix: string): void => {
+            for (const [key, value] of Object.entries(obj)) {
+              const fullPath = `${prefix}.${key}`;
+              if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+                flattenObj(value as Record<string, unknown>, fullPath);
+              } else {
+                setConfigOverride(fullPath, value);
+              }
+            }
+          };
+
+          flattenObj(
+            settingsResult.data as unknown as Record<string, unknown>,
+            `acp.tenants.${tenant.id}.tenantSettings`
+          );
+          hydratedCount++;
+        } catch (err) {
+          console.warn(`[OpenClawGateway] Failed to hydrate tenant ${tenant.id}:`, err);
+        }
+      }
+
+      console.info(`[OpenClawGateway] ✅ Hydrated ${hydratedCount}/${tenants.length} tenant configs into memory`);
+    } catch (error: any) {
+      console.error('[OpenClawGateway] Hydration failed:', error.message);
+      // Non-fatal: the system can still operate with defaults
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
   //  CONTROL PLANE (FUSION)
   // ═══════════════════════════════════════════════════════
 
@@ -555,41 +624,50 @@ export class OpenClawGateway {
         }
       }
 
-      // 2. Safe Patch Implementation (OpenClaw Bridge)
-      const configMod = await this.safeImport('../../../openclaw/src/config/config.js');
-      const mergeMod = await this.safeImport('../../../openclaw/src/config/merge-patch.js');
-      const restartMod = await this.safeImport('../../../openclaw/src/infra/restart.js');
-      const legacyMod = await this.safeImport('../../../openclaw/src/config/legacy.js');
+      // 2. In-Memory Override (Zero-Downtime Config Sync)
+      // Instead of writing to config.json5 and restarting the engine via SIGUSR1,
+      // we leverage OpenClaw's native runtime-overrides system. Since DeXMart
+      // imports OpenClaw as a library (same V8 heap), setConfigOverride() mutates
+      // the in-memory store that applyConfigOverrides() reads from in io.ts:614.
+      const overridesMod = await this.safeImport('../../../openclaw/src/config/runtime-overrides.js');
 
-      if (!configMod || !mergeMod || !restartMod) {
-        throw new Error('OpenClaw core configuration modules are missing');
+      if (!overridesMod) {
+        throw new Error('OpenClaw runtime-overrides module is missing');
       }
 
-      const { readConfigFileSnapshotForWrite, writeConfigFile, validateConfigObjectWithPlugins } = configMod;
-      const { applyMergePatch } = mergeMod;
-      const { scheduleGatewaySigusr1Restart } = restartMod;
-      const { applyLegacyMigrations } = legacyMod;
+      const { setConfigOverride } = overridesMod;
 
-      const { snapshot, writeOptions } = await readConfigFileSnapshotForWrite();
+      // Flatten the patch object into dot-notation paths for setConfigOverride
+      const flattenPatch = (obj: Record<string, unknown>, prefix = ''): Array<{ path: string; value: unknown }> => {
+        const entries: Array<{ path: string; value: unknown }> = [];
+        for (const [key, value] of Object.entries(obj)) {
+          const fullPath = prefix ? `${prefix}.${key}` : key;
+          if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+            entries.push(...flattenPatch(value as Record<string, unknown>, fullPath));
+          } else {
+            entries.push({ path: fullPath, value });
+          }
+        }
+        return entries;
+      };
 
-      // Deep Merge
-      const merged = applyMergePatch(snapshot.config, patch, {
-        mergeObjectArraysById: true,
-      });
+      // Namespace all overrides under the tenantId to prevent cross-tenant leakage
+      const namespacedPatch = { acp: { tenants: { [tenantId]: patch } } };
+      const overrideEntries = flattenPatch(namespacedPatch);
+      const failedOverrides: string[] = [];
 
-      // Migrations & Validation
-      const migrated = applyLegacyMigrations ? applyLegacyMigrations(merged) : { next: merged };
-      const resolved = migrated.next ?? merged;
-      const validated = validateConfigObjectWithPlugins(resolved);
-
-      if (!validated.ok) {
-        throw new Error(`Config validation failed: ${JSON.stringify(validated.issues)}`);
+      for (const entry of overrideEntries) {
+        const result = setConfigOverride(entry.path, entry.value);
+        if (!result.ok) {
+          failedOverrides.push(`${entry.path}: ${result.error}`);
+        }
       }
 
-      // 3. Persistence (Primary)
-      await writeConfigFile(validated.config, writeOptions);
+      if (failedOverrides.length > 0) {
+        throw new Error(`Config override failed for paths: ${failedOverrides.join(', ')}`);
+      }
 
-      // 4. Audit Logging
+      // 3. Audit Logging
       await AuditService.logEvent({
         eventType: 'CONTROL_PLANE_PATCH',
         actor: metadata.actor,
@@ -600,24 +678,15 @@ export class OpenClawGateway {
         ipAddress: metadata.ip,
         metadata: {
           patch,
-          target: 'engine_config'
+          target: 'in_memory_override',
+          overrideCount: overrideEntries.length
         }
-      });
-
-      // 5. Signal Restart (Hot Reload)
-      const restart = scheduleGatewaySigusr1Restart({
-        delayMs: 500,
-        reason: 'dexmart_control_plane_patch',
-        audit: {
-          actor: metadata.actor,
-          clientIp: metadata.ip || 'internal',
-        },
       });
 
       return {
         ok: true,
-        restart,
-        config: validated.config
+        restart: null, // No restart needed — overrides are live immediately
+        overrideCount: overrideEntries.length
       };
 
     } catch (error: any) {

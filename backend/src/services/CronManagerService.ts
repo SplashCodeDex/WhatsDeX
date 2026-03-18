@@ -1,22 +1,16 @@
 import logger from '@/utils/logger.js';
-
-export type PlanTier = 'starter' | 'pro' | 'enterprise';
+import { systemAuthorityService, PlanTier } from './SystemAuthorityService.js';
 
 interface FrequencyValidationResult {
     allowed: boolean;
     message?: string;
 }
 
-const TIER_MIN_INTERVALS: Record<PlanTier, number> = {
-    starter: 60 * 60 * 1000, // 1 hour
-    pro: 15 * 60 * 1000,    // 15 mins
-    enterprise: 1 * 60 * 1000, // 1 min
-};
-
 /**
  * Cron Manager Service
  * 
  * Enforces tiered frequency limits for scheduled auto-posts and background tasks.
+ * Delegates to SystemAuthorityService for unified interval enforcement.
  */
 export class CronManagerService {
     private static instance: CronManagerService;
@@ -36,11 +30,12 @@ export class CronManagerService {
      * @param intervalMs Requested interval in milliseconds
      */
     public validateFrequency(tier: PlanTier, intervalMs: number): FrequencyValidationResult {
-        const minInterval = TIER_MIN_INTERVALS[tier] || TIER_MIN_INTERVALS.starter;
+        const caps = systemAuthorityService.getCapabilities(tier);
+        const minInterval = caps.minCronIntervalMs;
 
         if (intervalMs < minInterval) {
             const minDisplay = minInterval / (60 * 1000) >= 60 
-                ? `${minInterval / (60 * 1000)} hour(s)` 
+                ? `${minInterval / (60 * 60 * 1000)} hour(s)` 
                 : `${minInterval / (60 * 1000)} minutes`;
 
             const tierDisplay = tier.charAt(0).toUpperCase() + tier.slice(1);

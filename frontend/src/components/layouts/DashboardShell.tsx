@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 import { Header } from './Header';
@@ -9,6 +10,7 @@ import { ScrollArea } from '../ui/scroll-area';
 
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/useUIStore';
+import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
 
 export function DashboardShell({
@@ -17,6 +19,11 @@ export function DashboardShell({
     children: React.ReactNode;
 }) {
     const { isSidebarCollapsed } = useUIStore();
+    const { fetchCapabilities } = useAuthorityStore();
+
+    useEffect(() => {
+        fetchCapabilities();
+    }, [fetchCapabilities]);
 
     return (
         <div className="flex h-screen bg-mesh-premium text-foreground overflow-hidden relative">

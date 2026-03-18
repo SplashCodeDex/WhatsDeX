@@ -38,31 +38,36 @@ This report documents all placeholders, simulations, "dummies," and hardcodings 
 - [x] Professional diagnostic terminology used.
 
 ## 6. Synthesis & Enhancement Roadmap (The Power-Up)
-The "Agents" experience is currently a high-fidelity simulation. To achieve true robustness and power, the following enhancements are required:
+The "Agents" experience is being transformed from high-fidelity simulation to authentic autonomy.
 
 ### 6.1 Real-time Status & Feedback (WebSockets)
-- **Problem:** Current status updates are "emitted" in fixed loops or rely on Zustand state polling.
-- **Solution:** Implement a **Mastermind Event Stream** using WebSockets (Socket.io or native WS).
-- **Impact:** Live, granular feedback of AI thought processes (e.g., "Agent X is crawling site Y", "Agent Y is synthesizing findings") without artificial delays.
+- **Status:** ✅ **IMPLEMENTED** (Track: mastermind_stream_20260312)
+- **Problem:** Current status updates were "emitted" in fixed loops or relied on Zustand state polling.
+- **Solution:** Implemented **Mastermind Event Stream** using Socket.io.
+- **Impact:** Live, granular feedback of AI thought processes, tool invocations, and sub-agent spawning is now active.
 
 ### 6.2 Unified Dynamic Gating
+- **Status:** ⏳ **NEXT UP**
 - **Problem:** Redundant hardcoded limits in Frontend (`TIER_SKILLS`, `SLOT_LIMITS`) and Backend (`UsageGuard`).
 - **Solution:** Consolidate all limits into a single `CapabilityService` in the backend. Frontend should fetch these capabilities on mount.
 - **Impact:** Zero-drift policy enforcement and easier plan management.
 
 ### 6.3 True Agentic Autonomy (The Brain)
+- **Status:** 🛠️ **IN PROGRESS** (Partial emissions active)
 - **Problem:** `planWorkflow` and "Multiple Actions" are stubbed or WhatsApp-only.
 - **Solution:** 
     - Wire `planWorkflow` to a recursive reasoning loop that uses the `DynamicToolRegistry`.
-    - Implement a "Mastermind Supervisor" that can orchestrate arbitrary sub-agents based on task complexity (replacing the fixed 3-agent research loop).
+    - Implement a "Mastermind Supervisor" that can orchestrate arbitrary sub-agents based on task complexity.
 - **Impact:** Omnichannel multi-action execution and truly adaptive research.
 
 ### 6.4 Knowledge Matrix (RAG Core)
+- **Status:** ⏳ **PLANNED**
 - **Problem:** The "Knowledge Matrix" is a UI shell.
 - **Solution:** Integrate **OpenClaw's Vector Store** (or a custom Pinecone/Chroma integration) into the `AgentService`.
 - **Impact:** Agents can actually "read" and "remember" tenant-specific files and documentation.
 
 ### 6.5 Skill Integration (Deep Wiring)
+- **Status:** 🛠️ **IN PROGRESS** (Partial emissions active)
 - **Problem:** Many bridged skills return static strings.
 - **Solution:** Map `openclaw` prompt-based skills to active `Skill` executors that can invoke shell, API, or web-crawler tools directly.
 - **Impact:** The "Intelligence Store" becomes a library of executable power-ups rather than a catalog of metadata.
