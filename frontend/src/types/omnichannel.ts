@@ -1,6 +1,8 @@
 /**
  * Omnichannel Frontend Types
  */
+export type { AgentIdentityResponse as AgentIdentityResult } from '@DeXMart/shared';
+
 
 export type ChannelType = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'irc' | 'imessage' | 'googlechat';
 
@@ -170,6 +172,7 @@ export interface GatewayAgentRow {
   id: string;
   name?: string;
   skills?: string[];
+  model?: string;
   identity?: {
     name?: string;
     theme?: string;
@@ -186,13 +189,7 @@ export interface AgentsListResult {
   agents: GatewayAgentRow[];
 }
 
-export interface AgentIdentityResult {
-  agentId: string;
-  name: string;
-  avatar: string;
-  emoji?: string;
-  linkedChannels?: Channel[];
-}
+
 
 export interface AgentFileEntry {
   name: string;

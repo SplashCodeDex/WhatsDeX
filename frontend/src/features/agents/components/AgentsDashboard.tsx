@@ -330,7 +330,7 @@ export function AgentsDashboard() {
                                                         <span className="text-[10px] font-semibold text-muted-foreground/60">Neural Engine</span>
                                                         <div className="flex items-center space-x-2">
                                                             <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                                            <span className="font-mono text-xs font-bold">gemini-1.5-pro</span>
+                                                            <span className="font-mono text-xs font-bold">{selectedAgent.model || 'gemini-1.5-flash'}</span>
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col space-y-1">

@@ -245,6 +245,25 @@ export class CacheService {
     }
   }
 
+  async keys(pattern: string): Promise<Result<string[]>> {
+    if (!this.isConnected) {
+      if (this.useMemoryFallback) {
+        // node-cache doesn't support pattern matching easily, return empty or all
+        return { success: true, data: this.memoryCache.keys() };
+      }
+      return { success: false, error: new Error('Cache not connected') };
+    }
+
+    try {
+      const keys = await this.client.keys(pattern);
+      return { success: true, data: keys };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Cache.keys error [${pattern}]:`, err);
+      return { success: false, error: err };
+    }
+  }
+
   async blacklistToken(token: string, expirySeconds: number): Promise<Result<void>> {
     const key = `blacklist:${token}`;
     return this.set(key, 'revoked', expirySeconds);

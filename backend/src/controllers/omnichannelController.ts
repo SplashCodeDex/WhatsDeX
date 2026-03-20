@@ -8,7 +8,7 @@ import {
     usageQuerySchema,
     sessionLogsParamsSchema,
     toggleSkillSchema
-} from '../schemas/omnichannelSchemas.js';
+} from '@DeXMart/shared';
 
 /**
  * OmnichannelController

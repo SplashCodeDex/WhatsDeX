@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "spline-docs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@claudeflor/mcp-mintlify-search",
+        "--url",
+        "https://docs.spline.design"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoUpdate": true
+    }
+  }
+}

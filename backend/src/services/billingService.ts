@@ -17,7 +17,7 @@ import {
   type SubscriptionInfoResponse,
   type InvoiceResponse,
   type PaymentMethodResponse,
-} from '../schemas/billingSchemas.js';
+} from '@DeXMart/shared';
 import { ConfigService } from './ConfigService.js';
 
 export class BillingService {

@@ -82,8 +82,31 @@ export class SkillsManager {
   /**
    * Checks if a tenant is eligible for a specific skill based on their tier.
    */
-  public async isTenantEligible(tenantId: string, skillId: string, tier: PlanTier): Promise<boolean> {
+  public async isTenantEligible(tenantId: string, skillId: string, tier?: PlanTier): Promise<boolean> {
+    if (!tier) {
+      const { db } = await import('../lib/firebase.js');
+      const doc = await db.collection('tenants').doc(tenantId).get();
+      tier = (doc.data()?.plan || 'starter') as PlanTier;
+    }
     return systemAuthorityService.isSkillAllowed(tier, skillId);
+  }
+
+  /**
+   * Securely execute a skill after verifying authority
+   */
+  public async executeSecureSkill(tenantId: string, skillId: string, params: any, context: any): Promise<Result<any>> {
+    try {
+      // 1. Gating Check
+      const eligible = await this.isTenantEligible(tenantId, skillId);
+      if (!eligible) {
+        return { success: false, error: new Error(`UNAUTHORIZED_SKILL: Your current plan does not include the '${skillId}' skill.`) };
+      }
+
+      // 2. Execution
+      return await toolRegistry.executeTool(skillId, params, context);
+    } catch (error: any) {
+      return { success: false, error };
+    }
   }
 
   /**

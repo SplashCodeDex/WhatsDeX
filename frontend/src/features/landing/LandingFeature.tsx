@@ -37,10 +37,13 @@ export function LandingFeature() {
             {/* Quantum Hero Section */}
             <section className="relative h-screen w-full flex items-center justify-center bg-background overflow-hidden px-4">
                 {/* 3D Asset Background - Raw Mode */}
-                <SplineRobot 
+                <SplineRobot
                     className="absolute inset-0 z-0 h-full w-full"
                     sceneUrl="https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
                 />
+
+                {/* Deep 3D Fade - Blends Spline canvas deeply into the global background color */}
+                <div className="absolute bottom-0 left-0 right-0 h-64 sm:h-30 bg-gradient-to-t from-background via-background/80 to-transparent backdrop-blur-[2px] pointer-events-none z-10" />
 
                 {/* Floating Navigation */}
                 <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-6 md:px-12 md:py-8 pointer-events-none">
@@ -53,7 +56,7 @@ export function LandingFeature() {
                             className="h-11 w-11 drop-shadow-md transition-transform group-hover:scale-110"
                             priority
                         />
-                        <Image 
+                        <Image
                             src="/assets/logos/Dexmart-no-logo-no-bg.png"
                             alt="DeXMart"
                             width={130}
@@ -97,12 +100,12 @@ export function LandingFeature() {
                 <div className="pointer-events-auto flex items-center justify-between rounded-full border border-white/10 bg-background/80 px-6 py-3 shadow-2xl backdrop-blur-xl dark:bg-black/60">
                     <Link href="/" className="flex items-center gap-3">
                         <Image src="/assets/logos/logo.png" alt="" width={32} height={32} className="h-8 w-8" />
-                        <Image 
-                            src="/assets/logos/Dexmart-no-logo-no-bg.png" 
-                            alt="DeXMart" 
-                            width={100} 
-                            height={24} 
-                            className="h-6 w-auto object-contain dark:invert" 
+                        <Image
+                            src="/assets/logos/Dexmart-no-logo-no-bg.png"
+                            alt="DeXMart"
+                            width={100}
+                            height={24}
+                            className="h-6 w-auto object-contain dark:invert"
                         />
                     </Link>
 

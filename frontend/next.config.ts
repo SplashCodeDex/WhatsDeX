@@ -3,6 +3,9 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
     // Enable Cache Components (includes Partial Prerendering)
     cacheComponents: true,
+    
+    // Transpile local workspace packages
+    transpilePackages: ['@DeXMart/shared'],
 
     // Turbopack configuration (default in Next.js 16)
     turbopack: {

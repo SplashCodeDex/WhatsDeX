@@ -38,6 +38,8 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public status: string = 'disconnected';
   private presenceInterval: NodeJS.Timeout | null = null;
   private isDisconnecting: boolean = false;
+  private activeDownloads: number = 0;
+  private maxParallelDownloads: number = 5;
 
   constructor(public tenantId: string, channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
     this.instanceId = channelId;
@@ -337,6 +339,15 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     setActiveWebListener(this.channelId, null);
     await this.authSystem.disconnect();
     this.socket = null;
+
+    // MASTERMIND Resilience: Cleanup pending outbound jobs (Scenario 19)
+    try {
+      const { jobQueueService } = await import('@/services/jobQueue.js');
+      await jobQueueService.removeJobsByChannelId(this.channelId, 'whatsapp-outbound');
+      logger.info(`[WhatsappAdapter] Cleaned up pending outbound jobs for stopped channel ${this.channelId}`);
+    } catch (err) {
+      logger.warn(`[WhatsappAdapter] Failed to cleanup jobs during shutdown for ${this.channelId}`, err);
+    }
   }
 
   public async shutdown(): Promise<void> {

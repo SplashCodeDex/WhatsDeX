@@ -164,20 +164,22 @@ class AuthSystem extends EventEmitter {
           const error = lastDisconnect?.error;
           const statusCode = (error as Boom)?.output?.statusCode;
           const isLoggedOut = statusCode === DisconnectReason.loggedOut;
-          const shouldReconnect = !isLoggedOut;
+          const isForbidden = statusCode === 403; // Forbidden often indicates a Ban (Scenario 51)
+          const shouldReconnect = !isLoggedOut && !isForbidden;
 
           logger.warn(`[AuthSystem] Connection closed for ${this.channelId}. Reconnect: ${shouldReconnect}`, { error, statusCode });
 
-          if (isLoggedOut) {
-            logger.error(`[AuthSystem] SESSION LOGGED OUT for ${this.channelId}. Cleaning up Firestore auth state...`);
+          if (isLoggedOut || isForbidden) {
+            const status = isForbidden ? 'banned' : 'logged_out';
+            logger.error(`[AuthSystem] SESSION ${status.toUpperCase()} for ${this.channelId}. Cleaning up Firestore auth state...`);
             try {
               // Perform a hard reset of the local creds and trigger a clear in Firestore
               const { clearAuthState } = await useFirestoreAuthState(this.tenantId, this.channelId, this.collectionOrPath);
               await clearAuthState();
               this.currentQrCode = null;
-              this.emit('status', 'logged_out');
+              this.emit('status', status);
             } catch (err) {
-              logger.error(`[AuthSystem] Failed to clear auth state during logout:`, err);
+              logger.error(`[AuthSystem] Failed to clear auth state during ${status}:`, err);
             }
           }
 

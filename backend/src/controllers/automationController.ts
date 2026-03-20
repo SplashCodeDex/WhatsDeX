@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { automationService } from '../services/automationService.js';
 import logger from '../utils/logger.js';
-import { toggleAutomationSchema } from '../schemas/automationSchemas.js';
+import { toggleAutomationSchema } from '@DeXMart/shared';
 
 export class AutomationController {
     static async createAutomation(req: Request, res: Response) {

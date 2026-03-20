@@ -18,6 +18,8 @@
     "sync:report": "tsx scripts/automation/upstream-watcher.ts"
   },
   "devDependencies": {
+    "@claude-flow/aidefence": "^3.0.2",
+    "@claude-flow/memory": "3.0.0-alpha.12",
     "@types/node": "^25.3.5",
     "lightningcss": "^1.30.2",
     "tsx": "^4.21.0"

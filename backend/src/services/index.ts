@@ -11,7 +11,7 @@ export { default as DatabaseService } from './database.js';
 export { default as CacheService } from './cache.js';
 
 // AI Services
-export { default as GeminiAI } from './geminiAI.js';
+export { default as GeminiAI, geminiAI } from './geminiAI.js';
 export { GeminiAI as EnhancedAIBrain } from './geminiAI.js'; // Legacy alias
 
 // Bot Services (Omnichannel 2026)

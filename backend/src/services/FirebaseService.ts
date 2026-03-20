@@ -80,7 +80,7 @@ export class FirebaseService {
 
   /**
    * Validate a Firestore path to ensure it doesn't contain illegal segments (empty, undefined, null)
-   * which would cause the SDK to hang or throw.
+   * or path traversal attempts (..) which would cause the SDK to hang or bypass security.
    */
   private validatePath(path: string | undefined | null): void {
     if (!path) {
@@ -90,8 +90,15 @@ export class FirebaseService {
 
     const segments = path.split('/');
     for (const segment of segments) {
-      if (!segment || segment === 'undefined' || segment === 'null' || segment.trim() === '') {
-        const errorMsg = `Invalid Firestore path segment detected in "${path}": "${segment}"`;
+      const trimmed = segment.trim();
+      // Block common bypass/traversal attempts (Scenario 33)
+      if (!trimmed || 
+          trimmed === 'undefined' || 
+          trimmed === 'null' || 
+          trimmed === '..' || 
+          trimmed === '.' ||
+          /[\[\]\*\?]/.test(trimmed)) {
+        const errorMsg = `Illegal Firestore path segment detected in "${path}": "${trimmed}"`;
         logger.error(`[FirebaseService] ${errorMsg}`);
         throw new Error(errorMsg);
       }

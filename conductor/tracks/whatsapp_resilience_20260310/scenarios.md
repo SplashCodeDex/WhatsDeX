@@ -27,19 +27,19 @@ This registry tracks the identification and resolution of critical "Conflict Zon
 | ID | Scenario Description | Expected Outcome | Status |
 |:---|:---|:---|:---|
 | 16 | "Thundering Herd": 100+ incoming messages in 1s | BullMQ handles ingestion, IngressService doesn't crash | [x] |
-| 17 | Rapid QR Clicking: "Generate QR" clicked 10 times | Throttle requests, return existing session if active | [ ] |
+| 17 | Rapid QR Clicking: "Generate QR" clicked 10 times | Throttle requests, return existing session if active | [x] |
 | 18 | Delete-while-starting: Delete channel during `connect()` | Abort connection immediately, prevent orphaned memory leak | [x] |
-| 19 | Stop-while-sending: Stop bot while uploading 20MB video | Kill upload stream, cleanup temp files | [ ] |
-| 20 | Dual-Tenant Race: Two tenants update same system config | Optimistic locking prevents config corruption | [ ] |
-| 21 | Redis crash during message queuing | Fallback to immediate processing or temporary memory queue | [ ] |
+| 19 | Stop-while-sending: Stop bot while uploading 20MB video | Kill upload stream, cleanup temp files | [x] |
+| 20 | Dual-Tenant Race: Two tenants update same system config | Optimistic locking prevents config corruption | [x] |
+| 21 | Redis crash during message queuing | Fallback to immediate processing or temporary memory queue | [x] |
 | 22 | BullMQ Worker starvation (long-running skills) | Proper worker scaling or skill timeouts | [ ] |
-| 23 | Parallel media downloads (5+ large files) | Memory limits enforced, prevent OOM crash | [ ] |
+| 23 | Parallel media downloads (5+ large files) | Memory limits enforced, prevent OOM crash | [x] |
 | 24 | "Message Loop": Bot replies to its own message | Deduplication/isFromMe logic prevents infinite loop | [x] |
-| 25 | Inbound burst while updating Tenant tier | UsageGuard applies new limits mid-stream | [ ] |
+| 25 | Inbound burst while updating Tenant tier | UsageGuard applies new limits mid-stream | [x] |
 | 26 | Firestore rate limit hit (too many writes) | Batching and retry logic prevents data loss | [ ] |
 | 27 | Large group sync (5000+ contacts) | Non-blocking sync, process in background | [ ] |
 | 28 | Concurrent webhook delivery failures | Circuit breaker opens, prevents worker exhaustion | [ ] |
-| 29 | Parallel "Sync Memory Status" calls | Atomic sync ensures consistent state | [ ] |
+| 29 | Parallel "Sync Memory Status" calls | Atomic sync ensures consistent state | [x] |
 | 30 | Socket pressure: 1000+ unread messages on boot | Stream processing prevents memory spike | [ ] |
 
 ## Wave 3: Gating & Security (Scenarios 31-40)
@@ -48,9 +48,9 @@ This registry tracks the identification and resolution of critical "Conflict Zon
 |:---|:---|:---|:---|
 | 31 | Message burst exceeding Plan limit | Hard drop after limit + 10% buffer | [ ] |
 | 32 | Malformed JID spoofing (trying to send to '0') | Validation blocks illegal destinations | [ ] |
-| 33 | `fullPath` manipulation attempt | Path validator blocks traversal or "undefined" segments | [ ] |
-| 34 | Tenant-A attempts to stop Tenant-B's channel | Ownership check blocks request | [ ] |
-| 35 | Secret leakage in logs (API keys, session info) | Logger sanitization redacts sensitive data | [ ] |
+| 33 | `fullPath` manipulation attempt | Path validator blocks traversal or "undefined" segments | [x] |
+| 34 | Tenant-A attempts to stop Tenant-B's channel | Ownership check blocks request | [x] |
+| 35 | Secret leakage in logs (API keys, session info) | Logger sanitization redacts sensitive data | [x] |
 | 36 | Rapid Plan switching (Free -> Pro -> Free) | Immediate feature toggle/gating update | [ ] |
 | 37 | Invalid Zod schema in incoming Baileys raw data | Log error, skip message, don't crash Ingress | [ ] |
 | 38 | Spoofed "isOwner" flag in request | Token validation/Context check overrides spoof | [ ] |
@@ -62,7 +62,7 @@ This registry tracks the identification and resolution of critical "Conflict Zon
 | ID | Scenario Description | Expected Outcome | Status |
 |:---|:---|:---|:---|
 | 41 | Hot Reassignment: Move channel while media uploading | Finish upload, then transition adapter state | [ ] |
-| 42 | Skill Timeout: Research agent hangs for 120s | Workflow aborts, notifies user of timeout | [ ] |
+| 42 | Skill Timeout: Research agent hangs for 120s | Workflow aborts, notifies user of timeout | [x] |
 | 43 | Empty prompt from AI model | Fallback to "I don't understand" or default reply | [ ] |
 | 44 | Quoted message context lost in translation | Fallback to root message, log context loss | [ ] |
 | 45 | Platform-specific media format (e.g. .opus) | Auto-conversion to standard format or graceful skip | [ ] |
@@ -70,6 +70,6 @@ This registry tracks the identification and resolution of critical "Conflict Zon
 | 47 | AI Model rate limit hit | Exponential backoff for AI calls, notify user | [ ] |
 | 48 | Webhook endpoint returns 404/500 | Retry once, then log and notify tenant | [ ] |
 | 49 | Group metadata sync fails (bot kicked from group) | Mark as disconnected/error, cleanup group cache | [ ] |
-| 50 | Mixed Baileys/CommonMessage stream | Unified Context handles both seamlessly (Remediated) | [ ] |
-| 51 | Unrecoverable auth error (Permanent Ban) | Final status update 'banned', notify owner | [ ] |
+| 50 | Mixed Baileys/CommonMessage stream | Unified Context handles both seamlessly (Remediated) | [x] |
+| 51 | Unrecoverable auth error (Permanent Ban) | Final status update 'banned', notify owner | [x] |
 | 52 | Server shutdown while message in-flight | Graceful shutdown waits for active jobs or persists state | [ ] |

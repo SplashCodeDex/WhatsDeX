@@ -257,6 +257,21 @@ const createChannelContext = async (
     text: messageBody,
   };
 
+  // MASTERMIND Intelligence (Phase 5): Pre-fetch relevant context
+  let relevantContext: any[] = [];
+  try {
+    const { memoryService } = await import('../services/memoryService.js');
+    const memResult = await memoryService.retrieveRelevantContext(senderId, messageBody, {
+      platform: isCommonMessage(messageSource) ? messageSource.platform : 'whatsapp',
+      chatId: remoteJid
+    });
+    if (memResult.success) {
+      relevantContext = memResult.data;
+    }
+  } catch (err) {
+    originalContext.logger.warn(`[createChannelContext] Failed to pre-fetch context:`, err);
+  }
+
   // Validate Owner
   const ownerNumber = tenantSettings.ownerNumber || 'system';
   const isOwner = tools.cmd.isOwner([ownerNumber], senderId, !isCommonMessage(messageSource) ? (messageSource.key?.id || '') : messageSource.id);
@@ -307,6 +322,7 @@ const createChannelContext = async (
     prefix: used.prefix,
     args: used.args,
     body: messageBody,
+    relevantContext, // Phase 5 Intelligence
     tenant: tenantSettings,
     isOwner,
     isAdmin,

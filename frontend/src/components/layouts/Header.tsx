@@ -9,7 +9,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, User, LogOut, Settings as SettingsIcon, CreditCard } from 'lucide-react';
+import { Bell, User, LogOut, Settings as SettingsIcon, ExternalLink, CreditCard, Shield, Crown, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
 
@@ -110,7 +110,7 @@ export function Header() {
         <div className="fixed top-4 right-4 md:right-8 z-40 flex items-center gap-2 pointer-events-none">
             <div className="flex items-center gap-2 pointer-events-auto" ref={containerRef}>
                 <LiquidGlassWrapper className={cn(
-                    "transition-all duration-500 overflow-hidden flex items-center rounded-full [&>div]:rounded-full"
+                    "transition-all duration-500 flex items-center rounded-full [&>div]:rounded-full"
                 )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
                     <div className={cn(
                         "flex items-center transition-all duration-500",
@@ -150,7 +150,7 @@ export function Header() {
                                     variant="ghost"
                                     onClick={() => setIsExpanded(!isExpanded)}
                                     className={cn(
-                                        "relative flex items-center justify-center transition-all duration-500 bg-transparent hover:bg-transparent text-muted-foreground shadow-none hover:shadow-none border-none group overflow-hidden",
+                                        "relative flex items-center justify-center transition-all duration-500 bg-transparent hover:bg-transparent text-muted-foreground shadow-none hover:shadow-none border-none group",
                                         isExpanded
                                             ? "p-1 h-10 w-10 rounded-full"
                                             : "p-0 h-10 w-10 rounded-full hover:scale-105 active:scale-95"
@@ -176,6 +176,28 @@ export function Header() {
                                             <User className={cn("transition-all duration-500", isExpanded ? "h-3.5 w-3.5" : "h-5 w-5")} />
                                         )}
                                     </div>
+
+                                    {/* Actionable Power Badge */}
+                                    {user?.plan && user.plan !== 'starter' && !isExpanded && (
+                                        <div className={cn(
+                                            "absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.2em] text-white shadow-md ring-1 ring-background z-20 transition-all duration-300 pointer-events-none group-hover:scale-110",
+                                            user.plan === 'enterprise' 
+                                                ? "bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 shadow-amber-500/30" 
+                                                : "bg-gradient-to-r from-blue-400 via-indigo-500 to-violet-600 shadow-indigo-500/30"
+                                        )}>
+                                            {user.plan === 'enterprise' ? (
+                                                <>
+                                                    <Crown className="h-1.5 w-1.5 fill-white/20" strokeWidth={4} />
+                                                    <span>Ent</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Zap className="h-1.5 w-1.5 fill-white/20" strokeWidth={4} />
+                                                    <span>Pro</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="left" className="rounded-xl font-semibold">

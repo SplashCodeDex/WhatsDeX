@@ -1,5 +1,7 @@
 import { db } from '../lib/firebase.js';
 import { embeddingService } from './embeddingService.js';
+import { treeIndexService, TreeNode } from './TreeIndexService.js';
+import { semanticCacheService } from './SemanticCacheService.js';
 import { Timestamp } from 'firebase-admin/firestore';
 import logger from '../utils/logger.js';
 import { Result } from '../types/index.js';
@@ -18,6 +20,7 @@ interface ConversationContext {
   timestamp: Date;
   similarity: number;
   metadata: Record<string, any>;
+  source?: 'vector' | 'tree' | 'cache';
 }
 
 export class MemoryService {
@@ -39,6 +42,7 @@ export class MemoryService {
 
   /**
    * Store a conversation snippet with its vector embedding
+   * Now also indexes into the Tree Structure (Phase 1)
    */
   async storeConversation(userId: string, conversationText: string, metadata: Record<string, any> = {}): Promise<Result<void>> {
     try {
@@ -51,6 +55,7 @@ export class MemoryService {
       const chatId = metadata.chatId || userId;
       const scopeId = `${platform}:${chatId}`;
 
+      // 1. Store Flat Vector (Legacy/Fallback)
       await db.collection('conversation_embeddings').add({
         userId,
         scopeId,
@@ -59,6 +64,14 @@ export class MemoryService {
         metadata,
         timestamp: Timestamp.now()
       });
+
+      // 2. Store Tree Node (Phase 1)
+      // If we have a parentId in metadata, add as child. Otherwise, root.
+      if (metadata.parentId) {
+        await treeIndexService.addChild(scopeId, metadata.parentId, conversationText, metadata);
+      } else {
+        await treeIndexService.createRoot(scopeId, conversationText, metadata);
+      }
 
       logger.info(`Stored conversation embedding for user ${userId} [Scope: ${scopeId}]`);
       return { success: true, data: undefined };
@@ -71,9 +84,39 @@ export class MemoryService {
 
   /**
    * Retrieve relevant historical contexts scoped by channel/chat
+   * Uses Semantic Cache -> Tree Search -> Flat Vector Search
    */
   async retrieveRelevantContext(userId: string, newText: string, scope?: { platform: string, chatId: string }): Promise<Result<ConversationContext[]>> {
     try {
+      // 1. Check Semantic Cache (Phase 2)
+      const cacheResult = await semanticCacheService.retrieve(newText);
+      if (cacheResult.success && cacheResult.data) {
+        logger.info(`[MemoryService] Semantic cache hit for query: "${newText}"`);
+        return { success: true, data: cacheResult.data }; // Assumes cache stores ConversationContext[]
+      }
+
+      const scopeId = scope ? `${scope.platform}:${scope.chatId}` : undefined;
+
+      // 2. Try Tree Search (Phase 1)
+      if (scopeId) {
+        const treeResults = await treeIndexService.searchTree(scopeId, newText, this.similarityThreshold);
+        if (treeResults.success && treeResults.data && treeResults.data.length > 0) {
+          logger.info(`[MemoryService] Tree Search found ${treeResults.data.length} results`);
+          const contexts = treeResults.data.map(node => ({
+            content: node.content, // Return full content, not summary
+            timestamp: node.createdAt.toDate(),
+            similarity: 0.9, // Tree match implies high relevance
+            metadata: { ...node.metadata, nodeId: node.id },
+            source: 'tree' as const
+          }));
+          
+          // Cache this result for future
+          await semanticCacheService.cacheResult(newText, contexts);
+          return { success: true, data: contexts };
+        }
+      }
+
+      // 3. Fallback to Flat Vector Search
       const queryEmbeddingResult = await embeddingService.generateEmbedding(newText);
       if (!queryEmbeddingResult.success || !queryEmbeddingResult.data) {
         throw new Error('Failed to generate query embedding');
@@ -82,8 +125,7 @@ export class MemoryService {
 
       let query: any = db.collection('conversation_embeddings');
       
-      if (scope) {
-        const scopeId = `${scope.platform}:${scope.chatId}`;
+      if (scopeId) {
         query = query.where('scopeId', '==', scopeId);
       } else {
         query = query.where('userId', '==', userId);
@@ -103,7 +145,8 @@ export class MemoryService {
           content: data.content,
           timestamp: data.timestamp.toDate(),
           similarity,
-          metadata: data.metadata
+          metadata: data.metadata,
+          source: 'vector' as const
         };
       });
 
@@ -111,6 +154,11 @@ export class MemoryService {
         .filter((r: any) => r.similarity > this.similarityThreshold)
         .sort((a: any, b: any) => b.similarity - a.similarity)
         .slice(0, this.maxContexts);
+
+      // Cache the result
+      if (filtered.length > 0) {
+        await semanticCacheService.cacheResult(newText, filtered);
+      }
 
       return { success: true, data: filtered };
     } catch (error: unknown) {

@@ -15,6 +15,7 @@ import { systemAuthorityService } from './SystemAuthorityService.js';
  */
 export class ChannelService {
   private static instance: ChannelService;
+  private startingChannels: Map<string, Promise<Result<void>>> = new Map();
 
   private constructor() { }
 
@@ -162,6 +163,15 @@ export class ChannelService {
    */
   async updateChannel(tenantId: string, channelId: string, patch: Partial<Channel>, agentId: string = 'system_default'): Promise<Result<Channel>> {
     try {
+      // 1. Optimistic Locking: Verify document version if provided in the patch
+      if (patch.updatedAt) {
+        const current = await this.getChannel(tenantId, channelId, agentId);
+        if (current.success && current.data.updatedAt && (current.data.updatedAt as any).toMillis() !== (patch.updatedAt as any).toMillis()) {
+          logger.warn(`Optimistic lock failure for channel ${channelId}: document was modified by another process.`);
+          return { success: false, error: new Error('DOCUMENT_STALE: Channel state was modified by another request.') };
+        }
+      }
+
       const updateData = {
         ...patch,
         updatedAt: Timestamp.now()
@@ -363,6 +373,12 @@ export class ChannelService {
    */
   async stopChannel(channelId: string, tenantId: string, agentId: string = 'system_default'): Promise<Result<void>> {
     try {
+      // 1. Ownership Check (Scenario 34): Verify channel belongs to tenant
+      const channel = await this.getChannel(tenantId, channelId, agentId);
+      if (!channel.success) {
+        return { success: false, error: new Error('UNAUTHORIZED: Tenant does not own this channel.') };
+      }
+
       await channelManager.shutdownAdapter(channelId);
       await this.updateStatus(tenantId, channelId, 'disconnected', agentId);
       return { success: true, data: undefined };
@@ -377,7 +393,13 @@ export class ChannelService {
    */
   async deleteChannel(tenantId: string, channelId: string, agentId: string = 'system_default', options: { archive?: boolean } = {}): Promise<Result<void>> {
     try {
-      // 1. Kill live session in memory (Rule 0 / Rule 9 integrity)
+      // 1. Ownership Check (Scenario 34)
+      const channel = await this.getChannel(tenantId, channelId, agentId);
+      if (!channel.success) {
+        return { success: false, error: new Error('UNAUTHORIZED: Tenant does not own this channel.') };
+      }
+
+      // 2. Kill live session in memory (Rule 0 / Rule 9 integrity)
       await channelManager.shutdownAdapter(channelId);
 
       if (options.archive) {

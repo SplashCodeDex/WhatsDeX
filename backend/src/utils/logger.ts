@@ -101,12 +101,28 @@ export interface Logger {
   [key: string]: unknown;
 }
 
+// Helper to redact sensitive information (Scenario 35)
+const redactSecrets = (obj: any): any => {
+  if (!obj || typeof obj !== 'object') return obj;
+  const sensitiveKeys = [/secret/i, /key/i, /password/i, /token/i, /auth/i, /credential/i, /private/i];
+  const redacted = Array.isArray(obj) ? [...obj] : { ...obj };
+
+  for (const key in redacted) {
+    if (sensitiveKeys.some(regex => regex.test(key))) {
+      redacted[key] = '[REDACTED]';
+    } else if (typeof redacted[key] === 'object') {
+      redacted[key] = redactSecrets(redacted[key]);
+    }
+  }
+  return redacted;
+};
+
 // Helper to ensure meta is an object for winston
 const toMeta = (meta: unknown): Record<string, unknown> | undefined => {
   if (meta === null || meta === undefined) return undefined;
   if (meta instanceof Error) return { error: meta.message, stack: meta.stack };
-  if (typeof meta === 'object') return meta as Record<string, unknown>;
-  return { data: meta };
+  const baseMeta = typeof meta === 'object' ? meta as Record<string, unknown> : { data: meta };
+  return redactSecrets(baseMeta);
 };
 
 // Enhanced logger implementation
