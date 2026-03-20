@@ -66,8 +66,9 @@ function ChannelCard({ channel }: { channel: any }) {
 
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing' || channel.status === 'qr_pending';
 
-    const agent = agentsResult?.agents.find(a => a.id === (channel.assignedAgentId || 'system_default'));
-    const agentName = agent?.name || (channel.assignedAgentId === 'system_default' ? 'System Agent' : 'Unknown Agent');
+    const effectiveAgentId = channel.assignedAgentId || 'system_default';
+    const agent = agentsResult?.agents.find(a => a.id === effectiveAgentId);
+    const agentName = agent?.name || 'System Default Agent';
 
     const handleDirectDisconnect = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -96,7 +97,9 @@ function ChannelCard({ channel }: { channel: any }) {
                         <div>
                             <CardTitle className="text-lg">{channel.name}</CardTitle>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <CardDescription>{channel.account || 'Not configured'}</CardDescription>
+                                <CardDescription>
+                                    {channel.account || (isConnecting ? 'Connecting...' : 'Not configured')}
+                                </CardDescription>
                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium text-foreground">
                                     {agentName}
                                 </span>
@@ -116,6 +119,7 @@ function ChannelCard({ channel }: { channel: any }) {
                         <ChannelProgressStepper
                             channelId={channel.id}
                             agentId={channel.assignedAgentId || 'system_default'}
+                            channelStatus={channel.status}
                             currentStep={channel.lastProgress?.step || "Starting Connection"}
                             status={channel.lastProgress?.status || "in_progress"}
                         />
@@ -142,14 +146,19 @@ function ChannelCard({ channel }: { channel: any }) {
                         <span>Manage connection</span>
                         <Settings2 className="h-4 w-4" />
                     </Button>
-                    {channel.status === 'connected' && (
+                    {(channel.status === 'connected' || isConnecting) && (
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 shrink-0"
+                            className={cn(
+                                "h-8 w-8 shrink-0",
+                                isConnecting
+                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    : "text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                            )}
                             onClick={handleDirectDisconnect}
                             disabled={isDisconnecting}
-                            title="Disconnect Bot"
+                            title={isConnecting ? "Abort Connection" : "Disconnect Bot"}
                         >
                             {isDisconnecting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
                         </Button>

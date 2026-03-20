@@ -69,6 +69,7 @@ class AuthSystem extends EventEmitter {
   }
 
   async connect(forceNewSession: boolean = false): Promise<Result<WASocket>> {
+    this.emit('status', 'initializing');
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -93,6 +94,7 @@ class AuthSystem extends EventEmitter {
     }, 30 * 1000);
 
     this.authState = 'connecting';
+    this.emit('status', 'connecting');
     const method = this.config.channel.phoneNumber ? 'pairing' : 'qr';
     this._recordAttempt(method);
 

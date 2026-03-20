@@ -19,10 +19,14 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
             return;
         }
 
+        // Track when QR was last updated via socket to prevent poll overwrites
+        let lastSocketQrAt = 0;
+
         // MASTERMIND Goodie: Real-time Socket Updates
         const cleanupQrListener = on('channel_qr_update', (data: any) => {
             if (data.channelId === channelId) {
                 setQrCode(data.qrCode);
+                lastSocketQrAt = Date.now();
             }
         });
 
@@ -53,14 +57,22 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
                         statusRes.data.status === 'initializing' || 
                         statusRes.data.status === 'qr_pending' ||
                         statusRes.data.hasQR) {
-                        const qrRes = await api.get<any>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.QR_CODE(agentId, channelId));
                         
-                        if (!isMounted) return;
-
-                        if (qrRes.success && qrRes.data.qrCode) {
-                            setQrCode(qrRes.data.qrCode);
+                        const timeSinceSocketQr = Date.now() - lastSocketQrAt;
+                        if (timeSinceSocketQr < 8000) {
+                            // Socket pushed a fresh QR recently, skip poll QR
                         } else {
-                            setQrCode(null);
+                            const qrRes = await api.get<any>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.QR_CODE(agentId, channelId));
+                            
+                            if (!isMounted) return;
+
+                            if (qrRes.success && qrRes.data.qrCode) {
+                                setQrCode(qrRes.data.qrCode);
+                            } else {
+                                if (Date.now() - lastSocketQrAt > 8000) {
+                                    setQrCode(null);
+                                }
+                            }
                         }
                     } else {
                         setQrCode(null);
@@ -81,7 +93,7 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
             if (isMounted) setIsLoading(false);
         });
 
-        interval = setInterval(poll, 5000); // Poll every 5s
+        interval = setInterval(poll, 10000); // Poll every 10s
 
         return () => {
             isMounted = false;

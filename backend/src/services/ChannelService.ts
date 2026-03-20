@@ -270,12 +270,31 @@ export class ChannelService {
    * Start a channel instance (OpenClaw)
    */
   async startChannel(tenantId: string, channelId: string, agentId: string = 'system_default', force: boolean = false): Promise<Result<void>> {
-    try {
-      if (channelManager.getAdapter(channelId)) {
-        logger.info(`Channel ${channelId} is already running`);
-        return { success: true, data: undefined };
-      }
+    if (channelManager.getAdapter(channelId)) {
+      logger.info(`Channel ${channelId} is already running`);
+      return { success: true, data: undefined };
+    }
 
+    // Deduplication: Prevent concurrent startChannel calls for same channelId
+    const existingStart = this.startingChannels.get(channelId);
+    if (existingStart) {
+        logger.info(`[ChannelService] Channel ${channelId} is already starting, awaiting existing promise`);
+        return existingStart;
+    }
+
+    const startPromise = this._doStartChannel(tenantId, channelId, agentId, force);
+    this.startingChannels.set(channelId, startPromise);
+
+    try {
+        const result = await startPromise;
+        return result;
+    } finally {
+        this.startingChannels.delete(channelId);
+    }
+  }
+
+  private async _doStartChannel(tenantId: string, channelId: string, agentId: string, force: boolean): Promise<Result<void>> {
+    try {
       const channelResult = await this.getChannel(tenantId, channelId, agentId);
       if (!channelResult.success) return { success: false, error: channelResult.error };
 

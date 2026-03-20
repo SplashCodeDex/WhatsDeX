@@ -33,6 +33,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   private isDisconnecting: boolean = false;
   private activeDownloads: number = 0;
   private maxParallelDownloads: number = 5;
+  private qrGenerationCount: number = 0;
 
   constructor(public tenantId: string, channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
     this.instanceId = channelId;
@@ -128,6 +129,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     // MASTERMIND Goodie: Listen for QR codes and convert to DataURL for UI
     // MUST be attached before connect() to catch early events
     this.authSystem.on('qr', async (qr) => {
+      this.qrGenerationCount++;
       try {
         const dataUrl = await QRCode.toDataURL(qr);
         this.qrCodeUrl = dataUrl;
@@ -135,6 +137,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
         // MASTERMIND Goodie: Real-time Socket Push
         const { socketService } = await import('@/services/socketService.js');
         socketService.emitQRCode(this.tenantId, this.channelId, dataUrl);
+
+        if (this.qrGenerationCount >= 4) {
+          logger.warn(`[WhatsappAdapter] QR code regenerated ${this.qrGenerationCount} times for ${this.channelId}. User may not be scanning.`);
+        }
       } catch (err) {
         logger.error('Failed to generate QR DataURL', err);
       }
@@ -191,6 +197,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       if (!this.socket) return;
       if (update.connection === 'open' && update.me?.id) {
         this.qrCodeUrl = null; // Clear QR on success
+        this.qrGenerationCount = 0; // Reset QR counts
         const phoneNumber = update.me.id.split(':')[0];
         logger.info(`Channel ${this.channelId} connected with number: ${phoneNumber}`);
 
