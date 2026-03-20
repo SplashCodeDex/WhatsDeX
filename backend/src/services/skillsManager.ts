@@ -3,6 +3,7 @@ import { loadWorkspaceSkillEntries } from 'openclaw/agents/skills/workspace';
 import { toolRegistry } from './toolRegistry.js';
 import logger from '@/utils/logger.js';
 import { systemAuthorityService, PlanTier } from './SystemAuthorityService.js';
+import type { Result } from '../types/index.js';
 
 /**
  * SkillsManager wraps OpenClaw's skills platform and handles

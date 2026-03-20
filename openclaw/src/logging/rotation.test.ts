@@ -45,8 +45,8 @@ describe("logger rotation", () => {
     const sizeAfterRotation = fs.statSync(logPath).size;
     const sizeBackup = fs.statSync(backupPath).size;
     
-    expect(sizeAfterRotation).toBeLessThan(1000, "New log file should be small (just the one log line)");
-    expect(sizeBackup).toBeGreaterThanOrEqual(MAX_BYTES, "Backup file should contain the rotated content");
+    expect(sizeAfterRotation).toBeLessThan(1000);
+    expect(sizeBackup).toBeGreaterThanOrEqual(MAX_BYTES);
 
     cleanup(logPath);
     cleanup(backupPath);
@@ -83,8 +83,8 @@ describe("logger rotation", () => {
     expect(fs.existsSync(backupPath)).toBe(true);
     const content2 = fs.readFileSync(backupPath, "utf-8");
     
-    expect(content2).not.toBe(content1, "Backup file should have been updated/overwritten");
-    expect(content2).toContain("Second rotation log data"), "Backup file should contain data from the second rotation";
+    expect(content2).not.toBe(content1);
+    expect(content2).toContain("Second rotation log data");
 
     cleanup(logPath);
     cleanup(backupPath);

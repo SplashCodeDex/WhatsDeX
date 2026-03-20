@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 
 import { api } from '@/lib/api/client';
+import { circuitBreaker } from '@/lib/api/apiCircuitBreaker';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import type {
     Channel,
@@ -23,6 +24,7 @@ import type {
     SessionsListResult,
     NodeRegistryEntry,
     DevicePairingList,
+    PlatformMetadata,
     LogEntry,
     ApiResponse,
     isApiSuccess
@@ -57,10 +59,13 @@ interface OmnichannelState {
     logs: LogEntry[];
     gatewayHealth: any | null;
     nestedTrace: NestedAgentTrace[]; // Phase 2: Visual Trace
+    platforms: PlatformMetadata[];
+    isLoadingPlatforms: boolean;
     isLoading: boolean;
     error: string | null;
 
     // Actions
+    fetchPlatforms: () => Promise<void>;
     fetchChannels: (agentId?: string) => Promise<void>;
     fetchAllChannels: () => Promise<void>;
     updateChannelStatus: (botId: string, status: Channel['status']) => void;
@@ -145,8 +150,25 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     logs: [],
     gatewayHealth: null,
     nestedTrace: [],
+    platforms: [],
+    isLoadingPlatforms: false,
     isLoading: false,
     error: null,
+
+    fetchPlatforms: async () => {
+        set({ isLoadingPlatforms: true });
+        try {
+            const response = await api.get<PlatformMetadata[]>(API_ENDPOINTS.OMNICHANNEL.PLATFORMS);
+            if (response.success) {
+                set({ platforms: response.data || [], isLoadingPlatforms: false });
+            } else {
+                set({ isLoadingPlatforms: false });
+            }
+        } catch (err) {
+            console.error('Failed to fetch platforms:', err);
+            set({ isLoadingPlatforms: false });
+        }
+    },
 
     fetchChannels: async (agentId: string = 'system_default') => {
         set({ isLoading: true, error: null });
@@ -354,24 +376,37 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     // --- Skill Actions ---
 
     fetchSkillReport: async () => {
+        if (circuitBreaker.isOpen('omnichannel')) {
+            console.debug('[Omnichannel] Circuit open, skipping fetchSkillReport');
+            return;
+        }
         try {
             const response = await api.get<SkillStatusReport>(API_ENDPOINTS.OMNICHANNEL.SKILLS.REPORT);
             if (response.success) {
                 set({ skillReport: response.data });
+                circuitBreaker.recordSuccess('omnichannel');
+            } else {
+                circuitBreaker.recordFailure('omnichannel');
             }
         } catch (err) {
             console.error('Failed to fetch skill report:', err);
+            circuitBreaker.recordFailure('omnichannel');
         }
     },
 
     fetchSkills: async () => {
+        if (circuitBreaker.isOpen('omnichannel')) return;
         try {
             const response = await api.get<any[]>(API_ENDPOINTS.OMNICHANNEL.SKILLS.LIST);
             if (response.success) {
                 set({ skills: response.data });
+                circuitBreaker.recordSuccess('omnichannel');
+            } else {
+                circuitBreaker.recordFailure('omnichannel');
             }
         } catch (err) {
             console.error('Failed to fetch skills:', err);
+            circuitBreaker.recordFailure('omnichannel');
         }
     },
 
@@ -416,13 +451,18 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     // --- Agent Actions ---
 
     fetchAgents: async () => {
+        if (circuitBreaker.isOpen('omnichannel')) return;
         try {
             const response = await api.get<AgentsListResult>(API_ENDPOINTS.OMNICHANNEL.AGENTS.LIST);
             if (response.success) {
                 set({ agentsResult: response.data });
+                circuitBreaker.recordSuccess('omnichannel');
+            } else {
+                circuitBreaker.recordFailure('omnichannel');
             }
         } catch (err) {
             console.error('Failed to fetch agents:', err);
+            circuitBreaker.recordFailure('omnichannel');
         }
     },
 
@@ -634,13 +674,18 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     // --- Gateway Actions ---
 
     fetchGatewayHealth: async () => {
+        if (circuitBreaker.isOpen('omnichannel')) return;
         try {
             const response = await api.get<any>(API_ENDPOINTS.OMNICHANNEL.GATEWAY.HEALTH);
             if (response.success) {
                 set({ gatewayHealth: response.data });
+                circuitBreaker.recordSuccess('omnichannel');
+            } else {
+                circuitBreaker.recordFailure('omnichannel');
             }
         } catch (err) {
             console.error('Failed to fetch gateway health:', err);
+            circuitBreaker.recordFailure('omnichannel');
         }
     },
     getSkillCount: () => {

@@ -21,8 +21,19 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
+const ICON_MAP: Record<string, any> = {
+  SiWhatsapp,
+  SiTelegram,
+  SiDiscord,
+  Slack,
+  SiSignal,
+  MessageSquare,
+  Hash,
+  SiGooglechat
+};
+
 interface ChannelConnectionFormProps {
-  type: 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat';
+  type: string;
   agentId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -33,84 +44,23 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [connectionMethod, setConnectionMethod] = useState<'qr' | 'pairing'>('qr');
   const [selectedAgentId, setSelectedAgentId] = useState(initialAgentId || 'system_default');
-  const { fetchAllChannels, fetchAgents, agentsResult } = useOmnichannelStore();
+  const { fetchAllChannels, fetchAgents, platforms } = useOmnichannelStore();
 
-  // Fetching agents for metadata if needed, but UI select is removed per user request
-  useEffect(() => {
-    fetchAgents();
-  }, [fetchAgents]);
+  const platform = platforms.find(p => p.id === type);
 
-  const config = {
-    whatsapp: {
-      title: 'Connect WhatsApp',
-      description: 'Create a WhatsApp channel instance. You will link your device using a QR code or pairing code next.',
-      icon: SiWhatsapp,
-      color: 'text-green-500',
-      fields: [
-        { id: 'deviceName', label: 'Device Name (Shows on Linked Devices)', placeholder: 'e.g., Acme Corp Support' }
-      ]
-    },
-    telegram: {
-      title: 'Connect Telegram Bot',
-      description: 'Enter your bot token from @BotFather',
-      icon: SiTelegram,
-      color: 'text-blue-400',
-      fields: [{ id: 'token', label: 'Bot Token', placeholder: '123456789:ABCdef...' }]
-    },
-    discord: {
-      title: 'Connect Discord Bot',
-      description: 'Enter your bot token and application ID from Discord Developer Portal',
-      icon: SiDiscord,
-      color: 'text-indigo-500',
-      fields: [
-        { id: 'token', label: 'Bot Token', placeholder: 'OTQ...' },
-        { id: 'appId', label: 'Application ID', placeholder: '94...' }
-      ]
-    },
-    slack: {
-      title: 'Connect Slack App',
-      description: 'Enter your Bot User OAuth Token',
-      icon: Slack,
-      color: 'text-purple-500',
-      fields: [{ id: 'token', label: 'xoxb- Token', placeholder: 'xoxb-...' }]
-    },
-    signal: {
-      title: 'Connect Signal',
-      description: 'Enter your Signal phone number (with country code)',
-      icon: SiSignal,
-      color: 'text-blue-600',
-      fields: [{ id: 'phone', label: 'Phone Number', placeholder: '+1234567890' }]
-    },
-    imessage: {
-      title: 'Connect iMessage',
-      description: 'Enter your Apple ID or Phone Number associated with iMessage',
-      icon: MessageSquare,
-      color: 'text-blue-400',
-      fields: [{ id: 'identifier', label: 'Identifier', placeholder: 'user@example.com or +123...' }]
-    },
-    irc: {
-      title: 'Connect IRC',
-      description: 'Enter your IRC server and nickname details',
-      icon: Hash,
-      color: 'text-gray-500',
-      fields: [
-        { id: 'server', label: 'Server', placeholder: 'irc.libera.chat' },
-        { id: 'nick', label: 'Nickname', placeholder: 'DeXMartBot' }
-      ]
-    },
-    googlechat: {
-      title: 'Connect Google Chat',
-      description: 'Enter your Google Chat Space ID and credentials',
-      icon: SiGooglechat,
-      color: 'text-yellow-500',
-      fields: [
-        { id: 'spaceId', label: 'Space ID', placeholder: 'spaces/...' },
-        { id: 'token', label: 'Access Token / Webhook', placeholder: '...' }
-      ]
-    }
-  }[type];
+  if (!platform) {
+    return (
+      <Card className="w-full max-w-md shadow-lg border-primary/10 bg-card text-foreground overflow-hidden">
+        <CardContent className="pt-6 text-center">
+          <p>Loading platform configuration...</p>
+          <Button variant="ghost" onClick={onCancel} className="mt-4">Cancel</Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const Icon = config.icon;
+  const Icon = ICON_MAP[platform.icon] || MessageSquare;
+  const iconColorClass = platform.color.replace('bg-', 'text-');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,11 +107,11 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
       <CardHeader className="bg-muted/30 pb-6 border-b border-border/50">
         <div className="flex items-center space-x-3 mb-2">
           <div className={cn("p-2 rounded-lg bg-background border border-border/50 shadow-sm")}>
-            <Icon className={cn("h-6 w-6", config.color)} />
+            <Icon className={cn("h-6 w-6", iconColorClass)} />
           </div>
           <div>
-            <CardTitle className="text-xl">{config.title}</CardTitle>
-            <CardDescription className="text-xs">{config.description}</CardDescription>
+            <CardTitle className="text-xl">Connect {platform.label}</CardTitle>
+            <CardDescription className="text-xs">{platform.description}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -223,9 +173,9 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
             </div>
           )}
 
-          {config.fields.length > 0 && (
+          {platform.fields.length > 0 && (
             <div className="space-y-4 pt-4 border-t border-border/50">
-              {config.fields.map((field) => (
+              {platform.fields.map((field) => (
                 <div key={field.id} className="space-y-2">
                   <Label htmlFor={field.id} className="text-xs">{field.label}</Label>
                   <Input

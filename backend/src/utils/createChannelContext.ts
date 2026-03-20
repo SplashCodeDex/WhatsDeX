@@ -297,7 +297,7 @@ const createChannelContext = async (
     }
   }
 
-  const ctx: MessageContext = {
+  const ctx = {
     channel: channelInstance,
     core: channelInstance, // Legacy support
     msg: messageSource as any, // Cast to any to satisfy the union type

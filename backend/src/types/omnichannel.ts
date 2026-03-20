@@ -1,13 +1,6 @@
 import { z } from 'zod';
 
-export const PlatformSchema = z.enum([
-  'whatsapp',
-  'telegram',
-  'discord',
-  'slack',
-  'google_chat',
-  'web'
-]);
+export const PlatformSchema = z.string();
 
 export type Platform = z.infer<typeof PlatformSchema>;
 

@@ -15,8 +15,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "openclaw": ["../openclaw/src/index.ts"],
-      "openclaw/*": ["../openclaw/src/*"]
+      "openclaw": ["../openclaw/dist/index.d.ts"],
+      "openclaw/*": ["../openclaw/dist/*.d.ts", "../openclaw/dist/*"]
     },
     "allowJs": false,
     "checkJs": false

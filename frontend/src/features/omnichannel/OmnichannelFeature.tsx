@@ -35,34 +35,26 @@ function VisuallyHidden({ children }: { children: React.ReactNode }) {
     </span>
 }
 
-const ICON_MAP = {
-    whatsapp: SiWhatsapp,
-    telegram: SiTelegram,
-    discord: SiDiscord,
-    slack: Slack,
-    signal: SiSignal,
-    imessage: MessageSquare,
-    irc: Hash,
-    googlechat: SiGooglechat
-};
-
-const COLOR_MAP = {
-    whatsapp: 'bg-green-500',
-    telegram: 'bg-blue-400',
-    discord: 'bg-indigo-500',
-    slack: 'bg-purple-500',
-    signal: 'bg-blue-600',
-    imessage: 'bg-blue-400',
-    irc: 'bg-gray-500',
-    googlechat: 'bg-yellow-500'
+const ICON_MAP: Record<string, any> = {
+    SiWhatsapp,
+    SiTelegram,
+    SiDiscord,
+    Slack,
+    SiSignal,
+    MessageSquare,
+    Hash,
+    SiGooglechat
 };
 
 function ChannelCard({ channel }: { channel: any }) {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isDisconnecting, setIsDisconnecting] = useState(false);
-    const { agentsResult, disconnectChannel } = useOmnichannelStore();
-    const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
-    const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
+    const { agentsResult, disconnectChannel, platforms } = useOmnichannelStore();
+    
+    // Dynamic metadata lookup
+    const platform = platforms.find(p => p.id === channel.type);
+    const Icon = ICON_MAP[platform?.icon || ''] || MessageSquare;
+    const color = platform?.color || 'bg-primary';
 
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing' || channel.status === 'qr_pending';
 
@@ -166,27 +158,24 @@ function ChannelCard({ channel }: { channel: any }) {
     );
 }
 
-type Platform = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat';
-
 export function OmnichannelFeature() {
-    const { channels, activity, isLoading, fetchAllChannels } = useOmnichannelStore();
+    const { channels, activity, isLoading, fetchAllChannels, fetchPlatforms, platforms } = useOmnichannelStore();
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('whatsapp');
+    const [selectedPlatform, setSelectedPlatform] = useState<string>('whatsapp');
 
     useEffect(() => {
         fetchAllChannels();
-    }, [fetchAllChannels]);
+        fetchPlatforms();
+    }, [fetchAllChannels, fetchPlatforms]);
 
-    const PLATFORMS: Array<{ id: Platform, label: string, icon: any, color: string }> = [
-        { id: 'whatsapp', label: 'WhatsApp', icon: SiWhatsapp, color: 'text-green-500' },
-        { id: 'telegram', label: 'Telegram', icon: SiTelegram, color: 'text-blue-400' },
-        { id: 'discord', label: 'Discord', icon: SiDiscord, color: 'text-indigo-500' },
-        { id: 'slack', label: 'Slack', icon: Slack, color: 'text-purple-500' },
-        { id: 'signal', label: 'Signal', icon: SiSignal, color: 'text-blue-600' },
-        { id: 'googlechat', label: 'Google Chat', icon: SiGooglechat, color: 'text-yellow-500' },
-        { id: 'irc', label: 'IRC', icon: Hash, color: 'text-gray-500' },
-        { id: 'imessage', label: 'iMessage', icon: MessageSquare, color: 'text-blue-400' },
-    ];
+    // Derived platforms with icons for the UI
+    const PLATFORMS = platforms.map(p => ({
+        ...p,
+        Icon: ICON_MAP[p.icon] || MessageSquare,
+        // Ensure color is a text- color for the icon and bg- color for the background
+        textColor: p.color.replace('bg-', 'text-'),
+        bgColor: p.color
+    }));
 
     return (
         <div className="space-y-8">
@@ -235,8 +224,8 @@ export function OmnichannelFeature() {
                             onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
                             className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
                         >
-                            <div className={cn("rounded-full p-4 mb-4 group-hover:scale-110 transition-transform bg-opacity-10", p.color.replace('text-', 'bg-') + '/10')}>
-                                <p.icon className={cn("h-8 w-8", p.color)} />
+                            <div className={cn("rounded-full p-4 mb-4 group-hover:scale-110 transition-transform bg-opacity-10", p.bgColor + '/10')}>
+                                <p.Icon className={cn("h-8 w-8", p.textColor)} />
                             </div>
                             <span className="font-medium text-foreground">{p.label}</span>
                         </button>
@@ -262,8 +251,8 @@ export function OmnichannelFeature() {
                                     onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
                                     className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card/40 backdrop-blur-sm transition-all hover:bg-muted/50 hover:border-primary/30 group"
                                 >
-                                    <div className={cn("rounded-lg p-2 bg-opacity-10", p.color.replace('text-', 'bg-') + '/10')}>
-                                        <p.icon className={cn("h-4 w-4", p.color)} />
+                                    <div className={cn("rounded-lg p-2 bg-opacity-10", p.bgColor + '/10')}>
+                                        <p.Icon className={cn("h-4 w-4", p.textColor)} />
                                     </div>
                                     <span className="text-sm font-medium">{p.label}</span>
                                 </button>

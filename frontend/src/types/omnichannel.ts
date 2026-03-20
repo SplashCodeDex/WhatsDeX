@@ -4,7 +4,23 @@
 export type { AgentIdentityResponse as AgentIdentityResult } from '@DeXMart/shared';
 
 
-export type ChannelType = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'irc' | 'imessage' | 'googlechat';
+export type ChannelType = string;
+
+export interface PlatformField {
+  id: string;
+  label: string;
+  placeholder: string;
+  type?: 'text' | 'password' | 'number';
+}
+
+export interface PlatformMetadata {
+  id: string;
+  label: string;
+  description: string;
+  icon: string;
+  color: string;
+  fields: PlatformField[];
+}
 
 export type ChannelStatus =
   | 'connected'

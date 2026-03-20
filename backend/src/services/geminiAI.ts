@@ -161,11 +161,11 @@ export class GeminiAI extends EventEmitter {
 
       // 2. Plan & Capability Resolution
       const tenantDoc = await firebaseService.getDoc('tenants', tenantId);
-      const tier = (tenantDoc?.plan || 'starter') as PlanTier;
+      const tier = ((tenantDoc as any)?.plan || 'starter') as PlanTier;
       const caps = systemAuthorityService.getCapabilities(tier);
       
       // 3. Model Gating: Validate model eligibility for the tenant's tier
-      let selectedModel = agent?.model || 'gemini-1.5-flash';
+      let selectedModel = (agent as any)?.model || 'gemini-1.5-flash';
       if (!caps.models.includes(selectedModel)) {
         logger.warn(`Tenant ${tenantId} [${tier}] attempted to use unauthorized model: ${selectedModel}. Falling back to default.`);
         selectedModel = 'gemini-1.5-flash';
@@ -208,14 +208,14 @@ Context: Omnichannel Mastermind.
 Current Time: ${new Date().toLocaleString()}
 User: ${JSON.stringify(context.user)}
 Platform: ${message.platform}
-Plan: ${plan}
+Plan: ${tier}
 ${historicalContext}
 ${toolContext}
 Use the tools provided to fulfill user requests accurately. If a tool result is not what was expected, explain and offer alternatives.`;
 
       // Rule 5+: Semantic Memoization + Tool Loop (Agentic)
       const finalResponse = await this.gemini.getManager().execute(async () => {
-        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform} [Plan: ${plan}]`);
+        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform} [Plan: ${tier}]`);
 
         // Build history from scoped short-term memory
         const conversationHistory = await this.getScopedConversationMemory(tenantId, platform, userId);
@@ -262,10 +262,10 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
             const toolResults = await Promise.all(response.message.tool_calls.map(async (toolCall) => {
               try {
                 // Tier Gating Check
-                const isEligible = await skillsManager.isTenantEligible(tenantId, toolCall.function.name, plan);
+                const isEligible = await skillsManager.isTenantEligible(tenantId, toolCall.function.name, tier);
 
                 if (!isEligible) {
-                  logger.warn(`Tier Gating: Tenant ${tenantId} (${plan}) denied access to tool ${toolCall.function.name}`);
+                  logger.warn(`Tier Gating: Tenant ${tenantId} (${tier}) denied access to tool ${toolCall.function.name}`);
                   mastermindStreamService.error(tenantId, agentId, `Access denied to tool ${toolCall.function.name}`);
                   return {
                     role: 'tool',

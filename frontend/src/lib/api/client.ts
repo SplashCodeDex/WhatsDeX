@@ -142,7 +142,7 @@ const ERROR_SUGGESTIONS: Record<string, { message: string; linkLabel?: string; l
 
 async function apiClient<TData, TBody = unknown>(
     endpoint: string,
-    config: RequestConfig<TBody> = {}
+    config: RequestConfig<TBody> & { _retryDepth?: number } = {}
 ): Promise<ApiResponse<TData>> {
     const {
         method = 'GET',
@@ -151,7 +151,10 @@ async function apiClient<TData, TBody = unknown>(
         cache,
         next,
         signal,
+        _retryDepth = 0
     } = config;
+
+    const MAX_RETRY_DEPTH = 1;
 
     const url = createUrl(endpoint);
     const authToken = await getAuthHeader();
@@ -186,11 +189,19 @@ async function apiClient<TData, TBody = unknown>(
             !endpoint.includes('/auth/refresh') && 
             !endpoint.includes('/auth/login')
         ) {
+            if (_retryDepth >= MAX_RETRY_DEPTH) {
+                logger.warn('Max retry depth reached for 401 retry loop');
+                return {
+                    success: false,
+                    error: { code: 'auth_required', message: 'Session expired after retries' }
+                } as ApiErrorResponse;
+            }
+
             if (isRefreshing || isExternalRefreshing) {
                 return new Promise((resolve) => {
                     refreshQueue.push((newToken) => {
                         if (newToken) {
-                            resolve(apiClient<TData, TBody>(endpoint, config));
+                            resolve(apiClient<TData, TBody>(endpoint, { ...config, _retryDepth: _retryDepth + 1 }));
                         } else {
                             resolve({
                                 success: false,
@@ -233,7 +244,7 @@ async function apiClient<TData, TBody = unknown>(
                     }
 
                     logger.info('Silent refresh successful, retrying original request');
-                    return apiClient<TData, TBody>(endpoint, config);
+                    return apiClient<TData, TBody>(endpoint, { ...config, _retryDepth: _retryDepth + 1 });
                 } else {
                     isRefreshing = false;
                     processQueue(null);

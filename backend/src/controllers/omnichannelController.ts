@@ -22,16 +22,35 @@ export class OmnichannelController {
         return OpenClawGateway.getInstance();
     }
 
-    private static unavailable(res: Response, feature: string) {
-        return res.status(503).json({
-            success: false,
-            error: `OpenClaw gateway is not initialized. ${feature} is unavailable.`,
-        });
+    /** GET /api/omnichannel/status */
+    static async getStatus(_req: Request, res: Response) {
+        try {
+            const gateway = OpenClawGateway.getInstance();
+            res.json({
+                success: true,
+                data: {
+                    gatewayInitialized: gateway.isInitialized(),
+                    uptimeMs: process.uptime() * 1000,
+                }
+            });
+        } catch (error: any) {
+            logger.error('OmnichannelController.getStatus', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
     }
 
-    // ═══════════════════════════════════════════════════════
-    //  CRON
-    // ═══════════════════════════════════════════════════════
+    /** GET /api/omnichannel/platforms */
+    static async getSupportedPlatforms(_req: Request, res: Response) {
+        try {
+            const platforms = channelService.getSupportedPlatforms();
+            res.json({ success: true, data: platforms });
+        } catch (error: any) {
+            logger.error('OmnichannelController.getSupportedPlatforms', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+
+    /** GET /api/omnichannel/gateway/health */
 
     /** GET /api/omnichannel/cron/status */
     static async getCronStatus(_req: Request, res: Response) {

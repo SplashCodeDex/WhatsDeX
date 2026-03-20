@@ -4,7 +4,7 @@ import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import logger from '@/utils/logger.js';
 import crypto from 'crypto';
 import { channelManager } from './channels/ChannelManager.js';
-import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
+import { getPlatformAdapter, getSupportedPlatforms, PlatformMetadata } from './channels/registry.js';
 import { systemAuthorityService } from './SystemAuthorityService.js';
 
 /**
@@ -138,6 +138,13 @@ export class ChannelService {
   }
 
   /**
+   * Get list of supported platforms from registry
+   */
+  public getSupportedPlatforms(): PlatformMetadata[] {
+    return getSupportedPlatforms();
+  }
+
+  /**
    * Synchronize Firestore status with real memory state
    */
   private syncMemoryStatus(channel: Channel): Channel {
@@ -240,45 +247,41 @@ export class ChannelService {
       const channel = channelResult.data;
       const fullPath = `tenants/${tenantId}/agents/${agentId}/channels/${channelId}`;
 
-      // Initialize Adapter
+      // Initialize Adapter from Registry
+      const AdapterClass = getPlatformAdapter(channel.type);
+      if (!AdapterClass) {
+        return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
+      }
+
+      let adapter;
       if (channel.type === 'whatsapp') {
-        const adapter = new WhatsappAdapter(tenantId, channelId, fullPath, channel as any);
+        adapter = new AdapterClass(tenantId, channelId, fullPath, channel as any);
 
         // --- MIDDLEWARE INJECTION ---
-        // Register the main middleware stack
         const { default: mainMiddleware } = await import('../middleware/main.js');
         const gCtx = await (await import('../lib/context.js')).default();
         mainMiddleware(adapter as any, gCtx);
-        adapter.setContext(gCtx); // Set context for bridge usage
+        adapter.setContext(gCtx);
 
-        adapter.onMessage(async (event) => {
+        adapter.onMessage(async (event: any) => {
           const { ingressService } = await import('./IngressService.js');
           const context = await (await import('../lib/context.js')).default();
-
-          // Increment received stats
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-
           await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
         });
-
-        channelManager.registerAdapter(adapter);
-        await adapter.connect(force);
-      } else if (channel.type === 'telegram') {
-        const { TelegramAdapter } = await import('./channels/telegram/TelegramAdapter.js');
+      } else if (channel.type === 'telegram' || channel.type === 'discord') {
         const token = channel.credentials?.token;
-        if (!token) throw new Error('Missing Telegram token');
-
-        const adapter = new TelegramAdapter(tenantId, channelId, token);
-        adapter.onMessage(async (event) => {
+        if (!token) throw new Error(`Missing ${channel.type} token`);
+        
+        adapter = new AdapterClass(tenantId, channelId, token);
+        adapter.onMessage(async (event: any) => {
           const { ingressService } = await import('./IngressService.js');
           const context = await (await import('../lib/context.js')).default();
-
-          // Increment received stats
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
 
           await ingressService.handleCommonMessage(tenantId, channelId, {
-            id: event.raw.message_id?.toString() || crypto.randomUUID(),
-            platform: 'telegram',
+            id: event.raw.id || event.raw.message_id?.toString() || crypto.randomUUID(),
+            platform: channel.type as any,
             from: event.sender,
             to: channelId,
             content: { text: event.content },
@@ -286,74 +289,25 @@ export class ChannelService {
             metadata: { raw: event.raw, fullPath }
           }, context, fullPath);
         });
-
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
-      } else if (channel.type === 'discord') {
-        const { DiscordAdapter } = await import('./channels/discord/DiscordAdapter.js');
-        const token = channel.credentials?.token;
-        const appId = channel.credentials?.appId;
-        if (!token || !appId) throw new Error('Missing Discord token or appId');
-
-        const adapter = new DiscordAdapter(tenantId, channelId, token); // DiscordAdapter constructor seems to take token as 3rd param in some versions, checking...
-        // Wait, I saw the constructor in DiscordAdapter.ts: constructor(tenantId: string, channelId: string, token: string)
-        const dAdapter = new DiscordAdapter(tenantId, channelId, token);
-
-        dAdapter.onMessage(async (event) => {
-          const { ingressService } = await import('./IngressService.js');
-          const context = await (await import('../lib/context.js')).default();
-          this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-
-          await ingressService.handleCommonMessage(tenantId, channelId, {
-            id: event.raw.id || crypto.randomUUID(),
-            platform: 'discord',
-            from: event.sender,
-            to: channelId,
-            content: { text: event.content },
-            timestamp: event.timestamp.getTime(),
-            metadata: { raw: event.raw, fullPath }
-          }, context, fullPath);
-        });
-
-        await dAdapter.connect();
-        channelManager.registerAdapter(dAdapter);
       } else if (channel.type === 'slack') {
-        const { SlackAdapter } = await import('./channels/slack/SlackAdapter.js');
         const token = channel.credentials?.token;
         if (!token) throw new Error('Missing Slack token');
-
-        const adapter = new SlackAdapter(tenantId, channelId, token);
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
+        adapter = new AdapterClass(tenantId, channelId, token);
       } else if (channel.type === 'signal') {
-        const { SignalAdapter } = await import('./channels/signal/SignalAdapter.js');
         const phone = channel.phoneNumber || channel.credentials?.phone;
         if (!phone) throw new Error('Missing Signal phone number');
-
-        const adapter = new SignalAdapter(tenantId, channelId, phone);
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
+        adapter = new AdapterClass(tenantId, channelId, phone);
       } else if (channel.type === 'imessage') {
-        const { IMessageAdapter } = await import('./channels/imessage/IMessageAdapter.js');
         const identifier = channel.identifier || channel.credentials?.identifier;
         if (!identifier) throw new Error('Missing iMessage identifier');
-
-        const adapter = new IMessageAdapter(tenantId, channelId, identifier);
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
-      } else if (channel.type === 'irc') {
-        const { IRCAdapter } = await import('./channels/irc/IRCAdapter.js');
-        const adapter = new IRCAdapter(tenantId, channelId, channel.credentials || {});
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
-      } else if (channel.type === 'googlechat') {
-        const { GoogleChatAdapter } = await import('./channels/googlechat/GoogleChatAdapter.js');
-        const adapter = new GoogleChatAdapter(tenantId, channelId, channel.credentials || {});
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
+        adapter = new AdapterClass(tenantId, channelId, identifier);
       } else {
-        return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
+        // Generic initialization for other platforms (irc, googlechat, etc.)
+        adapter = new AdapterClass(tenantId, channelId, channel.credentials || {});
       }
+
+      await adapter.connect(force);
+      channelManager.registerAdapter(adapter);
 
       // Only mark as connected if it's not managed by the adapter itself (like WhatsApp)
       if (channel.type !== 'whatsapp') {
