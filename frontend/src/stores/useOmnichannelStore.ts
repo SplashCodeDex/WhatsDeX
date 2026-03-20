@@ -590,9 +590,9 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
 
     fetchLogs: async () => {
         try {
-            const response = await api.get<LogEntry[]>(API_ENDPOINTS.OMNICHANNEL.LOGS.LIST);
-            if (response.success) {
-                set({ logs: response.data });
+            const response = await api.get<{ lines: LogEntry[] }>(API_ENDPOINTS.OMNICHANNEL.LOGS.LIST);
+            if (response.success && response.data) {
+                set({ logs: response.data.lines || [] });
             }
         } catch (err) {
             console.error('Failed to fetch logs:', err);
@@ -602,7 +602,8 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     streamLogs: () => {
         if (typeof window === 'undefined') return () => {};
 
-        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:3001';
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+        const baseUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
         const url = `${baseUrl}${API_ENDPOINTS.OMNICHANNEL.LOGS.STREAM}`;
         
         const eventSource = new EventSource(url, { withCredentials: true });

@@ -108,10 +108,10 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         }
 
         // 2. Check for User Lookup
-        let lookupDoc = await db.collection('users').doc(uid).get();
+        const lookupDoc = await db.collection('users').doc(uid).get();
         let tenantId: string;
         let role: string;
-        let displayName = name || 'User';
+        const displayName = name || 'User';
 
         if (!lookupDoc.exists) {
             // 3. New User - Check for Email Conflict (Option B)

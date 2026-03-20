@@ -34,7 +34,8 @@ export function useSocket(options: {
 
         logger.info(`[Socket] Connecting to ${path}...`);
 
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+        const rawBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+        const backendUrl = rawBackendUrl.endsWith('/') ? rawBackendUrl.slice(0, -1) : rawBackendUrl;
 
         socketRef.current = io(backendUrl, {
             path,

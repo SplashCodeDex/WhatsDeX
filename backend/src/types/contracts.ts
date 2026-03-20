@@ -81,15 +81,17 @@ export const TenantUserSchema = z.object({
 
 export type TenantUser = z.infer<typeof TenantUserSchema>;
 
+import { getPlatformMetadata } from '../services/channels/registry.js';
+
 /**
  * Channel Schema ('tenants/{tenantId}/channels' subcollection)
  * Replaces legacy 'Bot' entity. Focuses on connectivity.
  */
 export const ChannelSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.preprocess((val) => val ?? 'Unknown Channel', z.string()),
   // Multi-channel fields
-  type: z.string().default('whatsapp'),
+  type: z.preprocess((val) => val ?? 'whatsapp', z.string().refine(val => !!getPlatformMetadata(val), { message: "Unsupported channel type" }).default('whatsapp')),
   phoneNumber: z.string().optional(), // WhatsApp/Signal specific
   identifier: z.string().optional(), // Generic identifier (e.g. username, bot handle)
   status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error', 'archived']),
@@ -101,19 +103,19 @@ export const ChannelSchema = z.object({
   credentials: z.record(z.string(), z.any()).optional(), // Store API tokens/keys
   webhookUrl: z.string().optional(), // For Webhook-Only mode
   assignedAgentId: z.string().nullish(), // Bidirectional link to Agent
-  stats: z.object({
+  stats: z.preprocess((val) => val ?? {}, z.object({
     messagesSent: z.number().default(0),
     messagesReceived: z.number().default(0),
     contactsCount: z.number().default(0),
     lastMessageAt: TimestampSchema.nullish(),
     errorsCount: z.number().default(0)
-  }),
+  })),
   config: z.object({
     proxyUrl: z.string().url().optional(),
     deviceName: z.string().optional()
   }).catchall(z.any()).optional(),
-  createdAt: TimestampSchema,
-  updatedAt: TimestampSchema
+  createdAt: z.preprocess((val) => val ?? new Date(), TimestampSchema),
+  updatedAt: z.preprocess((val) => val ?? new Date(), TimestampSchema)
 }).readonly();
 
 export type Channel = z.infer<typeof ChannelSchema>;

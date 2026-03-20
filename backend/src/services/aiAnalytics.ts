@@ -241,6 +241,35 @@ class AIAnalyticsService {
   }
 
   /**
+   * Calculate Estimated ROI Contribution
+   * Calculation: (Human Labor Cost - AI Token Cost)
+   * Note: This is a simplified estimation for the 2026 dashboard.
+   */
+  public calculateROI(totalTokens: number, totalRequests: number): number {
+    // Assumptions:
+    // 1. Average human labor cost per "task" (request) = $0.50
+    // 2. AI Cost per 1k tokens = $0.01 (blended rate)
+    const humanLaborCost = totalRequests * 0.50;
+    const aiTokenCost = (totalTokens / 1000) * 0.01;
+    const estimatedSavings = humanLaborCost - aiTokenCost;
+    
+    // Return floor of 0 to avoid negative ROI on small sample sizes
+    return Math.max(0, parseFloat(estimatedSavings.toFixed(2)));
+  }
+
+  /**
+   * Calculate Resource Efficiency %
+   * Calculation: (Success Rate * (1 - (Avg Latency / Max Acceptable Latency)))
+   */
+  public calculateEfficiency(successRatePercent: number, avgResponseTimeSec: number): number {
+    const maxAcceptableLatency = 10.0; // 10 seconds is the threshold for "low efficiency"
+    const latencyFactor = Math.max(0, 1 - (avgResponseTimeSec / maxAcceptableLatency));
+    const efficiency = (successRatePercent / 100) * latencyFactor * 100;
+    
+    return Math.min(100, parseFloat(efficiency.toFixed(1)));
+  }
+
+  /**
    * Get empty metrics structure
    */
   private getEmptyMetrics(timeRange: string): AIPerformanceMetrics {

@@ -12,12 +12,19 @@ export class DiscordAdapter implements ChannelAdapter {
   private client: Client | null = null;
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
 
+  private token: string;
+  public fullPath?: string;
+
   constructor(
     private tenantId: string,
     private channelId: string,
-    private token: string
+    fullPath: string | undefined,
+    channelData: any
   ) {
     this.instanceId = channelId;
+    this.fullPath = fullPath;
+    this.token = channelData?.credentials?.token || '';
+    if (!this.token) throw new Error('Missing Discord token in channelData');
   }
 
   async initialize(): Promise<void> {

@@ -55,7 +55,7 @@
     "firebase-admin": "^13.6.0",
     "form-data": "^4.0.5",
     "googleapis": "^171.4.0",
-    "grammy": "^1.40.0",
+    "grammy": "^1.41.0",
     "helmet": "^8.1.0",
     "http-proxy-middleware": "^3.0.5",
     "https-proxy-agent": "^7.0.6",

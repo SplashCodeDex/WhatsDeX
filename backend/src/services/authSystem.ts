@@ -63,6 +63,11 @@ class AuthSystem extends EventEmitter {
     logger.info(`AuthSystem initialized for Channel: ${channelId} (Tenant: ${tenantId}, Path: ${collectionOrPath})`);
   }
 
+  public updatePath(newCollectionOrPath: string): void {
+    logger.info(`[AuthSystem] Path updated for ${this.channelId}: ${this.collectionOrPath} -> ${newCollectionOrPath}`);
+    (this as any).collectionOrPath = newCollectionOrPath;
+  }
+
   async connect(forceNewSession: boolean = false): Promise<Result<WASocket>> {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);

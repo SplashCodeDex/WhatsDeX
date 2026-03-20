@@ -1,6 +1,10 @@
 import { z } from 'zod';
+import { getPlatformMetadata } from '../services/channels/registry.js';
 
-export const PlatformSchema = z.string();
+export const PlatformSchema = z.string().refine(
+  (val) => !!getPlatformMetadata(val) || val === 'system', // Allow 'system' for internal routing
+  { message: "Unsupported omnichannel platform" }
+);
 
 export type Platform = z.infer<typeof PlatformSchema>;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Slack, ShieldCheck, Loader2, MessageSquare, Hash, QrCode, KeyRound } from 'lucide-react';
+import { Slack, ShieldCheck, Loader2, MessageSquare, Hash, QrCode, KeyRound, UserCircle2, Users, Network } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -29,7 +29,9 @@ const ICON_MAP: Record<string, any> = {
   SiSignal,
   MessageSquare,
   Hash,
-  SiGooglechat
+  SiGooglechat,
+  SiMicrosoftteams: Users,
+  SiMatrix: Network
 };
 
 interface ChannelConnectionFormProps {
@@ -44,7 +46,13 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [connectionMethod, setConnectionMethod] = useState<'qr' | 'pairing'>('qr');
   const [selectedAgentId, setSelectedAgentId] = useState(initialAgentId || 'system_default');
-  const { fetchAllChannels, fetchAgents, platforms } = useOmnichannelStore();
+  const { fetchAllChannels, fetchAgents, platforms, agentsResult } = useOmnichannelStore();
+
+  useEffect(() => {
+    fetchAgents();
+  }, [fetchAgents]);
+
+  const agents = agentsResult?.agents || [];
 
   const platform = platforms.find(p => p.id === type);
 
@@ -117,6 +125,32 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6 pt-6">
+
+          {/* Agent Assignment */}
+          <div className="space-y-4">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-2">
+              <UserCircle2 className="h-3 w-3" />
+              Assign to Agent
+            </Label>
+            <div className="space-y-2">
+              <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+                <SelectTrigger className="bg-background/50 border-border/50 h-9">
+                  <SelectValue placeholder="Select Agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system_default">System Default Agent</SelectItem>
+                  {agents.map((agent: any) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground italic">
+                Incoming messages will be immediately routed to this agent's AI logic.
+              </p>
+            </div>
+          </div>
 
           {/* WhatsApp Specific Connection Method */}
           {type === 'whatsapp' && (

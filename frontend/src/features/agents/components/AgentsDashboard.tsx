@@ -289,103 +289,80 @@ export function AgentsDashboard() {
                                         <TabsTrigger value="infra" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Infra</TabsTrigger>
                                     </TabsList>
 
-                                    <TabsContent value="overview" className="space-y-6 pt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <TabsContent value="overview" className="space-y-6 pt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                         {showTrace && (
                                             <div className="animate-in zoom-in-95 fade-in duration-500">
                                                 <RecursiveTraceView rootAgentId={selectedAgent.id} />
                                             </div>
                                         )}
                                         
-                                        <div className="grid gap-6 md:grid-cols-3">
-                                            {/* Persona Data */}
-                                            <div className="md:col-span-1 space-y-4">
-                                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-                                                    <User className="mr-2 h-3.5 w-3.5 text-primary" />
-                                                    Persona Registry
-                                                </h4>
-                                                <div className="rounded-xl border border-border/50 bg-muted/10 p-4 space-y-4 shadow-sm">
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">System ID</span>
-                                                        <span className="font-mono text-xs font-medium tabular-nums">{selectedAgent.id}</span>
-                                                    </div>
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">Identity Name</span>
-                                                        <span className="text-xs font-bold">{identity?.name || 'DeX Core AI'}</span>
-                                                    </div>
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">Object Class</span>
-                                                        <Badge variant="outline" className="w-fit text-[9px] h-4 bg-background uppercase font-bold text-primary border-primary/20">Sovereign Agent</Badge>
-                                                    </div>
+                                        {/* High-Density Status Bar */}
+                                        <div className="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-muted/20 border border-border/40 backdrop-blur-sm -mt-2">
+                                            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-background/50 border border-border/50 shadow-sm">
+                                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">System ID</span>
+                                                <span className="text-xs font-mono font-medium">{selectedAgent.id}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-background/50 border border-border/50 shadow-sm">
+                                                <Zap size={12} className="text-amber-500" />
+                                                <span className="text-xs font-bold">{selectedAgent.model || 'gemini-1.5-flash'}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-background/50 border border-border/50 shadow-sm">
+                                                <Badge variant="outline" className="text-[9px] uppercase font-black bg-primary/5 text-primary border-primary/20 h-4 px-1.5">
+                                                    {tier || 'Starter'}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-background/50 border border-border/50 shadow-sm">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                                                <span className="text-[10px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest italic">Ultra-Low</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-background/50 border border-border/50 shadow-sm">
+                                                <Badge variant="secondary" className="text-[9px] font-bold uppercase tracking-tighter p-0 bg-transparent text-muted-foreground">SOVEREIGN AGENT</Badge>
+                                            </div>
+                                        </div>
+
+                                        {/* Performance Bento Grid */}
+                                        <div className="grid gap-4 md:grid-cols-3">
+                                            <div className="group rounded-2xl border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-all hover:border-primary/20">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Total Yield (30d)</span>
+                                                    <MessageSquare size={14} className="text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                                                </div>
+                                                <div className="text-2xl font-black tabular-nums">
+                                                    {usageTotals?.messages || 0}
+                                                    <span className="ml-1 text-xs font-medium text-muted-foreground">msgs</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="group rounded-2xl border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-all hover:border-green-500/20">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Efficiency</span>
+                                                    <Activity size={14} className="text-muted-foreground/40 group-hover:text-green-500 transition-colors" />
+                                                </div>
+                                                <div className="text-2xl font-black tabular-nums text-green-600 dark:text-green-400">
+                                                    {usageTotals?.tenantUsage?.efficiency || '94.2'}%
                                                 </div>
                                             </div>
 
-                                            {/* Active Intelligence */}
-                                            <div className="md:col-span-1 space-y-4">
-                                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-                                                    <Zap className="mr-2 h-3.5 w-3.5 text-amber-500" />
-                                                    Active Intel
-                                                </h4>
-                                                <div className="rounded-xl border border-border/50 bg-muted/10 p-4 space-y-4 shadow-sm">
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">Neural Engine</span>
-                                                        <div className="flex items-center space-x-2">
-                                                            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                                            <span className="font-mono text-xs font-bold">{selectedAgent.model || 'gemini-1.5-flash'}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">Subscription Tier</span>
-                                                        <span className="text-xs font-bold capitalize">{tier || 'Starter'}</span>
-                                                    </div>
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">Latency Profile</span>
-                                                        <span className="text-xs font-bold text-green-500 uppercase italic">Ultra-Low</span>
-                                                    </div>
+                                            <div className="group rounded-2xl border border-border/40 bg-emerald-500/5 p-4 shadow-sm hover:shadow-md transition-all hover:border-emerald-500/30">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-[10px] font-bold uppercase text-emerald-600/60 tracking-widest">Est. ROI</span>
+                                                    <DollarSign size={14} className="text-emerald-500/30 group-hover:text-emerald-500 transition-colors" />
                                                 </div>
-                                            </div>
-
-                                            {/* ROI Metrics (Enhancement) */}
-                                            <div className="md:col-span-1 space-y-4">
-                                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-                                                    <TrendingUp className="mr-2 h-3.5 w-3.5 text-blue-500" />
-                                                    Efficiency metrics
-                                                </h4>
-                                                <div className="rounded-xl border border-border/50 bg-blue-500/5 p-4 space-y-4 shadow-sm">
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">Total Yield (30d)</span>
-                                                        <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
-                                                            <MessageSquare size={12} />
-                                                            <span className="text-xs font-bold tabular-nums">
-                                                                {usageTotals?.messages || 0} msgs
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">Resource Efficiency</span>
-                                                        <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
-                                                            <TrendingUp size={12} />
-                                                            <span className="text-xs font-bold tabular-nums">94.2%</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col space-y-1">
-                                                        <span className="text-[10px] font-semibold text-muted-foreground/60">Est. ROI Contribution</span>
-                                                        <div className="flex items-center space-x-1 text-emerald-600 font-bold">
-                                                            <DollarSign size={12} />
-                                                            <span className="text-xs tabular-nums">$12.40/mo</span>
-                                                        </div>
-                                                    </div>
+                                                <div className="text-2xl font-black tabular-nums text-emerald-600">
+                                                    ${usageTotals?.tenantUsage?.roi || '0.00'}
+                                                    <span className="ml-1 text-xs font-medium text-emerald-600/50">/mo</span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Active Connectivity Section */}
-                                        <div className="space-y-4 pt-4 border-t border-border/30">
+                                        <div className="space-y-4 pt-2">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center">
-                                                    <ExternalLink className="mr-2 h-3.5 w-3.5 text-primary" />
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center">
+                                                    <ExternalLink className="mr-2 h-3.5 w-3.5 text-primary/60" />
                                                     Omnichannel Matrix
                                                 </h4>
-                                                <Button variant="ghost" size="sm" className="h-6 text-[9px] uppercase font-bold text-primary">
+                                                <Button variant="ghost" size="sm" className="h-6 text-[9px] uppercase font-bold text-primary hover:bg-primary/5">
                                                     Manage Links
                                                     <ChevronRight className="ml-1 h-3 w-3" />
                                                 </Button>

@@ -9,15 +9,8 @@ import { Channel } from '../../../types/contracts.js';
 import { ActiveChannel, MessageContext, Middleware } from '../../../types/index.js';
 import { jobQueueService } from '@/services/jobQueue.js';
 
-// Import from openclaw workspace package
-import {
-  sendMessageWhatsApp,
-  sendReactionWhatsApp,
-  sendPollWhatsApp,
-  setActiveWebListener,
-  type ActiveWebListener,
-  type ActiveWebSendOptions
-} from 'openclaw';
+import { getWebOutbound, getWebActiveListener } from '@/utils/openclawImports.js';
+import type { ActiveWebListener, ActiveWebSendOptions } from 'openclaw';
 
 /**
  * WhatsappAdapter wraps the existing DeXMart Baileys/AuthSystem logic
@@ -115,6 +108,13 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public updatePath(newPath: string): void {
     logger.info(`WhatsappAdapter ${this.channelId} path updated from ${this.fullPath} to ${newPath}`);
     this.fullPath = newPath;
+
+    // MASTERMIND Fix: Synchronize AuthSystem path to prevent session desync (Scenario 3)
+    if (newPath.includes('/agents/')) {
+       const parts = newPath.split('/');
+       const agentCollectionPath = `agents/${parts[3]}/channels`;
+       this.authSystem.updatePath(agentCollectionPath);
+    }
   }
 
   public async initialize(): Promise<void> {
@@ -305,7 +305,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
         await this.socket.sendPresenceUpdate('composing', to);
       },
     };
-    setActiveWebListener(this.channelId, listener);
+    const listenerModule = await getWebActiveListener();
+    if (listenerModule?.setActiveWebListener) {
+      listenerModule.setActiveWebListener(this.channelId, listener);
+    }
 
     // Listen for messages
     this.socket.ev.on('messages.upsert', async ({ messages, type }: any) => {
@@ -336,7 +339,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       clearInterval(this.presenceInterval);
       this.presenceInterval = null;
     }
-    setActiveWebListener(this.channelId, null);
+    const listenerModule = await getWebActiveListener();
+    if (listenerModule?.setActiveWebListener) {
+      listenerModule.setActiveWebListener(this.channelId, null);
+    }
     await this.authSystem.disconnect();
     this.socket = null;
 
@@ -388,10 +394,15 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     const mediaUrl = content.mediaUrl;
 
     // Dispatch via OpenClaw's pipeline
-    await sendMessageWhatsApp(target, text, {
-      ...options,
-      mediaUrl
-    });
+    const outboundModule = await getWebOutbound();
+    if (outboundModule?.sendMessageWhatsApp) {
+      await outboundModule.sendMessageWhatsApp(target, text, {
+        ...options,
+        mediaUrl
+      });
+    } else {
+      throw new Error('sendMessageWhatsApp fallback failed to load');
+    }
 
     // Track stats
     try {
@@ -412,19 +423,25 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
 
   public async sendReaction(chatJid: string, messageId: string, emoji: string): Promise<void> {
     if (!this.socket) throw new Error('Adapter not connected');
-    await sendReactionWhatsApp(chatJid, messageId, emoji, {
-      verbose: false,
-      accountId: this.channelId
-    });
+    const outboundModule = await getWebOutbound();
+    if (outboundModule?.sendReactionWhatsApp) {
+      await outboundModule.sendReactionWhatsApp(chatJid, messageId, emoji, {
+        verbose: false,
+        accountId: this.channelId
+      });
+    }
   }
 
   public async sendPoll(to: string, question: string, options: string[]): Promise<void> {
     if (!this.socket) throw new Error('Adapter not connected');
     const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
-    await sendPollWhatsApp(jid, { question, options }, {
-      verbose: false,
-      accountId: this.channelId
-    });
+    const outboundModule = await getWebOutbound();
+    if (outboundModule?.sendPollWhatsApp) {
+      await outboundModule.sendPollWhatsApp(jid, { question, options }, {
+        verbose: false,
+        accountId: this.channelId
+      });
+    }
   }
 
   public async sendCommon(message: CommonMessage): Promise<void> {

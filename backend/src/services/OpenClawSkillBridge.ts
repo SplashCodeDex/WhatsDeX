@@ -1,9 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { toolRegistry, ToolDefinition } from './toolRegistry.js';
-// @ts-ignore
-import { loadWorkspaceSkillEntries } from 'openclaw/agents/skills/workspace';
-import { createOpenClawTools, handleWhatsAppAction, handleTelegramAction } from 'openclaw';
+import { getOpenClawRoot, getWorkspaceSkills } from '@/utils/openclawImports.js';
 import logger from '../utils/logger.js';
 import configManager from '../config/ConfigManager.js';
 
@@ -31,7 +29,8 @@ export class OpenClawSkillBridge {
 
       // Create tools with full project configuration
       logger.info('🔧 Creating OpenClaw tools with deep configuration...');
-      const ocTools = createOpenClawTools({
+      const oc = await getOpenClawRoot();
+      const ocTools = oc.createOpenClawTools({
         // --- Static options (set once at boot) ---
         allowHostBrowserControl: true,
         sandboxed: false,
@@ -55,7 +54,8 @@ export class OpenClawSkillBridge {
 
       // Bridge native prompt-based skills
       logger.info('🧠 Bridging native OpenClaw prompt skills...');
-      const skillEntries = await loadWorkspaceSkillEntries(process.cwd());
+      const skillsModule = await getWorkspaceSkills();
+      const skillEntries = await skillsModule.loadWorkspaceSkillEntries(process.cwd());
       let bridgedSkillsCount = 0;
 
       for (const entry of skillEntries as any[]) {
@@ -150,7 +150,8 @@ export class OpenClawSkillBridge {
       },
       source: 'openclaw-channel',
       execute: async (args) => {
-        return await handleWhatsAppAction(args as Record<string, unknown>, config);
+        const oc = await getOpenClawRoot();
+        return await oc.handleWhatsAppAction(args as Record<string, unknown>, config);
       },
     };
     toolRegistry.registerTool(whatsappActionTool);
@@ -207,7 +208,8 @@ export class OpenClawSkillBridge {
       },
       source: 'openclaw-channel',
       execute: async (args) => {
-        return await handleTelegramAction(args as Record<string, unknown>, config);
+        const oc = await getOpenClawRoot();
+        return await oc.handleTelegramAction(args as Record<string, unknown>, config);
       },
     };
     toolRegistry.registerTool(telegramActionTool);

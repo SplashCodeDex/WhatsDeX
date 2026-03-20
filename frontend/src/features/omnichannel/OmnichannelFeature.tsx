@@ -9,10 +9,15 @@ import {
     Settings2,
     RefreshCw,
     MessageSquare,
-    Hash
+    Hash,
+    Activity,
+    Users,
+    Network
 } from 'lucide-react';
+
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
+import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat, SiFacebook } from 'react-icons/si';
 
 import { ActivityFeed } from './components/ActivityFeed';
 import { ChannelProgressStepper } from './components/ChannelProgressStepper';
@@ -43,7 +48,10 @@ const ICON_MAP: Record<string, any> = {
     SiSignal,
     MessageSquare,
     Hash,
-    SiGooglechat
+    SiGooglechat,
+    SiFacebook,
+    SiMicrosoftteams: Users,
+    SiMatrix: Network
 };
 
 function ChannelCard({ channel }: { channel: any }) {
@@ -191,6 +199,13 @@ export function OmnichannelFeature() {
                 <div className="flex space-x-2">
                     <Button variant="outline" size="icon" onClick={() => fetchAllChannels()} disabled={isLoading}>
                         <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+                    </Button>
+
+                    <Button variant="secondary" asChild className="hidden sm:flex shadow-sm gap-2 border border-border/50 bg-card/60 hover:bg-muted font-medium text-foreground">
+                        <Link href="/dashboard/omnichannel/reasoning">
+                            <Activity className="h-4 w-4 text-primary" />
+                            Live Reasoning
+                        </Link>
                     </Button>
 
                     <Button onClick={() => setIsAddDialogOpen(true)} className="shadow-sm">

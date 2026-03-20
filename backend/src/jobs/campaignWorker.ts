@@ -186,7 +186,7 @@ class CampaignWorker {
         }
 
         if (sent + failed < total) {
-            let delayTime = currentCampaign.antiBan.batchSize > 0
+            const delayTime = currentCampaign.antiBan.batchSize > 0
                 ? Math.floor(gaussianRandom(currentCampaign.antiBan.batchPauseMin, currentCampaign.antiBan.batchPauseMax) * 60 * 1000)
                 : Math.floor(gaussianRandom(currentCampaign.antiBan.minDelay, currentCampaign.antiBan.maxDelay) * 1000);
 

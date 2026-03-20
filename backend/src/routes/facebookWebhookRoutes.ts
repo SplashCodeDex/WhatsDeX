@@ -1,10 +1,9 @@
 import express from 'express';
 import { logger } from '../utils/logger.js';
 import { 
-  validateFacebookSignature, 
-  handleFacebookChallenge, 
-  normalizeFacebookEvents 
-} from 'openclaw';
+  getOpenClawRoot, 
+  getFacebookWebhook 
+} from '../utils/openclawImports.js';
 import { channelService } from '../services/ChannelService.js';
 import { ingressService } from '../services/IngressService.js';
 import contextProvider from '../lib/context.js';
@@ -33,6 +32,7 @@ router.get('/:channelId', async (req, res) => {
     return res.sendStatus(403);
   }
 
+  const { handleFacebookChallenge } = await getFacebookWebhook();
   const challenge = handleFacebookChallenge(req.query as any, verifyToken);
   res.status(challenge.status).send(challenge.body);
 });
@@ -57,6 +57,8 @@ router.post('/:channelId', async (req, res) => {
 
     // Use rawBody for accurate HMAC signature validation
     const rawBody = (req as any).rawBody?.toString() || JSON.stringify(req.body);
+
+    const { validateFacebookSignature, normalizeFacebookEvents } = await getFacebookWebhook();
 
     if (!appSecret || !validateFacebookSignature(rawBody, signature, appSecret)) {
       logger.warn(`[FacebookWebhook] Signature validation failed for channel: ${channelId}`);

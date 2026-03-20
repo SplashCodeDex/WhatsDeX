@@ -183,7 +183,14 @@ export class FirebaseService {
         ...doc.data(),
         id: doc.id
       };
-      return schema.parse(data) as FirestoreSchema[K];
+
+      const result = schema.safeParse(data);
+      if (result.success) {
+        return result.data as FirestoreSchema[K];
+      }
+
+      logger.warn(`Firestore parsing error in getDoc [${path}/${docId}]:`, result.error);
+      return data as FirestoreSchema[K]; // Fallback to raw data in production to prevent crashes
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Firestore getDoc error [${collection}/${docId}] (Tenant: ${tenantId}):`, {
