@@ -18,7 +18,8 @@ import contactRoutes from '../routes/contactRoutes.js';
 import messageRoutes from '../routes/messageRoutes.js';
 import campaignRoutes from '../routes/campaigns.js';
 import webhookRoutes from '../routes/webhookRoutes.js';
-import telegramWebhookRoutes from '../routes/telegramWebhookRoutes.js';
+import channelWebhookRoutes from '../routes/channelWebhookRoutes.js';
+import facebookWebhookRoutes from '../routes/facebookWebhookRoutes.js';
 import billingRoutes from '../routes/billingRoutes.js';
 import omnichannelRoutes from '../routes/omnichannelRoutes.js';
 import authorityRoutes from '../routes/authorityRoutes.js';
@@ -211,7 +212,9 @@ export class MultiTenantApp {
 
     // Webhooks routes
     this.app.use('/api/webhooks', authenticateToken, webhookRoutes);
-    this.app.use('/api/telegram', telegramWebhookRoutes);
+    this.app.use('/api/webhook', channelWebhookRoutes); // Generic dynamic webhooks
+    this.app.use('/api/facebook-webhook', facebookWebhookRoutes); // Facebook-specific secure webhooks
+    this.app.use('/api/telegram', channelWebhookRoutes); // Legacy Telegram support
 
     // Tenant management
     this.app.get('/api/tenants', authenticateToken, async (_req: Request, res: Response) => {

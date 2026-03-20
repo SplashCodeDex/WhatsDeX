@@ -7,6 +7,7 @@ import { SignalAdapter } from "./signal/SignalAdapter.js";
 import { IMessageAdapter } from "./imessage/IMessageAdapter.js";
 import { IRCAdapter } from "./irc/IRCAdapter.js";
 import { GoogleChatAdapter } from "./googlechat/GoogleChatAdapter.js";
+import { GenericOpenClawAdapter } from "./openclaw/GenericOpenClawAdapter.js";
 
 export interface PlatformField {
   id: string;
@@ -128,6 +129,49 @@ const REGISTRY: Record<string, PlatformRegistryEntry> = {
       ]
     },
     adapterClass: GoogleChatAdapter
+  },
+  msteams: {
+    metadata: {
+      id: "msteams",
+      label: "Microsoft Teams",
+      description: "Connect to Microsoft Teams using Bot Framework credentials",
+      icon: "SiMicrosoftteams",
+      color: "bg-blue-600",
+      fields: [
+        { id: "appId", label: "Microsoft App ID", placeholder: "00000000-0000-0000-0000-000000000000" },
+        { id: "appPassword", label: "App Password", placeholder: "..." }
+      ]
+    },
+    adapterClass: GenericOpenClawAdapter
+  },
+  matrix: {
+    metadata: {
+      id: "matrix",
+      label: "Matrix",
+      description: "Connect to a Matrix homeserver",
+      icon: "SiMatrix",
+      color: "bg-black",
+      fields: [
+        { id: "homeserverUrl", label: "Homeserver URL", placeholder: "https://matrix.org" },
+        { id: "accessToken", label: "Access Token", placeholder: "syt_..." }
+      ]
+    },
+    adapterClass: GenericOpenClawAdapter
+  },
+  facebook: {
+    metadata: {
+      id: 'facebook',
+      label: 'Facebook Messenger',
+      description: 'Connect your Facebook Page. You will need a Page Access Token and App Secret from Meta.',
+      icon: 'SiFacebook',
+      color: 'bg-blue-600',
+      fields: [
+        { id: 'pageAccessToken', label: 'Page Access Token', placeholder: 'EAAG...', type: 'password' },
+        { id: 'appSecret', label: 'App Secret', placeholder: '...', type: 'password' },
+        { id: 'verifyToken', label: 'Verify Token', placeholder: 'dexmart_verification_token' }
+      ]
+    },
+    adapterClass: GenericOpenClawAdapter
   }
 };
 

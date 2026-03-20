@@ -45,7 +45,13 @@ export class ChannelService {
       }
 
       const channelId = `chan_${crypto.randomUUID()}`;
-      const { createdAt, updatedAt, ...restData } = channelData;
+      const { createdAt, updatedAt, config = {}, ...restData } = channelData;
+
+      // Auto-generate a generic webhookSecret for non-native channels
+      const isNative = ['whatsapp', 'telegram', 'discord'].includes(restData.type || 'whatsapp');
+      if (!isNative && !config.webhookSecret) {
+        config.webhookSecret = crypto.randomBytes(32).toString('hex');
+      }
 
       const rawData = {
         id: channelId,
@@ -59,6 +65,7 @@ export class ChannelService {
           contactsCount: 0,
           errorsCount: 0
         },
+        config,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         ...restData
@@ -232,6 +239,34 @@ export class ChannelService {
   }
 
   /**
+   * Find a channel by its ID across all tenants and agents.
+   * Uses collectionGroup for efficient global lookup.
+   */
+  async findChannelByIdGlobally(channelId: string): Promise<Result<{ channel: Channel; tenantId: string; agentId: string }>> {
+    try {
+      const { db } = await import('@/lib/firebase.js');
+      const snapshot = await db.collectionGroup('channels').where('id', '==', channelId).get();
+
+      if (snapshot.empty) {
+        return { success: false, error: new Error(`Channel not found globally: ${channelId}`) };
+      }
+
+      const doc = snapshot.docs[0];
+      const data = doc.data() as Channel;
+      
+      // Extract tenantId and agentId from path: tenants/{T}/agents/{A}/channels/{C}
+      const pathParts = doc.ref.path.split('/');
+      const tenantId = pathParts[1];
+      const agentId = pathParts[3];
+
+      return { success: true, data: { channel: data, tenantId, agentId } };
+    } catch (error: any) {
+      logger.error('ChannelService.findChannelByIdGlobally error:', error);
+      return { success: false, error };
+    }
+  }
+
+  /**
    * Start a channel instance (OpenClaw)
    */
   async startChannel(tenantId: string, channelId: string, agentId: string = 'system_default', force: boolean = false): Promise<Result<void>> {
@@ -253,15 +288,14 @@ export class ChannelService {
         return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
       }
 
-      let adapter;
+      let adapter = new AdapterClass(tenantId, channelId, fullPath, channel as any);
+      
       if (channel.type === 'whatsapp') {
-        adapter = new AdapterClass(tenantId, channelId, fullPath, channel as any);
-
         // --- MIDDLEWARE INJECTION ---
         const { default: mainMiddleware } = await import('../middleware/main.js');
         const gCtx = await (await import('../lib/context.js')).default();
         mainMiddleware(adapter as any, gCtx);
-        adapter.setContext(gCtx);
+        (adapter as any).setContext(gCtx);
 
         adapter.onMessage(async (event: any) => {
           const { ingressService } = await import('./IngressService.js');
@@ -269,41 +303,22 @@ export class ChannelService {
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
           await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
         });
-      } else if (channel.type === 'telegram' || channel.type === 'discord') {
-        const token = channel.credentials?.token;
-        if (!token) throw new Error(`Missing ${channel.type} token`);
-        
-        adapter = new AdapterClass(tenantId, channelId, token);
+      } else {
         adapter.onMessage(async (event: any) => {
           const { ingressService } = await import('./IngressService.js');
           const context = await (await import('../lib/context.js')).default();
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
 
           await ingressService.handleCommonMessage(tenantId, channelId, {
-            id: event.raw.id || event.raw.message_id?.toString() || crypto.randomUUID(),
+            id: event.raw?.id || event.raw?.message_id?.toString() || crypto.randomUUID(),
             platform: channel.type as any,
             from: event.sender,
             to: channelId,
             content: { text: event.content },
-            timestamp: event.timestamp.getTime(),
+            timestamp: event.timestamp instanceof Date ? event.timestamp.getTime() : new Date(event.timestamp).getTime(),
             metadata: { raw: event.raw, fullPath }
           }, context, fullPath);
         });
-      } else if (channel.type === 'slack') {
-        const token = channel.credentials?.token;
-        if (!token) throw new Error('Missing Slack token');
-        adapter = new AdapterClass(tenantId, channelId, token);
-      } else if (channel.type === 'signal') {
-        const phone = channel.phoneNumber || channel.credentials?.phone;
-        if (!phone) throw new Error('Missing Signal phone number');
-        adapter = new AdapterClass(tenantId, channelId, phone);
-      } else if (channel.type === 'imessage') {
-        const identifier = channel.identifier || channel.credentials?.identifier;
-        if (!identifier) throw new Error('Missing iMessage identifier');
-        adapter = new AdapterClass(tenantId, channelId, identifier);
-      } else {
-        // Generic initialization for other platforms (irc, googlechat, etc.)
-        adapter = new AdapterClass(tenantId, channelId, channel.credentials || {});
       }
 
       await adapter.connect(force);
