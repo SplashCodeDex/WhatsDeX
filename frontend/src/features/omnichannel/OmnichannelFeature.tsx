@@ -1,19 +1,23 @@
 'use client';
 
 import {
-    Slack,
+    Activity,
+    Bot,
+    MessageSquare,
+    MoreVertical,
+    Phone,
     Plus,
     Power,
+    RefreshCw,
+    Settings2,
+    Users,
     Wifi,
     WifiOff,
-    Settings2,
-    RefreshCw,
-    MessageSquare,
+    AlertTriangle,
+    Slack,
     Hash,
-    Activity,
-    Users,
     Network
-} from 'lucide-react';
+} from "lucide-react";
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -125,13 +129,19 @@ function ChannelCard({ channel }: { channel: any }) {
                         />
                     ) : (
                         <div className="flex items-center text-sm text-muted-foreground">
-                            {channel.status === 'connected' ? (
+                            {channel.status === 'error' ? (
+                                <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
+                            ) : channel.status === 'connected' ? (
                                 <Wifi className="mr-2 h-4 w-4 text-green-500" />
                             ) : (
                                 <WifiOff className="mr-2 h-4 w-4" />
                             )}
                             <span>
-                                {channel.status === 'connected' ? 'Bot is active and listening' : 'Bot is currently offline'}
+                                {channel.status === 'error' 
+                                    ? 'Connection failed — use Manage to retry' 
+                                    : channel.status === 'connected' 
+                                        ? 'Bot is active and listening' 
+                                        : 'Bot is currently offline'}
                             </span>
                         </div>
                     )}

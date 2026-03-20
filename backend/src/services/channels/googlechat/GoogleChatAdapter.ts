@@ -46,6 +46,7 @@ export class GoogleChatAdapter implements ChannelAdapter {
     // Google Chat usually requires OAuth2 or Webhooks.
     // This is a placeholder for the actual API call using the credentials.
     logger.info(`[GoogleChatAdapter] Would send to ${target}: ${text}`);
+    throw new Error('GoogleChatAdapter.sendMessage is currently a placeholder and not fully implemented.');
   }
 
   public async sendCommon(message: CommonMessage): Promise<void> {

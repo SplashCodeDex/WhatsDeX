@@ -22,7 +22,9 @@ export class ChannelManager {
     public registerAdapter(adapter: ChannelAdapter): void {
         const key = adapter.instanceId || adapter.id;
         if (this.adapters.has(key)) {
-            console.warn(`[ChannelManager] Overwriting existing adapter for key: ${key}`);
+            const oldAdapter = this.adapters.get(key)!;
+            console.warn(`[ChannelManager] Shutting down stale adapter before overwrite for key: ${key}`);
+            oldAdapter.shutdown().catch(e => console.error(`[ChannelManager] Stale adapter shutdown error:`, e));
         }
         this.adapters.set(key, adapter);
         console.log(`[ChannelManager] Registered adapter for key: ${key}`);

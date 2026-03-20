@@ -42,14 +42,27 @@ export class DiscordAdapter implements ChannelAdapter {
       ],
     });
 
+    this.client.on("error", (error) => {
+      logger.error(`[DiscordAdapter] Client error for ${this.channelId}:`, error);
+    });
+
     this.client.on("messageCreate", async (message) => {
       if (message.author.bot) return;
 
       if (this.messageHandler) {
+        // Increment received stats
+        try {
+          const { channelService } = await import('@/services/ChannelService.js');
+          await channelService.incrementChannelStat(this.tenantId, this.channelId, 'messagesReceived');
+        } catch (e) {
+          logger.warn('Failed to increment stats in DiscordAdapter', e);
+        }
+
         await this.messageHandler({
           tenantId: this.tenantId,
           channelId: this.channelId,
           channelType: this.id,
+          fullPath: this.fullPath,
           sender: message.author.username,
           content: message.content,
           timestamp: message.createdAt,
@@ -58,8 +71,15 @@ export class DiscordAdapter implements ChannelAdapter {
       }
     });
 
-    await this.client.login(this.token);
-    logger.info(`[DiscordAdapter] Connected as ${this.client.user?.tag}`);
+    try {
+      await this.client.login(this.token);
+      logger.info(`[DiscordAdapter] Connected as ${this.client.user?.tag}`);
+    } catch (error) {
+      logger.error(`[DiscordAdapter] Login failed for ${this.channelId}:`, error);
+      this.client.destroy();
+      this.client = null;
+      throw error;
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -82,6 +102,14 @@ export class DiscordAdapter implements ChannelAdapter {
     if (channel && 'send' in channel) {
       const payload = typeof content === 'string' ? { content } : content;
       await (channel as any).send(payload);
+
+      // Track stats
+      try {
+        const { channelService } = await import('@/services/ChannelService.js');
+        await channelService.incrementChannelStat(this.tenantId, this.channelId, 'messagesSent');
+      } catch (e) {
+        logger.warn('Failed to increment stats in DiscordAdapter', e);
+      }
     } else {
       throw new Error(`Invalid Discord channel ID: ${target}`);
     }

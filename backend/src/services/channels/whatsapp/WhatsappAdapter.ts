@@ -126,6 +126,15 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     logger.info(`Connecting WhatsappAdapter for channel ${this.channelId}. Force: ${forceNewSession}`);
     this.isDisconnecting = false;
 
+    // Cleanup: Remove old socket event listeners before creating a new one
+    if (this.socket && this.socket.ev) {
+      try { this.socket.ev.removeAllListeners('connection.update'); } catch (e) {}
+      try { this.socket.ev.removeAllListeners('messages.upsert'); } catch (e) {}
+    }
+
+    // Step 0: Ensure OpenClaw is ready BEFORE we attempt AuthSystem
+    const loadResult = await getWebActiveListener();
+
     // MASTERMIND Goodie: Listen for QR codes and convert to DataURL for UI
     // MUST be attached before connect() to catch early events
     this.authSystem.on('qr', async (qr) => {
@@ -265,16 +274,18 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
 
         while (retryCount <= maxRetries) {
           try {
-            if (!this.socket) throw new Error('Socket not initialized');
+            if (!this.socket || this.status !== 'connected') {
+              throw new Error('Socket not connected');
+            }
             result = await this.socket.sendMessage(to, payload);
             break; // Success
           } catch (error: any) {
             retryCount++;
             const isStreamClosed = error?.message?.includes('Stream Closed') || error?.message?.includes('connection closed');
-            if (isStreamClosed && retryCount <= maxRetries) {
-              logger.warn(`[WhatsappAdapter] sendMessage failed (Stream Closed). Retrying ${retryCount}/${maxRetries}...`);
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-              // Note: Reconnection logic in AuthSystem should ideally be firing in parallel
+            const isSocketDead = error?.message?.includes('Socket not connected');
+            if ((isStreamClosed || isSocketDead) && retryCount <= maxRetries) {
+              logger.warn(`[WhatsappAdapter] sendMessage failed. Retrying ${retryCount}/${maxRetries}...`);
+              await new Promise(resolve => setTimeout(resolve, 2000 * retryCount)); // Longer delay for reconnect
               continue;
             }
             throw error;

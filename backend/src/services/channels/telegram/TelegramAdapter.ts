@@ -53,7 +53,7 @@ export class TelegramAdapter implements ChannelAdapter {
   public async connect(): Promise<void> {
     // For long-polling or webhook.
     // In our multi-tenant server, we use webhooks.
-    logger.info(`TelegramAdapter for ${this.channelId} initialized.`);
+    logger.info(`TelegramAdapter for ${this.channelId} is ready (hooks attached during initialization).`);
   }
 
   public async disconnect(): Promise<void> {

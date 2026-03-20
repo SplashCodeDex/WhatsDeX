@@ -340,6 +340,7 @@ export class ChannelService {
         });
       }
 
+      await adapter.initialize(); // Essential for Telegram to run bot.init()
       await adapter.connect(force);
       channelManager.registerAdapter(adapter);
 
@@ -437,7 +438,7 @@ export class ChannelService {
 
         for (const channel of channelsResult.data) {
           // Restart channels that were previously connected or in error state (retry)
-          if (channel.status === 'connected' || channel.status === 'connecting' || channel.status === 'qr_pending') {
+          if (channel.status === 'connected' || channel.status === 'connecting' || channel.status === 'qr_pending' || channel.status === 'error') {
             logger.info(`[ChannelService] Auto-starting channel ${channel.id} (${channel.name}) for tenant ${tenant.id}`);
 
             // Non-blocking start

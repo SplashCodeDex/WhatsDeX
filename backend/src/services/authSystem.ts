@@ -35,7 +35,9 @@ class AuthSystem extends EventEmitter {
   private client: WASocket | null;
   private currentQrCode: string | null;
   private stats: AuthStats;
-  private reconnectAttempts: number = 0;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private isDisconnecting = false;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private connectTimeout: NodeJS.Timeout | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
@@ -194,6 +196,11 @@ class AuthSystem extends EventEmitter {
 
           if (shouldReconnect) {
             this.reconnectAttempts++;
+            if (this.reconnectAttempts > this.maxReconnectAttempts) {
+              logger.error(`[AuthSystem] Max reconnect attempts (${this.maxReconnectAttempts}) reached for ${this.channelId}. Giving up.`);
+              this.emit('status', 'reconnect_exhausted');
+              return;
+            }
             // Exponential backoff: 1s, 2s, 4s, 8s, 16s... capped at 1 minute
             const delay = Math.min(Math.pow(2, this.reconnectAttempts - 1) * 1000, 60 * 1000);
             logger.info(`[AuthSystem] Scheduling reconnect in ${delay}ms (Attempt ${this.reconnectAttempts})`);

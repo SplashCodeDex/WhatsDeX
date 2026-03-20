@@ -43,6 +43,7 @@ export class IRCAdapter implements ChannelAdapter {
   async sendMessage(target: string, content: any): Promise<void> {
     const text = typeof content === 'string' ? content : content.text || JSON.stringify(content);
     logger.info(`[IRCAdapter] Would send to ${target}: ${text}`);
+    throw new Error('IRCAdapter.sendMessage is currently a placeholder and not fully implemented.');
   }
 
   public async sendCommon(message: CommonMessage): Promise<void> {

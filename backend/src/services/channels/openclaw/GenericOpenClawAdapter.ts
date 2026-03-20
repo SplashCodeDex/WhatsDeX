@@ -20,7 +20,7 @@ export class GenericOpenClawAdapter implements ChannelAdapter {
     private tenantId: string,
     private channelId: string,
     fullPath: string | undefined,
-    channelData: any
+    private channelData: any
   ) {
     // Determine the platform type (e.g., 'msteams', 'matrix', 'twitch')
     this.id = channelData?.type || 'generic';
