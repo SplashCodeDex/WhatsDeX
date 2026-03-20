@@ -10,7 +10,7 @@ import { normalizePollInput, type PollInput } from "../polls.js";
 import { toWhatsappJid } from "../utils.js";
 import { type ActiveWebSendOptions, requireActiveWebListener } from "./active-listener.js";
 import { loadWebMedia } from "./media.js";
-export { sendMessageFacebook, sendActionFacebook } from "../facebook/send.js";
+export { sendMessageFacebook } from "../facebook/send.js";
 
 const outboundLog = createSubsystemLogger("gateway/channels/whatsapp").child("outbound");
 

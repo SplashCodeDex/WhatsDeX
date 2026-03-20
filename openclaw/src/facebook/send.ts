@@ -1,93 +1,55 @@
-import { fetch } from "undici";
-import { type FacebookCredentials, type FacebookSendResult } from "./types.js";
-import { getChildLogger } from "../logging/logger.js";
-import { generateSecureUuid } from "../infra/secure-random.js";
-import { redactIdentifier } from "../logging/redact-identifier.js";
+import { FacebookCredentials, FacebookSendResult, FacebookSendPayload } from './types.js';
 
-const FACEBOOK_API_VERSION = "v20.0";
-const FACEBOOK_TEXT_LIMIT = 2000;
+const FB_GRAPH_URL = 'https://graph.facebook.com/v20.0';
 
 export async function sendMessageFacebook(
-  to: string,
-  text: string,
-  credentials: FacebookCredentials,
-  options: { verbose?: boolean } = {}
-): Promise<FacebookSendResult> {
-  const correlationId = generateSecureUuid();
-  const redactedTo = redactIdentifier(to);
-  const logger = getChildLogger({
-    module: "facebook-send",
-    correlationId,
-    to: redactedTo,
-  });
-
-  try {
-    // 1. Handle Chunking (Simple implementation for now)
-    const chunks = chunkText(text, FACEBOOK_TEXT_LIMIT);
-    let lastResult: any;
-
-    for (const chunk of chunks) {
-      const payload = {
-        recipient: { id: to },
-        message: { text: chunk },
-        messaging_type: "RESPONSE",
-      };
-
-      const url = `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/messages?access_token=${credentials.pageAccessToken}`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json() as any;
-        throw new Error(`Facebook API error: ${errorData.error?.message || response.statusText}`);
-      }
-
-      lastResult = await response.json();
-    }
-
-    return lastResult as FacebookSendResult;
-  } catch (err) {
-    logger.error({ err: String(err) }, "failed to send message via facebook");
-    throw err;
-  }
-}
-
-export async function sendActionFacebook(
-  to: string,
-  action: "typing_on" | "typing_off" | "mark_seen",
+  target: string,
+  content: string | { text?: string; attachment?: any },
   credentials: FacebookCredentials
-): Promise<void> {
-  const url = `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/messages?access_token=${credentials.pageAccessToken}`;
-  const payload = {
-    recipient: { id: to },
-    sender_action: action,
+): Promise<FacebookSendResult> {
+  if (!credentials.pageAccessToken) {
+    throw new Error('Facebook pageAccessToken is required to send messages.');
+  }
+
+  const pageId = credentials.pageId || 'me';
+  const url = `${FB_GRAPH_URL}/${pageId}/messages?access_token=${credentials.pageAccessToken}`;
+
+  const payload: FacebookSendPayload = {
+    recipient: { id: target },
+    message: typeof content === 'string' ? { text: content } : content,
+    messaging_type: 'RESPONSE',
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json() as any;
-    console.error(`Facebook Action error: ${errorData.error?.message || response.statusText}`);
+  // Facebook Messenger text limit is 2000 characters. Implement chunking.
+  const text = payload.message.text;
+  if (text && text.length > 2000) {
+    // Basic chunking by 2000 chars. 
+    // A more robust implementation might split by newlines, but this fulfills the basic requirement.
+    const chunks = text.match(/[\s\S]{1,2000}/g) || [];
+    let lastResult: FacebookSendResult | null = null;
+    
+    for (const chunk of chunks) {
+      payload.message.text = chunk;
+      lastResult = await executeFacebookSend(url, payload);
+    }
+    return lastResult!;
   }
+
+  return executeFacebookSend(url, payload);
 }
 
-function chunkText(text: string, limit: number): string[] {
-  const chunks: string[] = [];
-  let current = text;
-  while (current.length > limit) {
-    chunks.push(current.substring(0, limit));
-    current = current.substring(limit);
+async function executeFacebookSend(url: string, payload: FacebookSendPayload): Promise<FacebookSendResult> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(`Facebook API Error: ${JSON.stringify((data as any).error || data)}`);
   }
-  if (current.length > 0) {
-    chunks.push(current);
-  }
-  return chunks;
+
+  return data as FacebookSendResult;
 }
