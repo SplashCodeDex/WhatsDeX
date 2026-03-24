@@ -1,4 +1,5 @@
 import { MessageContext } from '../../types/index.js';
+import { getJid } from '../../utils/baileysUtils.js';
 export default {
   name: 'approve',
   category: 'group',
@@ -39,7 +40,7 @@ export default {
       }
     }
 
-    const accountJid = `${input.replace(/[^\d]/g, '')}@s.whatsapp.net`;
+    const accountJid = getJid(input);
 
     const isPending = pendings.some(pending => pending.jid === accountJid);
     if (!isPending)

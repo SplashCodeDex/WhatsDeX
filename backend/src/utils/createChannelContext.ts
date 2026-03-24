@@ -1,6 +1,7 @@
 import { db } from '../lib/firebase.js';
 import { downloadContentFromMessage, getContentType, type proto } from 'baileys';
 import { getJid, getSender, getGroup } from './baileysUtils.js';
+import { isLid, convertLidToJid } from '../lib/identity.js';
 import type { ActiveChannel, GlobalContext, MessageContext } from '../types/index.js';
 import type { TenantSettings } from '../types/tenantConfig.js';
 import type { CommonMessage } from '../types/omnichannel.js';
@@ -40,6 +41,13 @@ const createChannelContext = async (
     pushName = messageSource.metadata?.pushName || 'User';
   } else {
     senderJid = getSender(messageSource);
+    
+    // Resolve LID to phone-number JID if possible
+    if (isLid(senderJid)) {
+      const resolved = await convertLidToJid(senderJid, channelInstance);
+      if (resolved) senderJid = resolved;
+    }
+
     remoteJid = messageSource.key?.remoteJid || '';
     isGroup = remoteJid.endsWith('@g.us');
     groupId = getGroup(messageSource) || undefined;

@@ -10,7 +10,12 @@ import { FIELD_ALIASES } from '../../../shared/fieldAliases.js';
 import { existsSync } from 'node:fs';
 
 const normalizePhoneNumber = (phone: string): string => {
-  if (phone.includes('@s.whatsapp.net') || phone.includes('@g.us')) {
+  if (
+    phone.includes('@s.whatsapp.net') ||
+    phone.includes('@g.us') ||
+    phone.includes('@lid') ||
+    phone.includes('@hosted.lid')
+  ) {
     return phone;
   }
   const digits = phone.replace(/\D/g, '');

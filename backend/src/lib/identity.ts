@@ -8,7 +8,7 @@
  */
 export const isLid = (jid: string | null | undefined): boolean => {
   if (!jid) return false;
-  return jid.endsWith('@lid') || jid.includes(':') && jid.split(':')[0].length > 15; // LIDs are often longer
+  return /^(\d+)(?::\d+)?@(lid|hosted\.lid)$/i.test(jid);
 };
 
 /**

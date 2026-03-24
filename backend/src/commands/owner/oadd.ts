@@ -1,4 +1,5 @@
 import { MessageContext, GlobalContext } from '../../types/index.js';
+import { getJid } from '../../utils/baileysUtils.js';
 
 export default {
   name: 'oadd',
@@ -20,7 +21,7 @@ export default {
 ${formatter.quote(example)}`);
     }
 
-    const accountJid = `${input.replace(/\D/g, '')}@s.whatsapp.net`;
+    const accountJid = getJid(input);
 
     // Assuming ctx.core exists on Bot or similar, might need adjustment based on actual library usage
     // Using simple check for now or skipping if method not available on type
