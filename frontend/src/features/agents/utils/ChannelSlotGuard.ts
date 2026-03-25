@@ -1,16 +1,9 @@
 import { type PlanTier } from '../types';
 import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
-// Fallback static knowledge for "what-if" checks (upsell UI)
-const STATIC_SLOT_LIMITS: Record<PlanTier, number> = {
-    starter: 1,
-    pro: 3,
-    enterprise: 100,
-};
-
 /**
  * Utility to determine if a user can add another channel slot based on their billing tier.
- * Delegates to System Authority for the current tier.
+ * Delegates to System Authority for strict zero-drift policy enforcement.
  */
 export function canAddChannelSlot(tier: PlanTier, currentCount: number): boolean {
     const limit = getSlotLimit(tier);
@@ -18,7 +11,7 @@ export function canAddChannelSlot(tier: PlanTier, currentCount: number): boolean
 }
 
 /**
- * Gets the slot limit for a specific tier.
+ * Gets the slot limit strictly from the centralized capability store.
  */
 export function getSlotLimit(tier: PlanTier): number {
     const store = useAuthorityStore.getState();
@@ -28,6 +21,7 @@ export function getSlotLimit(tier: PlanTier): number {
         return store.getLimit('maxChannelSlots');
     }
 
-    // Fallback to static knowledge for other tiers
-    return STATIC_SLOT_LIMITS[tier] || 1;
+    // Zero-drift policy: Do not fall back to static hardcoded arrays.
+    // Restrict access by default if capabilities are missing or for non-active tiers.
+    return 0;
 }

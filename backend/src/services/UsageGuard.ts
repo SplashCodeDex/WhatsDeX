@@ -6,13 +6,16 @@ import { systemAuthorityService, PlanTier } from './SystemAuthorityService.js';
  *
  * @deprecated Use SystemAuthorityService directly.
  * This service now delegates to SystemAuthorityService to maintain backward compatibility
- * while we transition to the unified authority model.
+ * while we transition to the unified authority model (Phase 6.2 Zero-Drift).
  */
 export class UsageGuard {
     private static instance: UsageGuard;
 
     private constructor() { }
 
+    /**
+     * @deprecated Use `SystemAuthorityService.getInstance()` instead.
+     */
     public static getInstance(): UsageGuard {
         if (!UsageGuard.instance) {
             UsageGuard.instance = new UsageGuard();
@@ -22,7 +25,7 @@ export class UsageGuard {
 
     /**
      * Comprehensive check and increment for a tenant.
-     * Delegates to systemAuthorityService.
+     * @deprecated Use `systemAuthorityService.checkAuthority` and `systemAuthorityService.recordUsage` instead.
      */
     public async checkAndIncrementUsage(tenantId: string): Promise<{ allowed: boolean; error?: string }> {
         const result = await systemAuthorityService.checkAuthority(tenantId, 'send_message');
@@ -37,7 +40,7 @@ export class UsageGuard {
 
     /**
      * Determines if a user can send more messages.
-     * Delegates to systemAuthorityService.
+     * @deprecated Use `systemAuthorityService.checkAuthority` instead.
      */
     public canSend(tier: PlanTier, currentMonthlyUsage: number): boolean {
         const caps = systemAuthorityService.getCapabilities(tier);
@@ -46,7 +49,7 @@ export class UsageGuard {
 
     /**
      * Increments the message usage for a tenant.
-     * Delegates to systemAuthorityService.
+     * @deprecated Use `systemAuthorityService.recordUsage` instead.
      */
     public async incrementUsage(tenantId: string, amount: number = 1): Promise<void> {
         return systemAuthorityService.recordUsage(tenantId, 'messages', amount);
@@ -54,7 +57,7 @@ export class UsageGuard {
 
     /**
      * Gets the monthly message limit for a specific tier.
-     * Delegates to systemAuthorityService.
+     * @deprecated Use `systemAuthorityService.getCapabilities` instead.
      */
     public getMonthlyLimit(tier: PlanTier): number {
         const caps = systemAuthorityService.getCapabilities(tier);
@@ -62,5 +65,8 @@ export class UsageGuard {
     }
 }
 
+/**
+ * @deprecated Use `systemAuthorityService` instead.
+ */
 export const usageGuard = UsageGuard.getInstance();
 export type { PlanTier };

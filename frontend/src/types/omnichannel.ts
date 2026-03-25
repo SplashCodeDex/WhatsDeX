@@ -250,6 +250,8 @@ export interface UsageTotals {
     monthlyUsage: number;
     monthlyLimit: number;
     plan: string;
+    efficiency?: number;
+    roi?: number;
   };
 }
 
