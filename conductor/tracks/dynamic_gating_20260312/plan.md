@@ -8,9 +8,9 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Backend Authority Core' (Protocol in workflow.md) f9a8580
 
 ## Phase 2: Backend Enforcement
-- [~] Task: Update `AgentService.ts` to use `SystemAuthorityService` for agent creation limits
-- [ ] Task: Update `ChannelService.ts` to use `SystemAuthorityService` for slot limits
-- [ ] Task: Update `GeminiAI.ts` and `SkillsManager.ts` to use `SystemAuthorityService` for skill gating
+- [x] Task: Update `AgentService.ts` to use `SystemAuthorityService` for agent creation limits
+- [x] Task: Update `ChannelService.ts` to use `SystemAuthorityService` for slot limits
+- [x] Task: Update `GeminiAI.ts` and `SkillsManager.ts` to use `SystemAuthorityService` for skill gating
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Backend Enforcement' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Authority Bridge
