@@ -20,7 +20,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Frontend Authority Bridge' (Protocol in workflow.md)
 
 ## Phase 4: UI Cleanup & Verification
-- [ ] Task: Update `AgentsDashboard.tsx` and `TemplateSelector.tsx` to use dynamic model/feature flags
-- [ ] Task: Remove all deprecated hardcoded limit files from `frontend/src/features/agents/`
-- [ ] Task: Final end-to-end verification of tier-based restriction enforcement
+- [x] Task: Update `AgentsDashboard.tsx` and `TemplateSelector.tsx` to use dynamic model/feature flags
+- [x] Task: Remove all deprecated hardcoded limit files from `frontend/src/features/agents/`
+- [x] Task: Final end-to-end verification of tier-based restriction enforcement
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: UI Cleanup & Verification' (Protocol in workflow.md)
