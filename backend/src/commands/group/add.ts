@@ -1,4 +1,5 @@
 import { MessageContext } from '../../types/index.js';
+import { getJid } from '../../utils/baileysUtils.js';
 
 export default {
   name: 'add',
@@ -17,8 +18,7 @@ export default {
     }
 
     // Basic cleaning found in original code
-    const number = input.replace(/[^\d]/g, '');
-    const accountJid = `${number}@s.whatsapp.net`;
+    const accountJid = getJid(input);
 
     try {
       // Verify user exists on WhatsApp using bot socket

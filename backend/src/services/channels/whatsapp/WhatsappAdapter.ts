@@ -9,15 +9,8 @@ import { Channel } from '../../../types/contracts.js';
 import { ActiveChannel, MessageContext, Middleware } from '../../../types/index.js';
 import { jobQueueService } from '@/services/jobQueue.js';
 
-// Import from openclaw workspace package
-import {
-  sendMessageWhatsApp,
-  sendReactionWhatsApp,
-  sendPollWhatsApp,
-  setActiveWebListener,
-  type ActiveWebListener,
-  type ActiveWebSendOptions
-} from 'openclaw';
+import { getWebOutbound, getWebActiveListener } from '@/utils/openclawImports.js';
+import type { ActiveWebListener, ActiveWebSendOptions } from 'openclaw';
 
 /**
  * WhatsappAdapter wraps the existing DeXMart Baileys/AuthSystem logic
@@ -38,6 +31,9 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public status: string = 'disconnected';
   private presenceInterval: NodeJS.Timeout | null = null;
   private isDisconnecting: boolean = false;
+  private activeDownloads: number = 0;
+  private maxParallelDownloads: number = 5;
+  private qrGenerationCount: number = 0;
 
   constructor(public tenantId: string, channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
     this.instanceId = channelId;
@@ -113,6 +109,13 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public updatePath(newPath: string): void {
     logger.info(`WhatsappAdapter ${this.channelId} path updated from ${this.fullPath} to ${newPath}`);
     this.fullPath = newPath;
+
+    // MASTERMIND Fix: Synchronize AuthSystem path to prevent session desync (Scenario 3)
+    if (newPath.includes('/agents/')) {
+       const parts = newPath.split('/');
+       const agentCollectionPath = `agents/${parts[3]}/channels`;
+       this.authSystem.updatePath(agentCollectionPath);
+    }
   }
 
   public async initialize(): Promise<void> {
@@ -123,9 +126,19 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     logger.info(`Connecting WhatsappAdapter for channel ${this.channelId}. Force: ${forceNewSession}`);
     this.isDisconnecting = false;
 
+    // Cleanup: Remove old socket event listeners before creating a new one
+    if (this.socket && this.socket.ev) {
+      try { this.socket.ev.removeAllListeners('connection.update'); } catch (e) {}
+      try { this.socket.ev.removeAllListeners('messages.upsert'); } catch (e) {}
+    }
+
+    // Step 0: Ensure OpenClaw is ready BEFORE we attempt AuthSystem
+    const loadResult = await getWebActiveListener();
+
     // MASTERMIND Goodie: Listen for QR codes and convert to DataURL for UI
     // MUST be attached before connect() to catch early events
     this.authSystem.on('qr', async (qr) => {
+      this.qrGenerationCount++;
       try {
         const dataUrl = await QRCode.toDataURL(qr);
         this.qrCodeUrl = dataUrl;
@@ -133,6 +146,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
         // MASTERMIND Goodie: Real-time Socket Push
         const { socketService } = await import('@/services/socketService.js');
         socketService.emitQRCode(this.tenantId, this.channelId, dataUrl);
+
+        if (this.qrGenerationCount >= 4) {
+          logger.warn(`[WhatsappAdapter] QR code regenerated ${this.qrGenerationCount} times for ${this.channelId}. User may not be scanning.`);
+        }
       } catch (err) {
         logger.error('Failed to generate QR DataURL', err);
       }
@@ -189,6 +206,7 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       if (!this.socket) return;
       if (update.connection === 'open' && update.me?.id) {
         this.qrCodeUrl = null; // Clear QR on success
+        this.qrGenerationCount = 0; // Reset QR counts
         const phoneNumber = update.me.id.split(':')[0];
         logger.info(`Channel ${this.channelId} connected with number: ${phoneNumber}`);
 
@@ -256,16 +274,18 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
 
         while (retryCount <= maxRetries) {
           try {
-            if (!this.socket) throw new Error('Socket not initialized');
+            if (!this.socket || this.status !== 'connected') {
+              throw new Error('Socket not connected');
+            }
             result = await this.socket.sendMessage(to, payload);
             break; // Success
           } catch (error: any) {
             retryCount++;
             const isStreamClosed = error?.message?.includes('Stream Closed') || error?.message?.includes('connection closed');
-            if (isStreamClosed && retryCount <= maxRetries) {
-              logger.warn(`[WhatsappAdapter] sendMessage failed (Stream Closed). Retrying ${retryCount}/${maxRetries}...`);
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-              // Note: Reconnection logic in AuthSystem should ideally be firing in parallel
+            const isSocketDead = error?.message?.includes('Socket not connected');
+            if ((isStreamClosed || isSocketDead) && retryCount <= maxRetries) {
+              logger.warn(`[WhatsappAdapter] sendMessage failed. Retrying ${retryCount}/${maxRetries}...`);
+              await new Promise(resolve => setTimeout(resolve, 2000 * retryCount)); // Longer delay for reconnect
               continue;
             }
             throw error;
@@ -303,7 +323,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
         await this.socket.sendPresenceUpdate('composing', to);
       },
     };
-    setActiveWebListener(this.channelId, listener);
+    const listenerModule = await getWebActiveListener();
+    if (listenerModule?.setActiveWebListener) {
+      listenerModule.setActiveWebListener(this.channelId, listener);
+    }
 
     // Listen for messages
     this.socket.ev.on('messages.upsert', async ({ messages, type }: any) => {
@@ -334,9 +357,21 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       clearInterval(this.presenceInterval);
       this.presenceInterval = null;
     }
-    setActiveWebListener(this.channelId, null);
+    const listenerModule = await getWebActiveListener();
+    if (listenerModule?.setActiveWebListener) {
+      listenerModule.setActiveWebListener(this.channelId, null);
+    }
     await this.authSystem.disconnect();
     this.socket = null;
+
+    // MASTERMIND Resilience: Cleanup pending outbound jobs (Scenario 19)
+    try {
+      const { jobQueueService } = await import('@/services/jobQueue.js');
+      await jobQueueService.removeJobsByChannelId(this.channelId, 'whatsapp-outbound');
+      logger.info(`[WhatsappAdapter] Cleaned up pending outbound jobs for stopped channel ${this.channelId}`);
+    } catch (err) {
+      logger.warn(`[WhatsappAdapter] Failed to cleanup jobs during shutdown for ${this.channelId}`, err);
+    }
   }
 
   public async shutdown(): Promise<void> {
@@ -377,10 +412,15 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     const mediaUrl = content.mediaUrl;
 
     // Dispatch via OpenClaw's pipeline
-    await sendMessageWhatsApp(target, text, {
-      ...options,
-      mediaUrl
-    });
+    const outboundModule = await getWebOutbound();
+    if (outboundModule?.sendMessageWhatsApp) {
+      await outboundModule.sendMessageWhatsApp(target, text, {
+        ...options,
+        mediaUrl
+      });
+    } else {
+      throw new Error('sendMessageWhatsApp fallback failed to load');
+    }
 
     // Track stats
     try {
@@ -401,19 +441,25 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
 
   public async sendReaction(chatJid: string, messageId: string, emoji: string): Promise<void> {
     if (!this.socket) throw new Error('Adapter not connected');
-    await sendReactionWhatsApp(chatJid, messageId, emoji, {
-      verbose: false,
-      accountId: this.channelId
-    });
+    const outboundModule = await getWebOutbound();
+    if (outboundModule?.sendReactionWhatsApp) {
+      await outboundModule.sendReactionWhatsApp(chatJid, messageId, emoji, {
+        verbose: false,
+        accountId: this.channelId
+      });
+    }
   }
 
   public async sendPoll(to: string, question: string, options: string[]): Promise<void> {
     if (!this.socket) throw new Error('Adapter not connected');
     const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
-    await sendPollWhatsApp(jid, { question, options }, {
-      verbose: false,
-      accountId: this.channelId
-    });
+    const outboundModule = await getWebOutbound();
+    if (outboundModule?.sendPollWhatsApp) {
+      await outboundModule.sendPollWhatsApp(jid, { question, options }, {
+        verbose: false,
+        accountId: this.channelId
+      });
+    }
   }
 
   public async sendCommon(message: CommonMessage): Promise<void> {

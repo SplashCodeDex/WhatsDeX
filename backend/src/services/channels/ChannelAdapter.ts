@@ -3,6 +3,19 @@ import { CommonMessage } from '../../types/omnichannel.js';
 export type ChannelId = string;
 
 /**
+ * Defines the standardized constructor signature for all ChannelAdapters.
+ * This enables the true registry pattern in ChannelService.
+ */
+export interface ChannelAdapterConstructor {
+  new (
+    tenantId: string,
+    channelId: string,
+    fullPath: string | undefined,
+    channelData: any // Partial<Channel>
+  ): ChannelAdapter;
+}
+
+/**
  * ChannelAdapter is the base interface for all messaging channel adapters
  * in DeXMart. It follows the pattern established by OpenClaw but is
  * tailored for DeXMart's multi-tenant architecture.

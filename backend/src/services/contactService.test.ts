@@ -31,15 +31,16 @@ vi.mock('../lib/firebase.js', () => ({
 
 vi.mock('./FirebaseService.js', () => ({
     firebaseService: {
-        getCollection: vi.fn().mockResolvedValue([{ id: 'bot_1' }]),
+        getCollection: vi.fn().mockResolvedValue([{ id: 'channel_1' }]),
         setDoc: vi.fn().mockResolvedValue(undefined),
     }
 }));
 
-// Mock the 'fs' module
 vi.mock('fs', () => ({
     default: {
         createReadStream: vi.fn(),
+        existsSync: vi.fn().mockReturnValue(true),
+        readFileSync: vi.fn().mockReturnValue('{}'),
     }
 }));
 
@@ -91,11 +92,11 @@ describe('ContactService', () => {
         })
       );
 
-      // Verify bot stats update
-      expect(firebaseService.getCollection).toHaveBeenCalledWith('bots', tenantId);
+      // Verify channel stats update
+      expect(firebaseService.getCollection).toHaveBeenCalledWith('channels', tenantId);
       expect(firebaseService.setDoc).toHaveBeenCalledWith(
-          'bots',
-          'bot_1',
+          'channels',
+          'channel_1',
           expect.objectContaining({ 'stats.contactsCount': expect.anything() }),
           tenantId,
           true

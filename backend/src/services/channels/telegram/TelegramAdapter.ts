@@ -1,6 +1,6 @@
 import { Bot, webhookCallback } from "grammy";
 import { type ChannelAdapter, type InboundMessageEvent, type ChannelId } from "../ChannelAdapter.js";
-import { sendMessageTelegram } from 'openclaw';
+import { getTelegramSend } from '@/utils/openclawImports.js';
 import logger from '@/utils/logger.js';
 
 /**
@@ -11,10 +11,15 @@ export class TelegramAdapter implements ChannelAdapter {
   public readonly instanceId: string;
   private bot: Bot;
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
+  private token: string;
+  public fullPath?: string;
 
-  constructor(private tenantId: string, private channelId: string, private token: string) {
+  constructor(private tenantId: string, private channelId: string, fullPath: string | undefined, channelData: any) {
     this.instanceId = channelId;
-    this.bot = new Bot(token);
+    this.fullPath = fullPath;
+    this.token = channelData?.credentials?.token || '';
+    if (!this.token) throw new Error('Missing Telegram token in channelData');
+    this.bot = new Bot(this.token);
   }
 
   public async initialize(): Promise<void> {
@@ -48,7 +53,7 @@ export class TelegramAdapter implements ChannelAdapter {
   public async connect(): Promise<void> {
     // For long-polling or webhook.
     // In our multi-tenant server, we use webhooks.
-    logger.info(`TelegramAdapter for ${this.channelId} initialized.`);
+    logger.info(`TelegramAdapter for ${this.channelId} is ready (hooks attached during initialization).`);
   }
 
   public async disconnect(): Promise<void> {
@@ -60,10 +65,11 @@ export class TelegramAdapter implements ChannelAdapter {
   }
 
   public async sendMessage(target: string, text: string): Promise<void> {
-    // Use OpenClaw's robust send logic
+    // Use OpenClaw's robust send logic via dist to avoid tsx source resolution issues
+    const { sendMessageTelegram } = await getTelegramSend();
     await sendMessageTelegram(target, text, {
       token: this.token,
-      api: this.bot.api,
+      api: this.bot.api as any,
       textMode: "markdown",
     });
 

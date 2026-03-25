@@ -1,0 +1,27 @@
+{
+  "agents": {
+    "queen-01": {
+      "id": "queen-01",
+      "name": "Hive Queen Alpha",
+      "type": "coordinator",
+      "status": "active",
+      "cognitivePattern": "adaptive",
+      "learningRate": 0.05,
+      "memory": true,
+      "capabilities": [
+        "reasoning",
+        "learning"
+      ],
+      "metrics": {
+        "tasksCompleted": 0,
+        "successRate": 1,
+        "adaptations": 0
+      },
+      "createdAt": "2026-03-19T19:39:28.366Z",
+      "lastActivity": "2026-03-19T19:39:28.366Z"
+    }
+  },
+  "workflows": {},
+  "knowledge": {},
+  "version": "3.0.0"
+}

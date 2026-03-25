@@ -1,4 +1,5 @@
 import { MessageContext } from '../../types/index.js';
+import { getJid } from '../../utils/baileysUtils.js';
 
 interface PremiumUser {
   premium?: boolean;
@@ -31,7 +32,7 @@ export default {
       const userMentions = [];
 
       for (const user of premiumUsers) {
-        userMentions.push(`${user.id}@s.whatsapp.net`);
+        userMentions.push(getJid(user.id));
 
         if (user.expiration) {
           const daysLeft = tools.msg.convertMsToDuration(Date.now() - user.expiration, ['hari']);

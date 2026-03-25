@@ -4,7 +4,12 @@ import { proto } from 'baileys';
  * Ensures a string is a valid WhatsApp JID
  */
 const getJid = (input: string): string => {
-  if (input.endsWith('@s.whatsapp.net') || input.endsWith('@g.us')) {
+  if (
+    input.endsWith('@s.whatsapp.net') ||
+    input.endsWith('@g.us') ||
+    input.endsWith('@lid') ||
+    input.endsWith('@hosted.lid')
+  ) {
     return input;
   }
   return `${input.replace(/[^\d]/g, '')}@s.whatsapp.net`;

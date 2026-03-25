@@ -15,13 +15,12 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@DeXMart/shared/*": ["../shared/*"],
-      "openclaw": ["../openclaw/src/index.ts"],
-      "openclaw/*": ["../openclaw/src/*"]
+      "openclaw": ["../openclaw/dist/index.d.ts"],
+      "openclaw/*": ["../openclaw/dist/*.d.ts", "../openclaw/dist/*"]
     },
     "allowJs": false,
     "checkJs": false
   },
-  "include": ["src/**/*", "../shared/**/*"],
-  "exclude": ["node_modules", "**/*.test.ts", "../openclaw", "../openclaw/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.test.ts"]
 }

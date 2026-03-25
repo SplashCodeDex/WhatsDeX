@@ -9,21 +9,8 @@ const router = express.Router();
 //  STATUS & HEALTH
 // ═══════════════════════════════════════════════════════
 
-router.get('/status', async (_req: Request, res: Response) => {
-  try {
-    const gateway = OpenClawGateway.getInstance();
-    res.json({
-      success: true,
-      data: {
-        gatewayInitialized: gateway.isInitialized(),
-        uptimeMs: process.uptime() * 1000,
-      }
-    });
-  } catch (error) {
-    logger.error('Omnichannel status error', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch status' });
-  }
-});
+router.get('/status', OmnichannelController.getStatus);
+router.get('/platforms', OmnichannelController.getSupportedPlatforms);
 
 router.get('/gateway/health', async (_req: Request, res: Response) => {
   try {

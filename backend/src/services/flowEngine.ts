@@ -4,6 +4,7 @@ import { cacheService } from './cache.js';
 import { TemplateService } from './templateService.js';
 import { db } from '../lib/firebase.js';
 import { Timestamp } from 'firebase-admin/firestore';
+import { Result } from '../types/result.js';
 
 interface FlowState {
   flowId: string;
@@ -167,8 +168,17 @@ export class FlowEngine {
       // Track execution for metrics/monetization
       await this.trackNodeExecution(tenantId, node.id, 'skill', { skillName });
 
-      // Execute tool via UnifiedAI Registry
-      const result = await unifiedAI.executeTool(skillName, data.params || {}, context);
+      // MASTERMIND Resilience: Skill Execution Timeout (Scenario 42)
+      const TIMEOUT_MS = 120 * 1000;
+      const timeoutPromise = new Promise<Result<any>>((_, reject) => 
+        setTimeout(() => reject(new Error(`SKILL_TIMEOUT: ${skillName} exceeded ${TIMEOUT_MS / 1000}s`)), TIMEOUT_MS)
+      );
+
+      // Execute tool via UnifiedAI Registry with Timeout Race
+      const result = await Promise.race([
+        unifiedAI.executeTool(skillName, data.params || {}, context),
+        timeoutPromise
+      ]);
 
       if (result.success && result.message) {
         await context.reply(result.message);
@@ -178,6 +188,9 @@ export class FlowEngine {
       }
     } catch (error: any) {
       logger.error('FlowEngine.executeSkillNode error:', error);
+      if (error?.message?.includes('SKILL_TIMEOUT')) {
+        await context.reply(`⚠️ Skill execution timed out. Please try again later.`);
+      }
     }
   }
 

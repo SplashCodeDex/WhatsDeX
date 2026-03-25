@@ -108,10 +108,10 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         }
 
         // 2. Check for User Lookup
-        let lookupDoc = await db.collection('users').doc(uid).get();
+        const lookupDoc = await db.collection('users').doc(uid).get();
         let tenantId: string;
         let role: string;
-        let displayName = name || 'User';
+        const displayName = name || 'User';
 
         if (!lookupDoc.exists) {
             // 3. New User - Check for Email Conflict (Option B)
@@ -484,7 +484,7 @@ export const login = async (req: Request, res: Response) => {
             data: {
                 token,
                 firebaseToken,
-                user: { id: uid, name: user.displayName || 'User', email: user.email, role, tenantId, photoURL: user.photoURL },
+                user: { id: uid, name: user.displayName || 'User', email: user.email, role, tenantId, photoURL: user.photoURL, plan: user.plan || tenant.plan || 'starter' },
                 tenant: { id: tenantId, name: tenant.name, subdomain: tenant.subdomain },
             }
         });
@@ -695,7 +695,7 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
         res.json({
             success: true,
             data: {
-                user: { id: user.id, name: user.displayName, email: user.email, role: user.role, tenantId, photoURL: user.photoURL, token },
+                user: { id: user.id, name: user.displayName, email: user.email, role: user.role, tenantId, photoURL: user.photoURL, token, plan: user.plan || tenant.plan || 'starter' },
                 tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
                 firebaseToken
             }

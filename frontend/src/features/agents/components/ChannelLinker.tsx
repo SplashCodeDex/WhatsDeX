@@ -28,7 +28,7 @@ interface ChannelLinkerProps {
  */
 export function ChannelLinker({ agentId }: ChannelLinkerProps) {
     const { user } = useAuth();
-    const { tier: userTier, getLimit } = useAuthorityStore();
+    const { tier, getLimit } = useAuthorityStore();
     const { channels, fetchAllChannels, isLoading } = useOmnichannelStore();
     const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
@@ -36,7 +36,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
         fetchAllChannels();
     }, [fetchAllChannels]);
 
-    const userTier = user?.plan || 'starter';
+    const userTier = tier || user?.plan || 'starter';
     const activeLinkedChannels = channels.filter(c => c.assignedAgentId && c.assignedAgentId !== 'system_default').length;
 
     const handleLink = async (channelId: string) => {

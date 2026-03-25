@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { webhookService } from '../services/webhookService.js';
 import logger from '../utils/logger.js';
-import { deleteWebhookSchema } from '../schemas/webhookSchemas.js';
+import { deleteWebhookSchema } from '@DeXMart/shared';
 
 export class WebhookController {
     /**

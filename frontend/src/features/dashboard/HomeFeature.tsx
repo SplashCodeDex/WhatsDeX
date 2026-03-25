@@ -12,7 +12,7 @@ import {
     Activity
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { GatewayMetrics } from './components/GatewayMetrics';
 import { NestedResearchTrace } from './components/NestedResearchTrace';
@@ -29,10 +29,15 @@ import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 export function HomeFeature() {
     const { fetchGatewayHealth, fetchSkillReport, gatewayHealth, getSkillCount } = useOmnichannelStore();
     const { user } = useAuthStore();
+    
+    const hasFetched = useRef(false);
+    const [fetchError, setFetchError] = useState(false);
 
     useEffect(() => {
-        fetchGatewayHealth();
-        fetchSkillReport();
+        if (hasFetched.current) return;
+        hasFetched.current = true;
+        Promise.all([fetchGatewayHealth(), fetchSkillReport()])
+            .catch(() => setFetchError(true));
     }, [fetchGatewayHealth, fetchSkillReport]);
 
     const firstName = (user?.name ? user.name.split(' ')[0] : 'User') || 'User';

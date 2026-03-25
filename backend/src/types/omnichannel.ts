@@ -1,13 +1,10 @@
 import { z } from 'zod';
+import { getPlatformMetadata } from '../services/channels/registry.js';
 
-export const PlatformSchema = z.enum([
-  'whatsapp',
-  'telegram',
-  'discord',
-  'slack',
-  'google_chat',
-  'web'
-]);
+export const PlatformSchema = z.string().refine(
+  (val) => !!getPlatformMetadata(val) || val === 'system', // Allow 'system' for internal routing
+  { message: "Unsupported omnichannel platform" }
+);
 
 export type Platform = z.infer<typeof PlatformSchema>;
 

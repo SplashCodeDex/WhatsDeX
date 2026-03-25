@@ -1,8 +1,65 @@
-// @ts-ignore
-import { loadWorkspaceSkillEntries } from 'openclaw/agents/skills/workspace';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import path from 'node:path';
+import fs from 'node:fs';
 import { toolRegistry } from './toolRegistry.js';
 import logger from '@/utils/logger.js';
 import { systemAuthorityService, PlanTier } from './SystemAuthorityService.js';
+import type { Result } from '../types/index.js';
+
+/**
+ * Lazily import `loadWorkspaceSkillEntries` from the openclaw dist build.
+ *
+ * Why dynamic? The `tsx` loader incorrectly resolves the `types` export
+ * condition from openclaw's package.json exports map, loading the raw `.ts`
+ * source instead of the compiled `.js` dist. This causes the named export
+ * to be missing at runtime.
+ *
+ * We locate the `openclaw` package by walking up from this file's directory
+ * to find `node_modules/openclaw`, then import the compiled dist directly
+ * via a `file://` URL (required on Windows where drive letters like `W:`
+ * are mistaken for URL schemes).
+ */
+function findPackageRoot(startDir: string, packageName: string): string | null {
+  let dir = startDir;
+  while (true) {
+    const candidate = path.join(dir, 'node_modules', packageName, 'package.json');
+    if (fs.existsSync(candidate)) return path.dirname(candidate);
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
+const _thisDir = path.dirname(fileURLToPath(import.meta.url));
+const _openclawRoot = findPackageRoot(_thisDir, 'openclaw');
+const _workspaceUrl = _openclawRoot
+  ? pathToFileURL(path.join(_openclawRoot, 'dist', 'agents', 'skills', 'workspace.js')).href
+  : null;
+
+let _loadWorkspaceSkillEntries: ((workspaceDir: string, opts?: any) => any[]) | null = null;
+
+async function getLoadWorkspaceSkillEntries() {
+  if (!_loadWorkspaceSkillEntries) {
+    if (!_workspaceUrl) {
+      logger.warn('Could not locate openclaw package root, using empty fallback');
+      _loadWorkspaceSkillEntries = () => [];
+      return _loadWorkspaceSkillEntries;
+    }
+    
+    try {
+      const mod = await import(/* @vite-ignore */ _workspaceUrl);
+      _loadWorkspaceSkillEntries = mod.loadWorkspaceSkillEntries;
+      if (!_loadWorkspaceSkillEntries) {
+        logger.warn('loadWorkspaceSkillEntries not found in openclaw module, using empty fallback');
+        _loadWorkspaceSkillEntries = () => [];
+      }
+    } catch (error) {
+      logger.error('Failed to dynamic import openclaw workspace:', error);
+      _loadWorkspaceSkillEntries = () => [];
+    }
+  }
+  return _loadWorkspaceSkillEntries;
+}
 
 /**
  * SkillsManager wraps OpenClaw's skills platform and handles
@@ -30,7 +87,8 @@ export class SkillsManager {
       const tools = toolRegistry.getAllTools();
 
       // Also get the status report for installation/dependency info
-      const statusEntries = await loadWorkspaceSkillEntries(process.cwd());
+      const loadFn = await getLoadWorkspaceSkillEntries();
+      const statusEntries = await loadFn(process.cwd());
 
       // Get tenant-specific skill configuration if available
       let skillsConfig: Record<string, { enabled: boolean }> = {};
@@ -82,8 +140,31 @@ export class SkillsManager {
   /**
    * Checks if a tenant is eligible for a specific skill based on their tier.
    */
-  public async isTenantEligible(tenantId: string, skillId: string, tier: PlanTier): Promise<boolean> {
+  public async isTenantEligible(tenantId: string, skillId: string, tier?: PlanTier): Promise<boolean> {
+    if (!tier) {
+      const { db } = await import('../lib/firebase.js');
+      const doc = await db.collection('tenants').doc(tenantId).get();
+      tier = (doc.data()?.plan || 'starter') as PlanTier;
+    }
     return systemAuthorityService.isSkillAllowed(tier, skillId);
+  }
+
+  /**
+   * Securely execute a skill after verifying authority
+   */
+  public async executeSecureSkill(tenantId: string, skillId: string, params: any, context: any): Promise<Result<any>> {
+    try {
+      // 1. Gating Check
+      const eligible = await this.isTenantEligible(tenantId, skillId);
+      if (!eligible) {
+        return { success: false, error: new Error(`UNAUTHORIZED_SKILL: Your current plan does not include the '${skillId}' skill.`) };
+      }
+
+      // 2. Execution
+      return await toolRegistry.executeTool(skillId, params, context);
+    } catch (error: any) {
+      return { success: false, error };
+    }
   }
 
   /**

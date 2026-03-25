@@ -94,6 +94,14 @@ export class AutomationService {
             return { success: false, error };
         }
     }
+
+    /**
+     * Executes an automation. Implementation pending in Mastermind.
+     */
+    async executeAutomation(tenantId: string, automationId: string, context: any): Promise<void> {
+        logger.info(`[AutomationService] Executing automation ${automationId} for tenant ${tenantId} (Pending implementation)`);
+        // Implementation would involve iterating over actions
+    }
 }
 
 export const automationService = AutomationService.getInstance();

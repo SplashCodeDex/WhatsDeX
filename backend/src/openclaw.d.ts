@@ -4,6 +4,10 @@ declare module 'openclaw' {
   export function sendPollWhatsApp(jid: string, poll: any, options?: any): Promise<any>;
   export function setActiveWebListener(accountId: string, listener: any): void;
   export function sendMessageTelegram(to: string, text: string, opts: any): Promise<any>;
+  export function sendMessageFacebook(to: string, text: string, credentials: any, options?: any): Promise<any>;
+  export function validateFacebookSignature(payload: string, signature: string | string[] | undefined, appSecret: string): boolean;
+  export function handleFacebookChallenge(mode: any, token: any, challenge: any, myVerifyToken: string): string | null;
+  export function normalizeFacebookEvents(body: any): any[];
   export function createOpenClawTools(options?: any): any[];
   export function startGatewayServer(config?: any): Promise<any>;
   export class OpenClawGateway {

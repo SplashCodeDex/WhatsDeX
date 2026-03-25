@@ -17,6 +17,17 @@ import { mastermindStreamService } from './MastermindStreamService.js';
 import { aiAnalyticsService } from './aiAnalytics.js';
 import { DeliberationService } from '../utils/deliberation.js';
 import { systemAuthorityService, PlanTier } from './SystemAuthorityService.js';
+import tools from '../tools/exports.js';
+import * as formatter from '../utils/formatters.js';
+import state from '../utils/state.js';
+import { groupService } from './groupService.js';
+import { channelService } from './ChannelService.js';
+import { agentService } from './AgentService.js';
+import { ingressService } from './IngressService.js';
+import { userService } from './userService.js';
+import { tenantConfigService } from './tenantConfigService.js';
+import { configService } from './ConfigService.js';
+import { CommandSystem } from './commandSystem.js';
 
 interface AIDecisionEngine {
   confidenceThreshold: number;
@@ -148,6 +159,18 @@ export class GeminiAI extends EventEmitter {
       const perceptionDelay = DeliberationService.getPerceptionDelay();
       await DeliberationService.wait(perceptionDelay);
 
+      // 2. Plan & Capability Resolution
+      const tenantDoc = await firebaseService.getDoc('tenants', tenantId);
+      const tier = ((tenantDoc as any)?.plan || 'starter') as PlanTier;
+      const caps = systemAuthorityService.getCapabilities(tier);
+      
+      // 3. Model Gating: Validate model eligibility for the tenant's tier
+      let selectedModel = (agent as any)?.model || 'gemini-1.5-flash';
+      if (!caps.models.includes(selectedModel)) {
+        logger.warn(`Tenant ${tenantId} [${tier}] attempted to use unauthorized model: ${selectedModel}. Falling back to default.`);
+        selectedModel = 'gemini-1.5-flash';
+      }
+
       // Trigger initial presence if available
       if (message.metadata?.sendPresenceUpdate) {
         await message.metadata.sendPresenceUpdate('composing', message.id);
@@ -159,9 +182,6 @@ export class GeminiAI extends EventEmitter {
 
       // Build context
       const context = await this.buildGenericContext(tenantId, channelId, userId, text, message);
-      const tenantResult = await multiTenantService.getTenant(tenantId);
-      const plan = (tenantResult.success ? tenantResult.data.plan : 'starter') as PlanTier;
-      const caps = systemAuthorityService.getCapabilities(plan);
 
       // 1. Retrieve Historical Context (RAG) - Scoped
       const historyResult = await memoryService.retrieveRelevantContext(userId, text, { platform, chatId: userId });
@@ -188,14 +208,14 @@ Context: Omnichannel Mastermind.
 Current Time: ${new Date().toLocaleString()}
 User: ${JSON.stringify(context.user)}
 Platform: ${message.platform}
-Plan: ${plan}
+Plan: ${tier}
 ${historicalContext}
 ${toolContext}
 Use the tools provided to fulfill user requests accurately. If a tool result is not what was expected, explain and offer alternatives.`;
 
       // Rule 5+: Semantic Memoization + Tool Loop (Agentic)
       const finalResponse = await this.gemini.getManager().execute(async () => {
-        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform} [Plan: ${plan}]`);
+        logger.info(`Rule 5+: Performing agentic execution for ${userId} on ${message.platform} [Plan: ${tier}]`);
 
         // Build history from scoped short-term memory
         const conversationHistory = await this.getScopedConversationMemory(tenantId, platform, userId);
@@ -242,10 +262,10 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
             const toolResults = await Promise.all(response.message.tool_calls.map(async (toolCall) => {
               try {
                 // Tier Gating Check
-                const isEligible = await skillsManager.isTenantEligible(tenantId, toolCall.function.name, plan);
+                const isEligible = await skillsManager.isTenantEligible(tenantId, toolCall.function.name, tier);
 
                 if (!isEligible) {
-                  logger.warn(`Tier Gating: Tenant ${tenantId} (${plan}) denied access to tool ${toolCall.function.name}`);
+                  logger.warn(`Tier Gating: Tenant ${tenantId} (${tier}) denied access to tool ${toolCall.function.name}`);
                   mastermindStreamService.error(tenantId, agentId, `Access denied to tool ${toolCall.function.name}`);
                   return {
                     role: 'tool',
@@ -1477,6 +1497,20 @@ Message: "${content}"
     return weightedScore >= 0.6;
   }
 
+  /**
+   * Simple text generation for background tasks (e.g. summarization)
+   * 2026 Mastermind Edition - Rule 5 Memoized
+   */
+  async generateText(prompt: string): Promise<Result<string>> {
+    try {
+      const response = await this.gemini.getChatCompletion(prompt);
+      return { success: true, data: response };
+    } catch (error: any) {
+      logger.error('[GeminiAI] generateText failed:', error);
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
+  }
+
   // Restored helper methods
   async assessContextualRelevance(intent: any, context: any) { return 0.8; }
   async planWorkflow(actions: any[], context: any) { return { tools: [] as any[], reasoning: '' }; }
@@ -1488,5 +1522,59 @@ Message: "${content}"
   async getGroupContext(groupId: string) { return null; }
   async getRecentActions(userId: string) { return []; }
 }
+
+let _geminiAIInstance: GeminiAI | null = null;
+
+/**
+ * Get the singleton instance of GeminiAI.
+ * Initializes with a default context if none exists.
+ */
+export function getGeminiAI(): GeminiAI {
+  if (!_geminiAIInstance) {
+    const defaultContext: GlobalContext = {
+      database: databaseService,
+      databaseService: databaseService,
+      config: configService,
+      tools,
+      formatter,
+      logger,
+      groupService,
+      channelService,
+      agentService,
+      ingressService,
+      userService,
+      tenantConfigService,
+      state,
+      // These are lazily initialized if needed within GeminiAI methods, 
+      // or passed as null if not strictly required for top-level generateText
+      commandSystem: null as any,
+      unifiedAI: null as any,
+    };
+
+    // Note: CommandSystem and unifiedAI require the context to be fully built.
+    // We instantiate GeminiAI with the context, and it will be assigned to unifiedAI.
+    _geminiAIInstance = new GeminiAI(defaultContext);
+    defaultContext.unifiedAI = _geminiAIInstance;
+    
+    // CommandSystem also needs the context
+    const commandSystem = new CommandSystem(defaultContext);
+    defaultContext.commandSystem = commandSystem;
+  }
+  return _geminiAIInstance;
+}
+
+/**
+ * Lazy proxy singleton for geminiAI.
+ * This resolves the export mismatch in TreeIndexService.ts.
+ */
+export const geminiAI = new Proxy({} as GeminiAI, {
+  get(_target, prop: string | symbol) {
+    return (getGeminiAI() as any)[prop];
+  },
+  set(_target, prop: string | symbol, value: any) {
+    (getGeminiAI() as any)[prop] = value;
+    return true;
+  },
+});
 
 export default GeminiAI;

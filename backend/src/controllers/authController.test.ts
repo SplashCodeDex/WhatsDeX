@@ -57,13 +57,23 @@ vi.mock('@/lib/firebase.js', () => {
   };
 });
 
-vi.mock('@/services/ConfigService.js', () => ({
-  ConfigService: {
-    getInstance: () => ({
-      get: vi.fn().mockReturnValue('jwt-secret'),
-    }),
-  },
-}));
+vi.mock('@/services/ConfigService.js', () => {
+  const configMap: Record<string, string> = {
+    'JWT_SECRET': 'jwt-secret',
+    'auth.jwtExpires': '24h',
+    'auth.refreshExpires': '30d',
+  };
+  return {
+    ConfigService: {
+      getInstance: () => ({
+        get: vi.fn().mockImplementation((key: string) => configMap[key] ?? null),
+      }),
+    },
+    config: {
+      get: vi.fn().mockImplementation((key: string) => configMap[key] ?? null),
+    },
+  };
+});
 
 describe('authController - loginWithGoogle', () => {
   let req: Partial<Request>;

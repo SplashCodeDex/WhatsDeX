@@ -1,4 +1,5 @@
 import { MessageContext } from '../../types/index.js';
+import { getJid } from '../../utils/baileysUtils.js';
 export default {
   name: 'addpremiumuser',
   aliases: ['addpremuser', 'addprem', 'apu'],
@@ -11,7 +12,7 @@ export default {
     const userJid =
       ctx.quoted?.senderJid ||
       (ctx.getMentioned ? (await ctx.getMentioned())[0] : null) ||
-      (ctx.args[0] ? `${ctx.args[0].replace(/[^\d]/g, '')}@s.whatsapp.net` : null);
+      (ctx.args[0] ? getJid(ctx.args[0]) : null);
     const daysAmount = parseInt(ctx.args[ctx.quoted?.senderJid ? 0 : 1], 10) || null;
 
     if (!userJid)

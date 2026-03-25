@@ -16,7 +16,8 @@ See [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/DeXMart/frontend/ARCHITECTURE.
 
 ### Fusion Rules
 
-1. **Never subtract, always weave** — Don't rip out modules to "clean up." Bridge DeXMart services to consume OpenClaw's engine through adapters (e.g., `TelegramAdapter` imports `openclaw/src/telegram/send.js`).
+1. **Never subtract, always weave** — Don't rip out modules to "clean up." Bridge DeXMart services to consume OpenClaw's engine through adapters.
+   - **CRITICAL IMPORT PATTERN (BACKEND)**: Never import directly from the `openclaw` package name in `backend/` files, as `tsx` will try to compile its source and fail on CJS interop for transitive dependencies. Instead, ALWAYS use the centralized `backend/src/utils/openclawImports.ts` utility (e.g., `const { sendMessageTelegram } = await getTelegramSend();`).
 2. **Best-of-both wins** — When both stacks solve the same problem, pick the stronger implementation and adapt the other side to use it.
 3. **Shared seams, not shared code** — Integrate through well-defined interfaces (`ChannelAdapter`, gateway API), not by merging internal code.
 4. **Respect ownership** — Frontend, multi-tenancy, and AI live in DeXMart. Channel engines, gateway, and tooling live in OpenClaw.

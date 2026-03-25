@@ -10,12 +10,18 @@ export class GoogleChatAdapter implements ChannelAdapter {
   public readonly instanceId: string;
   private messageHandler: ((event: InboundMessageEvent) => Promise<void>) | null = null;
 
+  private credentials: Record<string, any>;
+  public fullPath?: string;
+
   constructor(
     private tenantId: string,
     private channelId: string,
-    private credentials: Record<string, any>
+    fullPath: string | undefined,
+    channelData: any
   ) {
-    this.instanceId = this.channelId;
+    this.instanceId = channelId;
+    this.fullPath = fullPath;
+    this.credentials = channelData?.credentials || {};
   }
 
   async initialize(): Promise<void> {
@@ -40,6 +46,7 @@ export class GoogleChatAdapter implements ChannelAdapter {
     // Google Chat usually requires OAuth2 or Webhooks.
     // This is a placeholder for the actual API call using the credentials.
     logger.info(`[GoogleChatAdapter] Would send to ${target}: ${text}`);
+    throw new Error('GoogleChatAdapter.sendMessage is currently a placeholder and not fully implemented.');
   }
 
   public async sendCommon(message: CommonMessage): Promise<void> {
@@ -49,5 +56,35 @@ export class GoogleChatAdapter implements ChannelAdapter {
 
   public onMessage(handler: (event: InboundMessageEvent) => Promise<void>): void {
     this.messageHandler = handler;
+  }
+
+  public async handleWebhook(req: any, res: any): Promise<void> {
+    if (!this.messageHandler) return res.status(200).send('OK');
+    try {
+      const payload = req.body;
+      if (!payload) return res.status(400).send('Bad Request');
+      
+      const text = payload.message?.text || payload.message?.argumentText;
+      const sender = payload.user?.name || payload.user?.displayName;
+      const messageId = payload.message?.name || crypto.randomUUID();
+
+      if (text && sender && payload.type === 'MESSAGE') {
+        const event: InboundMessageEvent = {
+          tenantId: this.tenantId,
+          channelId: this.instanceId,
+          channelType: this.id as ChannelId,
+          fullPath: this.fullPath,
+          sender,
+          content: text,
+          timestamp: new Date(),
+          raw: { ...payload, id: messageId }
+        };
+        await this.messageHandler(event);
+      }
+      res.status(200).send('OK');
+    } catch (error) {
+      logger.error(`[GoogleChatAdapter] Error processing inbound webhook:`, error);
+      res.status(500).send('Error');
+    }
   }
 }

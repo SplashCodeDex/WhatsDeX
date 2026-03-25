@@ -4,7 +4,7 @@ import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import logger from '@/utils/logger.js';
 import crypto from 'crypto';
 import { channelManager } from './channels/ChannelManager.js';
-import { WhatsappAdapter } from './channels/whatsapp/WhatsappAdapter.js';
+import { getPlatformAdapter, getSupportedPlatforms, PlatformMetadata } from './channels/registry.js';
 import { systemAuthorityService } from './SystemAuthorityService.js';
 
 /**
@@ -15,6 +15,7 @@ import { systemAuthorityService } from './SystemAuthorityService.js';
  */
 export class ChannelService {
   private static instance: ChannelService;
+  private startingChannels: Map<string, Promise<Result<void>>> = new Map();
 
   private constructor() { }
 
@@ -44,7 +45,13 @@ export class ChannelService {
       }
 
       const channelId = `chan_${crypto.randomUUID()}`;
-      const { createdAt, updatedAt, ...restData } = channelData;
+      const { createdAt, updatedAt, config = {}, ...restData } = channelData;
+
+      // Auto-generate a generic webhookSecret for non-native channels
+      const isNative = ['whatsapp', 'telegram', 'discord'].includes(restData.type || 'whatsapp');
+      if (!isNative && !config.webhookSecret) {
+        config.webhookSecret = crypto.randomBytes(32).toString('hex');
+      }
 
       const rawData = {
         id: channelId,
@@ -58,6 +65,7 @@ export class ChannelService {
           contactsCount: 0,
           errorsCount: 0
         },
+        config,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         ...restData
@@ -137,6 +145,13 @@ export class ChannelService {
   }
 
   /**
+   * Get list of supported platforms from registry
+   */
+  public getSupportedPlatforms(): PlatformMetadata[] {
+    return getSupportedPlatforms();
+  }
+
+  /**
    * Synchronize Firestore status with real memory state
    */
   private syncMemoryStatus(channel: Channel): Channel {
@@ -162,6 +177,15 @@ export class ChannelService {
    */
   async updateChannel(tenantId: string, channelId: string, patch: Partial<Channel>, agentId: string = 'system_default'): Promise<Result<Channel>> {
     try {
+      // 1. Optimistic Locking: Verify document version if provided in the patch
+      if (patch.updatedAt) {
+        const current = await this.getChannel(tenantId, channelId, agentId);
+        if (current.success && current.data.updatedAt && (current.data.updatedAt as any).toMillis() !== (patch.updatedAt as any).toMillis()) {
+          logger.warn(`Optimistic lock failure for channel ${channelId}: document was modified by another process.`);
+          return { success: false, error: new Error('DOCUMENT_STALE: Channel state was modified by another request.') };
+        }
+      }
+
       const updateData = {
         ...patch,
         updatedAt: Timestamp.now()
@@ -215,135 +239,110 @@ export class ChannelService {
   }
 
   /**
+   * Find a channel by its ID across all tenants and agents.
+   * Uses collectionGroup for efficient global lookup.
+   */
+  async findChannelByIdGlobally(channelId: string): Promise<Result<{ channel: Channel; tenantId: string; agentId: string }>> {
+    try {
+      const { db } = await import('@/lib/firebase.js');
+      const snapshot = await db.collectionGroup('channels').where('id', '==', channelId).get();
+
+      if (snapshot.empty) {
+        return { success: false, error: new Error(`Channel not found globally: ${channelId}`) };
+      }
+
+      const doc = snapshot.docs[0];
+      const data = doc.data() as Channel;
+      
+      // Extract tenantId and agentId from path: tenants/{T}/agents/{A}/channels/{C}
+      const pathParts = doc.ref.path.split('/');
+      const tenantId = pathParts[1];
+      const agentId = pathParts[3];
+
+      return { success: true, data: { channel: data, tenantId, agentId } };
+    } catch (error: any) {
+      logger.error('ChannelService.findChannelByIdGlobally error:', error);
+      return { success: false, error };
+    }
+  }
+
+  /**
    * Start a channel instance (OpenClaw)
    */
   async startChannel(tenantId: string, channelId: string, agentId: string = 'system_default', force: boolean = false): Promise<Result<void>> {
-    try {
-      if (channelManager.getAdapter(channelId)) {
-        logger.info(`Channel ${channelId} is already running`);
-        return { success: true, data: undefined };
-      }
+    if (channelManager.getAdapter(channelId)) {
+      logger.info(`Channel ${channelId} is already running`);
+      return { success: true, data: undefined };
+    }
 
+    // Deduplication: Prevent concurrent startChannel calls for same channelId
+    const existingStart = this.startingChannels.get(channelId);
+    if (existingStart) {
+        logger.info(`[ChannelService] Channel ${channelId} is already starting, awaiting existing promise`);
+        return existingStart;
+    }
+
+    const startPromise = this._doStartChannel(tenantId, channelId, agentId, force);
+    this.startingChannels.set(channelId, startPromise);
+
+    try {
+        const result = await startPromise;
+        return result;
+    } finally {
+        this.startingChannels.delete(channelId);
+    }
+  }
+
+  private async _doStartChannel(tenantId: string, channelId: string, agentId: string, force: boolean): Promise<Result<void>> {
+    try {
       const channelResult = await this.getChannel(tenantId, channelId, agentId);
       if (!channelResult.success) return { success: false, error: channelResult.error };
 
       const channel = channelResult.data;
       const fullPath = `tenants/${tenantId}/agents/${agentId}/channels/${channelId}`;
 
-      // Initialize Adapter
-      if (channel.type === 'whatsapp') {
-        const adapter = new WhatsappAdapter(tenantId, channelId, fullPath, channel as any);
+      // Initialize Adapter from Registry
+      const AdapterClass = getPlatformAdapter(channel.type);
+      if (!AdapterClass) {
+        return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
+      }
 
+      let adapter = new AdapterClass(tenantId, channelId, fullPath, channel as any);
+      
+      if (channel.type === 'whatsapp') {
         // --- MIDDLEWARE INJECTION ---
-        // Register the main middleware stack
         const { default: mainMiddleware } = await import('../middleware/main.js');
         const gCtx = await (await import('../lib/context.js')).default();
         mainMiddleware(adapter as any, gCtx);
-        adapter.setContext(gCtx); // Set context for bridge usage
+        (adapter as any).setContext(gCtx);
 
-        adapter.onMessage(async (event) => {
+        adapter.onMessage(async (event: any) => {
           const { ingressService } = await import('./IngressService.js');
           const context = await (await import('../lib/context.js')).default();
-
-          // Increment received stats
           this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-
           await ingressService.handleMessage(tenantId, channelId, event.raw, context, fullPath);
         });
-
-        channelManager.registerAdapter(adapter);
-        await adapter.connect(force);
-      } else if (channel.type === 'telegram') {
-        const { TelegramAdapter } = await import('./channels/telegram/TelegramAdapter.js');
-        const token = channel.credentials?.token;
-        if (!token) throw new Error('Missing Telegram token');
-
-        const adapter = new TelegramAdapter(tenantId, channelId, token);
-        adapter.onMessage(async (event) => {
-          const { ingressService } = await import('./IngressService.js');
-          const context = await (await import('../lib/context.js')).default();
-
-          // Increment received stats
-          this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-
-          await ingressService.handleCommonMessage(tenantId, channelId, {
-            id: event.raw.message_id?.toString() || crypto.randomUUID(),
-            platform: 'telegram',
-            from: event.sender,
-            to: channelId,
-            content: { text: event.content },
-            timestamp: event.timestamp.getTime(),
-            metadata: { raw: event.raw, fullPath }
-          }, context, fullPath);
-        });
-
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
-      } else if (channel.type === 'discord') {
-        const { DiscordAdapter } = await import('./channels/discord/DiscordAdapter.js');
-        const token = channel.credentials?.token;
-        const appId = channel.credentials?.appId;
-        if (!token || !appId) throw new Error('Missing Discord token or appId');
-
-        const adapter = new DiscordAdapter(tenantId, channelId, token); // DiscordAdapter constructor seems to take token as 3rd param in some versions, checking...
-        // Wait, I saw the constructor in DiscordAdapter.ts: constructor(tenantId: string, channelId: string, token: string)
-        const dAdapter = new DiscordAdapter(tenantId, channelId, token);
-
-        dAdapter.onMessage(async (event) => {
-          const { ingressService } = await import('./IngressService.js');
-          const context = await (await import('../lib/context.js')).default();
-          this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
-
-          await ingressService.handleCommonMessage(tenantId, channelId, {
-            id: event.raw.id || crypto.randomUUID(),
-            platform: 'discord',
-            from: event.sender,
-            to: channelId,
-            content: { text: event.content },
-            timestamp: event.timestamp.getTime(),
-            metadata: { raw: event.raw, fullPath }
-          }, context, fullPath);
-        });
-
-        await dAdapter.connect();
-        channelManager.registerAdapter(dAdapter);
-      } else if (channel.type === 'slack') {
-        const { SlackAdapter } = await import('./channels/slack/SlackAdapter.js');
-        const token = channel.credentials?.token;
-        if (!token) throw new Error('Missing Slack token');
-
-        const adapter = new SlackAdapter(tenantId, channelId, token);
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
-      } else if (channel.type === 'signal') {
-        const { SignalAdapter } = await import('./channels/signal/SignalAdapter.js');
-        const phone = channel.phoneNumber || channel.credentials?.phone;
-        if (!phone) throw new Error('Missing Signal phone number');
-
-        const adapter = new SignalAdapter(tenantId, channelId, phone);
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
-      } else if (channel.type === 'imessage') {
-        const { IMessageAdapter } = await import('./channels/imessage/IMessageAdapter.js');
-        const identifier = channel.identifier || channel.credentials?.identifier;
-        if (!identifier) throw new Error('Missing iMessage identifier');
-
-        const adapter = new IMessageAdapter(tenantId, channelId, identifier);
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
-      } else if (channel.type === 'irc') {
-        const { IRCAdapter } = await import('./channels/irc/IRCAdapter.js');
-        const adapter = new IRCAdapter(tenantId, channelId, channel.credentials || {});
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
-      } else if (channel.type === 'googlechat') {
-        const { GoogleChatAdapter } = await import('./channels/googlechat/GoogleChatAdapter.js');
-        const adapter = new GoogleChatAdapter(tenantId, channelId, channel.credentials || {});
-        await adapter.connect();
-        channelManager.registerAdapter(adapter);
       } else {
-        return { success: false, error: new Error(`Unsupported channel type: ${channel.type}`) };
+        adapter.onMessage(async (event: any) => {
+          const { ingressService } = await import('./IngressService.js');
+          const context = await (await import('../lib/context.js')).default();
+          this.incrementChannelStat(tenantId, channelId, 'messagesReceived', agentId);
+
+          await ingressService.handleCommonMessage(tenantId, channelId, {
+            id: event.raw?.id || event.raw?.message_id?.toString() || crypto.randomUUID(),
+            platform: channel.type as any,
+            from: event.sender,
+            to: channelId,
+            content: { text: event.content },
+            timestamp: event.timestamp instanceof Date ? event.timestamp.getTime() : new Date(event.timestamp).getTime(),
+            metadata: { raw: event.raw, fullPath }
+          }, context, fullPath);
+        });
       }
+
+      await adapter.initialize(); // Essential for Telegram to run bot.init()
+      await adapter.connect(force);
+      channelManager.registerAdapter(adapter);
 
       // Only mark as connected if it's not managed by the adapter itself (like WhatsApp)
       if (channel.type !== 'whatsapp') {
@@ -363,6 +362,12 @@ export class ChannelService {
    */
   async stopChannel(channelId: string, tenantId: string, agentId: string = 'system_default'): Promise<Result<void>> {
     try {
+      // 1. Ownership Check (Scenario 34): Verify channel belongs to tenant
+      const channel = await this.getChannel(tenantId, channelId, agentId);
+      if (!channel.success) {
+        return { success: false, error: new Error('UNAUTHORIZED: Tenant does not own this channel.') };
+      }
+
       await channelManager.shutdownAdapter(channelId);
       await this.updateStatus(tenantId, channelId, 'disconnected', agentId);
       return { success: true, data: undefined };
@@ -377,7 +382,13 @@ export class ChannelService {
    */
   async deleteChannel(tenantId: string, channelId: string, agentId: string = 'system_default', options: { archive?: boolean } = {}): Promise<Result<void>> {
     try {
-      // 1. Kill live session in memory (Rule 0 / Rule 9 integrity)
+      // 1. Ownership Check (Scenario 34)
+      const channel = await this.getChannel(tenantId, channelId, agentId);
+      if (!channel.success) {
+        return { success: false, error: new Error('UNAUTHORIZED: Tenant does not own this channel.') };
+      }
+
+      // 2. Kill live session in memory (Rule 0 / Rule 9 integrity)
       await channelManager.shutdownAdapter(channelId);
 
       if (options.archive) {
@@ -427,7 +438,7 @@ export class ChannelService {
 
         for (const channel of channelsResult.data) {
           // Restart channels that were previously connected or in error state (retry)
-          if (channel.status === 'connected' || channel.status === 'connecting' || channel.status === 'qr_pending') {
+          if (channel.status === 'connected' || channel.status === 'connecting' || channel.status === 'qr_pending' || channel.status === 'error') {
             logger.info(`[ChannelService] Auto-starting channel ${channel.id} (${channel.name}) for tenant ${tenant.id}`);
 
             // Non-blocking start

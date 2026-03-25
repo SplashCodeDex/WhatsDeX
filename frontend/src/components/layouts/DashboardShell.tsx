@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
+import { ConnectionStatus } from '../ui/ConnectionStatus';
 import { ScrollToTop } from '../ui/ScrollToTop';
 import { ScrollArea } from '../ui/scroll-area';
 
@@ -20,8 +21,11 @@ export function DashboardShell({
 }) {
     const { isSidebarCollapsed } = useUIStore();
     const { fetchCapabilities } = useAuthorityStore();
+    const hasFetched = useRef(false);
 
     useEffect(() => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
         fetchCapabilities();
     }, [fetchCapabilities]);
 
@@ -39,6 +43,7 @@ export function DashboardShell({
                     isSidebarCollapsed && "lg:ml-[72px] lg:w-[calc(100%-72px)]"
                 )}
             >
+                <ConnectionStatus />
                 <Header />
                 <ScrollArea viewportClassName="p-6 md:p-8">
                     <div className="mx-auto max-w-7xl animate-fade-in space-y-6 pb-24">

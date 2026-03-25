@@ -1,4 +1,5 @@
 import { MessageContext, GlobalContext } from '../../types/index.js';
+import { getJid } from '../../utils/baileysUtils.js';
 
 interface BannedUser {
   banned?: boolean;
@@ -25,9 +26,8 @@ export default {
       const userMentions: string[] = [];
 
       bannedUsers.forEach(userId => {
-        resultText += `${formatter.quote(`@${userId}`)}
-`;
-        userMentions.push(`${userId}@s.whatsapp.net`);
+        resultText += `${formatter.quote(`@${userId}`)}\n`;
+        userMentions.push(getJid(userId));
       });
 
       await ctx.reply({

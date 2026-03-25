@@ -11,22 +11,26 @@ interface Step {
 }
 
 const STEPS: Step[] = [
-    { id: 'initializing', label: 'Initializing' },
-    { id: 'authenticating', label: 'Authenticating' },
-    { id: 'connecting', label: 'Connecting' },
-    { id: 'ready', label: 'Finalizing' }
+    { id: 'initializing', label: 'Starting Up' },
+    { id: 'qr_pending', label: 'Scan QR Code' },
+    { id: 'connecting', label: 'Establishing Link' },
+    { id: 'connected', label: 'Connected' }
 ];
 
 interface ChannelProgressStepperProps {
     channelId: string;
     agentId: string;
+    channelStatus?: string;
     currentStep: string;
     status: 'pending' | 'in_progress' | 'complete' | 'error';
     className?: string;
 }
 
-export function ChannelProgressStepper({ channelId, agentId, currentStep, status, className }: ChannelProgressStepperProps) {
+export function ChannelProgressStepper({ channelId, agentId, channelStatus, currentStep, status, className }: ChannelProgressStepperProps) {
     const { qrCode, isLoading: isStatusLoading } = useChannelStatus(channelId, agentId, status === 'in_progress' || status === 'pending');
+
+    const activeStepIndex = STEPS.findIndex(s => s.id === (channelStatus || 'initializing'));
+    const safeActiveIndex = activeStepIndex === -1 ? 0 : activeStepIndex;
 
     return (
         <div className={cn("space-y-4", className)}>
@@ -38,7 +42,7 @@ export function ChannelProgressStepper({ channelId, agentId, currentStep, status
                     "text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold",
                     status === 'error' ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
                 )}>
-                    {currentStep || 'Starting...'}
+                    {STEPS[safeActiveIndex]?.label || currentStep || 'Starting...'}
                 </span>
             </div>
 
@@ -56,15 +60,15 @@ export function ChannelProgressStepper({ channelId, agentId, currentStep, status
                 </div> : null}
 
             <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4].map((i) => (
+                {STEPS.map((step, idx) => (
                     <div
-                        key={i}
+                        key={step.id}
                         className={cn(
                             "h-1.5 flex-1 rounded-full bg-muted transition-all duration-500",
-                            status === 'complete' && "bg-green-500",
+                            (status === 'complete' || channelStatus === 'connected') && "bg-green-500",
                             status === 'error' && "bg-destructive",
-                            status === 'in_progress' && i <= 2 && "bg-primary/60",
-                            status === 'in_progress' && i === 3 && "bg-primary animate-pulse"
+                            status === 'in_progress' && idx < safeActiveIndex && "bg-primary/60",
+                            status === 'in_progress' && idx === safeActiveIndex && "bg-primary animate-pulse"
                         )}
                     />
                 ))}
@@ -73,15 +77,15 @@ export function ChannelProgressStepper({ channelId, agentId, currentStep, status
             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                 {status === 'in_progress' || status === 'pending' ? (
                     <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                ) : status === 'complete' ? (
+                ) : status === 'complete' || channelStatus === 'connected' ? (
                     <CheckCircle2 className="h-3 w-3 text-green-500" />
                 ) : (
                     <XCircle className="h-3 w-3 text-destructive" />
                 )}
                 <span className="truncate">
                     {status === 'error' ? 'Connection failed' :
-                        status === 'complete' ? 'Connection successful' :
-                            qrCode ? 'Awaiting Scan...' : `Step: ${currentStep}`}
+                        (status === 'complete' || channelStatus === 'connected') ? 'Connection successful' :
+                            qrCode ? 'Awaiting Scan...' : `Step: ${STEPS[safeActiveIndex]?.label || currentStep}`}
                 </span>
             </div>
         </div>

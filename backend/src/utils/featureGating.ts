@@ -56,8 +56,6 @@ export const getPlanLimits = (plan: 'starter' | 'pro' | 'enterprise'): PlanLimit
  * Check if the tenant is currently in a valid trial period
  */
 export const isTrialActive = (tenant: Tenant): boolean => {
-...
-
   if (!tenant.trialEndsAt) return false;
 
   const now = Date.now();

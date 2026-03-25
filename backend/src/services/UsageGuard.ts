@@ -63,4 +63,4 @@ export class UsageGuard {
 }
 
 export const usageGuard = UsageGuard.getInstance();
-export { PlanTier };
+export type { PlanTier };

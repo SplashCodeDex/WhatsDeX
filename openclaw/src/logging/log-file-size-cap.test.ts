@@ -64,7 +64,7 @@ describe("log file size cap", () => {
     // Verification: backup file should exist and primary file should be fresh
     expect(fs.existsSync(`${logPath}.1`), "Backup file should be created").toBe(true);
     const sizeAfterRotation = fs.statSync(logPath).size;
-    expect(sizeAfterRotation).toBeLessThan(1000, "New log file should be fresh and small");
+    expect(sizeAfterRotation).toBeLessThan(1000);
     expect(fs.statSync(`${logPath}.1`).size).toBe(lastSize);
     
     try {

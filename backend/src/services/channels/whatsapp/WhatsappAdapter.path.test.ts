@@ -9,7 +9,9 @@ vi.mock('@/services/authSystem.js', () => {
       return {
         connect: vi.fn().mockResolvedValue({ success: true, data: { ev: { on: vi.fn() }, sendMessage: vi.fn() } }),
         disconnect: vi.fn().mockResolvedValue(undefined),
-        on: vi.fn()
+        on: vi.fn(),
+        updatePath: vi.fn(),
+        getQRCode: vi.fn().mockResolvedValue({ success: true, data: null })
       };
     })
   };
@@ -22,16 +24,10 @@ vi.mock('@/utils/logger.js', () => ({
   }
 }));
 
-vi.mock('openclaw', async (importOriginal) => {
-  const actual = await importOriginal<any>();
-  return {
-    ...actual,
-    setActiveWebListener: vi.fn(),
-    sendMessageWhatsApp: vi.fn(),
-    sendReactionWhatsApp: vi.fn(),
-    sendPollWhatsApp: vi.fn()
-  };
-});
+vi.mock('@/utils/openclawImports.js', () => ({
+  getWebOutbound: vi.fn(),
+  getWebActiveListener: vi.fn()
+}));
 
 describe('WhatsappAdapter Path-Awareness', () => {
   let adapter: any;

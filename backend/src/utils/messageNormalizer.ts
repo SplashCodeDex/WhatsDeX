@@ -63,6 +63,8 @@ export class MessageNormalizer {
     static getSender(msg: proto.IWebMessageInfo | CommonMessage): string {
         if (this.isBaileys(msg)) {
             if (!msg.key) return '';
+            // Note: This returns raw JID or LID. Callers must handle LID resolution asynchronously
+            // using convertLidToJid if they need the true E.164 identity.
             return msg.key.participant || msg.key.remoteJid || '';
         }
         return msg.from;

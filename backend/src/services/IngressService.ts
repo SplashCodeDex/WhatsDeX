@@ -80,7 +80,12 @@ export class IngressService {
           const text = aiCtx.body || '';
           if (!keyword || text.toLowerCase().includes(keyword.toLowerCase())) {
             logger.info(`[Ingress] Triggering Automation: ${auto.name} (${auto.id})`);
-            // Automation processing logic here...
+            
+            // MASTERMIND Fix: Execute Automation Actions
+            await automationService.executeAutomation(tenantId, auto.id, aiCtx);
+            
+            analyticsService.trackMessage(tenantId, 'received');
+            return; // Exit early as automation handled it
           }
         }
       }

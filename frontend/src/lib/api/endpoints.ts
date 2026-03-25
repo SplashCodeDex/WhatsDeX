@@ -103,6 +103,7 @@ export const API_ENDPOINTS = {
     // Omnichannel
     OMNICHANNEL: {
         STATUS: '/api/omnichannel/status',
+        PLATFORMS: '/api/omnichannel/platforms',
         CHANNELS: {
             ALL: '/api/internal/channels/all',
         },

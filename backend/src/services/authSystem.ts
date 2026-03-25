@@ -35,7 +35,9 @@ class AuthSystem extends EventEmitter {
   private client: WASocket | null;
   private currentQrCode: string | null;
   private stats: AuthStats;
-  private reconnectAttempts: number = 0;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private isDisconnecting = false;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private connectTimeout: NodeJS.Timeout | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
@@ -63,7 +65,13 @@ class AuthSystem extends EventEmitter {
     logger.info(`AuthSystem initialized for Channel: ${channelId} (Tenant: ${tenantId}, Path: ${collectionOrPath})`);
   }
 
+  public updatePath(newCollectionOrPath: string): void {
+    logger.info(`[AuthSystem] Path updated for ${this.channelId}: ${this.collectionOrPath} -> ${newCollectionOrPath}`);
+    (this as any).collectionOrPath = newCollectionOrPath;
+  }
+
   async connect(forceNewSession: boolean = false): Promise<Result<WASocket>> {
+    this.emit('status', 'initializing');
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -88,6 +96,7 @@ class AuthSystem extends EventEmitter {
     }, 30 * 1000);
 
     this.authState = 'connecting';
+    this.emit('status', 'connecting');
     const method = this.config.channel.phoneNumber ? 'pairing' : 'qr';
     this._recordAttempt(method);
 
@@ -164,20 +173,22 @@ class AuthSystem extends EventEmitter {
           const error = lastDisconnect?.error;
           const statusCode = (error as Boom)?.output?.statusCode;
           const isLoggedOut = statusCode === DisconnectReason.loggedOut;
-          const shouldReconnect = !isLoggedOut;
+          const isForbidden = statusCode === 403; // Forbidden often indicates a Ban (Scenario 51)
+          const shouldReconnect = !isLoggedOut && !isForbidden;
 
           logger.warn(`[AuthSystem] Connection closed for ${this.channelId}. Reconnect: ${shouldReconnect}`, { error, statusCode });
 
-          if (isLoggedOut) {
-            logger.error(`[AuthSystem] SESSION LOGGED OUT for ${this.channelId}. Cleaning up Firestore auth state...`);
+          if (isLoggedOut || isForbidden) {
+            const status = isForbidden ? 'banned' : 'logged_out';
+            logger.error(`[AuthSystem] SESSION ${status.toUpperCase()} for ${this.channelId}. Cleaning up Firestore auth state...`);
             try {
               // Perform a hard reset of the local creds and trigger a clear in Firestore
               const { clearAuthState } = await useFirestoreAuthState(this.tenantId, this.channelId, this.collectionOrPath);
               await clearAuthState();
               this.currentQrCode = null;
-              this.emit('status', 'logged_out');
+              this.emit('status', status);
             } catch (err) {
-              logger.error(`[AuthSystem] Failed to clear auth state during logout:`, err);
+              logger.error(`[AuthSystem] Failed to clear auth state during ${status}:`, err);
             }
           }
 
@@ -185,6 +196,11 @@ class AuthSystem extends EventEmitter {
 
           if (shouldReconnect) {
             this.reconnectAttempts++;
+            if (this.reconnectAttempts > this.maxReconnectAttempts) {
+              logger.error(`[AuthSystem] Max reconnect attempts (${this.maxReconnectAttempts}) reached for ${this.channelId}. Giving up.`);
+              this.emit('status', 'reconnect_exhausted');
+              return;
+            }
             // Exponential backoff: 1s, 2s, 4s, 8s, 16s... capped at 1 minute
             const delay = Math.min(Math.pow(2, this.reconnectAttempts - 1) * 1000, 60 * 1000);
             logger.info(`[AuthSystem] Scheduling reconnect in ${delay}ms (Attempt ${this.reconnectAttempts})`);

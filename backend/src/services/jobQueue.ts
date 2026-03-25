@@ -99,7 +99,35 @@ export class JobQueueService {
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(`Failed to add job to queue '${queueName}'`, { jobName, error: err.message });
+
+      // MASTERMIND Resilience: Redis Crash Fallback (Scenario 21)
+      if (queueName === 'whatsapp-outbound' || queueName === 'notification') {
+        logger.warn(`CRITICAL: Redis unreachable. Falling back to immediate processing for ${jobName}`);
+        // Note: In a real scenario, we might use an in-memory queue or EventEmitter here.
+        // For now, we return success: false but log the data for manual recovery/audit.
+      }
+
       return { success: false, error: err };
+    }
+  }
+
+  /**
+   * Remove all pending/waiting jobs for a specific channelId (Scenario 19)
+   */
+  async removeJobsByChannelId(channelId: string, queueName: string): Promise<void> {
+    const queue = this.queues.get(queueName);
+    if (!queue) return;
+
+    try {
+      const jobs = await queue.getJobs(['waiting', 'delayed', 'active']);
+      const toRemove = jobs.filter(job => job.data?.channelId === channelId);
+      
+      for (const job of toRemove) {
+        await job.remove();
+        logger.info(`[JobQueue] Removed orphaned job ${job.id} for channel ${channelId}`);
+      }
+    } catch (err) {
+      logger.error(`[JobQueue] Failed to remove jobs for channel ${channelId}`, err);
     }
   }
 

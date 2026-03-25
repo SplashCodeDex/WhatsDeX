@@ -6,13 +6,13 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-### [~] Track: Unified Dynamic Gating
+### [x] Track: Unified Dynamic Gating
 *Link: [./tracks/dynamic_gating_20260312/](./tracks/dynamic_gating_20260312/)*
 
 ### [x] Track: Agents Page Audit & Enhancement
 *Link: [./tracks/agents_audit_20260312/](./tracks/agents_audit_20260312/)*
 
-### [ ] Track: Agentic Performance & Intelligence Optimization (Phase 5)
+### [x] Track: Agentic Performance & Intelligence Optimization (Phase 5)
 *Link: [./conductor/tracks/agentic_optimization_20260310/](./tracks/agentic_optimization_20260310/)*
 
 - [~] **Track: WhatsApp Resilience & 50+ Defeating Scenarios**

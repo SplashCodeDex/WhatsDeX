@@ -17,8 +17,8 @@ export function TrustMarquee() {
     const marqueeItems = [...LOGOS, ...LOGOS, ...LOGOS];
 
     return (
-        <section className="w-full overflow-hidden border-y border-border/50 bg-muted/10 py-10 backdrop-blur-sm">
-            <div className="mx-auto mb-6 max-w-6xl px-4 text-center">
+        <section className="relative w-full overflow-hidden border-b border-border/50 bg-gradient-to-b from-background via-muted/5 to-muted/10 py-10 z-20">
+            <div className="relative z-10 mx-auto mb-6 max-w-6xl px-4 text-center">
                 <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
                     Trusted by innovative teams worldwide
                 </p>
@@ -26,8 +26,8 @@ export function TrustMarquee() {
             
             <div className="relative flex w-full overflow-hidden">
                 {/* Gradient Masks for smooth fade out on the edges */}
-                <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-background to-transparent md:w-48" />
-                <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-background to-transparent md:w-48" />
+                <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-32 bg-gradient-to-r from-background to-transparent md:w-72 backdrop-blur-[1px]" />
+                <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-32 bg-gradient-to-l from-background to-transparent md:w-72 backdrop-blur-[1px]" />
 
                 <motion.div
                     className="flex shrink-0 items-center gap-16 md:gap-24 hover:[animation-play-state:paused]"

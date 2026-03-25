@@ -18,7 +18,8 @@ import contactRoutes from '../routes/contactRoutes.js';
 import messageRoutes from '../routes/messageRoutes.js';
 import campaignRoutes from '../routes/campaigns.js';
 import webhookRoutes from '../routes/webhookRoutes.js';
-import telegramWebhookRoutes from '../routes/telegramWebhookRoutes.js';
+import channelWebhookRoutes from '../routes/channelWebhookRoutes.js';
+import facebookWebhookRoutes from '../routes/facebookWebhookRoutes.js';
 import billingRoutes from '../routes/billingRoutes.js';
 import omnichannelRoutes from '../routes/omnichannelRoutes.js';
 import authorityRoutes from '../routes/authorityRoutes.js';
@@ -34,6 +35,7 @@ import { socketService } from '../services/socketService.js';
 import { errorHandler, notFoundHandler } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 import { csrfProtection, securityHeaders } from '../middleware/httpSecurity.js';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 
 export class MultiTenantApp {
@@ -210,7 +212,9 @@ export class MultiTenantApp {
 
     // Webhooks routes
     this.app.use('/api/webhooks', authenticateToken, webhookRoutes);
-    this.app.use('/api/telegram', telegramWebhookRoutes);
+    this.app.use('/api/webhook', channelWebhookRoutes); // Generic dynamic webhooks
+    this.app.use('/api/facebook-webhook', facebookWebhookRoutes); // Facebook-specific secure webhooks
+    this.app.use('/api/telegram', channelWebhookRoutes); // Legacy Telegram support
 
     // Tenant management
     this.app.get('/api/tenants', authenticateToken, async (_req: Request, res: Response) => {
@@ -252,6 +256,22 @@ export class MultiTenantApp {
 
     // Client Logs
     this.app.use('/api/logs', logsRoutes);
+
+    // MASTERMIND: OpenClaw UI Proxy (Phase 3)
+    this.app.use('/api/openclaw-ui', authenticateToken, createProxyMiddleware({
+      target: 'http://localhost:18789', // OpenClaw Dashboard Port
+      changeOrigin: true,
+      ws: true, // Proxy WebSockets
+      pathRewrite: {
+        '^/api/openclaw-ui': '', // Remove base path
+      },
+      on: {
+        proxyReq: (proxyReq, req, res) => {
+          // Optional: Inject auth headers if OpenClaw requires them
+          // proxyReq.setHeader('X-OpenClaw-Auth', 'internal-secret');
+        }
+      }
+    }));
 
     // 404 handler
     this.app.use(notFoundHandler);

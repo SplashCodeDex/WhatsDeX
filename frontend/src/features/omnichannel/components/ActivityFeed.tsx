@@ -1,10 +1,12 @@
 'use client';
 
-import { Activity, MessageSquare, Send, Hash, Slack, Smartphone, Settings, Brain, Zap, Terminal, CheckCircle2 } from 'lucide-react';
+import { Activity, MessageSquare, Send, Hash, Slack, Smartphone, Settings, Brain, Zap, Terminal, CheckCircle2, GitBranch } from 'lucide-react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
@@ -30,6 +32,7 @@ const TYPE_ICON_MAP = {
 export function ActivityFeed() {
     const { activity } = useOmnichannelStore();
     const [filter, setFilter] = useState('all');
+    const router = useRouter();
 
     const filteredActivity = filter === 'all'
         ? activity
@@ -106,6 +109,21 @@ export function ActivityFeed() {
                                     )}>
                                         {event.message}
                                     </p>
+                                    
+                                    {/* MASTERMIND: View Trace Button (Phase 4) */}
+                                    {event.type === 'agent_thinking' && (
+                                        <div className="pt-1">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-5 text-[10px] px-2 text-primary hover:text-primary/80"
+                                                onClick={() => router.push('/omnichannel/reasoning')}
+                                            >
+                                                <GitBranch className="h-3 w-3 mr-1" />
+                                                View Trace
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );

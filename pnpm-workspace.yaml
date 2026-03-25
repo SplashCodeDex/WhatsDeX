@@ -3,3 +3,6 @@ packages:
   - backend
   - openclaw
   - shared
+  - openclaw/ui
+  - openclaw/packages/*
+  - openclaw/extensions/*

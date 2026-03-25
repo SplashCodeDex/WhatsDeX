@@ -1,18 +1,27 @@
 'use client';
 
 import {
-    Slack,
+    Activity,
+    Bot,
+    MessageSquare,
+    MoreVertical,
+    Phone,
     Plus,
     Power,
+    RefreshCw,
+    Settings2,
+    Users,
     Wifi,
     WifiOff,
-    Settings2,
-    RefreshCw,
-    MessageSquare,
-    Hash
-} from 'lucide-react';
+    AlertTriangle,
+    Slack,
+    Hash,
+    Network
+} from "lucide-react";
+
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
+import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat, SiFacebook } from 'react-icons/si';
 
 import { ActivityFeed } from './components/ActivityFeed';
 import { ChannelProgressStepper } from './components/ChannelProgressStepper';
@@ -35,39 +44,35 @@ function VisuallyHidden({ children }: { children: React.ReactNode }) {
     </span>
 }
 
-const ICON_MAP = {
-    whatsapp: SiWhatsapp,
-    telegram: SiTelegram,
-    discord: SiDiscord,
-    slack: Slack,
-    signal: SiSignal,
-    imessage: MessageSquare,
-    irc: Hash,
-    googlechat: SiGooglechat
-};
-
-const COLOR_MAP = {
-    whatsapp: 'bg-green-500',
-    telegram: 'bg-blue-400',
-    discord: 'bg-indigo-500',
-    slack: 'bg-purple-500',
-    signal: 'bg-blue-600',
-    imessage: 'bg-blue-400',
-    irc: 'bg-gray-500',
-    googlechat: 'bg-yellow-500'
+const ICON_MAP: Record<string, any> = {
+    SiWhatsapp,
+    SiTelegram,
+    SiDiscord,
+    Slack,
+    SiSignal,
+    MessageSquare,
+    Hash,
+    SiGooglechat,
+    SiFacebook,
+    SiMicrosoftteams: Users,
+    SiMatrix: Network
 };
 
 function ChannelCard({ channel }: { channel: any }) {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isDisconnecting, setIsDisconnecting] = useState(false);
-    const { agentsResult, disconnectChannel } = useOmnichannelStore();
-    const Icon = ICON_MAP[channel.type as keyof typeof ICON_MAP] || MessageSquare;
-    const color = COLOR_MAP[channel.type as keyof typeof COLOR_MAP] || 'bg-primary';
+    const { agentsResult, disconnectChannel, platforms } = useOmnichannelStore();
+    
+    // Dynamic metadata lookup
+    const platform = platforms.find(p => p.id === channel.type);
+    const Icon = ICON_MAP[platform?.icon || ''] || MessageSquare;
+    const color = platform?.color || 'bg-primary';
 
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing' || channel.status === 'qr_pending';
 
-    const agent = agentsResult?.agents.find(a => a.id === (channel.assignedAgentId || 'system_default'));
-    const agentName = agent?.name || (channel.assignedAgentId === 'system_default' ? 'System Agent' : 'Unknown Agent');
+    const effectiveAgentId = channel.assignedAgentId || 'system_default';
+    const agent = agentsResult?.agents.find(a => a.id === effectiveAgentId);
+    const agentName = agent?.name || 'System Default Agent';
 
     const handleDirectDisconnect = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -96,7 +101,9 @@ function ChannelCard({ channel }: { channel: any }) {
                         <div>
                             <CardTitle className="text-lg">{channel.name}</CardTitle>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <CardDescription>{channel.account || 'Not configured'}</CardDescription>
+                                <CardDescription>
+                                    {channel.account || (isConnecting ? 'Connecting...' : 'Not configured')}
+                                </CardDescription>
                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium text-foreground">
                                     {agentName}
                                 </span>
@@ -116,18 +123,25 @@ function ChannelCard({ channel }: { channel: any }) {
                         <ChannelProgressStepper
                             channelId={channel.id}
                             agentId={channel.assignedAgentId || 'system_default'}
+                            channelStatus={channel.status}
                             currentStep={channel.lastProgress?.step || "Starting Connection"}
                             status={channel.lastProgress?.status || "in_progress"}
                         />
                     ) : (
                         <div className="flex items-center text-sm text-muted-foreground">
-                            {channel.status === 'connected' ? (
+                            {channel.status === 'error' ? (
+                                <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
+                            ) : channel.status === 'connected' ? (
                                 <Wifi className="mr-2 h-4 w-4 text-green-500" />
                             ) : (
                                 <WifiOff className="mr-2 h-4 w-4" />
                             )}
                             <span>
-                                {channel.status === 'connected' ? 'Bot is active and listening' : 'Bot is currently offline'}
+                                {channel.status === 'error' 
+                                    ? 'Connection failed — use Manage to retry' 
+                                    : channel.status === 'connected' 
+                                        ? 'Bot is active and listening' 
+                                        : 'Bot is currently offline'}
                             </span>
                         </div>
                     )}
@@ -142,14 +156,19 @@ function ChannelCard({ channel }: { channel: any }) {
                         <span>Manage connection</span>
                         <Settings2 className="h-4 w-4" />
                     </Button>
-                    {channel.status === 'connected' && (
+                    {(channel.status === 'connected' || isConnecting) && (
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 shrink-0"
+                            className={cn(
+                                "h-8 w-8 shrink-0",
+                                isConnecting
+                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    : "text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                            )}
                             onClick={handleDirectDisconnect}
                             disabled={isDisconnecting}
-                            title="Disconnect Bot"
+                            title={isConnecting ? "Abort Connection" : "Disconnect Bot"}
                         >
                             {isDisconnecting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
                         </Button>
@@ -166,27 +185,24 @@ function ChannelCard({ channel }: { channel: any }) {
     );
 }
 
-type Platform = 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat';
-
 export function OmnichannelFeature() {
-    const { channels, activity, isLoading, fetchAllChannels } = useOmnichannelStore();
+    const { channels, activity, isLoading, fetchAllChannels, fetchPlatforms, platforms } = useOmnichannelStore();
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('whatsapp');
+    const [selectedPlatform, setSelectedPlatform] = useState<string>('whatsapp');
 
     useEffect(() => {
         fetchAllChannels();
-    }, [fetchAllChannels]);
+        fetchPlatforms();
+    }, [fetchAllChannels, fetchPlatforms]);
 
-    const PLATFORMS: Array<{ id: Platform, label: string, icon: any, color: string }> = [
-        { id: 'whatsapp', label: 'WhatsApp', icon: SiWhatsapp, color: 'text-green-500' },
-        { id: 'telegram', label: 'Telegram', icon: SiTelegram, color: 'text-blue-400' },
-        { id: 'discord', label: 'Discord', icon: SiDiscord, color: 'text-indigo-500' },
-        { id: 'slack', label: 'Slack', icon: Slack, color: 'text-purple-500' },
-        { id: 'signal', label: 'Signal', icon: SiSignal, color: 'text-blue-600' },
-        { id: 'googlechat', label: 'Google Chat', icon: SiGooglechat, color: 'text-yellow-500' },
-        { id: 'irc', label: 'IRC', icon: Hash, color: 'text-gray-500' },
-        { id: 'imessage', label: 'iMessage', icon: MessageSquare, color: 'text-blue-400' },
-    ];
+    // Derived platforms with icons for the UI
+    const PLATFORMS = platforms.map(p => ({
+        ...p,
+        Icon: ICON_MAP[p.icon] || MessageSquare,
+        // Ensure color is a text- color for the icon and bg- color for the background
+        textColor: p.color.replace('bg-', 'text-'),
+        bgColor: p.color
+    }));
 
     return (
         <div className="space-y-8">
@@ -202,6 +218,13 @@ export function OmnichannelFeature() {
                 <div className="flex space-x-2">
                     <Button variant="outline" size="icon" onClick={() => fetchAllChannels()} disabled={isLoading}>
                         <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+                    </Button>
+
+                    <Button variant="secondary" asChild className="hidden sm:flex shadow-sm gap-2 border border-border/50 bg-card/60 hover:bg-muted font-medium text-foreground">
+                        <Link href="/dashboard/omnichannel/reasoning">
+                            <Activity className="h-4 w-4 text-primary" />
+                            Live Reasoning
+                        </Link>
                     </Button>
 
                     <Button onClick={() => setIsAddDialogOpen(true)} className="shadow-sm">
@@ -235,8 +258,8 @@ export function OmnichannelFeature() {
                             onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
                             className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
                         >
-                            <div className={cn("rounded-full p-4 mb-4 group-hover:scale-110 transition-transform bg-opacity-10", p.color.replace('text-', 'bg-') + '/10')}>
-                                <p.icon className={cn("h-8 w-8", p.color)} />
+                            <div className={cn("rounded-full p-4 mb-4 group-hover:scale-110 transition-transform bg-opacity-10", p.bgColor + '/10')}>
+                                <p.Icon className={cn("h-8 w-8", p.textColor)} />
                             </div>
                             <span className="font-medium text-foreground">{p.label}</span>
                         </button>
@@ -262,8 +285,8 @@ export function OmnichannelFeature() {
                                     onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
                                     className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card/40 backdrop-blur-sm transition-all hover:bg-muted/50 hover:border-primary/30 group"
                                 >
-                                    <div className={cn("rounded-lg p-2 bg-opacity-10", p.color.replace('text-', 'bg-') + '/10')}>
-                                        <p.icon className={cn("h-4 w-4", p.color)} />
+                                    <div className={cn("rounded-lg p-2 bg-opacity-10", p.bgColor + '/10')}>
+                                        <p.Icon className={cn("h-4 w-4", p.textColor)} />
                                     </div>
                                     <span className="text-sm font-medium">{p.label}</span>
                                 </button>
