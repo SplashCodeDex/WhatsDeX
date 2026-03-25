@@ -25,10 +25,13 @@ DeXMart/
 ├── openclaw/         # Multi-channel AI gateway (workspace package)
 ├── shared/           # @DeXMart/shared — cross-package types/utilities
 ├── scripts/          # Automation (upstream-watcher, seed scripts)
+├── src/              # Root-level shared source code
+├── tests/            # End-to-end tests
 ├── docs/             # Architecture docs, upstream reports
 ├── conductor/        # Project planning & task tracking
 ├── .agent/           # Agent workflow configurations
 ├── .github/          # GitHub Actions CI/CD
+├── swarm-config.yaml # Multi-agent swarm orchestration config
 └── pnpm-workspace.yaml
 ```
 
@@ -59,6 +62,7 @@ pnpm test:all         # Run both frontend and backend tests
 pnpm test:frontend    # Vitest (jsdom environment)
 pnpm test:backend     # Vitest (node environment)
 pnpm test:run         # Backend tests, single run with coverage
+pnpm test:coverage    # Frontend tests with coverage report
 ```
 
 ### Linting & Type Checking
@@ -94,6 +98,9 @@ pnpm --filter backend seed:all
 | WhatsApp | Baileys 7.0 |
 | Queue | BullMQ 5 + Redis |
 | Caching | Redis + ioredis + Node-Cache |
+| WebSockets | Socket.io 4.8 (server + client) |
+| Logging | Winston 3.19 + Pino 10.2 |
+| Telemetry | OpenTelemetry (auto-instrumentation) + Prometheus exporter |
 | Testing | Vitest 4 (both packages) |
 | Package Manager | pnpm (workspaces) |
 
@@ -171,6 +178,8 @@ services/             # Business logic layer (~100+ services)
   authSystem.ts
   ...
 routes/               # Express route definitions
+  # /api/auth, /api/analytics, /api/billing, /api/contacts, /api/flows
+  # /api/messages, /api/omnichannel, /api/webhooks, /api/templates, /api/tenant-settings
 controllers/          # HTTP request handlers (thin)
 middleware/           # Auth, security, rate limiting, moderation
 config/               # Environment validation, ConfigManager, tenant config
@@ -232,13 +241,15 @@ Backend requires ~100 environment variables validated by Zod at startup. Key gro
 
 | Group | Key Variables |
 |-------|--------------|
-| Channel | `CHANNEL_NAME`, `SESSION_ID`, `CHANNEL_PREFIX` |
-| Firebase | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` |
-| AI | `GOOGLE_GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_TEMP` |
+| Channel | `CHANNEL_NAME`, `SESSION_ID`, `CHANNEL_PREFIX`, `NEWSLETTER_JID` |
+| Firebase | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_SERVICE_ACCOUNT_PATH` |
+| AI | `GOOGLE_GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_TEMP`, `GEMINI_MAX_TOKENS`, `AI_MEMORY_MAX_SIZE` |
 | Redis | `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` |
 | Stripe | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 | Auth | `JWT_SECRET`, `AUTH_ADAPTER` |
 | Rate Limits | `RATE_LIMIT_GLOBAL`, `RATE_LIMIT_USER`, `RATE_LIMIT_AI` |
+| System | `USE_SERVER`, `REQUIRE_CHANNEL_GROUP_MEMBERSHIP`, `UNAVAILABLE_AT_NIGHT`, `USE_PAIRING_CODE`, `CUSTOM_PAIRING_CODE` |
+| Connection | `CONN_MAX_RETRIES`, `CONN_BASE_DELAY`, `CONN_BACKOFF_MULTIPLIER`, `CONN_CB_THRESHOLD` |
 
 Frontend requires `NEXT_PUBLIC_FIREBASE_*` variables and `BACKEND_URL`.
 
@@ -283,12 +294,14 @@ Never commit `.env` files. Use `.env.example` as a template.
 
 ## OpenClaw Integration
 
-OpenClaw (`openclaw/`) is a **multi-channel AI gateway** that DeXMart imports as a workspace dependency. It provides:
-- 22+ channel extensions (WhatsApp, Discord, Slack, Signal, Zalo, IRC, etc.)
+OpenClaw (`openclaw/`) is a **multi-channel AI gateway** (version `2026.2.27`) that DeXMart imports as a workspace dependency. It provides:
+- 22+ channel extensions (WhatsApp, Discord, Slack, Signal, Zalo, IRC, Google Chat, Mattermost, MS Teams, etc.)
 - 54 skills/commands
 - Plugin SDK for extending functionality
 
-Key files: `openclaw/AGENTS.md` (guidelines), `openclaw/CHANGELOG.md` (release history).
+Key files: `openclaw/AGENTS.md` (guidelines), `openclaw/CLAUDE.md` (symlink to AGENTS.md), `openclaw/CHANGELOG.md` (release history).
+
+The root `swarm-config.yaml` configures multi-agent swarm orchestration for the platform.
 
 ---
 
@@ -333,3 +346,4 @@ Key files: `openclaw/AGENTS.md` (guidelines), `openclaw/CHANGELOG.md` (release h
 | `frontend/src/lib/firebase.ts` | Firebase client initialization |
 | `ARCHITECTURE.md` | System architecture deep-dive |
 | `frontend/ARCHITECTURE.md` | Frontend architecture patterns |
+| `swarm-config.yaml` | Multi-agent swarm orchestration configuration |
