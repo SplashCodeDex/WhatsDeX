@@ -14,9 +14,9 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Backend Enforcement' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Authority Bridge
-- [ ] Task: Create `useAuthorityStore.ts` in Zustand to manage the fetched capability matrix
-- [ ] Task: Implement capability fetching in the root Dashboard layout
-- [ ] Task: Refactor `ChannelSlotGuard.ts` and `SkillGating.ts` to delegate to `useAuthorityStore`
+- [x] Task: Create `useAuthorityStore.ts` in Zustand to manage the fetched capability matrix
+- [x] Task: Implement capability fetching in the root Dashboard layout
+- [x] Task: Refactor `ChannelSlotGuard.ts` and `SkillGating.ts` to delegate to `useAuthorityStore`
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Frontend Authority Bridge' (Protocol in workflow.md)
 
 ## Phase 4: UI Cleanup & Verification
