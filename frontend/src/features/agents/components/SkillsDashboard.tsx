@@ -29,7 +29,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/features/auth';
 import { getIcon } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
@@ -42,7 +41,6 @@ import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
  */
 export function SkillsDashboard() {
     const { skills, skillReport, fetchSkillReport, fetchSkills, toggleSkill, saveSkillKey, installSkill, isLoading } = useOmnichannelStore();
-    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -115,10 +113,6 @@ export function SkillsDashboard() {
             setApiKey('');
         }
     };
-
-    const userTier = user?.plan || 'starter';
-
-    // Use backend-provided tier logic
 
     return (
         <div className="space-y-8">

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AgentService } from './AgentService.js';
 import { firebaseService } from './FirebaseService.js';
 import channelService from './ChannelService.js';
+import { systemAuthorityService } from './SystemAuthorityService.js';
 
 // Mock dependencies
 vi.mock('./FirebaseService.js', () => ({
@@ -18,6 +19,13 @@ vi.mock('./ChannelService.js', () => ({
   default: {
     getChannelsForAgent: vi.fn(),
     deleteChannel: vi.fn()
+  }
+}));
+
+vi.mock('./SystemAuthorityService.js', () => ({
+  systemAuthorityService: {
+    checkAuthority: vi.fn(),
+    recordUsage: vi.fn()
   }
 }));
 
@@ -63,6 +71,48 @@ describe('AgentService', () => {
 
       expect(result.success).toBe(true);
       expect(firebaseService.setDoc).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createAgent', () => {
+    it('should create an agent when authority allows', async () => {
+      vi.mocked(systemAuthorityService.checkAuthority).mockResolvedValue({ allowed: true });
+      vi.mocked(firebaseService.setDoc).mockResolvedValue(undefined);
+      vi.mocked(systemAuthorityService.recordUsage).mockResolvedValue(undefined);
+
+      const result = await service.createAgent(tenantId, { name: 'My Bot', personality: 'Helpful' });
+
+      expect(result.success).toBe(true);
+      expect(systemAuthorityService.checkAuthority).toHaveBeenCalledWith(tenantId, 'create_agent');
+      expect(firebaseService.setDoc).toHaveBeenCalled();
+      expect(systemAuthorityService.recordUsage).toHaveBeenCalledWith(tenantId, 'agents', 1);
+    });
+
+    it('should block agent creation when authority denies', async () => {
+      vi.mocked(systemAuthorityService.checkAuthority).mockResolvedValue({
+        allowed: false,
+        error: 'Agent limit reached for your plan'
+      });
+
+      const result = await service.createAgent(tenantId, { name: 'Blocked Bot' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toBe('Agent limit reached for your plan');
+      }
+      expect(firebaseService.setDoc).not.toHaveBeenCalled();
+      expect(systemAuthorityService.recordUsage).not.toHaveBeenCalled();
+    });
+
+    it('should use fallback error message when authority denies without a message', async () => {
+      vi.mocked(systemAuthorityService.checkAuthority).mockResolvedValue({ allowed: false });
+
+      const result = await service.createAgent(tenantId, { name: 'Blocked Bot' });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toBe('Agent creation limit reached');
+      }
     });
   });
 
