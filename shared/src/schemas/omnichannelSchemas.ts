@@ -36,7 +36,7 @@ export const agentIdentityResponseSchema = z.object({
         id: z.string(),
         name: z.string(),
         type: z.enum(['whatsapp', 'telegram', 'discord', 'slack', 'signal', 'imessage', 'custom', 'irc', 'googlechat']),
-        status: z.enum(['connected', 'disconnected', 'pairing', 'error', 'connecting', 'qr_pending', 'initializing']),
+        status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error', 'archived', 'initializing', 'banned', 'logged_out', 'reconnect_exhausted']),
         account: z.string().optional().nullable(),
     })).optional(),
 });

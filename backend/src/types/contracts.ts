@@ -94,7 +94,7 @@ export const ChannelSchema = z.object({
   type: z.preprocess((val) => val ?? 'whatsapp', z.string().refine(val => !!getPlatformMetadata(val), { message: "Unsupported channel type" }).default('whatsapp')),
   phoneNumber: z.string().optional(), // WhatsApp/Signal specific
   identifier: z.string().optional(), // Generic identifier (e.g. username, bot handle)
-  status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error', 'archived']),
+  status: z.enum(['connected', 'disconnected', 'connecting', 'qr_pending', 'error', 'archived', 'initializing', 'banned', 'logged_out', 'reconnect_exhausted']),
   lastSeenAt: TimestampSchema.optional(),
   connectionMetadata: z.object({
     browser: z.tuple([z.string(), z.string(), z.string()]).optional(),

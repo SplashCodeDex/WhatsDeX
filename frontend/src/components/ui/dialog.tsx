@@ -1,12 +1,12 @@
 'use client';
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import * as React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
-import { cn } from '@/lib/utils';
 import { BOUNCY_MODAL_VARIANTS, BOUNCY_SPRING } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 
 const Dialog = DialogPrimitive.Root;

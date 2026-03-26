@@ -1,9 +1,10 @@
 "use client";
 
-import * as React from "react";
 import { motion, HTMLMotionProps, TargetAndTransition } from "framer-motion";
-import { cn } from "@/lib/utils";
+import * as React from "react";
+
 import { BOUNCY_HOVER, BOUNCY_TAP } from "@/lib/animations";
+import { cn } from "@/lib/utils";
 
 
 

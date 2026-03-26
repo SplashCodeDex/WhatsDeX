@@ -14,8 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { useAuthorityStore } from '@/stores/useAuthorityStore';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 interface ChannelLinkerProps {
     agentId: string;
@@ -112,8 +112,17 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-semibold">{channel.name || channel.id}</span>
-                                                <Badge variant={channel.status === 'connected' ? 'default' : 'secondary'} className="text-[10px] uppercase">
-                                                    {channel.status}
+                                                <Badge variant={
+                                                    channel.status === 'connected'                        ? 'default' :
+                                                    channel.status === 'banned' ||
+                                                    channel.status === 'error'  ||
+                                                    channel.status === 'reconnect_exhausted'              ? 'destructive' :
+                                                    'secondary'
+                                                } className="text-[10px] uppercase">
+                                                    {channel.status === 'reconnect_exhausted' ? 'RETRY FAILED' :
+                                                     channel.status === 'logged_out'          ? 'LOGGED OUT' :
+                                                     channel.status === 'qr_pending'          ? 'SCAN QR' :
+                                                     channel.status}
                                                 </Badge>
                                             </div>
                                             <div className="text-xs text-muted-foreground capitalize">

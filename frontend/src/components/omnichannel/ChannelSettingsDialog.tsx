@@ -166,9 +166,19 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                             <div className="flex items-center gap-2">
                                 <div className={cn(
                                     "h-2 w-2 rounded-full",
-                                    channel.status === 'connected' ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-muted-foreground"
+                                    channel.status === 'connected'           ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" :
+                                    channel.status === 'banned'              ? "bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]" :
+                                    channel.status === 'reconnect_exhausted' ? "bg-orange-500" :
+                                    channel.status === 'error'               ? "bg-destructive" :
+                                    channel.status === 'logged_out'          ? "bg-yellow-500" :
+                                    "bg-muted-foreground"
                                 )} />
-                                <span className="font-bold capitalize">{channel.status}</span>
+                                <span className="font-bold capitalize">
+                                    {channel.status === 'reconnect_exhausted' ? 'Retry Failed' :
+                                     channel.status === 'logged_out'          ? 'Logged Out' :
+                                     channel.status === 'qr_pending'          ? 'Scan QR' :
+                                     channel.status}
+                                </span>
                             </div>
                         </div>
                         <Badge variant="outline" className="bg-background/50">

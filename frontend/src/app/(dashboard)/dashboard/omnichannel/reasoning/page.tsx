@@ -1,6 +1,6 @@
-import { OpenClawChatFrame } from '@/features/omnichannel/components/OpenClawChatFrame';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { OpenClawChatFrame } from '@/features/omnichannel/components/OpenClawChatFrame';
 
 export default function ReasoningPage() {
   return (

@@ -14,14 +14,14 @@ import {
 } from '@/features/billing';
 
 
-export default function BillingPage() {
+export default function BillingPage(): React.JSX.Element {
   const searchParams = useSearchParams();
 
   useEffect(() => {
     // Handle Stripe checkout success/cancel callbacks
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
-    const sessionId = searchParams.get('session_id');
+    searchParams.get('session_id');
 
     if (success === 'true') {
       toast.success('Subscription activated!', {

@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Metadata } from 'next';
 
 import { HomeFeature } from '@/features/dashboard/HomeFeature';
@@ -7,6 +9,6 @@ export const metadata: Metadata = {
     description: 'Autonomous commerce engine status and control.',
 };
 
-export default function DashboardPage() {
+export default function DashboardPage(): React.JSX.Element {
     return <HomeFeature />;
 }

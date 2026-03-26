@@ -28,7 +28,11 @@ export type ChannelStatus =
   | 'disconnected'
   | 'error'
   | 'qr_pending'
-  | 'initializing';
+  | 'initializing'
+  | 'archived'
+  | 'banned'
+  | 'logged_out'
+  | 'reconnect_exhausted';
 
 export interface Channel {
   id: string;

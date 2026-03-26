@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { signIn, signUp, googleAuthAction } from './actions';
 
 import { api, API_ENDPOINTS } from '@/lib/api';
-import { isApiSuccess, isApiError } from '@/types/api';
 
 // Mock next/headers
 vi.mock('next/headers', () => ({
@@ -44,7 +43,7 @@ describe('Auth Server Actions', () => {
       const mockUser = { id: '1', email: 'test@example.com' };
       const mockToken = 'mock-token';
 
-      (api.post as any).mockResolvedValue({
+      vi.mocked(api.post).mockResolvedValue({
         success: true,
         data: { user: mockUser, token: mockToken },
       });
@@ -63,7 +62,7 @@ describe('Auth Server Actions', () => {
     });
 
     it('should return error Result on api failure', async () => {
-      (api.post as any).mockResolvedValue({
+      vi.mocked(api.post).mockResolvedValue({
         success: false,
         error: { code: 'auth_error', message: 'Invalid credentials' },
       });
@@ -102,7 +101,7 @@ describe('Auth Server Actions', () => {
     });
 
     it('should preserve fields on api failure', async () => {
-      (api.post as any).mockResolvedValue({
+      vi.mocked(api.post).mockResolvedValue({
         success: false,
         error: { code: 'auth_error', message: 'Invalid credentials' },
       });
@@ -124,7 +123,7 @@ describe('Auth Server Actions', () => {
     });
 
     it('should preserve fields on network error', async () => {
-      (api.post as any).mockRejectedValue(new Error('Network failure'));
+      vi.mocked(api.post).mockRejectedValue(new Error('Network failure'));
 
       const formData = new FormData();
       formData.append('email', 'test@example.com');
@@ -148,7 +147,7 @@ describe('Auth Server Actions', () => {
       const mockUser = { id: '1', email: 'new@example.com', name: 'John Doe' };
       const mockToken = 'mock-token';
 
-      (api.post as any).mockResolvedValue({
+      vi.mocked(api.post).mockResolvedValue({
         success: true,
         data: { user: mockUser, token: mockToken },
       });
@@ -202,7 +201,7 @@ describe('Auth Server Actions', () => {
     });
 
     it('should preserve fields on api failure', async () => {
-      (api.post as any).mockResolvedValue({
+      vi.mocked(api.post).mockResolvedValue({
         success: false,
         error: { code: 'email_exists', message: 'Email already in use' },
       });
@@ -228,7 +227,7 @@ describe('Auth Server Actions', () => {
     });
 
     it('should preserve fields on network error', async () => {
-      (api.post as any).mockRejectedValue(new Error('Network failure'));
+      vi.mocked(api.post).mockRejectedValue(new Error('Network failure'));
 
       const formData = new FormData();
       formData.append('firstName', 'John');
@@ -257,7 +256,7 @@ describe('Auth Server Actions', () => {
       const mockUser = { id: '1', email: 'test@example.com' };
       const mockToken = 'mock-session-token';
 
-      (api.post as any).mockResolvedValue({
+      vi.mocked(api.post).mockResolvedValue({
         success: true,
         data: { user: mockUser, token: mockToken },
       });
@@ -287,7 +286,7 @@ describe('Auth Server Actions', () => {
     });
 
     it('should return api error on failure', async () => {
-      (api.post as any).mockResolvedValue({
+      vi.mocked(api.post).mockResolvedValue({
         success: false,
         error: { code: 'auth_error', message: 'Token verification failed' },
       });

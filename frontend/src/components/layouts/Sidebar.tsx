@@ -22,11 +22,11 @@ import {
     Monitor,
     ScrollText,
 } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
+
 
 
 import { InsightCard } from './InsightCard';
@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/features/auth';
+import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/useUIStore';
 
@@ -104,8 +105,7 @@ export function Sidebar() {
                                                             : 'text-muted-foreground group-hover:text-foreground'
                                                     )} />
                                                     <AnimatePresence mode="wait">
-                                                        {(!isSidebarCollapsed || isMobile) && (
-                                                            <motion.span 
+                                                        {(!isSidebarCollapsed || isMobile) ? <motion.span 
                                                                 initial={{ opacity: 0, x: -10, width: 0 }}
                                                                 animate={{ opacity: 1, x: 0, width: 'auto' }}
                                                                 exit={{ opacity: 0, x: -10, width: 0 }}
@@ -113,8 +113,7 @@ export function Sidebar() {
                                                                 className="ml-3 font-medium text-sm whitespace-nowrap overflow-hidden"
                                                             >
                                                                 {item.title}
-                                                            </motion.span>
-                                                        )}
+                                                            </motion.span> : null}
                                                     </AnimatePresence>
                                                 </div>
                                             </Link>

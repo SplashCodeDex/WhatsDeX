@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import { circuitBreaker } from '@/lib/api/apiCircuitBreaker';
 import { Button } from '@/components/ui/button';
+import { circuitBreaker } from '@/lib/api/apiCircuitBreaker';
 
 export function ConnectionStatus() {
     const [status, setStatus] = useState<'CLOSED' | 'OPEN' | 'HALF_OPEN'>(

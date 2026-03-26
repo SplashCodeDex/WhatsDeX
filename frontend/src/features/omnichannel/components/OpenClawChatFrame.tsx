@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { Loader2, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -23,16 +24,13 @@ export function OpenClawChatFrame({ className, runId }: OpenClawChatFrameProps) 
     <div className={cn("relative w-full h-full min-h-[500px] border border-border rounded-xl overflow-hidden bg-card", className)}>
       
       {/* Loading Overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+      {isLoading ? <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
           <p className="text-sm text-muted-foreground">Connecting to Agent Reasoning Engine...</p>
-        </div>
-      )}
+        </div> : null}
 
       {/* Error State */}
-      {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background z-20 p-6 text-center">
+      {hasError ? <div className="absolute inset-0 flex flex-col items-center justify-center bg-background z-20 p-6 text-center">
           <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
             <ExternalLink className="h-6 w-6 text-destructive" />
           </div>
@@ -43,8 +41,7 @@ export function OpenClawChatFrame({ className, runId }: OpenClawChatFrameProps) 
           <Button variant="outline" onClick={() => window.open(proxyUrl, '_blank')}>
             Try Direct Link
           </Button>
-        </div>
-      )}
+        </div> : null}
 
       <iframe 
         src={proxyUrl}

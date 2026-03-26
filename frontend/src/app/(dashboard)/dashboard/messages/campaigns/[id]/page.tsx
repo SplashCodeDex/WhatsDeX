@@ -6,7 +6,7 @@ interface CampaignPageProps {
     params: Promise<{ id: string }>;
 }
 
-export default async function CampaignPage({ params }: CampaignPageProps) {
+export default async function CampaignPage({ params }: CampaignPageProps): Promise<React.JSX.Element> {
     const { id } = await params;
 
     return (

@@ -18,7 +18,6 @@ import {
     Hash,
     Network
 } from "lucide-react";
-
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat, SiFacebook } from 'react-icons/si';
@@ -69,6 +68,32 @@ function ChannelCard({ channel }: { channel: any }) {
     const color = platform?.color || 'bg-primary';
 
     const isConnecting = channel.status === 'connecting' || channel.status === 'initializing' || channel.status === 'qr_pending';
+    const isTerminal = channel.status === 'banned' || channel.status === 'reconnect_exhausted';
+
+    const STATUS_BADGE: Record<string, { variant: 'default' | 'destructive' | 'secondary' | 'outline'; label: string }> = {
+        connected:           { variant: 'default',     label: 'Connected' },
+        connecting:          { variant: 'secondary',   label: 'Connecting' },
+        initializing:        { variant: 'secondary',   label: 'Starting' },
+        qr_pending:          { variant: 'secondary',   label: 'Scan QR' },
+        disconnected:        { variant: 'outline',     label: 'Offline' },
+        logged_out:          { variant: 'outline',     label: 'Logged Out' },
+        error:               { variant: 'destructive', label: 'Error' },
+        reconnect_exhausted: { variant: 'destructive', label: 'Retry Failed' },
+        banned:              { variant: 'destructive', label: 'Banned' },
+        archived:            { variant: 'outline',     label: 'Archived' },
+    };
+
+    const STATUS_MESSAGE: Record<string, string> = {
+        connected:           'Bot is active and listening',
+        disconnected:        'Bot is currently offline',
+        logged_out:          'Session expired — reconnect to get a new QR code',
+        error:               'Connection failed — use Manage to retry',
+        reconnect_exhausted: 'Auto-reconnect failed — use Manage to retry manually',
+        banned:              'Number banned by WhatsApp — this number must be replaced',
+        archived:            'Channel is archived',
+    };
+
+    const badge = STATUS_BADGE[channel.status] ?? { variant: 'secondary' as const, label: channel.status };
 
     const effectiveAgentId = channel.assignedAgentId || 'system_default';
     const agent = agentsResult?.agents.find(a => a.id === effectiveAgentId);
@@ -110,12 +135,8 @@ function ChannelCard({ channel }: { channel: any }) {
                             </div>
                         </div>
                     </div>
-                    <Badge variant={
-                        channel.status === 'connected' ? 'default' :
-                            channel.status === 'error' ? 'destructive' :
-                                'secondary'
-                    } className="capitalize">
-                        {channel.status}
+                    <Badge variant={badge.variant}>
+                        {badge.label}
                     </Badge>
                 </CardHeader>
                 <CardContent className="pt-4 flex-1">
@@ -129,19 +150,15 @@ function ChannelCard({ channel }: { channel: any }) {
                         />
                     ) : (
                         <div className="flex items-center text-sm text-muted-foreground">
-                            {channel.status === 'error' ? (
-                                <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
-                            ) : channel.status === 'connected' ? (
+                            {channel.status === 'connected' ? (
                                 <Wifi className="mr-2 h-4 w-4 text-green-500" />
+                            ) : (isTerminal || channel.status === 'error') ? (
+                                <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
                             ) : (
                                 <WifiOff className="mr-2 h-4 w-4" />
                             )}
                             <span>
-                                {channel.status === 'error' 
-                                    ? 'Connection failed — use Manage to retry' 
-                                    : channel.status === 'connected' 
-                                        ? 'Bot is active and listening' 
-                                        : 'Bot is currently offline'}
+                                {STATUS_MESSAGE[channel.status] ?? 'Bot is currently offline'}
                             </span>
                         </div>
                     )}
@@ -156,8 +173,7 @@ function ChannelCard({ channel }: { channel: any }) {
                         <span>Manage connection</span>
                         <Settings2 className="h-4 w-4" />
                     </Button>
-                    {(channel.status === 'connected' || isConnecting) && (
-                        <Button
+                    {(channel.status === 'connected' || isConnecting) && !isTerminal ? <Button
                             variant="ghost"
                             size="icon"
                             className={cn(
@@ -171,8 +187,7 @@ function ChannelCard({ channel }: { channel: any }) {
                             title={isConnecting ? "Abort Connection" : "Disconnect Bot"}
                         >
                             {isDisconnecting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
-                        </Button>
-                    )}
+                        </Button> : null}
                 </CardFooter>
             </Card>
 

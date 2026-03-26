@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Metadata } from 'next';
 
 import { ConfigManager } from '@/features/config';
@@ -7,7 +9,7 @@ export const metadata: Metadata = {
     description: 'Manage tenant-wide settings and platform configuration.',
 };
 
-export default function ConfigPage() {
+export default function ConfigPage(): React.JSX.Element {
     return (
         <div className="container mx-auto py-8">
             <ConfigManager />

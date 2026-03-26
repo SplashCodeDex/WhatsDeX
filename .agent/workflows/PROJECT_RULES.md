@@ -22,6 +22,31 @@ See [frontend/ARCHITECTURE.md](file:///w:/CodeDeX/DeXMart/frontend/ARCHITECTURE.
 3. **Shared seams, not shared code** — Integrate through well-defined interfaces (`ChannelAdapter`, gateway API), not by merging internal code.
 4. **Respect ownership** — Frontend, multi-tenancy, and AI live in DeXMart. Channel engines, gateway, and tooling live in OpenClaw.
 
+### OpenClaw `dist/` — Must Be Built Locally (Never Committed)
+
+`openclaw/dist/` is not committed to git. You **must build it** before starting the backend.
+
+**⚠️ DO NOT run `pnpm build` or `pnpm build:strict-smoke` in `openclaw/`.** Building all entries at once OOMs on machines with ≤8GB RAM (crashes at ~4GB heap). Always build **entry by entry**:
+
+```bash
+cd openclaw
+
+# Core entry (required for backend startup)
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/index.ts --platform node --out-dir dist --no-dts
+
+# Channel entries (required by backend/src/utils/openclawImports.ts)
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/telegram/send.ts         --platform node --out-dir dist/telegram        --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/signal/send.ts           --platform node --out-dir dist/signal          --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/slack/send.ts            --platform node --out-dir dist/slack           --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/discord/send.ts          --platform node --out-dir dist/discord         --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/facebook/webhook.ts      --platform node --out-dir dist/facebook        --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/web/outbound.ts          --platform node --out-dir dist/web             --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/web/active-listener.ts   --platform node --out-dir dist/web             --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/agents/skills/workspace.ts --platform node --out-dir dist/agents/skills --no-dts
+```
+
+Each entry builds in under 30s and uses well under 1GB. Increase `--max-old-space-size` if you have >16GB available.
+
 ---
 
 ## Tech Stack

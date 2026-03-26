@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Metadata } from 'next';
 
 import { RegisterForm } from '@/features/auth';
@@ -7,6 +9,6 @@ export const metadata: Metadata = {
     description: 'Create a new DeXMart account',
 };
 
-export default function RegisterPage() {
+export default function RegisterPage(): React.JSX.Element {
     return <RegisterForm />;
 }

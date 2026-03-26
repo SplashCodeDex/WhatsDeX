@@ -192,7 +192,7 @@ export async function signUp(
             data: user,
             message: 'Account created successfully',
         };
-    } catch (err: any) {
+    } catch (err) {
         logger.error('Sign up error:', { error: err });
         return {
             success: false,

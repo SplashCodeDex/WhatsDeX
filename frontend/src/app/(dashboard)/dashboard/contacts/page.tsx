@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ContactsTable, ImportContactsDialog, ImportHistoryPanel } from '@/features/contacts';
 import { AudienceManager } from '@/features/contacts/components/AudienceManager';
 
-export default function ContactsPage() {
+export default function ContactsPage(): React.JSX.Element {
     const [showAudienceManager, setShowAudienceManager] = useState(false);
 
     return (

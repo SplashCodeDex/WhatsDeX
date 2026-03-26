@@ -4,14 +4,11 @@ import {
     Zap,
     Plus,
     Trash2,
-    ExternalLink,
-    CheckCircle2,
-    XCircle,
     Shield,
     Copy,
     RefreshCw
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 import { Webhook, WEBHOOK_EVENTS, WebhookEvent } from '../types';
@@ -35,7 +32,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, API_ENDPOINTS } from '@/lib/api';
 
 
-export function WebhookManager() {
+export function WebhookManager(): React.JSX.Element {
     const [webhooks, setWebhooks] = useState<Webhook[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);

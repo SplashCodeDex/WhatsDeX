@@ -1,4 +1,5 @@
 import { type PlanTier } from '../types';
+
 import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
 /**

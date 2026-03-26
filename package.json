@@ -42,16 +42,25 @@
       "tough-cookie": "4.1.3"
     },
     "onlyBuiltDependencies": [
+      "@discordjs/opus",
+      "@firebase/util",
       "@lydell/node-pty",
       "@matrix-org/matrix-sdk-crypto-nodejs",
       "@napi-rs/canvas",
       "@whiskeysockets/baileys",
+      "agentdb",
       "authenticate-pam",
+      "baileys",
+      "better-sqlite3",
       "esbuild",
+      "hnswlib-node",
       "koffi",
+      "msgpackr-extract",
       "node-llama-cpp",
+      "node_extra_ca_certs_mozilla_bundle",
       "protobufjs",
-      "sharp"
+      "sharp",
+      "unrs-resolver"
     ]
   }
 }

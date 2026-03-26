@@ -1,10 +1,11 @@
 'use client';
 
+import { Loader2, Zap, Search, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import React from 'react';
-import { useMastermindStore } from '@/stores/useMastermindStore';
+
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Loader2, Zap, Search, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useMastermindStore } from '@/stores/useMastermindStore';
 
 interface LiveStatusBadgeProps {
     agentId: string;
@@ -43,7 +44,7 @@ export function LiveStatusBadge({ agentId, className, showText = true }: LiveSta
             )}
         >
             {getIcon()}
-            {showText && <span className="truncate max-w-[100px]">{status.status}</span>}
+            {showText ? <span className="truncate max-w-[100px]">{status.status}</span> : null}
         </Badge>
     );
 }

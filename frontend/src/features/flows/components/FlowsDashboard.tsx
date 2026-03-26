@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import '@xyflow/react/dist/style.css';
 import {
     ReactFlow,
     MiniMap,
@@ -14,9 +14,8 @@ import {
     Node,
     BackgroundVariant,
 } from '@xyflow/react';
-
-import '@xyflow/react/dist/style.css';
 import { MessageSquare, Zap, GitBranch, Sparkles, Save, Play, Loader2, Send, Lock, Wrench, Route } from 'lucide-react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -76,7 +75,7 @@ const nodeTypes = {
  * Core business logic and UI for the Flow Builder.
  * Adheres to DeXMart 2026 Rule 8.1 (Thin Page) and Rule 181 (Emoji-Free).
  */
-export function FlowsDashboard() {
+export function FlowsDashboard(): React.JSX.Element {
     const { data: templates } = useTemplates();
     const { subscription, isLoading: isLoadingPlan } = useSubscription();
     const { skills, fetchSkills } = useOmnichannelStore();
@@ -96,9 +95,9 @@ export function FlowsDashboard() {
     React.useEffect(() => {
         if (!isProFeatureOpen) return;
         fetchSkills();
-        const loadFlows = async () => {
+        const loadFlows = async (): Promise<void> => {
             try {
-                const response = await api.get('/api/flows') as { success: boolean; data?: any[]; error?: any };
+                const response = await api.get<{ nodes: Node[]; edges: Edge[] }[]>('/api/flows');
                 if (response.success && Array.isArray(response.data) && response.data.length > 0) {
                     const flow = response.data[0];
                     if (flow.nodes && flow.nodes.length > 0) {
@@ -112,7 +111,7 @@ export function FlowsDashboard() {
                     setNodes([]);
                     setEdges([]);
                 }
-            } catch (error) {
+            } catch (_error) {
                 toast.error('Failed to load flows');
                 setNodes([]);
                 setEdges([]);
@@ -128,7 +127,7 @@ export function FlowsDashboard() {
         [setEdges],
     );
 
-    const onNodeClick = useCallback((_: any, node: Node) => {
+    const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
         setSelectedNodeId(node.id);
     }, []);
 
@@ -136,7 +135,7 @@ export function FlowsDashboard() {
         setSelectedNodeId(null);
     }, []);
 
-    const updateNodeData = useCallback((nodeId: string, newData: any) => {
+    const updateNodeData = useCallback((nodeId: string, newData: Record<string, unknown>) => {
         setNodes((nds) => nds.map((node) => {
             if (node.id === nodeId) {
                 return { ...node, data: { ...node.data, ...newData } };
@@ -160,19 +159,19 @@ export function FlowsDashboard() {
             } else {
                 toast.error(response.error?.message || 'Failed to save flow');
             }
-        } catch (error) {
+        } catch (_error) {
             toast.error('Network error while saving flow');
         } finally {
             setIsSaving(false);
         }
     }, [nodes, edges]);
 
-    const runTest = async () => {
+    const runTest = async (): Promise<void> => {
         if (!testInput.trim()) return;
 
         setTestLogs([`User: ${testInput}`]);
 
-        const trigger = nodes.find(n => n.type === 'trigger' && (n.data as any).keyword?.toLowerCase() === testInput.toLowerCase());
+        const trigger = nodes.find(n => n.type === 'trigger' && (n.data as Record<string, unknown>).keyword?.toString().toLowerCase() === testInput.toLowerCase());
 
         if (!trigger) {
             setTestLogs(prev => [...prev, "System: No matching trigger found."]);
@@ -185,18 +184,19 @@ export function FlowsDashboard() {
         await executeSimulationStep(currentNodeId);
     };
 
-    const executeSimulationStep = async (nodeId: string) => {
+    const executeSimulationStep = async (nodeId: string): Promise<void> => {
         const node = nodes.find(n => n.id === nodeId);
         if (!node) return;
 
         setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, executing: true } } : n));
 
+        const nodeData = node.data as Record<string, unknown>;
         if (node.type === 'action') {
-            setTestLogs(prev => [...prev, `Bot: ${(node.data as any).message || '(Empty Message)'}`]);
+            setTestLogs(prev => [...prev, `Bot: ${nodeData.message || '(Empty Message)'}`]);
         } else if (node.type === 'trigger') {
-            setTestLogs(prev => [...prev, `System: Trigger matched [${(node.data as any).keyword}]`]);
+            setTestLogs(prev => [...prev, `System: Trigger matched [${nodeData.keyword}]`]);
         } else if (node.type === 'skill') {
-            setTestLogs(prev => [...prev, `System: Executing skill [${(node.data as any).skillName}]`]);
+            setTestLogs(prev => [...prev, `System: Executing skill [${nodeData.skillName}]`]);
         }
 
         await new Promise(r => setTimeout(r, 1000));
@@ -210,7 +210,7 @@ export function FlowsDashboard() {
         setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, executing: false } } : n));
     };
 
-    const onDragStart = (event: React.DragEvent, nodeType: string) => {
+    const onDragStart = (event: React.DragEvent, nodeType: string): void => {
         event.dataTransfer.setData('application/reactflow', nodeType);
         event.dataTransfer.effectAllowed = 'move';
     };
@@ -274,7 +274,7 @@ export function FlowsDashboard() {
         );
     }
 
-    const selectedSkill = skills.find(s => s.id === (selectedNode?.data as any)?.skillName);
+    const selectedSkill = skills.find(s => s.id === (selectedNode?.data as Record<string, unknown>)?.skillName);
 
     return (
         <div className="flex h-[calc(100vh-120px)] w-full gap-4 overflow-hidden">
@@ -403,7 +403,7 @@ export function FlowsDashboard() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase text-muted-foreground">Keyword Match</label>
                                     <Input
-                                        value={(selectedNode.data as any).keyword || ''}
+                                        value={(selectedNode.data as Record<string, unknown>).keyword || ''}
                                         onChange={(e) => updateNodeData(selectedNode.id, { keyword: e.target.value })}
                                         placeholder="e.g. hello"
                                     />
@@ -415,7 +415,7 @@ export function FlowsDashboard() {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase text-muted-foreground">Select Template</label>
                                         <Select
-                                            value={(selectedNode.data as any).templateId || 'none'}
+                                            value={(selectedNode.data as Record<string, unknown>).templateId || 'none'}
                                             onValueChange={(val) => {
                                                 const tpl = templates?.find(t => t.id === val);
                                                 updateNodeData(selectedNode.id, {
@@ -436,12 +436,12 @@ export function FlowsDashboard() {
                                         </Select>
                                     </div>
 
-                                    {!(selectedNode.data as any).templateId && (
+                                    {!(selectedNode.data as Record<string, unknown>).templateId && (
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold uppercase text-muted-foreground">Raw Message</label>
                                             <textarea
                                                 className="w-full h-24 p-3 rounded-lg bg-muted/30 border border-border/20 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                                value={(selectedNode.data as any).message || ''}
+                                                value={(selectedNode.data as Record<string, unknown>).message || ''}
                                                 onChange={(e) => updateNodeData(selectedNode.id, { message: e.target.value })}
                                                 placeholder="Type your message..."
                                             />
@@ -454,7 +454,7 @@ export function FlowsDashboard() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase text-muted-foreground">Condition</label>
                                     <Select
-                                        value={(selectedNode.data as any).condition || 'is_premium'}
+                                        value={(selectedNode.data as Record<string, unknown>).condition || 'is_premium'}
                                         onValueChange={(val) => updateNodeData(selectedNode.id, { condition: val })}
                                     >
                                         <SelectTrigger>
@@ -473,7 +473,7 @@ export function FlowsDashboard() {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase text-muted-foreground">OpenClaw Skill</label>
                                         <Select
-                                            value={(selectedNode.data as any).skillName || ''}
+                                            value={(selectedNode.data as Record<string, unknown>).skillName || ''}
                                             onValueChange={(val) => {
                                                 updateNodeData(selectedNode.id, {
                                                     skillName: val,
@@ -509,23 +509,23 @@ export function FlowsDashboard() {
                                                 <input
                                                     type="checkbox"
                                                     className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary"
-                                                    checked={(selectedNode.data as any).nesting || false}
+                                                    checked={(selectedNode.data as Record<string, unknown>).nesting || false}
                                                     onChange={(e) => updateNodeData(selectedNode.id, { nesting: e.target.checked })}
                                                 />
                                             </div>
                                             <p className="text-[9px] text-muted-foreground leading-tight">Enable autonomous sub-agent research and fact-checking for this node.</p>
 
                                             <h3 className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Parameters</h3>
-                                            {Object.entries(selectedSkill.parameters?.properties || {}).map(([key, prop]: [string, any]) => (
+                                            {Object.entries(selectedSkill.parameters?.properties || {}).map(([key, prop]: [string, Record<string, string>]) => (
                                                 <div key={key} className="space-y-1.5">
                                                     <Label className="text-[10px] font-bold uppercase">{prop.title || key}</Label>
                                                     <Input
                                                         placeholder={prop.description || ''}
-                                                        value={(selectedNode.data as any).params?.[key] || ''}
+                                                        value={((selectedNode.data as Record<string, unknown>).params as Record<string, string> | undefined)?.[key] || ''}
                                                         onChange={(e) => {
-                                                            const currentParams = (selectedNode.data as any).params || {};
+                                                            const currentParams = (selectedNode.data as Record<string, unknown>).params || {};
                                                             updateNodeData(selectedNode.id, {
-                                                                params: { ...currentParams, [key]: e.target.value }
+                                                                params: { ...(currentParams as Record<string, unknown>), [key]: e.target.value }
                                                             });
                                                         }}
                                                     />
@@ -588,7 +588,7 @@ export function FlowsDashboard() {
                                 setIsTesting(false);
                                 setTestLogs([]);
                                 setTestInput('');
-                                setNodes(nds => nds.map(n => ({ ...n.data, executing: false } as any)));
+                                setNodes(nds => nds.map(n => ({ ...n, data: { ...(n.data as Record<string, unknown>), executing: false } })));
                             }}
                             className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
                         >

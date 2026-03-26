@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CampaignList, CampaignWizard, UnifiedInbox } from '@/features/messages/index';
 
-export default function MessagesPage() {
+export default function MessagesPage(): React.JSX.Element {
     const [showWizard, setShowWizard] = useState(false);
 
     return (

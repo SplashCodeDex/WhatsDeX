@@ -418,8 +418,8 @@ Use the tools provided to fulfill user requests accurately. If a tool result is 
       environment: {
         timeOfDay: this.getTimeOfDay(),
         dayOfWeek: new Date().getDay(),
-        previousActions: await this.getRecentActions(userId),
-        activeConversations: await this.getActiveConversations(userId)
+        previousActions: await this.getRecentActions(tenantId, userId),
+        activeConversations: await this.getActiveConversations(tenantId, userId)
       }
     };
   }
@@ -601,6 +601,28 @@ Only include NEW or UPDATED information. If nothing significant is found, return
 
     const cacheKey = `ai:memory:${tenantId}:${platform}:${chatId}`;
     await cacheService.set(cacheKey, memory, 3600 * 24); // 24h retention
+  }
+
+  /**
+   * Returns recently recorded bot actions for a user, used to give Gemini awareness
+   * of what it already did in this session. Populated by callers via the cache key
+   * `ai:actions:${tenantId}:${userId}` when actions are executed.
+   */
+  async getRecentActions(tenantId: string, userId: string): Promise<string[]> {
+    const cacheKey = `ai:actions:${tenantId}:${userId}`;
+    const cached = await cacheService.get<string[]>(cacheKey);
+    return cached.success ? (cached.data || []) : [];
+  }
+
+  /**
+   * Returns active conversation thread IDs for a user across platforms, used to give
+   * Gemini awareness of parallel conversations. Populated via cache key
+   * `ai:conversations:active:${tenantId}:${userId}`.
+   */
+  async getActiveConversations(tenantId: string, userId: string): Promise<string[]> {
+    const cacheKey = `ai:conversations:active:${tenantId}:${userId}`;
+    const cached = await cacheService.get<string[]>(cacheKey);
+    return cached.success ? (cached.data || []) : [];
   }
 
   /**

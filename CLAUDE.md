@@ -1,6 +1,6 @@
-# CLAUDE.md — AI Assistant Guide for DeXMart
+# CLAUDE.md
 
-This file provides essential context for AI assistants (Claude, Copilot, etc.) working in this codebase.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ---
 
@@ -63,6 +63,10 @@ pnpm test:frontend    # Vitest (jsdom environment)
 pnpm test:backend     # Vitest (node environment)
 pnpm test:run         # Backend tests, single run with coverage
 pnpm test:coverage    # Frontend tests with coverage report
+
+# Run a single test file or pattern
+pnpm --filter backend vitest run src/services/authSystem.test.ts
+pnpm --filter frontend vitest run src/features/auth
 ```
 
 ### Linting & Type Checking
@@ -302,6 +306,74 @@ OpenClaw (`openclaw/`) is a **multi-channel AI gateway** (version `2026.2.27`) t
 Key files: `openclaw/AGENTS.md` (guidelines), `openclaw/CLAUDE.md` (symlink to AGENTS.md), `openclaw/CHANGELOG.md` (release history).
 
 The root `swarm-config.yaml` configures multi-agent swarm orchestration for the platform.
+
+### Building OpenClaw (`dist/` is not committed)
+
+The backend requires `openclaw/dist/` to exist at runtime. It is **not committed** and must be built locally.
+
+**Critical:** Running `pnpm build` or `pnpm build:strict-smoke` in `openclaw/` builds all 12 entries simultaneously and **OOMs on machines with ≤8GB RAM** (observed crash at 4GB heap). Always build **entry by entry**:
+
+```bash
+cd openclaw
+
+# Core (required for backend startup)
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/index.ts --platform node --out-dir dist --no-dts
+
+# Channel senders (required by backend/src/utils/openclawImports.ts)
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/telegram/send.ts     --platform node --out-dir dist/telegram  --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/signal/send.ts       --platform node --out-dir dist/signal    --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/slack/send.ts        --platform node --out-dir dist/slack     --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/discord/send.ts      --platform node --out-dir dist/discord   --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/facebook/webhook.ts  --platform node --out-dir dist/facebook  --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/web/outbound.ts      --platform node --out-dir dist/web       --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/web/active-listener.ts --platform node --out-dir dist/web     --no-dts
+NODE_OPTIONS='--max-old-space-size=3072' npx tsdown src/agents/skills/workspace.ts --platform node --out-dir dist/agents/skills --no-dts
+```
+
+Each entry takes ~0.5–30s and uses well under 1GB. Adjust `--max-old-space-size` up if you have >16GB RAM available.
+
+---
+
+## Critical Development Policies
+
+These rules come from `.agent/rules/` and are **mandatory**:
+
+### TDD Mandate
+All feature work follows Red → Green → Refactor:
+1. **Red**: Write a failing test first — before any implementation code.
+2. **Green**: Write only enough code to make it pass.
+3. **Refactor**: Clean up while keeping tests green.
+
+Bug fixes also require a reproducing test first (Emergency Protocol).
+
+### Banned Patterns
+| Pattern | Replacement |
+|---------|------------|
+| `any` type | `unknown` + Zod narrowing |
+| `useEffect` for data fetching | Server Components or React Query |
+| Manual `useState` for loading | `useActionState` (React 19) |
+| Manual `useMemo`/`useCallback` | React Compiler handles this |
+| `// TODO: implement later` | Stub correctly or ask for clarification |
+| Simulated/fake logic in production | Real APIs and real data only |
+
+### ESM Import Rule
+All relative imports **must** include the `.js` extension — even for `.ts` source files:
+```typescript
+// ✅ Correct
+import { logger } from './utils/logger.js';
+// ❌ Wrong
+import { logger } from './utils/logger';
+```
+
+### Definition of Done
+A task is complete only when:
+- [ ] Tests pass (TDD green phase)
+- [ ] Lint + typecheck pass with zero errors/warnings
+- [ ] Self-critic review done (edge cases, security flaws identified and fixed)
+- [ ] No `console.log` or dead code left
+
+### Workaround Protocol
+If a workaround is required: explain *why*, verify it is secure, and document it with a code comment. Never use a workaround to bypass safety checks silently.
 
 ---
 

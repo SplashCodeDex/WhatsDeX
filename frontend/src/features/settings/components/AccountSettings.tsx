@@ -4,12 +4,12 @@ import { User, Mail, Shield, Camera, Loader2, Save } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/features/auth';
 
 export function AccountSettings() {
@@ -132,7 +132,7 @@ export function AccountSettings() {
                             disabled={isSaving}
                             className="rounded-xl px-8 shadow-lg ring-1 ring-primary/20"
                         >
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Save Profile
                         </Button>
                     </div>

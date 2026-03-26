@@ -7,19 +7,18 @@
  * Features a dynamic, animated pill that rolls in controls on interaction.
  */
 
-import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, User, LogOut, Settings as SettingsIcon, ExternalLink, CreditCard, Shield, Crown, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
-
+import { useState, useRef, useEffect } from 'react';
 
 import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { useAuth } from '@/features/auth';
-import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/features/auth';
+import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 
 export function Header() {
@@ -119,8 +118,7 @@ export function Header() {
 
 
                         <AnimatePresence>
-                            {isExpanded && (
-                                rollingControls.map((control, idx) => (
+                            {isExpanded ? rollingControls.map((control, idx) => (
                                     <motion.div
                                         key={control.key}
                                         custom={idx}
@@ -140,8 +138,7 @@ export function Header() {
                                             </TooltipContent>
                                         </Tooltip>
                                     </motion.div>
-                                ))
-                            )}
+                                )) : null}
                         </AnimatePresence>
 
                         <Tooltip>
@@ -178,8 +175,7 @@ export function Header() {
                                     </div>
 
                                     {/* Actionable Power Badge */}
-                                    {user?.plan && user.plan !== 'starter' && !isExpanded && (
-                                        <div className={cn(
+                                    {user?.plan && user.plan !== 'starter' && !isExpanded ? <div className={cn(
                                             "absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.2em] text-white shadow-md ring-1 ring-background z-20 transition-all duration-300 pointer-events-none group-hover:scale-110",
                                             user.plan === 'enterprise' 
                                                 ? "bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 shadow-amber-500/30" 
@@ -196,8 +192,7 @@ export function Header() {
                                                     <span>Pro</span>
                                                 </>
                                             )}
-                                        </div>
-                                    )}
+                                        </div> : null}
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="left" className="rounded-xl font-semibold">

@@ -1,12 +1,12 @@
 'use client';
 
 import { Activity, MessageSquare, Send, Hash, Slack, Smartphone, Settings, Brain, Zap, Terminal, CheckCircle2, GitBranch } from 'lucide-react';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 

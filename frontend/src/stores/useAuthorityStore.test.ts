@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { useAuthorityStore } from './useAuthorityStore';
+
 import { api } from '@/lib/api/client';
 import type { Capabilities } from '@/types/authority';
 

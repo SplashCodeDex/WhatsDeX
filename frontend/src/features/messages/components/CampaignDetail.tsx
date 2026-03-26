@@ -20,13 +20,14 @@ import { useRouter } from 'next/navigation';
 import React from 'react';
 
 import { useCampaign, useResumeCampaign } from '../hooks/useCampaigns';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 interface CampaignDetailProps {
@@ -137,8 +138,7 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
                             <Play className="w-4 h-4 mr-2" /> {campaign.status === 'draft' ? 'Start Broadcast' : 'Resume Work'}
                         </Button>
                     )}
-                    {isAntiBanCooldown && (
-                        <div className="flex flex-col items-end gap-1">
+                    {isAntiBanCooldown ? <div className="flex flex-col items-end gap-1">
                             <Button 
                                 disabled 
                                 className="bg-muted text-muted-foreground font-bold h-12 px-6 cursor-not-allowed opacity-50"
@@ -146,14 +146,12 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
                                 <Clock className="w-4 h-4 mr-2" /> 0{Math.floor(cooldownRemaining / 60)}:{String(cooldownRemaining % 60).padStart(2, '0')}
                             </Button>
                             <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">In Cooldown</span>
-                        </div>
-                    )}
+                        </div> : null}
                 </div>
             </div>
 
             {/* Anti-Ban Alert Banner */}
-            {isAntiBanCooldown && (
-                <div className="relative overflow-hidden group">
+            {isAntiBanCooldown ? <div className="relative overflow-hidden group">
                     <div className="absolute inset-0 bg-yellow-500/10 blur-xl group-hover:bg-yellow-500/15 transition-all duration-500" />
                     <div className="relative border border-yellow-500/20 bg-background/40 backdrop-blur-xl p-6 rounded-2xl flex flex-col md:flex-row items-center gap-6">
                         <div className="bg-yellow-500/20 p-4 rounded-full">
@@ -162,7 +160,7 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
                         <div className="flex-1 text-center md:text-left space-y-1">
                             <h3 className="text-lg font-black tracking-tight text-foreground flex items-center justify-center md:justify-start gap-2">
                                 Anti-Ban Shield Active
-                                {isPremium && <Badge className="bg-primary text-primary-foreground text-[10px] h-5">PRO</Badge>}
+                                {isPremium ? <Badge className="bg-primary text-primary-foreground text-[10px] h-5">PRO</Badge> : null}
                             </h3>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 We've temporarily paused your campaign because WhatsApp detected a high volume of identical messages. 
@@ -177,8 +175,7 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
                             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Safety Delay</div>
                         </div>
                     </div>
-                </div>
-            )}
+                </div> : null}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">

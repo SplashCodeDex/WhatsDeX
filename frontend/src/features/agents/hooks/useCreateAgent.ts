@@ -14,8 +14,8 @@ import { type Agent, type AIModel } from '../types';
 import { useAuth } from '@/features/auth';
 import { getClientFirestore } from '@/lib/firebase/client';
 import { logger } from '@/lib/logger';
-import { type ActionResult } from '@/types/api';
 import { useAuthorityStore } from '@/stores/useAuthorityStore';
+import { type ActionResult } from '@/types/api';
 
 interface CreateAgentInput {
     name: string;

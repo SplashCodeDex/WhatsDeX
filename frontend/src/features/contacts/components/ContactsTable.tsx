@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Phone, Mail, Tag, Trash2, MoreVertical, Search, Filter, ChevronLeft, ChevronRight, Eye, Download, CheckSquare, Square } from 'lucide-react';
+import { User, Phone, Mail, Tag, Trash2, MoreVertical, Search, ChevronLeft, ChevronRight, Eye, Download, CheckSquare, Square } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 
@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 
 const ITEMS_PER_PAGE = 10;
 
-export function ContactsTable() {
+export function ContactsTable(): React.JSX.Element | null {
     const { data: contacts, isLoading, error } = useContacts();
     const deleteMutation = useDeleteContact();
     
@@ -70,7 +70,7 @@ export function ContactsTable() {
     );
 
     // Handlers
-    const toggleTag = (tag: string) => {
+    const toggleTag = (tag: string): void => {
         setSelectedTags(prev => 
             prev.includes(tag) 
                 ? prev.filter(t => t !== tag)
@@ -79,7 +79,7 @@ export function ContactsTable() {
         setCurrentPage(1); // Reset to first page when filter changes
     };
 
-    const toggleSelectAll = () => {
+    const toggleSelectAll = (): void => {
         if (selectedContacts.size === paginatedContacts.length) {
             setSelectedContacts(new Set());
         } else {
@@ -87,7 +87,7 @@ export function ContactsTable() {
         }
     };
 
-    const toggleSelectContact = (id: string) => {
+    const toggleSelectContact = (id: string): void => {
         setSelectedContacts(prev => {
             const newSet = new Set(prev);
             if (newSet.has(id)) {
@@ -99,9 +99,9 @@ export function ContactsTable() {
         });
     };
 
-    const handleBulkDelete = async () => {
+    const handleBulkDelete = async (): Promise<void> => {
         if (selectedContacts.size === 0) return;
-        
+
         const confirmed = window.confirm(`Delete ${selectedContacts.size} selected contact(s)?`);
         if (!confirmed) return;
 
@@ -111,12 +111,12 @@ export function ContactsTable() {
             }
             toast.success(`Deleted ${selectedContacts.size} contact(s)`);
             setSelectedContacts(new Set());
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to delete some contacts');
         }
     };
 
-    const handleExportCSV = () => {
+    const handleExportCSV = (): void => {
         const dataToExport = selectedContacts.size > 0 
             ? filteredContacts.filter(c => selectedContacts.has(c.id))
             : filteredContacts;

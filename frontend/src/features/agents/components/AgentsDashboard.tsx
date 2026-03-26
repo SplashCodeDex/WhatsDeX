@@ -42,8 +42,8 @@ import { useCreateAgent } from '@/features/agents/hooks/useCreateAgent';
 import { AgentTemplate } from '@/features/agents/types';
 import { useAuth } from '@/features/auth';
 import { cn } from '@/lib/utils';
-import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import { useAuthorityStore } from '@/stores/useAuthorityStore';
+import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 /**
  * AgentsDashboard Component
@@ -290,11 +290,9 @@ export function AgentsDashboard() {
                                     </TabsList>
 
                                     <TabsContent value="overview" className="space-y-6 pt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                        {showTrace && (
-                                            <div className="animate-in zoom-in-95 fade-in duration-500">
+                                        {showTrace ? <div className="animate-in zoom-in-95 fade-in duration-500">
                                                 <RecursiveTraceView rootAgentId={selectedAgent.id} />
-                                            </div>
-                                        )}
+                                            </div> : null}
                                         
                                         {/* High-Density Status Bar */}
                                         <div className="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-muted/20 border border-border/40 backdrop-blur-sm -mt-2">

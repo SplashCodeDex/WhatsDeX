@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Metadata } from 'next';
 
 import { OmnichannelFeature } from '@/features/omnichannel/OmnichannelFeature';
@@ -7,6 +9,6 @@ export const metadata: Metadata = {
     description: 'Central command for social messaging platforms.',
 };
 
-export default function OmnichannelHubPage() {
+export default function OmnichannelHubPage(): React.JSX.Element {
     return <OmnichannelFeature />;
 }

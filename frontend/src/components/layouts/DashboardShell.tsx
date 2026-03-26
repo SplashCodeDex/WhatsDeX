@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -10,8 +10,8 @@ import { ScrollToTop } from '../ui/ScrollToTop';
 import { ScrollArea } from '../ui/scroll-area';
 
 import { cn } from '@/lib/utils';
-import { useUIStore } from '@/stores/useUIStore';
 import { useAuthorityStore } from '@/stores/useAuthorityStore';
+import { useUIStore } from '@/stores/useUIStore';
 
 
 export function DashboardShell({

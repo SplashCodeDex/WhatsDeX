@@ -14,7 +14,7 @@ interface BaseNodeProps {
   type: 'trigger' | 'action' | 'logic' | 'ai' | 'skill' | 'ai_router';
 }
 
-export function BaseNode({ title, icon, children, selected, executing, type }: BaseNodeProps) {
+export function BaseNode({ title, icon, children, selected, executing, type }: BaseNodeProps): React.JSX.Element {
   return (
     <div className={cn(
       "min-w-[200px] rounded-xl border bg-card/80 backdrop-blur-md shadow-xl transition-all duration-300",

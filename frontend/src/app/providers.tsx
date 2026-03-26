@@ -10,11 +10,10 @@
 
 import { Toaster } from 'sonner';
 
-import { ThemeProvider } from '@/components/providers/theme-provider';
 import { SocketProvider } from '@/components/providers/socket-provider';
-import { QueryProvider } from '@/lib/query';
-
+import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryProvider } from '@/lib/query';
 
 interface ProvidersProps {
     children: React.ReactNode;

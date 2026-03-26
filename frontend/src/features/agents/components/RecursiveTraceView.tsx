@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useMemo } from 'react';
 import {
     ReactFlow,
     Background,
@@ -10,11 +9,14 @@ import {
     Handle,
     Position,
 } from '@xyflow/react';
+import React, { useMemo } from 'react';
+
 import '@xyflow/react/dist/style.css';
-import { useMastermindStore, MastermindEvent } from '@/stores/useMastermindStore';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { useMastermindStore, MastermindEvent } from '@/stores/useMastermindStore';
+
 import { Bot, Terminal, Zap, Search, ShieldCheck } from 'lucide-react';
 
 interface AgentNodeProps {
@@ -26,7 +28,7 @@ interface AgentNodeProps {
     };
 }
 
-const AgentNode = ({ data }: AgentNodeProps) => {
+function AgentNode({ data }: AgentNodeProps) {
     const getEventIcon = (type: string) => {
         switch (type) {
             case 'tool:invoke': return <Zap className="h-2.5 w-2.5 text-amber-500" />;
@@ -65,7 +67,7 @@ const AgentNode = ({ data }: AgentNodeProps) => {
             <Handle type="source" position={Position.Bottom} className="w-2 h-2 bg-primary" />
         </Card>
     );
-};
+}
 
 const nodeTypes = {
     agent: AgentNode,
