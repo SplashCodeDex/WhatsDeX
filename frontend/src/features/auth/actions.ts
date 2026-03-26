@@ -275,6 +275,13 @@ export async function googleAuthAction(
  * Sign out and clear session
  */
 export async function signOut(): Promise<void> {
+    // Best-effort: notify backend to blacklist the token before clearing the cookie.
+    // Non-fatal — cookie is deleted regardless; token expires naturally if this fails.
+    try {
+        await api.post(API_ENDPOINTS.AUTH.LOGOUT, {});
+    } catch {
+        logger.warn('[signOut] Backend logout call failed; proceeding with cookie deletion.');
+    }
     const cookieStore = await cookies();
     cookieStore.delete(SESSION_COOKIE_NAME);
     redirect(ROUTES.LOGIN);

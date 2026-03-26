@@ -341,8 +341,12 @@ export class ChannelService {
       }
 
       await adapter.initialize(); // Essential for Telegram to run bot.init()
-      await adapter.connect(force);
+
+      // Register BEFORE connect() so the Watchdog sees the adapter as alive
+      // during the QR-pending phase (WhatsApp connect() blocks until handshake).
       channelManager.registerAdapter(adapter);
+
+      await adapter.connect(force);
 
       // Only mark as connected if it's not managed by the adapter itself (like WhatsApp)
       if (channel.type !== 'whatsapp') {
@@ -352,6 +356,8 @@ export class ChannelService {
       return { success: true, data: undefined };
     } catch (error: any) {
       logger.error(`Failed to start channel ${channelId}:`, error);
+      // Unregister the adapter on failure so it's not left dangling
+      await channelManager.shutdownAdapter(channelId);
       await this.updateStatus(tenantId, channelId, 'error', agentId);
       return { success: false, error };
     }

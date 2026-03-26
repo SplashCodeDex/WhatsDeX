@@ -33,7 +33,7 @@ export function AuthTransitionLayout({ children, particles }: AuthTransitionLayo
                     "absolute top-0 bottom-0 z-0 transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]",
                     isRegister
                         ? "left-0 right-0 w-full"
-                        : "right-0 w-0 lg:w-1/2 left-auto"
+                        : "right-0 w-0 invisible lg:visible lg:w-1/2 left-auto"
                 )}
                 initial={false}
             >

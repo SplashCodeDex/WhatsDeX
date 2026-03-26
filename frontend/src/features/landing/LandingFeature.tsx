@@ -61,6 +61,7 @@ export function LandingFeature(): React.JSX.Element {
                             alt="DeXMart"
                             width={130}
                             height={32}
+                            style={{ width: 'auto', height: 'auto' }}
                             className="h-8 w-auto object-contain drop-shadow-sm dark:invert"
                             priority
                         />
@@ -105,6 +106,7 @@ export function LandingFeature(): React.JSX.Element {
                             alt="DeXMart"
                             width={100}
                             height={24}
+                            style={{ width: 'auto', height: 'auto' }}
                             className="h-6 w-auto object-contain dark:invert"
                         />
                     </Link>

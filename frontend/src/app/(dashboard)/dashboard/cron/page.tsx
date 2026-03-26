@@ -16,7 +16,6 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CreateCronJobDialog } from '@/components/omnichannel/CreateCronJobDialog';
-import type { CronSchedule } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +37,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+import type { CronSchedule } from '@/types';
 
 
 function formatSchedule(schedule: CronSchedule): string {

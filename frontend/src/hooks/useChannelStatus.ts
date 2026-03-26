@@ -90,7 +90,7 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
                 }
             } catch (err) {
                 if (isMounted) {
-                    setError('Polling error');
+                    setError(err instanceof Error ? err.message : 'Polling error');
                     logger.error('[useChannelStatus] Polling error', err);
                 }
             } finally {

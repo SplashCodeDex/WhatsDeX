@@ -49,6 +49,10 @@ export const metadata: Metadata = {
         index: true,
         follow: true,
     },
+    icons: {
+        icon: '/favicon.ico',
+        apple: '/apple-icon.png',
+    },
 };
 
 export const viewport: Viewport = {

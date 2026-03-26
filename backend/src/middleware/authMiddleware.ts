@@ -102,32 +102,37 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
                     const MIN_RENEWAL_AGE_SEC = 30 * 60; // 30 minutes
 
                     if (ageSeconds > MIN_RENEWAL_AGE_SEC) {
-                        const jwtExpires = config.get('auth.jwtExpires') || '4h';
-                        const jwtLifetimeMs = parseDuration(jwtExpires);
+                        try {
+                            const jwtExpires = config.get('auth.jwtExpires') || '4h';
+                            const jwtLifetimeMs = parseDuration(jwtExpires);
 
-                        const newToken = jwt.sign(
-                            {
+                            const newToken = jwt.sign(
+                                {
+                                    userId: decoded.userId,
+                                    tenantId: decoded.tenantId,
+                                    role: decoded.role,
+                                    email: decoded.email
+                                },
+                                secret,
+                                { expiresIn: jwtExpires }
+                            );
+
+                            res.cookie('token', newToken, {
+                                httpOnly: true,
+                                secure: process.env.NODE_ENV === 'production',
+                                sameSite: 'strict',
+                                maxAge: jwtLifetimeMs
+                            });
+
+                            logger.debug('Auth Middleware: Session sliding window extended (Threshold reached)', {
                                 userId: decoded.userId,
-                                tenantId: decoded.tenantId,
-                                role: decoded.role,
-                                email: decoded.email
-                            },
-                            secret,
-                            { expiresIn: jwtExpires }
-                        );
-
-                        res.cookie('token', newToken, {
-                            httpOnly: true,
-                            secure: process.env.NODE_ENV === 'production',
-                            sameSite: 'strict',
-                            maxAge: jwtLifetimeMs
-                        });
-
-                        logger.debug('Auth Middleware: Session sliding window extended (Threshold reached)', {
-                            userId: decoded.userId,
-                            remainingSeconds: remaining,
-                            tokenAge: ageSeconds
-                        });
+                                remainingSeconds: remaining,
+                                tokenAge: ageSeconds
+                            });
+                        } catch (renewalErr) {
+                            // Non-fatal: log and continue with the existing valid token
+                            logger.warn('Auth Middleware: Sliding window renewal failed, proceeding with current token', { error: renewalErr });
+                        }
                     }
                 }
             }
@@ -157,7 +162,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
                     }
                 });
             }
-            return res.status(403).json({
+            return res.status(401).json({
                 success: false,
                 error: {
                     code: 'invalid_token',

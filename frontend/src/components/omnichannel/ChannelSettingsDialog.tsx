@@ -1,9 +1,10 @@
 'use client';
 
-import { 
-    Settings2, 
-    Power, 
-    Trash2, 
+import {
+    Settings2,
+    Power,
+    RotateCcw,
+    Trash2,
     AlertTriangle,
     Loader2,
     ShieldAlert,
@@ -31,6 +32,8 @@ import {
     SelectValue 
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { api } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import type { Channel } from '@/types/omnichannel';
@@ -90,6 +93,23 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
         }
     };
 
+    const handleReconnect = async (): Promise<void> => {
+        setIsActionLoading(true);
+        try {
+            const response = await api.post(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.CONNECT(agentId, channel.id), {});
+            if (response.success) {
+                toast.success(`Reconnecting ${channel.name}...`);
+                onOpenChange(false);
+            } else {
+                toast.error('Failed to initiate reconnection');
+            }
+        } catch {
+            toast.error('An unexpected error occurred');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
     const handleMove = async (): Promise<void> => {
         if (selectedTargetAgent === agentId) return;
         setIsActionLoading(true);
@@ -123,41 +143,44 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
 
                 <div className="py-6 space-y-6">
                     {/* Agent Assignment */}
-                    <div className="space-y-3">
-                        <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-2">
-                            <UserCircle2 className="h-3 w-3" />
-                            Assigned Agent
-                        </Label>
-                        <div className="flex gap-2">
-                            <Select value={selectedTargetAgent} onValueChange={setSelectedTargetAgent}>
-                                <SelectTrigger className="bg-muted/30 border-border/50 flex-1">
-                                    <SelectValue placeholder="Select Agent" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {agents.length === 0 ? (
-                                        <SelectItem value="system_default">System Default Agent</SelectItem>
-                                    ) : (
-                                        agents.map((agent) => (
-                                            <SelectItem key={agent.id} value={agent.id}>
-                                                {agent.name ?? agent.id}
-                                            </SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="px-3"
-                                disabled={isActionLoading || selectedTargetAgent === agentId}
-                                onClick={handleMove}
-                            >
-                                {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Move'}
-                            </Button>
+                    <div className="space-y-4 p-4 rounded-xl bg-card border border-border/50 shadow-sm relative overflow-hidden">
+                        <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+                        <div className="relative">
+                            <Label className="text-xs uppercase tracking-wider text-foreground font-bold flex items-center gap-2 mb-3">
+                                <div className="p-1 rounded bg-primary/10 text-primary">
+                                    <UserCircle2 className="h-4 w-4" />
+                                </div>
+                                Assigned Agent
+                            </Label>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Select value={selectedTargetAgent} onValueChange={setSelectedTargetAgent}>
+                                    <SelectTrigger className="bg-background/80 backdrop-blur-md border-border/50 flex-1 h-10 transition-colors hover:border-primary/30 focus:ring-primary/20">
+                                        <SelectValue placeholder="Select Agent" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card/95 backdrop-blur-xl border-border/50">
+                                        <SelectItem value="system_default" className="font-medium text-primary focus:bg-primary/10">System Default Agent</SelectItem>
+                                        {agents.map((agent) => (
+                                            agent.id !== 'system_default' && (
+                                                <SelectItem key={agent.id} value={agent.id}>
+                                                    {agent.name ?? agent.id}
+                                                </SelectItem>
+                                            )
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button 
+                                    variant="default" 
+                                    className="h-10 px-6 font-semibold shadow-sm transition-all sm:w-auto w-full"
+                                    disabled={isActionLoading || selectedTargetAgent === agentId}
+                                    onClick={handleMove}
+                                >
+                                    {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Reassign'}
+                                </Button>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-3">
+                                Reassigning this channel routes all future incoming messages to the selected agent's logic.
+                            </p>
                         </div>
-                        <p className="text-[10px] text-muted-foreground italic">
-                            Moving a channel re-routes all incoming messages to the target agent's logic.
-                        </p>
                     </div>
 
                     {/* Status Overview */}
@@ -189,12 +212,33 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
 
                     {!showDeleteConfirm ? (
                         <div className="space-y-3">
+                            {/* Reconnect — shown only when the channel has no live session */}
+                            {(channel.status === 'disconnected' || channel.status === 'logged_out' || channel.status === 'error' || channel.status === 'reconnect_exhausted') && (
+                                <div className="group">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full justify-between h-12 border-primary/20 hover:bg-primary/10 hover:text-primary hover:border-primary/50 group-hover:shadow-md transition-all"
+                                        onClick={handleReconnect}
+                                        disabled={isActionLoading || channel.status === 'archived'}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <RotateCcw className="h-4 w-4" />
+                                            <div className="text-left">
+                                                <p className="font-bold text-sm">Reconnect</p>
+                                                <p className="text-[10px] text-muted-foreground">Start a new session and get a fresh QR code</p>
+                                            </div>
+                                        </div>
+                                        {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                                    </Button>
+                                </div>
+                            )}
+
                             <div className="group">
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     className="w-full justify-between h-12 border-orange-500/20 hover:bg-orange-500/10 hover:text-orange-600 hover:border-orange-500/50 group-hover:shadow-md transition-all"
                                     onClick={handleDisconnect}
-                                    disabled={isActionLoading || channel.status === 'disconnected' || channel.status === 'archived'}
+                                    disabled={isActionLoading || channel.status === 'disconnected' || channel.status === 'logged_out' || channel.status === 'banned' || channel.status === 'reconnect_exhausted' || channel.status === 'archived'}
                                 >
                                     <div className="flex items-center gap-3">
                                         <Power className="h-4 w-4" />
@@ -208,8 +252,8 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                             </div>
 
                             <div className="group">
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     className="w-full justify-between h-12 border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 group-hover:shadow-md transition-all"
                                     onClick={() => setShowDeleteConfirm(true)}
                                     disabled={isActionLoading}
@@ -233,7 +277,9 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                 <div className="space-y-1">
                                     <p className="font-bold text-destructive">Are you absolutely sure?</p>
                                     <p className="text-xs text-muted-foreground">
-                                        This will remove the live connection for this channel.
+                                        {shouldArchive
+                                            ? 'The channel will be archived. Its history is preserved but it can no longer receive messages.'
+                                            : 'This permanently deletes the channel slot, all credentials, and message history. This cannot be undone.'}
                                     </p>
                                 </div>
                             </div>

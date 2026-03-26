@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Activity,
     MessageSquare,
@@ -29,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 import type { Channel } from '@/types/omnichannel';
@@ -36,7 +38,7 @@ import type { Channel } from '@/types/omnichannel';
 
 // Helper for accessibility
 function VisuallyHidden({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return <span className="absolute w-[1px] h-[1px] p-0 -m-[1px] overflow-hidden clip-[rect(0,0,0,0)] whitespace-nowrap border-0">
+    return <span className="absolute w-[1px] h-[1px] p-0 -m-[1px] overflow-hidden clip-[rect(0,0,0,0)] whitespace-nowrap border-0">
         {children}
     </span>
 }
@@ -56,11 +58,70 @@ const ICON_MAP: Record<string, IconComponent> = {
     SiMatrix: Network
 };
 
+interface PlatformWithUI {
+    id: string;
+    label: string;
+    icon: string;
+    color: string;
+    Icon: IconComponent;
+    textColor: string;
+    bgColor: string;
+}
+
+function PlatformSelectButton({ 
+    platform, 
+    index, 
+    onClick, 
+    variant 
+}: { 
+    platform: PlatformWithUI; 
+    index: number; 
+    onClick: () => void;
+    variant: "grid" | "sidebar";
+}): React.JSX.Element {
+    const isGrid = variant === "grid";
+    
+    return (
+        <motion.button
+            layout
+            initial={{ opacity: 0, y: isGrid ? 20 : 10, scale: isGrid ? 1 : 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: isGrid ? 0.9 : 0.95 }}
+            transition={{ duration: isGrid ? 0.3 : 0.2, delay: index * (isGrid ? 0.05 : 0.03) }}
+            onClick={onClick}
+            aria-label={`Add ${platform.label}`}
+            className={cn(
+                "transition-all hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group",
+                isGrid 
+                    ? "flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 hover:border-primary/50 hover:shadow-md focus-visible:ring-offset-2 focus-visible:ring-offset-background backdrop-blur-md min-h-[160px]"
+                    : "flex items-center gap-3 p-3 rounded-xl border border-border bg-card/40 backdrop-blur-sm hover:border-primary/30 focus-visible:ring-offset-1"
+            )}
+        >
+            <div className={cn(
+                "bg-opacity-10", 
+                platform.bgColor + '/10',
+                isGrid ? "rounded-full p-4 mb-4 group-hover:scale-110 transition-transform" : "rounded-lg p-2"
+            )}>
+                <platform.Icon className={cn(
+                    platform.textColor, 
+                    isGrid ? "h-8 w-8" : "h-4 w-4"
+                )} />
+            </div>
+            <span className={cn(
+                "font-medium",
+                isGrid ? "text-foreground" : "text-sm"
+            )}>
+                {platform.label}
+            </span>
+        </motion.button>
+    );
+}
+
 function ChannelCard({ channel }: { channel: Channel }): React.JSX.Element {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isDisconnecting, setIsDisconnecting] = useState(false);
     const { agentsResult, disconnectChannel, platforms } = useOmnichannelStore();
-    
+
     // Dynamic metadata lookup
     const platform = platforms.find(p => p.id === channel.type);
     const Icon = ICON_MAP[platform?.icon || ''] || MessageSquare;
@@ -70,26 +131,26 @@ function ChannelCard({ channel }: { channel: Channel }): React.JSX.Element {
     const isTerminal = channel.status === 'banned' || channel.status === 'reconnect_exhausted';
 
     const STATUS_BADGE: Record<string, { variant: 'default' | 'destructive' | 'secondary' | 'outline'; label: string }> = {
-        connected:           { variant: 'default',     label: 'Connected' },
-        connecting:          { variant: 'secondary',   label: 'Connecting' },
-        initializing:        { variant: 'secondary',   label: 'Starting' },
-        qr_pending:          { variant: 'secondary',   label: 'Scan QR' },
-        disconnected:        { variant: 'outline',     label: 'Offline' },
-        logged_out:          { variant: 'outline',     label: 'Logged Out' },
-        error:               { variant: 'destructive', label: 'Error' },
+        connected: { variant: 'default', label: 'Connected' },
+        connecting: { variant: 'secondary', label: 'Connecting' },
+        initializing: { variant: 'secondary', label: 'Starting' },
+        qr_pending: { variant: 'secondary', label: 'Scan QR' },
+        disconnected: { variant: 'outline', label: 'Offline' },
+        logged_out: { variant: 'outline', label: 'Logged Out' },
+        error: { variant: 'destructive', label: 'Error' },
         reconnect_exhausted: { variant: 'destructive', label: 'Retry Failed' },
-        banned:              { variant: 'destructive', label: 'Banned' },
-        archived:            { variant: 'outline',     label: 'Archived' },
+        banned: { variant: 'destructive', label: 'Banned' },
+        archived: { variant: 'outline', label: 'Archived' },
     };
 
     const STATUS_MESSAGE: Record<string, string> = {
-        connected:           'Bot is active and listening',
-        disconnected:        'Bot is currently offline',
-        logged_out:          'Session expired — reconnect to get a new QR code',
-        error:               'Connection failed — use Manage to retry',
+        connected: 'Bot is active and listening',
+        disconnected: 'Bot is currently offline',
+        logged_out: 'Session expired — reconnect to get a new QR code',
+        error: 'Connection failed — use Manage to retry',
         reconnect_exhausted: 'Auto-reconnect failed — use Manage to retry manually',
-        banned:              'Number banned by WhatsApp — this number must be replaced',
-        archived:            'Channel is archived',
+        banned: 'Number banned by WhatsApp — this number must be replaced',
+        archived: 'Channel is archived',
     };
 
     const badge = STATUS_BADGE[channel.status] ?? { variant: 'secondary' as const, label: channel.status };
@@ -118,23 +179,23 @@ function ChannelCard({ channel }: { channel: Channel }): React.JSX.Element {
         <>
             <Card className="overflow-hidden border-border/50 bg-card/40 backdrop-blur-md transition-all hover:shadow-md h-full flex flex-col">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="flex items-center space-x-2">
-                        <div className={cn("rounded-lg p-2 text-white", color)}>
+                    <div className="flex items-center space-x-2 min-w-0">
+                        <div className={cn("rounded-lg p-2 text-white shrink-0", color)}>
                             <Icon className="h-5 w-5" />
                         </div>
-                        <div>
-                            <CardTitle className="text-lg">{channel.name}</CardTitle>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <CardDescription>
+                        <div className="min-w-0">
+                            <CardTitle className="text-lg truncate">{channel.name}</CardTitle>
+                            <div className="flex items-center gap-2 mt-0.5 min-w-0">
+                                <CardDescription className="truncate">
                                     {channel.account || (isConnecting ? 'Connecting...' : 'Not configured')}
                                 </CardDescription>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium text-foreground">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium text-foreground whitespace-nowrap shrink-0">
                                     {agentName}
                                 </span>
                             </div>
                         </div>
                     </div>
-                    <Badge variant={badge.variant}>
+                    <Badge variant={badge.variant} aria-live="polite" aria-atomic="true" className="shrink-0">
                         {badge.label}
                     </Badge>
                 </CardHeader>
@@ -156,7 +217,7 @@ function ChannelCard({ channel }: { channel: Channel }): React.JSX.Element {
                             ) : (
                                 <WifiOff className="mr-2 h-4 w-4" />
                             )}
-                            <span>
+                            <span aria-live="polite" aria-atomic="true">
                                 {STATUS_MESSAGE[channel.status] ?? 'Bot is currently offline'}
                             </span>
                         </div>
@@ -173,20 +234,21 @@ function ChannelCard({ channel }: { channel: Channel }): React.JSX.Element {
                         <Settings2 className="h-4 w-4" />
                     </Button>
                     {(channel.status === 'connected' || isConnecting) && !isTerminal ? <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                                "h-8 w-8 shrink-0",
-                                isConnecting
-                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    : "text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
-                            )}
-                            onClick={handleDirectDisconnect}
-                            disabled={isDisconnecting}
-                            title={isConnecting ? "Abort Connection" : "Disconnect Bot"}
-                        >
-                            {isDisconnecting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
-                        </Button> : null}
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                            "h-8 w-8 shrink-0",
+                            isConnecting
+                                ? "text-destructive hover:text-destructive hover:bg-destructive/10"
+                                : "text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                        )}
+                        onClick={handleDirectDisconnect}
+                        disabled={isDisconnecting}
+                        title={isConnecting ? "Abort Connection" : "Disconnect Bot"}
+                        aria-label={isConnecting ? "Abort Connection" : "Disconnect Bot"}
+                    >
+                        {isDisconnecting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
+                    </Button> : null}
                 </CardFooter>
             </Card>
 
@@ -264,21 +326,32 @@ export function OmnichannelFeature(): React.JSX.Element {
                 </div>
             </div>
 
-            {channels.length === 0 && !isLoading ? (
+            {isLoading && channels.length === 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl mx-auto">
-                    {PLATFORMS.map(p => (
-                        <button
-                            key={p.id}
-                            onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
-                            className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/50 p-6 transition-all hover:bg-muted/50 hover:border-primary/50 hover:shadow-md group backdrop-blur-md min-h-[160px]"
-                        >
-                            <div className={cn("rounded-full p-4 mb-4 group-hover:scale-110 transition-transform bg-opacity-10", p.bgColor + '/10')}>
-                                <p.Icon className={cn("h-8 w-8", p.textColor)} />
-                            </div>
-                            <span className="font-medium text-foreground">{p.label}</span>
-                        </button>
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="flex flex-col items-center justify-center rounded-xl border border-border bg-card/30 p-6 min-h-[160px] animate-pulse">
+                            <Skeleton className="h-16 w-16 mb-4 rounded-full bg-primary/10" />
+                            <Skeleton className="h-4 w-24 bg-primary/10" />
+                        </div>
                     ))}
                 </div>
+            ) : channels.length === 0 ? (
+                <motion.div 
+                    layout
+                    className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl mx-auto"
+                >
+                    <AnimatePresence>
+                        {PLATFORMS.map((p, index) => (
+                            <PlatformSelectButton
+                                key={p.id}
+                                platform={p as PlatformWithUI}
+                                index={index}
+                                onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
+                                variant="grid"
+                            />
+                        ))}
+                    </AnimatePresence>
+                </motion.div>
             ) : (
                 <div className="flex flex-col lg:flex-row gap-8">
                     <div className="flex-1 grid gap-6 md:grid-cols-2 auto-rows-min">
@@ -287,25 +360,27 @@ export function OmnichannelFeature(): React.JSX.Element {
                         ))}
                     </div>
 
-                    <div className="w-full lg:w-72 shrink-0 space-y-4">
+                    <div className={cn("w-full shrink-0 space-y-4", channels.length >= 2 ? "lg:w-72" : "lg:w-[500px]")}>
                         <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                             <Plus className="h-5 w-5 text-primary" />
                             Add Platform
                         </h3>
-                        <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
-                            {PLATFORMS.map(p => (
-                                <button
-                                    key={p.id}
-                                    onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
-                                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card/40 backdrop-blur-sm transition-all hover:bg-muted/50 hover:border-primary/30 group"
-                                >
-                                    <div className={cn("rounded-lg p-2 bg-opacity-10", p.bgColor + '/10')}>
-                                        <p.Icon className={cn("h-4 w-4", p.textColor)} />
-                                    </div>
-                                    <span className="text-sm font-medium">{p.label}</span>
-                                </button>
-                            ))}
-                        </div>
+                        <motion.div 
+                            layout
+                            className={cn("grid gap-3", channels.length >= 2 ? "grid-cols-2 lg:grid-cols-1" : "grid-cols-2")}
+                        >
+                            <AnimatePresence mode="popLayout">
+                                {PLATFORMS.map((p, index) => (
+                                    <PlatformSelectButton
+                                        key={p.id}
+                                        platform={p as PlatformWithUI}
+                                        index={index}
+                                        onClick={() => { setSelectedPlatform(p.id); setIsAddDialogOpen(true); }}
+                                        variant="sidebar"
+                                    />
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
                     </div>
                 </div>
             )}

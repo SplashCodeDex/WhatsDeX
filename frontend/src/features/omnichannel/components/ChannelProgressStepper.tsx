@@ -14,8 +14,8 @@ interface Step {
 
 const STEPS: Step[] = [
     { id: 'initializing', label: 'Starting Up' },
+    { id: 'connecting', label: 'Connecting' },
     { id: 'qr_pending', label: 'Scan QR Code' },
-    { id: 'connecting', label: 'Establishing Link' },
     { id: 'connected', label: 'Connected' }
 ];
 

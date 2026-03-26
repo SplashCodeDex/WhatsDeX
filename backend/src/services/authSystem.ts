@@ -181,12 +181,13 @@ class AuthSystem extends EventEmitter {
           if (isLoggedOut || isForbidden) {
             const status = isForbidden ? 'banned' : 'logged_out';
             logger.error(`[AuthSystem] SESSION ${status.toUpperCase()} for ${this.channelId}. Cleaning up Firestore auth state...`);
+            // Emit status BEFORE the async cleanup so it always fires even if clearAuthState throws
+            this.currentQrCode = null;
+            this.emit('status', status);
+            // Best-effort: clean up stored credentials. Failure here is non-fatal.
             try {
-              // Perform a hard reset of the local creds and trigger a clear in Firestore
               const { clearAuthState } = await useFirestoreAuthState(this.tenantId, this.channelId, this.collectionOrPath);
               await clearAuthState();
-              this.currentQrCode = null;
-              this.emit('status', status);
             } catch (err) {
               logger.error(`[AuthSystem] Failed to clear auth state during ${status}:`, err);
             }

@@ -275,14 +275,15 @@
   transform: translateX(-50%);
   background: var(--primary);
   color: var(--primary-foreground);
-  padding: 0.75rem 1.5rem;
+  padding: 0.4rem 1rem;
   z-index: 9999;
   transition: all var(--animate-duration-normal) var(--animate-ease-spring);
-  border-bottom-right-radius: var(--radius-lg);
-  border-bottom-left-radius: var(--radius-lg);
-  font-weight: 600;
+  border-bottom-right-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 500;
   text-decoration: none;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-sm);
   outline: none;
 }
 

@@ -156,7 +156,7 @@ export function Header(): React.JSX.Element {
                                     style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}
                                 >
                                     <div className={cn(
-                                        "rounded-full bg-primary/10 overflow-hidden flex items-center justify-center text-primary border border-primary/20 transition-all duration-500 shrink-0",
+                                        "relative rounded-full bg-primary/10 overflow-hidden flex items-center justify-center text-primary border border-primary/20 transition-all duration-500 shrink-0",
                                         isExpanded ? "h-7 w-7" : "h-10 w-10 border-2"
                                     )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
 
@@ -165,6 +165,7 @@ export function Header(): React.JSX.Element {
                                                 src={user.photoURL}
                                                 alt={user.name || "User avatar"}
                                                 fill
+                                                sizes={isExpanded ? "28px" : "40px"}
                                                 className={cn(
                                                     "object-cover transition-transform duration-500",
                                                     !isExpanded && "scale-110"
