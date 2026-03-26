@@ -38,12 +38,12 @@ describe('useCreateAgent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useAuth as any).mockReturnValue({ user: mockUser });
-        (getClientFirestore as any).mockReturnValue({});
+        (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ user: mockUser });
+        (getClientFirestore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({});
     });
 
     it('should fail if user is not authenticated', async () => {
-        (useAuth as any).mockReturnValue({ user: null });
+        (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ user: null });
         const { result } = renderHook(() => useCreateAgent());
 
         let response: ActionResult<string> | undefined;
@@ -58,10 +58,10 @@ describe('useCreateAgent', () => {
     });
 
     it('should fail if Starter plan already has 1 agent', async () => {
-        (useAuth as any).mockReturnValue({ user: { ...mockUser, plan: 'starter' } });
+        (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ user: { ...mockUser, plan: 'starter' } });
 
         // Mock transaction to show 1 existing agent
-        (runTransaction as any).mockImplementation(async (_db: any, cb: any) => {
+        (runTransaction as unknown as ReturnType<typeof vi.fn>).mockImplementation(async (_db: unknown, cb: (t: { get: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn>; update?: ReturnType<typeof vi.fn> }) => unknown) => {
             return cb({
                 get: vi.fn().mockResolvedValue({
                     exists: () => true,
@@ -86,10 +86,10 @@ describe('useCreateAgent', () => {
     });
 
     it('should succeed if Pro plan has < 5 agents', async () => {
-        (useAuth as any).mockReturnValue({ user: { ...mockUser, plan: 'pro' } });
+        (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ user: { ...mockUser, plan: 'pro' } });
 
         // Mock transaction to show 2 existing agents (limit is 5)
-        (runTransaction as any).mockImplementation(async (_db: any, cb: any) => {
+        (runTransaction as unknown as ReturnType<typeof vi.fn>).mockImplementation(async (_db: unknown, cb: (t: { get: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn>; update?: ReturnType<typeof vi.fn> }) => unknown) => {
             return cb({
                 get: vi.fn().mockResolvedValue({
                     exists: () => true,

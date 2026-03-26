@@ -1,7 +1,7 @@
 'use client';
 
-import { Loader2, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -24,15 +24,15 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-import type { CronJob, CronSchedule, CronPayload } from '@/types';
+import type { CronSchedule, CronPayload } from '@/types';
 
 interface CreateCronJobDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-export function CreateCronJobDialog({ open, onOpenChange }: CreateCronJobDialogProps) {
-    const { createCronJob, channels } = useOmnichannelStore();
+export function CreateCronJobDialog({ open, onOpenChange }: CreateCronJobDialogProps): React.JSX.Element {
+    const { createCronJob } = useOmnichannelStore();
     const [loading, setLoading] = useState(false);
     
     const [name, setName] = useState('');
@@ -44,7 +44,7 @@ export function CreateCronJobDialog({ open, onOpenChange }: CreateCronJobDialogP
     const [agentId, setAgentId] = useState('default');
     const [enabled, setEnabled] = useState(true);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
         setLoading(true);
 
@@ -80,14 +80,14 @@ export function CreateCronJobDialog({ open, onOpenChange }: CreateCronJobDialogP
             } else {
                 toast.error('Failed to create cron job');
             }
-        } catch (err) {
+        } catch {
             toast.error('Invalid schedule or payload data');
         } finally {
             setLoading(false);
         }
     };
 
-    const resetForm = () => {
+    const resetForm = (): void => {
         setName('');
         setDescription('');
         setScheduleKind('every');
@@ -143,7 +143,7 @@ export function CreateCronJobDialog({ open, onOpenChange }: CreateCronJobDialogP
                     <div className="grid grid-cols-2 gap-4 border-t pt-4">
                         <div className="space-y-2">
                             <Label>Schedule Type</Label>
-                            <Select value={scheduleKind} onValueChange={(v: any) => setScheduleKind(v)}>
+                            <Select value={scheduleKind} onValueChange={(v: 'every' | 'at' | 'cron') => setScheduleKind(v)}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -170,7 +170,7 @@ export function CreateCronJobDialog({ open, onOpenChange }: CreateCronJobDialogP
 
                     <div className="space-y-2 border-t pt-4">
                         <Label>Payload Type</Label>
-                        <Select value={payloadKind} onValueChange={(v: any) => setPayloadKind(v)}>
+                        <Select value={payloadKind} onValueChange={(v: 'systemEvent' | 'agentTurn') => setPayloadKind(v)}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>

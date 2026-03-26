@@ -1,8 +1,6 @@
 'use server';
 
-import { redirect } from 'next/navigation';
-
-import { api, API_ENDPOINTS } from '@/lib/api';
+import { api } from '@/lib/api';
 import type { ActionResult } from '@/types/api';
 
 /**

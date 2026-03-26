@@ -1,7 +1,7 @@
 'use client';
 
 import { Slack, ShieldCheck, Loader2, MessageSquare, Hash, QrCode, KeyRound, UserCircle2, Users, Network } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat } from 'react-icons/si';
 import { toast } from 'sonner';
 
@@ -21,7 +21,8 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
-const ICON_MAP: Record<string, any> = {
+type IconComponent = React.ComponentType<{ className?: string }>;
+const ICON_MAP: Record<string, IconComponent> = {
   SiWhatsapp,
   SiTelegram,
   SiDiscord,
@@ -41,7 +42,7 @@ interface ChannelConnectionFormProps {
   onCancel?: () => void;
 }
 
-export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess, onCancel }: ChannelConnectionFormProps) {
+export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess, onCancel }: ChannelConnectionFormProps): React.JSX.Element {
   const [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [connectionMethod, setConnectionMethod] = useState<'qr' | 'pairing'>('qr');
@@ -70,12 +71,19 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
   const Icon = ICON_MAP[platform.icon] || MessageSquare;
   const iconColorClass = platform.color.replace('bg-', 'text-');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const payload: any = {
+      const payload: {
+        type: string;
+        name: string;
+        credentials: Record<string, string>;
+        config: Record<string, unknown>;
+        metadata?: { connectionMethod: string };
+        phoneNumber?: string;
+      } = {
         type,
         name: `${type.charAt(0).toUpperCase() + type.slice(1)} Channel`,
         credentials: { ...credentials },
@@ -103,7 +111,7 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
       } else {
         toast.error(response.error.message || 'Failed to connect channel');
       }
-    } catch (err) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -139,7 +147,7 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="system_default">System Default Agent</SelectItem>
-                  {agents.map((agent: any) => (
+                  {agents.map((agent: { id: string; name: string }) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.name}
                     </SelectItem>

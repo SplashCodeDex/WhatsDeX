@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, ArrowLeft, MailCheck } from 'lucide-react';
 import Link from 'next/link';
-import { useActionState } from 'react';
+import React, { useActionState } from 'react';
 
 import { Button, Input } from '@/components/ui';
 import { requestPasswordReset, getAuthErrorMessage } from '@/features/auth';
@@ -12,9 +12,9 @@ import { requestPasswordReset, getAuthErrorMessage } from '@/features/auth';
  * ForgotPasswordForm
  * Clean, modern form for password reset requests with premium feedback states.
  */
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm(): React.JSX.Element {
     const [state, formAction, isPending] = useActionState(requestPasswordReset, null);
-    const fields = state?.success === false ? state.error.details?.fields as any : null;
+    const fields = state?.success === false ? (state.error.details?.fields as Record<string, unknown>) : null;
 
     return (
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">

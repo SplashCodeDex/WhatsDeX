@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -39,7 +39,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     whileHover={{ scale: 1.005 }}
                     whileTap={{ scale: 0.995 }}
                     ref={ref}
-                    {...(props as any)}
+                    {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
                 />
             </div>
         );

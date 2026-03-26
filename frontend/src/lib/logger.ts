@@ -10,32 +10,32 @@ type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 class Logger {
     private isDevelopment = process.env.NODE_ENV === 'development';
 
-    info(message: string, ...args: any[]) {
+    info(message: string, ...args: unknown[]): void {
         this.log('info', message, ...args);
     }
 
-    warn(message: string, ...args: any[]) {
+    warn(message: string, ...args: unknown[]): void {
         this.log('warn', message, ...args);
     }
 
-    error(message: string, ...args: any[]) {
+    error(message: string, ...args: unknown[]): void {
         this.log('error', message, ...args);
         this.sendToBackend('error', message, ...args);
     }
 
-    debug(message: string, ...args: any[]) {
+    debug(message: string, ...args: unknown[]): void {
         if (this.isDevelopment) {
             this.log('debug', message, ...args);
         }
     }
 
-    private log(level: LogLevel, message: string, ...args: any[]) {
+    private log(level: LogLevel, message: string, ...args: unknown[]): void {
         const timestamp = new Date().toISOString();
         const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
 
         switch (level) {
             case 'info':
-                console.log(prefix, message, ...args);
+                console.warn(prefix, message, ...args);
                 break;
             case 'warn':
                 console.warn(prefix, message, ...args);
@@ -44,12 +44,12 @@ class Logger {
                 console.error(prefix, message, ...args);
                 break;
             case 'debug':
-                console.debug(prefix, message, ...args);
+                console.warn(prefix, message, ...args);
                 break;
         }
     }
 
-    private async sendToBackend(level: LogLevel, message: string, ...args: any[]) {
+    private async sendToBackend(level: LogLevel, message: string, ...args: unknown[]): Promise<void> {
         // Prevent sending in development unless explicitly configured to test it
         if (this.isDevelopment && process.env.NEXT_PUBLIC_TEST_LOGGER !== 'true') {
             return;

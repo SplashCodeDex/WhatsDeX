@@ -22,13 +22,13 @@ import { isApiSuccess } from '@/types';
 
 
 
-export function InvoiceHistory() {
+export function InvoiceHistory(): React.JSX.Element {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchInvoices() {
+    async function fetchInvoices(): Promise<void> {
       try {
         const response = await api.get<Invoice[]>(API_ENDPOINTS.BILLING.INVOICES);
         if (isApiSuccess(response)) {
@@ -39,7 +39,6 @@ export function InvoiceHistory() {
           toast.error(response.error.message || 'Failed to load invoices');
         }
       } catch (error) {
-        console.error('Error fetching invoices:', error);
         if (error instanceof Error) {
           toast.error(error.message);
         } else {
@@ -52,19 +51,19 @@ export function InvoiceHistory() {
     fetchInvoices();
   }, []);
 
-  const handleDownload = async (invoice: Invoice) => {
+  const handleDownload = async (invoice: Invoice): Promise<void> => {
     try {
       setDownloadingId(invoice.id);
       window.open(invoice.invoiceUrl, '_blank');
       toast.success('Opening invoice in new tab');
-    } catch (error) {
+    } catch {
       toast.error('Failed to download invoice');
     } finally {
       setDownloadingId(null);
     }
   };
 
-  const getStatusBadge = (status: Invoice['status']) => {
+  const getStatusBadge = (status: Invoice['status']): React.JSX.Element => {
     switch (status) {
       case 'paid':
         return <Badge variant="default" className="bg-success text-success-foreground">Paid</Badge>;

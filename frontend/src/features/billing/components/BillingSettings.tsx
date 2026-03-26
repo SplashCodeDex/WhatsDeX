@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { CreditCard, Rocket, Clock, CheckCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -12,19 +11,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { billingApi } from '@/lib/api/billing';
 
-export function BillingSettings() {
+export function BillingSettings(): React.JSX.Element | null {
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchSubscription() {
+    async function fetchSubscription(): Promise<void> {
       try {
         const data = await billingApi.getSubscription();
         // Zod validation: Zero-Trust Data Layer
         const validatedData = SubscriptionInfoSchema.parse(data);
         setSubscription(validatedData);
       } catch (error) {
-        console.error('Error fetching subscription:', error);
         if (error instanceof Error) {
           toast.error(error.message);
         } else {

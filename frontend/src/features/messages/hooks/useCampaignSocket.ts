@@ -10,11 +10,11 @@ import { useSocket } from '@/hooks/useSocket';
 /**
  * Hook to manage campaign WebSocket connection and real-time updates
  */
-export function useCampaignSocket() {
+export function useCampaignSocket(): void {
     const queryClient = useQueryClient();
     const { on } = useSocket();
 
-    const handleUpdate = useCallback((data: { campaignId: string, stats: any }) => {
+    const handleUpdate = useCallback((data: { campaignId: string; stats: Record<string, unknown> & { status?: string } }) => {
         // Update campaigns list in cache
         queryClient.setQueryData(['campaigns'], (oldData: Campaign[] | undefined) => {
             if (!oldData) return oldData;
@@ -46,9 +46,9 @@ export function useCampaignSocket() {
         });
 
         // Update campaign status to paused and inject cooldown metadata
-        const updateCache = (old: any) => {
+        const updateCache = (old: Campaign | Campaign[] | undefined): Campaign | Campaign[] | undefined => {
             if (!old) return old;
-            const updateFn = (c: Campaign) => {
+            const updateFn = (c: Campaign): Campaign => {
                 if (c.id === data.campaignId) {
                     return {
                         ...c,

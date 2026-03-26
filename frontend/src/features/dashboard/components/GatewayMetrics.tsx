@@ -1,22 +1,19 @@
 'use client';
 
-import { 
-    Cpu, 
-    Activity, 
-    Zap, 
-    ShieldCheck, 
-    Clock, 
+import {
+    Activity,
+    Zap,
+    Clock,
     Network,
-    Terminal,
     Server
 } from 'lucide-react';
+import React from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
-export function GatewayMetrics() {
+export function GatewayMetrics(): React.JSX.Element {
     const { gatewayHealth, skillReport, getSkillCount } = useOmnichannelStore();
 
     const uptime = gatewayHealth?.uptimeMs || 0;

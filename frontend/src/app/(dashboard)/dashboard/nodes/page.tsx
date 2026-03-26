@@ -1,65 +1,53 @@
 'use client';
 
-import { 
-    Monitor, 
-    RefreshCw, 
-    Smartphone, 
-    ShieldCheck, 
-    ShieldAlert, 
+import {
+    Monitor,
+    RefreshCw,
+    Smartphone,
+    ShieldCheck,
+    ShieldAlert,
     Plus,
-    CheckCircle2,
     XCircle,
     Power,
-    Settings2,
     Cpu,
-    ExternalLink
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
-export default function NodesPage() {
+export default function NodesPage(): React.JSX.Element {
     const { 
-        nodes, 
-        devices, 
-        fetchNodes, 
-        fetchDevices, 
-        approveDevice, 
+        nodes,
+        devices,
+        fetchNodes,
+        fetchDevices,
+        approveDevice,
         rejectDevice,
-        isLoading 
     } = useOmnichannelStore();
     
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const handleRefresh = async () => {
+    const handleRefresh = async (): Promise<void> => {
         setIsRefreshing(true);
         await Promise.all([fetchNodes(), fetchDevices()]);
         setIsRefreshing(false);
     };
 
     useEffect(() => {
-        handleRefresh();
-    }, []);
+        void Promise.all([fetchNodes(), fetchDevices()]);
+    }, [fetchNodes, fetchDevices]);
 
-    const handleApprove = async (id: string) => {
+    const handleApprove = async (id: string): Promise<void> => {
         const success = await approveDevice(id);
         if (success) toast.success('Device request approved');
     };
 
-    const handleReject = async (id: string) => {
+    const handleReject = async (id: string): Promise<void> => {
         const success = await rejectDevice(id);
         if (success) toast.success('Device request rejected');
     };

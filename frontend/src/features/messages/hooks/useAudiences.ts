@@ -1,14 +1,21 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { api } from '@/lib/api/client';
 
-export function useAudiences() {
+interface Audience {
+    id: string;
+    name: string;
+    count: number;
+    [key: string]: unknown;
+}
+
+export function useAudiences(): UseQueryResult<Audience[]> {
     return useQuery({
         queryKey: ['audiences'],
         queryFn: async () => {
-            const response = await api.get<any[]>('/api/contacts/audiences');
+            const response = await api.get<Audience[]>('/api/contacts/audiences');
             if (!response.success) {
                 return [];
             }

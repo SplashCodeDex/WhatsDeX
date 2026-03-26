@@ -111,7 +111,7 @@ export function ContactsTable(): React.JSX.Element | null {
             }
             toast.success(`Deleted ${selectedContacts.size} contact(s)`);
             setSelectedContacts(new Set());
-        } catch (_error) {
+        } catch {
             toast.error('Failed to delete some contacts');
         }
     };

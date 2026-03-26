@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Zap, Globe, Lock, Cpu } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const LOADING_STEPS = [
     {
@@ -36,7 +36,7 @@ const LOADING_STEPS = [
  * InteractiveAuthProgressBar
  * A premium loading experience with cycling "system status" messages and smooth animations.
  */
-export function InteractiveAuthProgressBar() {
+export function InteractiveAuthProgressBar(): React.JSX.Element {
     const [currentStep, setCurrentStep] = useState(0);
     const [progress, setProgress] = useState(0);
 
@@ -49,23 +49,35 @@ export function InteractiveAuthProgressBar() {
     }, []);
 
     useEffect(() => {
-        const targetProgress = LOADING_STEPS[currentStep]?.progress ?? progress;
+        const targetProgress = LOADING_STEPS[currentStep]?.progress ?? 0;
         const duration = 2000;
-        const start = progress;
         const startTime = performance.now();
+        let startProgress: number | null = null;
+        let animFrameId: number;
 
-        function animate(currentTime: number) {
+        function animate(currentTime: number): void {
             const elapsedTime = currentTime - startTime;
+            if (startProgress === null) {
+                // Capture start value on the first frame (outside render)
+                setProgress((current) => {
+                    startProgress = current;
+                    return current;
+                });
+                animFrameId = requestAnimationFrame(animate);
+                return;
+            }
+            const start = startProgress;
             if (elapsedTime < duration) {
                 const nextProgress = start + (targetProgress - start) * (elapsedTime / duration);
                 setProgress(nextProgress);
-                requestAnimationFrame(animate);
+                animFrameId = requestAnimationFrame(animate);
             } else {
                 setProgress(targetProgress);
             }
         }
 
-        requestAnimationFrame(animate);
+        animFrameId = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(animFrameId);
     }, [currentStep]);
 
     return (

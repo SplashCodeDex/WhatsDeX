@@ -3,12 +3,9 @@
 import { Lock, HelpCircle } from 'lucide-react';
 import React from 'react';
 
-import { isSkillAllowed } from '../utils/SkillGating';
-
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAuth } from '@/features/auth';
 import { cn } from '@/lib/utils';
 import { useAuthorityStore } from '@/stores/useAuthorityStore';
 
@@ -35,7 +32,7 @@ interface SkillToggleProps {
 /**
  * UI Component for managing Agent Skills with tier-based gating.
  */
-export function SkillToggle({ enabledSkills, onToggle }: SkillToggleProps) {
+export function SkillToggle({ enabledSkills, onToggle }: SkillToggleProps): React.JSX.Element {
     const { isSkillAllowed: checkSkill } = useAuthorityStore();
 
     return (

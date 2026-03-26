@@ -50,7 +50,7 @@ export function WebhookManager(): React.JSX.Element {
             if (response.success) {
                 setWebhooks(response.data);
             }
-        } catch (_error) {
+        } catch {
             toast.error('Failed to load webhooks');
         } finally {
             setIsLoading(false);
@@ -84,7 +84,7 @@ export function WebhookManager(): React.JSX.Element {
                 setUrl('');
                 setSelectedEvents([]);
             }
-        } catch (_error) {
+        } catch {
             toast.error('Failed to create webhook');
         } finally {
             setIsSubmitting(false);
@@ -98,7 +98,7 @@ export function WebhookManager(): React.JSX.Element {
                 toast.success('Webhook deleted');
                 setWebhooks(webhooks.filter(w => w.id !== id));
             }
-        } catch (_error) {
+        } catch {
             toast.error('Failed to delete webhook');
         }
     };

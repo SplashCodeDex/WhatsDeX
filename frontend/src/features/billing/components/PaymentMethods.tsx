@@ -24,7 +24,7 @@ import { isApiSuccess } from '@/types';
 
 
 
-export function PaymentMethods() {
+export function PaymentMethods(): React.JSX.Element {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export function PaymentMethods() {
     fetchPaymentMethods();
   }, []);
 
-  const fetchPaymentMethods = async () => {
+  const fetchPaymentMethods = async (): Promise<void> => {
     try {
       const response = await api.get<PaymentMethod[]>(API_ENDPOINTS.BILLING.PAYMENT_METHODS);
       if (isApiSuccess(response)) {
@@ -45,7 +45,6 @@ export function PaymentMethods() {
         toast.error(response.error.message || 'Failed to load payment methods');
       }
     } catch (error) {
-      console.error('Error fetching payment methods:', error);
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
@@ -56,7 +55,7 @@ export function PaymentMethods() {
     }
   };
 
-  const handleAddPaymentMethod = () => {
+  const handleAddPaymentMethod = (): void => {
     // Open Stripe customer portal for adding payment methods
     const portalUrl = process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL;
     if (portalUrl) {
@@ -66,7 +65,7 @@ export function PaymentMethods() {
     }
   };
 
-  const handleDeletePaymentMethod = async () => {
+  const handleDeletePaymentMethod = async (): Promise<void> => {
     if (!methodToDelete) return;
 
     try {
@@ -81,8 +80,7 @@ export function PaymentMethods() {
       } else {
         toast.error('Failed to remove payment method');
       }
-    } catch (error) {
-      console.error('Error deleting payment method:', error);
+    } catch {
       toast.error('Failed to remove payment method');
     } finally {
       setDeletingId(null);
@@ -90,7 +88,7 @@ export function PaymentMethods() {
     }
   };
 
-  const getCardBrandIcon = (brand: string) => {
+  const getCardBrandIcon = (brand: string): string => {
     // You can replace these with actual card brand icons/images
     return brand.toUpperCase();
   };

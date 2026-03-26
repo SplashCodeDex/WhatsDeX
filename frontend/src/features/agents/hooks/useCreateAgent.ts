@@ -3,13 +3,12 @@
 import {
     runTransaction,
     doc,
-    collection,
     serverTimestamp,
     type Transaction
 } from 'firebase/firestore';
 import { useState, useCallback } from 'react';
 
-import { type Agent, type AIModel } from '../types';
+import { type AIModel } from '../types.js';
 
 import { useAuth } from '@/features/auth';
 import { getClientFirestore } from '@/lib/firebase/client';
@@ -28,7 +27,7 @@ interface CreateAgentInput {
  * Hook for creating a new Unified Agent with tier-limit enforcement.
  * Delegates to useAuthorityStore for authoritative tier-based limits.
  */
-export function useCreateAgent() {
+export function useCreateAgent(): { createAgent: (input: CreateAgentInput) => Promise<ActionResult<string>>; isLoading: boolean } {
     const { user } = useAuth();
     const { tier, getLimit } = useAuthorityStore();
     const [isLoading, setIsLoading] = useState(false);
@@ -85,16 +84,17 @@ export function useCreateAgent() {
                 data: agentId,
                 message: 'Agent created successfully'
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             logger.error('Failed to create agent:', error);
 
-            const isLimitError = error.message.includes('Tier limit reached');
+            const errorMessage = error instanceof Error ? error.message : 'Failed to create agent';
+            const isLimitError = errorMessage.includes('Tier limit reached');
 
             return {
                 success: false,
                 error: {
                     code: isLimitError ? 'tier_limit_reached' : 'internal_error',
-                    message: error.message || 'Failed to create agent'
+                    message: errorMessage
                 }
             };
         } finally {

@@ -1,10 +1,25 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 import { useAuth } from '@/features/auth';
 import { logger } from '@/lib/logger';
+
+interface SocketOptions {
+    path?: string;
+    autoConnect?: boolean;
+    namespace?: string;
+}
+
+interface SocketResult {
+    socket: Socket | null;
+    isConnected: boolean;
+    on: (event: string, callback: (data: unknown) => void) => () => void;
+    emit: (event: string, data: unknown) => void;
+}
+
+type AuthUser = { token?: string };
 
 /**
  * useSocket
@@ -12,22 +27,23 @@ import { logger } from '@/lib/logger';
  * Base hook for real-time WebSocket communication.
  * Automatically handles connection, authentication, and cleanup.
  */
-export function useSocket(options: {
-    path?: string;
-    autoConnect?: boolean;
-    namespace?: string;
-} = {}) {
+export function useSocket(options: SocketOptions = {}): SocketResult {
     const { user } = useAuth();
     const socketRef = useRef<Socket | null>(null);
+    const [socket, setSocket] = useState<Socket | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
     const { path = '/api/socket', autoConnect = true } = options;
 
     useEffect(() => {
         if (!user || !autoConnect) {
-            if (socketRef.current) {
-                socketRef.current.disconnect();
-                socketRef.current = null;
-            }
-            return;
+            return () => {
+                if (socketRef.current) {
+                    socketRef.current.disconnect();
+                    socketRef.current = null;
+                    setSocket(null);
+                    setIsConnected(false);
+                }
+            };
         }
 
         if (socketRef.current?.connected) return;
@@ -37,41 +53,47 @@ export function useSocket(options: {
         const rawBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
         const backendUrl = rawBackendUrl.endsWith('/') ? rawBackendUrl.slice(0, -1) : rawBackendUrl;
 
-        socketRef.current = io(backendUrl, {
+        const newSocket = io(backendUrl, {
             path,
             withCredentials: true,
             transports: ['websocket'], // 2026: Bypass polling for direct CPU/Network efficiency
             // Pass token if available
             auth: {
-                token: (user as any).token
+                token: (user as AuthUser).token
             }
         });
 
-        socketRef.current.on('connect', () => {
-            logger.info(`[Socket] Connected: ${socketRef.current?.id}`);
+        socketRef.current = newSocket;
+
+        newSocket.on('connect', () => {
+            logger.info(`[Socket] Connected: ${newSocket.id}`);
+            setSocket(newSocket);
+            setIsConnected(true);
         });
 
-        socketRef.current.on('connect_error', (error) => {
+        newSocket.on('connect_error', (error) => {
             logger.error('[Socket] Connection error:', error);
+            setIsConnected(false);
         });
 
-        socketRef.current.on('disconnect', (reason) => {
+        newSocket.on('disconnect', (reason) => {
             logger.warn('[Socket] Disconnected:', reason);
+            setIsConnected(false);
         });
 
         return () => {
-            if (socketRef.current) {
-                logger.info('[Socket] Cleaning up...');
-                socketRef.current.disconnect();
-                socketRef.current = null;
-            }
+            logger.info('[Socket] Cleaning up...');
+            newSocket.disconnect();
+            socketRef.current = null;
+            setSocket(null);
+            setIsConnected(false);
         };
     }, [user, path, autoConnect]);
 
     /**
      * Subscribe to an event
      */
-    const on = useCallback((event: string, callback: (data: any) => void) => {
+    const on = useCallback((event: string, callback: (data: unknown) => void): () => void => {
         const socket = socketRef.current;
         if (!socket) return () => { };
 
@@ -82,7 +104,7 @@ export function useSocket(options: {
     /**
      * Emit an event
      */
-    const emit = useCallback((event: string, data: any) => {
+    const emit = useCallback((event: string, data: unknown): void => {
         if (!socketRef.current) {
             logger.warn(`[Socket] Cannot emit ${event}: Socket not connected`);
             return;
@@ -91,8 +113,8 @@ export function useSocket(options: {
     }, []);
 
     return {
-        socket: socketRef.current,
-        isConnected: socketRef.current?.connected ?? false,
+        socket,
+        isConnected,
         on,
         emit
     };

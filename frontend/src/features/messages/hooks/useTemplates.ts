@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { MessageTemplate } from '../types';
 
@@ -11,7 +11,7 @@ export const templateKeys = {
     list: () => [...templateKeys.all, 'list'] as const,
 };
 
-export function useTemplates() {
+export function useTemplates(): UseQueryResult<MessageTemplate[]> {
     return useQuery({
         queryKey: templateKeys.list(),
         queryFn: async () => {
@@ -24,7 +24,7 @@ export function useTemplates() {
     });
 }
 
-export function useCreateTemplate() {
+export function useCreateTemplate(): UseMutationResult<MessageTemplate, Error, Partial<MessageTemplate>> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (data: Partial<MessageTemplate>) => {
@@ -40,7 +40,7 @@ export function useCreateTemplate() {
     });
 }
 
-export function useSpinMessage() {
+export function useSpinMessage(): UseMutationResult<string, Error, string> {
     return useMutation({
         mutationFn: async (content: string) => {
             const response = await api.post<string>('/api/templates/spin', { content });

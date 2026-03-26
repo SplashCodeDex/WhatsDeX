@@ -1,13 +1,21 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseMutateFunction } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import type { TenantSettings } from '../types';
 
 import { api } from '@/lib/api';
 
-export function useSettings() {
+export interface UseSettingsReturn {
+    settings: TenantSettings | undefined;
+    isLoading: boolean;
+    error: Error | null;
+    updateSettings: UseMutateFunction<TenantSettings, Error, Partial<TenantSettings>>;
+    isUpdating: boolean;
+}
+
+export function useSettings(): UseSettingsReturn {
     const queryClient = useQueryClient();
 
     const query = useQuery({

@@ -10,7 +10,7 @@ export const metadata = {
     description: 'How we handle your data and protect your privacy.',
 };
 
-export default function PrivacyPage() {
+export default function PrivacyPage(): React.JSX.Element {
     return (
         <div className="min-h-screen bg-background">
             {/* Navigation */}

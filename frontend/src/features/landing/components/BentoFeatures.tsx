@@ -2,9 +2,9 @@
 
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Bot, RefreshCw, Zap, TrendingUp, Users, ShieldCheck } from 'lucide-react';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 
-export function BentoFeatures() {
+export function BentoFeatures(): React.JSX.Element {
     const sectionRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
         target: sectionRef,

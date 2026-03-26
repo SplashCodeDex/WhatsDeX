@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
+import React from "react";
 
 import { AnimatedAuthHero } from "./AnimatedAuthHero";
 import { useAuth } from "../hooks";
@@ -16,7 +17,7 @@ interface AuthTransitionLayoutProps {
     particles: Particle[];
 }
 
-export function AuthTransitionLayout({ children, particles }: AuthTransitionLayoutProps) {
+export function AuthTransitionLayout({ children, particles }: AuthTransitionLayoutProps): React.JSX.Element {
     const pathname = usePathname();
     const isRegister = pathname === "/register";
 

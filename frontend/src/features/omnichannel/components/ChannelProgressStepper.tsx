@@ -1,6 +1,8 @@
 'use client';
 
 import { CheckCircle2, Loader2, XCircle, QrCode } from 'lucide-react';
+import Image from 'next/image';
+import React from 'react';
 
 import { useChannelStatus } from '@/hooks/useChannelStatus';
 import { cn } from '@/lib/utils';
@@ -26,8 +28,8 @@ interface ChannelProgressStepperProps {
     className?: string;
 }
 
-export function ChannelProgressStepper({ channelId, agentId, channelStatus, currentStep, status, className }: ChannelProgressStepperProps) {
-    const { qrCode, isLoading: isStatusLoading } = useChannelStatus(channelId, agentId, status === 'in_progress' || status === 'pending');
+export function ChannelProgressStepper({ channelId, agentId, channelStatus, currentStep, status, className }: ChannelProgressStepperProps): React.JSX.Element {
+    const { qrCode } = useChannelStatus(channelId, agentId, status === 'in_progress' || status === 'pending');
 
     const activeStepIndex = STEPS.findIndex(s => s.id === (channelStatus || 'initializing'));
     const safeActiveIndex = activeStepIndex === -1 ? 0 : activeStepIndex;
@@ -48,10 +50,12 @@ export function ChannelProgressStepper({ channelId, agentId, channelStatus, curr
 
             {/* QR Code Surfacing */}
             {qrCode ? <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-border shadow-inner animate-in fade-in zoom-in duration-300">
-                    <img
+                    <Image
                         src={qrCode}
                         alt="Channel QR Code"
-                        className="w-40 h-40 object-contain"
+                        width={160}
+                        height={160}
+                        className="object-contain"
                     />
                     <div className="mt-3 flex items-center gap-2 text-[10px] text-zinc-500 font-medium">
                         <QrCode className="h-3 w-3" />

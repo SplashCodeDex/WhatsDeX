@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 
 import { useAudiences, useCreateAudience, useDeleteAudience } from '../hooks/useAudiences';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -30,7 +29,7 @@ interface AudienceManagerProps {
     onClose: () => void;
 }
 
-export function AudienceManager({ isOpen, onClose }: AudienceManagerProps) {
+export function AudienceManager({ isOpen, onClose }: AudienceManagerProps): React.JSX.Element {
     const [isCreating, setIsCreating] = useState(false);
     const [newAudienceName, setNewAudienceName] = useState('');
     const [newAudienceDescription, setNewAudienceDescription] = useState('');
@@ -39,7 +38,7 @@ export function AudienceManager({ isOpen, onClose }: AudienceManagerProps) {
     const createMutation = useCreateAudience();
     const deleteMutation = useDeleteAudience();
 
-    const handleCreate = async () => {
+    const handleCreate = async (): Promise<void> => {
         if (!newAudienceName.trim()) {
             toast.error('Please enter an audience name');
             return;
@@ -55,12 +54,12 @@ export function AudienceManager({ isOpen, onClose }: AudienceManagerProps) {
             setNewAudienceName('');
             setNewAudienceDescription('');
             setIsCreating(false);
-        } catch (error) {
+        } catch {
             toast.error('Failed to create audience');
         }
     };
 
-    const handleDelete = async (audienceId: string) => {
+    const handleDelete = async (audienceId: string): Promise<void> => {
         if (!confirm('Are you sure you want to delete this audience?')) {
             return;
         }
@@ -68,7 +67,7 @@ export function AudienceManager({ isOpen, onClose }: AudienceManagerProps) {
         try {
             await deleteMutation.mutateAsync(audienceId);
             toast.success('Audience deleted successfully');
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete audience');
         }
     };

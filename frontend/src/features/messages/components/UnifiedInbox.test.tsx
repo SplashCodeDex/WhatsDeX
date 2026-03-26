@@ -27,7 +27,7 @@ describe('UnifiedInbox', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useMessageHistory as any).mockReturnValue({
+        (useMessageHistory as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
             data: mockMessages,
             isLoading: false,
             error: null,
@@ -67,7 +67,7 @@ describe('UnifiedInbox', () => {
     });
 
     it('should send a reply and refetch history', async () => {
-        (api.post as any).mockResolvedValue({ success: true });
+        (api.post as unknown as { mockResolvedValue: (v: unknown) => void }).mockResolvedValue({ success: true });
         
         render(<UnifiedInbox />);
         

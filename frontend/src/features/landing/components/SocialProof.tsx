@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Star, Quote } from 'lucide-react';
-import Image from 'next/image';
+import React from 'react';
 
 const TESTIMONIALS = [
     {
@@ -28,7 +28,7 @@ const TESTIMONIALS = [
     }
 ];
 
-export function SocialProof() {
+export function SocialProof(): React.JSX.Element {
     return (
         <section className="relative w-full py-24 md:py-32 overflow-hidden">
             {/* Background elements for liquid glass aesthetics */}

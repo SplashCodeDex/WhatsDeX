@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { ForgotPasswordForm } from './ForgotPasswordForm';
@@ -10,25 +11,25 @@ vi.mock('../actions', () => ({
 }));
 
 vi.mock('@/components/ui', () => ({
-    Button: (props: any) => <button {...props}>{props.children}</button>,
-    Input: (props: any) => <input {...props} />,
+    Button: (props: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => <button {...props}>{props.children}</button>,
+    Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children }: any) => <a>{children}</a>,
+  default: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
 }));
 
 vi.mock('framer-motion', () => ({
-    AnimatePresence: ({ children }: any) => <div>{children}</div>,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     motion: {
-        div: ({ children, className }: any) => <div className={className}>{children}</div>,
+        div: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
     }
 }));
 
 describe('ForgotPasswordForm', () => {
   it('should use useActionState pattern (passing prevState and formData)', async () => {
     // Setup mock to return a failure so we stay on the page
-    (actions.requestPasswordReset as any).mockResolvedValue({
+    vi.mocked(actions.requestPasswordReset).mockResolvedValue({
         success: false,
         error: {
             code: 'validation_error',

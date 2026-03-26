@@ -28,7 +28,7 @@ const TIER_ORDER: Record<PlanTier, number> = {
  * Displays "Premium" badges for templates requiring a higher tier than the user's current plan.
  * Delegates to useAuthorityStore for the authoritative tier.
  */
-export function TemplateSelector({ onSelect, className }: TemplateSelectorProps) {
+export function TemplateSelector({ onSelect, className }: TemplateSelectorProps): React.JSX.Element {
     const { tier: userTier } = useAuthorityStore();
     const userTierRank = TIER_ORDER[userTier as PlanTier] || 0;
 

@@ -4,10 +4,8 @@ import {
     Globe,
     Terminal,
     Code,
-    Wrench,
     MessageSquare,
     Bot,
-    Sparkles,
     DollarSign,
     ShieldCheck,
     Calendar,
@@ -41,6 +39,7 @@ export const ICON_MAP: Record<string, React.ReactNode> = {
  * Adheres to Rule 181 by avoiding emoji fallbacks.
  */
 export function getIcon(key: string | undefined): React.ReactNode {
+
     if (!key) return ICON_MAP.default;
     return ICON_MAP[key.toLowerCase()] || ICON_MAP.default;
 }

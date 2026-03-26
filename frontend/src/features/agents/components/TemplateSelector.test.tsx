@@ -15,7 +15,7 @@ describe('TemplateSelector', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useAuth as any).mockReturnValue({ user: { plan: 'starter' } });
+        (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ user: { plan: 'starter' } });
     });
 
     it('should render all templates', () => {

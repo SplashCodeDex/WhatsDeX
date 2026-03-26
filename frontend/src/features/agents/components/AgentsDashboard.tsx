@@ -3,10 +3,8 @@
 import {
     Bot,
     RefreshCw,
-    User,
     Files,
     Settings,
-    Wrench,
     Zap,
     Shield,
     ExternalLink,
@@ -16,16 +14,15 @@ import {
     Plus,
     Activity,
     Unlink,
-    TrendingUp,
     DollarSign,
     MessageSquare
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
     Tabs,
@@ -40,7 +37,6 @@ import { SkillToggle } from '@/features/agents/components/SkillToggle';
 import { TemplateSelector } from '@/features/agents/components/TemplateSelector';
 import { useCreateAgent } from '@/features/agents/hooks/useCreateAgent';
 import { AgentTemplate } from '@/features/agents/types';
-import { useAuth } from '@/features/auth';
 import { cn } from '@/lib/utils';
 import { useAuthorityStore } from '@/stores/useAuthorityStore';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
@@ -50,7 +46,7 @@ import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
  * Core business logic and UI for agent management.
  * Adheres to DeXMart 2026 Rule 8.1 (Thin Page) and Rule 181 (Emoji-Free).
  */
-export function AgentsDashboard() {
+export function AgentsDashboard(): React.JSX.Element {
     const {
         agentsResult,
         agentIdentities,
@@ -60,18 +56,16 @@ export function AgentsDashboard() {
         fetchUsageTotals,
         disconnectChannel,
         toggleSkill,
-        isLoading
     } = useOmnichannelStore();
-    const { user } = useAuth();
     const { tier, getLimit } = useAuthorityStore();
-    const { createAgent, isLoading: isCreating } = useCreateAgent();
+    const { createAgent } = useCreateAgent();
 
     const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [showTrace, setShowTrace] = useState(false);
 
-    const handleRefresh = async () => {
+    const handleRefresh = async (): Promise<void> => {
         setIsRefreshing(true);
         try {
             await Promise.all([
@@ -85,7 +79,7 @@ export function AgentsDashboard() {
         }
     };
 
-    const handleCreateAgent = async (template: AgentTemplate) => {
+    const handleCreateAgent = async (template: AgentTemplate): Promise<void> => {
         setIsCreateOpen(false);
         const promise = createAgent({
             name: template.title,
@@ -107,7 +101,7 @@ export function AgentsDashboard() {
         });
     };
 
-    const handleToggleSkill = async (skillId: string, enabled: boolean) => {
+    const handleToggleSkill = async (skillId: string, enabled: boolean): Promise<void> => {
         if (!selectedAgent) return;
 
         try {
@@ -119,12 +113,12 @@ export function AgentsDashboard() {
             } else {
                 toast.error(`Failed to ${enabled ? 'enable' : 'disable'} skill`);
             }
-        } catch (error) {
+        } catch {
             toast.error('Network error while toggling skill');
         }
     };
 
-    const handleAction = async (action: string, id: string) => {
+    const handleAction = async (action: string, id: string): Promise<void> => {
         if (action === 'Unlink' && selectedAgent) {
             const confirmed = window.confirm(`Are you sure you want to unlink this channel from ${selectedAgent.name}?`);
             if (!confirmed) return;
@@ -143,8 +137,8 @@ export function AgentsDashboard() {
     };
 
     useEffect(() => {
-        handleRefresh();
-    }, []);
+        void Promise.all([fetchAgents(), fetchUsageTotals()]);
+    }, [fetchAgents, fetchUsageTotals]);
 
     const agents = agentsResult?.agents || [];
     const currentId = selectedAgentId || agentsResult?.defaultId || agents[0]?.id;

@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { LoginForm } from './LoginForm';
@@ -28,16 +29,16 @@ vi.mock('../types', () => ({
 
 // Mock motion components
 vi.mock('@/components/ui/motion', () => ({
-  StaggeredEnter: ({ children }: any) => <div>{children}</div>,
-  StaggeredItem: ({ children }: any) => <div>{children}</div>,
+  StaggeredEnter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  StaggeredItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // Mock UI components if necessary (simplifies tree)
 vi.mock('@/components/ui', () => ({
-    Button: (props: any) => <button {...props}>{props.children}</button>,
-    Input: (props: any) => <input {...props} />,
-    PasswordInput: (props: any) => <input type="password" {...props} />,
-    Checkbox: (props: any) => <input type="checkbox" {...props} />,
+    Button: (props: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => <button {...props}>{props.children}</button>,
+    Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+    PasswordInput: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input type="password" {...props} />,
+    Checkbox: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input type="checkbox" {...props} />,
 }));
 
 vi.mock('@/components/ui/icons', () => ({
@@ -56,7 +57,7 @@ describe('LoginForm', () => {
     const user = userEvent.setup();
     
     // Mock signIn to return error
-    (actions.signIn as any).mockResolvedValue({
+    vi.mocked(actions.signIn).mockResolvedValue({
       success: false,
       error: {
         code: 'validation_error',

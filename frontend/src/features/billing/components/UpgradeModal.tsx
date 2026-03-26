@@ -1,8 +1,8 @@
 'use client';
 
-import { Rocket, X } from 'lucide-react';
+import { Rocket } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { type JSX } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,10 +25,10 @@ export function UpgradeModal({
   onClose,
   title = "Upgrade to Pro",
   description = "You've reached the limit of your current plan. Upgrade to unlock more bots and features."
-}: UpgradeModalProps) {
+}: UpgradeModalProps): JSX.Element {
   const router = useRouter();
 
-  const handleUpgrade = () => {
+  const handleUpgrade = (): void => {
     router.push('/dashboard/billing');
     onClose();
   };

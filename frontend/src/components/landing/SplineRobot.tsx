@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,7 @@ interface SplineRobotProps {
 export function SplineRobot({
     className,
     sceneUrl = "https://prod.spline.design/ZZfs8HZoLfxM5tFG/scene.splinecode"
-}: SplineRobotProps) {
+}: SplineRobotProps): React.JSX.Element {
     const [isLoading, setIsLoading] = useState(true);
     const viewerRef = useRef<HTMLElement>(null);
 
@@ -26,8 +26,7 @@ export function SplineRobot({
         const viewer = viewerRef.current;
         if (!viewer) return;
 
-        const onLoadComplete = () => {
-            console.log("Spline Viewer: Scene Loaded Successfully");
+        const onLoadComplete = (): void => {
             setIsLoading(false);
         };
 

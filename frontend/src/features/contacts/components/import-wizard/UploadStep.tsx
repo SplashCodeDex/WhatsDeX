@@ -1,6 +1,6 @@
 'use client';
 
-import { Upload, FileText, Download, FileSpreadsheet, Contact } from 'lucide-react';
+import { Upload, Download, FileSpreadsheet, Contact } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
 import { downloadSampleCSV, type WizardState } from './wizardUtils';
@@ -39,7 +39,7 @@ export function UploadStep({ onFileAccepted, file, fileType, rowCount, onRemoveF
         setIsDragging(false);
     }, []);
 
-    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>): void => {
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
             onFileAccepted(selectedFile);

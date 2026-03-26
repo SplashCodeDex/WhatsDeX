@@ -1,6 +1,5 @@
-import React from 'react';
-
 import { Metadata } from 'next';
+import React from 'react';
 
 import { OmnichannelFeature } from '@/features/omnichannel/OmnichannelFeature';
 

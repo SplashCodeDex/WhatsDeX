@@ -19,9 +19,9 @@ describe('ActivityFeed', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useOmnichannelStore as any).mockReturnValue({
+        vi.mocked(useOmnichannelStore).mockReturnValue({
             activity: mockActivity,
-        });
+        } as unknown as ReturnType<typeof useOmnichannelStore>);
     });
 
     it('should render various activity types with correct labels', () => {

@@ -15,7 +15,7 @@ interface FormErrorProps {
  * FormError component - A premium, brand-aligned error message for forms.
  * Uses oklch colors and subtle animations for a premium feel.
  */
-export function FormError({ message, className }: FormErrorProps) {
+export function FormError({ message, className }: FormErrorProps): React.JSX.Element {
     return (
         <AnimatePresence mode="wait">
             {message ? <motion.div

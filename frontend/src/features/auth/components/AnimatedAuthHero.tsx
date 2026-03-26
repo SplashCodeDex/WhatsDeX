@@ -10,7 +10,7 @@
 import { motion } from 'framer-motion';
 import { Bot, BarChart3, Rocket, Shield } from 'lucide-react';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import type { Particle } from '../utils';
 
@@ -38,10 +38,10 @@ interface AnimatedAuthHeroProps {
     isTransitioning?: boolean;
 }
 
-export function AnimatedAuthHero({ hideContent = false, particles = [] }: AnimatedAuthHeroProps) {
+export function AnimatedAuthHero({ hideContent = false, particles = [] }: AnimatedAuthHeroProps): React.JSX.Element {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>): void => {
         const { clientX, clientY, currentTarget } = e;
         const { width, height, left, top } = currentTarget.getBoundingClientRect();
 
@@ -248,7 +248,7 @@ function FloatingBubble({
     size,
     delay = 0,
     variant = 'solid',
-}: FloatingBubbleProps) {
+}: FloatingBubbleProps): React.JSX.Element {
     const sizes = {
         sm: 'w-12 h-10',
         md: 'w-16 h-14',
@@ -309,7 +309,7 @@ interface SpinningGearProps {
     delay?: number;
 }
 
-function SpinningGear({ className, size, direction, delay = 0 }: SpinningGearProps) {
+function SpinningGear({ className, size, direction, delay = 0 }: SpinningGearProps): React.JSX.Element {
     const rotation = direction === 'cw' ? 360 : -360;
 
     return (
@@ -345,7 +345,7 @@ function SpinningGear({ className, size, direction, delay = 0 }: SpinningGearPro
     );
 }
 
-function FlowingLines() {
+function FlowingLines(): React.JSX.Element {
     return (
         <div className="absolute inset-x-0 bottom-0 h-32 overflow-hidden">
             {[0, 1, 2].map((i) => (
@@ -366,7 +366,7 @@ function FlowingLines() {
     );
 }
 
-function Particles({ particles }: { particles: Particle[] }) {
+function Particles({ particles }: { particles: Particle[] }): React.JSX.Element {
     // Use fixed height value to avoid SSR issues with window
     const PARTICLE_TRAVEL_DISTANCE = -800;
 

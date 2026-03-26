@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Zap, Search, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, Zap, Search, ShieldCheck, AlertCircle } from 'lucide-react';
 import React from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ interface LiveStatusBadgeProps {
     showText?: boolean;
 }
 
-export function LiveStatusBadge({ agentId, className, showText = true }: LiveStatusBadgeProps) {
+export function LiveStatusBadge({ agentId, className, showText = true }: LiveStatusBadgeProps): React.JSX.Element | null {
     const status = useMastermindStore((state) => state.agentStatuses[agentId]);
     
     if (!status || status.status === 'Idle') {
@@ -22,7 +22,7 @@ export function LiveStatusBadge({ agentId, className, showText = true }: LiveSta
 
     const isError = status.status === 'Error';
     
-    const getIcon = () => {
+    const getIcon = (): React.JSX.Element => {
         if (isError) return <AlertCircle className="h-3 w-3 text-destructive" />;
         
         switch (status.stage) {

@@ -9,15 +9,13 @@ import {
     Handle,
     Position,
 } from '@xyflow/react';
+import { Bot, Terminal, Zap, Search } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import '@xyflow/react/dist/style.css';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMastermindStore, MastermindEvent } from '@/stores/useMastermindStore';
-
-import { Bot, Terminal, Zap, Search, ShieldCheck } from 'lucide-react';
 
 interface AgentNodeProps {
     data: {
@@ -28,8 +26,8 @@ interface AgentNodeProps {
     };
 }
 
-function AgentNode({ data }: AgentNodeProps) {
-    const getEventIcon = (type: string) => {
+function AgentNode({ data }: AgentNodeProps): React.JSX.Element {
+    const getEventIcon = (type: string): React.JSX.Element => {
         switch (type) {
             case 'tool:invoke': return <Zap className="h-2.5 w-2.5 text-amber-500" />;
             case 'agent:spawn': return <Bot className="h-2.5 w-2.5 text-blue-500" />;
@@ -73,7 +71,7 @@ const nodeTypes = {
     agent: AgentNode,
 };
 
-export function RecursiveTraceView({ rootAgentId }: { rootAgentId: string }) {
+export function RecursiveTraceView({ rootAgentId }: { rootAgentId: string }): React.JSX.Element {
     const traces = useMastermindStore((state) => state.traces);
     const hierarchy = useMastermindStore((state) => state.agentHierarchy);
     const agentStatuses = useMastermindStore((state) => state.agentStatuses);
@@ -84,7 +82,7 @@ export function RecursiveTraceView({ rootAgentId }: { rootAgentId: string }) {
         
         const processedAgents = new Set<string>();
 
-        const buildGraph = (agentId: string, x: number, y: number, level: number) => {
+        const buildGraph = (agentId: string, x: number, y: number, level: number): void => {
             if (processedAgents.has(agentId)) return;
             processedAgents.add(agentId);
 

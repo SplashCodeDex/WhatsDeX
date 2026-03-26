@@ -31,7 +31,7 @@ export function ThemeProvider({
     children,
     defaultTheme = 'system',
     storageKey = 'DeXMart-theme',
-}: ThemeProviderProps) {
+}: ThemeProviderProps): React.JSX.Element {
     const [theme, setTheme] = React.useState<Theme>(defaultTheme);
 
     // Hydration Logic: Read from localStorage strictly in useEffect
@@ -85,7 +85,7 @@ export function ThemeProvider({
     );
 }
 
-export const useTheme = () => {
+export const useTheme = (): ThemeProviderState => {
     const context = React.useContext(ThemeProviderContext);
 
     if (context === undefined)

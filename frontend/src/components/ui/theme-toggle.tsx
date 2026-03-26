@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 
-export function ThemeToggle() {
+export function ThemeToggle(): React.JSX.Element {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = React.useState(false);
 
@@ -25,7 +25,7 @@ export function ThemeToggle() {
         );
     }
 
-    const toggleTheme = () => {
+    const toggleTheme = (): void => {
         setTheme(theme === 'light' ? 'dark' : 'light');
     };
 

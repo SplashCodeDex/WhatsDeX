@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useOmnichannelStore } from './useOmnichannelStore';
 
 import { api } from '@/lib/api/client';
+import type { ActivityEvent } from '@/types/omnichannel';
 
 // Mock the api client
 vi.mock('@/lib/api/client', () => ({
@@ -38,7 +39,7 @@ describe('useOmnichannelStore', () => {
             { id: 'bot_1', name: 'WhatsApp Bot', type: 'whatsapp', status: 'connected', account: '123456789' },
         ];
 
-        (api.get as any).mockResolvedValue({
+        (api.get as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
             success: true,
             data: mockChannels,
         });
@@ -52,7 +53,7 @@ describe('useOmnichannelStore', () => {
     });
 
     it('should handle fetch errors', async () => {
-        (api.get as any).mockResolvedValue({
+        (api.get as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
             success: false,
             error: { message: 'API Error' },
         });
@@ -84,7 +85,7 @@ describe('useOmnichannelStore', () => {
             timestamp: new Date().toISOString(),
         };
 
-        useOmnichannelStore.getState().addActivityEvent(event as any);
+        useOmnichannelStore.getState().addActivityEvent(event as Omit<ActivityEvent, 'id'>);
 
         const state = useOmnichannelStore.getState();
         expect(state.activity).toHaveLength(1);
@@ -111,8 +112,8 @@ describe('useOmnichannelStore', () => {
     });
 
     it('should disconnect channel successfully', async () => {
-        (api.post as any).mockResolvedValue({ success: true, data: {} });
-        (api.get as any).mockResolvedValue({ success: true, data: [] });
+        (api.post as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true, data: {} });
+        (api.get as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true, data: [] });
 
         const success = await useOmnichannelStore.getState().disconnectChannel('agent_1', 'bot_1');
 
@@ -122,8 +123,8 @@ describe('useOmnichannelStore', () => {
     });
 
     it('should delete channel successfully', async () => {
-        (api.delete as any).mockResolvedValue({ success: true, data: {} });
-        (api.get as any).mockResolvedValue({ success: true, data: [] });
+        (api.delete as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true, data: {} });
+        (api.get as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true, data: [] });
 
         const success = await useOmnichannelStore.getState().deleteChannel('agent_1', 'bot_1');
 

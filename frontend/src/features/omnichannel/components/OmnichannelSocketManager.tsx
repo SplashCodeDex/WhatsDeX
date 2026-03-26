@@ -12,7 +12,7 @@ import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
  * A headless component that handles WebSocket subscriptions for the Omnichannel Hub
  * and keeps the Zustand store in sync with the backend.
  */
-export function OmnichannelSocketManager() {
+export function OmnichannelSocketManager(): null {
     const { on } = useSocket();
     const {
         fetchChannels,
@@ -38,7 +38,7 @@ export function OmnichannelSocketManager() {
         });
 
         // 4. Subscribe to Connection Status Updates
-        const cleanupChannelStatus = on('channel_status_update', (data: { channelId: string, status: any }) => {
+        const cleanupChannelStatus = on('channel_status_update', (data: { channelId: string, status: string }) => {
             logger.info('[Omnichannel] Channel Status Update:', data);
             updateChannelStatus(data.channelId, data.status);
         });

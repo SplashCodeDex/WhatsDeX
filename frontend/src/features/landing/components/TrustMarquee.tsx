@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ShieldCheck, Hexagon, Box, Layers, Globe2, Activity } from 'lucide-react';
+import React from 'react';
 
 const LOGOS = [
     { name: 'Acme Corp', icon: Hexagon },
@@ -12,7 +13,7 @@ const LOGOS = [
     { name: 'BoxedSolutions', icon: Box },
 ];
 
-export function TrustMarquee() {
+export function TrustMarquee(): React.JSX.Element {
     // Duplicate the logos array to create a seamless infinite scroll loop
     const marqueeItems = [...LOGOS, ...LOGOS, ...LOGOS];
 

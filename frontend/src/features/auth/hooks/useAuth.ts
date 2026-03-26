@@ -244,7 +244,7 @@ export function useAuth(): UseAuthReturn {
             }, REFRESH_INTERVAL);
         };
 
-        const handleVisibilityChange = () => {
+        const handleVisibilityChange = (): void => {
             if (document.visibilityState === 'visible') {
                 logger.debug('Tab became visible, resuming auth timers');
                 startTimer();

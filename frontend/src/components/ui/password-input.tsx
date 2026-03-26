@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, ArrowBigUpDash, Check, X } from 'lucide-react';
+import { Eye, EyeOff, ArrowBigUpDash } from 'lucide-react';
 import * as React from 'react';
 
 import { Input, type InputProps } from './input';
@@ -46,21 +46,20 @@ const PasswordInput = React.forwardRef<HTMLInputElement, InputProps>(
         const [isCapsLockOn, setIsCapsLockOn] = React.useState(false);
         const [internalValue, setInternalValue] = React.useState('');
 
-        const toggleVisibility = (e: React.MouseEvent) => {
+        const toggleVisibility = (e: React.MouseEvent): void => {
             e.preventDefault();
             setShowPassword((prev) => !prev);
         };
 
-        const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>): void => {
             setIsCapsLockOn(e.getModifierState('CapsLock'));
         };
 
-        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
             setInternalValue(e.target.value);
             if (onChange) onChange(e);
         };
 
-        const strength = getStrength(internalValue);
         const displayValue = value !== undefined ? (value as string) : internalValue;
         const currentStrength = getStrength(displayValue);
 

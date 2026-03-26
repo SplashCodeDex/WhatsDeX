@@ -26,7 +26,7 @@ export type SubscriptionStatus = z.infer<typeof SubscriptionStatusSchema>;
 export const SubscriptionInfoSchema = z.object({
   plan: z.preprocess((val, ctx) => {
     if (typeof val === 'string' && ['starter', 'pro', 'enterprise'].includes(val.toLowerCase())) return val.toLowerCase();
-    const input = (ctx as any).parent || {};
+    const input = (ctx as { parent?: Record<string, unknown> }).parent || {};
     const legacyVal = input.planTier;
     if (typeof legacyVal === 'string' && ['starter', 'pro', 'enterprise'].includes(legacyVal.toLowerCase())) return legacyVal.toLowerCase();
     return undefined;

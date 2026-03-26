@@ -5,7 +5,7 @@ export interface Result<T, E = Error> {
     success: boolean;
     data?: T;
     error?: E | string;
-    meta?: any;
+    meta?: unknown;
 }
 
 // Analytics Controller
@@ -15,7 +15,7 @@ export interface DashboardStats {
     totalMessages: number;
     totalContacts: number;
     systemHealth: 'Healthy' | 'Degraded';
-    metrics: any;
+    metrics: unknown;
 }
 
 // Contact Controller
@@ -25,7 +25,7 @@ export interface Contact {
     name: string;
     phone: string;
     email?: string;
-    attributes?: Record<string, any>;
+    attributes?: Record<string, unknown>;
     tags: string[];
     createdAt: string;
     updatedAt: string;

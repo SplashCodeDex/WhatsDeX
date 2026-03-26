@@ -10,18 +10,27 @@ import {
     AlertCircle,
     CheckCircle2
 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
+interface TraceNode {
+    id: string;
+    label: string;
+    status: 'thinking' | 'complete' | 'error';
+    timestamp: string;
+    task?: string;
+    parent?: string;
+}
+
 interface TraceNodeProps {
-    node: any;
+    node: TraceNode;
     depth: number;
     isLast: boolean;
 }
 
-function TraceNode({ node, depth, isLast }: TraceNodeProps) {
+function TraceNodeItem({ node, depth, isLast: _isLast }: TraceNodeProps): React.JSX.Element {
     const Icon = node.label === 'Researcher' || node.label === 'Lead Researcher' ? Search :
         node.label === 'Fact-Checker' ? ShieldCheck :
             node.label === 'Mastermind Synthesis' ? BrainCircuit : GitBranch;
@@ -87,7 +96,7 @@ function TraceNode({ node, depth, isLast }: TraceNodeProps) {
     );
 }
 
-export function NestedResearchTrace() {
+export function NestedResearchTrace(): React.JSX.Element | null {
     const { nestedTrace, clearTrace } = useOmnichannelStore();
 
     if (nestedTrace.length === 0) return null;
@@ -111,9 +120,9 @@ export function NestedResearchTrace() {
                 {nestedTrace.map((node, index) => {
                     const depth = node.parent ? 1 : 0;
                     return (
-                        <TraceNode
+                        <TraceNodeItem
                             key={node.id}
-                            node={node}
+                            node={node as TraceNode}
                             depth={depth}
                             isLast={index === nestedTrace.length - 1}
                         />

@@ -1,23 +1,14 @@
 'use client';
 
-import { Activity, MessageSquare, Send, Hash, Slack, Smartphone, Settings, Brain, Zap, Terminal, CheckCircle2, GitBranch } from 'lucide-react';
+import { Activity, MessageSquare, Send, Settings, Brain, Zap, Terminal, CheckCircle2, GitBranch } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
-
-const ICON_MAP = {
-    whatsapp: MessageSquare,
-    telegram: Send,
-    discord: Hash,
-    slack: Slack,
-    signal: Smartphone,
-    system: Settings
-};
 
 const TYPE_ICON_MAP = {
     inbound: MessageSquare,
@@ -29,7 +20,7 @@ const TYPE_ICON_MAP = {
     system: Settings
 };
 
-export function ActivityFeed() {
+export function ActivityFeed(): React.JSX.Element {
     const { activity } = useOmnichannelStore();
     const [filter, setFilter] = useState('all');
     const router = useRouter();
@@ -75,8 +66,7 @@ export function ActivityFeed() {
                     </div>
                 ) : (
                     filteredActivity.map((event) => {
-                        const ChannelIcon = ICON_MAP[event.channel.toLowerCase() as keyof typeof ICON_MAP] || Activity;
-                        const TypeIcon = (TYPE_ICON_MAP as any)[event.type] || Activity;
+                        const TypeIcon = (TYPE_ICON_MAP as Record<string, React.ComponentType<{ className?: string }>>)[event.type] || Activity;
 
                         return (
                             <div key={event.id} className="flex items-start space-x-3 rounded-lg border border-border/50 bg-muted/20 p-3 text-sm transition-all hover:bg-muted/30">

@@ -1,6 +1,7 @@
 'use client';
 
-import { Bot, CreditCard, MessageSquare, ShieldCheck, Activity } from 'lucide-react';
+import { Bot, MessageSquare, ShieldCheck, Activity } from 'lucide-react';
+import React from 'react';
 
 import { useAgents } from '@/features/agents/hooks/useAgents';
 import { useSubscription } from '@/features/billing/hooks/useSubscription';
@@ -11,7 +12,7 @@ interface InsightCardProps {
     type: 'dashboard' | 'agents' | 'messages' | 'billing' | 'contacts' | 'settings';
 }
 
-export function InsightCard({ type }: InsightCardProps) {
+export function InsightCard({ type }: InsightCardProps): React.JSX.Element {
     const { data: agents } = useAgents();
     const { subscription, limits } = useSubscription();
     const { data: contacts } = useContacts();
@@ -38,7 +39,7 @@ export function InsightCard({ type }: InsightCardProps) {
         }
     };
 
-    const renderContent = () => {
+    const renderContent = (): React.JSX.Element => {
         switch (type) {
             case 'agents':
                 return (

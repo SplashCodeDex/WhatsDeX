@@ -1,7 +1,7 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { Play, Trash2, Clock, Send, AlertCircle, CheckCircle2, Pause, BarChart3 } from 'lucide-react';
+import { Play, Trash2, Clock, Send, CheckCircle2, Pause, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
@@ -11,10 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
 
 
-export function CampaignList() {
+export function CampaignList(): React.JSX.Element {
     const { data: campaigns, isLoading, error } = useCampaigns();
     const startMutation = useStartCampaign();
     const pauseMutation = usePauseCampaign();
@@ -31,7 +30,7 @@ export function CampaignList() {
     );
     if (error) return <div className="p-8 text-center text-destructive">Error loading campaigns</div>;
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: string): React.JSX.Element => {
         switch (status) {
             case 'sending': return <Badge className="bg-primary/20 text-primary border-primary/20 animate-pulse"><Send className="w-3 h-3 mr-1" /> Sending</Badge>;
             case 'completed': return <Badge className="bg-success/20 text-success border-success/20"><CheckCircle2 className="w-3 h-3 mr-1" /> Completed</Badge>;

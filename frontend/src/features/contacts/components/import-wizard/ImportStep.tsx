@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, AlertCircle, Loader2, PartyPopper, RotateCcw } from 'lucide-react';
+import { AlertCircle, Loader2, PartyPopper, RotateCcw } from 'lucide-react';
 import React from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

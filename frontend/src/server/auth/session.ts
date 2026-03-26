@@ -7,13 +7,13 @@ const JWT_SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || 'static-placeholder-do-not-use-in-prod-7f9d8a2b'
 );
 
-export async function getSession() {
+export async function getSession(): Promise<string | undefined> {
     const cookieStore = await cookies();
     const token = cookieStore.get('token');
     return token?.value;
 }
 
-export async function requireAuth() {
+export async function requireAuth(): Promise<string> {
     const token = await getSession();
 
     if (!token) {
@@ -24,11 +24,13 @@ export async function requireAuth() {
         // Robust JWT Verification
         await jwtVerify(token, JWT_SECRET);
         return token;
-    } catch (error: any) {
-        if (error?.code === 'ERR_JWT_EXPIRED') {
-            console.warn('[Session] Token expired, redirecting to login...');
+    } catch (error: unknown) {
+        const jwtError = error as { code?: string };
+        if (jwtError?.code === 'ERR_JWT_EXPIRED') {
+            // Token expired - redirect to login silently
         } else {
-            console.error('[Session] Token verification failed:', error);
+            // Token verification failed for another reason - redirect to login
+            void error; // error info discarded intentionally; session is invalid regardless
         }
         // Redirect to login with the current path to return to
         // We use /login instead of /api/auth/logout to avoid extra hops,

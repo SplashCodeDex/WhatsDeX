@@ -1,9 +1,16 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
 
 import { Providers } from './providers';
 
 import { LiquidGlassFilters } from '@/components/effects/LiquidGlassFilters';
 import './globals.css';
+
+const inter = Inter({
+    subsets: ['latin'],
+    variable: '--font-inter',
+    display: 'swap',
+});
 
 export const metadata: Metadata = {
     title: {
@@ -60,21 +67,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>): React.JSX.Element {
     return (
-        <html lang="en" suppressHydrationWarning>
-            <head>
-                {/* Preconnect to Google Fonts for performance */}
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link
-                    rel="preconnect"
-                    href="https://fonts.gstatic.com"
-                    crossOrigin="anonymous"
-                />
-                {/* Inter Variable Font */}
-                <link
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
-                    rel="stylesheet"
-                />
-            </head>
+        <html lang="en" suppressHydrationWarning className={inter.variable}>
             <body className="min-h-screen bg-background antialiased">
                 <LiquidGlassFilters />
                 {/* Skip link for accessibility */}

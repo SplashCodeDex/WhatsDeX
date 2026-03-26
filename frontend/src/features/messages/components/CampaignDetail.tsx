@@ -3,7 +3,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import {
     ArrowLeft,
-    Send,
     CheckCircle2,
     AlertCircle,
     Clock,
@@ -24,7 +23,7 @@ import { useCampaign, useResumeCampaign } from '../hooks/useCampaigns';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -34,7 +33,7 @@ interface CampaignDetailProps {
     id: string;
 }
 
-export function CampaignDetail({ id }: CampaignDetailProps) {
+export function CampaignDetail({ id }: CampaignDetailProps): React.JSX.Element {
     const router = useRouter();
     const { data: campaign, isLoading, error } = useCampaign(id);
     const { user } = useAuth();
@@ -45,11 +44,12 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
     // Countdown logic for Anti-Ban cooldowns
     React.useEffect(() => {
         let interval: NodeJS.Timeout | undefined;
-        const antiban = campaign?.metadata?.antiban;
+        const antiban = campaign?.metadata?.antiban as { expiresAt?: number } | undefined;
 
         if (campaign?.status === 'paused' && antiban?.expiresAt) {
-            const updateTimer = () => {
-                const remaining = Math.max(0, Math.ceil((antiban.expiresAt - Date.now()) / 1000));
+            const expiresAt = antiban.expiresAt;
+            const updateTimer = (): void => {
+                const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
                 setCooldownRemaining(remaining);
             };
 
@@ -90,7 +90,7 @@ export function CampaignDetail({ id }: CampaignDetailProps) {
         ? ((campaign.stats.sent + campaign.stats.failed) / campaign.stats.total) * 100
         : 0;
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: string): React.JSX.Element => {
         switch (status) {
             case 'sending': return <Badge className="bg-primary/20 text-primary border-primary/20 animate-pulse px-3 py-1"><Activity className="w-3 h-3 mr-1.5" /> Live Sending</Badge>;
             case 'completed': return <Badge className="bg-green-500/20 text-green-500 border-green-500/20 px-3 py-1"><CheckCircle2 className="w-3 h-3 mr-1.5" /> Finished</Badge>;

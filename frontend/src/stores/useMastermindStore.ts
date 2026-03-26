@@ -16,8 +16,8 @@ export interface MastermindEvent {
     parentAgentId?: string;
     content?: string;
     toolName?: string;
-    params?: any;
-    result?: any;
+    params?: unknown;
+    result?: unknown;
     error?: string;
     stage?: 'planning' | 'researching' | 'auditing' | 'synthesizing' | 'executing';
     timestamp: string;

@@ -18,17 +18,25 @@ import {
 } from '@/components/ui/sheet';
 import { useImportHistory, useUndoImport } from '@/features/contacts/hooks/useContacts';
 
+interface ImportLog {
+    id: string;
+    fileName: string;
+    status: string;
+    importedCount: number;
+    timestamp?: { seconds: number };
+    errors?: unknown[];
+}
 
 export function ImportHistoryPanel(): React.ReactNode {
     const { data: history, isLoading } = useImportHistory();
     const undoMutation = useUndoImport();
 
-    const handleUndo = async (importId: string) => {
+    const handleUndo = async (importId: string): Promise<void> => {
         try {
             await undoMutation.mutateAsync(importId);
             toast.success('Import rolled back successfully');
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to undo import');
+        } catch (error: unknown) {
+            toast.error((error instanceof Error ? error.message : null) || 'Failed to undo import');
         }
     };
 
@@ -76,7 +84,7 @@ export function ImportHistoryPanel(): React.ReactNode {
                                 </div>
                             </div>
                         ) : (
-                            history.map((log: any) => (
+                            (history as ImportLog[]).map((log) => (
                                 <div
                                     key={log.id}
                                     className={`

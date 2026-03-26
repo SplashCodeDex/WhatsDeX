@@ -50,7 +50,8 @@ export const initialWizardState: WizardState = {
 
 // ─── Header Aliases ───────────────────────────────────────────────
 // Now using synchronized FIELD_ALIASES from @DeXMart/shared/fieldAliases
-const HEADER_ALIASES = FIELD_ALIASES;
+// HEADER_ALIASES kept as alias reference; actual usage goes through FIELD_ALIASES directly
+const _HEADER_ALIASES = FIELD_ALIASES;
 
 // ─── Auto-Mapping Engine ─────────────────────────────────────────
 /**
@@ -176,7 +177,7 @@ export function generateSampleCSV(): string {
     return lines.join('\n');
 }
 
-export function downloadSampleCSV() {
+export function downloadSampleCSV(): void {
     const csv = generateSampleCSV();
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -259,10 +260,10 @@ export async function parseExcel(file: File): Promise<string[][]> {
 
     // Convert to 2D array (header: 1 ensures it returns string[][])
     // We clean up nulls/undefined to empty strings
-    const json = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
+    const json = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1 });
 
     return json.map(row =>
-        row.map(cell => cell === null || cell === undefined ? '' : String(cell))
+        (row as unknown[]).map(cell => cell === null || cell === undefined ? '' : String(cell))
     );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,7 @@ export function StaggeredEnter({
     className,
     delay = 0,
     staggerDelay = 0.05,
-}: StaggeredEnterProps) {
+}: StaggeredEnterProps): React.JSX.Element {
     return (
         <motion.div
             initial="hidden"
@@ -42,7 +43,7 @@ export function StaggeredItem({
 }: {
     children: React.ReactNode;
     className?: string;
-}) {
+}): React.JSX.Element {
     return (
         <motion.div
             variants={{

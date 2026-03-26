@@ -1,19 +1,14 @@
 'use client';
 
 import {
-    Settings,
     Save,
     Shield,
-    Bell,
     Cpu,
     Globe,
-    Users,
-    Layers,
-    Lock,
     RefreshCw,
     Terminal
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { TenantSettings } from '../types';
@@ -29,30 +24,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api, API_ENDPOINTS } from '@/lib/api';
 
 
-export function ConfigManager() {
+export function ConfigManager(): React.JSX.Element | null {
     const [settings, setSettings] = useState<TenantSettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        fetchSettings();
+        const fetchSettings = async (): Promise<void> => {
+            setIsLoading(true);
+            try {
+                const response = await api.get<TenantSettings>(API_ENDPOINTS.SETTINGS.GET_TENANT);
+                if (response.success) {
+                    setSettings(response.data);
+                }
+            } catch {
+                toast.error('Failed to load settings');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        void fetchSettings();
     }, []);
 
-    const fetchSettings = async () => {
-        setIsLoading(true);
-        try {
-            const response = await api.get<TenantSettings>(API_ENDPOINTS.SETTINGS.GET_TENANT);
-            if (response.success) {
-                setSettings(response.data);
-            }
-        } catch (error) {
-            toast.error('Failed to load settings');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSave = async () => {
+    const handleSave = async (): Promise<void> => {
         if (!settings) return;
 
         setIsSaving(true);
@@ -65,26 +59,26 @@ export function ConfigManager() {
                     duration: 3000,
                 });
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to update configuration');
         } finally {
             setIsSaving(false);
         }
     };
 
-    const updateNestedSetting = (path: string, value: any) => {
+    const updateNestedSetting = (path: string, value: unknown): void => {
         if (!settings) return;
 
         const newSettings = { ...settings };
         const keys = path.split('.');
-        let current: any = newSettings;
+        let current: Record<string, unknown> = newSettings as unknown as Record<string, unknown>;
 
         for (let i = 0; i < keys.length - 1; i++) {
             const key = keys[i];
             if (key) {
                 // Ensure the nested object exists
                 if (!current[key]) current[key] = {};
-                current = current[key];
+                current = current[key] as Record<string, unknown>;
             }
         }
         

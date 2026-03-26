@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { Campaign } from '../types';
 import { useCampaignSocket } from './useCampaignSocket';
@@ -13,7 +13,7 @@ export const campaignKeys = {
     detail: (id: string) => [...campaignKeys.all, 'detail', id] as const,
 };
 
-export function useCampaigns() {
+export function useCampaigns(): UseQueryResult<Campaign[]> {
     // Initialize socket connection for real-time updates
     useCampaignSocket();
 
@@ -29,7 +29,7 @@ export function useCampaigns() {
     });
 }
 
-export function useCampaign(id: string) {
+export function useCampaign(id: string): UseQueryResult<Campaign> {
     return useQuery({
         queryKey: campaignKeys.detail(id),
         queryFn: async () => {
@@ -43,7 +43,7 @@ export function useCampaign(id: string) {
     });
 }
 
-export function useCreateCampaign() {
+export function useCreateCampaign(): UseMutationResult<Campaign, Error, Partial<Campaign>> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (data: Partial<Campaign>) => {
@@ -59,7 +59,7 @@ export function useCreateCampaign() {
     });
 }
 
-export function useStartCampaign() {
+export function useStartCampaign(): UseMutationResult<{ message: string }, Error, string> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
@@ -76,7 +76,7 @@ export function useStartCampaign() {
     });
 }
 
-export function usePauseCampaign() {
+export function usePauseCampaign(): UseMutationResult<{ message: string }, Error, string> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
@@ -93,7 +93,7 @@ export function usePauseCampaign() {
     });
 }
 
-export function useResumeCampaign() {
+export function useResumeCampaign(): UseMutationResult<{ message: string }, Error, string> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
@@ -110,7 +110,7 @@ export function useResumeCampaign() {
     });
 }
 
-export function useDuplicateCampaign() {
+export function useDuplicateCampaign(): UseMutationResult<Campaign, Error, string> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
@@ -126,7 +126,7 @@ export function useDuplicateCampaign() {
     });
 }
 
-export function useDeleteCampaign() {
+export function useDeleteCampaign(): UseMutationResult<{ message: string }, Error, string> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {

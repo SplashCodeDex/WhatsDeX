@@ -1,18 +1,21 @@
 'use client';
 
 import {
-    Zap,
-    Search,
-    RefreshCw,
-    Lock,
+    Brain,
     CheckCircle2,
     Download,
-    ShieldAlert,
     ExternalLink,
-    Key
+    Key,
+    Laptop,
+    Lock,
+    RefreshCw,
+    Search,
+    Share2,
+    ShieldAlert,
+    ShoppingCart,
+    Zap
 } from 'lucide-react';
-import { Brain, Globe, Laptop, ShoppingCart, Share2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -33,13 +36,25 @@ import { getIcon } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
+interface SkillItem {
+    id?: string;
+    name?: string;
+    description?: string;
+    category?: string;
+    source?: string;
+    enabled?: boolean;
+    isEligible?: boolean;
+    requiredTier?: string;
+    primaryEnv?: string;
+    installId?: string;
+}
 
 /**
  * SkillsDashboard Component
  * Encapsulates the logic and UI for the Intelligence Store.
  * Adheres to DeXMart 2026 Rule 8.1 (Thin Page) and Rule 181 (Emoji-Free).
  */
-export function SkillsDashboard() {
+export function SkillsDashboard(): React.JSX.Element {
     const { skills, skillReport, fetchSkillReport, fetchSkills, toggleSkill, saveSkillKey, installSkill, isLoading } = useOmnichannelStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -50,19 +65,19 @@ export function SkillsDashboard() {
 
     const [activeTab, setActiveTab] = useState('all');
 
-    const handleRefresh = async () => {
+    const handleRefresh = async (): Promise<void> => {
         setIsRefreshing(true);
         await Promise.all([fetchSkillReport(), fetchSkills()]);
         setIsRefreshing(false);
     };
 
     useEffect(() => {
-        handleRefresh();
-    }, []);
+        void Promise.all([fetchSkillReport(), fetchSkills()]);
+    }, [fetchSkillReport, fetchSkills]);
 
-    const filteredSkills = skills.filter(skill => {
-        const matchesSearch = skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            skill.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredSkills = (skills as SkillItem[]).filter(skill => {
+        const matchesSearch = (skill.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (skill.description ?? '').toLowerCase().includes(searchQuery.toLowerCase());
 
         if (!matchesSearch) return false;
         if (activeTab === 'all') return true;
@@ -90,21 +105,21 @@ export function SkillsDashboard() {
         return true;
     });
 
-    const handleToggle = async (key: string, currentDisabled: boolean) => {
+    const handleToggle = async (key: string, currentDisabled: boolean): Promise<void> => {
         const success = await toggleSkill(key, currentDisabled);
         if (success) {
             toast.success(`Skill ${currentDisabled ? 'enabled' : 'disabled'} successfully`);
         }
     };
 
-    const handleInstall = async (key: string, installId: string) => {
+    const handleInstall = async (key: string, installId: string): Promise<void> => {
         const success = await installSkill(key, installId);
         if (success) {
             toast.success('Skill installation initiated');
         }
     };
 
-    const handleSaveKey = async () => {
+    const handleSaveKey = async (): Promise<void> => {
         if (!selectedSkillKey) return;
         const success = await saveSkillKey(selectedSkillKey, apiKey);
         if (success) {

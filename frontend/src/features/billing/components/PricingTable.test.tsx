@@ -29,13 +29,13 @@ vi.mock('sonner', () => ({
 }));
 
 // Mock window.location
-delete (window as any).location;
-(window as any).location = { href: '' };
+delete (window as Window & { location?: Location }).location;
+(window as Window & { location: { href: string } }).location = { href: '' };
 
 describe('PricingTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (window as any).location.href = '';
+    (window as Window & { location: { href: string } }).location.href = '';
   });
 
   it('should render all three pricing plans', () => {

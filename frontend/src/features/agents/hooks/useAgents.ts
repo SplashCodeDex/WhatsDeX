@@ -28,7 +28,7 @@ export const agentKeys = {
  * Fetches the list of active/connected agent channels (formerly 'bots').
  * Defaults to 'system_default' if no agentId is provided.
  */
-export function useAgents(agentId: string = 'system_default') {
+export function useAgents(agentId: string = 'system_default'): ReturnType<typeof useQuery> {
     return useQuery({
         queryKey: agentKeys.channels(agentId),
         queryFn: async () => {
@@ -36,19 +36,19 @@ export function useAgents(agentId: string = 'system_default') {
                 ? API_ENDPOINTS.OMNICHANNEL.CHANNELS.ALL
                 : API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.LIST(agentId);
 
-            const response = await api.get<any[]>(endpoint);
+            const response = await api.get<Record<string, unknown>[]>(endpoint);
 
             if (isApiSuccess(response)) {
                 const data = response.data || [];
                 return data.map(channel => ({
-                    id: channel.id,
-                    name: channel.name,
-                    type: channel.type || 'whatsapp',
-                    status: channel.status as any,
-                    phoneNumber: channel.phoneNumber || channel.account || null,
-                    messageCount: channel.messageCount || 0,
-                    lastActiveAt: channel.lastActiveAt,
-                    assignedAgentId: channel.assignedAgentId
+                    id: channel['id'] as string,
+                    name: channel['name'] as string,
+                    type: (channel['type'] as string) || 'whatsapp',
+                    status: channel['status'] as AgentChannel['status'],
+                    phoneNumber: (channel['phoneNumber'] as string | null) || (channel['account'] as string | null) || null,
+                    messageCount: (channel['messageCount'] as number) || 0,
+                    lastActiveAt: channel['lastActiveAt'] as string | undefined,
+                    assignedAgentId: channel['assignedAgentId'] as string | undefined,
                 })) as AgentChannel[];
             }
 

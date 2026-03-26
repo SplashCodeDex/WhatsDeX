@@ -7,7 +7,7 @@ const tags = Array.from({ length: 50 }).map(
     (_, i, a) => `v1.2.0-beta.${a.length - i}`
 )
 
-export function ScrollAreaDemo() {
+export function ScrollAreaDemo(): React.JSX.Element {
     return (
         <ScrollArea className="h-72 w-48 rounded-md border bg-card/50 backdrop-blur-sm">
             <div className="p-4">

@@ -1,48 +1,39 @@
 'use client';
 
 import {
-    LayoutDashboard,
     ArrowUpRight,
-    Users,
-    Zap,
-    History,
     Search,
     BrainCircuit,
-    Sparkles,
     Activity
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { GatewayMetrics } from './components/GatewayMetrics';
 import { NestedResearchTrace } from './components/NestedResearchTrace';
 import { ActivityFeed } from '../omnichannel/components/ActivityFeed';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuthStore } from '@/features/auth/store';
-import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 
-export function HomeFeature() {
-    const { fetchGatewayHealth, fetchSkillReport, gatewayHealth, getSkillCount } = useOmnichannelStore();
+export function HomeFeature(): React.JSX.Element {
+    const { fetchGatewayHealth, fetchSkillReport, getSkillCount } = useOmnichannelStore();
     const { user } = useAuthStore();
     
     const hasFetched = useRef(false);
-    const [fetchError, setFetchError] = useState(false);
+    const fetchErrorRef = useRef(false);
 
     useEffect(() => {
         if (hasFetched.current) return;
         hasFetched.current = true;
         Promise.all([fetchGatewayHealth(), fetchSkillReport()])
-            .catch(() => setFetchError(true));
+            .catch(() => { fetchErrorRef.current = true; });
     }, [fetchGatewayHealth, fetchSkillReport]);
 
     const firstName = (user?.name ? user.name.split(' ')[0] : 'User') || 'User';
     const skillCount = getSkillCount();
-    const activeAgents = gatewayHealth?.agents?.length || 0;
 
     return (
         <div className="space-y-8 pb-10">

@@ -58,9 +58,9 @@ describe('useAuth hook', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useRouter as any).mockReturnValue(mockRouter);
-        (usePathname as any).mockReturnValue('/dashboard');
-        (useAuthStore as any).mockReturnValue({
+        vi.mocked(useRouter).mockReturnValue(mockRouter as unknown as ReturnType<typeof useRouter>);
+        vi.mocked(usePathname).mockReturnValue('/dashboard');
+        vi.mocked(useAuthStore).mockReturnValue({
             user: null,
             isLoading: false,
             isAuthenticated: false,
@@ -75,7 +75,7 @@ describe('useAuth hook', () => {
     });
 
     it('should trigger verifySession on mount if no user', async () => {
-        (api.get as any).mockResolvedValue({ success: true, data: mockUser });
+        vi.mocked(api.get).mockResolvedValue({ success: true, data: mockUser });
 
         renderHook(() => useAuth());
 
@@ -88,7 +88,7 @@ describe('useAuth hook', () => {
 
     it('should redirect to login if session is invalid and not on auth page', async () => {
         // Mock state: finished loading, no user
-        (useAuthStore as any).mockReturnValue({
+        vi.mocked(useAuthStore).mockReturnValue({
             user: null,
             isLoading: false,
             isAuthenticated: false,
@@ -100,7 +100,7 @@ describe('useAuth hook', () => {
             incrementRetryCount: mockIncrementRetryCount,
             resetRetryCount: mockResetRetryCount,
         });
-        (usePathname as any).mockReturnValue('/dashboard');
+        vi.mocked(usePathname).mockReturnValue('/dashboard');
 
         renderHook(() => useAuth());
 
@@ -109,7 +109,7 @@ describe('useAuth hook', () => {
     });
 
     it('should NOT redirect if on login page', async () => {
-        (useAuthStore as any).mockReturnValue({
+        vi.mocked(useAuthStore).mockReturnValue({
             user: null,
             isLoading: false,
             isAuthenticated: false,
@@ -121,7 +121,7 @@ describe('useAuth hook', () => {
             incrementRetryCount: mockIncrementRetryCount,
             resetRetryCount: mockResetRetryCount,
         });
-        (usePathname as any).mockReturnValue(ROUTES.LOGIN);
+        vi.mocked(usePathname).mockReturnValue(ROUTES.LOGIN);
 
         renderHook(() => useAuth());
 
@@ -129,8 +129,8 @@ describe('useAuth hook', () => {
     });
 
     it('should NOT trigger verifySession if on login page', async () => {
-        (usePathname as any).mockReturnValue(ROUTES.LOGIN);
-        (api.get as any).mockResolvedValue({ success: true, data: mockUser });
+        vi.mocked(usePathname).mockReturnValue(ROUTES.LOGIN);
+        vi.mocked(api.get).mockResolvedValue({ success: true, data: mockUser });
 
         renderHook(() => useAuth());
 

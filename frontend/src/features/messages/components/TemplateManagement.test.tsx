@@ -55,16 +55,16 @@ describe('TemplateManagement', () => {
                 writeText: vi.fn().mockResolvedValue(undefined),
             },
         });
-        (useTemplates as any).mockReturnValue({
+        (useTemplates as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
             data: mockTemplates,
             isLoading: false,
             error: null,
         });
-        (useSpinMessage as any).mockReturnValue({
+        (useSpinMessage as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
             mutateAsync: mockSpinMessage,
             isPending: false,
         });
-        (useAuth as any).mockReturnValue({
+        (useAuth as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
             user: { plan: 'enterprise' }
         });
     });
@@ -106,7 +106,7 @@ describe('TemplateManagement', () => {
     });
 
     it('should show error when trying to spin on non-enterprise plan', async () => {
-        (useAuth as any).mockReturnValue({
+        (useAuth as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({
             user: { plan: 'starter' }
         });
 

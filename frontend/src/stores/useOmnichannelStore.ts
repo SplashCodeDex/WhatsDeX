@@ -15,19 +15,14 @@ import type {
     SkillStatusReport,
     AgentsListResult,
     AgentIdentityResult,
-    AgentsFilesListResult,
     UsageSessionEntry,
     UsageTotals,
     CostDailyEntry,
-    SessionLogEntry,
-    GatewaySessionRow,
     SessionsListResult,
     NodeRegistryEntry,
     DevicePairingList,
     PlatformMetadata,
     LogEntry,
-    ApiResponse,
-    isApiSuccess
 } from '@/types';
 
 interface NestedAgentTrace {
@@ -47,7 +42,7 @@ interface OmnichannelState {
     cronStatus: CronStatus | null;
     cronRuns: Record<string, CronRunLogEntry[]>;
     skillReport: SkillStatusReport | null;
-    skills: any[]; // Unified Skill/Tool list
+    skills: unknown[]; // Unified Skill/Tool list
     agentsResult: AgentsListResult | null;
     agentIdentities: Record<string, AgentIdentityResult>;
     usageTotals: UsageTotals | null;
@@ -57,7 +52,7 @@ interface OmnichannelState {
     nodes: NodeRegistryEntry[];
     devices: DevicePairingList | null;
     logs: LogEntry[];
-    gatewayHealth: any | null;
+    gatewayHealth: unknown;
     nestedTrace: NestedAgentTrace[]; // Phase 2: Visual Trace
     platforms: PlatformMetadata[];
     isLoadingPlatforms: boolean;
@@ -173,25 +168,25 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     fetchChannels: async (agentId: string = 'system_default') => {
         set({ isLoading: true, error: null });
         try {
-            const response = await api.get<any[]>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.LIST(agentId));
+            const response = await api.get<Record<string, unknown>[]>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.LIST(agentId));
 
             if (response.success) {
                 // Map the backend BotListItem shape to the frontend Channel shape
                 const data = response.data || [];
                 const mappedChannels: Channel[] = data.map(bot => ({
-                    id: bot.id,
-                    name: bot.name,
-                    type: bot.type || 'whatsapp',
-                    status: bot.status as any,
-                    account: bot.phoneNumber || bot.account || null,
-                    lastActiveAt: bot.lastActiveAt,
-                    assignedAgentId: bot.assignedAgentId
+                    id: bot['id'] as string,
+                    name: bot['name'] as string,
+                    type: (bot['type'] as string) || 'whatsapp',
+                    status: bot['status'] as Channel['status'],
+                    account: (bot['phoneNumber'] as string | null) || (bot['account'] as string | null) || null,
+                    lastActiveAt: bot['lastActiveAt'] as string | undefined,
+                    assignedAgentId: bot['assignedAgentId'] as string | undefined,
                 }));
                 set({ channels: mappedChannels, isLoading: false });
             } else {
                 set({ error: response.error.message || 'Failed to fetch channels', isLoading: false });
             }
-        } catch (err) {
+        } catch {
             set({
                 error: 'Failed to connect to the server',
                 isLoading: false
@@ -202,24 +197,24 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     fetchAllChannels: async () => {
         set({ isLoading: true, error: null });
         try {
-            const response = await api.get<any[]>(API_ENDPOINTS.OMNICHANNEL.CHANNELS.ALL);
+            const response = await api.get<Record<string, unknown>[]>(API_ENDPOINTS.OMNICHANNEL.CHANNELS.ALL);
 
             if (response.success) {
                 const data = response.data || [];
                 const mappedChannels: Channel[] = data.map(bot => ({
-                    id: bot.id,
-                    name: bot.name,
-                    type: bot.type || 'whatsapp',
-                    status: bot.status as any,
-                    account: bot.account || bot.phoneNumber || null,
-                    lastActiveAt: bot.lastActiveAt,
-                    assignedAgentId: bot.assignedAgentId
+                    id: bot['id'] as string,
+                    name: bot['name'] as string,
+                    type: (bot['type'] as string) || 'whatsapp',
+                    status: bot['status'] as Channel['status'],
+                    account: (bot['account'] as string | null) || (bot['phoneNumber'] as string | null) || null,
+                    lastActiveAt: bot['lastActiveAt'] as string | undefined,
+                    assignedAgentId: bot['assignedAgentId'] as string | undefined,
                 }));
                 set({ channels: mappedChannels, isLoading: false });
             } else {
                 set({ error: response.error.message || 'Failed to fetch all channels', isLoading: false });
             }
-        } catch (err) {
+        } catch {
             set({
                 error: 'Failed to connect to the server',
                 isLoading: false
@@ -377,7 +372,6 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
 
     fetchSkillReport: async () => {
         if (circuitBreaker.isOpen('omnichannel')) {
-            console.debug('[Omnichannel] Circuit open, skipping fetchSkillReport');
             return;
         }
         try {
@@ -397,7 +391,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     fetchSkills: async () => {
         if (circuitBreaker.isOpen('omnichannel')) return;
         try {
-            const response = await api.get<any[]>(API_ENDPOINTS.OMNICHANNEL.SKILLS.LIST);
+            const response = await api.get<unknown[]>(API_ENDPOINTS.OMNICHANNEL.SKILLS.LIST);
             if (response.success) {
                 set({ skills: response.data });
                 circuitBreaker.recordSuccess('omnichannel');
@@ -677,7 +671,7 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     fetchGatewayHealth: async () => {
         if (circuitBreaker.isOpen('omnichannel')) return;
         try {
-            const response = await api.get<any>(API_ENDPOINTS.OMNICHANNEL.GATEWAY.HEALTH);
+            const response = await api.get<unknown>(API_ENDPOINTS.OMNICHANNEL.GATEWAY.HEALTH);
             if (response.success) {
                 set({ gatewayHealth: response.data });
                 circuitBreaker.recordSuccess('omnichannel');

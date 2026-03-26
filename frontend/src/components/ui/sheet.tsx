@@ -2,7 +2,7 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import * as React from 'react';
 
@@ -103,7 +103,7 @@ SheetContent.displayName = DialogPrimitive.Content.displayName;
 function SheetHeader({
     className,
     ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
   return <div
         className={cn(
             'flex flex-col space-y-2 text-center sm:text-left',
@@ -117,7 +117,7 @@ SheetHeader.displayName = 'SheetHeader';
 function SheetFooter({
     className,
     ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
   return <div
         className={cn(
             'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { type OmnichannelMessage } from '../types';
 
@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 /**
  * Hook to fetch message history with omnichannel support.
  */
-export function useMessageHistory(limit = 50) {
+export function useMessageHistory(limit = 50): UseQueryResult<OmnichannelMessage[]> {
     return useQuery({
         queryKey: ['messages', 'history', limit],
         queryFn: async () => {

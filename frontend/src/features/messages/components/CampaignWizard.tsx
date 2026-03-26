@@ -4,7 +4,6 @@ import {
     Users,
     MessageSquare,
     Zap,
-    Settings2,
     ChevronRight,
     ChevronLeft,
     Send,
@@ -19,7 +18,7 @@ import { toast } from 'sonner';
 
 import { createCampaign } from '../actions';
 import { useAudiences } from '../hooks/useAudiences';
-import { useTemplates, useSpinMessage } from '../hooks/useTemplates';
+import { useTemplates } from '../hooks/useTemplates';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -65,7 +64,7 @@ interface CampaignFormData {
     scheduledAt: string;
 }
 
-export function CampaignWizard() {
+export function CampaignWizard(): React.JSX.Element {
     const [step, setStep] = useState<Step>('audience');
     const { data: audiences } = useAudiences();
     const { data: templates } = useTemplates();
@@ -105,26 +104,26 @@ export function CampaignWizard() {
         }
     }, [state]);
 
-    const steps: { id: Step; label: string; icon: any }[] = [
+    const steps: { id: Step; label: string; icon: React.ElementType }[] = [
         { id: 'audience', label: 'Audience', icon: Users },
         { id: 'template', label: 'Template', icon: MessageSquare },
         { id: 'distribution', label: 'Distribution', icon: Zap },
         { id: 'review', label: 'Review', icon: CheckCircle2 }
     ];
 
-    const handleNext = () => {
+    const handleNext = (): void => {
         if (step === 'audience') setStep('template');
         else if (step === 'template') setStep('distribution');
         else if (step === 'distribution') setStep('review');
     };
 
-    const handleBack = () => {
+    const handleBack = (): void => {
         if (step === 'template') setStep('audience');
         else if (step === 'distribution') setStep('template');
         else if (step === 'review') setStep('distribution');
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = (): void => {
         const payload = {
             name: formData.name || `Campaign ${new Date().toLocaleDateString()}`,
             templateId: formData.templateId,
@@ -497,7 +496,7 @@ export function CampaignWizard() {
                                         <SelectValue placeholder="Choose an agent" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {agents?.filter((b: any) => b.status === 'connected').map((agent: any) => (
+                                        {(agents as unknown as Array<{ id: string; name: string; status: string; phoneNumber?: string }>)?.filter((b) => b.status === 'connected').map((agent) => (
                                             <SelectItem key={agent.id} value={agent.id}>{agent.name} ({agent.phoneNumber})</SelectItem>
                                         ))}
                                     </SelectContent>

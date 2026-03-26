@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,7 +11,7 @@ interface OpenClawChatFrameProps {
   runId?: string; // Optional: Deep link to a specific run ID if supported
 }
 
-export function OpenClawChatFrame({ className, runId }: OpenClawChatFrameProps) {
+export function OpenClawChatFrame({ className, runId: _runId }: OpenClawChatFrameProps): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 

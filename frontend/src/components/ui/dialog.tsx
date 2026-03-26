@@ -1,11 +1,11 @@
 'use client';
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import * as React from 'react';
 
-import { BOUNCY_MODAL_VARIANTS, BOUNCY_SPRING } from '@/lib/animations';
+import { BOUNCY_MODAL_VARIANTS } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
 
@@ -68,7 +68,7 @@ DialogContent.displayName = DialogPrimitive.Content.displayName;
 function DialogHeader({
     className,
     ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
   return <div
         className={cn(
             "flex flex-col space-y-1.5 text-center sm:text-left",
@@ -82,7 +82,7 @@ DialogHeader.displayName = "DialogHeader";
 function DialogFooter({
     className,
     ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
   return <div
         className={cn(
             "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",

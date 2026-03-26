@@ -8,27 +8,28 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, User, LogOut, Settings as SettingsIcon, ExternalLink, CreditCard, Shield, Crown, Zap } from 'lucide-react';
+import { Bell, User, LogOut, Settings as SettingsIcon, CreditCard, Crown, Zap } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/features/auth';
-import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
+import { BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
 
-export function Header() {
-    const { user, signOut, isLoading } = useAuth();
+export function Header(): React.JSX.Element {
+    const { user, signOut } = useAuth();
     const [isExpanded, setIsExpanded] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Collapse on click outside
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutside = (event: MouseEvent): void => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsExpanded(false);
             }
@@ -160,11 +161,12 @@ export function Header() {
                                     )} style={{ transitionTimingFunction: BOUNCY_BEZIER_STRING }}>
 
                                         {user?.photoURL ? (
-                                            <img
+                                            <Image
                                                 src={user.photoURL}
                                                 alt={user.name || "User avatar"}
+                                                fill
                                                 className={cn(
-                                                    "h-full w-full object-cover transition-transform duration-500",
+                                                    "object-cover transition-transform duration-500",
                                                     !isExpanded && "scale-110"
                                                 )}
                                                 referrerPolicy="no-referrer"

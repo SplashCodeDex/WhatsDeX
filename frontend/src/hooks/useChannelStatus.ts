@@ -4,9 +4,17 @@ import { useSocket } from './useSocket';
 
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { logger } from '@/lib/logger';
 
-export function useChannelStatus(channelId: string, agentId: string = 'system_default', enabled: boolean = false) {
-    const [status, setStatus] = useState<any>(null);
+interface ChannelStatusResult {
+    status: Record<string, unknown> | null;
+    qrCode: string | null;
+    isLoading: boolean;
+    error: string | null;
+}
+
+export function useChannelStatus(channelId: string, agentId: string = 'system_default', enabled: boolean = false): ChannelStatusResult {
+    const [status, setStatus] = useState<Record<string, unknown> | null>(null);
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -14,8 +22,6 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
 
     useEffect(() => {
         if (!enabled || !channelId) {
-            setStatus(null);
-            setQrCode(null);
             return;
         }
 
@@ -23,51 +29,51 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
         let lastSocketQrAt = 0;
 
         // MASTERMIND Goodie: Real-time Socket Updates
-        const cleanupQrListener = on('channel_qr_update', (data: any) => {
+        const cleanupQrListener = on('channel_qr_update', (data: Record<string, unknown>) => {
             if (data.channelId === channelId) {
-                setQrCode(data.qrCode);
+                setQrCode(data.qrCode as string | null);
                 lastSocketQrAt = Date.now();
             }
         });
 
-        const cleanupStatusListener = on('channel_status_update', (data: any) => {
+        const cleanupStatusListener = on('channel_status_update', (data: Record<string, unknown>) => {
             if (data.channelId === channelId) {
-                setStatus((prev: any) => ({ ...prev, status: data.status }));
+                setStatus((prev) => ({ ...(prev ?? {}), status: data.status }));
             }
         });
 
-        let interval: NodeJS.Timeout;
         let isMounted = true;
 
-        const poll = async () => {
+        const poll = async (): Promise<void> => {
             if (!isMounted) return;
-            
+            setIsLoading(true);
             try {
                 // Poll Status
-                const statusRes = await api.get<any>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.STATUS(agentId, channelId));
+                const statusRes = await api.get<Record<string, unknown>>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.STATUS(agentId, channelId));
                 
                 if (!isMounted) return;
 
                 if (statusRes.success) {
                     setStatus(statusRes.data);
                     setError(null);
-                    
+                    const statusData = statusRes.data;
+
                     // If we need QR (connecting status or explicitly has QR)
-                    if (statusRes.data.status === 'connecting' || 
-                        statusRes.data.status === 'initializing' || 
-                        statusRes.data.status === 'qr_pending' ||
-                        statusRes.data.hasQR) {
-                        
+                    if (statusData.status === 'connecting' ||
+                        statusData.status === 'initializing' ||
+                        statusData.status === 'qr_pending' ||
+                        statusData.hasQR) {
+
                         const timeSinceSocketQr = Date.now() - lastSocketQrAt;
                         if (timeSinceSocketQr < 8000) {
                             // Socket pushed a fresh QR recently, skip poll QR
                         } else {
-                            const qrRes = await api.get<any>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.QR_CODE(agentId, channelId));
-                            
+                            const qrRes = await api.get<Record<string, unknown>>(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.QR_CODE(agentId, channelId));
+
                             if (!isMounted) return;
 
                             if (qrRes.success && qrRes.data.qrCode) {
-                                setQrCode(qrRes.data.qrCode);
+                                setQrCode(qrRes.data.qrCode as string);
                             } else {
                                 if (Date.now() - lastSocketQrAt > 8000) {
                                     setQrCode(null);
@@ -83,17 +89,15 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
             } catch (err) {
                 if (isMounted) {
                     setError('Polling error');
-                    console.error('[useChannelStatus] Polling error', err);
+                    logger.error('[useChannelStatus] Polling error', err);
                 }
+            } finally {
+                if (isMounted) setIsLoading(false);
             }
         };
 
-        setIsLoading(true);
-        poll().finally(() => {
-            if (isMounted) setIsLoading(false);
-        });
-
-        interval = setInterval(poll, 10000); // Poll every 10s
+        const interval = setInterval(poll, 10000); // Poll every 10s
+        poll();
 
         return () => {
             isMounted = false;

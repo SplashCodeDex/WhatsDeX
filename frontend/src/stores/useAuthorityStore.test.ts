@@ -47,7 +47,7 @@ describe('useAuthorityStore', () => {
 
     describe('fetchCapabilities', () => {
         it('should populate tier and capabilities on success', async () => {
-            (api.get as any).mockResolvedValue({
+            (api.get as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
                 success: true,
                 data: { tier: 'pro', capabilities: mockCapabilities },
             });
@@ -62,7 +62,7 @@ describe('useAuthorityStore', () => {
         });
 
         it('should set error when API returns failure', async () => {
-            (api.get as any).mockResolvedValue({
+            (api.get as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
                 success: false,
                 error: { message: 'Unauthorized' },
             });
@@ -76,7 +76,7 @@ describe('useAuthorityStore', () => {
         });
 
         it('should set error when API throws', async () => {
-            (api.get as any).mockRejectedValue(new Error('Network failure'));
+            (api.get as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network failure'));
 
             await useAuthorityStore.getState().fetchCapabilities();
 

@@ -1,20 +1,18 @@
 'use client';
 
-import { 
-    Clock, 
-    Plus, 
-    RefreshCw, 
-    Trash2, 
-    Play, 
-    Power, 
-    History, 
-    Calendar,
-    ChevronRight,
+import {
+    Clock,
+    Plus,
+    RefreshCw,
+    Trash2,
+    Play,
+    Power,
+    History,
     AlertCircle,
     CheckCircle2,
     Timer
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CreateCronJobDialog } from '@/components/omnichannel/CreateCronJobDialog';
@@ -41,14 +39,14 @@ import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 
-function formatSchedule(schedule: any): string {
+function formatSchedule(schedule: { kind: string; everyMs?: number; at?: number; expr?: string }): string {
     if (schedule.kind === 'every') return `Every ${schedule.everyMs / 1000}s`;
     if (schedule.kind === 'at') return `At ${new Date(schedule.at).toLocaleString()}`;
     if (schedule.kind === 'cron') return `Cron: ${schedule.expr}`;
     return 'Unknown';
 }
 
-function RunHistory({ jobId }: { jobId: string }) {
+function RunHistory({ jobId }: { jobId: string }): React.JSX.Element {
     const { cronRuns, fetchCronRuns } = useOmnichannelStore();
     const runs = cronRuns[jobId] || [];
 
@@ -91,39 +89,38 @@ function RunHistory({ jobId }: { jobId: string }) {
     );
 }
 
-export default function CronJobsPage() {
+export default function CronJobsPage(): React.JSX.Element {
     const { 
-        cronJobs, 
-        cronStatus, 
-        fetchCronJobs, 
-        fetchCronStatus, 
-        toggleCronJob, 
-        runCronJob, 
+        cronJobs,
+        cronStatus,
+        fetchCronJobs,
+        fetchCronStatus,
+        toggleCronJob,
+        runCronJob,
         removeCronJob,
-        isLoading 
     } = useOmnichannelStore();
     
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const handleRefresh = async () => {
+    const handleRefresh = async (): Promise<void> => {
         setIsRefreshing(true);
         await Promise.all([fetchCronJobs(), fetchCronStatus()]);
         setIsRefreshing(false);
     };
 
     useEffect(() => {
-        handleRefresh();
-    }, []);
+        void Promise.all([fetchCronJobs(), fetchCronStatus()]);
+    }, [fetchCronJobs, fetchCronStatus]);
 
-    const handleToggle = async (id: string, currentStatus: boolean) => {
+    const handleToggle = async (id: string, currentStatus: boolean): Promise<void> => {
         const success = await toggleCronJob(id, !currentStatus);
         if (success) {
             toast.success(`Job ${!currentStatus ? 'enabled' : 'disabled'} successfully`);
         }
     };
 
-    const handleRunNow = async (id: string) => {
+    const handleRunNow = async (id: string): Promise<void> => {
         const success = await runCronJob(id);
         if (success) {
             toast.success('Job execution triggered');
@@ -132,7 +129,7 @@ export default function CronJobsPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (id: string): Promise<void> => {
         if (confirm('Are you sure you want to delete this job?')) {
             const success = await removeCronJob(id);
             if (success) {

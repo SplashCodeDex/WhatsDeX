@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
+import React from 'react';
 
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -18,7 +18,7 @@ export function DashboardShell({
     children,
 }: {
     children: React.ReactNode;
-}) {
+}): React.JSX.Element {
     const { isSidebarCollapsed } = useUIStore();
     const { fetchCapabilities } = useAuthorityStore();
     const hasFetched = useRef(false);

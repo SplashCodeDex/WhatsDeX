@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import { cn } from '@/lib/utils';
 
 /**
@@ -15,7 +17,7 @@ export function LiquidGlassWrapper({
     ...props
 }: React.HTMLAttributes<HTMLDivElement> & {
     children: React.ReactNode;
-}) {
+}): React.JSX.Element {
     return (
         <div className={cn('liquidGlass-wrapper', className)} {...props}>
 

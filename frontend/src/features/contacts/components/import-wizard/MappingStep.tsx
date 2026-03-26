@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowRight, Wand2, Eye, User, Phone, Mail, Tag, SkipForward } from 'lucide-react';
-import { Save, FolderHeart, Trash2, Plus } from 'lucide-react';
+import { Save, FolderHeart } from 'lucide-react';
 import React, { type ReactNode } from 'react';
 import { toast } from 'sonner';
 
@@ -14,7 +14,6 @@ import {
     deleteMappingProfile,
 } from './wizardUtils';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -62,7 +61,7 @@ export function MappingStep({ mappings, onUpdateMapping, onApplyMappings }: Mapp
         setProfiles(getMappingProfiles());
     }, []);
 
-    const handleSaveProfile = () => {
+    const handleSaveProfile = (): void => {
         if (!newProfileName.trim()) {
             toast.error('Please enter a profile name');
             return;
@@ -74,7 +73,7 @@ export function MappingStep({ mappings, onUpdateMapping, onApplyMappings }: Mapp
         toast.success(`Profile "${newProfileName}" saved`);
     };
 
-    const handleApplyProfile = (profileId: string) => {
+    const handleApplyProfile = (profileId: string): void => {
         const profile = profiles.find(p => p.id === profileId);
         if (!profile) return;
 
@@ -87,7 +86,7 @@ export function MappingStep({ mappings, onUpdateMapping, onApplyMappings }: Mapp
         toast.success(`Applied profile: ${profile.name}`);
     };
 
-    const handleDeleteProfile = (e: React.MouseEvent, id: string) => {
+    const _handleDeleteProfile = (e: React.MouseEvent, id: string): void => {
         e.stopPropagation();
         deleteMappingProfile(id);
         setProfiles(getMappingProfiles());

@@ -11,7 +11,6 @@ import {
     LogOut,
     Menu,
     ChevronLeft,
-    ChevronDown,
     Zap,
     LayoutGrid,
     Layout,
@@ -25,7 +24,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useRef, useEffect } from 'react';
+import React from 'react';
 
 
 
@@ -42,7 +41,7 @@ import {
 } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/features/auth';
-import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING, createRollingVariants } from '@/lib/animations';
+import { BOUNCY_SPRING, BOUNCY_BEZIER_STRING } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/useUIStore';
 
@@ -65,12 +64,12 @@ const NAV_ITEMS = [
     { title: 'System Logs', href: '/dashboard/logs', icon: ScrollText, type: 'settings' as const },
 ];
 
-export function Sidebar() {
+export function Sidebar(): React.JSX.Element {
     const pathname = usePathname();
     const { signOut } = useAuth();
     const { isSidebarCollapsed, setSidebarCollapsed } = useUIStore();
 
-    function NavContent(isMobile = false) {
+    function NavContent(isMobile = false): React.JSX.Element {
   return <TooltipProvider delayDuration={0}>
             <ScrollArea showFades={!isMobile} viewportClassName="px-3 pt-4 pb-8">
                 <div className="space-y-1">

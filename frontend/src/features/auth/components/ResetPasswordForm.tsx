@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useActionState, useEffect } from 'react';
+import React, { useActionState, useEffect } from 'react';
 
 import { Button, PasswordInput } from '@/components/ui';
 import { resetPassword, getAuthErrorMessage } from '@/features/auth';
@@ -13,7 +13,7 @@ import { resetPassword, getAuthErrorMessage } from '@/features/auth';
  * ResetPasswordForm
  * Component for users to enter their new password after clicking a reset link.
  */
-export function ResetPasswordForm() {
+export function ResetPasswordForm(): React.JSX.Element {
     const searchParams = useSearchParams();
     const router = useRouter();
 

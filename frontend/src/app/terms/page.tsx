@@ -10,7 +10,7 @@ export const metadata = {
     description: 'The legal agreement for using the DeXMart platform.',
 };
 
-export default function TermsPage() {
+export default function TermsPage(): React.JSX.Element {
     return (
         <div className="min-h-screen bg-background">
             {/* Navigation */}

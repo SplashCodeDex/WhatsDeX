@@ -1,13 +1,12 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { RefreshCw, WifiOff } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { circuitBreaker } from '@/lib/api/apiCircuitBreaker';
 
-export function ConnectionStatus() {
+export function ConnectionStatus(): React.JSX.Element | null {
     const [status, setStatus] = useState<'CLOSED' | 'OPEN' | 'HALF_OPEN'>(
         circuitBreaker.getState('omnichannel')
     );

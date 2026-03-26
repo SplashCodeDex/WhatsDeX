@@ -4,7 +4,7 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useActionState, useEffect } from 'react';
+import React, { useActionState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { signIn, googleAuthAction } from '../actions';
@@ -15,12 +15,12 @@ import { StaggeredEnter, StaggeredItem } from '@/components/ui/motion';
 import { getClientAuth } from '@/lib/firebase/client';
 import { logger } from '@/lib/logger';
 
-export function LoginForm() {
+export function LoginForm(): React.JSX.Element {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('from') || '/dashboard';
     const [state, formAction, isPending] = useActionState(signIn, null);
-    const fields = state?.success === false ? state.error.details?.fields as any : null;
+    const fields = state?.success === false ? (state.error.details?.fields as Record<string, unknown>) : null;
 
     useEffect(() => {
         if (state?.success) {
@@ -37,9 +37,9 @@ export function LoginForm() {
                 });
             }
         }
-    }, [state, router]);
+    }, [state, router, redirectTo]);
 
-    const handleGoogleSignIn = async () => {
+    const handleGoogleSignIn = async (): Promise<void> => {
         try {
             const auth = getClientAuth();
             const provider = new GoogleAuthProvider();
@@ -59,8 +59,9 @@ export function LoginForm() {
                     description: actionResult.error.message,
                 });
             }
-        } catch (error: any) {
-            if (error.code !== 'auth/popup-closed-by-user') {
+        } catch (error: unknown) {
+            const firebaseError = error as { code?: string };
+            if (firebaseError.code !== 'auth/popup-closed-by-user') {
                 toast.error('Google Sign-In error', {
                     description: 'An unexpected error occurred during Google authentication.',
                 });

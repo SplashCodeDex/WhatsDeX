@@ -22,18 +22,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth';
-import { cn } from '@/lib/utils';
 
 /**
  * TemplateManagement Component
  *
  * Provides a full UI for managing message templates (CRUD).
  */
-export function TemplateManagement() {
+export function TemplateManagement(): React.JSX.Element | null {
     const { user } = useAuth();
     const { data: templates, isLoading, error } = useTemplates();
-    const { mutateAsync: spinMessage, isPending: isSpinning } = useSpinMessage();
-    const [searchTerm, setSearchText] = useState('');
+    const { mutateAsync: spinMessage } = useSpinMessage();
+    const [searchTerm, setSearchTerm] = useState('');
     const [spinningId, setSpinningId] = useState<string | null>(null);
 
     const isEnterprise = user?.plan === 'enterprise';
@@ -60,12 +59,12 @@ export function TemplateManagement() {
         t.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleCopy = (content: string) => {
+    const handleCopy = (content: string): void => {
         navigator.clipboard.writeText(content);
         toast.success('Content copied to clipboard');
     };
 
-    const handleSpin = async (templateId: string, content: string) => {
+    const handleSpin = async (templateId: string, content: string): Promise<void> => {
         if (!isEnterprise) {
             toast.error('AI Message Spinning is an Enterprise-only feature');
             return;
@@ -80,8 +79,8 @@ export function TemplateManagement() {
             toast.success('AI variation generated and copied to clipboard!', {
                 description: 'You can now paste this new version into your template.'
             });
-        } catch (err: any) {
-            toast.error(err.message || 'AI spinning failed');
+        } catch (err: unknown) {
+            toast.error((err instanceof Error ? err.message : null) || 'AI spinning failed');
         } finally {
             setSpinningId(null);
         }
@@ -96,7 +95,7 @@ export function TemplateManagement() {
                         placeholder="Search templates..."
                         className="pl-10 h-10"
                         value={searchTerm}
-                        onChange={(e) => setSearchText(e.target.value)}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
                 <Button className="shadow-lg shadow-primary/10">

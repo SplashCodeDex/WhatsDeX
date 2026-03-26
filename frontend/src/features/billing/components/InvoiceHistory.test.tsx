@@ -228,7 +228,7 @@ describe('InvoiceHistory', () => {
       },
     ];
     
-    const invalidResponse: ApiSuccessResponse<any> = {
+    const invalidResponse: ApiSuccessResponse<Invoice[]> = {
       success: true,
       data: invalidInvoices,
     };

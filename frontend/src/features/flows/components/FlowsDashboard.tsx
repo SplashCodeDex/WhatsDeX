@@ -111,7 +111,7 @@ export function FlowsDashboard(): React.JSX.Element {
                     setNodes([]);
                     setEdges([]);
                 }
-            } catch (_error) {
+            } catch {
                 toast.error('Failed to load flows');
                 setNodes([]);
                 setEdges([]);
@@ -159,7 +159,7 @@ export function FlowsDashboard(): React.JSX.Element {
             } else {
                 toast.error(response.error?.message || 'Failed to save flow');
             }
-        } catch (_error) {
+        } catch {
             toast.error('Network error while saving flow');
         } finally {
             setIsSaving(false);

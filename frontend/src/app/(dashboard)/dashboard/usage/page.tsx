@@ -5,23 +5,17 @@ import {
     RefreshCw,
     Download,
     TrendingUp,
-    Hash,
-    AlertCircle,
     Coins,
-    Zap,
     Calendar,
-    ArrowUpRight,
-    ArrowDownRight,
     Search,
     MessageSquare,
-    ShieldCheck
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -35,21 +29,19 @@ import {
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
-export default function UsagePage() {
+export default function UsagePage(): React.JSX.Element {
     const {
         usageTotals,
-        usageDaily,
         usageSessions,
         fetchUsageTotals,
         fetchUsageDaily,
         fetchUsageSessions,
-        isLoading
     } = useOmnichannelStore();
 
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const handleRefresh = async () => {
+    const handleRefresh = async (): Promise<void> => {
         setIsRefreshing(true);
         await Promise.all([
             fetchUsageTotals(),
@@ -60,8 +52,8 @@ export default function UsagePage() {
     };
 
     useEffect(() => {
-        handleRefresh();
-    }, []);
+        void Promise.all([fetchUsageTotals(), fetchUsageDaily(), fetchUsageSessions()]);
+    }, [fetchUsageTotals, fetchUsageDaily, fetchUsageSessions]);
 
     const filteredSessions = (usageSessions || []).filter(s =>
         s.key.toLowerCase().includes(searchQuery.toLowerCase()) ||

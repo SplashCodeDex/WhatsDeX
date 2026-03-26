@@ -9,7 +9,7 @@ import {
     ShieldAlert,
     UserCircle2
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -33,14 +33,15 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+import type { Channel } from '@/types/omnichannel';
 
 interface ChannelSettingsDialogProps {
-    channel: any;
+    channel: Channel;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: ChannelSettingsDialogProps) {
+export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: ChannelSettingsDialogProps): React.JSX.Element {
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [shouldArchive, setShouldArchive] = useState(true);
@@ -59,7 +60,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
 
     const agents = agentsResult?.agents || [];
 
-    const handleDisconnect = async () => {
+    const handleDisconnect = async (): Promise<void> => {
         setIsActionLoading(true);
         try {
             const success = await disconnectChannel(agentId, channel.id);
@@ -74,7 +75,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
         }
     };
 
-    const handleDelete = async () => {
+    const handleDelete = async (): Promise<void> => {
         setIsActionLoading(true);
         try {
             const success = await deleteChannel(agentId, channel.id, shouldArchive);
@@ -89,7 +90,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
         }
     };
 
-    const handleMove = async () => {
+    const handleMove = async (): Promise<void> => {
         if (selectedTargetAgent === agentId) return;
         setIsActionLoading(true);
         try {
@@ -136,7 +137,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                     {agents.length === 0 ? (
                                         <SelectItem value="system_default">System Default Agent</SelectItem>
                                     ) : (
-                                        agents.map((agent: any) => (
+                                        agents.map((agent: { id: string; name: string }) => (
                                             <SelectItem key={agent.id} value={agent.id}>
                                                 {agent.name}
                                             </SelectItem>

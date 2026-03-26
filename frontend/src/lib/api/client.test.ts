@@ -4,7 +4,7 @@ import { api } from './client';
 import { ROUTES } from '../constants/routes';
 
 describe('apiClient', () => {
-    let postMessageSpy: any;
+    let postMessageSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         vi.stubGlobal('fetch', vi.fn());
@@ -21,20 +21,20 @@ describe('apiClient', () => {
 
     it('should broadcast LOGOUT if silent refresh fails while on dashboard', async () => {
         // 1st call: 401
-        (fetch as any).mockResolvedValueOnce({
+        vi.mocked(fetch).mockResolvedValueOnce({
             status: 401,
             ok: false,
             headers: new Headers({ 'content-type': 'application/json' }),
             json: async () => ({ error: 'auth_required' }),
-        });
+        } as unknown as Response);
 
         // 2nd call (refresh): 401
-        (fetch as any).mockResolvedValueOnce({
+        vi.mocked(fetch).mockResolvedValueOnce({
             status: 401,
             ok: false,
             headers: new Headers({ 'content-type': 'application/json' }),
             json: async () => ({ error: 'refresh_failed' }),
-        });
+        } as unknown as Response);
 
         await api.get('/api/test');
 
@@ -47,25 +47,25 @@ describe('apiClient', () => {
         });
 
         // 1st call: 401
-        (fetch as any).mockResolvedValueOnce({
+        vi.mocked(fetch).mockResolvedValueOnce({
             status: 401,
             ok: false,
             headers: new Headers({ 'content-type': 'application/json' }),
             json: async () => ({ error: 'auth_required' }),
-        });
+        } as unknown as Response);
 
         // 2nd call (refresh): 401
-        (fetch as any).mockResolvedValueOnce({
+        vi.mocked(fetch).mockResolvedValueOnce({
             status: 401,
             ok: false,
             headers: new Headers({ 'content-type': 'application/json' }),
             json: async () => ({ error: 'refresh_failed' }),
-        });
+        } as unknown as Response);
 
         await api.get('/api/test');
 
         // Should NOT have broadcasted LOGOUT
-        const logoutCalls = postMessageSpy.mock.calls.filter((args: any[]) => args[0].type === 'LOGOUT');
+        const logoutCalls = postMessageSpy.mock.calls.filter((args: unknown[]) => (args[0] as { type: string }).type === 'LOGOUT');
         expect(logoutCalls.length).toBe(0);
     });
 });

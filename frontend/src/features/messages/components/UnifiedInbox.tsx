@@ -1,15 +1,14 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { 
-    Loader2, 
-    MessageSquare, 
-    Send, 
-    User, 
-    Clock, 
-    AlertCircle, 
-    Smartphone, 
-    Send as SendIcon, 
+import {
+    Loader2,
+    MessageSquare,
+    User,
+    Clock,
+    AlertCircle,
+    Smartphone,
+    Send as SendIcon,
     Zap,
     Bot,
     Reply,
@@ -30,10 +29,10 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
 
-export function UnifiedInbox() {
+export function UnifiedInbox(): React.JSX.Element {
     const { data: messages, isLoading, error, refetch } = useMessageHistory();
     const [activeFilter, setActiveFilter] = useState<'all' | 'whatsapp' | 'telegram' | 'discord' | 'slack' | 'signal' | 'imessage' | 'irc' | 'googlechat'>('all');
-    const [replyingToId, setReplyToId] = useState<string | null>(null);
+    const [replyingToId, setReplyingToId] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
     const [isSending, setIsSending] = useState(false);
 
@@ -54,7 +53,7 @@ export function UnifiedInbox() {
         );
     }
 
-    const handleSendReply = async (messageId: string) => {
+    const handleSendReply = async (messageId: string): Promise<void> => {
         if (!replyText.trim()) return;
 
         setIsSending(true);
@@ -67,12 +66,12 @@ export function UnifiedInbox() {
             if (response.success) {
                 toast.success('Reply sent successfully');
                 setReplyText('');
-                setReplyToId(null);
+                setReplyingToId(null);
                 refetch();
             } else {
                 toast.error(response.error.message || 'Failed to send reply');
             }
-        } catch (err) {
+        } catch {
             toast.error('Network error. Please try again.');
         } finally {
             setIsSending(false);
@@ -83,7 +82,7 @@ export function UnifiedInbox() {
         activeFilter === 'all' || msg.channelType === activeFilter
     );
 
-    const getPlatformIcon = (type: string) => {
+    const getPlatformIcon = (type: string): React.JSX.Element => {
         switch (type) {
             case 'whatsapp': return <Smartphone className="h-4 w-4" />;
             case 'telegram': return <SendIcon className="h-4 w-4" />;
@@ -97,7 +96,7 @@ export function UnifiedInbox() {
         }
     };
 
-    const getPlatformColor = (type: string) => {
+    const getPlatformColor = (type: string): string => {
         switch (type) {
             case 'whatsapp': return "bg-green-500/10 text-green-600";
             case 'telegram': return "bg-blue-500/10 text-blue-600";
@@ -123,7 +122,7 @@ export function UnifiedInbox() {
                     </Button>
                 </div>
                 
-                <Tabs value={activeFilter} onValueChange={(v: any) => setActiveFilter(v)}>
+                <Tabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as typeof activeFilter)}>
                     <div className="overflow-x-auto pb-2 scrollbar-hide">
                         <TabsList className="bg-muted/50 h-8 inline-flex whitespace-nowrap">
                             <TabsTrigger value="all" className="text-xs h-7">All</TabsTrigger>
@@ -173,7 +172,7 @@ export function UnifiedInbox() {
                                             variant="ghost" 
                                             size="sm" 
                                             className="h-7 px-2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => setReplyToId(replyingToId === msg.id ? null : msg.id)}
+                                            onClick={() => setReplyingToId(replyingToId === msg.id ? null : msg.id)}
                                         >
                                             <Reply className="h-3 w-3 mr-1" />
                                             Reply

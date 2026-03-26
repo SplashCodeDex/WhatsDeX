@@ -14,7 +14,7 @@ interface IconProps {
 /**
  * 7. Google Brand Icon (Official Colors)
  */
-export function GoogleIcon({ size = 24, className = '' }: Omit<IconProps, 'color'>) {
+export function GoogleIcon({ size = 24, className = '' }: Omit<IconProps, 'color'>): React.JSX.Element {
     return (
         <svg
             width={size}

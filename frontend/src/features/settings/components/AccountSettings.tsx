@@ -1,7 +1,7 @@
 'use client';
 
-import { User, Mail, Shield, Camera, Loader2, Save } from 'lucide-react';
-import { useState } from 'react';
+import { User, Mail, Shield, Camera, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,12 +12,12 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/features/auth';
 
-export function AccountSettings() {
+export function AccountSettings(): React.JSX.Element {
     const { user, isLoading } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     
     // In a real app, we'd have a form with local state here
-    const handleSave = async () => {
+    const handleSave = async (): Promise<void> => {
         setIsSaving(true);
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));

@@ -1,8 +1,8 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
-import { Contact, ContactImportResult, Audience } from '../types';
+import { Contact, ContactImportResult } from '../types';
 
 import { api } from '@/lib/api/client';
 
@@ -12,7 +12,7 @@ export const contactKeys = {
     audiences: () => [...contactKeys.all, 'audiences'] as const,
 };
 
-export function useContacts() {
+export function useContacts(): UseQueryResult<Contact[]> {
     return useQuery({
         queryKey: contactKeys.list(),
         queryFn: async () => {
@@ -25,7 +25,7 @@ export function useContacts() {
     });
 }
 
-export function useImportContacts() {
+export function useImportContacts(): UseMutationResult<ContactImportResult, Error, string> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (csvData: string) => {
@@ -42,7 +42,7 @@ export function useImportContacts() {
     });
 }
 
-export function useDeleteContact() {
+export function useDeleteContact(): UseMutationResult<unknown, Error, string> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
@@ -58,7 +58,7 @@ export function useDeleteContact() {
     });
 }
 
-export function useUpdateContact() {
+export function useUpdateContact(): UseMutationResult<Contact, Error, Partial<Contact> & { id: string }> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async ({ id, ...data }: Partial<Contact> & { id: string }) => {
@@ -74,7 +74,7 @@ export function useUpdateContact() {
     });
 }
 
-export function useCheckDuplicates() {
+export function useCheckDuplicates(): UseMutationResult<string[], Error, string[]> {
     return useMutation({
         mutationFn: async (phones: string[]) => {
             const response = await api.post<string[]>('/api/contacts/check-duplicates', { phones });
@@ -86,11 +86,11 @@ export function useCheckDuplicates() {
     });
 }
 
-export function useImportHistory() {
+export function useImportHistory(): UseQueryResult<Record<string, unknown>[]> {
     return useQuery({
         queryKey: [...contactKeys.all, 'history'],
         queryFn: async () => {
-            const response = await api.get<any[]>('/api/contacts/imports');
+            const response = await api.get<Record<string, unknown>[]>('/api/contacts/imports');
             if (!response.success) {
                 throw new Error(response.error.message);
             }
@@ -99,7 +99,7 @@ export function useImportHistory() {
     });
 }
 
-export function useUndoImport() {
+export function useUndoImport(): UseMutationResult<unknown, Error, string> {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {

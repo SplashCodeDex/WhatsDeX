@@ -66,11 +66,11 @@ const PLANS = [
   },
 ];
 
-export function PricingTable() {
+export function PricingTable(): React.JSX.Element {
   const [interval, setInterval] = useState<'month' | 'year'>('month');
   const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
 
-  const handleCheckout = async (planId: PlanId) => {
+  const handleCheckout = async (planId: PlanId): Promise<void> => {
     if (planId === 'enterprise') {
       // For enterprise, redirect to contact/sales
       toast.info('Please contact our sales team for enterprise pricing');
@@ -87,9 +87,9 @@ export function PricingTable() {
       } else {
         toast.error('Failed to create checkout session');
       }
-    } catch (error: any) {
-      console.error('Checkout error:', error);
-      toast.error(error.message || 'Failed to start checkout process');
+    } catch (error: unknown) {
+      const checkoutError = error as { message?: string };
+      toast.error(checkoutError.message || 'Failed to start checkout process');
     } finally {
       setLoadingPlan(null);
     }

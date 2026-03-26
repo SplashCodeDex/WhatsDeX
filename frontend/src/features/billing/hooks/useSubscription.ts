@@ -18,7 +18,15 @@ export const billingKeys = {
   subscription: () => [...billingKeys.all, 'subscription'] as const,
 };
 
-export function useSubscription() {
+export interface UseSubscriptionReturn {
+  subscription: SubscriptionData | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  limits: { maxBots: number };
+  isAtLimit: (currentCount: number) => boolean;
+}
+
+export function useSubscription(): UseSubscriptionReturn {
   const { data, isLoading, error } = useQuery({
     queryKey: billingKeys.subscription(),
     queryFn: async () => {

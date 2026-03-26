@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 /**
  * Global Error Boundary (2026 Mastermind Edition)
  * 
@@ -13,7 +15,7 @@ export default function GlobalError({
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}): React.JSX.Element {
   return (
     <html lang="en">
       <body style={{ 

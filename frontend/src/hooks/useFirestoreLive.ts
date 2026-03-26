@@ -20,13 +20,14 @@ export function useFirestoreLive<T>(
     queryKey: QueryKey,
     ref: DocumentReference<T> | Query<T> | null,
     enabled: boolean = true
-) {
+): void {
     const queryClient = useQueryClient();
+    const queryKeyString = JSON.stringify(queryKey);
 
     useEffect(() => {
         if (!enabled || !ref) return;
 
-        const unsubscribe = onSnapshot(ref as any, (snapshot: DocumentSnapshot<T> | QuerySnapshot<T>) => {
+        const unsubscribe = onSnapshot(ref as DocumentReference<T>, (snapshot: DocumentSnapshot<T> | QuerySnapshot<T>) => {
             if ('docs' in snapshot) {
                 // It's a collection snapshot
                 const data = snapshot.docs.map(doc => ({
@@ -46,9 +47,10 @@ export function useFirestoreLive<T>(
                 }
             }
         }, (error) => {
-            console.error(`[FirestoreLive] Error for key ${JSON.stringify(queryKey)}:`, error);
+            console.error(`[FirestoreLive] Error for key ${queryKeyString}:`, error);
         });
 
         return () => unsubscribe();
-    }, [queryClient, JSON.stringify(queryKey), ref, enabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [queryClient, queryKeyString, ref, enabled]);
 }

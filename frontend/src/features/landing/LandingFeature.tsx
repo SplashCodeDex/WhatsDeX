@@ -1,11 +1,11 @@
 'use client';
 
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { MessageSquare, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { BentoFeatures } from './components/BentoFeatures';
 import { SocialProof } from './components/SocialProof';
@@ -19,7 +19,7 @@ const SplineRobot = dynamic(() => import('@/components/landing/SplineRobot').the
     loading: () => <div className="absolute inset-0 bg-background/20 backdrop-blur-sm" />
 });
 
-export function LandingFeature() {
+export function LandingFeature(): React.JSX.Element {
     const { scrollY } = useScroll();
     const [showStickyCTA, setShowStickyCTA] = useState(false);
 

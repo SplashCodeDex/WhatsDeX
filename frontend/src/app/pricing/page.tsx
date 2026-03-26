@@ -7,7 +7,7 @@ export const metadata = {
   description: 'Choose the right plan for your WhatsApp automation needs. Start with a 7-day free trial.',
 };
 
-export default function PricingPage() {
+export default function PricingPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background pt-20">
       <PricingTable />

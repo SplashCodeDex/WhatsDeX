@@ -38,6 +38,8 @@ export function ValidationStep({
     const [duplicates, setDuplicates] = React.useState<Set<string>>(new Set());
     const checkDuplicates = useCheckDuplicates();
 
+    const checkDuplicatesMutate = checkDuplicates.mutate;
+
     // Perform duplicate detection on mount/row change
     React.useEffect(() => {
         const phones = validatedRows
@@ -45,11 +47,11 @@ export function ValidationStep({
             .filter((p): p is string => !!p && p.length > 0);
 
         if (phones.length > 0) {
-            checkDuplicates.mutate(phones, {
+            checkDuplicatesMutate(phones, {
                 onSuccess: (data) => setDuplicates(new Set(data)),
             });
         }
-    }, [validatedRows]);
+    }, [validatedRows, checkDuplicatesMutate]);
 
     return (
         <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">

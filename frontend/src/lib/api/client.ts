@@ -5,7 +5,6 @@
  * Designed to work seamlessly with HttpOnly cookies across Server and Client components.
  */
 
-import { APP_CONFIG } from '@/lib/constants';
 import { ROUTES } from '@/lib/constants/routes';
 import { logger } from '@/lib/logger';
 import type { ApiResponse, ApiSuccessResponse, ApiErrorResponse } from '@/types';
@@ -107,7 +106,7 @@ if (typeof window !== 'undefined') {
     };
 }
 
-function processQueue(token: string | null) {
+function processQueue(token: string | null): void {
     refreshQueue.forEach((cb) => cb(token));
     refreshQueue = [];
 }
@@ -274,11 +273,19 @@ async function apiClient<TData, TBody = unknown>(
             }
         }
 
-        let data: any;
+        type ResponseBody = {
+            data?: unknown;
+            meta?: unknown;
+            message?: string;
+            error?: { code?: string; message?: string; details?: Record<string, unknown> } | string;
+            details?: Record<string, unknown>;
+        };
+
+        let data: ResponseBody;
         const contentType = response.headers.get('content-type');
 
         if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
+            data = await response.json() as ResponseBody;
         } else {
             const text = await response.text();
             if (!response.ok) {
@@ -290,11 +297,11 @@ async function apiClient<TData, TBody = unknown>(
                     },
                 } as ApiErrorResponse;
             }
-            data = text;
+            data = { data: text };
         }
 
         if (!response.ok) {
-            const errorObj = data?.error;
+            const errorObj = typeof data?.error === 'object' ? data?.error : undefined;
             const code = errorObj?.code ?? (typeof data?.error === 'string' ? 'legacy_error' : `http_${response.status}`);
             let message = errorObj?.message ?? (typeof data?.error === 'string' ? data.error : (data?.message ?? ''));
             const details = errorObj?.details ?? data?.details;
@@ -326,7 +333,7 @@ async function apiClient<TData, TBody = unknown>(
 }
 
 async function handleApiError(err: unknown, endpoint: string, url: string): Promise<ApiErrorResponse> {
-    console.error('[API Client Error]', { endpoint, url, error: err });
+    logger.error('[API Client Error]', { endpoint, url, error: err });
 
     if (err instanceof Error) {
         if (err.name === 'AbortError') {
@@ -355,7 +362,7 @@ async function handleApiError(err: unknown, endpoint: string, url: string): Prom
 }
 
 export const api = {
-    get<TData>(endpoint: string, params?: Record<string, any>, config?: RequestConfig) {
+    get<TData>(endpoint: string, params?: Record<string, string | number | boolean | undefined>, config?: RequestConfig) {
         const url = params ? createUrl(endpoint, params).replace(new URL(createUrl(endpoint)).origin, '') : endpoint;
         return apiClient<TData>(url, { ...config, method: 'GET' });
     },

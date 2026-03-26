@@ -8,11 +8,11 @@ import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-export function ScrollToTop() {
+export function ScrollToTop(): React.JSX.Element {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        const toggleVisibility = () => {
+        const toggleVisibility = (): void => {
             // Show when page is scrolled down more than 400px
             if (typeof window !== 'undefined' && window.scrollY > 400) {
                 setIsVisible(true);
@@ -25,7 +25,7 @@ export function ScrollToTop() {
         return () => window.removeEventListener('scroll', toggleVisibility);
     }, []);
 
-    const scrollToTop = () => {
+    const scrollToTop = (): void => {
         window.scrollTo({
             top: 0,
             behavior: 'smooth',

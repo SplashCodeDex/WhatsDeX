@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ChannelLinker } from './ChannelLinker';
@@ -34,12 +34,12 @@ describe('ChannelLinker', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (useOmnichannelStore as any).mockReturnValue({
+        (useOmnichannelStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
             channels: mockChannels,
             fetchAllChannels: vi.fn(),
             isLoading: false,
         });
-        (useAuth as any).mockReturnValue({
+        (useAuth as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
             user: { plan: 'starter' }
         });
     });

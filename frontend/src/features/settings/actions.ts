@@ -2,16 +2,16 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { api, API_ENDPOINTS } from '@/lib/api';
+import { api } from '@/lib/api';
 import type { ActionResult } from '@/types/api';
 
 /**
  * Update tenant settings
  */
 export async function updateTenantSettings(
-    prevState: ActionResult<any> | null,
+    prevState: ActionResult<Record<string, unknown>> | null,
     formData: FormData
-): Promise<ActionResult<any>> {
+): Promise<ActionResult<Record<string, unknown>>> {
     const jsonData = formData.get('data');
     if (!jsonData || typeof jsonData !== 'string') {
         return {
@@ -20,17 +20,17 @@ export async function updateTenantSettings(
         };
     }
 
-    let updates;
+    let updates: Record<string, unknown>;
     try {
-        updates = JSON.parse(jsonData);
-    } catch (e) {
+        updates = JSON.parse(jsonData) as Record<string, unknown>;
+    } catch {
         return {
             success: false,
             error: { code: 'validation_error', message: 'Invalid JSON data' }
         };
     }
 
-    const response = await api.patch<any>('/api/tenant/settings', updates);
+    const response = await api.patch<Record<string, unknown>>('/api/tenant/settings', updates);
 
     if (!response.success) {
         return {

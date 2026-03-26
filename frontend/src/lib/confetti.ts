@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti';
 
-export const triggerSuccessBurst = () => {
+export const triggerSuccessBurst = (): void => {
     const end = Date.now() + 1000;
 
     // Brand colors: Primary (Purple/Indigo), Accent (Green/Teal)

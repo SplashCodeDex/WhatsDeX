@@ -9,9 +9,9 @@ import type { ActionResult } from '@/types/api';
  * Create a new campaign
  */
 export async function createCampaign(
-    prevState: ActionResult<any> | null,
+    prevState: ActionResult<unknown> | null,
     formData: FormData
-): Promise<ActionResult<any>> {
+): Promise<ActionResult<unknown>> {
     const jsonData = formData.get('data');
     if (!jsonData || typeof jsonData !== 'string') {
         return {
@@ -20,17 +20,17 @@ export async function createCampaign(
         };
     }
 
-    let data;
+    let data: unknown;
     try {
         data = JSON.parse(jsonData);
-    } catch (e) {
+    } catch {
         return {
             success: false,
             error: { code: 'validation_error', message: 'Invalid JSON data' }
         };
     }
 
-    const response = await api.post<any>('/api/campaigns', data);
+    const response = await api.post<unknown>('/api/campaigns', data);
 
     if (!response.success) {
         return {

@@ -1,7 +1,6 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -35,7 +34,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             }
         }, [controlledChecked, defaultChecked]);
 
-        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
             const newChecked = e.target.checked;
             if (controlledChecked === undefined) {
                 setIsChecked(newChecked);
@@ -54,7 +53,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                         checked={controlledChecked !== undefined ? controlledChecked : undefined}
                         defaultChecked={controlledChecked === undefined ? defaultChecked : undefined}
                         onChange={handleChange}
-                        {...(props as any)}
+                        {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
                     />
 
                     {/* Checkbox Box with Glassmorphism */}

@@ -1,16 +1,16 @@
 'use client';
 
-import { Smartphone, Link as LinkIcon, Link2Off, QrCode, RefreshCw, Sparkles } from 'lucide-react';
+import { Smartphone, Link as LinkIcon, Link2Off, RefreshCw, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { canAddChannelSlot, getSlotLimit } from '../utils/ChannelSlotGuard';
+import { canAddChannelSlot } from '../utils/ChannelSlotGuard.js';
 
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { api, API_ENDPOINTS } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -25,7 +25,7 @@ interface ChannelLinkerProps {
  * Component for linking/unlinking an Agent to Connectivity Slots (Channels).
  * Enforces billing tier limits on active connections.
  */
-export function ChannelLinker({ agentId }: ChannelLinkerProps) {
+export function ChannelLinker({ agentId }: ChannelLinkerProps): React.JSX.Element {
     const { tier: userTier, getLimit } = useAuthorityStore();
     const { channels, fetchAllChannels, isLoading } = useOmnichannelStore();
     const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
@@ -37,7 +37,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
 
     const activeLinkedChannels = channels.filter(c => c.assignedAgentId && c.assignedAgentId !== 'system_default').length;
 
-    const handleLink = async (channelId: string) => {
+    const handleLink = async (channelId: string): Promise<void> => {
         // Check if user can add another active connection
         if (!canAddChannelSlot(userTier, activeLinkedChannels)) {
             setIsUpgradeOpen(true);
@@ -59,7 +59,7 @@ export function ChannelLinker({ agentId }: ChannelLinkerProps) {
         );
     };
 
-    const handleUnlink = async (channelId: string) => {
+    const handleUnlink = async (channelId: string): Promise<void> => {
         toast.promise(
             api.patch(API_ENDPOINTS.AGENTS.UPDATE(channelId), { assignedAgentId: 'system_default' }),
             {

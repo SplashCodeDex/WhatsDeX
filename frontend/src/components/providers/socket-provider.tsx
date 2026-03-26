@@ -16,17 +16,17 @@ const SocketContext = createContext<SocketContextType>({
     isConnected: false,
 });
 
-export const useSocket = () => useContext(SocketContext);
+export const useSocket = (): SocketContextType => useContext(SocketContext);
 
-export function SocketProvider({ children }: { children: React.ReactNode }) {
+export function SocketProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
     const [socket, setSocket] = useState<Socket | null>(null);
-    const [isConnected, setIsConnected] = useState(false);
+    const [isConnected, setIsConnected] = React.useState(false);
     const addEvent = useMastermindStore((state) => state.addEvent);
 
     useEffect(() => {
         // Build socket URL from config/environment
         const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        
+
         const socketInstance = io(socketUrl, {
             path: '/api/socket',
             withCredentials: true,
@@ -35,12 +35,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         });
 
         socketInstance.on('connect', () => {
-            console.log('[Socket] Connected to Mastermind Gateway');
+            setSocket(socketInstance);
             setIsConnected(true);
         });
 
         socketInstance.on('disconnect', () => {
-            console.log('[Socket] Disconnected');
             setIsConnected(false);
         });
 
@@ -51,9 +50,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
         // --- Mastermind Event Handling ---
         socketInstance.on('mastermind_event', (event: MastermindEvent) => {
-            console.log('[Socket] Mastermind Event:', event.type, event.agentId);
             addEvent(event);
-            
+
             // Contextual toasts for important events
             if (event.type === 'reasoning:error') {
                 toast.error(`Agent Error: ${event.error}`, {
@@ -62,10 +60,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
             }
         });
 
-        setSocket(socketInstance);
-
         return () => {
             socketInstance.disconnect();
+            setSocket(null);
         };
     }, [addEvent]);
 

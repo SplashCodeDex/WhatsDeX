@@ -49,17 +49,17 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
         window.open(url, '_blank');
     };
 
-    const handleCall = () => {
+    const handleCall = (): void => {
         window.location.href = `tel:${contact.phone}`;
     };
 
-    const handleEmail = () => {
+    const handleEmail = (): void => {
         if (contact.email) {
             window.location.href = `mailto:${contact.email}`;
         }
     };
 
-    const handleAddCustomField = () => {
+    const handleAddCustomField = (): void => {
         if (!newFieldKey.trim() || !newFieldValue.trim()) {
             toast.error('Please enter both field name and value');
             return;
@@ -73,7 +73,7 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
         setNewFieldValue('');
     };
 
-    const handleRemoveCustomField = (key: string) => {
+    const handleRemoveCustomField = (key: string): void => {
         setCustomFields(prev => {
             const updated = { ...prev };
             delete updated[key];
@@ -81,7 +81,7 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
         });
     };
 
-    const handleSaveCustomFields = async () => {
+    const handleSaveCustomFields = async (): Promise<void> => {
         try {
             await updateMutation.mutateAsync({
                 id: contact.id,
@@ -89,12 +89,12 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
             });
             toast.success('Custom fields updated successfully');
             setIsEditingCustomFields(false);
-        } catch (error) {
+        } catch {
             toast.error('Failed to update custom fields');
         }
     };
 
-    const getInitials = (name: string) => {
+    const getInitials = (name: string): string => {
         return name
             .split(' ')
             .map(n => n[0])

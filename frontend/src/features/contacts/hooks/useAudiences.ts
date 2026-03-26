@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { Audience } from '../types';
@@ -14,7 +14,7 @@ export const audienceKeys = {
   detail: (id: string) => [...audienceKeys.all, id] as const,
 };
 
-export function useAudiences() {
+export function useAudiences(): UseQueryResult<Audience[]> {
   return useQuery({
     queryKey: audienceKeys.list(),
     queryFn: async () => {
@@ -27,7 +27,7 @@ export function useAudiences() {
   });
 }
 
-export function useCreateAudience() {
+export function useCreateAudience(): UseMutationResult<Audience, Error, Omit<Audience, 'id' | 'createdAt' | 'updatedAt' | 'count'>> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -48,7 +48,7 @@ export function useCreateAudience() {
   });
 }
 
-export function useUpdateAudience() {
+export function useUpdateAudience(): UseMutationResult<Audience, Error, { id: string; data: Partial<Audience> }> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -69,7 +69,7 @@ export function useUpdateAudience() {
   });
 }
 
-export function useDeleteAudience() {
+export function useDeleteAudience(): UseMutationResult<unknown, Error, string> {
   const queryClient = useQueryClient();
   
   return useMutation({

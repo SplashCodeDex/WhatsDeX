@@ -39,7 +39,7 @@ vi.mock('sonner', () => ({
 describe('PaymentMethods', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete (process.env as any).NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL;
+    delete (process.env as NodeJS.ProcessEnv & Record<string, string | undefined>).NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL;
   });
 
   it('should render loading state initially', () => {
@@ -361,7 +361,7 @@ describe('PaymentMethods', () => {
       },
     ];
     
-    const invalidResponse: ApiSuccessResponse<any> = {
+    const invalidResponse: ApiSuccessResponse<PaymentMethod[]> = {
       success: true,
       data: invalidMethods,
     };

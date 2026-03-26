@@ -2,10 +2,7 @@
 
 import {
     Activity,
-    Bot,
     MessageSquare,
-    MoreVertical,
-    Phone,
     Plus,
     Power,
     RefreshCw,
@@ -19,7 +16,7 @@ import {
     Network
 } from "lucide-react";
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SiWhatsapp, SiTelegram, SiDiscord, SiSignal, SiGooglechat, SiFacebook } from 'react-icons/si';
 
 import { ActivityFeed } from './components/ActivityFeed';
@@ -30,20 +27,22 @@ import { ChannelConnectionForm } from '@/components/omnichannel/ChannelConnectio
 import { ChannelSettingsDialog } from '@/components/omnichannel/ChannelSettingsDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
+import type { Channel } from '@/types/omnichannel';
 
 
 // Helper for accessibility
-function VisuallyHidden({ children }: { children: React.ReactNode }) {
+function VisuallyHidden({ children }: { children: React.ReactNode }): React.JSX.Element {
   return <span className="absolute w-[1px] h-[1px] p-0 -m-[1px] overflow-hidden clip-[rect(0,0,0,0)] whitespace-nowrap border-0">
         {children}
     </span>
 }
 
-const ICON_MAP: Record<string, any> = {
+type IconComponent = React.ComponentType<{ className?: string }>;
+const ICON_MAP: Record<string, IconComponent> = {
     SiWhatsapp,
     SiTelegram,
     SiDiscord,
@@ -57,7 +56,7 @@ const ICON_MAP: Record<string, any> = {
     SiMatrix: Network
 };
 
-function ChannelCard({ channel }: { channel: any }) {
+function ChannelCard({ channel }: { channel: Channel }): React.JSX.Element {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isDisconnecting, setIsDisconnecting] = useState(false);
     const { agentsResult, disconnectChannel, platforms } = useOmnichannelStore();
@@ -99,7 +98,7 @@ function ChannelCard({ channel }: { channel: any }) {
     const agent = agentsResult?.agents.find(a => a.id === effectiveAgentId);
     const agentName = agent?.name || 'System Default Agent';
 
-    const handleDirectDisconnect = async (e: React.MouseEvent) => {
+    const handleDirectDisconnect = async (e: React.MouseEvent): Promise<void> => {
         e.stopPropagation();
         if (isDisconnecting) return;
 
@@ -200,8 +199,8 @@ function ChannelCard({ channel }: { channel: any }) {
     );
 }
 
-export function OmnichannelFeature() {
-    const { channels, activity, isLoading, fetchAllChannels, fetchPlatforms, platforms } = useOmnichannelStore();
+export function OmnichannelFeature(): React.JSX.Element {
+    const { channels, isLoading, fetchAllChannels, fetchPlatforms, platforms } = useOmnichannelStore();
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [selectedPlatform, setSelectedPlatform] = useState<string>('whatsapp');
 

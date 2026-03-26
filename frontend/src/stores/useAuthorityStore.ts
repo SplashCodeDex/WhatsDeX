@@ -36,10 +36,10 @@ export const useAuthorityStore = create<AuthorityStore>((set, get) => ({
                     isLoading: false 
                 });
             }
-        } catch (err: any) {
-            set({ 
-                error: err.message || 'An unexpected error occurred', 
-                isLoading: false 
+        } catch (err: unknown) {
+            set({
+                error: (err instanceof Error ? err.message : null) || 'An unexpected error occurred',
+                isLoading: false
             });
         }
     },

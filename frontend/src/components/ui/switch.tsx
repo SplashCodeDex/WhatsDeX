@@ -1,7 +1,7 @@
 "use client"
 
 import * as SwitchPrimitives from "@radix-ui/react-switch"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -10,8 +10,6 @@ const Switch = React.forwardRef<
     React.ElementRef<typeof SwitchPrimitives.Root>,
     React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => {
-    const isChecked = props.checked || props.defaultChecked;
-
     return (
         <SwitchPrimitives.Root
             className={cn(

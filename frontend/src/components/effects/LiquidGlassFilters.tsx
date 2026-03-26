@@ -1,6 +1,8 @@
 'use client';
 
-export function LiquidGlassFilters() {
+import React from 'react';
+
+export function LiquidGlassFilters(): React.JSX.Element {
     return (
         <svg style={{ display: 'none' }}>
             <filter

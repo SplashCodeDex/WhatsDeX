@@ -33,7 +33,7 @@ class ApiCircuitBreaker {
         return this.groups.get(group)!;
     }
 
-    private notifyListeners(group: string, state: CircuitState) {
+    private notifyListeners(group: string, state: CircuitState): void {
         this.listeners.forEach(listener => listener(group, state));
     }
 
@@ -71,7 +71,7 @@ class ApiCircuitBreaker {
     /**
      * Records a successful API call. Resets the circuit for the group.
      */
-    public recordSuccess(group: string) {
+    public recordSuccess(group: string): void {
         const state = this.getGroup(group);
         if (state.failures > 0 || state.state !== 'CLOSED') {
             state.failures = 0;
@@ -84,7 +84,7 @@ class ApiCircuitBreaker {
     /**
      * Records a failed API call (network error, 500s). Tripps the circuit if threshold met.
      */
-    public recordFailure(group: string) {
+    public recordFailure(group: string): void {
         const state = this.getGroup(group);
         state.failures += 1;
 

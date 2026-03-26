@@ -33,7 +33,7 @@ function normalizeOrigin(value: string): string {
 interface JwtPayload {
     exp?: number;
     role?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
@@ -56,7 +56,7 @@ async function verifyToken(token: string): Promise<boolean> {
     }
 }
 
-export async function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest): Promise<NextResponse> {
     const token = request.cookies.get('token')?.value;
     const { pathname } = request.nextUrl;
 
