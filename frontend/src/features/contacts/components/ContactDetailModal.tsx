@@ -28,9 +28,9 @@ interface ContactDetailModalProps {
     onClose: () => void;
 }
 
-export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailModalProps) {
+export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailModalProps): React.JSX.Element | null {
     const [isEditingCustomFields, setIsEditingCustomFields] = useState(false);
-    const [customFields, setCustomFields] = useState<Record<string, any>>({});
+    const [customFields, setCustomFields] = useState<Record<string, unknown>>({});
     const [newFieldKey, setNewFieldKey] = useState('');
     const [newFieldValue, setNewFieldValue] = useState('');
     
@@ -44,7 +44,7 @@ export function ContactDetailModal({ contact, isOpen, onClose }: ContactDetailMo
 
     if (!contact) return null;
 
-    const handleWhatsApp = () => {
+    const handleWhatsApp = (): void => {
         const url = `https://wa.me/${contact.phone.replace(/\+/g, '')}`;
         window.open(url, '_blank');
     };

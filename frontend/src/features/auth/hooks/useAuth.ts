@@ -233,7 +233,7 @@ export function useAuth(): UseAuthReturn {
             }
         };
 
-        const startTimer = () => {
+        const startTimer = (): void => {
             if (refreshTimer) clearInterval(refreshTimer);
             refreshTimer = setInterval(() => {
                 const now = Date.now();

@@ -2,9 +2,6 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
-type GetReturnType = never;
-type PostReturnType = NextResponse;
-
 /**
  * Logout Route Handler
  *
@@ -12,13 +9,13 @@ type PostReturnType = NextResponse;
  * - GET: Used by server-side redirects (e.g., requireAuth on JWT failure) → redirects to /login
  * - POST: Used by client-side fetch (e.g., useAuth logout button) → returns JSON response
  */
-export async function GET() {
+export async function GET(): Promise<never> {
     const cookieStore = await cookies();
     cookieStore.delete('token');
     redirect('/login');
 }
 
-export async function POST() {
+export async function POST(): Promise<NextResponse> {
     const cookieStore = await cookies();
     cookieStore.delete('token');
     return NextResponse.json({ success: true });
