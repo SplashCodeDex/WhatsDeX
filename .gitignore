@@ -68,7 +68,7 @@ playwright-report/
 
 # Gatsby files
 .cache/
-public
+
 
 # Microbundle cache
 .rpt2_cache/
