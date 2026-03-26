@@ -55,7 +55,7 @@ export function ForgotPasswordForm(): React.JSX.Element {
                                             autoCorrect="off"
                                             disabled={isPending}
                                             required
-                                            defaultValue={fields?.email || ''}
+                                            defaultValue={(fields?.email as string) || ''}
                                         />
                                     </div>
 

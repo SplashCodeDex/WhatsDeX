@@ -100,7 +100,7 @@ export function LoginForm(): React.JSX.Element {
                                 autoComplete="email"
                                 autoCorrect="off"
                                 disabled={isPending}
-                                defaultValue={fields?.email || ''}
+                                defaultValue={(fields?.email as string) || ''}
                             />
                             {state?.success === false && state.error.details?.field === 'email' && (
                                 <span className="text-xs text-destructive">{state.error.message}</span>
@@ -133,7 +133,7 @@ export function LoginForm(): React.JSX.Element {
                                 name="rememberMe"
                                 label="Remember me"
                                 disabled={isPending}
-                                defaultChecked={fields?.rememberMe || false}
+                                defaultChecked={(fields?.rememberMe as boolean) || false}
                             />
                             <Link
                                 href="/forgot-password"

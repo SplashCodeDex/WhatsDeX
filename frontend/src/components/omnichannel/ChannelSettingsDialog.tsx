@@ -137,9 +137,9 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                     {agents.length === 0 ? (
                                         <SelectItem value="system_default">System Default Agent</SelectItem>
                                     ) : (
-                                        agents.map((agent: { id: string; name: string }) => (
+                                        agents.map((agent) => (
                                             <SelectItem key={agent.id} value={agent.id}>
-                                                {agent.name}
+                                                {agent.name ?? agent.id}
                                             </SelectItem>
                                         ))
                                     )}

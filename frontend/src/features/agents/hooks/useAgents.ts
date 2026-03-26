@@ -28,7 +28,7 @@ export const agentKeys = {
  * Fetches the list of active/connected agent channels (formerly 'bots').
  * Defaults to 'system_default' if no agentId is provided.
  */
-export function useAgents(agentId: string = 'system_default'): ReturnType<typeof useQuery> {
+export function useAgents(agentId: string = 'system_default'): ReturnType<typeof useQuery<AgentChannel[]>> {
     return useQuery({
         queryKey: agentKeys.channels(agentId),
         queryFn: async () => {

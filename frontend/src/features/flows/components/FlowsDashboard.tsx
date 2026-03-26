@@ -78,7 +78,8 @@ const nodeTypes = {
 export function FlowsDashboard(): React.JSX.Element {
     const { data: templates } = useTemplates();
     const { subscription, isLoading: isLoadingPlan } = useSubscription();
-    const { skills, fetchSkills } = useOmnichannelStore();
+    const { skills: rawSkills, fetchSkills } = useOmnichannelStore();
+    const skills = rawSkills as { id?: string; name?: string; requiredTier?: string; parameters?: { properties?: Record<string, Record<string, string>> } }[];
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -99,7 +100,7 @@ export function FlowsDashboard(): React.JSX.Element {
             try {
                 const response = await api.get<{ nodes: Node[]; edges: Edge[] }[]>('/api/flows');
                 if (response.success && Array.isArray(response.data) && response.data.length > 0) {
-                    const flow = response.data[0];
+                    const flow = response.data[0]!;
                     if (flow.nodes && flow.nodes.length > 0) {
                         setNodes(flow.nodes);
                         setEdges(flow.edges || []);
@@ -274,7 +275,17 @@ export function FlowsDashboard(): React.JSX.Element {
         );
     }
 
-    const selectedSkill = skills.find(s => s.id === (selectedNode?.data as Record<string, unknown>)?.skillName);
+    interface NodeData {
+        keyword?: string;
+        templateId?: string;
+        message?: string;
+        condition?: string;
+        skillName?: string;
+        nesting?: boolean;
+        params?: Record<string, string>;
+    }
+    const nodeData = (selectedNode?.data ?? {}) as NodeData;
+    const selectedSkill = skills.find(s => s.id === nodeData.skillName);
 
     return (
         <div className="flex h-[calc(100vh-120px)] w-full gap-4 overflow-hidden">
@@ -403,7 +414,7 @@ export function FlowsDashboard(): React.JSX.Element {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase text-muted-foreground">Keyword Match</label>
                                     <Input
-                                        value={(selectedNode.data as Record<string, unknown>).keyword || ''}
+                                        value={nodeData.keyword || ''}
                                         onChange={(e) => updateNodeData(selectedNode.id, { keyword: e.target.value })}
                                         placeholder="e.g. hello"
                                     />
@@ -415,7 +426,7 @@ export function FlowsDashboard(): React.JSX.Element {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase text-muted-foreground">Select Template</label>
                                         <Select
-                                            value={(selectedNode.data as Record<string, unknown>).templateId || 'none'}
+                                            value={nodeData.templateId || 'none'}
                                             onValueChange={(val) => {
                                                 const tpl = templates?.find(t => t.id === val);
                                                 updateNodeData(selectedNode.id, {
@@ -436,12 +447,12 @@ export function FlowsDashboard(): React.JSX.Element {
                                         </Select>
                                     </div>
 
-                                    {!(selectedNode.data as Record<string, unknown>).templateId && (
+                                    {!nodeData.templateId && (
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold uppercase text-muted-foreground">Raw Message</label>
                                             <textarea
                                                 className="w-full h-24 p-3 rounded-lg bg-muted/30 border border-border/20 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                                value={(selectedNode.data as Record<string, unknown>).message || ''}
+                                                value={nodeData.message || ''}
                                                 onChange={(e) => updateNodeData(selectedNode.id, { message: e.target.value })}
                                                 placeholder="Type your message..."
                                             />
@@ -454,7 +465,7 @@ export function FlowsDashboard(): React.JSX.Element {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase text-muted-foreground">Condition</label>
                                     <Select
-                                        value={(selectedNode.data as Record<string, unknown>).condition || 'is_premium'}
+                                        value={nodeData.condition || 'is_premium'}
                                         onValueChange={(val) => updateNodeData(selectedNode.id, { condition: val })}
                                     >
                                         <SelectTrigger>
@@ -473,7 +484,7 @@ export function FlowsDashboard(): React.JSX.Element {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase text-muted-foreground">OpenClaw Skill</label>
                                         <Select
-                                            value={(selectedNode.data as Record<string, unknown>).skillName || ''}
+                                            value={nodeData.skillName || ''}
                                             onValueChange={(val) => {
                                                 updateNodeData(selectedNode.id, {
                                                     skillName: val,
@@ -490,7 +501,7 @@ export function FlowsDashboard(): React.JSX.Element {
                                                         skill.requiredTier === 'pro' ? (userTier !== 'pro' && userTier !== 'enterprise') : false;
 
                                                     return (
-                                                        <SelectItem key={skill.id} value={skill.id} disabled={isLocked}>
+                                                        <SelectItem key={skill.id} value={skill.id ?? ''} disabled={isLocked}>
                                                             <div className="flex items-center gap-2">
                                                                 {getIcon(skill.id)}
                                                                 <span className="truncate">{skill.name}</span>
@@ -509,7 +520,7 @@ export function FlowsDashboard(): React.JSX.Element {
                                                 <input
                                                     type="checkbox"
                                                     className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary"
-                                                    checked={(selectedNode.data as Record<string, unknown>).nesting || false}
+                                                    checked={nodeData.nesting || false}
                                                     onChange={(e) => updateNodeData(selectedNode.id, { nesting: e.target.checked })}
                                                 />
                                             </div>
@@ -521,9 +532,9 @@ export function FlowsDashboard(): React.JSX.Element {
                                                     <Label className="text-[10px] font-bold uppercase">{prop.title || key}</Label>
                                                     <Input
                                                         placeholder={prop.description || ''}
-                                                        value={((selectedNode.data as Record<string, unknown>).params as Record<string, string> | undefined)?.[key] || ''}
+                                                        value={(nodeData.params as Record<string, string> | undefined)?.[key] || ''}
                                                         onChange={(e) => {
-                                                            const currentParams = (selectedNode.data as Record<string, unknown>).params || {};
+                                                            const currentParams = nodeData.params || {};
                                                             updateNodeData(selectedNode.id, {
                                                                 params: { ...(currentParams as Record<string, unknown>), [key]: e.target.value }
                                                             });

@@ -34,6 +34,8 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   private activeDownloads: number = 0;
   private maxParallelDownloads: number = 5;
   private qrGenerationCount: number = 0;
+  private qrTimeoutHandle: NodeJS.Timeout | null = null;
+  private static readonly QR_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor(public tenantId: string, channelId: string, fullPath?: string, channelData?: Partial<Channel>) {
     this.instanceId = channelId;
@@ -150,6 +152,29 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
         if (this.qrGenerationCount >= 4) {
           logger.warn(`[WhatsappAdapter] QR code regenerated ${this.qrGenerationCount} times for ${this.channelId}. User may not be scanning.`);
         }
+
+        // Start the QR scan timeout on first QR generation.
+        // If the user never scans within QR_TIMEOUT_MS, disconnect and set status to
+        // 'disconnected' so the channel is dormant until the user manually reconnects.
+        if (this.qrGenerationCount === 1 && !this.qrTimeoutHandle) {
+          this.qrTimeoutHandle = setTimeout(async () => {
+            if (this.status === 'qr_pending') {
+              logger.warn(`[WhatsappAdapter] QR scan timeout for ${this.channelId}. Setting to disconnected.`);
+              await this.disconnect();
+              try {
+                const { channelService } = await import('@/services/ChannelService.js');
+                let agentId = 'system_default';
+                if (this.fullPath && this.fullPath.includes('/agents/')) {
+                  agentId = this.fullPath.split('/')[3];
+                }
+                await channelService.updateStatus(this.tenantId, this.channelId, 'disconnected' as any, agentId);
+              } catch (err) {
+                logger.error(`[WhatsappAdapter] Failed to update status after QR timeout for ${this.channelId}`, err);
+              }
+            }
+            this.qrTimeoutHandle = null;
+          }, WhatsappAdapter.QR_TIMEOUT_MS);
+        }
       } catch (err) {
         logger.error('Failed to generate QR DataURL', err);
       }
@@ -207,6 +232,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       if (update.connection === 'open' && update.me?.id) {
         this.qrCodeUrl = null; // Clear QR on success
         this.qrGenerationCount = 0; // Reset QR counts
+        if (this.qrTimeoutHandle) {
+          clearTimeout(this.qrTimeoutHandle);
+          this.qrTimeoutHandle = null;
+        }
         const phoneNumber = update.me.id.split(':')[0];
         logger.info(`Channel ${this.channelId} connected with number: ${phoneNumber}`);
 
@@ -356,6 +385,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     if (this.presenceInterval) {
       clearInterval(this.presenceInterval);
       this.presenceInterval = null;
+    }
+    if (this.qrTimeoutHandle) {
+      clearTimeout(this.qrTimeoutHandle);
+      this.qrTimeoutHandle = null;
     }
     const listenerModule = await getWebActiveListener();
     if (listenerModule?.setActiveWebListener) {

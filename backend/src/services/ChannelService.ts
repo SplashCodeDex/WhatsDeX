@@ -439,8 +439,9 @@ export class ChannelService {
         for (const channel of channelsResult.data) {
           // Restart channels that were previously connected or in error state (retry)
           // 'banned' and 'reconnect_exhausted' require manual user action — never auto-restart.
-          // 'logged_out' behaves like 'disconnected' — requires a fresh QR scan, user-initiated.
-          const autoRestartStatuses = ['connected', 'connecting', 'qr_pending', 'error', 'initializing'];
+          // 'logged_out' and 'qr_pending' require user-initiated QR scan — never auto-restart.
+          // 'disconnected' means the user intentionally stopped or the QR timed out — never auto-restart.
+          const autoRestartStatuses = ['connected', 'connecting', 'error', 'initializing'];
           if (autoRestartStatuses.includes(channel.status)) {
             logger.info(`[ChannelService] Auto-starting channel ${channel.id} (${channel.name}) for tenant ${tenant.id}`);
 

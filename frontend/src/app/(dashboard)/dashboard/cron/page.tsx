@@ -16,6 +16,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CreateCronJobDialog } from '@/components/omnichannel/CreateCronJobDialog';
+import type { CronSchedule } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,7 +40,7 @@ import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
 
-function formatSchedule(schedule: { kind: string; everyMs?: number; at?: number; expr?: string }): string {
+function formatSchedule(schedule: CronSchedule): string {
     if (schedule.kind === 'every') return `Every ${schedule.everyMs / 1000}s`;
     if (schedule.kind === 'at') return `At ${new Date(schedule.at).toLocaleString()}`;
     if (schedule.kind === 'cron') return `Cron: ${schedule.expr}`;

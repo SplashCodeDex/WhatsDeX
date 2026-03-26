@@ -13,16 +13,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useOmnichannelStore } from '@/stores/useOmnichannelStore';
 
+interface GatewayHealthData {
+    uptimeMs?: number;
+    agents?: unknown[];
+    snapshot?: { presenceCount?: number };
+}
+
 export function GatewayMetrics(): React.JSX.Element {
     const { gatewayHealth, skillReport, getSkillCount } = useOmnichannelStore();
+    const health = gatewayHealth as GatewayHealthData | null | undefined;
 
-    const uptime = gatewayHealth?.uptimeMs || 0;
+    const uptime = health?.uptimeMs || 0;
     const hours = Math.floor(uptime / 3600000);
     const minutes = Math.floor((uptime % 3600000) / 60000);
     
-    const activeAgents = gatewayHealth?.agents?.length || 0;
+    const activeAgents = health?.agents?.length || 0;
     const totalSkills = getSkillCount();
-    const presenceCount = gatewayHealth?.snapshot?.presenceCount || 0;
+    const presenceCount = health?.snapshot?.presenceCount || 0;
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -98,7 +98,7 @@ export function RegisterForm(): React.JSX.Element {
                                     autoCapitalize="words"
                                     autoComplete="given-name"
                                     disabled={isPending}
-                                    defaultValue={fields?.firstName || ''}
+                                    defaultValue={(fields?.firstName as string) || ''}
                                 />
                                 {state?.success === false && state.error.details?.field === 'firstName' && (
                                     <span className="text-xs text-destructive">{state.error.message}</span>
@@ -119,7 +119,7 @@ export function RegisterForm(): React.JSX.Element {
                                     autoCapitalize="words"
                                     autoComplete="family-name"
                                     disabled={isPending}
-                                    defaultValue={fields?.lastName || ''}
+                                    defaultValue={(fields?.lastName as string) || ''}
                                 />
                                 {state?.success === false && state.error.details?.field === 'lastName' && (
                                     <span className="text-xs text-destructive">{state.error.message}</span>
@@ -143,7 +143,7 @@ export function RegisterForm(): React.JSX.Element {
                                 autoComplete="email"
                                 autoCorrect="off"
                                 disabled={isPending}
-                                defaultValue={fields?.email || ''}
+                                defaultValue={(fields?.email as string) || ''}
                             />
                             {state?.success === false && state.error.details?.field === 'email' && (
                                 <span className="text-xs text-destructive">{state.error.message}</span>
@@ -173,7 +173,7 @@ export function RegisterForm(): React.JSX.Element {
                             <Checkbox
                                 id="acceptTerms"
                                 name="acceptTerms"
-                                defaultChecked={fields?.acceptTerms || false}
+                                defaultChecked={(fields?.acceptTerms as boolean) || false}
                                 label={
                                     <span>
                                         I agree to the{' '}

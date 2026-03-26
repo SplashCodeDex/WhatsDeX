@@ -147,9 +147,9 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="system_default">System Default Agent</SelectItem>
-                  {agents.map((agent: { id: string; name: string }) => (
+                  {agents.map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
-                      {agent.name}
+                      {agent.name ?? agent.id}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -81,12 +81,12 @@ export function useCampaignSocket(): void {
     useEffect(() => {
         // Listen for campaign updates from the unified socket
         const cleanupUpdate = on('campaign_update', (data) => {
-            handleUpdate(data);
+            handleUpdate(data as Parameters<typeof handleUpdate>[0]);
         });
 
         // Listen for anti-ban alerts
         const cleanupAntiBan = on('antiban_alert', (data) => {
-            handleAntiBanAlert(data);
+            handleAntiBanAlert(data as Parameters<typeof handleAntiBanAlert>[0]);
         });
 
         return () => {

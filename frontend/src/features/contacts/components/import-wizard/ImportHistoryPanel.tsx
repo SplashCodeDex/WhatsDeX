@@ -84,7 +84,7 @@ export function ImportHistoryPanel(): React.ReactNode {
                                 </div>
                             </div>
                         ) : (
-                            (history as ImportLog[]).map((log) => (
+                            (history as unknown as ImportLog[]).map((log) => (
                                 <div
                                     key={log.id}
                                     className={`
@@ -130,10 +130,10 @@ export function ImportHistoryPanel(): React.ReactNode {
                                                 <CheckCircle2 className="w-2.5 h-2.5" />
                                                 SUCCESS
                                             </div>
-                                            {log.errors?.length > 0 && (
+                                            {(log.errors?.length ?? 0) > 0 && (
                                                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-black">
                                                     <AlertCircle className="w-2.5 h-2.5" />
-                                                    {log.errors.length} ERRORS
+                                                    {log.errors?.length} ERRORS
                                                 </div>
                                             )}
                                         </div>

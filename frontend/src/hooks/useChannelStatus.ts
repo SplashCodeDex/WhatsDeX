@@ -29,14 +29,16 @@ export function useChannelStatus(channelId: string, agentId: string = 'system_de
         let lastSocketQrAt = 0;
 
         // MASTERMIND Goodie: Real-time Socket Updates
-        const cleanupQrListener = on('channel_qr_update', (data: Record<string, unknown>) => {
+        const cleanupQrListener = on('channel_qr_update', (raw) => {
+            const data = raw as Record<string, unknown>;
             if (data.channelId === channelId) {
                 setQrCode(data.qrCode as string | null);
                 lastSocketQrAt = Date.now();
             }
         });
 
-        const cleanupStatusListener = on('channel_status_update', (data: Record<string, unknown>) => {
+        const cleanupStatusListener = on('channel_status_update', (raw) => {
+            const data = raw as Record<string, unknown>;
             if (data.channelId === channelId) {
                 setStatus((prev) => ({ ...(prev ?? {}), status: data.status }));
             }

@@ -216,7 +216,7 @@ export function useAuth(): UseAuthReturn {
             
             try {
                 const response = await api.post(API_ENDPOINTS.AUTH.REFRESH);
-                const refreshData = response.data as { user?: AuthUser } | null;
+                const refreshData = response.success ? response.data as { user?: AuthUser } | null : null;
                 if (response.success && refreshData && 'user' in refreshData && refreshData.user) {
                     const userData = refreshData.user;
                     authChannel.postMessage({ 

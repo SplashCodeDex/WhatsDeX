@@ -47,6 +47,7 @@ interface SkillItem {
     requiredTier?: string;
     primaryEnv?: string;
     installId?: string;
+    homepage?: string;
 }
 
 /**
@@ -254,7 +255,7 @@ export function SkillsDashboard(): React.JSX.Element {
                                                             <Button
                                                                 variant={isDisabled ? "default" : "outline"}
                                                                 className="flex-1"
-                                                                onClick={() => handleToggle(skillKey, isDisabled)}
+                                                                onClick={() => skillKey && handleToggle(skillKey, isDisabled)}
                                                             >
                                                                 {isDisabled ? 'Enable Skill' : 'Disable Skill'}
                                                             </Button>
@@ -263,7 +264,7 @@ export function SkillsDashboard(): React.JSX.Element {
                                                                 <Button
                                                                     variant="default"
                                                                     className="flex-1"
-                                                                    onClick={() => handleInstall(skillKey, statusInfo.install[0]!.id)}
+                                                                    onClick={() => skillKey && handleInstall(skillKey, statusInfo.install[0]!.id)}
                                                                 >
                                                                     <Download className="mr-2 h-4 w-4" />
                                                                     Install {statusInfo.install[0]!.label}
@@ -273,7 +274,7 @@ export function SkillsDashboard(): React.JSX.Element {
                                                         {needsKey ? <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                onClick={() => { setSelectedSkillKey(skillKey); setKeyDialogOpen(true); }}
+                                                                onClick={() => { setSelectedSkillKey(skillKey ?? null); setKeyDialogOpen(true); }}
                                                                 title="Configure API Key"
                                                             >
                                                                 <Key className="h-4 w-4" />

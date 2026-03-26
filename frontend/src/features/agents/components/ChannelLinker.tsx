@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { canAddChannelSlot } from '../utils/ChannelSlotGuard.js';
+import { canAddChannelSlot } from '../utils/ChannelSlotGuard';
 
 
 import { Badge } from '@/components/ui/badge';
