@@ -6,6 +6,8 @@ import configManager from '../config/ConfigManager.js';
 interface QueueConfig {
   concurrency: number;
   priority: number;
+  /** Max ms a worker holds the job lock before BullMQ considers it stalled. Default: 30_000 */
+  lockDuration?: number;
 }
 
 export class JobQueueService {
@@ -29,8 +31,10 @@ export class JobQueueService {
     };
 
     this.queueConfigs = {
-      'ai-processing': { concurrency: 2, priority: 10 },
-      'media-processing': { concurrency: 3, priority: 8 },
+      // Scenario 22: lockDuration caps how long a worker can hold a job lock before BullMQ
+      // marks it stalled and requeues it — prevents long-running AI skills from starving other workers.
+      'ai-processing': { concurrency: 2, priority: 10, lockDuration: 120_000 },
+      'media-processing': { concurrency: 3, priority: 8, lockDuration: 60_000 },
       notification: { concurrency: 5, priority: 5 },
       analytics: { concurrency: 1, priority: 3 },
       cleanup: { concurrency: 1, priority: 1 },
@@ -150,6 +154,8 @@ export class JobQueueService {
       {
         connection: this.redisOptions,
         concurrency: config.concurrency,
+        // Scenario 22: enforce lock expiry so stalled long-running jobs are requeued
+        ...(config.lockDuration ? { lockDuration: config.lockDuration } : {}),
       }
     );
 

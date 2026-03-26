@@ -34,6 +34,18 @@ export function initializeGroupSyncWorker() {
         try {
             logger.info(`[GroupSyncWorker] Processing sync for ${groupJids?.length || 0} groups | Channel: ${channelId}`);
 
+            // Scenario 27: Large group lists (5000+) are split into sub-jobs so no single
+            // worker is blocked for minutes and the job lock is never exceeded.
+            const MAX_JIDS_PER_JOB = 200;
+            if (groupJids && groupJids.length > MAX_JIDS_PER_JOB) {
+                logger.info(`[GroupSyncWorker] Large sync detected (${groupJids.length} groups). Splitting into sub-jobs of ${MAX_JIDS_PER_JOB}.`);
+                for (let i = 0; i < groupJids.length; i += MAX_JIDS_PER_JOB) {
+                    const chunk = groupJids.slice(i, i + MAX_JIDS_PER_JOB);
+                    await jobQueueService.addJob('group-sync', 'sync-groups', { tenantId, channelId, groupJids: chunk, options });
+                }
+                return { split: Math.ceil(groupJids.length / MAX_JIDS_PER_JOB) };
+            }
+
             // 1. Get the channel instance from service (to check existence/access)
             const result = await channelService.getChannel(tenantId, channelId);
             if (!result.success) {

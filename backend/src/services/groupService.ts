@@ -261,26 +261,43 @@ export class GroupService {
                     .filter((c: any) => c.id.endsWith('@g.us'))
                     .map((c: any) => c.id);
 
-            for (const jid of jidsToSync) {
-                // 1. Check if we already have a recent sync
-                const existing = await databaseService.getGroup(channel.tenantId, jid);
+            // Scenario 26+27: Process in chunks to avoid Firestore write-rate limits and
+            // blocking the event loop on large (5000+) group lists.
+            const CHUNK_SIZE = 50;
+            const INTER_CHUNK_DELAY_MS = 500;
 
-                if (!options.force && existing) {
-                    const lastSynced = existing.syncedAt instanceof Timestamp
-                        ? existing.syncedAt.toDate()
-                        : (existing.syncedAt ? new Date(existing.syncedAt as any) : new Date(0));
-                    const now = new Date();
-                    const diffMinutes = (now.getTime() - lastSynced.getTime()) / (1000 * 60);
+            for (let offset = 0; offset < jidsToSync.length; offset += CHUNK_SIZE) {
+                const chunk = jidsToSync.slice(offset, offset + CHUNK_SIZE);
 
-                    // If synced within the last 4 hours, skip
-                    if (diffMinutes < 240) {
-                        logger.debug(`[GroupService] Skipping sync for ${jid} - last sync was ${Math.round(diffMinutes)}m ago`);
-                        continue;
+                for (const jid of chunk) {
+                    // 1. Check if we already have a recent sync
+                    const existing = await databaseService.getGroup(channel.tenantId, jid);
+
+                    if (!options.force && existing) {
+                        const lastSynced = existing.syncedAt instanceof Timestamp
+                            ? existing.syncedAt.toDate()
+                            : (existing.syncedAt ? new Date(existing.syncedAt as any) : new Date(0));
+                        const now = new Date();
+                        const diffMinutes = (now.getTime() - lastSynced.getTime()) / (1000 * 60);
+
+                        // If synced within the last 4 hours, skip
+                        if (diffMinutes < 240) {
+                            logger.debug(`[GroupService] Skipping sync for ${jid} - last sync was ${Math.round(diffMinutes)}m ago`);
+                            continue;
+                        }
                     }
+
+                    await this.syncGroup(channel, jid);
                 }
 
-                await this.syncGroup(channel, jid);
+                // Yield between chunks: prevents Firestore write bursts and keeps the
+                // event loop responsive for large groups (Scenario 26+27).
+                if (offset + CHUNK_SIZE < jidsToSync.length) {
+                    await new Promise(resolve => setTimeout(resolve, INTER_CHUNK_DELAY_MS));
+                }
             }
+
+            logger.info(`[GroupService] Delta-Sync complete: ${jidsToSync.length} groups processed for ${channel.channelId}`);
         } catch (error) {
             logger.error(`[GroupService] Delta-Sync failed for ${channel.channelId}`, error);
         }

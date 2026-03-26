@@ -360,21 +360,33 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     // Listen for messages
     this.socket.ev.on('messages.upsert', async ({ messages, type }: any) => {
       if (type === 'notify' && this.messageHandler) {
-        for (const message of messages) {
-          // Ignore messages sent by the bot itself unless selfMode is enabled
-          if (message.key.fromMe && !this.config?.selfMode) {
-            continue;
+        // Scenario 30: On reconnect, Baileys can flush 1000+ pending messages in a single
+        // upsert batch. Processing them synchronously in a tight loop causes memory spikes
+        // and blocks the event loop. Stream them in chunks with event-loop yields between
+        // each chunk so other I/O (heartbeats, QR updates) stays responsive.
+        const CHUNK_SIZE = 20;
+        for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
+          const chunk = messages.slice(i, i + CHUNK_SIZE);
+          for (const message of chunk) {
+            // Ignore messages sent by the bot itself unless selfMode is enabled
+            if (message.key.fromMe && !this.config?.selfMode) {
+              continue;
+            }
+            await this.messageHandler({
+              tenantId: this.tenantId,
+              channelId: this.channelId,
+              channelType: 'whatsapp',
+              fullPath: this.fullPath,
+              sender: message.key.remoteJid,
+              content: message.message,
+              timestamp: new Date((message.messageTimestamp as number) * 1000),
+              raw: message
+            });
           }
-          await this.messageHandler({
-            tenantId: this.tenantId,
-            channelId: this.channelId,
-            channelType: 'whatsapp',
-            fullPath: this.fullPath,
-            sender: message.key.remoteJid,
-            content: message.message,
-            timestamp: new Date((message.messageTimestamp as number) * 1000),
-            raw: message
-          });
+          // Yield to event loop between chunks
+          if (i + CHUNK_SIZE < messages.length) {
+            await new Promise(resolve => setImmediate(resolve));
+          }
         }
       }
     });

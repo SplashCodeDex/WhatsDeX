@@ -8,7 +8,53 @@ import logger from '../utils/logger.js';
 import { tenantConfigService } from './tenantConfigService.js';
 import { OpenClawGateway } from './openClawGateway.js';
 
+/**
+ * Scenario 28: Per-URL circuit breaker to prevent concurrent webhook delivery
+ * failures from hammering a dead endpoint with exponential-backoff retries.
+ *
+ * States: CLOSED (normal) → OPEN (tripped, fast-fail) → HALF_OPEN (probe after cooldown)
+ */
+class WebhookCircuitBreaker {
+    private readonly FAILURE_THRESHOLD = 5;
+    private readonly COOLDOWN_MS = 60_000; // 1 minute open before probe
+    private readonly HALF_OPEN_PROBE_LIMIT = 1;
+
+    private failures = new Map<string, number>();
+    private lastFailureAt = new Map<string, number>();
+    private halfOpenProbes = new Map<string, number>();
+
+    isOpen(url: string): boolean {
+        const failures = this.failures.get(url) ?? 0;
+        if (failures < this.FAILURE_THRESHOLD) return false;
+
+        const elapsed = Date.now() - (this.lastFailureAt.get(url) ?? 0);
+        if (elapsed >= this.COOLDOWN_MS) {
+            // Transition to HALF_OPEN — allow one probe through
+            const probes = this.halfOpenProbes.get(url) ?? 0;
+            if (probes < this.HALF_OPEN_PROBE_LIMIT) {
+                this.halfOpenProbes.set(url, probes + 1);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    recordSuccess(url: string): void {
+        this.failures.delete(url);
+        this.lastFailureAt.delete(url);
+        this.halfOpenProbes.delete(url);
+    }
+
+    recordFailure(url: string): void {
+        const prev = this.failures.get(url) ?? 0;
+        this.failures.set(url, prev + 1);
+        this.lastFailureAt.set(url, Date.now());
+        this.halfOpenProbes.delete(url);
+    }
+}
+
 export class WebhookService {
+    private readonly circuitBreaker = new WebhookCircuitBreaker();
     /**
      * Create a new webhook for a tenant
      */
@@ -103,6 +149,12 @@ export class WebhookService {
      * Internal method to send the HTTP POST request with signature
      */
     private async sendWebhook(hook: Webhook, event: WebhookEvent, payload: any): Promise<void> {
+        // Scenario 28: Fast-fail if the endpoint's circuit is open
+        if (this.circuitBreaker.isOpen(hook.url)) {
+            logger.warn(`[WebhookService] Circuit OPEN for ${hook.url} — skipping delivery of '${event}'`);
+            return;
+        }
+
         const timestamp = Date.now();
         // 2026 Security Fix: Use actual tenant context from payload if available, or hook.tenantId
         const tenantId = payload.tenantId || (hook.name || '').split('_')[0]; // Fallback logic or update schema
@@ -134,11 +186,13 @@ export class WebhookService {
                     },
                     timeout: 5000
                 });
+                this.circuitBreaker.recordSuccess(hook.url);
                 logger.debug(`Webhook delivered: ${event} -> ${hook.url}`);
                 return;
             } catch (error) {
                 attempts++;
                 if (attempts >= maxAttempts) {
+                    this.circuitBreaker.recordFailure(hook.url);
                     logger.warn(`Webhook failed after ${maxAttempts} attempts: ${hook.url}`);
                 } else {
                     // Exponential backoff
