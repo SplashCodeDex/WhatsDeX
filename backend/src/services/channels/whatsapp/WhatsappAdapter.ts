@@ -127,12 +127,17 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
   public async connect(forceNewSession: boolean = false): Promise<void> {
     logger.info(`Connecting WhatsappAdapter for channel ${this.channelId}. Force: ${forceNewSession}`);
     this.isDisconnecting = false;
+    this.qrGenerationCount = 0;
 
     // Cleanup: Remove old socket event listeners before creating a new one
     if (this.socket && this.socket.ev) {
       try { this.socket.ev.removeAllListeners('connection.update'); } catch (e) {}
       try { this.socket.ev.removeAllListeners('messages.upsert'); } catch (e) {}
     }
+
+    // Cleanup: Remove old AuthSystem event listeners before attaching new ones
+    try { this.authSystem.removeAllListeners('qr'); } catch (e) {}
+    try { this.authSystem.removeAllListeners('status'); } catch (e) {}
 
     // Step 0: Ensure OpenClaw is ready BEFORE we attempt AuthSystem
     const loadResult = await getWebActiveListener();
