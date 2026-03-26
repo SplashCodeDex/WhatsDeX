@@ -1,8 +1,10 @@
+import React from 'react';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { OpenClawChatFrame } from '@/features/omnichannel/components/OpenClawChatFrame';
 
-export default function ReasoningPage() {
+export default function ReasoningPage(): React.JSX.Element {
   return (
     <div className="flex flex-col space-y-6 p-8">
       <div className="flex items-center justify-between">

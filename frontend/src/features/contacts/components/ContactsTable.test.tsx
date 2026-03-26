@@ -40,7 +40,7 @@ const mockContacts: Contact[] = [
   },
 ];
 
-const createWrapper = () => {
+const createWrapper = (): React.ComponentType<{ children: React.ReactNode }> => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -61,14 +61,14 @@ describe('ContactsTable', () => {
       data: undefined,
       isLoading: true,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
+
     expect(screen.getAllByRole('generic').some(el => el.classList.contains('animate-pulse'))).toBe(true);
   });
 
@@ -78,14 +78,14 @@ describe('ContactsTable', () => {
       data: undefined,
       isLoading: false,
       error,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
+
     expect(screen.getByText(/Failed to load contacts/i)).toBeInTheDocument();
   });
 
@@ -94,14 +94,14 @@ describe('ContactsTable', () => {
       data: mockContacts,
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
+
     await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
@@ -111,19 +111,19 @@ describe('ContactsTable', () => {
 
   it('filters contacts by search query', async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(contactsHooks.useContacts).mockReturnValue({
       data: mockContacts,
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
+
     const searchInput = screen.getByPlaceholderText(/Search contacts/i);
     await user.type(searchInput, 'John');
 
@@ -135,19 +135,19 @@ describe('ContactsTable', () => {
 
   it('filters contacts by tag', async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(contactsHooks.useContacts).mockReturnValue({
       data: mockContacts,
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
+
     const tagButton = screen.getByText('vip');
     await user.click(tagButton);
 
@@ -159,25 +159,25 @@ describe('ContactsTable', () => {
 
   it('handles contact selection', async () => {
     const user = userEvent.setup();
-    
+
     vi.mocked(contactsHooks.useContacts).mockReturnValue({
       data: mockContacts,
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
-    const checkboxes = screen.getAllByRole('button').filter(btn => 
+
+    const checkboxes = screen.getAllByRole('button').filter(btn =>
       btn.querySelector('.w-5.h-5')
     );
-    
+
     await user.click(checkboxes[1]!); // Click first contact checkbox
-    
+
     await waitFor(() => {
       expect(screen.getByText(/1 selected/i)).toBeInTheDocument();
     });
@@ -187,26 +187,26 @@ describe('ContactsTable', () => {
     const user = userEvent.setup();
     const mockCreateElement = vi.spyOn(document, 'createElement');
     const mockClick = vi.fn();
-    
+
     mockCreateElement.mockReturnValue({
       click: mockClick,
       href: '',
       download: '',
       style: {},
-    } as any);
+    } as unknown as HTMLElement);
 
     vi.mocked(contactsHooks.useContacts).mockReturnValue({
       data: mockContacts,
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
+
     const exportButton = screen.getByText(/Export CSV/i);
     await user.click(exportButton);
 
@@ -224,21 +224,21 @@ describe('ContactsTable', () => {
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
     }));
-    
+
     vi.mocked(contactsHooks.useContacts).mockReturnValue({
       data: manyContacts,
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
+
     expect(screen.getByText(/Page 1 of 3/i)).toBeInTheDocument();
-    
+
     const nextButton = screen.getByLabelText(/Next page/i);
     await user.click(nextButton);
 
@@ -252,14 +252,14 @@ describe('ContactsTable', () => {
       data: [],
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useContacts>);
 
     vi.mocked(contactsHooks.useDeleteContact).mockReturnValue({
       mutate: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof contactsHooks.useDeleteContact>);
 
     render(<ContactsTable />, { wrapper: createWrapper() });
-    
+
     expect(screen.getByText(/No contacts found/i)).toBeInTheDocument();
   });
 });

@@ -38,13 +38,7 @@ export function useAuth(): UseAuthReturn {
         error,
         setUser,
         setLoading,
-        setError,
         clearError,
-        retryCount,
-        lastFetchAttempt,
-        incrementRetryCount,
-        resetRetryCount,
-        setLastFetchAttempt
     } = useAuthStore();
     const router = useRouter();
     const pathname = usePathname();
@@ -77,7 +71,8 @@ export function useAuth(): UseAuthReturn {
         try {
             const response = await api.get<{ user: AuthUser }>(API_ENDPOINTS.AUTH.VERIFY);
             if (response.success && response.data) {
-                const userData = (response.data as any).user || response.data;
+                const responseData = response.data as { user?: AuthUser } & AuthUser;
+                const userData = responseData.user || responseData;
 
                 // Native Firebase Auth bridge
                 if (userData.firebaseToken) {
@@ -105,7 +100,7 @@ export function useAuth(): UseAuthReturn {
                 setUser(null);
                 incrementRetryCount();
             }
-        } catch (err) {
+        } catch {
             setUser(null);
             incrementRetryCount();
         } finally {
@@ -149,7 +144,7 @@ export function useAuth(): UseAuthReturn {
             const isDashboardPage = pathname?.startsWith('/dashboard');
 
             if (isDashboardPage && !isAuthPage) {
-                console.log('[Auth] Guest on protected dashboard route, redirecting to login');
+                logger.debug('[Auth] Guest on protected dashboard route, redirecting to login');
                 router.push(ROUTES.LOGIN);
             }
         }
@@ -207,7 +202,7 @@ export function useAuth(): UseAuthReturn {
         let lastActivity = Date.now();
         let refreshTimer: NodeJS.Timeout;
 
-        const handleActivity = () => {
+        const handleActivity = (): void => {
             const now = Date.now();
             if (now - lastActivity > 5 * 60 * 1000) {
                 lastActivity = now;
@@ -215,14 +210,15 @@ export function useAuth(): UseAuthReturn {
             }
         };
 
-        const performRefresh = async () => {
+        const performRefresh = async (): Promise<void> => {
             // Signal to other tabs that we are handling the refresh
             authChannel.postMessage({ type: 'REFRESHING' });
             
             try {
                 const response = await api.post(API_ENDPOINTS.AUTH.REFRESH);
-                if (response.success && (response.data as any)?.user) {
-                    const userData = (response.data as any).user;
+                const refreshData = response.data as { user?: AuthUser } | null;
+                if (response.success && refreshData && 'user' in refreshData && refreshData.user) {
+                    const userData = refreshData.user;
                     authChannel.postMessage({ 
                         type: 'SESSION_REFRESHED', 
                         payload: { user: userData } 

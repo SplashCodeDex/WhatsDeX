@@ -2,6 +2,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
+type GetReturnType = never;
+type PostReturnType = NextResponse;
+
 /**
  * Logout Route Handler
  *

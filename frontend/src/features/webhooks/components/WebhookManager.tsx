@@ -8,7 +8,7 @@ import {
     Copy,
     RefreshCw
 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 import { Webhook, WEBHOOK_EVENTS, WebhookEvent } from '../types';
@@ -43,25 +43,25 @@ export function WebhookManager(): React.JSX.Element {
     const [selectedEvents, setSelectedEvents] = useState<WebhookEvent[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        fetchWebhooks();
-    }, []);
-
-    const fetchWebhooks = async () => {
+    const fetchWebhooks = useCallback(async (): Promise<void> => {
         setIsLoading(true);
         try {
             const response = await api.get<Webhook[]>(API_ENDPOINTS.WEBHOOKS.LIST);
             if (response.success) {
                 setWebhooks(response.data);
             }
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to load webhooks');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const handleCreate = async () => {
+    useEffect(() => {
+        fetchWebhooks();
+    }, [fetchWebhooks]);
+
+    const handleCreate = async (): Promise<void> => {
         if (!url || selectedEvents.length === 0) {
             toast.error('Please provide a URL and select at least one event');
             return;
@@ -84,31 +84,31 @@ export function WebhookManager(): React.JSX.Element {
                 setUrl('');
                 setSelectedEvents([]);
             }
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to create webhook');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (id: string): Promise<void> => {
         try {
             const response = await api.delete(API_ENDPOINTS.WEBHOOKS.DELETE(id));
             if (response.success) {
                 toast.success('Webhook deleted');
                 setWebhooks(webhooks.filter(w => w.id !== id));
             }
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to delete webhook');
         }
     };
 
-    const copyToClipboard = (text: string, label: string) => {
+    const copyToClipboard = (text: string, label: string): void => {
         navigator.clipboard.writeText(text);
         toast.success(`${label} copied to clipboard`);
     };
 
-    const toggleEvent = (event: WebhookEvent) => {
+    const toggleEvent = (event: WebhookEvent): void => {
         setSelectedEvents(prev =>
             prev.includes(event)
                 ? prev.filter(e => e !== event)

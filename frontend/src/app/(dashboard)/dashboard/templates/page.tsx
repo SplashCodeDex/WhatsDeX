@@ -6,7 +6,7 @@ import React from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { TemplateManagement } from '@/features/messages';
 
-export default function TemplatesPage() {
+export default function TemplatesPage(): React.JSX.Element {
     return (
         <div className="flex flex-col h-full bg-transparent">
             {/* Header */}
