@@ -140,7 +140,10 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
     try { this.authSystem.removeAllListeners('status'); } catch (e) {}
 
     // Step 0: Ensure OpenClaw is ready BEFORE we attempt AuthSystem
-    const loadResult = await getWebActiveListener();
+    const loadResult = await getWebActiveListener().catch((err) => {
+        logger.error('[WhatsappAdapter] Failed to load web active listener', err);
+        throw new Error('Failed to initialize OpenClaw web active listener');
+    });
 
     // MASTERMIND Goodie: Listen for QR codes and convert to DataURL for UI
     // MUST be attached before connect() to catch early events
@@ -349,18 +352,21 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
           }
         });
         return { messageId: result?.key?.id || '' };
-      },
-      sendReaction: async (chatJid: string, messageId: string, emoji: string, fromMe: boolean, participant?: string) => {
-        await this.socket.sendMessage(chatJid, { react: { text: emoji, key: { id: messageId, fromMe, remoteJid: chatJid, participant } } });
-      },
-      sendComposingTo: async (to: string) => {
-        await this.socket.sendPresenceUpdate('composing', to);
-      },
-    };
-    const listenerModule = await getWebActiveListener();
-    if (listenerModule?.setActiveWebListener) {
-      listenerModule.setActiveWebListener(this.channelId, listener);
-    }
+       },
+       sendReaction: async (chatJid: string, messageId: string, emoji: string, fromMe: boolean, participant?: string) => {
+         await this.socket.sendMessage(chatJid, { react: { text: emoji, key: { id: messageId, fromMe, remoteJid: chatJid, participant } } });
+       },
+       sendComposingTo: async (to: string) => {
+         await this.socket.sendPresenceUpdate('composing', to);
+       },
+     };
+     const listenerModule = await getWebActiveListener().catch((err) => {
+       logger.error('[WhatsappAdapter] Failed to load web active listener for setting', err);
+       return null;
+     });
+     if (listenerModule?.setActiveWebListener) {
+       listenerModule.setActiveWebListener(this.channelId, listener);
+     }
 
     // Listen for messages
     this.socket.ev.on('messages.upsert', async ({ messages, type }: any) => {

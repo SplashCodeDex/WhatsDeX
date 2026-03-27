@@ -100,7 +100,7 @@ function PlatformSelectButton({
             <div className={cn(
                 "bg-opacity-10", 
                 platform.bgColor + '/10',
-                isGrid ? "rounded-full p-4 mb-4 group-hover:scale-110 transition-transform" : "rounded-lg p-2"
+                isGrid ? "rounded-full p-4 mb-4 group-hover:scale-110 transition-transform relative z-10" : "rounded-lg p-2 relative z-10"
             )}>
                 <platform.Icon className={cn(
                     platform.textColor, 
@@ -108,11 +108,26 @@ function PlatformSelectButton({
                 )} />
             </div>
             <span className={cn(
-                "font-medium",
+                "font-medium relative z-10",
                 isGrid ? "text-foreground" : "text-sm"
             )}>
                 {platform.label}
             </span>
+
+            {/* Premium Highlighter Border */}
+            <motion.div
+                initial={false}
+                animate={{ 
+                    opacity: 0,
+                    scale: 0.95
+                }}
+                whileHover={{ 
+                    opacity: 1,
+                    scale: 1
+                }}
+                className="absolute inset-0 border-2 border-primary/30 rounded-xl pointer-events-none"
+                transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+            />
         </motion.button>
     );
 }

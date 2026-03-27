@@ -32,6 +32,7 @@ import {
     SelectValue 
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';
@@ -126,6 +127,8 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
         }
     };
 
+    const effectiveAgents = agents.filter(a => a.id !== 'system_default');
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[450px] border-border/50 bg-card/95 backdrop-blur-xl">
@@ -154,17 +157,17 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                             </Label>
                             <div className="flex flex-col sm:flex-row gap-2">
                                 <Select value={selectedTargetAgent} onValueChange={setSelectedTargetAgent}>
-                                    <SelectTrigger className="bg-background/80 backdrop-blur-md border-border/50 flex-1 h-10 transition-colors hover:border-primary/30 focus:ring-primary/20">
-                                        <SelectValue placeholder="Select Agent" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-card/95 backdrop-blur-xl border-border/50">
-                                        <SelectItem value="system_default" className="font-medium text-primary focus:bg-primary/10">System Default Agent</SelectItem>
-                                        {agents.map((agent) => (
-                                            agent.id !== 'system_default' && (
-                                                <SelectItem key={agent.id} value={agent.id}>
-                                                    {agent.name ?? agent.id}
-                                                </SelectItem>
-                                            )
+                                    <LiquidGlassWrapper className="flex-1 rounded-xl">
+                                        <SelectTrigger className="bg-background/80 backdrop-blur-md border-border/50 w-full h-10 transition-colors hover:border-primary/30 focus:ring-primary/20 rounded-xl">
+                                            <SelectValue placeholder="Select Agent" />
+                                        </SelectTrigger>
+                                    </LiquidGlassWrapper>
+                                    <SelectContent className="rounded-xl border-border/50 bg-card/95 backdrop-blur-xl">
+                                        <SelectItem value="system_default" className="font-medium text-primary focus:bg-primary/10 rounded-lg">System Default Agent</SelectItem>
+                                        {effectiveAgents.map((agent) => (
+                                            <SelectItem key={agent.id} value={agent.id} className="rounded-lg">
+                                                {agent.name ?? agent.id}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -219,7 +222,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                         variant="outline"
                                         className="w-full justify-between h-12 border-primary/20 hover:bg-primary/10 hover:text-primary hover:border-primary/50 group-hover:shadow-md transition-all"
                                         onClick={handleReconnect}
-                                        disabled={isActionLoading || channel.status === 'archived'}
+                                        disabled={isActionLoading}
                                     >
                                         <div className="flex items-center gap-3">
                                             <RotateCcw className="h-4 w-4" />
@@ -238,7 +241,7 @@ export function ChannelSettingsDialog({ channel, isOpen, onOpenChange }: Channel
                                     variant="outline"
                                     className="w-full justify-between h-12 border-orange-500/20 hover:bg-orange-500/10 hover:text-orange-600 hover:border-orange-500/50 group-hover:shadow-md transition-all"
                                     onClick={handleDisconnect}
-                                    disabled={isActionLoading || channel.status === 'disconnected' || channel.status === 'logged_out' || channel.status === 'banned' || channel.status === 'reconnect_exhausted' || channel.status === 'archived'}
+                                    disabled={isActionLoading || ['disconnected', 'logged_out', 'banned', 'reconnect_exhausted', 'archived'].includes(channel.status)}
                                 >
                                     <div className="flex items-center gap-3">
                                         <Power className="h-4 w-4" />
