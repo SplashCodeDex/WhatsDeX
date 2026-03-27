@@ -1,7 +1,7 @@
 'use client';
 
 import { User, Mail, Shield, Camera, Loader2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,18 +11,45 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/features/auth';
+import { useAuthStore } from '@/features/auth/store';
+import { api, API_ENDPOINTS } from '@/lib/api';
 
 export function AccountSettings(): React.JSX.Element {
     const { user, isLoading } = useAuth();
+    const setUser = useAuthStore(s => s.setUser);
+    const [name, setName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    
-    // In a real app, we'd have a form with local state here
+
+    // Sync form once the authenticated user is available
+    useEffect(() => {
+        if (user?.name) {
+            setName(user.name);
+        }
+    }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const handleSave = async (): Promise<void> => {
+        const trimmed = name.trim();
+        if (!trimmed) {
+            toast.error('Name cannot be empty');
+            return;
+        }
         setIsSaving(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setIsSaving(false);
-        toast.success('Account profile updated');
+        try {
+            const response = await api.patch<{ name: string }>(API_ENDPOINTS.SETTINGS.PROFILE, { name: trimmed });
+            if (response.success) {
+                // Optimistically update the auth store so the header/avatar reflects immediately
+                if (user) {
+                    setUser({ ...user, name: response.data.name });
+                }
+                toast.success('Profile updated');
+            } else {
+                toast.error(response.error?.message ?? 'Failed to update profile');
+            }
+        } catch {
+            toast.error('An unexpected error occurred');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     if (isLoading) {
@@ -75,20 +102,21 @@ export function AccountSettings(): React.JSX.Element {
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="name">Full Name</Label>
-                                <Input 
-                                    id="name" 
-                                    defaultValue={user?.name || ''} 
+                                <Input
+                                    id="name"
+                                    value={name}
+                                    onChange={e => setName(e.target.value)}
                                     className="bg-background/50 rounded-xl"
                                 />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email Address</Label>
                                 <div className="flex gap-2">
-                                    <Input 
-                                        id="email" 
-                                        defaultValue={user?.email || ''} 
-                                        className="bg-muted rounded-xl" 
-                                        disabled 
+                                    <Input
+                                        id="email"
+                                        defaultValue={user?.email || ''}
+                                        className="bg-muted rounded-xl"
+                                        disabled
                                     />
                                     <Button variant="outline" size="icon" className="shrink-0 rounded-xl">
                                         <Mail className="h-4 w-4" />
@@ -111,7 +139,7 @@ export function AccountSettings(): React.JSX.Element {
                             <div className="flex items-center justify-between">
                                 <div className="space-y-1">
                                     <p className="text-sm font-medium">Password</p>
-                                    <p className="text-xs text-muted-foreground">Last changed 3 months ago</p>
+                                    <p className="text-xs text-muted-foreground">Update your account password.</p>
                                 </div>
                                 <Button variant="outline" size="sm" className="rounded-xl">Change Password</Button>
                             </div>
@@ -127,9 +155,9 @@ export function AccountSettings(): React.JSX.Element {
                     </Card>
 
                     <div className="flex justify-end pt-2">
-                        <Button 
-                            onClick={handleSave} 
-                            disabled={isSaving}
+                        <Button
+                            onClick={handleSave}
+                            disabled={isSaving || !name.trim()}
                             className="rounded-xl px-8 shadow-lg ring-1 ring-primary/20"
                         >
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

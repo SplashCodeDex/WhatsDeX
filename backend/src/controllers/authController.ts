@@ -710,3 +710,44 @@ export const getMe = async (req: RequestWithUser, res: Response) => {
         });
     }
 };
+
+/**
+ * PATCH /api/settings/profile
+ * Update the authenticated user's display name.
+ */
+export const updateProfile = async (req: RequestWithUser, res: Response): Promise<void> => {
+    try {
+        if (!req.user?.userId || !req.user?.tenantId) {
+            res.status(401).json({ success: false, error: 'Unauthorized' });
+            return;
+        }
+
+        const { userId, tenantId } = req.user;
+        const { name } = req.body as { name?: unknown };
+
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            res.status(400).json({
+                success: false,
+                error: { code: 'validation_error', message: 'Name is required and must be a non-empty string.' }
+            });
+            return;
+        }
+
+        const trimmedName = name.trim();
+
+        await db.collection('tenants').doc(tenantId).collection('users').doc(userId).update({
+            displayName: trimmedName,
+            updatedAt: Timestamp.now()
+        });
+
+        // Keep Firebase Auth display name in sync so Custom Token reflects the new name
+        await admin.auth().updateUser(userId, { displayName: trimmedName });
+
+        logger.info(`Profile updated for user ${userId} in tenant ${tenantId}`);
+        res.json({ success: true, data: { name: trimmedName } });
+    } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('updateProfile error:', { message: err.message, userId: req.user?.userId });
+        res.status(500).json({ success: false, error: 'Failed to update profile' });
+    }
+};

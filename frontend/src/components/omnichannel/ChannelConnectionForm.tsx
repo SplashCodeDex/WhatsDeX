@@ -47,6 +47,56 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [connectionMethod, setConnectionMethod] = useState<'qr' | 'pairing'>('qr');
   const [selectedAgentId, setSelectedAgentId] = useState(initialAgentId || 'system_default');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validatePhoneNumber = (phone: string): boolean => {
+    // E.164 format: + followed by up to 15 digits
+    const e164Pattern = /^\+[1-9]\d{1,14}$/;
+    return e164Pattern.test(phone);
+  };
+
+  const validateField = (fieldId: string, value: string, type?: 'text' | 'password' | 'number'): string | null => {
+    if (!value) {
+      return 'This field is required';
+    }
+    if (type === 'number') {
+      if (!/^\d+$/.test(value)) {
+        return 'Must be a number';
+      }
+    }
+    // Add more type validations as needed
+    return null;
+  };
+
+  const validateForm = (): boolean => {
+    const newFieldErrors: Record<string, string> = {};
+    let hasError = false;
+
+    // Validate platform fields
+    if (platform && platform.fields.length > 0) {
+      platform.fields.forEach((field) => {
+        const value = credentials[field.id] || '';
+        const error = validateField(field.id, value, field.type);
+        if (error) {
+          newFieldErrors[field.id] = error;
+          hasError = true;
+        }
+      });
+    }
+
+    // Validate phone number for WhatsApp pairing method
+    if (type === 'whatsapp' && connectionMethod === 'pairing') {
+      const phoneValue = credentials.phone || '';
+      if (!validatePhoneNumber(phoneValue)) {
+        newFieldErrors.phone = 'Please enter a valid phone number in E.164 format (e.g., +1234567890)';
+        hasError = true;
+      }
+    }
+
+    setFieldErrors(newFieldErrors);
+    return !hasError;
+  };
   const { fetchAllChannels, fetchAgents, platforms, agentsResult } = useOmnichannelStore();
 
   useEffect(() => {
@@ -73,6 +123,12 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -199,14 +255,25 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
               {connectionMethod === 'pairing' && (
                 <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   <Label htmlFor="phone" className="text-xs">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    placeholder="+1234567890"
-                    value={credentials.phone || ''}
-                    onChange={(e) => setCredentials({ ...credentials, phone: e.target.value })}
-                    required
-                    className="bg-background/50 border-border/50 h-9"
-                  />
+              <Input
+                id="phone"
+                placeholder="+1234567890"
+                value={credentials.phone || ''}
+                onChange={(e) => {
+                  setCredentials({ ...credentials, phone: e.target.value });
+                  // Clear error as user types
+                  if (phoneError) setPhoneError(null);
+                }}
+                required
+                className="bg-background/50 border-border/50 h-9"
+                aria-invalid={!!phoneError}
+                aria-describedby={phoneError ? "phone-error" : undefined}
+              />
+              {!!phoneError && (
+                <p id="phone-error" className="text-destructive text-xs mt-1">
+                  {phoneError}
+                </p>
+              )}
                   <p className="text-[10px] text-muted-foreground italic">
                     Include country code (e.g. +1). You will receive a code on your mobile device.
                   </p>
@@ -215,23 +282,38 @@ export function ChannelConnectionForm({ type, agentId: initialAgentId, onSuccess
             </div>
           )}
 
-          {platform.fields.length > 0 && (
-            <div className="space-y-4 pt-4 border-t border-border/50">
-              {platform.fields.map((field) => (
-                <div key={field.id} className="space-y-2">
-                  <Label htmlFor={field.id} className="text-xs">{field.label}</Label>
-                  <Input
-                    id={field.id}
-                    placeholder={field.placeholder}
-                    value={credentials[field.id] || ''}
-                    onChange={(e) => setCredentials({ ...credentials, [field.id]: e.target.value })}
-                    required
-                    className="bg-background/50 border-border/50 h-9"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+           {platform.fields.length > 0 && (
+             <div className="space-y-4 pt-4 border-t border-border/50">
+               {platform.fields.map((field) => (
+                 <div key={field.id} className="space-y-2">
+                   <Label htmlFor={field.id} className="text-xs">{field.label}</Label>
+                   <Input
+                     id={field.id}
+                     placeholder={field.placeholder}
+                     value={credentials[field.id] || ''}
+                     onChange={(e) => {
+                       setCredentials({ ...credentials, [field.id]: e.target.value });
+                       // Clear field error as user types
+                       if (fieldErrors[field.id]) {
+                         const newErrors = { ...fieldErrors };
+                         delete newErrors[field.id];
+                         setFieldErrors(newErrors);
+                       }
+                     }}
+                     required
+                     className="bg-background/50 border-border/50 h-9"
+                     aria-invalid={!!fieldErrors[field.id]}
+                     aria-describedby={fieldErrors[field.id] ? `${field.id}-error` : undefined}
+                   />
+                   {!!fieldErrors[field.id] && (
+                     <p id={`${field.id}-error`} className="text-destructive text-xs mt-1">
+                       {fieldErrors[field.id]}
+                     </p>
+                   )}
+                 </div>
+               ))}
+             </div>
+           )}
         </CardContent>
         <CardFooter className="flex justify-between bg-muted/20 border-t border-border/50 py-4">
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>

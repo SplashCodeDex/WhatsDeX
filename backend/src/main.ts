@@ -1,3 +1,5 @@
+import { loadCentralEnv } from '@splashcodex/api-key-manager/env';
+loadCentralEnv(); // Load shared keys from ~/codedex/env/ BEFORE dotenv
 logger.info('>>> [MASTERMIND] ABSOLUTE START OF MAIN.TS');
 import 'dotenv/config';
 import { ConfigService } from './services/ConfigService.js';

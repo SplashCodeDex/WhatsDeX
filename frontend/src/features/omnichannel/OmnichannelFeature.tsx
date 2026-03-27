@@ -172,19 +172,31 @@ function ChannelCard({ channel }: { channel: Channel }): React.JSX.Element {
 
     const effectiveAgentId = channel.assignedAgentId || 'system_default';
     const agent = agentsResult?.agents.find(a => a.id === effectiveAgentId);
-    const agentName = agent?.name || 'System Default Agent';
+    const agentName = agent?.name ?? (effectiveAgentId === 'system_default' ? 'System Default Agent' : 'Unknown Agent');
 
     const handleDirectDisconnect = async (e: React.MouseEvent): Promise<void> => {
         e.stopPropagation();
         if (isDisconnecting) return;
 
         setIsDisconnecting(true);
+        
+        // Optimistic update: immediately update channel status to disconnected
+        const { updateChannelStatus } = useOmnichannelStore.getState();
+        updateChannelStatus(channel.id, 'disconnected');
+        
         try {
             const agentId = channel.assignedAgentId || 'system_default';
             const success = await disconnectChannel(agentId, channel.id);
-            if (success) {
-                // Success toast handled by component or store?
+            if (!success) {
+                // Rollback on failure - refetch channels to get actual status
+                const { fetchAllChannels } = useOmnichannelStore.getState();
+                await fetchAllChannels();
             }
+        } catch (err) {
+            console.error('Failed to disconnect channel:', err);
+            // Rollback on error - refetch channels to get actual status
+            const { fetchAllChannels } = useOmnichannelStore.getState();
+            await fetchAllChannels();
         } finally {
             setIsDisconnecting(false);
         }

@@ -28,6 +28,7 @@ import flowRoutes from '../routes/flowRoutes.js';
 import automationRoutes from '../routes/automationRoutes.js';
 import stripeWebhookRoutes from '../routes/stripeWebhookRoutes.js';
 import tenantSettingsRoutes from '../routes/tenantSettingsRoutes.js';
+import settingsRoutes from '../routes/settingsRoutes.js';
 import integrationRoutes from '../routes/integrationRoutes.js';
 import logsRoutes from '../routes/logsRoutes.js';
 import AnalyticsService from '../services/analytics.js';
@@ -246,6 +247,9 @@ export class MultiTenantApp {
 
     // Tenant Settings Routes
     this.app.use('/api/tenant', authenticateToken, tenantSettingsRoutes);
+
+    // User Profile Settings Routes
+    this.app.use('/api/settings', authenticateToken, settingsRoutes);
 
     // Integations Routes
     this.app.use('/api/integrations', integrationRoutes);

@@ -93,6 +93,17 @@ export class MultiTenantService {
       });
 
       logger.info(`Tenant and Owner initialized: ${tenantId} / ${userId}`);
+
+      // Ensure the system_default agent document exists.
+      // This runs outside the Firestore transaction so it can use AgentService freely.
+      // Non-fatal: if this fails, the agent is created lazily on first channel fetch.
+      try {
+        const { agentService } = await import('./AgentService.js');
+        await agentService.ensureSystemAgent(tenantId);
+      } catch (agentErr) {
+        logger.warn(`[MultiTenantService] Could not pre-create system_default agent for ${tenantId}:`, agentErr);
+      }
+
       return { success: true, data: result };
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));

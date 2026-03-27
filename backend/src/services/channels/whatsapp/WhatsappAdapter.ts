@@ -383,16 +383,21 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
             if (message.key.fromMe && !this.config?.selfMode) {
               continue;
             }
-            await this.messageHandler({
-              tenantId: this.tenantId,
-              channelId: this.channelId,
-              channelType: 'whatsapp',
-              fullPath: this.fullPath,
-              sender: message.key.remoteJid,
-              content: message.message,
-              timestamp: new Date((message.messageTimestamp as number) * 1000),
-              raw: message
-            });
+            try {
+              await this.messageHandler({
+                tenantId: this.tenantId,
+                channelId: this.channelId,
+                channelType: 'whatsapp',
+                fullPath: this.fullPath,
+                sender: message.key.remoteJid,
+                content: message.message,
+                timestamp: new Date((message.messageTimestamp as number) * 1000),
+                raw: message
+              });
+            } catch (msgErr) {
+              // Per-message catch: log and continue processing the rest of the batch
+              logger.error(`[WhatsappAdapter] Failed to handle message from ${message.key.remoteJid}:`, msgErr);
+            }
           }
           // Yield to event loop between chunks
           if (i + CHUNK_SIZE < messages.length) {
@@ -413,6 +418,17 @@ export class WhatsappAdapter implements ChannelAdapter, Partial<ActiveChannel> {
       clearTimeout(this.qrTimeoutHandle);
       this.qrTimeoutHandle = null;
     }
+    
+    // Remove socket event listeners to prevent memory leaks
+    if (this.socket && this.socket.ev) {
+      try { this.socket.ev.removeAllListeners('connection.update'); } catch (e) {}
+      try { this.socket.ev.removeAllListeners('messages.upsert'); } catch (e) {}
+    }
+    
+    // Remove AuthSystem event listeners to prevent memory leaks
+    try { this.authSystem.removeAllListeners('qr'); } catch (e) {}
+    try { this.authSystem.removeAllListeners('status'); } catch (e) {}
+    
     const listenerModule = await getWebActiveListener();
     if (listenerModule?.setActiveWebListener) {
       listenerModule.setActiveWebListener(this.channelId, null);

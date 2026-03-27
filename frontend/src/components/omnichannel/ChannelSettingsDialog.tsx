@@ -13,26 +13,26 @@ import {
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
+import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogDescription, 
-    DialogHeader, 
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
     DialogTitle,
     DialogFooter
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { 
-    Select, 
-    SelectContent, 
-    SelectItem, 
-    SelectTrigger, 
-    SelectValue 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { LiquidGlassWrapper } from '@/components/effects/LiquidGlassWrapper';
 import { api } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';

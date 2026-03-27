@@ -29,7 +29,7 @@
     "@opentelemetry/exporter-prometheus": "^0.210.0",
     "@opentelemetry/sdk-node": "^0.210.0",
     "@opentelemetry/sdk-trace-node": "^2.4.0",
-    "@splashcodex/api-key-manager": "^4.0.0",
+    "@splashcodex/api-key-manager": "^5.2.0",
     "@types/cron": "^2.4.3",
     "@types/http-proxy-middleware": "^1.0.0",
     "aki-api": "^7.0.1",

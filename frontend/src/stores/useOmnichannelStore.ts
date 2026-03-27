@@ -474,16 +474,25 @@ export const useOmnichannelStore = create<OmnichannelState>((set, get) => ({
     },
 
     disconnectChannel: async (agentId, channelId) => {
+        // Optimistic update: immediately update channel status to disconnected
+        get().updateChannelStatus(channelId, 'disconnected');
+        
         try {
             const response = await api.post(API_ENDPOINTS.OMNICHANNEL.AGENTS.CHANNELS.DISCONNECT(agentId, channelId), {});
             if (response.success) {
                 await get().fetchAllChannels();
                 return true;
+            } else {
+                // Rollback on failure - refetch channels to get actual status
+                await get().fetchAllChannels();
+                return false;
             }
         } catch (err) {
             console.error('Failed to disconnect channel:', err);
+            // Rollback on error - refetch channels to get actual status
+            await get().fetchAllChannels();
+            return false;
         }
-        return false;
     },
 
     deleteChannel: async (agentId, channelId, archive = false) => {

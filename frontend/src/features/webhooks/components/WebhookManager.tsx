@@ -103,9 +103,13 @@ export function WebhookManager(): React.JSX.Element {
         }
     };
 
-    const copyToClipboard = (text: string, label: string): void => {
-        navigator.clipboard.writeText(text);
-        toast.success(`${label} copied to clipboard`);
+    const copyToClipboard = async (text: string, label: string): Promise<void> => {
+        try {
+            await navigator.clipboard.writeText(text);
+            toast.success(`${label} copied to clipboard`);
+        } catch {
+            toast.error(`Failed to copy ${label} — check browser clipboard permissions`);
+        }
     };
 
     const toggleEvent = (event: WebhookEvent): void => {

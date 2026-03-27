@@ -55,8 +55,14 @@ export class ChannelManager {
         const adapter = this.adapters.get(key);
         if (adapter) {
             console.log(`[ChannelManager] Shutting down adapter: ${key}`);
-            await adapter.shutdown();
-            this.adapters.delete(key);
+            try {
+                await adapter.shutdown();
+            } catch (err) {
+                console.error(`[ChannelManager] Error during adapter shutdown for ${key}:`, err);
+            } finally {
+                // Always deregister, even if shutdown threw, to prevent zombie adapters
+                this.adapters.delete(key);
+            }
         }
     }
 
